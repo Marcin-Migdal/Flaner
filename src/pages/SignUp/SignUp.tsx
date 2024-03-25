@@ -109,7 +109,7 @@ const SignUp = () => {
                     </Col>
                     <Col xl={6} className="right-col">
                         <Icon icon={["fas", "rectangle-list"]} />
-                        <h2>APP NAME</h2>
+                        <h2>{process.env.APP_NAME}</h2>
                         <p>{t("Already have any account?")}</p>
                         <CustomButton
                             data-cy="go-to-sign-in-btn"
