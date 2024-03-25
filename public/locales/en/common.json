@@ -1,0 +1,17 @@
+{
+    "_Hello": "Hello",
+    "_or": "or",
+    "Save": "Save",
+
+    "Invalid email address": "Invalid email address",
+    "Required": "Required",
+    "Must be at least 3 characters": "Must be at least 3 characters",
+    "Max length of the password is 20 characters": "Max length of the password is 20 characters",
+    "Must be at least 8 characters long": "Must be at least 8 characters long",
+    "Passwords must match": "Passwords must match",
+
+    "Success": "Success",
+    "Failure": "Failure",
+    "Warning": "Warning",
+    "Information": "Information"
+}

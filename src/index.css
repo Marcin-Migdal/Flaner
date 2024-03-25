@@ -1,0 +1,39 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap");
+
+body {
+    margin: 0;
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+* {
+    font-family: "Open Sans", sans-serif;
+    box-sizing: border-box;
+}
+
+p,
+h1,
+h2,
+h3,
+span {
+    margin: unset;
+    color: var(--white);
+}
+
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 12px;
+}
+
+*::-webkit-scrollbar-track {
+    background-color: rgb(255, 255, 255);
+    width: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+    border-radius: 6px;
+    width: 10px;
+    background-color: rgb(216, 216, 216);
+}

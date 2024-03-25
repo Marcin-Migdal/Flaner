@@ -1,0 +1,1 @@
+export { CustomFirebaseError } from "./firebase";

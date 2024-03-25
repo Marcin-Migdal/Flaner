@@ -1,0 +1,17 @@
+.page-404-container {
+    display: flex;
+    flex-direction: column;
+    color: var(--white);
+}
+
+.page-404-container svg {
+    font-size: 2.5rem;
+}
+
+.page-404-container h3 {
+    margin: 15px 0;
+}
+
+.page-404-container .m-button {
+    margin-right: unset;
+}

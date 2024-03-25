@@ -1,0 +1,17 @@
+{
+    "_Hello": "Witaj",
+    "_or": "lub",
+    "Save": "Zapisz",
+
+    "Invalid email address": "Nieprawidłowy adres e-mail",
+    "Required": "Wymagane",
+    "Must be at least 3 characters": "Musi mieć co najmniej 3 znaki",
+    "Max length of the password is 20 characters": "Maksymalna długość hasła wynosi 20 znaków",
+    "Must be at least 8 characters long": "Hasło musi mieć co najmniej 8 znaków",
+    "Passwords must match": "Hasła muszą się zgadzać",
+
+    "Success": "Sukces",
+    "Failure": "Niepowodzenie",
+    "Warning": "Ostrzeżenie",
+    "Information": "Informacja"
+}
