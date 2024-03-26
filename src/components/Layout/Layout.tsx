@@ -44,7 +44,7 @@ export default function Layout() {
     return (
         <>
             {authUser && <Header />}
-            <main style={{ height: "inherit" }}>
+            <main style={!authUser ? { height: "100%" } : { height: "calc(100% - var(--header-height))" }}>
                 <Suspense fallback={<Loader />}>
                     <Outlet />
                 </Suspense>

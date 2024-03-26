@@ -2,11 +2,13 @@ body {
     margin: unset;
 }
 
-.app-container {
+.page-container {
+    width: 100vw;
+    height: calc(100% - var(--header-height));
+}
+
+.page-container.centered {
     display: flex;
     justify-content: center;
     align-items: center;
-
-    width: 100vw;
-    height: 100%;
 }

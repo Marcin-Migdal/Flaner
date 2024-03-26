@@ -8,12 +8,14 @@ const HomePage = React.lazy(() => import("./Home"));
 const SignInPage = React.lazy(() => import("./SignIn"));
 const SignUpPage = React.lazy(() => import("./SignUp"));
 const Page404 = React.lazy(() => import("./Page404"));
+const Community = React.lazy(() => import("./Community"));
 
 const routes = [
     { path: PATH_CONSTRANTS.HOME, element: <HomePage /> },
     { path: PATH_CONSTRANTS.SIGN_IN, element: <SignInPage /> },
     { path: PATH_CONSTRANTS.SIGN_UP, element: <SignUpPage /> },
     { path: PATH_CONSTRANTS.PAGE_404, element: <Page404 /> },
+    { path: PATH_CONSTRANTS.COMMUNITY, element: <Community /> },
     { path: "*", element: <Navigate to={PATH_CONSTRANTS.PAGE_404} /> },
 ];
 

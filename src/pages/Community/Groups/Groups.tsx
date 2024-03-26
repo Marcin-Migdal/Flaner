@@ -1,11 +1,11 @@
 import React from "react";
 
-const Home = () => {
+const Groups = () => {
     return (
         <div className="page-container centered">
-            <p>Home</p>
+            <p>Groups</p>
         </div>
     );
 };
 
-export default Home;
+export default Groups;
