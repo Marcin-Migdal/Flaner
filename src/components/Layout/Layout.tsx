@@ -5,9 +5,9 @@ import { Suspense, useEffect } from "react";
 import { UserType, setAuthUser } from "@slices/authorization-slice";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
 import { PATH_CONSTRANTS } from "@utils/enums";
+import { Header } from "./components/Header/Header";
 import { fb } from "@firebase/firebase";
 import { Loader } from "../Loader";
-import { Header } from "./Header";
 
 export default function Layout() {
     const navigate = useNavigate();

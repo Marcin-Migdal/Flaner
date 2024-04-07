@@ -1,0 +1,54 @@
+.page-tile-view {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+
+    padding: 20vh 20vw;
+    gap: 2vw;
+}
+
+.page-tile-view .page-tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 13vw;
+    height: 13vw;
+}
+
+.page-tile-view .page-tile-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: inherit;
+    height: inherit;
+
+    border-radius: 6px;
+    background-color: var(--primary-color_300);
+    font-weight: 600;
+    font-size: 2rem;
+    text-transform: uppercase;
+
+    color: var(--white);
+
+    transition: 0.2s;
+}
+
+.page-tile-view .page-tile-content:hover {
+    width: 12.65vw;
+    height: 12.65vw;
+    font-size: 1.9rem;
+
+    background-color: var(--primary-color_400) !important;
+}
+
+.page-tile-view .page-tile-content:active {
+    width: 12.3vw;
+    height: 12.3vw;
+    font-size: 1.8rem;
+
+    background-color: var(--primary-color_500) !important;
+
+    transition: 0.1s;
+}

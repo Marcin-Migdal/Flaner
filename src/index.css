@@ -27,17 +27,26 @@ span {
 }
 
 *::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
     height: 12px;
 }
 
 *::-webkit-scrollbar-track {
-    background-color: rgb(255, 255, 255);
-    width: 10px;
+    background-color: transparent;
+    width: 8px;
 }
 
 *::-webkit-scrollbar-thumb {
-    border-radius: 6px;
-    width: 10px;
-    background-color: rgb(216, 216, 216);
+    border-radius: 4px;
+    width: 8px;
+    background-color: var(--primary-color_50);
+}
+
+.unselectable {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Old versions of Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently supported by Chrome and Opera */
 }
