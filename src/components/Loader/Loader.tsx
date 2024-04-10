@@ -1,7 +1,7 @@
 import { ProgressSpinner } from "@Marcin-Migdal/morti-component-library";
 import React from "react";
 
-import "@commonAssets/css/page.css";
+import "../../commonAssets/css/layout.scss";
 
 export const Loader = () => {
     return (

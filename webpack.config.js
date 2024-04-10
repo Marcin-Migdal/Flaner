@@ -40,10 +40,14 @@ module.exports = {
                 test: /\.css$/,
                 use: ["style-loader", "css-loader"],
             },
+            {
+                test: /\.scss$/,
+                use: ["style-loader", "css-loader", "sass-loader"],
+            },
         ],
     },
     resolve: {
-        extensions: [".tsx", ".ts", ".jsx", ".js", ".css"],
+        extensions: [".tsx", ".ts", ".jsx", ".js", ".css", ".scss"],
         plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.json" })],
     },
 };

@@ -6,7 +6,7 @@ import { PATH_CONSTRANTS } from "@utils/enums";
 import { useAppSelector } from "@hooks/redux-hooks";
 import { Loader } from "@components/index";
 
-import "./styles.css";
+import "./styles.scss";
 
 const Page404 = () => {
     const navigate = useNavigate();

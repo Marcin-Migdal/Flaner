@@ -1,0 +1,101 @@
+.auth-from-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    height: inherit;
+
+    .auth-card {
+        padding: unset;
+        background-color: rgb(71, 71, 71) !important;
+    }
+
+    .m-grid-col {
+        width: 320px !important;
+        padding: 40px 30px;
+
+        &.left-col {
+            p,
+            span {
+                font-size: 0.9rem;
+            }
+
+            p {
+                margin-bottom: 20px;
+            }
+
+            .m-form {
+                .m-button {
+                    width: 100%;
+                    margin: unset;
+                    margin-top: 0.35em;
+                }
+            }
+
+            .bottom-section {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+
+                span {
+                    text-align: center;
+                    margin-top: 15px;
+                    margin-bottom: 18px;
+                }
+
+                .google-sign-in-icon {
+                    padding: 10px;
+                    border-radius: 100%;
+                    background-color: var(--dark-grey_250);
+                    transition: 100ms;
+
+                    &:hover {
+                        background-color: var(--dark-grey_150);
+                    }
+
+                    &:active {
+                        transform: scale(0.9);
+                    }
+                }
+            }
+        }
+
+        &.right-col {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+
+            background-color: var(--primary-color_200);
+
+            svg {
+                font-size: 3.75rem;
+                color: var(--white);
+            }
+
+            h2 {
+                margin: 8px;
+            }
+
+            p {
+                margin-bottom: 15px;
+                font-size: 0.9rem;
+            }
+
+            .m-button {
+                border-radius: 16px;
+                padding: 3px 8px;
+
+                border-color: var(--white) !important;
+                background-color: var(--primary-color_200) !important;
+                color: var(--white) !important;
+
+                &:hover {
+                    background-color: var(--white) !important;
+                    color: var(--primary-color_200) !important;
+                }
+            }
+        }
+    }
+}

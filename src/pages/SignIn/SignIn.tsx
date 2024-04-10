@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
 import { CustomButton, CustomInput } from "@components/index";
 import { PATH_CONSTRANTS } from "@utils/enums";
 
-import "@commonAssets/css/auth-form.css";
+import "../../commonAssets/css/auth-form.scss";
 
 const nameSpace: string = "auth";
 const SignIn = () => {

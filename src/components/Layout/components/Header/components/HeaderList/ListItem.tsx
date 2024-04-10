@@ -1,7 +1,7 @@
 import { Icon } from "@Marcin-Migdal/morti-component-library";
 import { useRef, useState, MouseEvent } from "react";
 
-import { HeaderItems, OpenDirectionType, SubListPosition } from "../interfaces";
+import { HeaderItems, OpenDirectionType, SubListPosition } from "../../interfaces";
 import { HeaderSubList } from "./HeaderSubList";
 
 interface IListItemProps {

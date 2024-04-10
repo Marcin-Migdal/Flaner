@@ -18,10 +18,10 @@ const PageTilesView = () => {
 
     return (
         <div className="page-container page-tile-view">
-            {pagesUrl.map((fullUrl) => {
+            {pagesUrl.map((fullUrl, index) => {
                 const strArr = fullUrl.split("/");
                 return (
-                    <div className="page-tile" onClick={(event) => goTo(fullUrl, event)}>
+                    <div key={index} className="page-tile" onClick={(event) => goTo(fullUrl, event)}>
                         <div className="page-tile-content">{strArr[strArr.length - 1]}</div>
                     </div>
                 );
