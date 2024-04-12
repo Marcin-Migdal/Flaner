@@ -12,14 +12,10 @@ import "./styles.scss";
 export const Header = () => {
     const navigate = useNavigate();
 
-    const goTo = (to: PATH_CONSTRANTS, _event: MouseEvent<HTMLElement>) => {
-        navigate(to);
-    };
-
     return (
         <div className="header">
-            <h2 onClick={(event) => goTo(PATH_CONSTRANTS.HOME, event)}>{process.env.APP_NAME}</h2>
-            <HeaderList goTo={goTo} />
+            <h2 onClick={() => navigate(PATH_CONSTRANTS.HOME)}>{process.env.APP_NAME}</h2>
+            <HeaderList />
         </div>
     );
 };

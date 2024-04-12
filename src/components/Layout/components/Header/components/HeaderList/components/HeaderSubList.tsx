@@ -1,4 +1,4 @@
-import { HeaderItems, SubListPosition } from "../../interfaces";
+import { HeaderItems, SubListPosition } from "../../../interfaces";
 import { ListItem } from "./ListItem";
 
 interface IHeaderSubListProps {

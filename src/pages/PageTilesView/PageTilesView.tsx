@@ -1,31 +1,26 @@
+import { Icon } from "@Marcin-Migdal/morti-component-library";
 import { useNavigate } from "react-router-dom";
-import React, { MouseEvent } from "react";
 
+import { getNodeByPath, NavigationNode } from "@utils/constants";
 import { PATH_CONSTRANTS } from "@utils/enums";
 
-import "./styles.css";
+import "./styles.scss";
 
 const PageTilesView = () => {
     const navigate = useNavigate();
 
-    const pagesUrl: PATH_CONSTRANTS[] = Object.values(PATH_CONSTRANTS).filter(
-        (urls) => urls.startsWith(window.location.pathname) && urls !== window.location.pathname
-    );
-
-    const goTo = (to: PATH_CONSTRANTS, event: MouseEvent<HTMLElement>) => {
-        navigate(to);
-    };
+    const pages: NavigationNode[] = getNodeByPath(window.location.pathname as PATH_CONSTRANTS)[0]?.subItems || [];
 
     return (
         <div className="page-container page-tile-view">
-            {pagesUrl.map((fullUrl, index) => {
-                const strArr = fullUrl.split("/");
-                return (
-                    <div key={index} className="page-tile" onClick={(event) => goTo(fullUrl, event)}>
-                        <div className="page-tile-content">{strArr[strArr.length - 1]}</div>
+            {pages.map(({ text, path, icon }, index) => (
+                <div key={index} className="page-tile" onClick={() => navigate(path)}>
+                    <div className="page-tile-content">
+                        <p>{text}</p>
+                        {icon ? <Icon className={`tile-icon ${icon[1]}`} icon={icon} /> : <div className="tile-icon-placeholder" />}
                     </div>
-                );
-            })}
+                </div>
+            ))}
         </div>
     );
 };
