@@ -2,17 +2,18 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { Suspense, useEffect } from "react";
 
-import { UserType, setAuthUser } from "@slices/authorization-slice";
+import { Header } from "./components/Header/Header";
+import { Loader } from "../Loader";
+
+import { UserType, selectAuthorization, setAuthUser } from "@slices/authorization-slice";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
 import { PATH_CONSTRANTS } from "@utils/enums";
-import { Header } from "./components/Header/Header";
 import { fb } from "@firebase/firebase";
-import { Loader } from "../Loader";
 
 export default function Layout() {
     const navigate = useNavigate();
 
-    const { isLoading, authUser } = useAppSelector((store) => store.authorization);
+    const { isLoading, authUser } = useAppSelector(selectAuthorization);
     const dispatch = useAppDispatch();
 
     useEffect(() => {

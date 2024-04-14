@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import React from "react";
 
+import { selectAuthorization, setAuthError, signInWithEmail, signInWithGoogle } from "@slices/authorization-slice";
 import { ISignInState, signInInitialValues, signInValidationSchema } from "./sign-in-formik-config";
-import { setAuthError, signInWithEmail, signInWithGoogle } from "@slices/authorization-slice";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
 import { CustomButton, CustomInput } from "@components/index";
 import { PATH_CONSTRANTS } from "@utils/enums";
@@ -16,7 +16,7 @@ const SignIn = () => {
     const { t, i18n } = useTranslation([nameSpace]);
     const navigate = useNavigate();
 
-    const { isLoading, authFormErrors: authErrors } = useAppSelector((store) => store.authorization);
+    const { isLoading, authFormErrors: authErrors } = useAppSelector(selectAuthorization);
     const dispatch = useAppDispatch();
 
     const handleSubmit = async (values: ISignInState) => dispatch(signInWithEmail({ ...values, t: t }));

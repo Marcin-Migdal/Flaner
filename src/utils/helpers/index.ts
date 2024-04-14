@@ -1,2 +1,9 @@
 export { getRejectValue, toSerializable } from "./firebase";
-export { getDocumentSnapshotById, setDocumentSnapshot, validateUsername } from "./firestore";
+export {
+    getAllDocuments,
+    getDocumentSnapshotById,
+    setDocumentSnapshot,
+    validateUsername,
+    getCollectionData,
+    getFilteredDocuments,
+} from "./firestore";

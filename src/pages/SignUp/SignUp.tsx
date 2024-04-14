@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import React from "react";
 
+import { setAuthError, signUpWithEmail, signInWithGoogle, selectAuthorization } from "@slices/authorization-slice";
 import { ISignUpState, signUpInitialValues, signUpValidationSchema } from "./sign-up-formik-config";
-import { setAuthError, signUpWithEmail, signInWithGoogle } from "@slices/authorization-slice";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
 import { CustomButton, CustomInput } from "@components/index";
 import { PATH_CONSTRANTS } from "@utils/enums";
@@ -17,7 +17,7 @@ const SignUp = () => {
     const { t } = useTranslation([nameSpace]);
 
     const dispatch = useAppDispatch();
-    const { isLoading, authFormErrors: authErrors } = useAppSelector((store) => store.authorization);
+    const { isLoading, authFormErrors: authErrors } = useAppSelector(selectAuthorization);
 
     const handleSubmit = async (values) => dispatch(signUpWithEmail({ ...values, language: "pl", t: t }));
 
@@ -47,12 +47,12 @@ const SignUp = () => {
                             {({ values, errors, handleBlur, handleChange, isValid }) => (
                                 <>
                                     <CustomInput
-                                        data-cy="userName-input"
+                                        data-cy="username-input"
                                         i18NameSpace={nameSpace}
                                         label="Username"
-                                        name="userName"
-                                        value={values.userName}
-                                        error={errors.userName}
+                                        name="username"
+                                        value={values.username}
+                                        error={errors.username}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                     />

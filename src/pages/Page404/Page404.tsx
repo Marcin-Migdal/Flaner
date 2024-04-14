@@ -2,15 +2,16 @@ import { Button, Icon } from "@Marcin-Migdal/morti-component-library";
 import { useNavigate } from "react-router-dom";
 import React from "react";
 
-import { PATH_CONSTRANTS } from "@utils/enums";
+import { selectAuthorization } from "@slices/authorization-slice";
 import { useAppSelector } from "@hooks/redux-hooks";
+import { PATH_CONSTRANTS } from "@utils/enums";
 import { Loader } from "@components/index";
 
 import "./styles.scss";
 
 const Page404 = () => {
     const navigate = useNavigate();
-    const { authUser } = useAppSelector((store) => store.authorization);
+    const { authUser } = useAppSelector(selectAuthorization);
 
     return (
         <>

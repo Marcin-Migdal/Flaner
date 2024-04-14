@@ -5,7 +5,7 @@ import React, { Suspense } from "react";
 import { Provider } from "react-redux";
 
 // internal imports
-import store from "./store";
+import store from "./app/store";
 import App from "./App";
 
 // css files
