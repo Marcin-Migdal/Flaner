@@ -4,6 +4,7 @@ import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { IAuthUserInitialState, IFirebaseError, UserType } from "./authorization-interfaces";
 import { ISignInState } from "@pages/SignIn/sign-in-formik-config";
 import { ISignUpState } from "@pages/SignUp/sign-up-formik-config";
+import { RootState } from "app/store";
 
 const initialState: IAuthUserInitialState = {
     authUser: null,
@@ -46,5 +47,7 @@ const authorizationSlice = createSlice({
 
 // Action creators are generated for each function in reducers object
 export const { setAuthUser, setIsLoading, setAuthError } = authorizationSlice.actions;
+
+export const selectAuthorization = (store: { authorization: IAuthUserInitialState }) => store.authorization;
 
 export default authorizationSlice.reducer;

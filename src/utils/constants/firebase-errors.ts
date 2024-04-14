@@ -37,7 +37,7 @@ export const authErrors: IErrorObj = {
     "auth/username-already-in-use": {
         message: "Username already in use",
         code: "auth/username-already-in-use",
-        fieldNames: "userName",
+        fieldNames: "username",
     },
     "auth/email-already-in-use": {
         message: "Email already in use",

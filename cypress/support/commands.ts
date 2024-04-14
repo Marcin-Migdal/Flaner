@@ -56,14 +56,14 @@ Cypress.Commands.add("signIn", (selector: string, credentials: { email: string; 
     cy.wait(`@${selector}`).its("response.statusCode").should("eq", 200);
 });
 
-Cypress.Commands.add("signUp", (selector: string, credentials: { userName: string; email: string; password: string }) => {
+Cypress.Commands.add("signUp", (selector: string, credentials: { username: string; email: string; password: string }) => {
     cy.visit("http://localhost:8080");
 
     cy.btnClick("go-to-sign-up-btn");
 
     cy.getBySelector("sign-up-description").should("be.visible").and("contain", "Please sign up to continue");
 
-    cy.getBySelectorAndType("userName-input", credentials.userName);
+    cy.getBySelectorAndType("username-input", credentials.username);
     cy.getBySelectorAndType("email-input", credentials.email);
     cy.getBySelectorAndType("password-input", credentials.password);
     cy.getBySelectorAndType("validate-password-input", credentials.password);
@@ -98,7 +98,7 @@ declare global {
             getBySelectorAndType(selector: string, text: string): Chainable<JQuery<HTMLElement>>;
             btnClick(selector: string): Chainable<JQuery<HTMLElement>>;
             signIn(selector: string, credentials: { email: string; password: string }): Chainable<void>;
-            signUp(selector: string, credentials: { userName: string; email: string; password: string }): Chainable<void>;
+            signUp(selector: string, credentials: { username: string; email: string; password: string }): Chainable<void>;
             signOut(selector?: string): Chainable<void>;
         }
     }

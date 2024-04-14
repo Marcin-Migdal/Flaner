@@ -15,7 +15,7 @@ describe("Auth pages", () => {
 
     it("Can sign up", () => {
         cy.signUp("authRequest", {
-            userName: uuidv4().slice(0, 16),
+            username: uuidv4().slice(0, 16),
             email: uuidv4().slice(0, 16) + "@example.com",
             password: "password123",
         });

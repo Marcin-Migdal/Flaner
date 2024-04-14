@@ -2,21 +2,21 @@ import * as Yup from "yup";
 
 export interface ISignUpState {
     email: string;
-    userName: string;
+    username: string;
     password: string;
     verifyPassword: string;
 }
 
 export const signUpInitialValues: ISignUpState = {
     email: "",
-    userName: "",
+    username: "",
     password: "",
     verifyPassword: "",
 };
 
 export const signUpValidationSchema = Yup.object().shape({
     email: Yup.string().email("Invalid email address").required("Required"),
-    userName: Yup.string()
+    username: Yup.string()
         .required("Required")
         .matches(/^S*/, "no spaces")
         .min(3, "Must be at least 3 characters")

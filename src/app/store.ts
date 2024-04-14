@@ -1,11 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 
 import { authorizationReducer, toastReducer } from "@slices/index";
+import { firestoreApi } from "@services/api";
 
 const store = configureStore({
     reducer: {
         authorization: authorizationReducer,
         toast: toastReducer,
+        [firestoreApi.reducerPath]: firestoreApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
@@ -15,7 +17,7 @@ const store = configureStore({
                 // Ignore these paths in the state
                 ignoredPaths: ["toast.toastHandler"],
             },
-        }),
+        }).concat(firestoreApi.middleware),
 });
 
 export default store;
