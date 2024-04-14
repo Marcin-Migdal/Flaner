@@ -2,15 +2,15 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { Suspense, useEffect } from "react";
 
-import { Header } from "./components/Header/Header";
-import { Loader } from "../Loader";
+import { SpinnerPlaceholder } from "../../placeholders";
 
 import { UserType, selectAuthorization, setAuthUser } from "@slices/authorization-slice";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
 import { PATH_CONSTRANTS } from "@utils/enums";
 import { fb } from "@firebase/firebase";
+import { Header } from "./components/Header/Header";
 
-export default function Layout() {
+export default function MainLayout() {
     const navigate = useNavigate();
 
     const { isLoading, authUser } = useAppSelector(selectAuthorization);
@@ -46,7 +46,7 @@ export default function Layout() {
         <>
             {authUser && <Header />}
             <main style={!authUser ? { height: "100%" } : { height: "calc(100% - var(--header-height))" }}>
-                <Suspense fallback={<Loader />}>
+                <Suspense fallback={<SpinnerPlaceholder />}>
                     <Outlet />
                 </Suspense>
             </main>

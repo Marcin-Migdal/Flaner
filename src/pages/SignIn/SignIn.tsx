@@ -5,8 +5,8 @@ import React from "react";
 
 import { selectAuthorization, setAuthError, signInWithEmail, signInWithGoogle } from "@slices/authorization-slice";
 import { ISignInState, signInInitialValues, signInValidationSchema } from "./sign-in-formik-config";
+import { CustomButton, CustomTextfield, Page } from "@components/index";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
-import { CustomButton, CustomInput } from "@components/index";
 import { PATH_CONSTRANTS } from "@utils/enums";
 
 import "../../commonAssets/css/auth-form.scss";
@@ -31,7 +31,7 @@ const SignIn = () => {
     };
 
     return (
-        <div className="auth-from-container">
+        <Page className="auth-from-container" flex center>
             <Card className="auth-card">
                 <Row>
                     <Col xl={6} className="left-col">
@@ -46,7 +46,7 @@ const SignIn = () => {
                         >
                             {({ values, errors, handleChange, handleBlur, isValid }) => (
                                 <>
-                                    <CustomInput
+                                    <CustomTextfield
                                         data-cy="email-input"
                                         i18NameSpace={nameSpace}
                                         label="Email"
@@ -56,7 +56,7 @@ const SignIn = () => {
                                         value={values.email}
                                         error={errors.email}
                                     />
-                                    <CustomInput
+                                    <CustomTextfield
                                         data-cy="password-input"
                                         i18NameSpace={nameSpace}
                                         label="Password"
@@ -100,7 +100,7 @@ const SignIn = () => {
                     </Col>
                 </Row>
             </Card>
-        </div>
+        </Page>
     );
 };
 

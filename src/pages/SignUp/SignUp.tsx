@@ -5,8 +5,8 @@ import React from "react";
 
 import { setAuthError, signUpWithEmail, signInWithGoogle, selectAuthorization } from "@slices/authorization-slice";
 import { ISignUpState, signUpInitialValues, signUpValidationSchema } from "./sign-up-formik-config";
+import { CustomButton, CustomTextfield, Page } from "@components/index";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
-import { CustomButton, CustomInput } from "@components/index";
 import { PATH_CONSTRANTS } from "@utils/enums";
 
 import "../../commonAssets/css/auth-form.scss";
@@ -31,7 +31,7 @@ const SignUp = () => {
     };
 
     return (
-        <div className="auth-from-container">
+        <Page className="auth-from-container" flex center>
             <Card className="auth-card">
                 <Row>
                     <Col xl={6} className="left-col">
@@ -46,7 +46,7 @@ const SignUp = () => {
                         >
                             {({ values, errors, handleBlur, handleChange, isValid }) => (
                                 <>
-                                    <CustomInput
+                                    <CustomTextfield
                                         data-cy="username-input"
                                         i18NameSpace={nameSpace}
                                         label="Username"
@@ -56,7 +56,7 @@ const SignUp = () => {
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                     />
-                                    <CustomInput
+                                    <CustomTextfield
                                         data-cy="email-input"
                                         i18NameSpace={nameSpace}
                                         label="Email"
@@ -66,7 +66,7 @@ const SignUp = () => {
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                     />
-                                    <CustomInput
+                                    <CustomTextfield
                                         data-cy="password-input"
                                         i18NameSpace={nameSpace}
                                         label="Password"
@@ -77,7 +77,7 @@ const SignUp = () => {
                                         onBlur={handleBlur}
                                         type="password"
                                     />
-                                    <CustomInput
+                                    <CustomTextfield
                                         data-cy="validate-password-input"
                                         i18NameSpace={nameSpace}
                                         label="Verify password"
@@ -121,7 +121,7 @@ const SignUp = () => {
                     </Col>
                 </Row>
             </Card>
-        </div>
+        </Page>
     );
 };
 

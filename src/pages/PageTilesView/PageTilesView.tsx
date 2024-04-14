@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { getNodeByPath, NavigationNode } from "@utils/constants";
 import { PATH_CONSTRANTS } from "@utils/enums";
+import { Page } from "@components/index";
 
 import "./styles.scss";
 
@@ -12,7 +13,7 @@ const PageTilesView = () => {
     const pages: NavigationNode[] = getNodeByPath(window.location.pathname as PATH_CONSTRANTS)[0]?.subItems || [];
 
     return (
-        <div className="page-container page-tile-view">
+        <Page className="page-tile-view">
             {pages.map(({ text, path, icon }, index) => (
                 <div key={index} className="page-tile" onClick={() => navigate(path)}>
                     <div className="page-tile-content">
@@ -21,7 +22,7 @@ const PageTilesView = () => {
                     </div>
                 </div>
             ))}
-        </div>
+        </Page>
     );
 };
 

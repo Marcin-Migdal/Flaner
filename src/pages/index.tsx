@@ -2,7 +2,7 @@ import { Navigate, createBrowserRouter } from "react-router-dom";
 import React from "react";
 
 import { PATH_CONSTRANTS } from "@utils/enums";
-import { Layout } from "@components/index";
+import { MainLayout } from "@components/index";
 
 const HomePage = React.lazy(() => import("./Home"));
 const SignInPage = React.lazy(() => import("./SignIn"));
@@ -46,7 +46,7 @@ const routes = [
 
 const router = createBrowserRouter([
     {
-        element: <Layout />,
+        element: <MainLayout />,
         children: routes,
     },
 ]);

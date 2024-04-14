@@ -1,1 +1,2 @@
-export { CustomTextfield } from "./CustomInput/CustomInput";
+export { CustomTextfield } from "./CustomTextfield/CustomTextfield";
+export { DebounceTextfield } from "./DebounceTextfield/DebounceTextfield";

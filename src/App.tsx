@@ -7,8 +7,6 @@ import { TranslateFunctionType, setToastHandler } from "@slices/index";
 import { useAppDispatch } from "@hooks/redux-hooks";
 import router from "@pages/index";
 
-import "./App.scss";
-
 const translateToastConfig = (toastConfig: ToastConfigType<VariantTypes>, t: TranslateFunctionType): ToastConfigType<VariantTypes> => {
     const _toastConfig = { ...toastConfig };
 
