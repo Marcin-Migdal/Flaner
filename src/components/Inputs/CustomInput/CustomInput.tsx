@@ -2,15 +2,15 @@ import { Input, InputProps } from "@Marcin-Migdal/morti-component-library";
 import { useTranslation } from "react-i18next";
 import React from "react";
 
-type CustomInputPropsType = InputProps & { i18NameSpace?: string };
+export type CustomTextfieldPropsType = InputProps & { i18NameSpace?: string };
 
-export const CustomInput = ({
+export const CustomTextfield = ({
     i18NameSpace,
     label = undefined,
     placeholder = undefined,
     error = undefined,
     ...otherProps
-}: CustomInputPropsType) => {
+}: CustomTextfieldPropsType) => {
     const { t } = useTranslation(i18NameSpace);
 
     return (

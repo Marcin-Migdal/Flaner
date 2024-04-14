@@ -1,1 +1,1 @@
-export { CustomInput } from "./CustomInput/CustomInput";
+export { CustomTextfield } from "./CustomInput/CustomInput";
