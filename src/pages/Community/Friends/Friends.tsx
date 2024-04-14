@@ -1,4 +1,4 @@
-import { Input } from "@Marcin-Migdal/morti-component-library";
+import { DebounceTextfield } from "@components/Inputs/DebounceTextfield/DebounceTextfield";
 
 import { useGetUsersByUsernameQuery } from "@services/users/usersApi";
 import React, { useState } from "react";
@@ -10,7 +10,7 @@ const Friends = () => {
 
     return (
         <div className="page-container centered">
-            <Input name="username" onBlur={(event) => setFilterValue(event.target.value)} />
+            <DebounceTextfield name="username" onDebounce={(event) => setFilterValue(event.target.value)} />
             {query.isFetching ? (
                 <>loading</>
             ) : query.isError ? (
