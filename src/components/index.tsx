@@ -1,6 +1,8 @@
 export * from "./Inputs";
-export * from "./placeholders";
 export * from "./Layout";
+export * from "./display";
+export * from "./placeholders";
 
-export { CustomButton } from "./CustomButton";
+export { Avatar } from "./Avatar";
 export { ContentWrapper } from "./ContentWrapper";
+export { CustomButton } from "./CustomButton";

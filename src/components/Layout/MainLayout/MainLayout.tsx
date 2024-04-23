@@ -4,7 +4,7 @@ import { Suspense, useEffect } from "react";
 
 import { SpinnerPlaceholder } from "../../placeholders";
 
-import { UserType, selectAuthorization, setAuthUser } from "@slices/authorization-slice";
+import { AuthUserType, selectAuthorization, setAuthUser } from "@slices/authorization-slice";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
 import { PATH_CONSTRANTS } from "@utils/enums";
 import { fb } from "@firebase/firebase";
@@ -19,7 +19,7 @@ export default function MainLayout() {
     useEffect(() => {
         const unSubscribe = onAuthStateChanged(fb.auth.auth, (user) => {
             //Serializing user object before sending it to the reducer
-            const serializedUser: UserType = JSON.parse(JSON.stringify(user));
+            const serializedUser: AuthUserType = JSON.parse(JSON.stringify(user));
             dispatch(setAuthUser(serializedUser));
         });
 

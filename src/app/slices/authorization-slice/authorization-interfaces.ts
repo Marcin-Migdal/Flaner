@@ -20,7 +20,7 @@ interface StsTokenManager {
 }
 
 //* Firebase user object, that is serializable
-export interface IUser {
+export interface IAuthUser {
     uid: string;
     email: string;
     emailVerified: boolean;
@@ -36,11 +36,11 @@ export interface IUser {
 }
 
 //* Authorization user type
-export type UserType = IUser | null;
+export type AuthUserType = IAuthUser | null;
 
 //! Slice init state
 export interface IAuthUserInitialState {
-    authUser: UserType;
+    authUser: AuthUserType;
     isLoading: boolean;
     authFormErrors: FormErrorsType<ISignInState | ISignUpState>;
 }

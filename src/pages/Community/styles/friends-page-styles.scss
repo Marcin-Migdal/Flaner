@@ -1,0 +1,127 @@
+.friends-page {
+    .m-input-container {
+        width: 250px;
+
+        .m-input {
+            width: 100% !important;
+            height: 40px !important;
+            margin: unset !important;
+        }
+    }
+
+    .row {
+        display: flex;
+        gap: 1.25rem;
+
+        width: 90%;
+        height: calc(100% - 9rem);
+
+        .users-col {
+            height: 100%;
+            padding: 0.5rem;
+            padding-right: unset;
+            border-radius: var(--border-radius);
+
+            background-color: var(--dark-grey_350);
+            box-shadow: 0 0 6px 3px var(--primary-color_200);
+        }
+
+        .friend-request-col {
+            height: 100%;
+            padding: 0.5rem;
+            padding-right: unset;
+            border-radius: var(--border-radius);
+
+            background-color: var(--dark-grey_350);
+            box-shadow: 0 0 5px 3px var(--primary-color_200);
+        }
+    }
+}
+
+@media (min-width: 650px) {
+    .friends-page {
+        .row {
+            width: 65%;
+        }
+    }
+}
+
+@media (max-width: 950px) {
+    .friends-page {
+        .row {
+            flex-direction: column-reverse;
+
+            .users-col {
+                height: calc(72.5% - 1rem);
+            }
+
+            .friend-request-col {
+                height: 27.5%;
+            }
+        }
+    }
+}
+
+@media (min-width: 950px) {
+    .friends-page {
+        .row {
+            width: 90%;
+
+            .users-col {
+                flex: 7;
+            }
+
+            .friend-request-col {
+                flex: 2.5;
+            }
+        }
+    }
+}
+
+@media (min-width: 1650px) {
+    .friends-page {
+        .row {
+            width: 80%;
+
+            .users-col {
+                flex: 7;
+            }
+
+            .friend-request-col {
+                flex: 2.5;
+            }
+        }
+    }
+}
+
+@media (min-width: 1921px) {
+    .friends-page {
+        .row {
+            width: 77.5%;
+
+            .users-col {
+                flex: 7;
+            }
+
+            .friend-request-col {
+                flex: 2;
+            }
+        }
+    }
+}
+
+@media (min-width: 2561px) {
+    .search-friends-page {
+        .row {
+            width: 70%;
+
+            .users-col {
+                flex: 7;
+            }
+
+            .friend-request-col {
+                flex: 1.75;
+            }
+        }
+    }
+}

@@ -1,7 +1,6 @@
 import { getFilteredDocuments, getCollectionData } from "@utils/helpers";
 import { selectAuthorization } from "@slices/authorization-slice";
 import { COLLECTIONS } from "@utils/enums";
-
 import { firestoreApi } from "../api";
 
 export type UserType = {
@@ -13,7 +12,7 @@ export type UserType = {
     email: string;
 };
 
-export const currentJobDetailsApi = firestoreApi.injectEndpoints({
+export const usersApi = firestoreApi.injectEndpoints({
     endpoints: (build) => ({
         getUsersByUsername: build.query<UserType[], string>({
             async queryFn(username, api) {
@@ -28,7 +27,7 @@ export const currentJobDetailsApi = firestoreApi.injectEndpoints({
 
                 const users = getCollectionData<UserType>(snap);
 
-                if (auth.authUser) return { data: users.filter((user) => user.uid !== auth.authUser?.uid) };
+                if (auth.authUser) return { data: users };
                 return { data: users };
             },
             providesTags: ["Users"],
@@ -36,4 +35,4 @@ export const currentJobDetailsApi = firestoreApi.injectEndpoints({
     }),
 });
 
-export const { useGetUsersByUsernameQuery } = currentJobDetailsApi;
+export const { useGetUsersByUsernameQuery } = usersApi;

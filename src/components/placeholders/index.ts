@@ -1,3 +1,3 @@
-export { SpinnerPlaceholder } from "./SpinnerPlaceholder/SpinnerPlaceholder";
-export { NoDataPlaceholder } from "./NoDataPlaceholder/NoDataPlaceholder";
-export { ErrorPlaceholder } from "./ErrorPlaceholder/ErrorPlaceholder";
+export * from "./SpinnerPlaceholder/SpinnerPlaceholder";
+export * from "./NoDataPlaceholder/NoDataPlaceholder";
+export * from "./ErrorPlaceholder/ErrorPlaceholder";

@@ -1,7 +1,7 @@
 import { FormErrorsType } from "@Marcin-Migdal/morti-component-library";
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
-import { IAuthUserInitialState, IFirebaseError, UserType } from "./authorization-interfaces";
+import { IAuthUserInitialState, IFirebaseError, AuthUserType } from "./authorization-interfaces";
 import { ISignInState } from "@pages/SignIn/sign-in-formik-config";
 import { ISignUpState } from "@pages/SignUp/sign-up-formik-config";
 import { RootState } from "app/store";
@@ -16,7 +16,7 @@ const authorizationSlice = createSlice({
     name: "authorization",
     initialState: initialState,
     reducers: {
-        setAuthUser: (state, action: PayloadAction<UserType>) => {
+        setAuthUser: (state, action: PayloadAction<AuthUserType>) => {
             state.authUser = action.payload;
             state.isLoading = false;
         },

@@ -8,6 +8,18 @@
     padding: 2rem;
 
     overflow: auto;
+
+    h3 {
+        text-align: center;
+    }
+
+    &.no-data {
+        display: flex;
+        flex-direction: column;
+
+        background-color: var(--dark-grey_350);
+        color: var(--white);
+    }
 }
 
 .unselectable {
@@ -21,7 +33,7 @@
 
 *::-webkit-scrollbar {
     width: 8px;
-    height: 12px;
+    height: 8px;
 }
 
 *::-webkit-scrollbar-track {

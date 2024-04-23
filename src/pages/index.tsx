@@ -9,7 +9,8 @@ const SignInPage = React.lazy(() => import("./SignIn"));
 const SignUpPage = React.lazy(() => import("./SignUp"));
 
 const CommunityPage = React.lazy(() => import("./PageTilesView"));
-const FriendsPage = React.lazy(() => import("./Community/Friends"));
+const SearchFriendsPage = React.lazy(() => import("./Community/SearchFriends"));
+const MyFriendsPage = React.lazy(() => import("./Community/MyFriends"));
 const GroupsPage = React.lazy(() => import("./Community/Groups"));
 
 const PlanningPage = React.lazy(() => import("./PageTilesView"));
@@ -27,7 +28,8 @@ const routes = [
 
     //! Community
     { path: PATH_CONSTRANTS.COMMUNITY, element: <CommunityPage /> },
-    { path: PATH_CONSTRANTS.FRIENDS, element: <FriendsPage /> },
+    { path: PATH_CONSTRANTS.SEARCH_FRIENDS, element: <SearchFriendsPage /> },
+    { path: PATH_CONSTRANTS.MY_FRIENDS, element: <MyFriendsPage /> },
     { path: PATH_CONSTRANTS.GROUPS, element: <GroupsPage /> },
 
     //! Products

@@ -1,5 +1,6 @@
 import { ReactElement } from "react";
 
+import { SpinnerPlaceholderProps, ErrorPlaceholderProps, NoDataPlaceholderProps } from "@components/index";
 import { ErrorPlaceholder, NoDataPlaceholder, SpinnerPlaceholder } from "../placeholders";
 import { UseQueryResult } from "./types";
 
@@ -10,11 +11,44 @@ type ChildrenObject<T> = {
 type ContentWrapper<T> = {
     query: UseQueryResult<T>;
     children: (childrenObject: ChildrenObject<T>) => ReactElement;
+    placeholders?: Partial<Placeholders>;
+    placeholdersConfig?: PlaceholdersConfig;
 };
 
-export const ContentWrapper = <T,>({ query, children }: ContentWrapper<T>) => {
-    if (query.isFetching) return <SpinnerPlaceholder />;
-    if (query.isError) return <ErrorPlaceholder />;
+type PlaceholdersConfig = {
+    spinner?: SpinnerPlaceholderProps;
+    error?: ErrorPlaceholderProps;
+    noData?: NoDataPlaceholderProps;
+    common?: SpinnerPlaceholderProps & ErrorPlaceholderProps & NoDataPlaceholderProps;
+};
+
+type Placeholders = {
+    spinner: ReactElement;
+    error: ReactElement;
+    noData: ReactElement;
+};
+
+export const ContentWrapper = <T,>({ query, children, placeholders: customPlaceholders, placeholdersConfig }: ContentWrapper<T>) => {
+    const placeholders: Placeholders = {
+        spinner: customPlaceholders?.spinner ? (
+            customPlaceholders.spinner
+        ) : (
+            <SpinnerPlaceholder {...placeholdersConfig?.common} {...placeholdersConfig?.spinner} />
+        ),
+        error: customPlaceholders?.error ? (
+            customPlaceholders.error
+        ) : (
+            <ErrorPlaceholder {...placeholdersConfig?.common} {...placeholdersConfig?.error} />
+        ),
+        noData: customPlaceholders?.noData ? (
+            customPlaceholders.noData
+        ) : (
+            <NoDataPlaceholder {...placeholdersConfig?.common} {...placeholdersConfig?.noData} />
+        ),
+    };
+
+    if (query.isFetching) return placeholders.spinner;
+    if (query.isError) return placeholders.error;
     if (query.isSuccess) return children({ data: query.data as T });
-    return <NoDataPlaceholder />;
+    return placeholders.noData;
 };

@@ -10,12 +10,12 @@ import { fb } from "@firebase/firebase";
 import * as AI from "./authorization-interfaces";
 
 // Sign in user using email and password
-export const signInWithEmail = createAsyncThunk<AI.IUser, unknown, { rejectValue: AI.IFirebaseError<ISignInState> }>(
+export const signInWithEmail = createAsyncThunk<AI.IAuthUser, unknown, { rejectValue: AI.IFirebaseError<ISignInState> }>(
     "authorization/async/signInWithEmail",
     async ({ email, password, t }: AI.EmailSignInPayload, { rejectWithValue }) => {
         try {
             const { user } = await signInWithEmailAndPassword(fb.auth.auth, email, password);
-            return toSerializable<AI.IUser>(user);
+            return toSerializable<AI.IAuthUser>(user);
         } catch (error) {
             return rejectWithValue(getRejectValue(error.code, t));
         }
@@ -23,7 +23,7 @@ export const signInWithEmail = createAsyncThunk<AI.IUser, unknown, { rejectValue
 );
 
 //Sign up user using email and password
-export const signUpWithEmail = createAsyncThunk<AI.IUser, unknown, { rejectValue: AI.IFirebaseError<ISignUpState> }>(
+export const signUpWithEmail = createAsyncThunk<AI.IAuthUser, unknown, { rejectValue: AI.IFirebaseError<ISignUpState> }>(
     "authorization/async/signUpWithEmail",
     async ({ email, password, username, language, t }: AI.EmailSignUpPayload, { rejectWithValue }) => {
         try {
@@ -37,7 +37,7 @@ export const signUpWithEmail = createAsyncThunk<AI.IUser, unknown, { rejectValue
             const documentPayload = { uid: user.uid, username, email, avatarUrl: "", darkMode: false, language };
             await setDocumentSnapshot(COLLECTIONS.USERS, user.uid, documentPayload);
 
-            return toSerializable<AI.IUser>(user);
+            return toSerializable<AI.IAuthUser>(user);
         } catch (error) {
             return rejectWithValue(getRejectValue(error.code, t));
         }
@@ -45,7 +45,7 @@ export const signUpWithEmail = createAsyncThunk<AI.IUser, unknown, { rejectValue
 );
 
 // Sign in user using google account
-export const signInWithGoogle = createAsyncThunk<AI.IUser, unknown, { rejectValue: AI.IFirebaseError }>(
+export const signInWithGoogle = createAsyncThunk<AI.IAuthUser, unknown, { rejectValue: AI.IFirebaseError }>(
     "authorization/async/signInWithGoogle",
     async ({ language, t }: AI.GoogleSignInPayload, { rejectWithValue }) => {
         try {
@@ -63,7 +63,7 @@ export const signInWithGoogle = createAsyncThunk<AI.IUser, unknown, { rejectValu
                 await setDocumentSnapshot(COLLECTIONS.USERS, uid, documentPayload);
             }
 
-            return toSerializable<AI.IUser>(user);
+            return toSerializable<AI.IAuthUser>(user);
         } catch (error) {
             return rejectWithValue(getRejectValue(error.code, t));
         }
