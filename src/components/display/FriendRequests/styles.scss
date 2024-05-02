@@ -35,10 +35,10 @@
 
             .confirm-icon,
             .decline-icon {
-                width: 30px;
-                height: 30px;
-                background-color: var(--white);
+                width: 34px;
+                height: 34px;
                 border-radius: 100%;
+                color: var(--white);
 
                 transition: 0.2s;
 
@@ -49,11 +49,18 @@
 
             .confirm-icon {
                 margin-right: 0.5rem;
-                color: var(--success-color);
+
+                &:hover {
+                    color: var(--success-light-color);
+                    background-color: var(--white);
+                }
             }
 
             .decline-icon {
-                color: var(--failure-color);
+                &:hover {
+                    color: var(--failure-light-color);
+                    background-color: var(--white);
+                }
             }
         }
     }

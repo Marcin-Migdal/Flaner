@@ -1,20 +1,15 @@
 import { ToastConfigType, ToastHandler, ToastsContainer, VariantTypes, defaultToastConfig } from "@Marcin-Migdal/morti-component-library";
-import { RouterProvider } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { RouterProvider } from "react-router-dom";
 
-import { TranslateFunctionType, setToastHandler } from "@slices/index";
 import { useAppDispatch } from "@hooks/redux-hooks";
 import router from "@pages/index";
+import { TranslateFunctionType, setToastHandler } from "@slices/index";
+
+// TODO! mobile view for header list
 
 // TODO! Lib fixes/changes
-//* - When input does not have the label, but has placeholder, labelType should not be "floating", also when labelType changes to "left", labelWidth should be set to 0 and input width to 100%
-//* - Make input size prop small/big
-//* - change css logic in Col component from % to flex: 1/2/3/4/5/6/7/8/9/10/11/12, because css property gab does not work
-//* - why button variant full has black text color???
-//* - add highlight version of colors variables for success filure etc.
-//? - publish those changes, then apply them in this project
-
 //* - ... css variables refactor
 //* - move the dropdown component used in header to lib
 //* - adding different colors like purple to the themes, adding the possibility of modifying the theme colors from outside the library

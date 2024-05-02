@@ -2,13 +2,17 @@
     .auth-card {
         padding: unset;
         background-color: rgb(71, 71, 71) !important;
+        width: 640px;
     }
 
     .m-grid-col {
-        width: 320px !important;
         padding: 40px 30px;
 
         &.left-col {
+            &.col-flex-md-1 {
+                padding-bottom: 20px;
+            }
+
             p,
             span {
                 font-size: 0.9rem;
@@ -62,6 +66,10 @@
             align-items: center;
 
             background-color: var(--primary-color_200);
+
+            &.col-flex-md-1 {
+                min-height: 380px;
+            }
 
             svg {
                 font-size: 3.75rem;

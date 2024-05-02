@@ -1,12 +1,12 @@
-import { NavigateFunction, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { NavigateFunction, useNavigate } from "react-router-dom";
 
-import { ListItem } from "./components/ListItem";
 import { HeaderItems } from "../../interfaces";
+import { ListItem } from "./components/ListItem";
 
-import { NavigationNode, navigationTree } from "@utils/constants";
-import { signOut } from "@slices/authorization-slice";
 import { useAppDispatch } from "@hooks/index";
+import { signOut } from "@slices/authorization-slice";
+import { NavigationNode, navigationTree } from "@utils/constants";
 
 import "./styles.scss";
 
@@ -17,8 +17,8 @@ const mapNavigationTree = (t: (string: string) => string, navigate: NavigateFunc
 };
 
 export const HeaderList = () => {
-    const navigate = useNavigate();
     const { t } = useTranslation(["header"]);
+    const navigate = useNavigate();
     const dispatch = useAppDispatch();
 
     const handleSignOut = () => dispatch(signOut({ t: t }));

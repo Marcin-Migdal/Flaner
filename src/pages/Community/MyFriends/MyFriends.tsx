@@ -1,3 +1,4 @@
+import { Col, Row } from "@Marcin-Migdal/morti-component-library";
 import { useState } from "react";
 
 import { ContentWrapper, DebounceTextfield, FriendRequests, Page, UserTiles } from "@components/index";
@@ -18,9 +19,10 @@ const MyFriends = () => {
                 onDebounce={(event) => setFilterValue(event.target.value)}
                 placeholder="Search friends"
                 labelType="left"
+                size="large"
             />
-            <div className="row">
-                <div className="users-col">
+            <Row>
+                <Col smFlex={1} mdFlex={7}>
                     <ContentWrapper query={query} placeholdersConfig={{ noData: { message: "Search for users" } }}>
                         {({ data }) => (
                             <UserTiles
@@ -28,8 +30,8 @@ const MyFriends = () => {
                             />
                         )}
                     </ContentWrapper>
-                </div>
-                <div className="friend-request-col">
+                </Col>
+                <Col smFlex={1} mdFlex={2}>
                     <ContentWrapper query={query} placeholdersConfig={{ noData: { message: "No friend requests" } }}>
                         {({ data }) => (
                             <FriendRequests
@@ -49,8 +51,8 @@ const MyFriends = () => {
                             />
                         )}
                     </ContentWrapper>
-                </div>
-            </div>
+                </Col>
+            </Row>
         </Page>
     );
 };

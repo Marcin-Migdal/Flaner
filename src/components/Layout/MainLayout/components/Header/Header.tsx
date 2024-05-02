@@ -5,7 +5,6 @@ import { HeaderList } from "./components/HeaderList";
 
 import "./styles.scss";
 
-// TODO! mobile view for header list
 export const Header = () => {
     const navigate = useNavigate();
 
