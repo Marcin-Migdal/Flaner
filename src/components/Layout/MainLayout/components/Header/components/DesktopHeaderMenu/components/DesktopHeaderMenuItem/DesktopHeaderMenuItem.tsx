@@ -1,16 +1,18 @@
 import { Icon } from "@Marcin-Migdal/morti-component-library";
-import { useRef, useState, MouseEvent } from "react";
+import { MouseEvent, useRef, useState } from "react";
 
-import { HeaderItems, OpenDirectionType, SubListPosition } from "../../../interfaces";
-import { HeaderSubList } from "./HeaderSubList";
+import { HeaderItem, OpenDirectionType, SubListPosition } from "../../../../interfaces";
+import { DesktopHeaderSubMenu } from "../DesktopHeaderSubMenu/DesktopHeaderSubMenu";
+
+import "./styles.scss";
 
 interface IListItemProps {
-    listItem: HeaderItems;
+    listItem: HeaderItem;
     depth: number;
     openDirection?: OpenDirectionType;
 }
 
-export const ListItem = ({ listItem, depth, openDirection = "right" }: IListItemProps) => {
+export const DesktopHeaderMenuItem = ({ listItem, depth, openDirection = "right" }: IListItemProps) => {
     const itemRef = useRef<HTMLLIElement>(null);
 
     const [subListPosition, setSubListPosition] = useState<SubListPosition | undefined>(undefined);
@@ -76,7 +78,7 @@ export const ListItem = ({ listItem, depth, openDirection = "right" }: IListItem
                     {depth !== 0 && hasActiveSubItems && <Icon className={`icon arrow-indicator`} icon={["fas", "chevron-right"]} />}
                 </div>
                 {subListPosition && hasActiveSubItems && (
-                    <HeaderSubList listItems={subItems} subListPosition={subListPosition} depth={depth} />
+                    <DesktopHeaderSubMenu listItems={subItems} subListPosition={subListPosition} depth={depth} />
                 )}
             </li>
         </>

@@ -10,7 +10,6 @@ import { TranslateFunctionType, setToastHandler } from "@slices/index";
 // TODO! mobile view for header list
 
 // TODO! Lib fixes/changes
-//* - ... css variables refactor
 //* - move the dropdown component used in header to lib
 //* - adding different colors like purple to the themes, adding the possibility of modifying the theme colors from outside the library
 

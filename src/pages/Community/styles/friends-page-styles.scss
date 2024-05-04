@@ -35,11 +35,11 @@
             flex-direction: column-reverse;
 
             .m-grid-col:first-of-type {
-                height: calc(72.5% - 1rem);
+                max-height: calc(72.5% - 1rem);
             }
 
             .m-grid-col:last-of-type {
-                height: 27.5%;
+                max-height: 27.5%;
             }
         }
     }

@@ -1,0 +1,129 @@
+.open-menu-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    transition: 0.15s;
+
+    svg {
+        height: 50%;
+        margin: unset;
+        color: var(--white);
+    }
+
+    &:hover {
+        background-color: var(--primary-color_600);
+    }
+}
+
+.mobile-menu {
+    --mobile-menu-height: calc(100% - var(--header-height));
+
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+
+    height: var(--mobile-menu-height);
+    width: 100vw;
+    background-color: var(--dark-grey_350);
+
+    transition: 0.25s;
+    overflow-y: auto;
+
+    &.closing,
+    &.mounted {
+        top: calc(var(--mobile-menu-height) * -1);
+    }
+
+    &.opened {
+        top: var(--header-height);
+    }
+
+    .mobile-menu-list,
+    .mobile-submenu-list {
+        list-style: none;
+        padding: unset;
+
+        .mobile-menu-item {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+
+            &:not(:last-of-type) {
+                margin-bottom: 1rem;
+            }
+
+            .mobile-menu-item-content {
+                display: flex;
+                align-items: center;
+
+                padding: 0.5rem 1rem;
+
+                border-left: 4px solid transparent;
+
+                h2 {
+                    color: var(--input-text-color);
+                }
+
+                &.has-sub-items {
+                    border-left-color: var(--input-text-color);
+                }
+
+                &.sub-menu-opened {
+                    border-left-color: var(--primary-color_300);
+                }
+            }
+        }
+    }
+
+    .mobile-menu-list {
+        padding-top: 35%;
+        padding-left: 32.5%;
+
+        .mobile-menu-item {
+            .mobile-menu-item-content {
+                .icon {
+                    padding-right: 1rem;
+                    width: 34px;
+                    height: 34px;
+                }
+            }
+        }
+    }
+
+    .mobile-submenu-list {
+        position: absolute;
+        left: 0;
+        top: 100%;
+
+        margin: unset;
+
+        background-color: var(--dark-grey_350);
+        border-left: 4px solid transparent;
+
+        z-index: 3;
+
+        opacity: 0;
+        transform: translateY(-50px);
+        transition: 0.3s ease-in-out;
+
+        &.opened {
+            opacity: 1;
+            transform: translateY(0);
+
+            border-left: 4px solid var(--primary-color_300);
+        }
+
+        .mobile-menu-item {
+            .mobile-menu-item-content {
+                .icon {
+                    padding-right: 1rem;
+                    width: 26px;
+                    height: 26px;
+                }
+            }
+        }
+    }
+}

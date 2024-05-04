@@ -1,0 +1,26 @@
+.header-list {
+    display: flex;
+    list-style: none;
+
+    height: 100%;
+    margin: unset;
+    padding: unset;
+}
+
+.header-list .list-item,
+.header-sub-list .list-item {
+    position: relative;
+
+    .icon {
+        width: 23px;
+        height: 23px;
+        padding: 0 0.5rem 0 0;
+
+        &.arrow-indicator {
+            width: 12px;
+            height: 12px;
+            margin-left: auto;
+            padding: unset;
+        }
+    }
+}

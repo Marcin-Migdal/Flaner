@@ -1,7 +1,7 @@
-import { InputProps, Textfield } from "@Marcin-Migdal/morti-component-library";
+import { Textfield, TextfieldProps } from "@Marcin-Migdal/morti-component-library";
 import { useTranslation } from "react-i18next";
 
-export type CustomTextfieldPropsType = InputProps & { i18NameSpace?: string };
+export type CustomTextfieldPropsType = TextfieldProps & { i18NameSpace?: string };
 
 export const CustomTextfield = ({
     i18NameSpace,
