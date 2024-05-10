@@ -1,22 +1,22 @@
 import {
-    getDoc,
-    doc,
-    collection,
-    getDocs,
-    query,
-    where,
-    setDoc,
     DocumentData,
     DocumentSnapshot,
+    QueryFieldFilterConstraint,
     QuerySnapshot,
     WhereFilterOp,
-    QueryFieldFilterConstraint,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    query,
+    setDoc,
+    where,
 } from "firebase/firestore";
 
-import { CustomFirebaseError } from "../error-classes";
-import { IError, authErrors } from "../constants";
 import { fb } from "@firebase/firebase";
+import { IError, authErrors } from "../constants";
 import { COLLECTIONS } from "../enums";
+import { CustomFirebaseError } from "../error-classes";
 
 export const getAllDocuments = async (collectionName: COLLECTIONS): Promise<QuerySnapshot<DocumentData, DocumentData>> => {
     try {
@@ -73,7 +73,7 @@ export const getFilteredDocuments = async (
     }
 };
 
-export const setDocumentSnapshot = async (collectionName: COLLECTIONS, documentId: string, payload) => {
+export const setDocumentSnapshot = async (collectionName: COLLECTIONS, documentId: string, payload: any) => {
     try {
         await setDoc(doc(fb.firestore, collectionName, documentId), payload);
     } catch (e) {

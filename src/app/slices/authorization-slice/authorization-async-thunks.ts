@@ -1,11 +1,11 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut, signInWithPopup } from "firebase/auth";
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import { createUserWithEmailAndPassword, signOut as firebaseSignOut, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 
-import { getRejectValue, toSerializable, getDocumentSnapshotById, setDocumentSnapshot, validateUsername } from "@utils/helpers";
+import { fb } from "@firebase/firebase";
 import { ISignInState } from "@pages/SignIn/sign-in-formik-config";
 import { ISignUpState } from "@pages/SignUp/sign-up-formik-config";
 import { COLLECTIONS } from "@utils/enums";
-import { fb } from "@firebase/firebase";
+import { getDocumentSnapshotById, getRejectValue, setDocumentSnapshot, toSerializable, validateUsername } from "@utils/helpers";
 
 import * as AI from "./authorization-interfaces";
 
