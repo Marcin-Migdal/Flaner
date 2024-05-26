@@ -1,13 +1,17 @@
 import { ToastConfigType, ToastHandler, ToastsContainer, VariantTypes, defaultToastConfig } from "@Marcin-Migdal/morti-component-library";
-import { RouterProvider } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { RouterProvider } from "react-router-dom";
 
-import { TranslateFunctionType, setToastHandler } from "@slices/index";
 import { useAppDispatch } from "@hooks/redux-hooks";
 import router from "@pages/index";
+import { TranslateFunctionType, setToastHandler } from "@slices/index";
 
-import "./App.scss";
+// TODO! Finish mobile view for header list
+
+// TODO! Lib fixes/changes
+//* - move the dropdown component used in header to lib
+//* - adding different colors like purple to the themes, adding the possibility of modifying the theme colors from outside the library
 
 const translateToastConfig = (toastConfig: ToastConfigType<VariantTypes>, t: TranslateFunctionType): ToastConfigType<VariantTypes> => {
     const _toastConfig = { ...toastConfig };

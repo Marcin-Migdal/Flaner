@@ -1,0 +1,25 @@
+.avatar-container {
+    --avatar-size: 50px;
+
+    display: flex;
+    justify-content: center;
+
+    height: var(--avatar-size);
+    width: var(--avatar-size);
+
+    border-radius: 100%;
+
+    background-color: var(--white);
+
+    svg {
+        height: 60%;
+        color: var(--primary-color_300);
+        margin-top: 15%;
+    }
+
+    img {
+        height: inherit;
+        width: inherit;
+        border-radius: inherit;
+    }
+}

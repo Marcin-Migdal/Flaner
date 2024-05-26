@@ -1,6 +1,6 @@
 const ToDo = () => {
     return (
-        <div className="page-container centered">
+        <div>
             <p>ToDo</p>
         </div>
     );

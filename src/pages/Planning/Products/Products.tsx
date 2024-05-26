@@ -1,6 +1,6 @@
 const Products = () => {
     return (
-        <div className="page-container centered">
+        <div>
             <p>Products</p>
         </div>
     );

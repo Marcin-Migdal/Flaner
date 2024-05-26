@@ -2,7 +2,7 @@ import React from "react";
 
 const Groups = () => {
     return (
-        <div className="page-container centered">
+        <div>
             <p>Groups</p>
         </div>
     );

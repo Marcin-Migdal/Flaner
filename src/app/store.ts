@@ -1,7 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
 
-import { authorizationReducer, toastReducer } from "@slices/index";
 import { firestoreApi } from "@services/api";
+import { authorizationReducer, toastReducer } from "@slices/index";
+import { errorIntersectMiddleware } from "./middleware/errorToasterMiddleware";
 
 const store = configureStore({
     reducer: {
@@ -17,7 +18,9 @@ const store = configureStore({
                 // Ignore these paths in the state
                 ignoredPaths: ["toast.toastHandler"],
             },
-        }).concat(firestoreApi.middleware),
+        })
+            .concat(firestoreApi.middleware)
+            .concat(firestoreApi.middleware, errorIntersectMiddleware),
 });
 
 export default store;

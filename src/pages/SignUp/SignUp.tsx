@@ -1,13 +1,12 @@
 import { Card, Col, Form, Icon, Row } from "@Marcin-Migdal/morti-component-library";
-import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import React from "react";
+import { useNavigate } from "react-router-dom";
 
-import { setAuthError, signUpWithEmail, signInWithGoogle, selectAuthorization } from "@slices/authorization-slice";
-import { ISignUpState, signUpInitialValues, signUpValidationSchema } from "./sign-up-formik-config";
+import { CustomButton, CustomTextfield, Page } from "@components/index";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
-import { CustomButton, CustomInput } from "@components/index";
+import { selectAuthorization, setAuthError, signInWithGoogle, signUpWithEmail } from "@slices/authorization-slice";
 import { PATH_CONSTRANTS } from "@utils/enums";
+import { ISignUpState, signUpInitialValues, signUpValidationSchema } from "./sign-up-formik-config";
 
 import "../../commonAssets/css/auth-form.scss";
 
@@ -31,10 +30,10 @@ const SignUp = () => {
     };
 
     return (
-        <div className="auth-from-container">
+        <Page className="auth-from-container" flex center>
             <Card className="auth-card">
                 <Row>
-                    <Col xl={6} className="left-col">
+                    <Col sm={12} mdFlex={1} className="left-col">
                         <h2>{t("_Hello")}!</h2>
                         <p data-cy="sign-up-description">{t("Please sign up to continue")}</p>
                         <Form<ISignUpState>
@@ -46,7 +45,7 @@ const SignUp = () => {
                         >
                             {({ values, errors, handleBlur, handleChange, isValid }) => (
                                 <>
-                                    <CustomInput
+                                    <CustomTextfield
                                         data-cy="username-input"
                                         i18NameSpace={nameSpace}
                                         label="Username"
@@ -55,8 +54,9 @@ const SignUp = () => {
                                         error={errors.username}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
+                                        labelType="floating"
                                     />
-                                    <CustomInput
+                                    <CustomTextfield
                                         data-cy="email-input"
                                         i18NameSpace={nameSpace}
                                         label="Email"
@@ -65,8 +65,9 @@ const SignUp = () => {
                                         error={errors.email}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
+                                        labelType="floating"
                                     />
-                                    <CustomInput
+                                    <CustomTextfield
                                         data-cy="password-input"
                                         i18NameSpace={nameSpace}
                                         label="Password"
@@ -75,9 +76,10 @@ const SignUp = () => {
                                         error={errors.password}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
+                                        labelType="floating"
                                         type="password"
                                     />
-                                    <CustomInput
+                                    <CustomTextfield
                                         data-cy="validate-password-input"
                                         i18NameSpace={nameSpace}
                                         label="Verify password"
@@ -86,6 +88,7 @@ const SignUp = () => {
                                         error={errors.verifyPassword}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
+                                        labelType="floating"
                                         type="password"
                                     />
                                     <CustomButton
@@ -107,7 +110,7 @@ const SignUp = () => {
                             <Icon className="google-sign-in-icon" icon={["fab", "google"]} onClick={onGoogleSignIn} />
                         </div>
                     </Col>
-                    <Col xl={6} className="right-col">
+                    <Col sm={12} mdFlex={1} className="right-col">
                         <Icon icon={["fas", "rectangle-list"]} />
                         <h2>{process.env.APP_NAME}</h2>
                         <p>{t("Already have any account?")}</p>
@@ -121,7 +124,7 @@ const SignUp = () => {
                     </Col>
                 </Row>
             </Card>
-        </div>
+        </Page>
     );
 };
 

@@ -1,21 +1,28 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut, signInWithPopup } from "firebase/auth";
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import {
+    createUserWithEmailAndPassword,
+    signOut as firebaseSignOut,
+    signInWithEmailAndPassword,
+    signInWithPopup,
+    updateProfile,
+} from "firebase/auth";
 
-import { getRejectValue, toSerializable, getDocumentSnapshotById, setDocumentSnapshot, validateUsername } from "@utils/helpers";
+import { fb } from "@firebase/firebase";
 import { ISignInState } from "@pages/SignIn/sign-in-formik-config";
 import { ISignUpState } from "@pages/SignUp/sign-up-formik-config";
 import { COLLECTIONS } from "@utils/enums";
-import { fb } from "@firebase/firebase";
+import { addCollectionDocument, getCollectionDocumentById, getRejectValue, toSerializable, validateUsername } from "@utils/helpers";
 
+import { UserType } from "@services/users";
 import * as AI from "./authorization-interfaces";
 
 // Sign in user using email and password
-export const signInWithEmail = createAsyncThunk<AI.IUser, unknown, { rejectValue: AI.IFirebaseError<ISignInState> }>(
+export const signInWithEmail = createAsyncThunk<AI.ISerializedAuthUser, unknown, { rejectValue: AI.IFirebaseError<ISignInState> }>(
     "authorization/async/signInWithEmail",
     async ({ email, password, t }: AI.EmailSignInPayload, { rejectWithValue }) => {
         try {
             const { user } = await signInWithEmailAndPassword(fb.auth.auth, email, password);
-            return toSerializable<AI.IUser>(user);
+            return toSerializable<AI.ISerializedAuthUser>(user);
         } catch (error) {
             return rejectWithValue(getRejectValue(error.code, t));
         }
@@ -23,7 +30,7 @@ export const signInWithEmail = createAsyncThunk<AI.IUser, unknown, { rejectValue
 );
 
 //Sign up user using email and password
-export const signUpWithEmail = createAsyncThunk<AI.IUser, unknown, { rejectValue: AI.IFirebaseError<ISignUpState> }>(
+export const signUpWithEmail = createAsyncThunk<AI.ISerializedAuthUser, unknown, { rejectValue: AI.IFirebaseError<ISignUpState> }>(
     "authorization/async/signUpWithEmail",
     async ({ email, password, username, language, t }: AI.EmailSignUpPayload, { rejectWithValue }) => {
         try {
@@ -33,11 +40,13 @@ export const signUpWithEmail = createAsyncThunk<AI.IUser, unknown, { rejectValue
             // creates users
             const { user } = await createUserWithEmailAndPassword(fb.auth.auth, email, password);
 
-            //creates user document in firestore db
-            const documentPayload = { uid: user.uid, username, email, avatarUrl: "", darkMode: false, language };
-            await setDocumentSnapshot(COLLECTIONS.USERS, user.uid, documentPayload);
+            await updateProfile(user, { displayName: username });
 
-            return toSerializable<AI.IUser>(user);
+            //creates user document in firestore db
+            const documentPayload = { uid: user.uid, username, email, avatarUrl: "", darkMode: true, language };
+            await addCollectionDocument(COLLECTIONS.USERS, user.uid, documentPayload);
+
+            return toSerializable<AI.ISerializedAuthUser>(user);
         } catch (error) {
             return rejectWithValue(getRejectValue(error.code, t));
         }
@@ -45,7 +54,7 @@ export const signUpWithEmail = createAsyncThunk<AI.IUser, unknown, { rejectValue
 );
 
 // Sign in user using google account
-export const signInWithGoogle = createAsyncThunk<AI.IUser, unknown, { rejectValue: AI.IFirebaseError }>(
+export const signInWithGoogle = createAsyncThunk<AI.ISerializedAuthUser, unknown, { rejectValue: AI.IFirebaseError }>(
     "authorization/async/signInWithGoogle",
     async ({ language, t }: AI.GoogleSignInPayload, { rejectWithValue }) => {
         try {
@@ -53,17 +62,17 @@ export const signInWithGoogle = createAsyncThunk<AI.IUser, unknown, { rejectValu
             let { user } = await signInWithPopup(fb.auth.auth, fb.auth.provider);
 
             // Try to get document in user collection
-            const docSnap = await getDocumentSnapshotById(COLLECTIONS.USERS, user.uid);
+            const userDocumentSnapshot = await getCollectionDocumentById<UserType>(COLLECTIONS.USERS, user.uid);
 
             // Checks if user exists, and if it does not exists, creates user document in firestore db
-            if (!docSnap?.exists()) {
+            if (!userDocumentSnapshot?.exists()) {
                 const { displayName: username, photoURL, email, uid } = user;
 
-                const documentPayload = { uid, username, email, avatarUrl: photoURL, darkMode: false, language: language };
-                await setDocumentSnapshot(COLLECTIONS.USERS, uid, documentPayload);
+                const documentPayload = { uid, username, email, avatarUrl: photoURL, darkMode: true, language: language };
+                await addCollectionDocument(COLLECTIONS.USERS, uid, documentPayload);
             }
 
-            return toSerializable<AI.IUser>(user);
+            return toSerializable<AI.ISerializedAuthUser>(user);
         } catch (error) {
             return rejectWithValue(getRejectValue(error.code, t));
         }

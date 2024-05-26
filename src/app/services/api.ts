@@ -4,7 +4,7 @@ export const firestoreApi = createApi({
     reducerPath: "firestoreApi",
     baseQuery: fakeBaseQuery(),
 
-    tagTypes: ["Users"],
+    tagTypes: ["Users", "Friend_Requests", "Friends"],
 
     endpoints: () => ({}),
 });

@@ -1,6 +1,6 @@
 const Settings = () => {
     return (
-        <div className="page-container centered">
+        <div>
             <p>Settings</p>
         </div>
     );

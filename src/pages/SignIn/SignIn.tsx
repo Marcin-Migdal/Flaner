@@ -1,13 +1,12 @@
 import { Card, Col, Form, FormErrorsType, Icon, Row } from "@Marcin-Migdal/morti-component-library";
-import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import React from "react";
+import { useNavigate } from "react-router-dom";
 
-import { selectAuthorization, setAuthError, signInWithEmail, signInWithGoogle } from "@slices/authorization-slice";
-import { ISignInState, signInInitialValues, signInValidationSchema } from "./sign-in-formik-config";
+import { CustomButton, CustomTextfield, Page } from "@components/index";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
-import { CustomButton, CustomInput } from "@components/index";
+import { selectAuthorization, setAuthError, signInWithEmail, signInWithGoogle } from "@slices/authorization-slice";
 import { PATH_CONSTRANTS } from "@utils/enums";
+import { ISignInState, signInInitialValues, signInValidationSchema } from "./sign-in-formik-config";
 
 import "../../commonAssets/css/auth-form.scss";
 
@@ -31,10 +30,10 @@ const SignIn = () => {
     };
 
     return (
-        <div className="auth-from-container">
+        <Page className="auth-from-container" flex center>
             <Card className="auth-card">
                 <Row>
-                    <Col xl={6} className="left-col">
+                    <Col sm={12} mdFlex={1} className="left-col">
                         <h2>{t("_Hello")}!</h2>
                         <p data-cy="sign-in-description">{t("Please sign in to continue")}</p>
                         <Form<ISignInState>
@@ -46,7 +45,7 @@ const SignIn = () => {
                         >
                             {({ values, errors, handleChange, handleBlur, isValid }) => (
                                 <>
-                                    <CustomInput
+                                    <CustomTextfield
                                         data-cy="email-input"
                                         i18NameSpace={nameSpace}
                                         label="Email"
@@ -55,8 +54,9 @@ const SignIn = () => {
                                         onBlur={handleBlur}
                                         value={values.email}
                                         error={errors.email}
+                                        labelType="floating"
                                     />
-                                    <CustomInput
+                                    <CustomTextfield
                                         data-cy="password-input"
                                         i18NameSpace={nameSpace}
                                         label="Password"
@@ -65,6 +65,7 @@ const SignIn = () => {
                                         onBlur={handleBlur}
                                         value={values.password}
                                         error={errors.password}
+                                        labelType="floating"
                                         type="password"
                                     />
                                     <CustomButton
@@ -86,7 +87,7 @@ const SignIn = () => {
                             <Icon className="google-sign-in-icon" icon={["fab", "google"]} onClick={onGoogleSignIn} />
                         </div>
                     </Col>
-                    <Col xl={6} className="right-col">
+                    <Col sm={12} mdFlex={1} className="right-col">
                         <Icon icon={["fas", "rectangle-list"]} />
                         <h2>{process.env.APP_NAME}</h2>
                         <p>{t("Don't have any account?")}</p>
@@ -100,7 +101,7 @@ const SignIn = () => {
                     </Col>
                 </Row>
             </Card>
-        </div>
+        </Page>
     );
 };
 

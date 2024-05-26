@@ -1,4 +1,8 @@
-export { Layout } from "./Layout";
-export { CustomTextfield as CustomInput } from "./Inputs";
+export * from "./Inputs";
+export * from "./Layout";
+export * from "./display";
+export * from "./placeholders";
+
+export { Avatar } from "./Avatar";
+export { ContentWrapper } from "./ContentWrapper";
 export { CustomButton } from "./CustomButton";
-export { Loader } from "./Loader";

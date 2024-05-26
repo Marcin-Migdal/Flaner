@@ -1,8 +1,9 @@
 import { FormErrorsType } from "@Marcin-Migdal/morti-component-library";
 import { TFunction } from "i18next";
 
-import { ISignUpState } from "@pages/SignUp/sign-up-formik-config";
 import { ISignInState } from "@pages/SignIn/sign-in-formik-config";
+import { ISignUpState } from "@pages/SignUp/sign-up-formik-config";
+import { LanguageType } from "@services/users";
 
 interface ProviderData {
     providerId: string;
@@ -20,7 +21,7 @@ interface StsTokenManager {
 }
 
 //* Firebase user object, that is serializable
-export interface IUser {
+export type ISerializedAuthUser = {
     uid: string;
     email: string;
     emailVerified: boolean;
@@ -33,14 +34,18 @@ export interface IUser {
     lastLoginAt: string;
     apiKey: string;
     appName: string;
-}
+};
 
 //* Authorization user type
-export type UserType = IUser | null;
+export type AuthUserConfigType = Omit<ISerializedAuthUser, "photoURL"> & {
+    avatarUrl: string;
+    darkMode: boolean;
+    language: LanguageType;
+};
 
 //! Slice init state
 export interface IAuthUserInitialState {
-    authUser: UserType;
+    authUser: AuthUserConfigType | null;
     isLoading: boolean;
     authFormErrors: FormErrorsType<ISignInState | ISignUpState>;
 }

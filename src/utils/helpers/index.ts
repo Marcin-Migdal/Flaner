@@ -1,9 +1,12 @@
 export { getRejectValue, toSerializable } from "./firebase";
 export {
-    getAllDocuments,
-    getDocumentSnapshotById,
-    setDocumentSnapshot,
-    validateUsername,
+    addCollectionDocument,
+    deleteCollectionDocument,
+    editCollectionDocument,
     getCollectionData,
-    getFilteredDocuments,
+    getCollectionDocumentById,
+    getCollectionDocuments,
+    getCollectionFilteredDocuments,
+    getDocumentReference,
+    validateUsername,
 } from "./firestore";

@@ -1,0 +1,48 @@
+.user-tiles-container {
+    --min-tile-width: 185px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--min-tile-width), 1fr));
+
+    height: fit-content;
+    max-height: 100%;
+    gap: 0.5rem;
+    padding-right: 0.5rem;
+
+    overflow: auto;
+
+    .user-tile {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        align-items: center;
+
+        height: 240px;
+        max-width: calc(var(--min-tile-width) * 1.5);
+
+        padding: 1rem;
+        border-radius: var(--border-radius);
+
+        background-color: var(--dark-grey_200);
+
+        &:only-child {
+            max-width: var(--min-tile-width) !important;
+        }
+
+        .avatar-container {
+            --avatar-size: 100px;
+        }
+
+        h3 {
+            text-align: center;
+            width: 100%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .m-button {
+            width: 100%;
+            margin: unset;
+            color: var(--white);
+        }
+    }
+}
