@@ -1,2 +1,2 @@
-export { FriendRequests } from "./FriendRequests/FriendRequests";
-export { UserTiles } from "./UserTiles/UserTiles";
+export { ReceivedFriendRequests, SentFriendRequests } from "./FriendRequests/FriendRequests";
+export { FriendsTiles, UserTiles } from "./UserTiles/UserTiles";

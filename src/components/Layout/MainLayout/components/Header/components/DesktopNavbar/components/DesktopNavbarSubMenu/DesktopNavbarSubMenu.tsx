@@ -1,19 +1,19 @@
-import { HeaderItem, SubListPosition } from "../../../../interfaces";
-import { DesktopHeaderMenuItem } from "../DesktopHeaderMenuItem/DesktopHeaderMenuItem";
+import { HeaderItem, SubMenuPosition } from "../../../../interfaces";
+import { DesktopNavbarItem } from "../DesktopNavbarItem/DesktopNavbarItem";
 
 import "./styles.scss";
 
 interface IHeaderSubListProps {
     listItems: HeaderItem[];
-    subListPosition: SubListPosition;
+    subListPosition: SubMenuPosition;
     depth: number;
 }
 
-export const DesktopHeaderSubMenu = ({ listItems, subListPosition, depth }: IHeaderSubListProps) => {
+export const DesktopNavbarSubMenu = ({ listItems, subListPosition, depth }: IHeaderSubListProps) => {
     return (
-        <ul className="header-sub-list" style={subListPosition}>
+        <ul className="desktop-navbar-sub-menu" style={subListPosition}>
             {listItems.map((listItem) => (
-                <DesktopHeaderMenuItem
+                <DesktopNavbarItem
                     key={listItem.text}
                     listItem={listItem}
                     depth={depth + 1}

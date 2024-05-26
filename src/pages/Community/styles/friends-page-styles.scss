@@ -18,6 +18,17 @@
             box-shadow: 0 0 6px 3px var(--primary-color_200);
         }
     }
+
+    .placeholder-container {
+        .placeholder {
+            &.transparent-spinner-placeholder {
+                margin: -0.5rem 0 0 -0.5rem;
+                width: calc(100% + 0.5rem);
+                height: calc(100% + 1rem);
+                border-radius: var(--border-radius);
+            }
+        }
+    }
 }
 
 @media (min-width: 650px) {

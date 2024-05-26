@@ -2,16 +2,15 @@ import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { CSSProperties, MouseEvent } from "react";
 
 export type HeaderItem = {
-    text: string;
+    text?: string;
     onClick?: (event: MouseEvent<HTMLLIElement>) => void;
-    icon?: IconProp;
     disabled?: boolean;
     subItems?: HeaderItem[];
-};
+} & ({ icon?: IconProp; iconUrl?: undefined } | { icon?: undefined; iconUrl?: string });
 
 export type OpenDirectionType = "left" | "right";
 
-export type SubListPosition = Pick<CSSProperties, "left" | "top" | "minWidth" | "position" | "borderTop" | "zIndex"> & {
+export type SubMenuPosition = Pick<CSSProperties, "left" | "right" | "top" | "minWidth" | "position" | "borderTop" | "zIndex"> & {
     openDirection?: OpenDirectionType;
 };
 

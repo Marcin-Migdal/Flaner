@@ -1,15 +1,15 @@
-import { Navigate, createBrowserRouter } from "react-router-dom";
 import React from "react";
+import { Navigate, createBrowserRouter } from "react-router-dom";
 
-import { PATH_CONSTRANTS } from "@utils/enums";
 import { MainLayout } from "@components/index";
+import { PATH_CONSTRANTS } from "@utils/enums";
 
 const HomePage = React.lazy(() => import("./Home"));
 const SignInPage = React.lazy(() => import("./SignIn"));
 const SignUpPage = React.lazy(() => import("./SignUp"));
 
 const CommunityPage = React.lazy(() => import("./PageTilesView"));
-const SearchFriendsPage = React.lazy(() => import("./Community/SearchFriends"));
+const SearchUsersPage = React.lazy(() => import("./Community/SearchUsers"));
 const MyFriendsPage = React.lazy(() => import("./Community/MyFriends"));
 const GroupsPage = React.lazy(() => import("./Community/Groups"));
 
@@ -28,7 +28,7 @@ const routes = [
 
     //! Community
     { path: PATH_CONSTRANTS.COMMUNITY, element: <CommunityPage /> },
-    { path: PATH_CONSTRANTS.SEARCH_FRIENDS, element: <SearchFriendsPage /> },
+    { path: PATH_CONSTRANTS.SEARCH_FRIENDS, element: <SearchUsersPage /> },
     { path: PATH_CONSTRANTS.MY_FRIENDS, element: <MyFriendsPage /> },
     { path: PATH_CONSTRANTS.GROUPS, element: <GroupsPage /> },
 

@@ -7,7 +7,7 @@ import { useAppDispatch } from "@hooks/redux-hooks";
 import router from "@pages/index";
 import { TranslateFunctionType, setToastHandler } from "@slices/index";
 
-// TODO! mobile view for header list
+// TODO! Finish mobile view for header list
 
 // TODO! Lib fixes/changes
 //* - move the dropdown component used in header to lib

@@ -70,9 +70,4 @@ export const navigationTree: NavigationNode[] = [
             },
         ],
     },
-    {
-        text: "Settings",
-        path: PATH_CONSTRANTS.SETTINGS,
-        icon: ["fas", "gear"],
-    },
 ];

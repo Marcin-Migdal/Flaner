@@ -1,26 +1,51 @@
 import { Col, Row } from "@Marcin-Migdal/morti-component-library";
 import { useState } from "react";
 
-import { ContentWrapper, DebounceTextfield, FriendRequests, Page, UserTiles } from "@components/index";
-import { useGetUsersByUsernameQuery } from "@services/users/users.api";
+import { ContentWrapper, DebounceTextfield, FriendsTiles, Page, ReceivedFriendRequests } from "@components/index";
+import { useAppSelector } from "@hooks/redux-hooks";
+import { ReceivedFriendRequest, UserType } from "@services/users";
+import { selectAuthorization } from "@slices/authorization-slice";
+
+import {
+    useConfirmFriendRequestMutation,
+    useDeclineFriendRequestMutation,
+    useDeleteFriendMutation,
+    useGetFriendsByUsernameQuery,
+    useGetReceivedFriendRequestQueryQuery,
+} from "@services/users/users-api";
 
 import "../styles/friends-page-styles.scss";
 
-// TODO! first query current user friends
-// TODO! second query friends requests that current user got
-// TODO! confirming friend request
-// TODO! declining friend request
+// TODO! improve the RTK catche tags
 
 const MyFriends = () => {
-    const [filterValue, setFilterValue] = useState<string>("");
-    const query = useGetUsersByUsernameQuery(filterValue);
+    const { authUser } = useAppSelector(selectAuthorization);
 
-    const handleRequestConfirm = (request: any) => {
-        console.log(request);
+    const [filterValue, setFilterValue] = useState<string>("");
+
+    const friendsQuery = useGetFriendsByUsernameQuery({ currentUserUid: authUser?.uid, username: filterValue });
+    const receivedFriendRequestQuery = useGetReceivedFriendRequestQueryQuery(authUser?.uid, { skip: !authUser });
+
+    const [confirmFriendRequest] = useConfirmFriendRequestMutation();
+    const [declineFriendRequest] = useDeclineFriendRequestMutation();
+    const [deleteFriend] = useDeleteFriendMutation();
+
+    const handleRequestConfirm = (friendRequest: ReceivedFriendRequest) => {
+        if (!authUser) return;
+
+        confirmFriendRequest({ friendRequest, currentUser: authUser });
     };
 
-    const handleRequestDecline = (request: any) => {
-        console.log(request);
+    const handleRequestDecline = (friendRequest: ReceivedFriendRequest) => {
+        if (!authUser) return;
+
+        declineFriendRequest({ friendRequest, currentUserUid: authUser.uid });
+    };
+
+    const handleDeleteFriend = (friend: UserType) => {
+        if (!authUser) return;
+
+        deleteFriend({ friend, currentUser: authUser });
     };
 
     return (
@@ -34,15 +59,15 @@ const MyFriends = () => {
             />
             <Row>
                 <Col smFlex={1} mdFlex={7}>
-                    <ContentWrapper query={query} placeholdersConfig={{ noData: { message: "Search for users" } }}>
-                        {({ data }) => <UserTiles users={data} />}
+                    <ContentWrapper query={friendsQuery}>
+                        {({ data }) => <FriendsTiles users={data || []} message="No friends found" onDeleteFriend={handleDeleteFriend} />}
                     </ContentWrapper>
                 </Col>
                 <Col smFlex={1} mdFlex={2}>
-                    <ContentWrapper query={query} placeholdersConfig={{ noData: { message: "No friend requests" } }}>
+                    <ContentWrapper query={receivedFriendRequestQuery}>
                         {({ data }) => (
-                            <FriendRequests
-                                friendRequests={data}
+                            <ReceivedFriendRequests
+                                friendRequests={(data as any) || []}
                                 onRequestConfirm={handleRequestConfirm}
                                 onRequestDecline={handleRequestDecline}
                             />

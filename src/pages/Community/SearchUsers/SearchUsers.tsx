@@ -1,30 +1,32 @@
 import { Col, Row } from "@Marcin-Migdal/morti-component-library";
 import { useState } from "react";
 
-import { ContentWrapper, DebounceTextfield, FriendRequests, Page, UserTiles } from "@components/index";
+import { ContentWrapper, DebounceTextfield, Page, SentFriendRequests, UserTiles } from "@components/index";
 import { useAppSelector } from "@hooks/redux-hooks";
-import { UserType } from "@services/users";
-import { useGetSentFriendRequestQueryQuery, useGetUsersByUsernameQuery, useSendFriendRequestMutation } from "@services/users/users.api";
+import { SearchedUserType } from "@services/users";
+import { useGetSearchUsersQuery, useGetSentFriendRequestQueryQuery, useSendFriendRequestMutation } from "@services/users/users-api";
 import { selectAuthorization } from "@slices/authorization-slice";
 
 import "../styles/friends-page-styles.scss";
 
-// TODO! czy da się modyfikować zapytania do firestore
-//?     - w taki sposób że użytkownicy którzy są zwracani z back'u mają pole alreadySent: boolean, jeżeli użytkownik wysłał już do niego friend request, jeżeli nie to mapować users ręcznie, zrobić set z friends requests i robić request.has(user.uid)
-//?     - w taki sposób żeby friend request poza polami z dokumentu w friend_request, zwracał też pewne pola z user'a o id które jest w receiverUid w friend_request
-
-const SearchFriends = () => {
+const SearchUsers = () => {
     const { authUser } = useAppSelector(selectAuthorization);
-    const [filterValue, setFilterValue] = useState<string>("Mor");
 
-    const usersQuery = useGetUsersByUsernameQuery(filterValue, { skip: filterValue.length < 3 });
+    const [filterValue, setFilterValue] = useState<string>("");
+
+    const usersQuery = useGetSearchUsersQuery(
+        { username: filterValue, currentUserUid: authUser?.uid },
+        { skip: filterValue.length < 3 || !authUser?.uid }
+    );
+
     const sentFriendRequestQuery = useGetSentFriendRequestQueryQuery(authUser?.uid, { skip: !authUser });
+
     const [sendFriendRequest] = useSendFriendRequestMutation();
 
-    const handleAddFriend = (user: UserType) => {
+    const handleAddFriend = (user: SearchedUserType) => {
         if (!user || !authUser) return;
 
-        sendFriendRequest({ currentUserUid: authUser.uid, userUid: user.uid });
+        sendFriendRequest({ senderUid: authUser.uid, receiverUid: user.uid });
     };
 
     return (
@@ -43,8 +45,8 @@ const SearchFriends = () => {
                     </ContentWrapper>
                 </Col>
                 <Col smFlex={1} mdFlex={2}>
-                    <ContentWrapper query={sentFriendRequestQuery} placeholdersConfig={{ noData: { message: "No sent friend requests" } }}>
-                        {({ data }) => <FriendRequests friendRequests={data} />}
+                    <ContentWrapper query={sentFriendRequestQuery}>
+                        {({ data }) => <SentFriendRequests friendRequests={data} />}
                     </ContentWrapper>
                 </Col>
             </Row>
@@ -52,4 +54,4 @@ const SearchFriends = () => {
     );
 };
 
-export default SearchFriends;
+export default SearchUsers;

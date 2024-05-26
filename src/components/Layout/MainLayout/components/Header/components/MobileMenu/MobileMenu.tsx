@@ -3,7 +3,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 
 import { HeaderItem, MobileHeaderMenuOpenType } from "../../interfaces";
-import { MobileHeaderMenuItem } from "./components/MobileHeaderMenuItem";
+import { MobileMenuItem } from "./components/MobileMenuItem";
 
 import "./styles.scss";
 
@@ -11,7 +11,7 @@ type MobileHeaderMenuProps = {
     menuItems: HeaderItem[];
 };
 
-export const MobileHeaderMenu = ({ menuItems }: MobileHeaderMenuProps) => {
+export const MobileMenu = ({ menuItems }: MobileHeaderMenuProps) => {
     const [menuOpen, setMenuOpen] = useState<MobileHeaderMenuOpenType>("closed");
 
     const toggleMenuDropdown = () => {
@@ -42,7 +42,7 @@ export const MobileHeaderMenu = ({ menuItems }: MobileHeaderMenuProps) => {
                     <div className={`mobile-menu ${menuOpen}`}>
                         <ul className="mobile-menu-list">
                             {menuItems.map((menuItem) => (
-                                <MobileHeaderMenuItem menuItem={menuItem} closeMenuDropdown={toggleMenuDropdown} />
+                                <MobileMenuItem menuItem={menuItem} closeMenuDropdown={toggleMenuDropdown} />
                             ))}
                         </ul>
                     </div>,

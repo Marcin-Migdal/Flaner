@@ -1,5 +1,28 @@
-.header-list {
-    .list-item {
+.desktop-navbar .navbar-item,
+.desktop-navbar-sub-menu .navbar-item {
+    position: relative;
+
+    &:has(p) {
+        .icon {
+            padding: 0 0.5rem 0 0;
+        }
+    }
+
+    .icon.arrow-indicator {
+        width: 12px;
+        height: 12px;
+        margin-left: auto;
+        padding: unset;
+    }
+
+    p {
+        font-size: 1rem;
+        white-space: nowrap;
+    }
+}
+
+.desktop-navbar {
+    .navbar-item {
         width: fit-content;
         height: inherit;
 
@@ -22,11 +45,16 @@
             display: none;
         }
 
-        p {
-            white-space: nowrap;
+        .icon {
+            width: 28px;
+            height: 28px;
         }
 
-        .list-item-content {
+        p {
+            font-size: 1.25rem;
+        }
+
+        .navbar-item-content {
             display: flex;
             justify-content: start;
             align-items: center;
@@ -37,15 +65,19 @@
 
             transition: 0.1s;
 
-            &:active {
+            .avatar-container {
+                --avatar-size: 40px;
+            }
+
+            &:not(:has(.avatar-container)):active {
                 transform: scale(0.925);
             }
         }
     }
 }
 
-.header-sub-list {
-    .list-item {
+.desktop-navbar-sub-menu {
+    .navbar-item {
         width: 100%;
         height: 36px;
 
@@ -68,11 +100,16 @@
             display: none;
         }
 
-        p {
-            white-space: nowrap;
+        .icon {
+            width: 20px;
+            height: 20px;
         }
 
-        .list-item-content {
+        p {
+            font-size: 1rem;
+        }
+
+        .navbar-item-content {
             display: flex;
             justify-content: start;
             align-items: center;

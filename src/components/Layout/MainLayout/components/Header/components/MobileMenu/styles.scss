@@ -1,20 +1,22 @@
-.open-menu-btn {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.header {
+    .open-menu-btn {
+        display: flex;
+        justify-content: center;
+        align-items: center;
 
-    height: 100%;
-    aspect-ratio: 1 / 1;
-    transition: 0.15s;
+        height: 100%;
+        aspect-ratio: 1 / 1;
+        transition: 0.15s;
 
-    svg {
-        height: 50%;
-        margin: unset;
-        color: var(--white);
-    }
+        svg {
+            height: 50%;
+            margin: unset;
+            color: var(--white);
+        }
 
-    &:hover {
-        background-color: var(--primary-color_600);
+        &:hover {
+            background-color: var(--primary-color_600);
+        }
     }
 }
 

@@ -1,4 +1,8 @@
 export enum COLLECTIONS {
     USERS = "users",
-    FRIEND_REQUEST = "friend_request",
+    //* users sub collections
+    FRIENDSHIPS = "users_friendships",
+    NOTIFICATIONS = "users_notifications",
+
+    FRIEND_REQUEST = "friend-request",
 }
