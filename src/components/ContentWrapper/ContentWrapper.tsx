@@ -1,7 +1,7 @@
 import { ReactElement } from "react";
 
 import { ErrorPlaceholderProps, NoDataPlaceholderProps, SpinnerPlaceholderProps } from "@components/index";
-import { ErrorPlaceholder, NoDataPlaceholder, SpinnerPlaceholder, TransparentSpinnerPlaceholder } from "../placeholders";
+import { ErrorPlaceholder, NoDataPlaceholder, SpinnerPlaceholder } from "../placeholders";
 import { UseQueryResult } from "./types";
 
 type ChildrenObject<T> = {
@@ -17,7 +17,6 @@ type ContentWrapper<T> = {
 
 type PlaceholdersConfig = {
     spinner?: SpinnerPlaceholderProps;
-    transparentSpinner?: SpinnerPlaceholderProps;
     error?: ErrorPlaceholderProps;
     noData?: NoDataPlaceholderProps;
     common?: SpinnerPlaceholderProps & ErrorPlaceholderProps & NoDataPlaceholderProps;
@@ -25,7 +24,6 @@ type PlaceholdersConfig = {
 
 type Placeholders = {
     spinner: ReactElement;
-    transparentSpinner: ReactElement;
     error: ReactElement;
     noData: ReactElement;
 };
@@ -36,13 +34,6 @@ export const ContentWrapper = <T,>({ query, children, placeholders: customPlaceh
             customPlaceholders.spinner
         ) : (
             <SpinnerPlaceholder {...placeholdersConfig?.common} {...placeholdersConfig?.spinner} />
-        ),
-        transparentSpinner: customPlaceholders?.transparentSpinner ? (
-            customPlaceholders.transparentSpinner
-        ) : (
-            <TransparentSpinnerPlaceholder {...placeholdersConfig?.common} {...placeholdersConfig?.transparentSpinner}>
-                {children({ data: query.data as T })}
-            </TransparentSpinnerPlaceholder>
         ),
         error: customPlaceholders?.error ? (
             customPlaceholders.error
@@ -57,7 +48,6 @@ export const ContentWrapper = <T,>({ query, children, placeholders: customPlaceh
     };
 
     if (query.isLoading) return placeholders.spinner;
-    if (query.isFetching) return placeholders.transparentSpinner;
     if (query.isError) return placeholders.error;
     if (query.isUninitialized) return placeholders.noData;
     return children({ data: query.data as T });

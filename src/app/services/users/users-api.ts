@@ -8,12 +8,13 @@ import { firestoreApi } from "../api";
 import { getFriendRequestUid } from "./users-helpers";
 import {
     Friendships,
+    Notification,
     NotificationType,
     RawFriendRequest,
+    RawNotification,
     ReceivedFriendRequest,
     SearchedUserType,
     SentFriendRequest,
-    UserNotification,
     UserType,
 } from "./users-types";
 
@@ -21,9 +22,11 @@ import {
     addCollectionDocument,
     deleteCollectionDocument,
     getCollectionData,
+    getCollectionDataWithId,
     getCollectionDocumentById,
     getCollectionFilteredDocuments,
     getDocumentReference,
+    getRtkTags,
 } from "@utils/helpers";
 
 export const usersApi = firestoreApi.injectEndpoints({
@@ -48,7 +51,7 @@ export const usersApi = firestoreApi.injectEndpoints({
                     return { error: "Error occurred while loading users" };
                 }
             },
-            providesTags: ["Users"],
+            providesTags: (result) => getRtkTags(result, "uid", "Searched_Users"),
         }),
         getSearchUsers: build.query<SearchedUserType[], { username: string; currentUserUid: string | undefined }>({
             async queryFn(params) {
@@ -93,7 +96,7 @@ export const usersApi = firestoreApi.injectEndpoints({
                     return { error: "Error occurred while loading users" };
                 }
             },
-            providesTags: ["Users"],
+            providesTags: (result) => getRtkTags(result, "uid", "Searched_Users"),
         }),
         sendFriendRequest: build.mutation<null, { senderUid: string; receiverUid: string }>({
             async queryFn(params) {
@@ -112,8 +115,7 @@ export const usersApi = firestoreApi.injectEndpoints({
                         sentAt: new Date().getTime(),
                     };
 
-                    // TODO! catch does not work
-                    addCollectionDocument(COLLECTIONS.FRIEND_REQUEST, friendRequestUid, payload);
+                    await addCollectionDocument(COLLECTIONS.FRIEND_REQUEST, friendRequestUid, payload);
 
                     return { data: null };
                 } catch (error) {
@@ -121,7 +123,13 @@ export const usersApi = firestoreApi.injectEndpoints({
                     return { error: "Error occurred while sending friend request" };
                 }
             },
-            invalidatesTags: ["Friend_Requests", "Users"],
+            invalidatesTags: (_result, error, arg) => {
+                if (error) return [];
+                return [
+                    { type: "Sent_Friend_Requests", id: "List" },
+                    { type: "Searched_Users", id: arg.receiverUid },
+                ];
+            },
         }),
         getSentFriendRequestQuery: build.query<SentFriendRequest[], string | undefined>({
             async queryFn(senderUid) {
@@ -162,7 +170,7 @@ export const usersApi = firestoreApi.injectEndpoints({
                     return { error: "Error occurred while loading friend requests" };
                 }
             },
-            providesTags: ["Friend_Requests"],
+            providesTags: (result) => getRtkTags(result, "id", "Sent_Friend_Requests"),
         }),
         getReceivedFriendRequestQuery: build.query<ReceivedFriendRequest[], string | undefined>({
             async queryFn(receiverUid) {
@@ -203,7 +211,7 @@ export const usersApi = firestoreApi.injectEndpoints({
                     return { error: "Error occurred while loading friend requests" };
                 }
             },
-            providesTags: ["Friend_Requests"],
+            providesTags: (result) => getRtkTags(result, "id", "Received_Friend_Requests"),
         }),
         getFriendsByUsername: build.query<UserType[], { currentUserUid: string | undefined; username: string }>({
             async queryFn(params) {
@@ -238,7 +246,7 @@ export const usersApi = firestoreApi.injectEndpoints({
                     return { error: "Error occurred while loading friends" };
                 }
             },
-            providesTags: ["Friends"],
+            providesTags: (result) => getRtkTags(result, "uid", "Friends"),
         }),
         confirmFriendRequest: build.mutation<null, { friendRequest: ReceivedFriendRequest; currentUser: AuthUserConfigType }>({
             async queryFn(params) {
@@ -260,9 +268,12 @@ export const usersApi = firestoreApi.injectEndpoints({
                         createdAt: new Date().getTime(),
                     };
 
-                    const addNotificationPayload: UserNotification = {
+                    const addNotificationPayload: RawNotification = {
                         type: NotificationType.FRIEND_REQUEST_ACCEPT,
                         createdAt: new Date().getTime(),
+                        content: `${receiverUsername} has accepted your friend request`,
+                        read: false,
+                        userRef: getDocumentReference<UserType>(COLLECTIONS.USERS, receiverUid),
                     };
 
                     const batch = writeBatch(fb.firestore);
@@ -290,7 +301,14 @@ export const usersApi = firestoreApi.injectEndpoints({
                     return { error: "Error occurred while confirming friend request" };
                 }
             },
-            invalidatesTags: ["Friend_Requests", "Friends", "Users"],
+            invalidatesTags: (_result, error, arg) => {
+                if (error) return [];
+                return [
+                    { type: "Received_Friend_Requests", id: arg.friendRequest.id },
+                    { type: "Searched_Users", id: arg.friendRequest.senderUser.uid },
+                    { type: "Friends", id: "List" },
+                ];
+            },
         }),
         declineFriendRequest: build.mutation<null, { friendRequest: ReceivedFriendRequest; currentUserUid: string }>({
             async queryFn(params) {
@@ -298,7 +316,6 @@ export const usersApi = firestoreApi.injectEndpoints({
                     const { friendRequest, currentUserUid } = params;
                     const senderUid = friendRequest.senderUser.uid;
 
-                    // TODO! does catch work?
                     await deleteCollectionDocument(COLLECTIONS.FRIEND_REQUEST, getFriendRequestUid(senderUid, currentUserUid));
 
                     return { data: null };
@@ -307,7 +324,10 @@ export const usersApi = firestoreApi.injectEndpoints({
                     return { error: "Error occurred while declining friend request" };
                 }
             },
-            invalidatesTags: ["Friend_Requests", "Users"],
+            invalidatesTags: (_result, error, arg) => {
+                if (error) return [];
+                return [{ type: "Received_Friend_Requests", id: arg.friendRequest.id }];
+            },
         }),
         deleteFriend: build.mutation<null, { friend: UserType; currentUser: AuthUserConfigType }>({
             async queryFn(params) {
@@ -326,7 +346,185 @@ export const usersApi = firestoreApi.injectEndpoints({
                     return { error: "Error occurred while deleting a friend" };
                 }
             },
-            invalidatesTags: ["Friends", "Users"],
+            invalidatesTags: (_result, error, arg) => {
+                if (error) return [];
+                return [
+                    { type: "Friends", id: arg.friend.uid },
+                    { type: "Searched_Users", id: arg.friend.uid },
+                ];
+            },
+        }),
+        getUnreadNotificationsCount: build.query<number, { currentUserUid: string | undefined }>({
+            async queryFn(params) {
+                try {
+                    const { currentUserUid } = params;
+
+                    if (!currentUserUid) throw new Error("Error occurred while loading notifications");
+
+                    const userNotificationsSnapshot = await getDocs(
+                        query(
+                            collection(fb.firestore, COLLECTIONS.USERS, currentUserUid, COLLECTIONS.NOTIFICATIONS),
+                            where("read", "==", false)
+                        ) as CollectionReference<RawNotification, RawNotification>
+                    );
+
+                    return { data: userNotificationsSnapshot.size };
+                } catch (error) {
+                    if (error instanceof Error) return { error: error.message };
+                    return { error: "Error occurred while loading notifications" };
+                }
+            },
+            providesTags: ["Unread-Notifications-Count"],
+        }),
+        getUnreadNotifications: build.query<Notification[], { currentUserUid: string | undefined }>({
+            async queryFn(params) {
+                try {
+                    const { currentUserUid } = params;
+
+                    if (!currentUserUid) throw new Error("Error occurred while loading unread notifications");
+
+                    const unreadNotificationsSnapshot = await getDocs(
+                        query(
+                            collection(fb.firestore, COLLECTIONS.USERS, currentUserUid, COLLECTIONS.NOTIFICATIONS),
+                            where("read", "==", false)
+                        ) as CollectionReference<RawNotification, RawNotification>
+                    );
+
+                    const notifications: Notification[] = [];
+
+                    await Promise.all(
+                        getCollectionDataWithId(unreadNotificationsSnapshot).map(async (notification) => {
+                            switch (notification.type) {
+                                case NotificationType.FRIEND_REQUEST_ACCEPT:
+                                    const { userRef, ...otherNotificationProperties } = notification;
+                                    const userSnap = await getDoc(notification.userRef);
+
+                                    if (!userSnap.exists()) throw new Error("Error occurred while loading unread notification");
+
+                                    const { avatarUrl, uid } = userSnap.data();
+
+                                    notifications.push({
+                                        ...otherNotificationProperties,
+                                        receivedFrom: { avatarUrl, uid },
+                                    });
+
+                                    break;
+
+                                default:
+                                    notifications.push(notification);
+                                    break;
+                            }
+                        })
+                    );
+
+                    return { data: notifications };
+                } catch (error) {
+                    if (error instanceof Error) return { error: error.message };
+                    return { error: "Error occurred while loading unread notifications" };
+                }
+            },
+            providesTags: (result) => getRtkTags(result, "id", "Unread-Notifications"),
+        }),
+        getAllNotifications: build.query<Notification[], { currentUserUid: string | undefined }>({
+            async queryFn(params) {
+                try {
+                    const { currentUserUid } = params;
+
+                    if (!currentUserUid) throw new Error("Error occurred while loading notifications");
+
+                    const allNotificationsSnapshot = await getDocs(
+                        query(
+                            collection(fb.firestore, COLLECTIONS.USERS, currentUserUid, COLLECTIONS.NOTIFICATIONS)
+                        ) as CollectionReference<RawNotification, RawNotification>
+                    );
+
+                    const notifications: Notification[] = [];
+
+                    await Promise.all(
+                        getCollectionDataWithId(allNotificationsSnapshot).map(async (notification) => {
+                            switch (notification.type) {
+                                case NotificationType.FRIEND_REQUEST_ACCEPT:
+                                    const { userRef, ...otherNotificationProperties } = notification;
+                                    const userSnap = await getDoc(notification.userRef);
+
+                                    if (!userSnap.exists()) throw new Error("Error occurred while loading notification");
+
+                                    const { avatarUrl, uid } = userSnap.data();
+
+                                    notifications.push({
+                                        ...otherNotificationProperties,
+                                        receivedFrom: { avatarUrl, uid },
+                                    });
+
+                                    break;
+
+                                default:
+                                    notifications.push(notification);
+                                    break;
+                            }
+                        })
+                    );
+
+                    return { data: notifications };
+                } catch (error) {
+                    if (error instanceof Error) return { error: error.message };
+                    return { error: "Error occurred while loading notifications" };
+                }
+            },
+            providesTags: (result) => getRtkTags(result, "id", "All-Notifications"),
+        }),
+        updateReadNotification: build.mutation<null, { currentUserUid: string }>({
+            async queryFn(params) {
+                try {
+                    const { currentUserUid } = params;
+
+                    const unreadNotificationsSnapshot = await getDocs(
+                        query(
+                            collection(fb.firestore, COLLECTIONS.USERS, currentUserUid, COLLECTIONS.NOTIFICATIONS),
+                            where("read", "==", false)
+                        ) as CollectionReference<RawNotification, RawNotification>
+                    );
+
+                    const batch = writeBatch(fb.firestore);
+
+                    getCollectionDataWithId(unreadNotificationsSnapshot).forEach(({ read, id, ...otherProperties }) => {
+                        batch.update(doc(fb.firestore, COLLECTIONS.USERS, currentUserUid, COLLECTIONS.NOTIFICATIONS, id), {
+                            ...otherProperties,
+                            read: true,
+                        });
+                    });
+
+                    await batch.commit();
+
+                    return { data: null };
+                } catch (error) {
+                    if (error instanceof Error) return { error: error.message };
+                    return { error: "Error occurred while deleting a friend" };
+                }
+            },
+            invalidatesTags: (_result, error) => {
+                if (error) return [];
+                return ["Unread-Notifications-Count", { type: "Unread-Notifications", id: "List" }];
+            },
+        }),
+        deleteFriendRequest: build.mutation<null, SentFriendRequest>({
+            async queryFn(request) {
+                try {
+                    await deleteCollectionDocument(COLLECTIONS.FRIEND_REQUEST, request.id);
+
+                    return { data: null };
+                } catch (error) {
+                    if (error instanceof Error) return { error: error.message };
+                    return { error: "Error occurred while deleting a friend request" };
+                }
+            },
+            invalidatesTags: (_result, error, arg) => {
+                if (error) return [];
+                return [
+                    { type: "Sent_Friend_Requests", id: arg.id },
+                    { type: "Searched_Users", id: arg.receiverUser.uid },
+                ];
+            },
         }),
     }),
 });
@@ -341,4 +539,9 @@ export const {
     useConfirmFriendRequestMutation,
     useDeclineFriendRequestMutation,
     useDeleteFriendMutation,
+    useGetUnreadNotificationsCountQuery,
+    useGetUnreadNotificationsQuery,
+    useGetAllNotificationsQuery,
+    useUpdateReadNotificationMutation,
+    useDeleteFriendRequestMutation,
 } = usersApi;

@@ -30,9 +30,13 @@ export const signInWithEmail = createAsyncThunk<AI.ISerializedAuthUser, unknown,
 );
 
 //Sign up user using email and password
-export const signUpWithEmail = createAsyncThunk<AI.ISerializedAuthUser, unknown, { rejectValue: AI.IFirebaseError<ISignUpState> }>(
+export const signUpWithEmail = createAsyncThunk<
+    AI.ISerializedAuthUser,
+    unknown,
+    { dispatch: any; rejectValue: AI.IFirebaseError<ISignUpState> }
+>(
     "authorization/async/signUpWithEmail",
-    async ({ email, password, username, language, t }: AI.EmailSignUpPayload, { rejectWithValue }) => {
+    async ({ email, password, username, language, t }: AI.EmailSignUpPayload, { dispatch, rejectWithValue }) => {
         try {
             // Validate if user with this username exists
             await validateUsername(username);

@@ -3,6 +3,7 @@ import {
     DocumentData,
     DocumentReference,
     DocumentSnapshot,
+    QueryDocumentSnapshot,
     QueryFieldFilterConstraint,
     QuerySnapshot,
     WhereFilterOp,
@@ -112,19 +113,32 @@ export const validateUsername = async (username: string) => {
 export const getCollectionData = <TData extends DocumentData>(
     collectionSnapshots: QuerySnapshot<TData, TData> | QuerySnapshot<TData, TData>[]
 ): TData[] => {
+    return mapCollectionData(collectionSnapshots, (snapShot) => snapShot.data());
+};
+
+export const getCollectionDataWithId = <TData extends DocumentData>(
+    collectionSnapshots: QuerySnapshot<TData, TData> | QuerySnapshot<TData, TData>[]
+): (TData & { id: string })[] => {
+    return mapCollectionData(collectionSnapshots, (snapShot) => ({ ...snapShot.data(), id: snapShot.id } as TData & { id: string }));
+};
+
+const mapCollectionData = <TData extends DocumentData, TReturn extends DocumentData>(
+    collectionSnapshots: QuerySnapshot<TData, TData> | QuerySnapshot<TData, TData>[],
+    map: (data: QueryDocumentSnapshot<TData, TData>) => TReturn
+): TReturn[] => {
     if (Array.isArray(collectionSnapshots)) {
-        const dataArray: TData[] = [];
+        const dataArray: TReturn[] = [];
 
         collectionSnapshots.forEach((snapShot) => {
             if (snapShot.empty) return;
-            return snapShot.docs.forEach((docSnapshot) => dataArray.push(docSnapshot.data() as TData));
+            return snapShot.docs.forEach((docSnapshot) => dataArray.push(map(docSnapshot) as TReturn));
         });
 
         return dataArray;
     }
 
     if (collectionSnapshots.empty) return [];
-    return collectionSnapshots.docs.map((docSnapshot) => docSnapshot.data() as TData);
+    return collectionSnapshots.docs.map((docSnapshot) => map(docSnapshot) as TReturn);
 };
 
 export const getDocumentReference = <TData extends DocumentData>(
