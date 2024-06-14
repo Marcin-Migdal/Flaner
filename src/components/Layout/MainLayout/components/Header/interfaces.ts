@@ -7,7 +7,8 @@ export type HeaderItem = {
     disabled?: boolean;
     subItems?: HeaderItem[];
     metaData?: any;
-} & ({ icon?: IconProp; iconUrl?: undefined } | { icon?: undefined; iconUrl?: string });
+    icon?: IconProp;
+};
 
 export type OpenDirectionType = "left" | "right";
 

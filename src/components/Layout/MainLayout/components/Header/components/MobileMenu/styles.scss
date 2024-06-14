@@ -43,6 +43,27 @@
         top: var(--header-height);
     }
 
+    .user-item {
+        position: absolute;
+        left: 50%;
+        transform: translate(-50%, -150%);
+
+        display: flex;
+        align-items: center;
+
+        margin-bottom: 4rem;
+        padding: 0.75rem 1.25rem;
+        border-radius: 1rem;
+
+        background-color: var(--primary-color_200);
+        transition: 0.2s;
+
+        h2 {
+            margin-left: 1rem;
+            font-size: 1.75rem;
+        }
+    }
+
     .mobile-menu-list,
     .mobile-submenu-list {
         list-style: none;
@@ -81,7 +102,7 @@
     }
 
     .mobile-menu-list {
-        padding-top: 35%;
+        margin-top: 400px;
         padding-left: 32.5%;
 
         .mobile-menu-item {

@@ -7,13 +7,13 @@ import { ProfileSubMenu } from "./ProfileSubMenu";
 
 export const ProfileItem = () => {
     const {
-        item: { iconUrl },
+        item: { metaData },
         subMenuPosition,
     } = useContext(NavbarItemContext);
 
     return (
         <div className="navbar-item-content">
-            {iconUrl !== undefined && <Avatar avatarUrl={iconUrl} />}
+            {metaData.user?.avatarUrl !== undefined && <Avatar avatarUrl={metaData.user.avatarUrl} />}
             {subMenuPosition && (
                 <DesktopNavbarSubMenu>
                     <ProfileSubMenu />
