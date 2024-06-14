@@ -1,17 +1,16 @@
 import { ToastConfigType, ToastHandler, ToastsContainer, VariantTypes, defaultToastConfig } from "@Marcin-Migdal/morti-component-library";
+import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { RouterProvider } from "react-router-dom";
 
+import { fb } from "@firebase/firebase";
 import { useAppDispatch } from "@hooks/redux-hooks";
-import router from "@pages/index";
-import { TranslateFunctionType, setToastHandler } from "@slices/index";
-
-// TODO! Finish mobile view for header list
-
-// TODO! Lib fixes/changes
-//* - move the dropdown component used in header to lib
-//* - adding different colors like purple to the themes, adding the possibility of modifying the theme colors from outside the library
+import router from "@pages/routing";
+import { UserType } from "@services/users";
+import { ISerializedAuthUser, TranslateFunctionType, addToast, setAuthUser, setToastHandler } from "@slices/index";
+import { COLLECTIONS } from "@utils/enums";
+import { getCollectionDocumentById, retryDocumentRequest, toSerializable } from "@utils/helpers";
 
 const translateToastConfig = (toastConfig: ToastConfigType<VariantTypes>, t: TranslateFunctionType): ToastConfigType<VariantTypes> => {
     const _toastConfig = { ...toastConfig };
@@ -24,14 +23,52 @@ const translateToastConfig = (toastConfig: ToastConfigType<VariantTypes>, t: Tra
 };
 
 function App() {
+    const dispatch = useAppDispatch();
+
     const toastRef = useRef<ToastHandler>(null);
 
     const { t } = useTranslation("common");
 
-    const dispatch = useAppDispatch();
-
     useEffect(() => {
         if (toastRef.current) dispatch(setToastHandler(toastRef.current));
+    }, []);
+
+    useEffect(() => {
+        const unSubscribe = onAuthStateChanged(fb.auth.auth, async (user) => {
+            if (!user) {
+                dispatch(setAuthUser(null));
+                return;
+            }
+
+            // Serializing signed-in user object, before sending it to the reducer
+            const serializedUser = toSerializable<ISerializedAuthUser>(user);
+            const { photoURL, ...otherProperties } = serializedUser;
+
+            try {
+                const userResponse = await retryDocumentRequest<UserType>(() =>
+                    getCollectionDocumentById(COLLECTIONS.USERS, serializedUser.uid)
+                );
+
+                if (!userResponse.exists()) throw new Error("Error occurred while loading user profile, please refresh page");
+
+                const userConfig = userResponse.data();
+
+                dispatch(
+                    setAuthUser({
+                        ...otherProperties,
+                        avatarUrl: userConfig?.avatarUrl || "",
+                        language: userConfig?.language || "en",
+                        darkMode: userConfig?.darkMode || true,
+                    })
+                );
+            } catch (error) {
+                if (error instanceof Error) {
+                    dispatch(addToast({ type: "failure", message: error.message }));
+                }
+            }
+        });
+
+        return unSubscribe;
     }, []);
 
     return (

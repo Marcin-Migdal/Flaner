@@ -6,6 +6,7 @@ export type HeaderItem = {
     onClick?: (event: MouseEvent<HTMLLIElement>) => void;
     disabled?: boolean;
     subItems?: HeaderItem[];
+    metaData?: any;
 } & ({ icon?: IconProp; iconUrl?: undefined } | { icon?: undefined; iconUrl?: string });
 
 export type OpenDirectionType = "left" | "right";

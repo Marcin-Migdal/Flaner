@@ -2,19 +2,20 @@ import { Icon } from "@Marcin-Migdal/morti-component-library";
 import { ReactElement } from "react";
 
 import { Avatar } from "@components/Avatar";
+import { NoDataPlaceholder } from "@components/placeholders";
 import { ReceivedFriendRequest, SentFriendRequest, UserType } from "@services/users";
 
-import { NoDataPlaceholder } from "@components/placeholders";
 import "./styles.scss";
 
 type ReceivedFriendRequestsProps = {
     friendRequests: ReceivedFriendRequest[];
-    onRequestConfirm: (requests: ReceivedFriendRequest) => void;
-    onRequestDecline: (requests: ReceivedFriendRequest) => void;
+    onRequestConfirm: (request: ReceivedFriendRequest) => void;
+    onRequestDecline: (request: ReceivedFriendRequest) => void;
 };
 
 type SentFriendRequestsProps = {
     friendRequests: SentFriendRequest[];
+    onRequestDelete: (request: SentFriendRequest) => void;
 };
 
 type RequestsWrapperProps<T extends ReceivedFriendRequest | SentFriendRequest> = {
@@ -46,10 +47,23 @@ export const ReceivedFriendRequests = ({ friendRequests, onRequestConfirm, onReq
     );
 };
 
-export const SentFriendRequests = ({ friendRequests }: SentFriendRequestsProps) => {
+export const SentFriendRequests = ({ friendRequests, onRequestDelete }: SentFriendRequestsProps) => {
     if (friendRequests.length === 0) return <NoDataPlaceholder message="No friend requests sent" />;
 
-    return <RequestsWrapper friendRequests={friendRequests}>{(requests) => <LeftSection user={requests.receiverUser} />}</RequestsWrapper>;
+    return (
+        <RequestsWrapper friendRequests={friendRequests}>
+            {(requests) => (
+                <>
+                    <LeftSection user={requests.receiverUser} />
+                    {onRequestDelete && (
+                        <div className="right-section">
+                            <Icon icon="circle-xmark" className="decline-icon" onClick={() => onRequestDelete(requests)} />
+                        </div>
+                    )}
+                </>
+            )}
+        </RequestsWrapper>
+    );
 };
 
 const RequestsWrapper = <T extends ReceivedFriendRequest | SentFriendRequest>({ friendRequests, children }: RequestsWrapperProps<T>) => {

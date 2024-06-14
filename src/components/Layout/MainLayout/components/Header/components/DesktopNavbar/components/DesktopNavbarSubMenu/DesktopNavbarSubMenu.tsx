@@ -1,25 +1,19 @@
-import { HeaderItem, SubMenuPosition } from "../../../../interfaces";
-import { DesktopNavbarItem } from "../DesktopNavbarItem/DesktopNavbarItem";
+import React, { useContext } from "react";
+
+import { NavbarItemContext } from "../DesktopNavbarItem/DesktopNavbarItem";
 
 import "./styles.scss";
 
 interface IHeaderSubListProps {
-    listItems: HeaderItem[];
-    subListPosition: SubMenuPosition;
-    depth: number;
+    children: React.ReactElement;
 }
 
-export const DesktopNavbarSubMenu = ({ listItems, subListPosition, depth }: IHeaderSubListProps) => {
+export const DesktopNavbarSubMenu = ({ children }: IHeaderSubListProps) => {
+    const { subMenuPosition } = useContext(NavbarItemContext);
+
     return (
-        <ul className="desktop-navbar-sub-menu" style={subListPosition}>
-            {listItems.map((listItem) => (
-                <DesktopNavbarItem
-                    key={listItem.text}
-                    listItem={listItem}
-                    depth={depth + 1}
-                    openDirection={subListPosition.openDirection}
-                />
-            ))}
+        <ul className="desktop-navbar-sub-menu" style={subMenuPosition}>
+            {children}
         </ul>
     );
 };

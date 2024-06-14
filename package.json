@@ -11,7 +11,7 @@
     "author": "Marcin Migdal",
     "license": "ISC",
     "dependencies": {
-        "@Marcin-Migdal/morti-component-library": "^0.1.91",
+        "@Marcin-Migdal/morti-component-library": "^0.1.92",
         "@reduxjs/toolkit": "^2.1.0",
         "firebase": "^10.4.0",
         "i18next": "^23.8.2",

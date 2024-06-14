@@ -1,25 +1,46 @@
-import { Icon } from "@Marcin-Migdal/morti-component-library";
-import { MouseEvent, useRef, useState } from "react";
+import { MouseEvent, ReactNode, createContext, useRef, useState } from "react";
 
 import { HeaderItem, OpenDirectionType, SubMenuPosition } from "../../../../interfaces";
-import { DesktopNavbarSubMenu } from "../DesktopNavbarSubMenu/DesktopNavbarSubMenu";
 
-import { Avatar } from "@components/Avatar";
 import "./styles.scss";
 
-interface INavbarItemProps {
-    listItem: HeaderItem;
+type NavbarItemContext = {
+    item: HeaderItem;
+    subMenuPosition: SubMenuPosition | undefined;
     depth: number;
+};
+
+export const NavbarItemContext = createContext<NavbarItemContext>({
+    item: {} as any,
+    subMenuPosition: undefined,
+    depth: 0,
+});
+
+interface INavbarItemProps {
+    navbarItem: HeaderItem;
+    depth?: number;
     openDirection?: OpenDirectionType;
+    children: ReactNode | ReactNode[];
+    alwaysOpenSubMenu?: boolean;
+    className?: string;
+    onOpen?: (navbarItem: HeaderItem) => void;
+    onClose?: (navbarItem: HeaderItem) => void;
 }
 
-export const DesktopNavbarItem = ({ listItem, depth, openDirection = "right" }: INavbarItemProps) => {
+export const DesktopNavbarItem = ({
+    children,
+    navbarItem,
+    depth = 0,
+    openDirection = "right",
+    alwaysOpenSubMenu = false,
+    className = "",
+    onOpen,
+    onClose,
+}: INavbarItemProps) => {
     const itemRef = useRef<HTMLLIElement>(null);
 
     const [subMenuPosition, setSubMenuPosition] = useState<SubMenuPosition | undefined>(undefined);
-    const { text, onClick, icon, iconUrl, disabled = false, subItems } = listItem;
-
-    const hasActiveSubMenu = subItems && subItems.filter((item) => !item.disabled).length !== 0;
+    const { onClick, disabled = false, subItems } = navbarItem;
 
     const handleClick = (event) => {
         event.stopPropagation();
@@ -32,7 +53,7 @@ export const DesktopNavbarItem = ({ listItem, depth, openDirection = "right" }: 
     const handleMouseEnter = (event: MouseEvent<HTMLLIElement>) => {
         event.stopPropagation();
 
-        if (disabled || !hasActiveSubMenu) return;
+        if (disabled || (!alwaysOpenSubMenu && (!subItems || !(subItems.filter((item) => !item.disabled).length > 0)))) return;
 
         const { bottom, width, left, right } = event.currentTarget.getBoundingClientRect();
 
@@ -61,6 +82,8 @@ export const DesktopNavbarItem = ({ listItem, depth, openDirection = "right" }: 
                 openDirection: validatedOpenDirection,
             });
         }
+
+        onOpen && onOpen(navbarItem);
     };
 
     const handleMouseLeave = (event: MouseEvent<HTMLLIElement>) => {
@@ -68,25 +91,21 @@ export const DesktopNavbarItem = ({ listItem, depth, openDirection = "right" }: 
         else if (subMenuPosition && itemRef?.current && !itemRef.current.contains(event.relatedTarget)) {
             setSubMenuPosition(undefined);
         }
+
+        onClose && onClose(navbarItem);
     };
 
     return (
-        <li
-            ref={itemRef}
-            className={`navbar-item ${disabled || (!onClick && !hasActiveSubMenu) ? "disabled" : ""}`}
-            onClick={handleClick}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-        >
-            <div className="navbar-item-content">
-                {icon && <Icon className={`icon ${icon[1]}`} icon={icon} />}
-                {iconUrl !== undefined && <Avatar avatarUrl={iconUrl} />}
-                {text && <p>{text}</p>}
-                {depth !== 0 && hasActiveSubMenu && <Icon className={`icon arrow-indicator`} icon={["fas", "chevron-right"]} />}
-            </div>
-            {subMenuPosition && hasActiveSubMenu && (
-                <DesktopNavbarSubMenu listItems={subItems} subListPosition={subMenuPosition} depth={depth} />
-            )}
-        </li>
+        <NavbarItemContext.Provider value={{ item: navbarItem, subMenuPosition, depth }}>
+            <li
+                ref={itemRef}
+                className={`navbar-item ${disabled ? "disabled" : ""} ${onClick ? "on-click-animation" : ""} ${className}`}
+                onClick={handleClick}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+            >
+                {children}
+            </li>
+        </NavbarItemContext.Provider>
     );
 };

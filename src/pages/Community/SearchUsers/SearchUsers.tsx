@@ -3,9 +3,15 @@ import { useState } from "react";
 
 import { ContentWrapper, DebounceTextfield, Page, SentFriendRequests, UserTiles } from "@components/index";
 import { useAppSelector } from "@hooks/redux-hooks";
-import { SearchedUserType } from "@services/users";
-import { useGetSearchUsersQuery, useGetSentFriendRequestQueryQuery, useSendFriendRequestMutation } from "@services/users/users-api";
+import { SearchedUserType, SentFriendRequest } from "@services/users";
 import { selectAuthorization } from "@slices/authorization-slice";
+
+import {
+    useDeleteFriendRequestMutation,
+    useGetSearchUsersQuery,
+    useGetSentFriendRequestQueryQuery,
+    useSendFriendRequestMutation,
+} from "@services/users/users-api";
 
 import "../styles/friends-page-styles.scss";
 
@@ -22,11 +28,16 @@ const SearchUsers = () => {
     const sentFriendRequestQuery = useGetSentFriendRequestQueryQuery(authUser?.uid, { skip: !authUser });
 
     const [sendFriendRequest] = useSendFriendRequestMutation();
+    const [deleteFriendRequest] = useDeleteFriendRequestMutation();
 
     const handleAddFriend = (user: SearchedUserType) => {
         if (!user || !authUser) return;
 
         sendFriendRequest({ senderUid: authUser.uid, receiverUid: user.uid });
+    };
+
+    const handleRequestDelete = async (request: SentFriendRequest) => {
+        await deleteFriendRequest(request);
     };
 
     return (
@@ -46,7 +57,7 @@ const SearchUsers = () => {
                 </Col>
                 <Col smFlex={1} mdFlex={2}>
                     <ContentWrapper query={sentFriendRequestQuery}>
-                        {({ data }) => <SentFriendRequests friendRequests={data} />}
+                        {({ data }) => <SentFriendRequests friendRequests={data} onRequestDelete={handleRequestDelete} />}
                     </ContentWrapper>
                 </Col>
             </Row>

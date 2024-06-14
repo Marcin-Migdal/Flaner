@@ -1,5 +1,6 @@
-import { Col, Row } from "@Marcin-Migdal/morti-component-library";
-import { useState } from "react";
+import { Alert, AlertHandler, Col, Row } from "@Marcin-Migdal/morti-component-library";
+import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { ContentWrapper, DebounceTextfield, FriendsTiles, Page, ReceivedFriendRequests } from "@components/index";
 import { useAppSelector } from "@hooks/redux-hooks";
@@ -16,14 +17,17 @@ import {
 
 import "../styles/friends-page-styles.scss";
 
-// TODO! improve the RTK catche tags
-
 const MyFriends = () => {
+    const { t } = useTranslation();
+    const alertRef = useRef<AlertHandler>(null);
     const { authUser } = useAppSelector(selectAuthorization);
 
     const [filterValue, setFilterValue] = useState<string>("");
 
-    const friendsQuery = useGetFriendsByUsernameQuery({ currentUserUid: authUser?.uid, username: filterValue });
+    // TODO! Temporary solution, later add feature of, passing data to alert as openAlert argument, making it available in onConfirmBtnClick, onDeclineBtnClick
+    const [friendToDelete, setFriendToDelete] = useState<UserType | undefined>(undefined);
+
+    const friendsQuery = useGetFriendsByUsernameQuery({ currentUserUid: authUser?.uid, username: filterValue }, { skip: !authUser?.uid });
     const receivedFriendRequestQuery = useGetReceivedFriendRequestQueryQuery(authUser?.uid, { skip: !authUser });
 
     const [confirmFriendRequest] = useConfirmFriendRequestMutation();
@@ -42,10 +46,21 @@ const MyFriends = () => {
         declineFriendRequest({ friendRequest, currentUserUid: authUser.uid });
     };
 
-    const handleDeleteFriend = (friend: UserType) => {
-        if (!authUser) return;
+    const handleOpenAlert = (user: UserType) => {
+        alertRef.current?.openAlert();
+        setFriendToDelete(user);
+    };
 
-        deleteFriend({ friend, currentUser: authUser });
+    const handleDeleteFriend = async () => {
+        if (!authUser || !friendToDelete) return;
+
+        await deleteFriend({
+            friend: friendToDelete,
+            currentUser: authUser,
+        });
+
+        alertRef.current?.closeAlert();
+        setFriendToDelete(undefined);
     };
 
     return (
@@ -60,7 +75,7 @@ const MyFriends = () => {
             <Row>
                 <Col smFlex={1} mdFlex={7}>
                     <ContentWrapper query={friendsQuery}>
-                        {({ data }) => <FriendsTiles users={data || []} message="No friends found" onDeleteFriend={handleDeleteFriend} />}
+                        {({ data }) => <FriendsTiles users={data || []} message="No friends found" onDeleteFriend={handleOpenAlert} />}
                     </ContentWrapper>
                 </Col>
                 <Col smFlex={1} mdFlex={2}>
@@ -75,6 +90,16 @@ const MyFriends = () => {
                     </ContentWrapper>
                 </Col>
             </Row>
+            <Alert
+                ref={alertRef}
+                header={{ header: t("Delete friend") }}
+                footer={{
+                    onConfirmBtnClick: handleDeleteFriend,
+                    onDeclineBtnClick: () => alertRef.current?.closeAlert(),
+                }}
+            >
+                <p>{t("Are you sure, you want to delete a friend?")}</p>
+            </Alert>
         </Page>
     );
 };

@@ -1,3 +1,5 @@
+import { Alert, AlertHandler } from "@Marcin-Migdal/morti-component-library";
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { NavigateFunction, useNavigate } from "react-router-dom";
 
@@ -18,64 +20,61 @@ const mapNavigationTree = (t: (string: string) => string, navigate: NavigateFunc
     });
 };
 
-/*
-    * display notification in navbar. 
-        - new bell icon in navbar [DONE]
-        - delete weird effect on hover (icon container becomes wider)
+//? Flaner
+// TODO! email validation on email sign-up
 
-        - add field to notification document, content: string, eq. "{user}, accepted your friend request"
-        - add field to notification document, read: boolean, default false
+// TODO! Finish mobile menu
 
-        - fetch notifications
-        - when hovered, dropdown with notification should appear
-        - create option to pass custom desktop navbar item
-            - for now only notification type "friend-request-accepted" should be handled, but logic should be make with expansion in mind (something like switch or something similar)
-        
-        - if user opens notification dropdown, all notification(that have field "read" === false) should be edited to have field "read" set to true
-        - bell should have number on it, indicating how many unread notification user have
+// TODO! add translations for desktop navbar and mobile menu
 
-*/
-
-//? LIB
-// TODO! on sign out, confirmation popup should be shown (prob. new component in lib.)
-// TODO! add new color theme
-
-// TODO! check if all functions in usersApi correctly catch errors
-// TODO! implement error middleware (displaying toast on error)
+//? LIB 2
+// TODO! Temporary solution, later add feature of, passing data to alert as openAlert argument, making it available in onConfirmBtnClick, onDeclineBtnClick
+// TODO! move navbar component used in header to lib
 
 export const Header = () => {
-    const { t } = useTranslation(["header"]);
     const navigate = useNavigate();
+    const { t } = useTranslation(["header"]);
 
-    const { authUser } = useAppSelector(selectAuthorization);
     const dispatch = useAppDispatch();
+    const { authUser } = useAppSelector(selectAuthorization);
 
+    const alertRef = useRef<AlertHandler>(null);
     const isMobile = useBreakpoint(`(max-width: 768px)`);
 
-    const handleSignOut = () => dispatch(signOut({ t: t }));
+    const navigationItems: HeaderItem[] = mapNavigationTree(t, navigate, navigationTree);
 
-    const menuItems: HeaderItem[] = [
-        ...mapNavigationTree(t, navigate, navigationTree),
-        {
-            icon: ["fas", "bell"],
-            subItems: [
-                { text: "Sign out", onClick: handleSignOut, icon: ["fas", "sign-out"] },
-                { text: "Settings", onClick: () => navigate(PATH_CONSTRANTS.SETTINGS), icon: ["fas", "gear"] },
-            ],
-        },
-        {
-            iconUrl: authUser?.avatarUrl,
-            subItems: [
-                { text: "Sign out", onClick: handleSignOut, icon: ["fas", "sign-out"] },
-                { text: "Settings", onClick: () => navigate(PATH_CONSTRANTS.SETTINGS), icon: ["fas", "gear"] },
-            ],
-        },
-    ];
+    const userProfileItem: HeaderItem = {
+        iconUrl: authUser?.avatarUrl,
+        subItems: [
+            { text: "Settings", onClick: () => navigate(PATH_CONSTRANTS.SETTINGS), icon: ["fas", "gear"] },
+            { text: "Sign out", onClick: () => alertRef.current?.openAlert(), icon: ["fas", "sign-out"] },
+        ],
+    };
+
+    const handleSignOut = () => {
+        dispatch(signOut({ t: t }));
+    };
 
     return (
-        <div className="header">
-            <h1 onClick={() => navigate(PATH_CONSTRANTS.HOME)}>{process.env.APP_NAME}</h1>
-            {!isMobile ? <DesktopNavbar menuItems={menuItems} /> : <MobileMenu menuItems={menuItems} />}
-        </div>
+        <>
+            <div className="header">
+                <h1 onClick={() => navigate(PATH_CONSTRANTS.HOME)}>{process.env.APP_NAME}</h1>
+                {!isMobile ? (
+                    <DesktopNavbar navigationItems={navigationItems} userProfileItem={userProfileItem} />
+                ) : (
+                    <MobileMenu menuItems={navigationItems} />
+                )}
+            </div>
+            <Alert
+                ref={alertRef}
+                header={{ header: t("Sign out") }}
+                footer={{
+                    onConfirmBtnClick: handleSignOut,
+                    onDeclineBtnClick: () => alertRef.current?.closeAlert(),
+                }}
+            >
+                <p>{t("Are you sure, you want to sing out?")}</p>
+            </Alert>
+        </>
     );
 };

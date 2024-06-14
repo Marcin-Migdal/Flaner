@@ -1,6 +1,7 @@
 import React from "react";
-import { Navigate, createBrowserRouter } from "react-router-dom";
+import { Navigate, RouteObject, createBrowserRouter } from "react-router-dom";
 
+import UnAuthorizedMainLayout from "@components/Layout/UnAuthorizedMainLayout/UnAuthorizedMainLayout";
 import { MainLayout } from "@components/index";
 import { PATH_CONSTRANTS } from "@utils/enums";
 
@@ -21,10 +22,13 @@ const ProductsPage = React.lazy(() => import("./Planning/Products"));
 const SettingsPage = React.lazy(() => import("./Settings"));
 const Page404 = React.lazy(() => import("./Page404"));
 
-const routes = [
-    { path: PATH_CONSTRANTS.HOME, element: <HomePage /> },
+const unAuthorizedRouting: RouteObject[] = [
     { path: PATH_CONSTRANTS.SIGN_IN, element: <SignInPage /> },
     { path: PATH_CONSTRANTS.SIGN_UP, element: <SignUpPage /> },
+];
+
+const authorizedRouting: RouteObject[] = [
+    { path: PATH_CONSTRANTS.HOME, element: <HomePage /> },
 
     //! Community
     { path: PATH_CONSTRANTS.COMMUNITY, element: <CommunityPage /> },
@@ -49,7 +53,11 @@ const routes = [
 const router = createBrowserRouter([
     {
         element: <MainLayout />,
-        children: routes,
+        children: authorizedRouting,
+    },
+    {
+        element: <UnAuthorizedMainLayout />,
+        children: unAuthorizedRouting,
     },
 ]);
 

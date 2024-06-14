@@ -1,12 +1,16 @@
 import { Middleware, isRejectedWithValue } from "@reduxjs/toolkit";
+import { addToast } from "@slices/toast-slice";
 
-export const errorIntersectMiddleware: Middleware = () => (next) => (action) => {
+export const errorIntersectMiddleware: Middleware = (api) => (next) => (action) => {
     if (isRejectedWithValue(action)) {
-        console.log(action);
-        const meta = action.meta;
         const payload = action.payload;
 
-        // TODO! implement logic for displaying toasts
+        api.dispatch(
+            addToast({
+                type: "failure",
+                message: typeof payload === "string" ? payload : "Error has occurred",
+            })
+        );
     }
 
     return next(action);
