@@ -8,7 +8,7 @@ import "./styles.scss";
 
 export const ProfileSubMenu = () => {
     const {
-        item: { iconUrl, subItems },
+        item: { subItems, metaData },
         subMenuPosition,
         depth,
     } = useContext(NavbarItemContext);
@@ -16,7 +16,8 @@ export const ProfileSubMenu = () => {
     return (
         <>
             <div className="profile-menu-header">
-                {iconUrl !== undefined && <Avatar avatarUrl={iconUrl} />} <h3>Username</h3>
+                {metaData.user?.avatarUrl !== undefined && <Avatar avatarUrl={metaData?.user?.avatarUrl} />}
+                <h3>{metaData.user?.displayName}</h3>
             </div>
             {subItems?.map((listItem) => (
                 <DesktopNavbarItem

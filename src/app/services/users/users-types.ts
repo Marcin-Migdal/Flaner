@@ -76,5 +76,6 @@ export type Notification = {
     receivedFrom?: {
         avatarUrl: string;
         uid: string;
+        name: string;
     };
 };

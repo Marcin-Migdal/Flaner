@@ -27,7 +27,7 @@ function App() {
 
     const toastRef = useRef<ToastHandler>(null);
 
-    const { t } = useTranslation("common");
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (toastRef.current) dispatch(setToastHandler(toastRef.current));

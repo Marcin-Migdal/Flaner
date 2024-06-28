@@ -74,12 +74,15 @@ const MyFriends = () => {
             />
             <Row>
                 <Col smFlex={1} mdFlex={7}>
-                    <ContentWrapper query={friendsQuery}>
+                    <ContentWrapper query={friendsQuery} placeholdersConfig={{ noData: { message: "No friends found" } }}>
                         {({ data }) => <FriendsTiles users={data || []} message="No friends found" onDeleteFriend={handleOpenAlert} />}
                     </ContentWrapper>
                 </Col>
                 <Col smFlex={1} mdFlex={2}>
-                    <ContentWrapper query={receivedFriendRequestQuery}>
+                    <ContentWrapper
+                        query={receivedFriendRequestQuery}
+                        placeholdersConfig={{ noData: { message: "No friend requests received" } }}
+                    >
                         {({ data }) => (
                             <ReceivedFriendRequests
                                 friendRequests={(data as any) || []}
@@ -94,7 +97,9 @@ const MyFriends = () => {
                 ref={alertRef}
                 header={{ header: t("Delete friend") }}
                 footer={{
+                    confirmBtnText: t("Delete"),
                     onConfirmBtnClick: handleDeleteFriend,
+                    declineBtnText: t("Close"),
                     onDeclineBtnClick: () => alertRef.current?.closeAlert(),
                 }}
             >

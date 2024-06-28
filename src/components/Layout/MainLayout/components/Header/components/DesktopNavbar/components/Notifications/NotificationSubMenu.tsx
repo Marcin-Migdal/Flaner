@@ -1,4 +1,5 @@
 import { useContext, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Icon } from "@Marcin-Migdal/morti-component-library";
 import { ContentWrapper } from "@components/ContentWrapper";
@@ -12,11 +13,9 @@ import "./styles.scss";
 
 type Tabs = "unread-notification" | "all-notification";
 
-type NotificationSubMenuProps = {
-    unreadNotificationCount: number | undefined;
-};
+export const NotificationSubMenu = () => {
+    const { t } = useTranslation();
 
-export const NotificationSubMenu = ({ unreadNotificationCount }: NotificationSubMenuProps) => {
     const { depth, subMenuPosition } = useContext(NavbarItemContext);
     const { authUser } = useAppSelector(selectAuthorization);
 
@@ -42,10 +41,10 @@ export const NotificationSubMenu = ({ unreadNotificationCount }: NotificationSub
         <div>
             <div className="tab-buttons-container">
                 <div className={selectedTab === "unread-notification" ? "selected" : ""} onClick={handleChangeTab("unread-notification")}>
-                    <h3>Unread</h3>
+                    {t("Unread")}
                 </div>
                 <div className={selectedTab === "all-notification" ? "selected" : ""} onClick={handleChangeTab("all-notification")}>
-                    <h3>All </h3>
+                    {t("All")}
                 </div>
             </div>
 
@@ -61,7 +60,7 @@ export const NotificationSubMenu = ({ unreadNotificationCount }: NotificationSub
                                 openDirection={subMenuPosition?.openDirection}
                             >
                                 <Icon icon={["fas", "triangle-exclamation"]} />
-                                <h3>No notifications</h3>
+                                <h3>{t("No notifications")}</h3>
                             </DesktopNavbarItem>
                         ) : (
                             data.map((notification) => {

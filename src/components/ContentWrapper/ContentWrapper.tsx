@@ -8,11 +8,18 @@ type ChildrenObject<T> = {
     data: T;
 };
 
+type Conditions = {
+    isLoading?: boolean;
+    isError?: boolean;
+    isUninitialized?: boolean;
+};
+
 type ContentWrapper<T> = {
     query: UseQueryResult<T>;
     children: (childrenObject: ChildrenObject<T>) => ReactElement;
     placeholders?: Partial<Placeholders>;
     placeholdersConfig?: PlaceholdersConfig;
+    conditions?: Conditions;
 };
 
 type PlaceholdersConfig = {
@@ -28,7 +35,13 @@ type Placeholders = {
     noData: ReactElement;
 };
 
-export const ContentWrapper = <T,>({ query, children, placeholders: customPlaceholders, placeholdersConfig }: ContentWrapper<T>) => {
+export const ContentWrapper = <T,>({
+    query,
+    children,
+    placeholders: customPlaceholders,
+    placeholdersConfig,
+    conditions: customConditions,
+}: ContentWrapper<T>) => {
     const placeholders: Placeholders = {
         spinner: customPlaceholders?.spinner ? (
             customPlaceholders.spinner
@@ -47,8 +60,14 @@ export const ContentWrapper = <T,>({ query, children, placeholders: customPlaceh
         ),
     };
 
-    if (query.isLoading) return placeholders.spinner;
-    if (query.isError) return placeholders.error;
-    if (query.isUninitialized) return placeholders.noData;
+    const conditions: Conditions = {
+        isLoading: customConditions !== undefined ? customConditions.isLoading : query.isLoading,
+        isError: customConditions !== undefined ? customConditions.isError : query.isError,
+        isUninitialized: customConditions !== undefined ? customConditions.isUninitialized : query.isUninitialized,
+    };
+
+    if (conditions.isLoading) return placeholders.spinner;
+    if (conditions.isError) return placeholders.error;
+    if (conditions.isUninitialized) return placeholders.noData;
     return children({ data: query.data as T });
 };

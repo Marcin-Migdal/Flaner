@@ -56,7 +56,7 @@ const SearchUsers = () => {
                     </ContentWrapper>
                 </Col>
                 <Col smFlex={1} mdFlex={2}>
-                    <ContentWrapper query={sentFriendRequestQuery}>
+                    <ContentWrapper query={sentFriendRequestQuery} placeholdersConfig={{ noData: { message: "No friend requests sent" } }}>
                         {({ data }) => <SentFriendRequests friendRequests={data} onRequestDelete={handleRequestDelete} />}
                     </ContentWrapper>
                 </Col>

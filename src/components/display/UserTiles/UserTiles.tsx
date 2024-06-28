@@ -1,10 +1,10 @@
+import { ReactElement } from "react";
+
 import { Avatar } from "@components/Avatar";
 import { CustomButton } from "@components/CustomButton";
+import { NoDataPlaceholder } from "@components/placeholders";
 import { SearchedUserType, UserType } from "@services/users";
 
-import { NoDataPlaceholder } from "@components/placeholders";
-
-import { ReactElement } from "react";
 import "./styles.scss";
 
 type UserTilesProps = {
@@ -20,8 +20,10 @@ export const UserTiles = ({ users, message = "No users fund", onAddFriend }: Use
         <div className="user-tiles-container">
             {users.map((user) => (
                 <div key={user.uid} className="user-tile">
-                    <Avatar avatarUrl={user.avatarUrl} />
-                    <h3>{user.username}</h3>
+                    <div className="tile-top-section">
+                        <Avatar avatarUrl={user.avatarUrl} />
+                        <h3>{user.username}</h3>
+                    </div>
                     <CustomButton disabled={user.isFriend || user.invited} text="Invite" onClick={() => onAddFriend(user)} variant="full" />
                 </div>
             ))}

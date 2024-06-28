@@ -1,14 +1,16 @@
 import { Icon } from "@Marcin-Migdal/morti-component-library";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
+import { Page } from "@components/index";
 import { getNodeByPath, NavigationNode } from "@utils/constants";
 import { PATH_CONSTRANTS } from "@utils/enums";
-import { Page } from "@components/index";
 
 import "./styles.scss";
 
 const PageTilesView = () => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     const pages: NavigationNode[] = getNodeByPath(window.location.pathname as PATH_CONSTRANTS)[0]?.subItems || [];
 
@@ -17,7 +19,7 @@ const PageTilesView = () => {
             {pages.map(({ text, path, icon }, index) => (
                 <div key={index} className="page-tile" onClick={() => navigate(path)}>
                     <div className="page-tile-content">
-                        <p>{text}</p>
+                        <p>{t(text)}</p>
                         {icon ? <Icon className={`tile-icon ${icon[1]}`} icon={icon} /> : <div className="tile-icon-placeholder" />}
                     </div>
                 </div>
