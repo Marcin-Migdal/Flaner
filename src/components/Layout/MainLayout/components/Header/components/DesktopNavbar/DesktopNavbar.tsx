@@ -1,6 +1,15 @@
+import { AlertHandler } from "@Marcin-Migdal/morti-component-library";
+import { useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+
+import { SignOutAlert } from "@components/alerts";
 import { useAppSelector } from "@hooks/index";
 import { useGetUnreadNotificationsCountQuery, useUpdateReadNotificationMutation } from "@services/users";
 import { selectAuthorization } from "@slices/authorization-slice";
+import { navigationTree } from "@utils/constants";
+import { PATH_CONSTRANTS } from "@utils/enums";
+import { mapNavigationTree } from "@utils/helpers/mapNavigationTree";
 import { HeaderItem } from "../../interfaces";
 import { DesktopNavbarItem } from "./components/DesktopNavbarItem/DesktopNavbarItem";
 import { NavigationItem } from "./components/Navigation/NavigationItem";
@@ -9,18 +18,25 @@ import { ProfileItem } from "./components/Profile/ProfileItem";
 
 import "./styles.scss";
 
-export type DesktopNavbarProps = {
-    navigationItems: HeaderItem[];
-    userProfileItem: HeaderItem;
-};
-
-export const DesktopNavbar = ({ navigationItems, userProfileItem }: DesktopNavbarProps) => {
+export const DesktopNavbar = () => {
+    const navigate = useNavigate();
+    const { t } = useTranslation();
     const { authUser } = useAppSelector(selectAuthorization);
+    const alertRef = useRef<AlertHandler>(null);
 
     const [updateReadNotification] = useUpdateReadNotificationMutation();
     const unreadNotificationCountQuery = useGetUnreadNotificationsCountQuery({ currentUserUid: authUser?.uid }, { skip: !authUser });
 
+    const navigationItems: HeaderItem[] = mapNavigationTree(t, navigate, navigationTree);
     const navigationItemsLength: number = navigationItems.length;
+
+    const userProfileItem: HeaderItem = {
+        metaData: { user: authUser },
+        subItems: [
+            { text: "Settings", onClick: () => navigate(PATH_CONSTRANTS.SETTINGS), icon: ["fas", "gear"] },
+            { text: "Sign out", onClick: () => alertRef.current?.openAlert(), icon: ["fas", "sign-out"] },
+        ],
+    };
 
     const handleClose = () => {
         if (authUser && unreadNotificationCountQuery.data) {
@@ -47,6 +63,8 @@ export const DesktopNavbar = ({ navigationItems, userProfileItem }: DesktopNavba
             <DesktopNavbarItem key={navigationItemsLength + 1} navbarItem={userProfileItem}>
                 <ProfileItem />
             </DesktopNavbarItem>
+
+            <SignOutAlert alertRef={alertRef} />
         </ul>
     );
 };

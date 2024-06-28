@@ -22,7 +22,7 @@ export const NotificationItem = ({ unreadNotificationCount }: NotificationItemPr
             {unreadNotificationCount ? <p className="notifications-count">{unreadNotificationCount}</p> : null}
             {subMenuPosition && (
                 <DesktopNavbarSubMenu>
-                    <NotificationSubMenu unreadNotificationCount={unreadNotificationCount} />
+                    <NotificationSubMenu />
                 </DesktopNavbarSubMenu>
             )}
         </div>

@@ -1,9 +1,9 @@
 import { Alert, AlertHandler } from "@Marcin-Migdal/morti-component-library";
-import { t } from "i18next";
 import { RefObject } from "react";
 
 import { useAppDispatch } from "@hooks/redux-hooks";
 import { signOut } from "@slices/authorization-slice";
+import { useTranslation } from "react-i18next";
 
 type SignOutAlertProps = {
     alertRef: RefObject<AlertHandler>;
@@ -11,6 +11,7 @@ type SignOutAlertProps = {
 };
 
 export const SignOutAlert = ({ alertRef, onAction }: SignOutAlertProps) => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
 
     const handleSignOut = () => {
@@ -28,6 +29,8 @@ export const SignOutAlert = ({ alertRef, onAction }: SignOutAlertProps) => {
             ref={alertRef}
             header={{ header: t("Sign out") }}
             footer={{
+                confirmBtnText: t("Sign out"),
+                declineBtnText: t("Close"),
                 onConfirmBtnClick: handleSignOut,
                 onDeclineBtnClick: handleClose,
             }}

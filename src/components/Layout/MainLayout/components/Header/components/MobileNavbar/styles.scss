@@ -1,0 +1,77 @@
+.header {
+    .mobile-buttons-container {
+        display: flex;
+        margin-left: auto;
+
+        .open-notifications-btn,
+        .open-menu-btn {
+            position: relative;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            height: 100%;
+            aspect-ratio: 1 / 1;
+            transition: 0.15s;
+
+            svg {
+                height: 50%;
+                margin: unset;
+                color: var(--white);
+            }
+
+            &:hover {
+                background-color: var(--primary-color_600);
+            }
+        }
+    }
+
+    .open-notifications-btn {
+        margin-left: auto;
+
+        .notifications-count {
+            top: 0.25rem;
+            right: 0.75rem;
+            position: absolute;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            height: 1rem;
+            width: 1rem;
+            line-height: 0.85rem;
+            font-size: 0.85rem;
+
+            background-color: var(--failure-light-color);
+            color: var(--white);
+            border-radius: 100%;
+        }
+    }
+}
+
+.mobile-notifications,
+.mobile-menu {
+    --mobile-menu-height: calc(100% - var(--header-height));
+
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+
+    height: var(--mobile-menu-height);
+    width: 100vw;
+    background-color: var(--dark-grey_350);
+
+    transition: 0.25s;
+    overflow-y: auto;
+
+    &.closing,
+    &.mounted {
+        top: calc(var(--mobile-menu-height) * -1);
+    }
+
+    &.opened {
+        top: var(--header-height);
+    }
+}

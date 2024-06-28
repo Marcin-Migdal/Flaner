@@ -271,7 +271,7 @@ export const usersApi = firestoreApi.injectEndpoints({
                     const addNotificationPayload: RawNotification = {
                         type: NotificationType.FRIEND_REQUEST_ACCEPT,
                         createdAt: new Date().getTime(),
-                        content: `${receiverUsername} has accepted your friend request`,
+                        content: `has accepted your friend request`,
                         read: false,
                         userRef: getDocumentReference<UserType>(COLLECTIONS.USERS, receiverUid),
                     };
@@ -401,11 +401,11 @@ export const usersApi = firestoreApi.injectEndpoints({
 
                                     if (!userSnap.exists()) throw new Error("Error occurred while loading unread notification");
 
-                                    const { avatarUrl, uid } = userSnap.data();
+                                    const { avatarUrl, uid, username } = userSnap.data();
 
                                     notifications.push({
                                         ...otherNotificationProperties,
-                                        receivedFrom: { avatarUrl, uid },
+                                        receivedFrom: { avatarUrl, uid, name: username },
                                     });
 
                                     break;
@@ -449,11 +449,11 @@ export const usersApi = firestoreApi.injectEndpoints({
 
                                     if (!userSnap.exists()) throw new Error("Error occurred while loading notification");
 
-                                    const { avatarUrl, uid } = userSnap.data();
+                                    const { avatarUrl, uid, username } = userSnap.data();
 
                                     notifications.push({
                                         ...otherNotificationProperties,
-                                        receivedFrom: { avatarUrl, uid },
+                                        receivedFrom: { avatarUrl, uid, name: username },
                                     });
 
                                     break;
