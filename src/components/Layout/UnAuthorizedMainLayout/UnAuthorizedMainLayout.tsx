@@ -4,7 +4,6 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { useAppSelector } from "@hooks/redux-hooks";
 import { selectAuthorization } from "@slices/authorization-slice";
 import { PATH_CONSTRANTS } from "@utils/enums";
-import { SpinnerPlaceholder } from "../../placeholders";
 
 export default function UnAuthorizedMainLayout() {
     const navigate = useNavigate();
@@ -21,7 +20,7 @@ export default function UnAuthorizedMainLayout() {
 
     return (
         <main style={{ height: "100%" }}>
-            <Suspense fallback={<SpinnerPlaceholder />}>
+            <Suspense>
                 <Outlet />
             </Suspense>
         </main>

@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { ContentWrapper, DebounceTextfield, FriendsTiles, Page, ReceivedFriendRequests } from "@components/index";
-import { useAppSelector } from "@hooks/redux-hooks";
+import { I18NameSpace, useAppSelector } from "@hooks/index";
 import { ReceivedFriendRequest, UserType } from "@services/users";
 import { selectAuthorization } from "@slices/authorization-slice";
 
@@ -17,15 +17,13 @@ import {
 
 import "../styles/friends-page-styles.scss";
 
+const nameSpace: I18NameSpace = "addFriends";
 const MyFriends = () => {
     const { t } = useTranslation();
-    const alertRef = useRef<AlertHandler>(null);
+    const alertRef = useRef<AlertHandler<UserType>>(null);
     const { authUser } = useAppSelector(selectAuthorization);
 
     const [filterValue, setFilterValue] = useState<string>("");
-
-    // TODO! Temporary solution, later add feature of, passing data to alert as openAlert argument, making it available in onConfirmBtnClick, onDeclineBtnClick
-    const [friendToDelete, setFriendToDelete] = useState<UserType | undefined>(undefined);
 
     const friendsQuery = useGetFriendsByUsernameQuery({ currentUserUid: authUser?.uid, username: filterValue }, { skip: !authUser?.uid });
     const receivedFriendRequestQuery = useGetReceivedFriendRequestQueryQuery(authUser?.uid, { skip: !authUser });
@@ -47,11 +45,10 @@ const MyFriends = () => {
     };
 
     const handleOpenAlert = (user: UserType) => {
-        alertRef.current?.openAlert();
-        setFriendToDelete(user);
+        alertRef.current?.openAlert(user);
     };
 
-    const handleDeleteFriend = async () => {
+    const handleDeleteFriend = async (friendToDelete: UserType) => {
         if (!authUser || !friendToDelete) return;
 
         await deleteFriend({
@@ -60,7 +57,6 @@ const MyFriends = () => {
         });
 
         alertRef.current?.closeAlert();
-        setFriendToDelete(undefined);
     };
 
     return (
@@ -71,18 +67,22 @@ const MyFriends = () => {
                 placeholder="Search friends"
                 labelType="left"
                 size="large"
+                nameSpace={nameSpace}
             />
             <Row>
                 <Col smFlex={1} mdFlex={7}>
-                    <ContentWrapper query={friendsQuery} placeholdersConfig={{ noData: { message: "No friends found" } }}>
-                        {({ data }) => <FriendsTiles users={data || []} message="No friends found" onDeleteFriend={handleOpenAlert} />}
+                    <ContentWrapper query={friendsQuery}>
+                        {({ data }) => (
+                            <FriendsTiles
+                                users={data || []}
+                                message={filterValue.trim().length !== 0 ? "No friends found" : "Add friends"}
+                                onDeleteFriend={handleOpenAlert}
+                            />
+                        )}
                     </ContentWrapper>
                 </Col>
                 <Col smFlex={1} mdFlex={2}>
-                    <ContentWrapper
-                        query={receivedFriendRequestQuery}
-                        placeholdersConfig={{ noData: { message: "No friend requests received" } }}
-                    >
+                    <ContentWrapper query={receivedFriendRequestQuery}>
                         {({ data }) => (
                             <ReceivedFriendRequests
                                 friendRequests={(data as any) || []}

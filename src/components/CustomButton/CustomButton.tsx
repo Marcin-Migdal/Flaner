@@ -1,11 +1,13 @@
 import { Button, IButtonProps } from "@Marcin-Migdal/morti-component-library";
 import { useTranslation } from "react-i18next";
-import React from "react";
 
-type CustomButtonPropsType = IButtonProps & { i18NameSpace?: string };
+import { I18NameSpace, useI18NameSpace } from "@hooks/index";
 
-export const CustomButton = ({ i18NameSpace, text, ...otherProps }: CustomButtonPropsType) => {
-    const { t } = useTranslation(i18NameSpace);
+type CustomButtonPropsType = IButtonProps & { nameSpace?: I18NameSpace };
 
-    return <Button {...otherProps} text={t(text)} />;
+export const CustomButton = ({ nameSpace, text, ...otherProps }: CustomButtonPropsType) => {
+    const ns = useI18NameSpace(nameSpace);
+    const { t } = useTranslation(ns);
+
+    return <Button {...otherProps} text={t(text, { ns })} />;
 };

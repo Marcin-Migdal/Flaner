@@ -1,6 +1,7 @@
 import { ReactElement } from "react";
 
 import { ErrorPlaceholderProps, NoDataPlaceholderProps, SpinnerPlaceholderProps } from "@components/index";
+import { I18NameSpace } from "@hooks/useI18NameSpace";
 import { ErrorPlaceholder, NoDataPlaceholder, SpinnerPlaceholder } from "../placeholders";
 import { UseQueryResult } from "./types";
 
@@ -20,6 +21,7 @@ type ContentWrapper<T> = {
     placeholders?: Partial<Placeholders>;
     placeholdersConfig?: PlaceholdersConfig;
     conditions?: Conditions;
+    nameSpace?: I18NameSpace;
 };
 
 type PlaceholdersConfig = {
@@ -41,6 +43,7 @@ export const ContentWrapper = <T,>({
     placeholders: customPlaceholders,
     placeholdersConfig,
     conditions: customConditions,
+    nameSpace,
 }: ContentWrapper<T>) => {
     const placeholders: Placeholders = {
         spinner: customPlaceholders?.spinner ? (
@@ -51,12 +54,12 @@ export const ContentWrapper = <T,>({
         error: customPlaceholders?.error ? (
             customPlaceholders.error
         ) : (
-            <ErrorPlaceholder {...placeholdersConfig?.common} {...placeholdersConfig?.error} />
+            <ErrorPlaceholder {...placeholdersConfig?.common} {...placeholdersConfig?.error} nameSpace={nameSpace} />
         ),
         noData: customPlaceholders?.noData ? (
             customPlaceholders.noData
         ) : (
-            <NoDataPlaceholder {...placeholdersConfig?.common} {...placeholdersConfig?.noData} />
+            <NoDataPlaceholder message="" {...placeholdersConfig?.common} {...placeholdersConfig?.noData} nameSpace={nameSpace} />
         ),
     };
 

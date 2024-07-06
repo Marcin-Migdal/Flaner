@@ -13,21 +13,13 @@ type UserTilesProps = {
     onAddFriend: (user: SearchedUserType) => void;
 };
 
-export const UserTiles = ({ users, message = "No users fund", onAddFriend }: UserTilesProps) => {
-    if (users.length === 0) return <NoDataPlaceholder message={message} />;
-
+export const UserTiles = ({ users, message = "No users found", onAddFriend }: UserTilesProps) => {
     return (
-        <div className="user-tiles-container">
-            {users.map((user) => (
-                <div key={user.uid} className="user-tile">
-                    <div className="tile-top-section">
-                        <Avatar avatarUrl={user.avatarUrl} />
-                        <h3>{user.username}</h3>
-                    </div>
-                    <CustomButton disabled={user.isFriend || user.invited} text="Invite" onClick={() => onAddFriend(user)} variant="full" />
-                </div>
-            ))}
-        </div>
+        <BaseUsersTiles users={users} message={message} nameSpace="addFriends">
+            {(user) => (
+                <CustomButton disabled={user.isFriend || user.invited} text="Invite" onClick={() => onAddFriend(user)} variant="full" />
+            )}
+        </BaseUsersTiles>
     );
 };
 
@@ -37,9 +29,9 @@ type FriendsTilesProps = {
     onDeleteFriend: (user: UserType) => void;
 };
 
-export const FriendsTiles = ({ users, message = "No friends fund", onDeleteFriend }: FriendsTilesProps) => {
+export const FriendsTiles = ({ users, message = "No friends found", onDeleteFriend }: FriendsTilesProps) => {
     return (
-        <BaseUsersTiles users={users} message={message}>
+        <BaseUsersTiles users={users} message={message} nameSpace="myFriends">
             {(user) => <CustomButton text="Delete" onClick={() => onDeleteFriend(user)} variant="full" />}
         </BaseUsersTiles>
     );
@@ -49,10 +41,11 @@ type BaseUsersTilesProps<T extends UserType | SearchedUserType> = {
     users: T[];
     message: string;
     children: (request: T) => ReactElement;
+    nameSpace: string;
 };
 
-const BaseUsersTiles = <T extends UserType | SearchedUserType>({ users, children, message }: BaseUsersTilesProps<T>) => {
-    if (users.length === 0) return <NoDataPlaceholder message={message} />;
+const BaseUsersTiles = <T extends UserType | SearchedUserType>({ users, children, message, nameSpace }: BaseUsersTilesProps<T>) => {
+    if (users.length === 0) return <NoDataPlaceholder message={message} nameSpace={nameSpace} />;
 
     return (
         <div className="user-tiles-container">

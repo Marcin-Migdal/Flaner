@@ -4,7 +4,7 @@ export enum PATH_CONSTRANTS {
     SIGN_UP = "/sign-up",
     COMMUNITY = "/community",
     GROUPS = "/community/groups",
-    SEARCH_FRIENDS = "/community/search-friends",
+    ADD_FRIENDS = "/community/add-friends",
     MY_FRIENDS = "/community/my-friends",
     PAGE_404 = "/404",
     PLANNING = "/planning",

@@ -52,26 +52,16 @@ export interface IAuthUserInitialState {
 
 //! AsyncThunks payloads
 //* SIGN IN
-export type EmailSignInPayload = ISignInState & {
-    t: TranslateFunctionType;
-};
+export type EmailSignInPayload = ISignInState;
 
 //* SIGN UP
 export type EmailSignUpPayload = ISignUpState & {
     language: LanguageTypes;
-    t: TranslateFunctionType;
-};
-
-//* SIGN OUT
-export type SignOutPayload = {
-    language: LanguageTypes;
-    t: TranslateFunctionType;
 };
 
 //* GOOGLE SIGN IN
 export type GoogleSignInPayload = {
     language: LanguageTypes;
-    t: TranslateFunctionType;
 };
 
 //! AsyncThunks error payload

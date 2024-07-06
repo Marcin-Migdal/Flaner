@@ -1,0 +1,24 @@
+{
+    "Required": "Wymagane",
+
+    "Username can only contain letters, numbers, underscores, and periods.": "Nazwa użytkownika może zawierać tylko litery, cyfry, podkreślenia i kropki.",
+    "Username must be at least 3 characters.": "Nazwa użytkownika musi mieć co najmniej 3 znaki.",
+    "Username cannot be longer than 20 characters.": "Nazwa użytkownika nie może być dłuższa niż 20 znaków.",
+
+    "Passwords must match": "Hasła muszą się zgadzać",
+    "Password must be at least 8 characters.": "Hasło musi mieć co najmniej 8 znaków.",
+    "Password cannot be longer than 30 characters.": "Hasło nie może być dłuższe niż 30 znaków.",
+    "Password must contain at least one uppercase letter.": "Hasło musi zawierać co najmniej jedną wielką literę.",
+    "Password must contain at least one lowercase letter.": "Hasło musi zawierać co najmniej jedną małą literę.",
+    "Password must contain at least one number.": "Hasło musi zawierać co najmniej jedną cyfrę.",
+    "Password must contain at least one special character.": "Hasło musi zawierać co najmniej jeden znak specjalny.",
+
+    "Username already in use": "Nazwa użytkownika jest już zajęta",
+    "Email already in use": "Adres e-mail jest już zajęty",
+    "Invalid credentials": "Nieprawidłowe dane logowania",
+    "Invalid email address": "Nieprawidłowy email",
+    "Invalid password": "Nieprawidłowe hasło",
+    "Email not found": "Nie znaleziono adresu e-mail",
+    "Access to this account has been temporarily disabled due to many failed login attempts. You can try again later.": "Dostęp do tego konta został tymczasowo zablokowany z powodu wielu nieudanych prób logowania. Możesz spróbować ponownie później.",
+    "Error has occurred, please try again": "Wystąpił błąd, spróbuj ponownie"
+}

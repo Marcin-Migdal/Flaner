@@ -4,7 +4,6 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { useAppSelector } from "@hooks/redux-hooks";
 import { selectAuthorization } from "@slices/authorization-slice";
 import { PATH_CONSTRANTS } from "@utils/enums";
-import { SpinnerPlaceholder } from "../../placeholders";
 import { Header } from "./components/Header/Header";
 
 export default function MainLayout() {
@@ -24,7 +23,7 @@ export default function MainLayout() {
         <>
             <Header />
             <main style={{ height: "calc(100% - var(--header-height))" }}>
-                <Suspense fallback={<SpinnerPlaceholder />}>
+                <Suspense>
                     <Outlet />
                 </Suspense>
             </main>

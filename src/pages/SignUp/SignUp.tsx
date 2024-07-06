@@ -13,7 +13,7 @@ import "../../commonAssets/css/auth-form.scss";
 const nameSpace: string = "auth";
 const SignUp = () => {
     const navigate = useNavigate();
-    const { t } = useTranslation([nameSpace]);
+    const { t } = useTranslation(nameSpace);
 
     const dispatch = useAppDispatch();
     const { isLoading, authFormErrors: authErrors } = useAppSelector(selectAuthorization);
@@ -47,7 +47,7 @@ const SignUp = () => {
                                 <>
                                     <CustomTextfield
                                         data-cy="username-input"
-                                        i18NameSpace={nameSpace}
+                                        nameSpace={nameSpace}
                                         label="Username"
                                         name="username"
                                         value={values.username}
@@ -58,7 +58,7 @@ const SignUp = () => {
                                     />
                                     <CustomTextfield
                                         data-cy="email-input"
-                                        i18NameSpace={nameSpace}
+                                        nameSpace={nameSpace}
                                         label="Email"
                                         name="email"
                                         value={values.email}
@@ -69,7 +69,7 @@ const SignUp = () => {
                                     />
                                     <CustomTextfield
                                         data-cy="password-input"
-                                        i18NameSpace={nameSpace}
+                                        nameSpace={nameSpace}
                                         label="Password"
                                         name="password"
                                         value={values.password}
@@ -81,7 +81,7 @@ const SignUp = () => {
                                     />
                                     <CustomTextfield
                                         data-cy="validate-password-input"
-                                        i18NameSpace={nameSpace}
+                                        nameSpace={nameSpace}
                                         label="Verify password"
                                         name="verifyPassword"
                                         value={values.verifyPassword}
@@ -93,7 +93,7 @@ const SignUp = () => {
                                     />
                                     <CustomButton
                                         data-cy="sign-up-submit-btn"
-                                        i18NameSpace={nameSpace}
+                                        nameSpace={nameSpace}
                                         text="Sign up"
                                         type="submit"
                                         variant="full"
@@ -116,7 +116,7 @@ const SignUp = () => {
                         <p>{t("Already have any account?")}</p>
                         <CustomButton
                             data-cy="go-to-sign-in-btn"
-                            i18NameSpace={nameSpace}
+                            nameSpace={nameSpace}
                             text="Sign in"
                             variant="full"
                             onClick={() => handleNavigate(PATH_CONSTRANTS.SIGN_IN)}
