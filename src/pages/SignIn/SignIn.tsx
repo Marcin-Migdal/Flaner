@@ -10,9 +10,9 @@ import { ISignInState, signInInitialValues, signInValidationSchema } from "./sig
 
 import "../../commonAssets/css/auth-form.scss";
 
-const nameSpace: string = "auth";
+const nameSpace = "auth";
 const SignIn = () => {
-    const { t, i18n } = useTranslation([nameSpace]);
+    const { t, i18n } = useTranslation(nameSpace);
     const navigate = useNavigate();
 
     const { isLoading, authFormErrors: authErrors } = useAppSelector(selectAuthorization);
@@ -47,7 +47,7 @@ const SignIn = () => {
                                 <>
                                     <CustomTextfield
                                         data-cy="email-input"
-                                        i18NameSpace={nameSpace}
+                                        nameSpace={nameSpace}
                                         label="Email"
                                         name="email"
                                         onChange={handleChange}
@@ -58,7 +58,7 @@ const SignIn = () => {
                                     />
                                     <CustomTextfield
                                         data-cy="password-input"
-                                        i18NameSpace={nameSpace}
+                                        nameSpace={nameSpace}
                                         label="Password"
                                         name="password"
                                         onChange={handleChange}
@@ -70,7 +70,7 @@ const SignIn = () => {
                                     />
                                     <CustomButton
                                         data-cy="sign-in-submit-btn"
-                                        i18NameSpace={nameSpace}
+                                        nameSpace={nameSpace}
                                         text="Sign in"
                                         type="submit"
                                         variant="full"
@@ -93,7 +93,7 @@ const SignIn = () => {
                         <p>{t("Don't have any account?")}</p>
                         <CustomButton
                             data-cy="go-to-sign-up-btn"
-                            i18NameSpace={nameSpace}
+                            nameSpace={nameSpace}
                             text="Sign up"
                             variant="full"
                             onClick={() => handleNavigate(PATH_CONSTRANTS.SIGN_UP)}

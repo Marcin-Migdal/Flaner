@@ -10,21 +10,21 @@ import {
 import { fb } from "@firebase/firebase";
 import { ISignInState } from "@pages/SignIn/sign-in-formik-config";
 import { ISignUpState } from "@pages/SignUp/sign-up-formik-config";
+import { UserType } from "@services/users";
 import { COLLECTIONS } from "@utils/enums";
 import { addCollectionDocument, getCollectionDocumentById, getRejectValue, toSerializable, validateUsername } from "@utils/helpers";
 
-import { UserType } from "@services/users";
 import * as AI from "./authorization-interfaces";
 
 // Sign in user using email and password
 export const signInWithEmail = createAsyncThunk<AI.ISerializedAuthUser, unknown, { rejectValue: AI.IFirebaseError<ISignInState> }>(
     "authorization/async/signInWithEmail",
-    async ({ email, password, t }: AI.EmailSignInPayload, { rejectWithValue }) => {
+    async ({ email, password }: AI.EmailSignInPayload, { rejectWithValue }) => {
         try {
             const { user } = await signInWithEmailAndPassword(fb.auth.auth, email, password);
             return toSerializable<AI.ISerializedAuthUser>(user);
         } catch (error) {
-            return rejectWithValue(getRejectValue(error.code, t));
+            return rejectWithValue(getRejectValue(error.code));
         }
     }
 );
@@ -36,7 +36,7 @@ export const signUpWithEmail = createAsyncThunk<
     { dispatch: any; rejectValue: AI.IFirebaseError<ISignUpState> }
 >(
     "authorization/async/signUpWithEmail",
-    async ({ email, password, username, language, t }: AI.EmailSignUpPayload, { dispatch, rejectWithValue }) => {
+    async ({ email, password, username, language }: AI.EmailSignUpPayload, { dispatch, rejectWithValue }) => {
         try {
             // Validate if user with this username exists
             await validateUsername(username);
@@ -52,7 +52,7 @@ export const signUpWithEmail = createAsyncThunk<
 
             return toSerializable<AI.ISerializedAuthUser>(user);
         } catch (error) {
-            return rejectWithValue(getRejectValue(error.code, t));
+            return rejectWithValue(getRejectValue(error.code));
         }
     }
 );
@@ -60,7 +60,7 @@ export const signUpWithEmail = createAsyncThunk<
 // Sign in user using google account
 export const signInWithGoogle = createAsyncThunk<AI.ISerializedAuthUser, unknown, { rejectValue: AI.IFirebaseError }>(
     "authorization/async/signInWithGoogle",
-    async ({ language, t }: AI.GoogleSignInPayload, { rejectWithValue }) => {
+    async ({ language }: AI.GoogleSignInPayload, { rejectWithValue }) => {
         try {
             // Sign in users
             let { user } = await signInWithPopup(fb.auth.auth, fb.auth.provider);
@@ -78,7 +78,7 @@ export const signInWithGoogle = createAsyncThunk<AI.ISerializedAuthUser, unknown
 
             return toSerializable<AI.ISerializedAuthUser>(user);
         } catch (error) {
-            return rejectWithValue(getRejectValue(error.code, t));
+            return rejectWithValue(getRejectValue(error.code));
         }
     }
 );
@@ -86,11 +86,11 @@ export const signInWithGoogle = createAsyncThunk<AI.ISerializedAuthUser, unknown
 // Sign out
 export const signOut = createAsyncThunk<Promise<void>, unknown, { rejectValue: AI.IFirebaseError }>(
     "authorization/async/signOut",
-    ({ t }: AI.SignOutPayload, { rejectWithValue }) => {
+    (params, { rejectWithValue }) => {
         try {
             return firebaseSignOut(fb.auth.auth);
         } catch (error) {
-            return rejectWithValue(getRejectValue(error.code, t));
+            return rejectWithValue(getRejectValue(error.code));
         }
     }
 );

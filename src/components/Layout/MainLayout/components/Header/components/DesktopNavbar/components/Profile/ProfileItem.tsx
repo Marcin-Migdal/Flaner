@@ -13,7 +13,7 @@ export const ProfileItem = () => {
 
     return (
         <div className="navbar-item-content">
-            {metaData.user?.avatarUrl !== undefined && <Avatar avatarUrl={metaData.user.avatarUrl} />}
+            <Avatar avatarUrl={metaData?.user?.avatarUrl} />
             {subMenuPosition && (
                 <DesktopNavbarSubMenu>
                     <ProfileSubMenu />

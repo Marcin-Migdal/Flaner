@@ -28,7 +28,7 @@ type LeftSectionProps = {
 };
 
 export const ReceivedFriendRequests = ({ friendRequests, onRequestConfirm, onRequestDecline }: ReceivedFriendRequestsProps) => {
-    if (friendRequests.length === 0) return <NoDataPlaceholder message="No friend requests received" />;
+    if (friendRequests.length === 0) return <NoDataPlaceholder message="No friend requests received" nameSpace="myFriends" />;
 
     return (
         <RequestsWrapper friendRequests={friendRequests}>
@@ -48,7 +48,7 @@ export const ReceivedFriendRequests = ({ friendRequests, onRequestConfirm, onReq
 };
 
 export const SentFriendRequests = ({ friendRequests, onRequestDelete }: SentFriendRequestsProps) => {
-    if (friendRequests.length === 0) return <NoDataPlaceholder message="No friend requests sent" />;
+    if (friendRequests.length === 0) return <NoDataPlaceholder message="No friend requests sent" nameSpace="addFriends" />;
 
     return (
         <RequestsWrapper friendRequests={friendRequests}>

@@ -30,7 +30,7 @@ export const authErrors: IErrorObj = {
         fieldNames: "email",
     },
     "auth/wrong-password": {
-        message: "Wrong password",
+        message: "Invalid password",
         code: "auth/wrong-password",
         fieldNames: "password",
     },
@@ -45,7 +45,7 @@ export const authErrors: IErrorObj = {
         fieldNames: "email",
     },
     "auth/invalid-email": {
-        message: "Invalid email",
+        message: "Invalid email address",
         code: "auth/invalid-email",
         fieldNames: "email",
     },

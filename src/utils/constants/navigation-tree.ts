@@ -32,9 +32,9 @@ export const navigationTree: NavigationNode[] = [
         icon: ["fas", "person"],
         subItems: [
             {
-                text: "Search friends",
-                path: PATH_CONSTRANTS.SEARCH_FRIENDS,
-                icon: ["fas", "magnifying-glass"],
+                text: "Add friends",
+                path: PATH_CONSTRANTS.ADD_FRIENDS,
+                icon: ["fas", "plus"],
             },
             {
                 text: "My friends",

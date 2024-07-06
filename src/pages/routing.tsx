@@ -10,7 +10,7 @@ const SignInPage = React.lazy(() => import("./SignIn"));
 const SignUpPage = React.lazy(() => import("./SignUp"));
 
 const CommunityPage = React.lazy(() => import("./PageTilesView"));
-const SearchUsersPage = React.lazy(() => import("./Community/SearchUsers"));
+const AddFriendsPage = React.lazy(() => import("./Community/AddFriends"));
 const MyFriendsPage = React.lazy(() => import("./Community/MyFriends"));
 const GroupsPage = React.lazy(() => import("./Community/Groups"));
 
@@ -32,7 +32,7 @@ const authorizedRouting: RouteObject[] = [
 
     //! Community
     { path: PATH_CONSTRANTS.COMMUNITY, element: <CommunityPage /> },
-    { path: PATH_CONSTRANTS.SEARCH_FRIENDS, element: <SearchUsersPage /> },
+    { path: PATH_CONSTRANTS.ADD_FRIENDS, element: <AddFriendsPage /> },
     { path: PATH_CONSTRANTS.MY_FRIENDS, element: <MyFriendsPage /> },
     { path: PATH_CONSTRANTS.GROUPS, element: <GroupsPage /> },
 

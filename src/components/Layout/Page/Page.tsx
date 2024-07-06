@@ -15,7 +15,7 @@ type PageProps = {
 };
 
 export const Page = ({ children, style = {}, ...other }: PropsWithChildren<PageProps>) => {
-    const classNames: string = getClassed(other);
+    const classNames: string = getClasses(other);
 
     return (
         <div style={style} className={classNames}>
@@ -24,7 +24,7 @@ export const Page = ({ children, style = {}, ...other }: PropsWithChildren<PageP
     );
 };
 
-const getClassed = ({ className, ...other }: PageProps): string => {
+const getClasses = ({ className, ...other }: PageProps): string => {
     let classNames: string = "page";
 
     Object.entries(other).forEach(([key, value]) => {

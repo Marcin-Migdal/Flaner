@@ -7,29 +7,22 @@ import { MobileNavbar } from "./components/MobileNavbar/MobileNavbar";
 
 import "./styles.scss";
 
-//* LIB 1
-// TODO! Temporary solution, later add feature of, passing data to alert as openAlert argument, making it available in onConfirmBtnClick, onDeclineBtnClick
-// TODO! figure out how to handle Error message translation
-
-//* Flaner 2
-// TODO! MyFriends => implementing new feature from lib Alert component, passing friendToDelete in openAlert function, deleting friendToDelete useState
-// TODO! add error translations
-
-// TODO! Separate translation from common file
-//?          prepare components like ContentWrapper to take prop i18NameSpace like CustomButton
-//?          create files for separate functionality/app translations, move translations to them
-
+//* Flaner 3
 // TODO! email validation on email sign-up
 
+//* Flaner 4
 // TODO! very basic settings functionality
 //?          changing theme color
 //?          changing language
 
 //* LIB 2
+// TODO! export files refactor
 // TODO! move navbar component used in header to lib
 
-//* Flaner 3
+//* Flaner 5
 // TODO! Implementing Products page
+
+//* Flaner 6
 // TODO! Implementing Shopping page
 
 export const Header = () => {
