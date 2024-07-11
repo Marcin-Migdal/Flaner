@@ -25,3 +25,11 @@ span {
     margin: unset;
     color: var(--white);
 }
+
+.toasts-list {
+    z-index: 10;
+
+    .toast {
+        background-color: rgba(var(--toast-background-color), 0.3) !important;
+    }
+}

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { CustomButton, CustomTextfield, Page } from "@components/index";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
-import { selectAuthorization, setAuthError, signInWithEmail, signInWithGoogle } from "@slices/authorization-slice";
+import { LanguageTypes, selectAuthorization, setAuthError, signInWithEmail, signInWithGoogle } from "@slices/authorization-slice";
 import { PATH_CONSTRANTS } from "@utils/enums";
 import { ISignInState, signInInitialValues, signInValidationSchema } from "./sign-in-formik-config";
 
@@ -18,9 +18,9 @@ const SignIn = () => {
     const { isLoading, authFormErrors: authErrors } = useAppSelector(selectAuthorization);
     const dispatch = useAppDispatch();
 
-    const handleSubmit = async (values: ISignInState) => dispatch(signInWithEmail({ ...values, t: t }));
+    const handleSubmit = async (values: ISignInState) => dispatch(signInWithEmail({ ...values }));
 
-    const onGoogleSignIn = async () => dispatch(signInWithGoogle({ language: i18n.language, t: t }));
+    const onGoogleSignIn = async () => dispatch(signInWithGoogle({ language: i18n.language as LanguageTypes }));
 
     const handleAuthErrorChange = (authError: FormErrorsType<ISignInState>) => dispatch(setAuthError(authError));
 

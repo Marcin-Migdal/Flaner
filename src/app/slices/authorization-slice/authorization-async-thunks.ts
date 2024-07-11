@@ -2,6 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
     createUserWithEmailAndPassword,
     signOut as firebaseSignOut,
+    sendEmailVerification,
     signInWithEmailAndPassword,
     signInWithPopup,
     updateProfile,
@@ -17,50 +18,49 @@ import { addCollectionDocument, getCollectionDocumentById, getRejectValue, toSer
 import * as AI from "./authorization-interfaces";
 
 // Sign in user using email and password
-export const signInWithEmail = createAsyncThunk<AI.ISerializedAuthUser, unknown, { rejectValue: AI.IFirebaseError<ISignInState> }>(
-    "authorization/async/signInWithEmail",
-    async ({ email, password }: AI.EmailSignInPayload, { rejectWithValue }) => {
-        try {
-            const { user } = await signInWithEmailAndPassword(fb.auth.auth, email, password);
-            return toSerializable<AI.ISerializedAuthUser>(user);
-        } catch (error) {
-            return rejectWithValue(getRejectValue(error.code));
-        }
+export const signInWithEmail = createAsyncThunk<
+    AI.ISerializedAuthUser,
+    AI.EmailSignInPayload,
+    { rejectValue: AI.IFirebaseError<ISignInState> }
+>("authorization/async/signInWithEmail", async ({ email, password }, { rejectWithValue }) => {
+    try {
+        const { user } = await signInWithEmailAndPassword(fb.auth.auth, email, password);
+        return toSerializable<AI.ISerializedAuthUser>(user);
+    } catch (error) {
+        return rejectWithValue(getRejectValue(error.code));
     }
-);
+});
 
 //Sign up user using email and password
 export const signUpWithEmail = createAsyncThunk<
     AI.ISerializedAuthUser,
-    unknown,
+    AI.EmailSignUpPayload,
     { dispatch: any; rejectValue: AI.IFirebaseError<ISignUpState> }
->(
-    "authorization/async/signUpWithEmail",
-    async ({ email, password, username, language }: AI.EmailSignUpPayload, { dispatch, rejectWithValue }) => {
-        try {
-            // Validate if user with this username exists
-            await validateUsername(username);
+>("authorization/async/signUpWithEmail", async ({ email, password, username, language }, { dispatch, rejectWithValue }) => {
+    try {
+        // Validate if user with this username exists
+        await validateUsername(username);
 
-            // creates users
-            const { user } = await createUserWithEmailAndPassword(fb.auth.auth, email, password);
+        // creates users
+        const { user } = await createUserWithEmailAndPassword(fb.auth.auth, email, password);
 
-            await updateProfile(user, { displayName: username });
+        await sendEmailVerification(user);
+        await updateProfile(user, { displayName: username });
 
-            //creates user document in firestore db
-            const documentPayload = { uid: user.uid, username, email, avatarUrl: "", darkMode: true, language };
-            await addCollectionDocument(COLLECTIONS.USERS, user.uid, documentPayload);
+        //creates user document in firestore db
+        const documentPayload = { uid: user.uid, username, email, avatarUrl: "", darkMode: true, language };
+        await addCollectionDocument(COLLECTIONS.USERS, user.uid, documentPayload);
 
-            return toSerializable<AI.ISerializedAuthUser>(user);
-        } catch (error) {
-            return rejectWithValue(getRejectValue(error.code));
-        }
+        return toSerializable<AI.ISerializedAuthUser>(user);
+    } catch (error) {
+        return rejectWithValue(getRejectValue(error.code));
     }
-);
+});
 
 // Sign in user using google account
-export const signInWithGoogle = createAsyncThunk<AI.ISerializedAuthUser, unknown, { rejectValue: AI.IFirebaseError }>(
+export const signInWithGoogle = createAsyncThunk<AI.ISerializedAuthUser, AI.GoogleSignInPayload, { rejectValue: AI.IFirebaseError }>(
     "authorization/async/signInWithGoogle",
-    async ({ language }: AI.GoogleSignInPayload, { rejectWithValue }) => {
+    async ({ language }, { rejectWithValue }) => {
         try {
             // Sign in users
             let { user } = await signInWithPopup(fb.auth.auth, fb.auth.provider);
@@ -84,9 +84,9 @@ export const signInWithGoogle = createAsyncThunk<AI.ISerializedAuthUser, unknown
 );
 
 // Sign out
-export const signOut = createAsyncThunk<Promise<void>, unknown, { rejectValue: AI.IFirebaseError }>(
+export const signOut = createAsyncThunk<Promise<void>, undefined, { rejectValue: AI.IFirebaseError }>(
     "authorization/async/signOut",
-    (params, { rejectWithValue }) => {
+    (_params, { rejectWithValue }) => {
         try {
             return firebaseSignOut(fb.auth.auth);
         } catch (error) {

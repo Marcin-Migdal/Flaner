@@ -15,7 +15,7 @@ export const SignOutAlert = ({ alertRef, onAction }: SignOutAlertProps) => {
     const dispatch = useAppDispatch();
 
     const handleSignOut = () => {
-        dispatch(signOut({ t: t }));
+        dispatch(signOut());
         onAction && onAction();
     };
 
