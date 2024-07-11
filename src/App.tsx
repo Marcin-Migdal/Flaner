@@ -8,7 +8,7 @@ import { fb } from "@firebase/firebase";
 import { useAppDispatch } from "@hooks/redux-hooks";
 import router from "@pages/routing";
 import { UserType } from "@services/users";
-import { ISerializedAuthUser, addToast, setAuthUser, setToastHandler, signOut } from "@slices/index";
+import { ISerializedAuthUser, addToast, setAuthUser, setToastHandler } from "@slices/index";
 import { COLLECTIONS } from "@utils/enums";
 import { getCollectionDocumentById, retryDocumentRequest, toSerializable } from "@utils/helpers";
 
@@ -31,8 +31,6 @@ function App() {
             }
 
             if (!user.emailVerified) {
-                dispatch(signOut());
-                dispatch(addToast({ type: "information", message: "To sign in, verify your email address" }));
                 return;
             }
 

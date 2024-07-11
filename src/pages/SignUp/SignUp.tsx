@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { CustomButton, CustomTextfield, Page } from "@components/index";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
-import { selectAuthorization, setAuthError, signInWithGoogle, signUpWithEmail } from "@slices/index";
+import { addToast, selectAuthorization, setAuthError, signInWithGoogle, signOut, signUpWithEmail } from "@slices/index";
 import { PATH_CONSTRANTS } from "@utils/enums";
 import { ISignUpState, signUpInitialValues, signUpValidationSchema } from "./sign-up-formik-config";
 
@@ -22,7 +22,11 @@ const SignUp = () => {
         dispatch(signUpWithEmail({ ...values, language: "pl", t: t }))
             .unwrap()
             .then((user) => {
-                if (!user.emailVerified) navigate(PATH_CONSTRANTS.SIGN_IN);
+                if (!user.emailVerified) {
+                    dispatch(addToast({ type: "information", message: "To sign in, verify your email address" }));
+                    dispatch(signOut());
+                    navigate(PATH_CONSTRANTS.SIGN_IN);
+                }
             });
     };
 
