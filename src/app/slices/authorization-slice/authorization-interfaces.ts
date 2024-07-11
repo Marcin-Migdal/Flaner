@@ -69,4 +69,4 @@ export type IFirebaseError<T = unknown> = { code: string; message: string; formE
 
 //? Additional types
 export type TranslateFunctionType = TFunction<[string, string], undefined>;
-type LanguageTypes = "pl" | "en";
+export type LanguageTypes = "pl" | "en";

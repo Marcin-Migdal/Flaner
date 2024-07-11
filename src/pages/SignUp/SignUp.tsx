@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { CustomButton, CustomTextfield, Page } from "@components/index";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
-import { selectAuthorization, setAuthError, signInWithGoogle, signUpWithEmail } from "@slices/authorization-slice";
+import { addToast, selectAuthorization, setAuthError, signInWithGoogle, signOut, signUpWithEmail } from "@slices/index";
 import { PATH_CONSTRANTS } from "@utils/enums";
 import { ISignUpState, signUpInitialValues, signUpValidationSchema } from "./sign-up-formik-config";
 
@@ -18,9 +18,19 @@ const SignUp = () => {
     const dispatch = useAppDispatch();
     const { isLoading, authFormErrors: authErrors } = useAppSelector(selectAuthorization);
 
-    const handleSubmit = async (values) => dispatch(signUpWithEmail({ ...values, language: "pl", t: t }));
+    const handleSubmit = async (values) => {
+        dispatch(signUpWithEmail({ ...values, language: "pl", t: t }))
+            .unwrap()
+            .then((user) => {
+                if (!user.emailVerified) {
+                    dispatch(addToast({ type: "information", message: "To sign in, verify your email address" }));
+                    dispatch(signOut());
+                    navigate(PATH_CONSTRANTS.SIGN_IN);
+                }
+            });
+    };
 
-    const onGoogleSignIn = async () => dispatch(signInWithGoogle({ language: "pl", t: t }));
+    const onGoogleSignIn = async () => dispatch(signInWithGoogle({ language: "pl" }));
 
     const handleAuthErrorChange = (authErrors) => dispatch(setAuthError(authErrors));
 

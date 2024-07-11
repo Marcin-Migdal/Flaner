@@ -20,5 +20,17 @@
     "Invalid password": "Nieprawidłowe hasło",
     "Email not found": "Nie znaleziono adresu e-mail",
     "Access to this account has been temporarily disabled due to many failed login attempts. You can try again later.": "Dostęp do tego konta został tymczasowo zablokowany z powodu wielu nieudanych prób logowania. Możesz spróbować ponownie później.",
-    "Error has occurred, please try again": "Wystąpił błąd, spróbuj ponownie"
+    "Error has occurred, please try again": "Wystąpił błąd, spróbuj ponownie",
+    "Error occurred while loading user profile, please refresh page": "Wystąpił błąd podczas ładowania profilu użytkownika, odśwież stronę",
+
+    "Error occurred while loading users": "Wystąpił błąd podczas ładowania użytkowników",
+    "Error occurred while sending friend requests": "Wystąpił błąd podczas wysyłania zaproszeń do znajomych",
+    "Error occurred while loading friend requests": "Wystąpił błąd podczas ładowania zaproszeń do znajomych",
+    "Error occurred while loading friends": "Wystąpił błąd podczas ładowania znajomych",
+    "Error occurred while confirming friend request": "Wystąpił błąd podczas potwierdzania zaproszenia do znajomych",
+    "Error occurred while declining friend request": "Wystąpił błąd podczas odrzucania zaproszenia do znajomych",
+    "Error occurred while deleting a friend": "Wystąpił błąd podczas usuwania znajomego",
+    "Error occurred while loading notifications": "Wystąpił błąd podczas ładowania powiadomień",
+    "Error occurred while loading unread notifications": "Wystąpił błąd podczas ładowania nieprzeczytanych powiadomień",
+    "Error occurred while deleting a friend request": "Wystąpił błąd podczas usuwania zaproszenia do znajomych"
 }

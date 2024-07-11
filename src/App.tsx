@@ -30,6 +30,10 @@ function App() {
                 return;
             }
 
+            if (!user.emailVerified) {
+                return;
+            }
+
             // Serializing signed-in user object, before sending it to the reducer
             const serializedUser = toSerializable<ISerializedAuthUser>(user);
             const { photoURL, ...otherProperties } = serializedUser;
