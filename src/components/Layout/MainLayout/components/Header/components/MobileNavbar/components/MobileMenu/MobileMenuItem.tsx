@@ -40,9 +40,7 @@ export const MobileMenuItem = ({
         openSubMenuItem.openStatus === "opened" && handleCloseSubMenuItem();
     }, [openMenuItem?.openStatus]);
 
-    const toggleSubMenuItem = (text: string, event: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
-        event.stopPropagation();
-
+    const toggleSubMenuItem = (text: string) => {
         if (["mounted", "opened"].includes(openSubMenuItem.openStatus)) {
             handleCloseSubMenuItem();
 
@@ -70,8 +68,22 @@ export const MobileMenuItem = ({
         }, 150);
     };
 
+    const handleClick = (event: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
+        event.stopPropagation();
+
+        if (toggleMenuItem && subItems && subItems.length !== 0) {
+            toggleMenuItem(text as string, event);
+            return;
+        }
+
+        if (onClick) {
+            onClick(event);
+            closeMenuDropdown();
+        }
+    };
+
     return (
-        <li className={mobileMenuItemClasses} onClick={(event) => toggleMenuItem && toggleMenuItem(text as string, event)}>
+        <li className={mobileMenuItemClasses} onClick={(event) => handleClick(event)}>
             <div className={`mobile-menu-item-content sub-menu-${openMenuItem?.openStatus} ${hasActiveSubItems ? "has-sub-items" : ""}`}>
                 {icon && <Icon className={`icon ${icon[1]}`} icon={icon} />}
                 {text && <h2>{t(text)}</h2>}

@@ -10,6 +10,10 @@ import "./styles.scss";
 //* Flaner 3
 // TODO! mobile menu sub items onClick does not work
 
+//* LIB 1
+// TODO! color picker
+// TODO! dynamic theme functionality
+
 //* Flaner 4
 // TODO! very basic settings functionality
 //?          changing language

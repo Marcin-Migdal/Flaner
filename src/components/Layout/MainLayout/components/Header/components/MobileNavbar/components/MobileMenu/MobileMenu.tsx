@@ -1,5 +1,5 @@
 import { AlertHandler } from "@Marcin-Migdal/morti-component-library";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -41,6 +41,12 @@ export const MobileMenu = ({ authUser, menuOpen, toggleMenuDropdown }: MobileMen
         onClick: () => alertRef.current?.openAlert(),
         icon: ["fas", "sign-out"],
     };
+
+    useEffect(() => {
+        if (menuOpen === "closing") {
+            handleCloseMenuItem();
+        }
+    }, [menuOpen]);
 
     const toggleMenuItem = (text: string, event: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
         event.stopPropagation();
