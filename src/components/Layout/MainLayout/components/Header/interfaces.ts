@@ -1,9 +1,9 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
-import { CSSProperties, MouseEvent } from "react";
+import { CSSProperties } from "react";
 
 export type HeaderItem = {
     text?: string;
-    onClick?: (event: MouseEvent<HTMLLIElement>) => void;
+    onClick?: (event: React.MouseEvent<HTMLLIElement, MouseEvent>) => void;
     disabled?: boolean;
     subItems?: HeaderItem[];
     metaData?: any;
