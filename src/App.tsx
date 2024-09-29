@@ -1,4 +1,4 @@
-import { ToastHandler, ToastsContainer } from "@Marcin-Migdal/morti-component-library";
+import { ThemeWrapper, ToastHandler, ToastsContainer } from "@Marcin-Migdal/morti-component-library";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -66,10 +66,12 @@ function App() {
     }, []);
 
     return (
-        <>
-            <ToastsContainer ref={toastRef} transformContent={t} />
-            <RouterProvider router={router} />
-        </>
+        <ThemeWrapper hue={192} darkMode>
+            <>
+                <ToastsContainer ref={toastRef} transformToastsContent={t} />
+                <RouterProvider router={router} />
+            </>
+        </ThemeWrapper>
     );
 }
 

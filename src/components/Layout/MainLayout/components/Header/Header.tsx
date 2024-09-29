@@ -7,10 +7,8 @@ import { MobileNavbar } from "./components/MobileNavbar/MobileNavbar";
 
 import "./styles.scss";
 
-//* Flaner 3
-// TODO! mobile menu sub items onClick does not work
-
 //* LIB 1
+// TODO! export theme variable
 // TODO! color picker
 // TODO! dynamic theme functionality
 

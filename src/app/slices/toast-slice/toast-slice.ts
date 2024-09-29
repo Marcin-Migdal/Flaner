@@ -1,4 +1,4 @@
-import { ToastHandler, VariantTypes } from "@Marcin-Migdal/morti-component-library";
+import { ToastHandler, ToastVariant } from "@Marcin-Migdal/morti-component-library";
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
 interface IToastInitialState {
@@ -6,9 +6,9 @@ interface IToastInitialState {
 }
 
 type AddToastPayload = {
-    type: VariantTypes;
+    type: ToastVariant;
     message: string;
-    transformContent?: (content: string) => string;
+    transformToastContent?: (content: string) => string;
 };
 
 const initialState: IToastInitialState = {

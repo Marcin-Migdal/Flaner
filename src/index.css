@@ -6,6 +6,10 @@
 
 body {
     margin: unset;
+
+    #root {
+        height: 100%;
+    }
 }
 
 code {
