@@ -70,7 +70,7 @@ export const DesktopNavbarItem = ({
                 left: validatedOpenDirection === "right" ? 0 : "unset",
                 right: validatedOpenDirection === "right" ? "unset" : 0,
                 minWidth: width,
-                borderTop: "1px solid var(--white)",
+                borderTop: "1px solid var(--grey-color-000)",
                 zIndex: depth + 1,
             });
         } else {

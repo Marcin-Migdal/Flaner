@@ -22,7 +22,7 @@
         padding: 1rem;
         border-radius: var(--border-radius);
 
-        background-color: var(--dark-grey_200);
+        background-color: var(--grey-color-500);
 
         &:only-child {
             max-width: var(--min-tile-width) !important;
@@ -43,7 +43,7 @@
         .m-button {
             width: 100%;
             margin: unset;
-            color: var(--white);
+            color: var(--grey-color-000);
         }
     }
 }

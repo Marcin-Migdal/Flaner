@@ -26,24 +26,24 @@
             padding: 1rem 1rem 1.25rem 1rem;
 
             border-radius: 6px;
-            background-color: var(--primary-color_250);
+            background-color: var(--primary-color_680);
             font-weight: 600;
             font-size: 1.7rem;
             text-transform: uppercase;
 
-            color: var(--white);
+            color: var(--grey-color-000);
 
             transition: 0.1s;
 
             &:hover {
-                background-color: var(--primary-color_600) !important;
+                background-color: var(--primary-color_540);
                 transition: 0.2s;
             }
 
             &:active {
                 transform: scale(0.95);
 
-                background-color: var(--primary-color_600) !important;
+                background-color: var(--primary-color_540);
             }
 
             p {

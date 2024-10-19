@@ -7,6 +7,7 @@ import { COLLECTIONS } from "@utils/enums";
 import { firestoreApi } from "../api";
 import { getFriendRequestUid } from "./users-helpers";
 import {
+    EditUserRequest,
     Friendships,
     Notification,
     NotificationType,
@@ -21,6 +22,7 @@ import {
 import {
     addCollectionDocument,
     deleteCollectionDocument,
+    editCollectionDocument,
     getCollectionData,
     getCollectionDataWithId,
     getCollectionDocumentById,
@@ -526,6 +528,24 @@ export const usersApi = firestoreApi.injectEndpoints({
                 ];
             },
         }),
+        editUser: build.mutation<null, EditUserRequest>({
+            async queryFn({ currentUserUid, ...payload }) {
+                try {
+                    if (!currentUserUid) throw new Error("Error occurred while editing user");
+
+                    await editCollectionDocument(COLLECTIONS.USERS, currentUserUid, payload);
+
+                    return { data: null };
+                } catch (error) {
+                    if (error instanceof Error) return { error: error.message };
+                    return { error: "Error occurred while deleting a friend request" };
+                }
+            },
+            invalidatesTags: (_result, error, arg) => {
+                if (error) return [];
+                return [];
+            },
+        }),
     }),
 });
 
@@ -544,4 +564,5 @@ export const {
     useGetAllNotificationsQuery,
     useUpdateReadNotificationMutation,
     useDeleteFriendRequestMutation,
+    useEditUserMutation,
 } = usersApi;
