@@ -46,11 +46,11 @@
                 .google-sign-in-icon {
                     padding: 10px;
                     border-radius: 100%;
-                    background-color: var(--dark-grey_250);
+                    background-color: var(--grey-color-525);
                     transition: 100ms;
 
                     &:hover {
-                        background-color: var(--dark-grey_150);
+                        background-color: var(--grey-color-475);
                     }
 
                     &:active {
@@ -66,7 +66,7 @@
             justify-content: center;
             align-items: center;
 
-            background-color: var(--primary-color_200);
+            background-color: var(--primary-color_740);
 
             &.col-flex-md-1 {
                 min-height: 380px;
@@ -74,7 +74,7 @@
 
             svg {
                 font-size: 3.75rem;
-                color: var(--white);
+                color: var(--grey-color-000);
             }
 
             h2 {
@@ -90,13 +90,13 @@
                 border-radius: 16px;
                 padding: 3px 8px;
 
-                border-color: var(--white) !important;
-                background-color: var(--primary-color_200) !important;
-                color: var(--white) !important;
+                border-color: var(--grey-color-000) !important;
+                background-color: inherit;
+                color: var(--grey-color-000) !important;
 
                 &:hover {
-                    background-color: var(--white) !important;
-                    color: var(--primary-color_200) !important;
+                    background-color: var(--grey-color-000) !important;
+                    color: var(--primary-color_780) !important;
                 }
             }
         }

@@ -93,7 +93,7 @@ export const MobileMenuItem = ({
                 <ul
                     ref={subMenuRef}
                     className={`mobile-submenu-list ${openMenuItem?.openStatus} `}
-                    style={{ borderColor: depth % 2 ? "var(--white)" : "var(--primary-color_300)" }}
+                    style={{ borderColor: depth % 2 ? "var(--grey-color-000)" : "var(--primary-color_680)" }}
                 >
                     {navigationItem.subItems.map((navigationItem, index) => (
                         <MobileMenuItem

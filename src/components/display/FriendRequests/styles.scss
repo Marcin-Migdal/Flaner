@@ -16,7 +16,7 @@
         padding: 0.5rem;
         border-radius: var(--border-radius);
 
-        background-color: var(--primary-color_100);
+        background-color: var(--primary-color_780);
 
         .left-section {
             display: flex;
@@ -38,7 +38,7 @@
                 width: 34px;
                 height: 34px;
                 border-radius: 100%;
-                color: var(--white);
+                color: var(--grey-color-000);
 
                 transition: 0.2s;
 
@@ -52,14 +52,14 @@
 
                 &:hover {
                     color: var(--success-light-color);
-                    background-color: var(--white);
+                    background-color: var(--grey-color-000);
                 }
             }
 
             .decline-icon {
                 &:hover {
                     color: var(--failure-light-color);
-                    background-color: var(--white);
+                    background-color: var(--grey-color-000);
                 }
             }
         }

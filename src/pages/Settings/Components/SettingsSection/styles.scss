@@ -1,0 +1,19 @@
+.settings-section {
+    .settings-section-subtitle {
+        margin-top: 4px;
+        margin-bottom: 1rem;
+
+        color: var(--grey-color-200);
+        font-size: 14px;
+    }
+
+    hr {
+        margin: 2rem 0;
+    }
+
+    &:last-of-type {
+        hr {
+            display: none;
+        }
+    }
+}

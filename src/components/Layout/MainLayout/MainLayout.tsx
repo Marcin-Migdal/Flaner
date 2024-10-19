@@ -1,6 +1,7 @@
 import { Suspense, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 
+import { SpinnerPlaceholder } from "@components/placeholders";
 import { useAppSelector } from "@hooks/redux-hooks";
 import { selectAuthorization } from "@slices/authorization-slice";
 import { PATH_CONSTRANTS } from "@utils/enums";
@@ -18,6 +19,10 @@ export default function MainLayout() {
             navigate(PATH_CONSTRANTS.SIGN_IN);
         }
     }, [authUser, isLoading]);
+
+    if (isLoading) {
+        return <SpinnerPlaceholder />;
+    }
 
     return (
         <>

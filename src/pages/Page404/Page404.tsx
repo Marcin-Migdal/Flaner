@@ -1,10 +1,9 @@
 import { Button, Icon } from "@Marcin-Migdal/morti-component-library";
 import { useNavigate } from "react-router-dom";
-import React from "react";
 
-import { selectAuthorization } from "@slices/authorization-slice";
 import { Page, SpinnerPlaceholder } from "@components/index";
 import { useAppSelector } from "@hooks/redux-hooks";
+import { selectAuthorization } from "@slices/authorization-slice";
 import { PATH_CONSTRANTS } from "@utils/enums";
 
 import "./styles.scss";

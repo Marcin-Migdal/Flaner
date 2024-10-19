@@ -23,13 +23,11 @@ h2,
 h3,
 span {
     margin: unset;
-    color: var(--white);
+    color: var(--grey-color-000);
 }
 
-.toasts-list {
-    z-index: 10;
-
-    .toast {
-        background-color: rgba(var(--toast-background-color), 0.3) !important;
+.common-wrapper-container {
+    & > div {
+        height: 100%;
     }
 }

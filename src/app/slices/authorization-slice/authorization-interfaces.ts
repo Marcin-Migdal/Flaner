@@ -3,7 +3,7 @@ import { TFunction } from "i18next";
 
 import { ISignInState } from "@pages/SignIn/sign-in-formik-config";
 import { ISignUpState } from "@pages/SignUp/sign-up-formik-config";
-import { LanguageType } from "@services/users";
+import { LanguageType } from "i18n";
 
 interface ProviderData {
     providerId: string;
@@ -41,6 +41,7 @@ export type AuthUserConfigType = Omit<ISerializedAuthUser, "photoURL"> & {
     avatarUrl: string;
     darkMode: boolean;
     language: LanguageType;
+    themeColorHue: number;
 };
 
 //! Slice init state
@@ -56,12 +57,12 @@ export type EmailSignInPayload = ISignInState;
 
 //* SIGN UP
 export type EmailSignUpPayload = ISignUpState & {
-    language: LanguageTypes;
+    language: LanguageType;
 };
 
 //* GOOGLE SIGN IN
 export type GoogleSignInPayload = {
-    language: LanguageTypes;
+    language: LanguageType;
 };
 
 //! AsyncThunks error payload
@@ -69,4 +70,3 @@ export type IFirebaseError<T = unknown> = { code: string; message: string; formE
 
 //? Additional types
 export type TranslateFunctionType = TFunction<[string, string], undefined>;
-export type LanguageTypes = "pl" | "en";

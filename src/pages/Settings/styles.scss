@@ -1,0 +1,35 @@
+.settings-page {
+    max-width: 1000px1;
+    width: 40%;
+    min-width: 500px;
+    margin: auto;
+    padding-top: 4rem;
+
+    .language-input-row {
+        display: flex;
+        align-items: center;
+
+        .m-button {
+            margin: unset;
+            margin-left: 0.5rem;
+        }
+    }
+
+    .hue-picker-label {
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .hue-placeholder-container {
+        display: flex;
+
+        .hue-placeholder {
+            height: var(--medium-input-height);
+            border-radius: var(--border-radius);
+            aspect-ratio: 1/1;
+
+            margin-right: 0.5rem;
+            border: 4px solid white;
+        }
+    }
+}
