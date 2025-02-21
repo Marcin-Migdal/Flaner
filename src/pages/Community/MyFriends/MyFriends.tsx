@@ -62,6 +62,8 @@ const MyFriends = () => {
       friend: friendToDelete,
       currentUser: authUser,
     });
+
+    alertProps.handleClose();
   };
 
   return (

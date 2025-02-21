@@ -1,5 +1,5 @@
 .settings-page {
-  max-width: 1000px1;
+  max-width: 1000px;
   width: 40%;
   min-width: 500px;
   margin: auto;
@@ -11,7 +11,7 @@
 
     .m-button {
       margin: unset;
-      margin-left: var(--spacing-2);
+      margin-left: var(--spacing-1);
     }
   }
 
@@ -29,7 +29,7 @@
       aspect-ratio: 1/1;
 
       margin-right: var(--spacing-2);
-      border: var(--spacing-1) solid white;
+      border: var(--border-md) solid var(--grey-color-000);
     }
   }
 }

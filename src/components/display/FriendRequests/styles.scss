@@ -23,13 +23,11 @@
       align-items: center;
 
       .avatar-container {
-        --avatar-size: 45px;
         margin-right: var(--spacing-2);
       }
     }
 
-    .right-section,
-    .decline-icon {
+    .right-section {
       display: flex;
       align-items: center;
 
@@ -37,8 +35,8 @@
       .decline-icon {
         width: 2rem;
         height: 2rem;
-        border-radius: 100%;
-        color: var(--white);
+        border-radius: var(--radius-full);
+        color: var(--primary-text-color);
 
         transition: var(--transition-duration-normal);
 
@@ -52,14 +50,14 @@
 
         &:hover {
           color: var(--success-light-color);
-          background-color: var(--white);
+          background-color: var(--primary-text-color);
         }
       }
 
       .decline-icon {
         &:hover {
           color: var(--failure-light-color);
-          background-color: var(--white);
+          background-color: var(--primary-text-color);
         }
       }
     }
