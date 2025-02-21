@@ -1,34 +1,34 @@
-import { ToastHandler, VariantTypes } from "@Marcin-Migdal/morti-component-library";
+import { ToastHandler, ToastVariant } from "@marcin-migdal/m-component-library";
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
 interface IToastInitialState {
-    toastHandler: ToastHandler | null;
+  toastHandler: ToastHandler | null;
 }
 
 type AddToastPayload = {
-    type: VariantTypes;
-    message: string;
-    transformContent?: (content: string) => string;
+  type: ToastVariant;
+  message: string;
+  transformContent?: (content: string) => string;
 };
 
 const initialState: IToastInitialState = {
-    toastHandler: null,
+  toastHandler: null,
 };
 
 const toastSlice = createSlice({
-    name: "toast",
-    initialState: initialState,
-    reducers: {
-        setToastHandler: (state, action: PayloadAction<ToastHandler | null>) => {
-            state.toastHandler = action.payload;
-        },
-        addToast: (state, action: PayloadAction<AddToastPayload>) => {
-            state.toastHandler?.addToast(action.payload);
-        },
-        clearToasts: (state) => {
-            state.toastHandler?.clear();
-        },
+  name: "toast",
+  initialState: initialState,
+  reducers: {
+    setToastHandler: (state, action: PayloadAction<ToastHandler | null>) => {
+      state.toastHandler = action.payload;
     },
+    addToast: (state, action: PayloadAction<AddToastPayload>) => {
+      state.toastHandler?.addToast(action.payload);
+    },
+    clearToasts: (state) => {
+      state.toastHandler?.clear();
+    },
+  },
 });
 
 // Action creators are generated for each function in reducers object

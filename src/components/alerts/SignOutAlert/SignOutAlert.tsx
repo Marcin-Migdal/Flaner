@@ -1,41 +1,35 @@
-import { Alert, AlertHandler } from "@Marcin-Migdal/morti-component-library";
-import { RefObject } from "react";
+import { Alert, AlertOpenState } from "@marcin-migdal/m-component-library";
 
 import { useAppDispatch } from "@hooks/redux-hooks";
 import { signOut } from "@slices/authorization-slice";
 import { useTranslation } from "react-i18next";
 
 type SignOutAlertProps = {
-    alertRef: RefObject<AlertHandler>;
-    onAction?: () => void;
+  onAction?: () => void;
+  alertOpen: AlertOpenState;
+  handleClose: () => void;
 };
 
-export const SignOutAlert = ({ alertRef, onAction }: SignOutAlertProps) => {
-    const { t } = useTranslation();
-    const dispatch = useAppDispatch();
+export const SignOutAlert = ({ onAction, alertOpen, handleClose }: SignOutAlertProps) => {
+  const { t } = useTranslation();
+  const dispatch = useAppDispatch();
 
-    const handleSignOut = () => {
-        dispatch(signOut());
-        onAction && onAction();
-    };
+  const handleSignOut = () => {
+    dispatch(signOut());
+    onAction && onAction();
+  };
 
-    const handleClose = () => {
-        alertRef.current?.closeAlert();
-        onAction && onAction();
-    };
-
-    return (
-        <Alert
-            ref={alertRef}
-            header={{ header: t("Sign out") }}
-            footer={{
-                confirmBtnText: t("Sign out"),
-                declineBtnText: t("Close"),
-                onConfirmBtnClick: handleSignOut,
-                onDeclineBtnClick: handleClose,
-            }}
-        >
-            <p>{t("Are you sure, you want to sing out?")}</p>
-        </Alert>
-    );
+  return (
+    <Alert
+      alertOpen={alertOpen}
+      handleClose={handleClose}
+      header={t("Sign out")}
+      confirmBtnText={t("Sign out")}
+      declineBtnText={t("Close")}
+      onConfirm={handleSignOut}
+      onDecline={onAction}
+    >
+      <p>{t("Are you sure, you want to sing out?")}</p>
+    </Alert>
+  );
 };

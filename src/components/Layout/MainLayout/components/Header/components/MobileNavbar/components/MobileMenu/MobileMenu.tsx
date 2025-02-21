@@ -1,5 +1,5 @@
-import { AlertHandler } from "@Marcin-Migdal/morti-component-library";
-import { useEffect, useRef, useState } from "react";
+import { useAlert } from "@marcin-migdal/m-component-library";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -16,101 +16,102 @@ import { MobileMenuItem, OpenMenuConfig } from "./MobileMenuItem";
 import "./styles.scss";
 
 type MobileMenuProps = {
-    authUser: AuthUserConfigType | null;
-    menuOpen: MobileHeaderMenuOpenType;
-    toggleMenuDropdown: () => void;
+  authUser: AuthUserConfigType | null;
+  menuOpen: MobileHeaderMenuOpenType;
+  toggleMenuDropdown: () => void;
 };
 
 export const MobileMenu = ({ authUser, menuOpen, toggleMenuDropdown }: MobileMenuProps) => {
-    const navigate = useNavigate();
-    const alertRef = useRef<AlertHandler>(null);
-    const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
 
-    const [openMenuItem, setOpenMenuItem] = useState<OpenMenuConfig>({ openStatus: "closed", item: undefined });
+  const [handleOpenAlert, alertProps] = useAlert();
 
-    const navigationItems: HeaderItem[] = mapNavigationTree(t, navigate, navigationTree);
+  const [openMenuItem, setOpenMenuItem] = useState<OpenMenuConfig>({ openStatus: "closed", item: undefined });
 
-    const settingsItem: HeaderItem = {
-        text: "Settings",
-        onClick: () => navigate(PATH_CONSTRANTS.SETTINGS),
-        icon: ["fas", "gear"],
-    };
+  const navigationItems: HeaderItem[] = mapNavigationTree(t, navigate, navigationTree);
 
-    const signOutItem: HeaderItem = {
-        text: "Sign out",
-        onClick: () => alertRef.current?.openAlert(),
-        icon: ["fas", "sign-out"],
-    };
+  const settingsItem: HeaderItem = {
+    text: "Settings",
+    onClick: () => navigate(PATH_CONSTRANTS.SETTINGS),
+    icon: ["fas", "gear"],
+  };
 
-    useEffect(() => {
-        if (menuOpen === "closing") {
-            handleCloseMenuItem();
-        }
-    }, [menuOpen]);
+  const signOutItem: HeaderItem = {
+    text: "Sign out",
+    onClick: handleOpenAlert,
+    icon: ["fas", "sign-out"],
+  };
 
-    const toggleMenuItem = (text: string, event: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
-        event.stopPropagation();
+  useEffect(() => {
+    if (menuOpen === "closing") {
+      handleCloseMenuItem();
+    }
+  }, [menuOpen]);
 
-        if (["mounted", "opened"].includes(openMenuItem.openStatus)) {
-            handleCloseMenuItem();
+  const toggleMenuItem = (text: string, event: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
+    event.stopPropagation();
 
-            if (openMenuItem.item !== text) {
-                setTimeout(() => {
-                    handleOpenMenuItem(text);
-                }, 150);
-            }
+    if (["mounted", "opened"].includes(openMenuItem.openStatus)) {
+      handleCloseMenuItem();
 
-            return;
-        }
-
-        handleOpenMenuItem(text);
-    };
-
-    const handleCloseMenuItem = () => {
-        setOpenMenuItem({ openStatus: "closing", item: openMenuItem.item });
-
+      if (openMenuItem.item !== text) {
         setTimeout(() => {
-            setOpenMenuItem({ openStatus: "closed", item: undefined });
+          handleOpenMenuItem(text);
         }, 150);
-    };
+      }
 
-    const handleOpenMenuItem = (text: string) => {
-        setOpenMenuItem({ openStatus: "mounted", item: text });
+      return;
+    }
 
-        setTimeout(() => {
-            setOpenMenuItem({ openStatus: "opened", item: text });
-        }, 150);
-    };
+    handleOpenMenuItem(text);
+  };
 
-    return (
-        <>
-            {menuOpen !== "closed" &&
-                createPortal(
-                    <div className={`mobile-menu ${menuOpen}`}>
-                        <ul className="mobile-menu-list">
-                            <li className="user-item">
-                                <Avatar avatarUrl={authUser?.avatarUrl} />
-                                <h2>{authUser?.displayName}</h2>
-                            </li>
+  const handleCloseMenuItem = () => {
+    setOpenMenuItem({ openStatus: "closing", item: openMenuItem.item });
 
-                            {navigationItems.map((navigationItem, index) => (
-                                <MobileMenuItem
-                                    key={index}
-                                    navigationItem={navigationItem}
-                                    closeMenuDropdown={toggleMenuDropdown}
-                                    itemPath={navigationItem.text as string}
-                                    toggleMenuItem={toggleMenuItem}
-                                    openMenuItem={openMenuItem}
-                                    depth={1}
-                                />
-                            ))}
-                            <MobileMenuItem depth={1} navigationItem={settingsItem} closeMenuDropdown={toggleMenuDropdown} />
-                            <MobileMenuItem depth={1} navigationItem={signOutItem} closeMenuDropdown={() => {}} />
-                        </ul>
-                        <SignOutAlert alertRef={alertRef} onAction={toggleMenuDropdown} />
-                    </div>,
-                    document.querySelector(".common-wrapper-container") as Element
-                )}
-        </>
-    );
+    setTimeout(() => {
+      setOpenMenuItem({ openStatus: "closed", item: undefined });
+    }, 150);
+  };
+
+  const handleOpenMenuItem = (text: string) => {
+    setOpenMenuItem({ openStatus: "mounted", item: text });
+
+    setTimeout(() => {
+      setOpenMenuItem({ openStatus: "opened", item: text });
+    }, 150);
+  };
+
+  return (
+    <>
+      {menuOpen !== "closed" &&
+        createPortal(
+          <div className={`mobile-menu ${menuOpen}`}>
+            <ul className="mobile-menu-list">
+              <li className="user-item">
+                <Avatar avatarUrl={authUser?.avatarUrl} />
+                <h2>{authUser?.displayName}</h2>
+              </li>
+
+              {navigationItems.map((navigationItem, index) => (
+                <MobileMenuItem
+                  key={index}
+                  navigationItem={navigationItem}
+                  closeMenuDropdown={toggleMenuDropdown}
+                  itemPath={navigationItem.text as string}
+                  toggleMenuItem={toggleMenuItem}
+                  openMenuItem={openMenuItem}
+                  depth={1}
+                />
+              ))}
+              <MobileMenuItem depth={1} navigationItem={settingsItem} closeMenuDropdown={toggleMenuDropdown} />
+              <MobileMenuItem depth={1} navigationItem={signOutItem} closeMenuDropdown={() => {}} />
+            </ul>
+            <SignOutAlert {...alertProps} onAction={toggleMenuDropdown} />
+          </div>,
+          document.querySelector(".common-wrapper-container") as Element
+        )}
+    </>
+  );
 };

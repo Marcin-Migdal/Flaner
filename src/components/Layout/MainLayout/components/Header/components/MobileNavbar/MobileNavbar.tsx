@@ -1,4 +1,4 @@
-import { Icon } from "@Marcin-Migdal/morti-component-library";
+import { Icon } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 
 import { useAppSelector } from "@hooks/redux-hooks";
@@ -13,102 +13,105 @@ import "./styles.scss";
 export type NotificationsTabs = "unread-notification" | "all-notification";
 
 export const MobileNavbar = () => {
-    const { authUser } = useAppSelector(selectAuthorization);
+  const { authUser } = useAppSelector(selectAuthorization);
 
-    const [menuOpen, setMenuOpen] = useState<MobileHeaderMenuOpenType>("closed");
-    const [notificationsOpen, setNotificationsOpen] = useState<MobileHeaderMenuOpenType>("closed");
-    const [selectedNotificationTab, setSelectedNotificationTab] = useState<NotificationsTabs>("unread-notification");
+  const [menuOpen, setMenuOpen] = useState<MobileHeaderMenuOpenType>("closed");
+  const [notificationsOpen, setNotificationsOpen] = useState<MobileHeaderMenuOpenType>("closed");
+  const [selectedNotificationTab, setSelectedNotificationTab] = useState<NotificationsTabs>("unread-notification");
 
-    const { data: unreadNotificationCount } = useGetUnreadNotificationsCountQuery({ currentUserUid: authUser?.uid }, { skip: !authUser });
-    const [updateReadNotification] = useUpdateReadNotificationMutation();
+  const { data: unreadNotificationCount } = useGetUnreadNotificationsCountQuery(
+    { currentUserUid: authUser?.uid },
+    { skip: !authUser }
+  );
+  const [updateReadNotification] = useUpdateReadNotificationMutation();
 
-    const toggleMenuDropdown = () => {
-        if (["mounted", "opened"].includes(menuOpen)) {
-            closeMenuDropdown();
+  const toggleMenuDropdown = () => {
+    if (["mounted", "opened"].includes(menuOpen)) {
+      closeMenuDropdown();
 
-            return;
-        }
+      return;
+    }
 
-        if (["mounted", "opened"].includes(notificationsOpen)) {
-            closeNotificationsDropdown();
-        }
+    if (["mounted", "opened"].includes(notificationsOpen)) {
+      closeNotificationsDropdown();
+    }
 
-        setMenuOpen("mounted");
+    setMenuOpen("mounted");
 
-        setTimeout(() => {
-            setMenuOpen("opened");
-        }, 0);
-    };
+    setTimeout(() => {
+      setMenuOpen("opened");
+    }, 0);
+  };
 
-    const closeMenuDropdown = () => {
-        setMenuOpen("closing");
+  const closeMenuDropdown = () => {
+    setMenuOpen("closing");
 
-        setTimeout(() => {
-            setMenuOpen("closed");
-        }, 150);
+    setTimeout(() => {
+      setMenuOpen("closed");
+    }, 150);
 
-        return;
-    };
+    return;
+  };
 
-    const toggleNotificationsDropdown = () => {
-        if (["mounted", "opened"].includes(notificationsOpen)) {
-            closeNotificationsDropdown();
-            setSelectedNotificationTab("unread-notification");
+  const toggleNotificationsDropdown = () => {
+    if (["mounted", "opened"].includes(notificationsOpen)) {
+      closeNotificationsDropdown();
+      setSelectedNotificationTab("unread-notification");
 
-            if (authUser && unreadNotificationCount) {
-                updateReadNotification({ currentUserUid: authUser.uid });
-            }
+      if (authUser && unreadNotificationCount) {
+        updateReadNotification({ currentUserUid: authUser.uid });
+      }
 
-            return;
-        }
+      return;
+    }
 
-        if (["mounted", "opened"].includes(menuOpen)) {
-            closeMenuDropdown();
-        }
+    if (["mounted", "opened"].includes(menuOpen)) {
+      closeMenuDropdown();
+    }
 
-        setNotificationsOpen("mounted");
+    setNotificationsOpen("mounted");
 
-        setTimeout(() => {
-            setNotificationsOpen("opened");
-        }, 0);
-    };
+    setTimeout(() => {
+      setNotificationsOpen("opened");
+    }, 0);
+  };
 
-    const closeNotificationsDropdown = () => {
-        setNotificationsOpen("closing");
+  const closeNotificationsDropdown = () => {
+    setNotificationsOpen("closing");
 
-        setTimeout(() => {
-            setNotificationsOpen("closed");
-        }, 150);
-    };
+    setTimeout(() => {
+      setNotificationsOpen("closed");
+    }, 150);
+  };
 
-    const handleChangeTab = (tab: NotificationsTabs) => {
-        selectedNotificationTab !== tab && setSelectedNotificationTab(tab);
-    };
+  const handleChangeTab = (tab: NotificationsTabs) => {
+    selectedNotificationTab !== tab && setSelectedNotificationTab(tab);
+  };
 
-    return (
-        <>
-            <div className="mobile-buttons-container">
-                <div className="open-notifications-btn" onClick={toggleNotificationsDropdown}>
-                    {notificationsOpen !== "opened" ? <Icon icon={["fas", "bell"]} /> : <Icon icon="close" />}
+  return (
+    <>
+      <div className="mobile-buttons-container">
+        <div className="open-notifications-btn" onClick={toggleNotificationsDropdown}>
+          {notificationsOpen !== "opened" ? <Icon icon={["fas", "bell"]} /> : <Icon icon="close" />}
 
-                    {unreadNotificationCount && notificationsOpen === "closed" ? (
-                        <p className="notifications-count">{unreadNotificationCount}</p>
-                    ) : null}
-                </div>
+          {unreadNotificationCount && notificationsOpen === "closed" ? (
+            <p className="notifications-count">{unreadNotificationCount}</p>
+          ) : null}
+        </div>
 
-                <div className="open-menu-btn" onClick={toggleMenuDropdown}>
-                    {menuOpen !== "opened" ? <Icon icon="bars" /> : <Icon icon="close" />}
-                </div>
-            </div>
+        <div className="open-menu-btn" onClick={toggleMenuDropdown}>
+          {menuOpen !== "opened" ? <Icon icon="bars" /> : <Icon icon="close" />}
+        </div>
+      </div>
 
-            <MobileNotifications
-                notificationsOpen={notificationsOpen}
-                selectedNotificationTab={selectedNotificationTab}
-                onChangeTab={handleChangeTab}
-                authUser={authUser}
-            />
+      <MobileNotifications
+        notificationsOpen={notificationsOpen}
+        selectedNotificationTab={selectedNotificationTab}
+        onChangeTab={handleChangeTab}
+        authUser={authUser}
+      />
 
-            <MobileMenu authUser={authUser} menuOpen={menuOpen} toggleMenuDropdown={toggleMenuDropdown} />
-        </>
-    );
+      <MobileMenu authUser={authUser} menuOpen={menuOpen} toggleMenuDropdown={toggleMenuDropdown} />
+    </>
+  );
 };
