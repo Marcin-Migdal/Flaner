@@ -18,7 +18,7 @@
             svg {
                 height: 50%;
                 margin: unset;
-                color: var(--white);
+                color: var(--grey-color-000);
             }
 
             &:hover {
@@ -45,7 +45,7 @@
             font-size: 0.85rem;
 
             background-color: var(--failure-light-color);
-            color: var(--white);
+            color: var(--grey-color-000);
             border-radius: 100%;
         }
     }
@@ -61,7 +61,7 @@
 
     height: var(--mobile-menu-height);
     width: 100vw;
-    background-color: var(--dark-grey_350);
+    background-color: var(--grey-color-575);
 
     transition: 0.25s;
     overflow-y: auto;

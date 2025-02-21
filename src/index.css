@@ -27,3 +27,9 @@ span {
 
   color: var(--primary-text-color);
 }
+
+.common-wrapper-container {
+  & > div {
+    height: 100%;
+  }
+}

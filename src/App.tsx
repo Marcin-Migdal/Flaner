@@ -1,14 +1,15 @@
-import { ToastHandler, ToastsContainer } from "@marcin-migdal/m-component-library";
+import { ThemeWrapper, ToastHandler, ToastsContainer } from "@marcin-migdal/m-component-library";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { RouterProvider } from "react-router-dom";
 
 import { fb } from "@firebase/firebase";
-import { useAppDispatch } from "@hooks/redux-hooks";
+import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
 import router from "@pages/routing";
 import { UserType } from "@services/users";
-import { ISerializedAuthUser, addToast, setAuthUser, setToastHandler } from "@slices/index";
+import { ISerializedAuthUser, addToast, selectAuthorization, setAuthUser, setToastHandler } from "@slices/index";
+import { defaultThemeHue } from "@utils/constants/theme-hue";
 import { COLLECTIONS } from "@utils/enums";
 import { getCollectionDocumentById, retryDocumentRequest, toSerializable } from "@utils/helpers";
 
@@ -23,10 +24,11 @@ import { getCollectionDocumentById, retryDocumentRequest, toSerializable } from 
 
 function App() {
   const dispatch = useAppDispatch();
+  const { authUser } = useAppSelector(selectAuthorization);
 
   const toastRef = useRef<ToastHandler>(null);
 
-  const { t } = useTranslation("errors");
+  const { t, i18n } = useTranslation("errors");
 
   useEffect(() => {
     if (toastRef.current) dispatch(setToastHandler(toastRef.current));
@@ -56,12 +58,15 @@ function App() {
 
         const userConfig = userResponse.data();
 
+        userConfig.language !== i18n.language && i18n.changeLanguage(userConfig.language);
+
         dispatch(
           setAuthUser({
             ...otherProperties,
-            avatarUrl: userConfig?.avatarUrl || "",
-            language: userConfig?.language || "en",
-            darkMode: userConfig?.darkMode || true,
+            avatarUrl: userConfig.avatarUrl,
+            language: userConfig.language,
+            darkMode: userConfig.darkMode,
+            themeColorHue: userConfig.themeColorHue,
           })
         );
       } catch (error) {
@@ -75,10 +80,12 @@ function App() {
   }, []);
 
   return (
-    <>
-      <ToastsContainer ref={toastRef} transformToastsContent={t} />
-      <RouterProvider router={router} />
-    </>
+    <ThemeWrapper hue={authUser?.themeColorHue || defaultThemeHue} darkMode>
+      <>
+        <ToastsContainer ref={toastRef} transformToastsContent={t} />
+        <RouterProvider router={router} />
+      </>
+    </ThemeWrapper>
   );
 }
 

@@ -6,31 +6,32 @@ import { CustomButton, CustomTextfield, Page } from "@components/index";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
 import { addToast, selectAuthorization, setAuthError, signInWithGoogle, signOut, signUpWithEmail } from "@slices/index";
 import { PATH_CONSTRANTS } from "@utils/enums";
+import { LanguageType } from "i18n";
 import { ISignUpState, signUpInitialValues, signUpValidationSchema } from "./sign-up-formik-config";
 
 import "../../commonAssets/css/auth-form.scss";
 
 const nameSpace: string = "auth";
 const SignUp = () => {
-  const navigate = useNavigate();
-  const { t } = useTranslation(nameSpace);
+    const navigate = useNavigate();
+    const { t, i18n } = useTranslation(nameSpace);
 
   const dispatch = useAppDispatch();
   const { isLoading, authFormErrors: authErrors } = useAppSelector(selectAuthorization);
 
-  const handleSubmit = async (values) => {
-    dispatch(signUpWithEmail({ ...values, language: "pl", t: t }))
-      .unwrap()
-      .then((user) => {
-        if (!user.emailVerified) {
-          dispatch(addToast({ type: "information", message: "To sign in, verify your email address" }));
-          dispatch(signOut());
-          navigate(PATH_CONSTRANTS.SIGN_IN);
-        }
-      });
-  };
+    const handleSubmit = async (values) => {
+        dispatch(signUpWithEmail({ ...values, language: i18n.language as LanguageType, t: t }))
+            .unwrap()
+            .then((user) => {
+                if (!user.emailVerified) {
+                    dispatch(addToast({ type: "information", message: "To sign in, verify your email address" }));
+                    dispatch(signOut());
+                    navigate(PATH_CONSTRANTS.SIGN_IN);
+                }
+            });
+    };
 
-  const onGoogleSignIn = async () => dispatch(signInWithGoogle({ language: "pl" }));
+    const onGoogleSignIn = async () => dispatch(signInWithGoogle({ language: i18n.language as LanguageType }));
 
   const handleAuthErrorChange = (authErrors) => dispatch(setAuthError(authErrors));
 

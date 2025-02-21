@@ -15,6 +15,7 @@ import { UserType } from "@services/users";
 import { COLLECTIONS } from "@utils/enums";
 import { addCollectionDocument, getCollectionDocumentById, getRejectValue, toSerializable, validateUsername } from "@utils/helpers";
 
+import { defaultThemeHue } from "@utils/constants/theme-hue";
 import * as AI from "./authorization-interfaces";
 
 // Sign in user using email and password
@@ -48,7 +49,16 @@ export const signUpWithEmail = createAsyncThunk<
         await updateProfile(user, { displayName: username });
 
         //creates user document in firestore db
-        const documentPayload = { uid: user.uid, username, email, avatarUrl: "", darkMode: true, language };
+        const documentPayload = {
+            uid: user.uid,
+            username,
+            email,
+            avatarUrl: "",
+            darkMode: true,
+            language,
+            themeColorHue: defaultThemeHue,
+        };
+
         await addCollectionDocument(COLLECTIONS.USERS, user.uid, documentPayload);
 
         return toSerializable<AI.ISerializedAuthUser>(user);
@@ -72,7 +82,16 @@ export const signInWithGoogle = createAsyncThunk<AI.ISerializedAuthUser, AI.Goog
             if (!userDocumentSnapshot?.exists()) {
                 const { displayName: username, photoURL, email, uid } = user;
 
-                const documentPayload = { uid, username, email, avatarUrl: photoURL, darkMode: true, language: language };
+                const documentPayload = {
+                    uid,
+                    username,
+                    email,
+                    avatarUrl: photoURL,
+                    darkMode: true,
+                    language: language,
+                    themeColorHue: defaultThemeHue,
+                };
+
                 await addCollectionDocument(COLLECTIONS.USERS, uid, documentPayload);
             }
 
