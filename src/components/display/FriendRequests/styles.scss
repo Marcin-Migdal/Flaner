@@ -36,7 +36,7 @@
         width: 2rem;
         height: 2rem;
         border-radius: var(--radius-full);
-        color: var(--primary-text-color);
+        color: var(--primary-text-color_300);
 
         transition: var(--transition-duration-normal);
 
@@ -50,14 +50,14 @@
 
         &:hover {
           color: var(--success-light-color);
-          background-color: var(--primary-text-color);
+          background-color: var(--primary-text-color_300);
         }
       }
 
       .decline-icon {
         &:hover {
           color: var(--failure-light-color);
-          background-color: var(--primary-text-color);
+          background-color: var(--primary-text-color_300);
         }
       }
     }

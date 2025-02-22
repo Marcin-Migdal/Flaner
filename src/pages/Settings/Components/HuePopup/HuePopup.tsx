@@ -1,11 +1,7 @@
-import {
-  AlertBody,
-  AlertFooter,
-  AlertHeader,
-  AlertOpenState,
-  HueSliderCanvas,
-} from "@marcin-migdal/m-component-library";
+import { Alert, AlertOpenState, HueSliderCanvas } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
+
+import "./styles.scss";
 
 type HuePopupProps = {
   hue: number;
@@ -23,12 +19,17 @@ export const HuePopup = ({ hue, alertOpen, onConfirm, handleClose }: HuePopupPro
   };
 
   return (
-    <AlertBody alertOpen={alertOpen} onClose={handleClose}>
-      <AlertHeader onClose={handleClose} header="Select application main color" />
-      <div className="m-alert-content">
-        <HueSliderCanvas hue={selectedHue} onChange={setSelectedHue} />
-      </div>
-      <AlertFooter onConfirm={handleConfirm} confirmBtnText="Select" declineBtnText="Close" onDecline={handleClose} />
-    </AlertBody>
+    <Alert
+      alertOpen={alertOpen}
+      handleClose={handleClose}
+      header="Select theme color"
+      onConfirm={handleConfirm}
+      onDecline={handleClose}
+      confirmBtnText="Select"
+      declineBtnText="Close"
+      className="hue-popup"
+    >
+      <HueSliderCanvas hue={selectedHue} onChange={setSelectedHue} />
+    </Alert>
   );
 };

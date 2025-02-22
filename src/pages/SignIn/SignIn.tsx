@@ -4,12 +4,17 @@ import { useNavigate } from "react-router-dom";
 
 import { CustomButton, CustomTextfield, Page } from "@components/index";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
-import { selectAuthorization, setAuthError, signInWithEmail, signInWithGoogle, signOut } from "@slices/authorization-slice";
+import {
+  selectAuthorization,
+  setAuthError,
+  signInWithEmail,
+  signInWithGoogle,
+  signOut,
+} from "@slices/authorization-slice";
 import { addToast } from "@slices/toast-slice";
 import { PATH_CONSTRANTS } from "@utils/enums";
 import { LanguageType } from "i18n";
 import { ISignInState, signInInitialValues, signInValidationSchema } from "./sign-in-formik-config";
-
 
 import "../../commonAssets/css/auth-form.scss";
 
@@ -21,19 +26,19 @@ const SignIn = () => {
   const { isLoading, authFormErrors: authErrors } = useAppSelector(selectAuthorization);
   const dispatch = useAppDispatch();
 
-    const handleSubmit = async (values: ISignInState) => {
-        dispatch(signInWithEmail({ ...values }))
-            .unwrap()
-            .then((user) => {
-                if (!user.emailVerified) {
-                    dispatch(addToast({ type: "information", message: "To sign in, verify your email address" }));
-                    dispatch(signOut());
-                    navigate(PATH_CONSTRANTS.SIGN_IN);
-                }
-            });
-    };
+  const handleSubmit = async (values: ISignInState) => {
+    dispatch(signInWithEmail({ ...values }))
+      .unwrap()
+      .then((user) => {
+        if (!user.emailVerified) {
+          dispatch(addToast({ type: "information", message: "To sign in, verify your email address" }));
+          dispatch(signOut());
+          navigate(PATH_CONSTRANTS.SIGN_IN);
+        }
+      });
+  };
 
-    const onGoogleSignIn = async () => dispatch(signInWithGoogle({ language: i18n.language as LanguageType }));
+  const onGoogleSignIn = async () => dispatch(signInWithGoogle({ language: i18n.language as LanguageType }));
 
   const handleAuthErrorChange = (authError: FormErrorsType<ISignInState>) => dispatch(setAuthError(authError));
 
@@ -68,7 +73,6 @@ const SignIn = () => {
                     value={values.email}
                     error={errors.email}
                     labelType="floating"
-                    floatingInputWidth={100}
                   />
                   <CustomTextfield
                     data-cy="password-input"
@@ -81,7 +85,6 @@ const SignIn = () => {
                     error={errors.password}
                     labelType="floating"
                     type="password"
-                    floatingInputWidth={100}
                   />
                   <CustomButton
                     data-cy="sign-in-submit-btn"

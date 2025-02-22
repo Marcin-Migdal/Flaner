@@ -1,11 +1,12 @@
 .page-404-container {
-  color: var(--grey-color-000);
+  color: var(--primary-text-color_400);
 
   svg {
     font-size: var(--font-size-6xl);
   }
 
   h3 {
+    color: inherit;
     margin: var(--spacing-4) 0;
   }
 

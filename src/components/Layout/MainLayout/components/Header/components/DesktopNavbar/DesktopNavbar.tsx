@@ -1,3 +1,4 @@
+import { useAlert } from "@marcin-migdal/m-component-library";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
@@ -14,7 +15,6 @@ import { NavigationItem } from "./components/Navigation/NavigationItem";
 import { NotificationItem } from "./components/Notifications/NotificationItem";
 import { ProfileItem } from "./components/Profile/ProfileItem";
 
-import { useAlert } from "@marcin-migdal/m-component-library";
 import "./styles.scss";
 
 export const DesktopNavbar = () => {
@@ -37,7 +37,7 @@ export const DesktopNavbar = () => {
     metaData: { user: authUser },
     subItems: [
       { text: "Settings", onClick: () => navigate(PATH_CONSTRANTS.SETTINGS), icon: ["fas", "gear"] },
-      { text: "Sign out", onClick: handleOpenAlert, icon: ["fas", "sign-out"] },
+      { text: "Sign out", onClick: () => handleOpenAlert(), icon: ["fas", "sign-out"] },
     ],
   };
 

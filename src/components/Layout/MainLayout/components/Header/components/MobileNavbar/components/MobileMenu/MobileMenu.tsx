@@ -39,7 +39,7 @@ export const MobileMenu = ({ authUser, menuOpen, toggleMenuDropdown }: MobileMen
 
   const signOutItem: HeaderItem = {
     text: "Sign out",
-    onClick: handleOpenAlert,
+    onClick: () => handleOpenAlert(),
     icon: ["fas", "sign-out"],
   };
 

@@ -25,11 +25,5 @@ h3,
 span {
   margin: unset;
 
-  color: var(--primary-text-color);
-}
-
-.common-wrapper-container {
-  & > div {
-    height: 100%;
-  }
+  color: var(--primary-text-color_300);
 }

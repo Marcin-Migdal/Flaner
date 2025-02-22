@@ -22,10 +22,9 @@ const MyFriends = () => {
   const { t } = useTranslation();
   const { authUser } = useAppSelector(selectAuthorization);
 
-  const [handleOpenAlert, alertProps] = useAlert({ onClose: () => setFriendToDelete(undefined) });
+  const [handleOpenAlert, alertProps] = useAlert<UserType>();
 
   const [filterValue, setFilterValue] = useState<string>("");
-  const [friendToDelete, setFriendToDelete] = useState<UserType | undefined>(undefined);
 
   const friendsQuery = useGetFriendsByUsernameQuery(
     { currentUserUid: authUser?.uid, username: filterValue },
@@ -50,12 +49,10 @@ const MyFriends = () => {
   };
 
   const handleOpenDeleteAlert = (user: UserType) => {
-    setFriendToDelete(user);
-
-    handleOpenAlert();
+    handleOpenAlert(user);
   };
 
-  const handleDeleteFriend = async () => {
+  const handleDeleteFriend = async (friendToDelete: UserType) => {
     if (!authUser || !friendToDelete) return;
 
     await deleteFriend({

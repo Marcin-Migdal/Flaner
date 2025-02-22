@@ -14,7 +14,7 @@
     font-size: var(--font-size-sm);
 
     background-color: var(--failure-light-color);
-    color: var(--grey-color-000);
+    color: var(--primary-text-color_400);
     border-radius: var(--radius-full);
   }
 
@@ -77,14 +77,17 @@
         justify-content: center;
         padding: var(--spacing-3);
         background-color: var(--primary-color_780);
+        color: var(--primary-text-color_400);
 
         svg {
           height: 32px;
           margin-right: var(--spacing-2);
+          color: inherit;
         }
 
         h3 {
           white-space: nowrap;
+          color: inherit;
         }
       }
 
@@ -100,8 +103,7 @@
         --notification-icon-size: 3.5rem;
 
         .avatar-container {
-          min-width: var(--notification-icon-size);
-          min-height: var(--notification-icon-size);
+          --avatar-size: var(--notification-icon-size);
         }
 
         .right-content {
@@ -122,12 +124,15 @@
               overflow: hidden;
               line-height: calc(var(--notification-icon-size) / var(--notification-content-line-clamp));
               margin-left: var(--spacing-2);
+
+              color: var(--primary-text-color_400);
             }
           }
 
           p {
             margin-top: var(--spacing-2);
             font-size: var(--font-size-2xs);
+            color: var(--primary-text-color_400);
           }
         }
       }

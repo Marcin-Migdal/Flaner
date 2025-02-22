@@ -13,25 +13,25 @@ import "../../commonAssets/css/auth-form.scss";
 
 const nameSpace: string = "auth";
 const SignUp = () => {
-    const navigate = useNavigate();
-    const { t, i18n } = useTranslation(nameSpace);
+  const navigate = useNavigate();
+  const { t, i18n } = useTranslation(nameSpace);
 
   const dispatch = useAppDispatch();
   const { isLoading, authFormErrors: authErrors } = useAppSelector(selectAuthorization);
 
-    const handleSubmit = async (values) => {
-        dispatch(signUpWithEmail({ ...values, language: i18n.language as LanguageType, t: t }))
-            .unwrap()
-            .then((user) => {
-                if (!user.emailVerified) {
-                    dispatch(addToast({ type: "information", message: "To sign in, verify your email address" }));
-                    dispatch(signOut());
-                    navigate(PATH_CONSTRANTS.SIGN_IN);
-                }
-            });
-    };
+  const handleSubmit = async (values) => {
+    dispatch(signUpWithEmail({ ...values, language: i18n.language as LanguageType, t: t }))
+      .unwrap()
+      .then((user) => {
+        if (!user.emailVerified) {
+          dispatch(addToast({ type: "information", message: "To sign in, verify your email address" }));
+          dispatch(signOut());
+          navigate(PATH_CONSTRANTS.SIGN_IN);
+        }
+      });
+  };
 
-    const onGoogleSignIn = async () => dispatch(signInWithGoogle({ language: i18n.language as LanguageType }));
+  const onGoogleSignIn = async () => dispatch(signInWithGoogle({ language: i18n.language as LanguageType }));
 
   const handleAuthErrorChange = (authErrors) => dispatch(setAuthError(authErrors));
 
@@ -66,7 +66,6 @@ const SignUp = () => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     labelType="floating"
-                    floatingInputWidth={100}
                   />
                   <CustomTextfield
                     data-cy="email-input"
@@ -78,7 +77,6 @@ const SignUp = () => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     labelType="floating"
-                    floatingInputWidth={100}
                   />
                   <CustomTextfield
                     data-cy="password-input"
@@ -91,7 +89,6 @@ const SignUp = () => {
                     onBlur={handleBlur}
                     labelType="floating"
                     type="password"
-                    floatingInputWidth={100}
                   />
                   <CustomTextfield
                     data-cy="validate-password-input"
@@ -104,7 +101,6 @@ const SignUp = () => {
                     onBlur={handleBlur}
                     labelType="floating"
                     type="password"
-                    floatingInputWidth={100}
                   />
                   <CustomButton
                     data-cy="sign-up-submit-btn"

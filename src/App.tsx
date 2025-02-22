@@ -13,14 +13,7 @@ import { defaultThemeHue } from "@utils/constants/theme-hue";
 import { COLLECTIONS } from "@utils/enums";
 import { getCollectionDocumentById, retryDocumentRequest, toSerializable } from "@utils/helpers";
 
-//! fix scss variables
-//! test sign in, sign up and sign out
-//! is toast and alert working properly
-
 //! rest of the pages (details will be planned when I will come to this point)
-
-//! implement hot fix on library side
-//! implement library fixes on flaner side
 
 function App() {
   const dispatch = useAppDispatch();

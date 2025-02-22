@@ -78,13 +78,13 @@
 
       h2 {
         margin: var(--spacing-2);
-        color: var(--grey-color-000);
+        color: var(--primary-text-color_400);
       }
 
       > p {
         margin-bottom: var(--spacing-4);
         font-size: var(--font-size-sm);
-        color: var(--grey-color-000);
+        color: var(--primary-text-color_400);
       }
 
       .m-button {
@@ -93,17 +93,11 @@
 
         border-color: var(--grey-color-000);
         background-color: var(--primary-color_740) !important;
+        color: var(--grey-color-000);
 
         &:hover {
           background-color: var(--grey-color-000) !important;
-
-          p {
-            color: var(--primary-color_740);
-          }
-        }
-
-        p {
-          color: var(--grey-color-000);
+          color: var(--primary-color_740);
         }
       }
     }

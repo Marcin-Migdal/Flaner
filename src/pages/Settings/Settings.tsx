@@ -1,6 +1,14 @@
-import { Textfield, useAlert } from "@marcin-migdal/m-component-library";
-import { LanguageType, lngLabelMap } from "i18n";
+import { availableLanguages, LanguageType, lngLabelMap } from "i18n";
 import { useTranslation } from "react-i18next";
+
+import {
+  ColorPreviewSquare,
+  Dropdown,
+  DropdownChangeEvent,
+  hslToHex,
+  Textfield,
+  useAlert,
+} from "@marcin-migdal/m-component-library";
 
 import { CustomButton } from "@components/CustomButton";
 import { Page } from "@components/Layout";
@@ -29,18 +37,18 @@ const Settings = () => {
   };
   const currentThemeHue: number = authUser?.themeColorHue || defaultThemeHue;
 
-  // const handleLngChange = (event: DropdownChangeEvent<DropdownOption<LanguageType>>) => {
-  //     const selectedOption = event.target.value?.value!;
+  const handleLngChange = (event: DropdownChangeEvent<DropdownOption<LanguageType>>) => {
+    const selectedOption = event.target.value?.value!;
 
-  //     editUser({ currentUserUid: authUser?.uid, language: selectedOption })
-  //         .unwrap()
-  //         .then(() => {
-  //             i18n.changeLanguage(selectedOption);
+    editUser({ currentUserUid: authUser?.uid, language: selectedOption })
+      .unwrap()
+      .then(() => {
+        i18n.changeLanguage(selectedOption);
 
-  //             authUser && dispatch(setAuthUser({ ...authUser, language: selectedOption }));
-  //         })
-  //         .catch(() => {});
-  // };
+        authUser && dispatch(setAuthUser({ ...authUser, language: selectedOption }));
+      })
+      .catch(() => {});
+  };
 
   const handleOpenHuePopup = () => {
     handleOpenAlert();
@@ -55,23 +63,26 @@ const Settings = () => {
       .catch(() => {});
   };
 
+  const hexColor = hslToHex(currentThemeHue, 80, 50);
+
   return (
     <Page flex flex-column className="settings-page">
       <SettingsSection title="Language" description="Choose your application language">
         <div className="language-input-row">
-          {/* <Dropdown value={currentLanguageOption} options={availableLanguages} onChange={handleLngChange} noBottomMargin /> */}
+          <Dropdown
+            value={currentLanguageOption}
+            options={availableLanguages}
+            onChange={handleLngChange}
+            disableDefaultMargin
+          />
           <CustomButton onClick={() => i18n.changeLanguage("pl")} text="Revert" icon={["fas", "undo"]} />
         </div>
       </SettingsSection>
       <SettingsSection title="Appearance" description="Customize your application theme">
         <label className="hue-picker-label">Theme color</label>
         <div className="hue-placeholder-container">
-          <div
-            className="hue-placeholder"
-            style={{ backgroundColor: `hsl(${currentThemeHue}, 100%, 50%)` }}
-            onClick={handleOpenHuePopup}
-          />
-          <Textfield value={"#hexhex"} readOnly />
+          <ColorPreviewSquare onClick={handleOpenHuePopup} color={hexColor} />
+          <Textfield onClick={handleOpenHuePopup} value={hexColor} readOnly classNamesObj={{ container: "ml-2-rem" }} />
         </div>
       </SettingsSection>
       <HuePopup hue={currentThemeHue} {...alertProps} onConfirm={handleConfirm} />
