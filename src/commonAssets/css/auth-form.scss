@@ -1,104 +1,105 @@
 .auth-from-container {
-    .auth-card {
-        padding: unset;
-        background-color: rgb(71, 71, 71) !important;
-        width: 640px;
-    }
+  .auth-card {
+    padding: unset;
+    width: 640px;
+  }
 
-    .m-grid-col {
-        padding: 40px 30px;
-        width: 100%;
+  .m-grid-col {
+    padding: var(--spacing-10) var(--spacing-7);
+    width: 100%;
 
-        &.left-col {
-            &.col-flex-md-1 {
-                padding-bottom: 20px;
-            }
+    &.left-col {
+      &.col-flex-md-1 {
+        padding-bottom: var(--spacing-5);
+      }
 
-            p,
-            span {
-                font-size: 0.9rem;
-            }
+      p,
+      span {
+        font-size: var(--font-size-sm);
+      }
 
-            p {
-                margin-bottom: 20px;
-            }
+      > p {
+        margin-bottom: var(--spacing-5);
+      }
 
-            .m-form {
-                .m-button {
-                    width: 100%;
-                    margin: unset;
-                    margin-top: 0.35em;
-                }
-            }
+      .m-form {
+        .m-button {
+          width: 100%;
+          margin: unset;
+          margin-top: 0.35em;
+        }
+      }
 
-            .bottom-section {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
+      .bottom-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
 
-                span {
-                    text-align: center;
-                    margin-top: 15px;
-                    margin-bottom: 18px;
-                }
-
-                .google-sign-in-icon {
-                    padding: 10px;
-                    border-radius: 100%;
-                    background-color: var(--dark-grey_250);
-                    transition: 100ms;
-
-                    &:hover {
-                        background-color: var(--dark-grey_150);
-                    }
-
-                    &:active {
-                        transform: scale(0.9);
-                    }
-                }
-            }
+        span {
+          text-align: center;
+          margin-top: var(--spacing-4);
+          margin-bottom: var(--spacing-5);
         }
 
-        &.right-col {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+        .google-sign-in-icon {
+          padding: var(--spacing-3);
+          border-radius: var(--radius-full);
+          background-color: var(--grey-color-550);
+          transition: var(--transition-duration-fast);
 
-            background-color: var(--primary-color_200);
+          &:hover {
+            background-color: var(--grey-color-500);
+          }
 
-            &.col-flex-md-1 {
-                min-height: 380px;
-            }
-
-            svg {
-                font-size: 3.75rem;
-                color: var(--white);
-            }
-
-            h2 {
-                margin: 8px;
-            }
-
-            p {
-                margin-bottom: 15px;
-                font-size: 0.9rem;
-            }
-
-            .m-button {
-                border-radius: 16px;
-                padding: 3px 8px;
-
-                border-color: var(--white) !important;
-                background-color: var(--primary-color_200) !important;
-                color: var(--white) !important;
-
-                &:hover {
-                    background-color: var(--white) !important;
-                    color: var(--primary-color_200) !important;
-                }
-            }
+          &:active {
+            transform: scale(0.9);
+          }
         }
+      }
     }
+
+    &.right-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+      background-color: var(--primary-color_740);
+
+      &.col-flex-md-1 {
+        min-height: 380px;
+      }
+
+      svg {
+        font-size: 3.75rem;
+        color: var(--grey-color-000);
+      }
+
+      h2 {
+        margin: var(--spacing-2);
+        color: var(--primary-text-color_400);
+      }
+
+      > p {
+        margin-bottom: var(--spacing-4);
+        font-size: var(--font-size-sm);
+        color: var(--primary-text-color_400);
+      }
+
+      .m-button {
+        border-radius: var(--radius-2xl);
+        padding: var(--spacing-1) var(--spacing-2);
+
+        border-color: var(--grey-color-000);
+        background-color: var(--primary-color_740) !important;
+        color: var(--grey-color-000);
+
+        &:hover {
+          background-color: var(--grey-color-000) !important;
+          color: var(--primary-color_740);
+        }
+      }
+    }
+  }
 }

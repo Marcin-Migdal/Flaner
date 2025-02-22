@@ -1,6 +1,5 @@
 import { DocumentReference } from "firebase/firestore";
-
-export type LanguageType = "en" | "pl";
+import { LanguageType } from "i18n";
 
 //! USERS
 export type UserType = {
@@ -10,6 +9,13 @@ export type UserType = {
     darkMode: boolean;
     uid: string;
     email: string;
+    themeColorHue: number;
+};
+
+export type EditUserRequest = {
+    currentUserUid: string | undefined;
+    themeColorHue?: number;
+    language?: LanguageType;
 };
 
 //! SEARCH USERS

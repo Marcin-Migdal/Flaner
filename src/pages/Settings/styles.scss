@@ -1,0 +1,35 @@
+.settings-page {
+  max-width: 1000px;
+  width: 40%;
+  min-width: 500px;
+  margin: auto;
+  padding-top: var(--spacing-16);
+
+  .language-input-row {
+    display: flex;
+    align-items: center;
+
+    .m-button {
+      margin: unset;
+      margin-left: var(--spacing-1);
+    }
+  }
+
+  .hue-picker-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .hue-placeholder-container {
+    display: flex;
+
+    .hue-placeholder {
+      height: var(--medium-input-height);
+      border-radius: var(--radius-md);
+      aspect-ratio: 1/1;
+
+      margin-right: var(--spacing-2);
+      border: var(--border-md) solid var(--grey-color-000);
+    }
+  }
+}

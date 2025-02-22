@@ -1,7 +1,20 @@
+import { DropdownOption } from "@utils/types";
 import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import Backend from "i18next-http-backend";
 import { initReactI18next } from "react-i18next";
+
+export enum LanguageType {
+    EN = "en",
+    PL = "pl",
+}
+
+export const lngLabelMap: Record<LanguageType, string> = { [LanguageType.PL]: "Polski", [LanguageType.EN]: "English" };
+
+export const availableLanguages: DropdownOption<LanguageType>[] = [
+    { label: lngLabelMap[LanguageType.PL], value: LanguageType.PL },
+    { label: lngLabelMap[LanguageType.EN], value: LanguageType.EN },
+];
 
 i18n
     // i18next-http-backend, loads translations from your server
