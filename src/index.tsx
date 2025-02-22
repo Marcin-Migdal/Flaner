@@ -18,9 +18,9 @@ const root = createRoot(rootElement as HTMLElement);
 
 // Suspense wrapper is needed for app to wait for ti18next translations files to load
 root.render(
-    <Suspense>
-        <Provider store={store}>
-            <App />
-        </Provider>
-    </Suspense>
+  <Suspense>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </Suspense>
 );

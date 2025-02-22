@@ -1,25 +1,25 @@
 .avatar-container {
-    --avatar-size: 50px;
+  --avatar-size: var(--spacing-12);
 
-    display: flex;
-    justify-content: center;
+  display: flex;
+  justify-content: center;
 
-    height: var(--avatar-size);
-    width: var(--avatar-size);
+  height: var(--avatar-size);
+  width: var(--avatar-size);
 
-    border-radius: 100%;
+  border-radius: var(--radius-full);
 
-    background-color: var(--grey-color-000);
+  background-color: var(--popups-background-color);
 
-    svg {
-        height: 60%;
-        color: var(--primary-color_680);
-        margin-top: 15%;
-    }
+  svg {
+    height: 60%;
+    color: var(--primary-color_680);
+    margin-top: 15%;
+  }
 
-    img {
-        height: inherit;
-        width: inherit;
-        border-radius: inherit;
-    }
+  img {
+    height: inherit;
+    width: inherit;
+    border-radius: inherit;
+  }
 }

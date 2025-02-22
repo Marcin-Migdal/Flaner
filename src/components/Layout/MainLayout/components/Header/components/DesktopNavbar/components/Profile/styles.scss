@@ -1,18 +1,18 @@
 .profile-menu-header {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 
-    padding: 0.5rem;
-    border-bottom: 1px solid white;
+  padding: var(--spacing-2);
+  border-bottom: var(--border-sm) solid var(--grey-color-000);
 
-    cursor: default;
+  cursor: default;
 
-    .avatar-container {
-        --avatar-size: 50px !important;
-    }
+  .avatar-container {
+    --avatar-size: 50px !important;
+  }
 
-    h3 {
-        margin-left: 0.5rem;
-        white-space: nowrap;
-    }
+  h3 {
+    margin-left: var(--spacing-2);
+    white-space: nowrap;
+  }
 }

@@ -1,20 +1,21 @@
-@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap");
 
-:root {
-    --header-height: 55px;
+#root {
+  --header-height: 55px;
+  height: 100%;
 }
 
 body {
-    margin: unset;
+  margin: unset;
 }
 
 code {
-    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
 * {
-    font-family: "Open Sans", sans-serif;
-    box-sizing: border-box;
+  font-family: "Open Sans", sans-serif;
+  box-sizing: border-box;
 }
 
 p,
@@ -22,12 +23,7 @@ h1,
 h2,
 h3,
 span {
-    margin: unset;
-    color: var(--grey-color-000);
-}
+  margin: unset;
 
-.common-wrapper-container {
-    & > div {
-        height: 100%;
-    }
+  color: var(--primary-text-color_300);
 }

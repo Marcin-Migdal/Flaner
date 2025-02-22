@@ -1,19 +1,18 @@
 .settings-section {
-    .settings-section-subtitle {
-        margin-top: 4px;
-        margin-bottom: 1rem;
+  .settings-section-subtitle {
+    margin-top: var(--spacing-1);
+    margin-bottom: var(--spacing-4);
 
-        color: var(--grey-color-200);
-        font-size: 14px;
-    }
+    font-size: var(--font-size-sm);
+  }
 
+  hr {
+    margin: var(--spacing-8) var(--spacing-0);
+  }
+
+  &:last-of-type {
     hr {
-        margin: 2rem 0;
+      display: none;
     }
-
-    &:last-of-type {
-        hr {
-            display: none;
-        }
-    }
+  }
 }
