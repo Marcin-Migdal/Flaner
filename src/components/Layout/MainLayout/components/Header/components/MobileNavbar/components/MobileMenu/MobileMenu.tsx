@@ -91,7 +91,7 @@ export const MobileMenu = ({ authUser, menuOpen, toggleMenuDropdown }: MobileMen
             <ul className="mobile-menu-list">
               <li className="user-item">
                 <Avatar avatarUrl={authUser?.avatarUrl} />
-                <h2>{authUser?.displayName}</h2>
+                <h2>{authUser?.username}</h2>
               </li>
 
               {navigationItems.map((navigationItem, index) => (

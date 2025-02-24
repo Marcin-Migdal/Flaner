@@ -30,6 +30,37 @@
   }
 }
 
+.single-column-page-container {
+  max-width: 1000px;
+
+  width: 40%;
+  min-width: 40%;
+
+  margin: auto;
+  overflow: auto;
+}
+
+@media (max-width: 2560px) {
+  .single-column-page-container {
+    width: 55%;
+    min-width: 55%;
+  }
+}
+
+@media (max-width: 950px) {
+  .single-column-page-container {
+    width: 75%;
+    min-width: 75%;
+  }
+}
+
+@media (max-width: 650px) {
+  .single-column-page-container {
+    width: 100%;
+    min-width: 100%;
+  }
+}
+
 .unselectable {
   -webkit-touch-callout: none; /* iOS Safari */
   -webkit-user-select: none; /* Safari */

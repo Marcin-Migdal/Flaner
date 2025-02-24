@@ -1,0 +1,16 @@
+.m-accordion-toggle {
+  height: fit-content !important;
+
+  .settings-section-toggle-content {
+    display: flex;
+    flex-direction: column;
+
+    h4 {
+      margin: unset;
+    }
+
+    p {
+      font-size: var(--font-size-xs);
+    }
+  }
+}
