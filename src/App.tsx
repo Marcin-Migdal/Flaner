@@ -73,7 +73,6 @@ function App() {
     return unSubscribe;
   }, []);
 
-  console.log(authUser);
   return (
     <ThemeWrapper
       hue={authUser?.themeColorHue || defaultThemeHue}
