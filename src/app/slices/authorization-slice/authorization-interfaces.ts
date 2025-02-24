@@ -37,11 +37,12 @@ export type ISerializedAuthUser = {
 };
 
 //* Authorization user type
-export type AuthUserConfigType = Omit<ISerializedAuthUser, "photoURL"> & {
-    avatarUrl: string;
-    darkMode: boolean;
-    language: LanguageType;
-    themeColorHue: number;
+export type AuthUserConfigType = Omit<ISerializedAuthUser, "photoURL" | "displayName"> & {
+  username: string;
+  avatarUrl: string;
+  darkMode: boolean;
+  language: LanguageType;
+  themeColorHue: number;
 };
 
 //! Slice init state
@@ -57,12 +58,12 @@ export type EmailSignInPayload = ISignInState;
 
 //* SIGN UP
 export type EmailSignUpPayload = ISignUpState & {
-    language: LanguageType;
+  language: LanguageType;
 };
 
 //* GOOGLE SIGN IN
 export type GoogleSignInPayload = {
-    language: LanguageType;
+  language: LanguageType;
 };
 
 //! AsyncThunks error payload

@@ -56,6 +56,7 @@ function App() {
         dispatch(
           setAuthUser({
             ...otherProperties,
+            username: userConfig.username,
             avatarUrl: userConfig.avatarUrl,
             language: userConfig.language,
             darkMode: userConfig.darkMode,
@@ -73,7 +74,10 @@ function App() {
   }, []);
 
   return (
-    <ThemeWrapper hue={authUser?.themeColorHue || defaultThemeHue} darkMode>
+    <ThemeWrapper
+      hue={authUser?.themeColorHue || defaultThemeHue}
+      darkMode={authUser?.darkMode === undefined ? true : authUser.darkMode}
+    >
       <>
         <ToastsContainer ref={toastRef} transformToastsContent={t} />
         <RouterProvider router={router} />
