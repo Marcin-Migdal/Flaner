@@ -1,4 +1,4 @@
-.user-tiles-container {
+.user-tiles {
   --min-tile-width: 185px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--min-tile-width), 1fr));
@@ -58,7 +58,7 @@
 @media (max-width: 650px) {
   .friends-page {
     .m-grid-row {
-      .user-tiles-container {
+      .user-tiles {
         grid-template-columns: 100%;
 
         .user-tile {

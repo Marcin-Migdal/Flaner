@@ -1,28 +1,47 @@
+.friends-page-request-side-panel {
+  h3 {
+    margin-top: var(--spacing-6);
+    margin-bottom: var(--spacing-3);
+  }
+}
+
 .friends-page {
-  .m-textfield-container {
-    width: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  .top-section-container {
+    display: flex;
+
+    width: 90%;
+
+    align-items: center;
+
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-4);
   }
 
-  .m-grid-row {
-    gap: var(--spacing-5);
+  .user-tiles-container {
     width: 90%;
     height: calc(100% - 9rem);
+    padding: var(--spacing-2);
+    padding-right: unset;
+    border-radius: var(--radius-md);
 
-    .m-grid-col {
-      height: 100%;
-      padding: var(--spacing-2);
-      padding-right: unset;
-      border-radius: var(--radius-md);
-
-      background-color: var(--popups-background-color);
-      box-shadow: var(--shadow-xl) var(--primary-color_680);
-    }
+    background-color: var(--popups-background-color);
+    box-shadow: var(--shadow-xl) var(--primary-color_680);
   }
 }
 
 @media (min-width: 650px) {
   .friends-page {
-    .m-grid-row {
+    .top-section-container {
+      min-width: 350px;
+      width: unset;
+    }
+
+    .user-tiles-container {
       width: 65%;
     }
   }
@@ -30,24 +49,15 @@
 
 @media (max-width: 950px) {
   .friends-page {
-    .m-grid-row {
-      flex-wrap: nowrap;
-      flex-direction: column-reverse;
-
-      .m-grid-col:first-of-type {
-        max-height: calc(72.5% - var(--spacing-4));
-      }
-
-      .m-grid-col:last-of-type {
-        max-height: 27.5%;
-      }
+    .user-tiles-container {
+      max-height: calc(72.5% - var(--spacing-4));
     }
   }
 }
 
 @media (min-width: 950px) {
   .friends-page {
-    .m-grid-row {
+    .user-tiles-container {
       width: 90%;
     }
   }
@@ -55,7 +65,7 @@
 
 @media (min-width: 1650px) {
   .friends-page {
-    .m-grid-row {
+    .user-tiles-container {
       width: 80%;
     }
   }
@@ -63,7 +73,7 @@
 
 @media (min-width: 1921px) {
   .friends-page {
-    .m-grid-row {
+    .user-tiles-container {
       width: 77.5%;
     }
   }
@@ -71,7 +81,7 @@
 
 @media (min-width: 2561px) {
   .friends-page {
-    .m-grid-row {
+    .user-tiles-container {
       width: 70%;
     }
   }
