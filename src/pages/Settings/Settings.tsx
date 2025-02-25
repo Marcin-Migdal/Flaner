@@ -17,7 +17,6 @@ import {
 } from "@marcin-migdal/m-component-library";
 
 import { CustomButton } from "@components/CustomButton";
-import { Page } from "@components/Layout";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
 import { EditUserRequest, useEditUserMutation } from "@services/users";
 import { AuthUserConfigType, selectAuthorization, setAuthUser } from "@slices/authorization-slice";
@@ -125,7 +124,7 @@ const Settings = () => {
   const hexColor = hslToHex(currentThemeHue, 80, 50);
 
   return (
-    <Page flex flex-column className="single-column-page-container settings-page">
+    <div className="page single-column settings-page">
       <Accordion expansionMode="multiple">
         <Accordion.Section sectionId="language">
           <AccordionSettingsSectionToggle title="Language" description="Choose your application language" />
@@ -197,7 +196,7 @@ const Settings = () => {
           disableDefaultMargin
         />
       </div>
-    </Page>
+    </div>
   );
 };
 

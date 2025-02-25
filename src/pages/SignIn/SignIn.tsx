@@ -2,7 +2,7 @@ import { Card, Col, Form, FormErrorsType, Icon, Row } from "@marcin-migdal/m-com
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import { CustomButton, CustomTextfield, Page } from "@components/index";
+import { CustomButton, CustomTextfield } from "@components/index";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
 import {
   selectAuthorization,
@@ -48,7 +48,7 @@ const SignIn = () => {
   };
 
   return (
-    <Page className="auth-from-container" flex center>
+    <div className="page auth-from-container">
       <Card className="auth-card">
         <Row>
           <Col sm={12} mdFlex={1} className="left-col">
@@ -119,7 +119,7 @@ const SignIn = () => {
           </Col>
         </Row>
       </Card>
-    </Page>
+    </div>
   );
 };
 

@@ -2,7 +2,7 @@ import { Card, Col, Form, Icon, Row } from "@marcin-migdal/m-component-library";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import { CustomButton, CustomTextfield, Page } from "@components/index";
+import { CustomButton, CustomTextfield } from "@components/index";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
 import { addToast, selectAuthorization, setAuthError, signInWithGoogle, signOut, signUpWithEmail } from "@slices/index";
 import { PATH_CONSTRANTS } from "@utils/enums";
@@ -41,7 +41,7 @@ const SignUp = () => {
   };
 
   return (
-    <Page className="auth-from-container" flex center>
+    <div className="page auth-from-container">
       <Card className="auth-card">
         <Row>
           <Col sm={12} mdFlex={1} className="left-col">
@@ -135,7 +135,7 @@ const SignUp = () => {
           </Col>
         </Row>
       </Card>
-    </Page>
+    </div>
   );
 };
 

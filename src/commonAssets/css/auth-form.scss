@@ -1,4 +1,8 @@
 .auth-from-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
   .auth-card {
     padding: unset;
     width: 640px;
