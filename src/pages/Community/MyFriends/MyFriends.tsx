@@ -1,4 +1,4 @@
-import { Alert, useAlert } from "@marcin-migdal/m-component-library";
+import { Alert, useAlert, useSidePanel } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -10,8 +10,6 @@ import { selectAuthorization } from "@slices/authorization-slice";
 import { ReceivedRequestsSidePanel } from "./components/ReceivedRequestsSidePanel/ReceivedRequestsSidePanel";
 
 import "../../../commonAssets/css/friends-page-styles.scss";
-
-import { useSidePanel } from "@hooks/useSidePanel";
 
 const nameSpace: I18NameSpace = "addFriends";
 const MyFriends = () => {
@@ -55,7 +53,7 @@ const MyFriends = () => {
           labelType="left"
           size="large"
           nameSpace={nameSpace}
-          disableDefaultMargin
+          marginBottomType="none"
         />
         <CustomButton icon="user-plus" onClick={handleOpen} disableDefaultMargin />
       </div>

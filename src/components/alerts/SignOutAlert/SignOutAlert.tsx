@@ -21,6 +21,7 @@ export const SignOutAlert = ({ onAction, alertOpen, handleClose }: SignOutAlertP
 
   return (
     <Alert
+      className="w-350-px"
       alertOpen={alertOpen}
       handleClose={handleClose}
       header={t("Sign out")}

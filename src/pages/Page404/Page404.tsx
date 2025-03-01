@@ -1,7 +1,7 @@
-import { Button, Icon } from "@marcin-migdal/m-component-library";
+import { Icon } from "@marcin-migdal/m-component-library";
 import { useNavigate } from "react-router-dom";
 
-import { SpinnerPlaceholder } from "@components/index";
+import { CustomButton, SpinnerPlaceholder } from "@components/index";
 import { useAppSelector } from "@hooks/redux-hooks";
 import { selectAuthorization } from "@slices/authorization-slice";
 import { PATH_CONSTRANTS } from "@utils/enums";
@@ -18,9 +18,14 @@ const Page404 = () => {
 
   return (
     <div className="page page-404-container">
-      <Icon icon={["fas", "circle-xmark"]} />
+      <Icon className="not-found-icon" icon={["fas", "circle-xmark"]} />
       <h3>Page does not exist</h3>
-      <Button text="Homepage" onClick={() => navigate(PATH_CONSTRANTS.HOME)} variant="full" />
+      <CustomButton
+        text="Homepage"
+        onClick={() => navigate(PATH_CONSTRANTS.HOME)}
+        variant="full"
+        disableDefaultMargin
+      />
     </div>
   );
 };

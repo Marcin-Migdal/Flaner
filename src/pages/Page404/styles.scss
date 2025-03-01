@@ -4,16 +4,12 @@
   justify-content: center;
   align-items: center;
 
-  svg {
+  .not-found-icon {
     font-size: var(--font-size-6xl);
   }
 
   h3 {
     color: var(--primary-text-color_400);
     margin: var(--spacing-4) 0;
-  }
-
-  .m-button {
-    margin-right: unset;
   }
 }

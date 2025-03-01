@@ -1,4 +1,4 @@
-import { Card, Col, Form, Icon, Row } from "@marcin-migdal/m-component-library";
+import { ButtonWidth, Card, Col, Form, Icon, Row } from "@marcin-migdal/m-component-library";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
@@ -110,6 +110,8 @@ const SignUp = () => {
                     variant="full"
                     disabled={!isValid}
                     busy={isLoading}
+                    width={ButtonWidth.STRETCH}
+                    disableDefaultMargin
                   />
                 </>
               )}
@@ -131,6 +133,7 @@ const SignUp = () => {
               text="Sign in"
               variant="full"
               onClick={() => handleNavigate(PATH_CONSTRANTS.SIGN_IN)}
+              disableDefaultMargin
             />
           </Col>
         </Row>
