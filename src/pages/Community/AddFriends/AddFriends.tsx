@@ -2,14 +2,13 @@ import { useState } from "react";
 
 import { ContentWrapper, CustomButton, DebounceTextfield, UserTiles } from "@components/index";
 import { I18NameSpace, useAppSelector } from "@hooks/index";
+import { useSidePanel } from "@marcin-migdal/m-component-library";
 import { SearchedUserType } from "@services/users";
 import { useGetSearchUsersQuery, useSendFriendRequestMutation } from "@services/users/users-api";
 import { selectAuthorization } from "@slices/authorization-slice";
 import { SentRequestSidePanel } from "./components/SentRequestSidePanel/SentRequestSidePanel";
 
 import "../../../commonAssets/css/friends-page-styles.scss";
-
-import { useSidePanel } from "@hooks/useSidePanel";
 
 const nameSpace: I18NameSpace = "addFriends";
 const AddFriends = () => {
@@ -41,9 +40,9 @@ const AddFriends = () => {
           labelType="left"
           size="large"
           nameSpace={nameSpace}
-          disableDefaultMargin
+          marginBottomType="none"
         />
-        <CustomButton icon="user-clock" onClick={handleOpen} disableDefaultMargin />
+        <CustomButton size="large" icon="user-clock" onClick={handleOpen} disableDefaultMargin />
       </div>
 
       <div className="user-tiles-container">

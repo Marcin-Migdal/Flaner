@@ -9,5 +9,5 @@ export const CustomButton = ({ nameSpace, text, ...otherProps }: CustomButtonPro
   const ns = useI18NameSpace(nameSpace);
   const { t } = useTranslation(ns);
 
-  return <Button className="color-test" {...otherProps} text={text ? t(text) : undefined} />;
+  return <Button {...otherProps} text={text ? t(text) : undefined} />;
 };

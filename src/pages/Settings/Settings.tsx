@@ -1,16 +1,15 @@
-import { DropdownValue } from "@marcin-migdal/m-component-library/build/components/Inputs/Dropdown/types";
 import deepEqual from "fast-deep-equal";
 import { availableLanguages, LanguageType, lngLabelMap } from "i18n";
-import { ChangeEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
   Accordion,
   ColorPreviewSquare,
   Dropdown,
-  DropdownChangeEvent,
   hslToHex,
   ImageField,
+  MInputChangeEvent,
   Textfield,
   ToggleSwitch,
   useAlert,
@@ -87,17 +86,14 @@ const Settings = () => {
     setAuthUserSettings({ ...authUserSettings, themeColorHue: selectedHue });
   };
 
-  const handleSettingsChange = (
-    event: ChangeEvent<HTMLInputElement> | DropdownChangeEvent<DropdownOption<LanguageType>>,
-    value: string | boolean | DropdownValue<DropdownOption<LanguageType>>
-  ) => {
+  const handleSettingsChange = (event: MInputChangeEvent<string | boolean | DropdownOption<LanguageType>>) => {
     if (!authUserSettings) {
       return;
     }
 
-    const name = event.target.name;
+    const { name, value } = event.target;
 
-    setAuthUserSettings({ ...authUserSettings, [name as string]: typeof value === "object" ? value.value : value });
+    setAuthUserSettings({ ...authUserSettings, [name]: typeof value === "object" ? value.value : value });
   };
 
   const handleSettingsSave = () => {
@@ -133,8 +129,8 @@ const Settings = () => {
               name="language"
               value={currentLanguageOption}
               options={availableLanguages}
-              onChange={(event, value) => handleSettingsChange(event, value)}
-              disableDefaultMargin
+              onChange={(event) => handleSettingsChange(event)}
+              marginBottomType="none"
             />
           </Accordion.Content>
         </Accordion.Section>
@@ -149,17 +145,16 @@ const Settings = () => {
                 readOnly
                 classNamesObj={{ container: "mr-2-rem" }}
                 labelWidth={26}
-                disableDefaultMargin
+                marginBottomType="none"
               />
               <ColorPreviewSquare onClick={handleOpenHuePopup} color={hexColor} />
             </div>
             <ToggleSwitch
               label="Dark Mode"
               name="darkMode"
-              labelWidth={25}
               checked={authUserSettings?.darkMode}
               onChange={handleSettingsChange}
-              disableDefaultMargin
+              marginBottomType="none"
             />
           </Accordion.Content>
         </Accordion.Section>
@@ -171,11 +166,10 @@ const Settings = () => {
               value={authUserSettings?.username}
               label="Display name"
               classNamesObj={{ container: "mt-4-rem" }}
-              labelWidth={25}
               onChange={handleSettingsChange}
               debounceDelay={300}
             />
-            <ImageField label="Avatar" labelWidth={25} onChange={handleAvatarChange} disableDefaultMargin disabled />
+            <ImageField label="Avatar" onChange={handleAvatarChange} marginBottomType="none" disabled />
           </Accordion.Content>
         </Accordion.Section>
       </Accordion>

@@ -5,6 +5,7 @@ import { CustomButton } from "@components/CustomButton";
 import { NoDataPlaceholder } from "@components/placeholders";
 import { SearchedUserType, UserType } from "@services/users";
 
+import { ButtonWidth } from "@marcin-migdal/m-component-library";
 import "./styles.scss";
 
 type UserTilesProps = {
@@ -22,6 +23,8 @@ export const UserTiles = ({ users, message = "No users found", onAddFriend }: Us
           text="Invite"
           onClick={() => onAddFriend(user)}
           variant="full"
+          width={ButtonWidth.STRETCH}
+          disableDefaultMargin
         />
       )}
     </BaseUsersTiles>
@@ -37,7 +40,15 @@ type FriendsTilesProps = {
 export const FriendsTiles = ({ users, message = "No friends found", onDeleteFriend }: FriendsTilesProps) => {
   return (
     <BaseUsersTiles users={users} message={message} nameSpace="myFriends">
-      {(user) => <CustomButton text="Delete" onClick={() => onDeleteFriend(user)} variant="full" />}
+      {(user) => (
+        <CustomButton
+          text="Delete"
+          onClick={() => onDeleteFriend(user)}
+          variant="full"
+          width={ButtonWidth.STRETCH}
+          disableDefaultMargin
+        />
+      )}
     </BaseUsersTiles>
   );
 };
