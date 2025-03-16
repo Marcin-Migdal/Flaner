@@ -1,0 +1,11 @@
+.product-page {
+  .category-input-container {
+    width: 214px;
+  }
+
+  .categories-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-2);
+  }
+}

@@ -58,7 +58,7 @@ const MyFriends = () => {
         <CustomButton icon="user-plus" onClick={handleOpen} disableDefaultMargin />
       </div>
 
-      <div className="user-tiles-container">
+      <div className="content-container">
         <ContentWrapper query={friendsQuery}>
           {({ data }) => (
             <FriendsTiles

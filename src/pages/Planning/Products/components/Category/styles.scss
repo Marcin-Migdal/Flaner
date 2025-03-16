@@ -1,0 +1,15 @@
+.category {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+
+  width: 214px;
+  border-radius: var(--radius-base);
+  padding: var(--spacing-2);
+
+  background-color: var(--grey-color-650);
+
+  .context-menu-icon {
+    margin-left: auto;
+  }
+}
