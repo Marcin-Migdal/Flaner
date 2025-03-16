@@ -74,8 +74,8 @@ export const ContentWrapper = <T,>({
     isUninitialized: customConditions !== undefined ? customConditions.isUninitialized : query.isUninitialized,
   };
 
-  if (conditions.isLoading) return placeholders.spinner;
-  if (conditions.isError) return placeholders.error;
-  if (conditions.isUninitialized) return placeholders.noData;
+  if (conditions.isLoading) {return placeholders.spinner;}
+  if (conditions.isError) {return placeholders.error;}
+  if (conditions.isUninitialized) {return placeholders.noData;}
   return children({ data: query.data as T });
 };

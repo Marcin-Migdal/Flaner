@@ -55,21 +55,21 @@ export const NotificationSubMenu = () => {
       </div>
 
       <ContentWrapper query={currentQuery}>
-        {({ data }) => (
-          <>
-            {data.length === 0 ? (
-              <DesktopNavbarItem
-                className="no-notification-item"
-                key="no-notification-message"
-                navbarItem={{}}
-                depth={depth + 1}
-                openDirection={subMenuPosition?.openDirection}
-              >
-                <Icon icon={["fas", "triangle-exclamation"]} />
-                <h3>{t("No notifications")}</h3>
-              </DesktopNavbarItem>
-            ) : (
-              data.map((notification) => {
+        {({ data }) => {
+          return data.length === 0 ? (
+            <DesktopNavbarItem
+              className="no-notification-item"
+              key="no-notification-message"
+              navbarItem={{}}
+              depth={depth + 1}
+              openDirection={subMenuPosition?.openDirection}
+            >
+              <Icon icon={["fas", "triangle-exclamation"]} />
+              <h3>{t("No notifications")}</h3>
+            </DesktopNavbarItem>
+          ) : (
+            <>
+              {data.map((notification) => {
                 return (
                   <DesktopNavbarItem
                     key={notification.createdAt}
@@ -80,10 +80,10 @@ export const NotificationSubMenu = () => {
                     <NotificationSubMenuItem notification={notification} />
                   </DesktopNavbarItem>
                 );
-              })
-            )}
-          </>
-        )}
+              })}
+            </>
+          );
+        }}
       </ContentWrapper>
     </div>
   );

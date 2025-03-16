@@ -33,7 +33,7 @@ const SignUp = () => {
 
   const onGoogleSignIn = async () => dispatch(signInWithGoogle({ language: i18n.language as LanguageType }));
 
-  const handleAuthErrorChange = (authErrors) => dispatch(setAuthError(authErrors));
+  const handleAuthErrorChange = (newAuthErrors) => dispatch(setAuthError(newAuthErrors));
 
   const handleNavigate = (to: PATH_CONSTRANTS) => {
     dispatch(setAuthError({}));
