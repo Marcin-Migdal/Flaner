@@ -29,6 +29,10 @@ jobs:
           node-version: 20
           cache: "npm"
 
+      - name: Set up .npmrc for GitHub Packages
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PAT }}" > ~/.npmrc
+
       - name: Install dependencies
         run: npm ci
 
