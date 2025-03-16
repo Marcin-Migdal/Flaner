@@ -40,7 +40,7 @@ export const DebounceTextfield = ({
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
         !hasValueChanged && setHasValueChanged(true);
 
-        if (onChange) onChange(event, event.target.value);
+        if (onChange) {onChange(event, event.target.value);}
 
         !isControlled && setInternalValue(event.target.value);
     };

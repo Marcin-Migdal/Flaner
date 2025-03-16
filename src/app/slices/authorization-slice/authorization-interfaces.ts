@@ -10,7 +10,7 @@ interface ProviderData {
   uid: string;
   displayName: string;
   email: string;
-  phoneNumber: any;
+  phoneNumber: string | null;
   photoURL: string;
 }
 
@@ -67,7 +67,11 @@ export type GoogleSignInPayload = {
 };
 
 //! AsyncThunks error payload
-export type IFirebaseError<T = unknown> = { code: string; message: string; formErrors: FormErrorsType<T> | {} };
+export type FirebaseError<T = unknown> = {
+  code: string;
+  message: string;
+  formErrors: FormErrorsType<T>;
+};
 
 //? Additional types
 export type TranslateFunctionType = TFunction<[string, string], undefined>;

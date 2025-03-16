@@ -11,6 +11,7 @@ type NavbarItemContext = {
 };
 
 export const NavbarItemContext = createContext<NavbarItemContext>({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   item: {} as any,
   subMenuPosition: undefined,
   depth: 0,
@@ -45,7 +46,9 @@ export const DesktopNavbarItem = ({
   const handleClick = (event) => {
     event.stopPropagation();
 
-    if (disabled || !onClick) return;
+    if (disabled || !onClick) {
+      return;
+    }
 
     onClick(event);
   };
@@ -53,15 +56,17 @@ export const DesktopNavbarItem = ({
   const handleMouseEnter = (event: MouseEvent<HTMLLIElement>) => {
     event.stopPropagation();
 
-    if (disabled || (!alwaysOpenSubMenu && (!subItems || !(subItems.filter((item) => !item.disabled).length > 0))))
+    if (disabled || (!alwaysOpenSubMenu && (!subItems || !(subItems.filter((item) => !item.disabled).length > 0)))) {
       return;
+    }
 
     const { bottom, width, left, right } = event.currentTarget.getBoundingClientRect();
 
     let validatedOpenDirection: OpenDirectionType = openDirection;
 
-    if (openDirection === "right") validatedOpenDirection = right + width <= window.innerWidth ? "right" : "left";
-    else if (openDirection === "left") {
+    if (openDirection === "right") {
+      validatedOpenDirection = right + width <= window.innerWidth ? "right" : "left";
+    } else if (openDirection === "left") {
       validatedOpenDirection = left - width >= 0 ? "left" : "right";
     }
 
@@ -88,8 +93,9 @@ export const DesktopNavbarItem = ({
   };
 
   const handleMouseLeave = (event: MouseEvent<HTMLLIElement>) => {
-    if (!(event.relatedTarget instanceof Node)) setSubMenuPosition(undefined);
-    else if (subMenuPosition && itemRef?.current && !itemRef.current.contains(event.relatedTarget)) {
+    if (!(event.relatedTarget instanceof Node)) {
+      setSubMenuPosition(undefined);
+    } else if (subMenuPosition && itemRef?.current && !itemRef.current.contains(event.relatedTarget)) {
       setSubMenuPosition(undefined);
     }
 

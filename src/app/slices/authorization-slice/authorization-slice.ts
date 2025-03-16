@@ -3,7 +3,7 @@ import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
 import { ISignInState } from "@pages/SignIn/sign-in-formik-config";
 import { ISignUpState } from "@pages/SignUp/sign-up-formik-config";
-import { AuthUserConfigType, IAuthUserInitialState, IFirebaseError } from "./authorization-interfaces";
+import { AuthUserConfigType, FirebaseError, IAuthUserInitialState } from "./authorization-interfaces";
 
 const initialState: IAuthUserInitialState = {
   authUser: null,
@@ -36,7 +36,7 @@ const authorizationSlice = createSlice({
     );
     builder.addMatcher(
       (action) => action.type.startsWith("authorization/") && action.type.endsWith("/rejected"),
-      (state, action: PayloadAction<IFirebaseError>) => {
+      (state, action: PayloadAction<FirebaseError>) => {
         action.payload?.formErrors && (state.authFormErrors = action.payload.formErrors); // setting errors in form inputs
         state.isLoading = false;
       }
