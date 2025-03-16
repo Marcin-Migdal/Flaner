@@ -43,6 +43,22 @@ export const MobileMenu = ({ authUser, menuOpen, toggleMenuDropdown }: MobileMen
     icon: ["fas", "sign-out"],
   };
 
+  const handleCloseMenuItem = () => {
+    setOpenMenuItem({ openStatus: "closing", item: openMenuItem.item });
+
+    setTimeout(() => {
+      setOpenMenuItem({ openStatus: "closed", item: undefined });
+    }, 150);
+  };
+
+  const handleOpenMenuItem = (text: string) => {
+    setOpenMenuItem({ openStatus: "mounted", item: text });
+
+    setTimeout(() => {
+      setOpenMenuItem({ openStatus: "opened", item: text });
+    }, 150);
+  };
+
   useEffect(() => {
     if (menuOpen === "closing") {
       handleCloseMenuItem();
@@ -67,51 +83,34 @@ export const MobileMenu = ({ authUser, menuOpen, toggleMenuDropdown }: MobileMen
     handleOpenMenuItem(text);
   };
 
-  const handleCloseMenuItem = () => {
-    setOpenMenuItem({ openStatus: "closing", item: openMenuItem.item });
+  if (menuOpen === "closed") {
+    return null;
+  }
 
-    setTimeout(() => {
-      setOpenMenuItem({ openStatus: "closed", item: undefined });
-    }, 150);
-  };
+  return createPortal(
+    <div className={`mobile-menu ${menuOpen}`}>
+      <ul className="mobile-menu-list">
+        <li className="user-item">
+          <Avatar avatarUrl={authUser?.avatarUrl} />
+          <h2>{authUser?.username}</h2>
+        </li>
 
-  const handleOpenMenuItem = (text: string) => {
-    setOpenMenuItem({ openStatus: "mounted", item: text });
-
-    setTimeout(() => {
-      setOpenMenuItem({ openStatus: "opened", item: text });
-    }, 150);
-  };
-
-  return (
-    <>
-      {menuOpen !== "closed" &&
-        createPortal(
-          <div className={`mobile-menu ${menuOpen}`}>
-            <ul className="mobile-menu-list">
-              <li className="user-item">
-                <Avatar avatarUrl={authUser?.avatarUrl} />
-                <h2>{authUser?.username}</h2>
-              </li>
-
-              {navigationItems.map((navigationItem, index) => (
-                <MobileMenuItem
-                  key={index}
-                  navigationItem={navigationItem}
-                  closeMenuDropdown={toggleMenuDropdown}
-                  itemPath={navigationItem.text as string}
-                  toggleMenuItem={toggleMenuItem}
-                  openMenuItem={openMenuItem}
-                  depth={1}
-                />
-              ))}
-              <MobileMenuItem depth={1} navigationItem={settingsItem} closeMenuDropdown={toggleMenuDropdown} />
-              <MobileMenuItem depth={1} navigationItem={signOutItem} closeMenuDropdown={() => {}} />
-            </ul>
-            <SignOutAlert {...alertProps} onAction={toggleMenuDropdown} />
-          </div>,
-          document.querySelector(".common-wrapper-container") as Element
-        )}
-    </>
+        {navigationItems.map((navigationItem, index) => (
+          <MobileMenuItem
+            key={index}
+            navigationItem={navigationItem}
+            closeMenuDropdown={toggleMenuDropdown}
+            itemPath={navigationItem.text as string}
+            toggleMenuItem={toggleMenuItem}
+            openMenuItem={openMenuItem}
+            depth={1}
+          />
+        ))}
+        <MobileMenuItem depth={1} navigationItem={settingsItem} closeMenuDropdown={toggleMenuDropdown} />
+        <MobileMenuItem depth={1} navigationItem={signOutItem} closeMenuDropdown={() => {}} />
+      </ul>
+      <SignOutAlert {...alertProps} onAction={toggleMenuDropdown} />
+    </div>,
+    document.querySelector(".common-wrapper-container") as Element
   );
 };

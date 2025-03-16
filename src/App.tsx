@@ -24,7 +24,9 @@ function App() {
   const { t, i18n } = useTranslation("errors");
 
   useEffect(() => {
-    if (toastRef.current) dispatch(setToastHandler(toastRef.current));
+    if (toastRef.current) {
+      dispatch(setToastHandler(toastRef.current));
+    }
   }, []);
 
   useEffect(() => {
@@ -40,14 +42,15 @@ function App() {
 
       // Serializing signed-in user object, before sending it to the reducer
       const serializedUser = toSerializable<ISerializedAuthUser>(user);
-      const { photoURL, ...otherProperties } = serializedUser;
 
       try {
         const userResponse = await retryDocumentRequest<UserType>(() =>
           getCollectionDocumentById(COLLECTIONS.USERS, serializedUser.uid)
         );
 
-        if (!userResponse.exists()) throw new Error("Error occurred while loading user profile, please refresh page");
+        if (!userResponse.exists()) {
+          throw new Error("Error occurred while loading user profile, please refresh page");
+        }
 
         const userConfig = userResponse.data();
 
@@ -55,7 +58,7 @@ function App() {
 
         dispatch(
           setAuthUser({
-            ...otherProperties,
+            ...serializedUser,
             username: userConfig.username,
             avatarUrl: userConfig.avatarUrl,
             language: userConfig.language,

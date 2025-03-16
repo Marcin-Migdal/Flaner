@@ -31,13 +31,17 @@ export const ReceivedRequestsSidePanel = ({ nameSpace, ...sidePanelProps }: Rece
   const [confirmFriendRequest] = useConfirmFriendRequestMutation();
   const [declineFriendRequest] = useDeclineFriendRequestMutation();
   const handleRequestConfirm = (friendRequest: ReceivedFriendRequest) => {
-    if (!authUser) return;
+    if (!authUser) {
+      return;
+    }
 
     confirmFriendRequest({ friendRequest, currentUser: authUser });
   };
 
   const handleRequestDecline = (friendRequest: ReceivedFriendRequest) => {
-    if (!authUser) return;
+    if (!authUser) {
+      return;
+    }
 
     declineFriendRequest({ friendRequest, currentUserUid: authUser.uid });
   };
@@ -48,7 +52,7 @@ export const ReceivedRequestsSidePanel = ({ nameSpace, ...sidePanelProps }: Rece
       <ContentWrapper query={receivedFriendRequestQuery}>
         {({ data }) => (
           <ReceivedFriendRequests
-            friendRequests={(data as any) || []}
+            friendRequests={data || []}
             onRequestConfirm={handleRequestConfirm}
             onRequestDecline={handleRequestDecline}
           />

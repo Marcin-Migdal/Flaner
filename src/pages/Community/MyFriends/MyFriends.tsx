@@ -33,7 +33,7 @@ const MyFriends = () => {
   };
 
   const handleDeleteFriend = async (friendToDelete: UserType) => {
-    if (!authUser || !friendToDelete) return;
+    if (!authUser || !friendToDelete) {return;}
 
     await deleteFriend({
       friend: friendToDelete,

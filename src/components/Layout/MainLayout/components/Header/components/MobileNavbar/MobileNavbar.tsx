@@ -25,6 +25,24 @@ export const MobileNavbar = () => {
   );
   const [updateReadNotification] = useUpdateReadNotificationMutation();
 
+  const closeMenuDropdown = () => {
+    setMenuOpen("closing");
+
+    setTimeout(() => {
+      setMenuOpen("closed");
+    }, 150);
+
+    return;
+  };
+
+  const closeNotificationsDropdown = () => {
+    setNotificationsOpen("closing");
+
+    setTimeout(() => {
+      setNotificationsOpen("closed");
+    }, 150);
+  };
+
   const toggleMenuDropdown = () => {
     if (["mounted", "opened"].includes(menuOpen)) {
       closeMenuDropdown();
@@ -41,16 +59,6 @@ export const MobileNavbar = () => {
     setTimeout(() => {
       setMenuOpen("opened");
     }, 0);
-  };
-
-  const closeMenuDropdown = () => {
-    setMenuOpen("closing");
-
-    setTimeout(() => {
-      setMenuOpen("closed");
-    }, 150);
-
-    return;
   };
 
   const toggleNotificationsDropdown = () => {
@@ -74,14 +82,6 @@ export const MobileNavbar = () => {
     setTimeout(() => {
       setNotificationsOpen("opened");
     }, 0);
-  };
-
-  const closeNotificationsDropdown = () => {
-    setNotificationsOpen("closing");
-
-    setTimeout(() => {
-      setNotificationsOpen("closed");
-    }, 150);
   };
 
   const handleChangeTab = (tab: NotificationsTabs) => {

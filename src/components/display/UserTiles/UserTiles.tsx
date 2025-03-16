@@ -1,11 +1,9 @@
-import { ReactElement } from "react";
-
-import { Avatar } from "@components/Avatar";
-import { CustomButton } from "@components/CustomButton";
-import { NoDataPlaceholder } from "@components/placeholders";
-import { SearchedUserType, UserType } from "@services/users";
-
 import { ButtonWidth } from "@marcin-migdal/m-component-library";
+
+import { CustomButton } from "@components/CustomButton";
+import { SearchedUserType, UserType } from "@services/users";
+import { BaseUsersTiles } from "./BaseUsersTiles/BaseUsersTiles";
+
 import "./styles.scss";
 
 type UserTilesProps = {
@@ -50,33 +48,5 @@ export const FriendsTiles = ({ users, message = "No friends found", onDeleteFrie
         />
       )}
     </BaseUsersTiles>
-  );
-};
-
-type BaseUsersTilesProps<T extends UserType | SearchedUserType> = {
-  users: T[];
-  message: string;
-  children: (request: T) => ReactElement;
-  nameSpace: string;
-};
-
-const BaseUsersTiles = <T extends UserType | SearchedUserType>({
-  users,
-  children,
-  message,
-  nameSpace,
-}: BaseUsersTilesProps<T>) => {
-  if (users.length === 0) return <NoDataPlaceholder message={message} nameSpace={nameSpace} />;
-
-  return (
-    <div className="user-tiles">
-      {users.map((user) => (
-        <div key={user.uid} className="user-tile">
-          <Avatar avatarUrl={user.avatarUrl} />
-          <h3>{user.username}</h3>
-          {children(user)}
-        </div>
-      ))}
-    </div>
   );
 };

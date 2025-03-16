@@ -13,7 +13,7 @@ export async function retryDocumentRequest<T extends DocumentData>(
         try {
             const res = await fn();
 
-            if (!res.exists()) throw new Error("Document not found");
+            if (!res.exists()) {throw new Error("Document not found");}
 
             return res;
         } catch (error) {

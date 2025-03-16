@@ -25,7 +25,7 @@ const AddFriends = () => {
   const [sendFriendRequest] = useSendFriendRequestMutation();
 
   const handleAddFriend = (user: SearchedUserType) => {
-    if (!user || !authUser) return;
+    if (!user || !authUser) {return;}
 
     sendFriendRequest({ senderUid: authUser.uid, receiverUid: user.uid });
   };

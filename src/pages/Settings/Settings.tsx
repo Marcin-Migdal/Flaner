@@ -115,7 +115,7 @@ const Settings = () => {
     setAuthUserSettings(createEditUserRequest(authUser));
   };
 
-  const handleAvatarChange = async (event) => {};
+  const handleAvatarChange = async () => {};
 
   const hexColor = hslToHex(currentThemeHue, 80, 50);
 

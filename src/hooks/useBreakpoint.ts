@@ -2,31 +2,33 @@ import { useEffect, useState } from "react";
 
 type BreakPointType = `(max-width: ${number}px)` | `(min-width: ${number}px)`;
 
-export const useBreakpoint = (breakpoint: BreakPointType): boolean => {
-    const [breakPointResult, setBreakPointResult] = useState<boolean>(getBreakPointResult(breakpoint));
+const getBreakPointResult = (breakpoint: BreakPointType): boolean => {
+  const width: number = parseInt(breakpoint.replace(/\D/g, ""));
 
-    useEffect(() => {
-        const handleResize = () => {
-            const newBreakPointResult = getBreakPointResult(breakpoint);
-
-            if (breakPointResult !== newBreakPointResult) {
-                setBreakPointResult(newBreakPointResult);
-            }
-        };
-
-        window.addEventListener("resize", handleResize);
-
-        return () => {
-            window.removeEventListener("resize", handleResize);
-        };
-    }, [breakPointResult]);
-
-    return breakPointResult;
+  if (breakpoint.includes("max-width")) {
+    return window.innerWidth <= width;
+  }
+  return window.innerWidth >= width;
 };
 
-const getBreakPointResult = (breakpoint: BreakPointType): boolean => {
-    const width: number = parseInt(breakpoint.replace(/\D/g, ""));
+export const useBreakpoint = (breakpoint: BreakPointType): boolean => {
+  const [breakPointResult, setBreakPointResult] = useState<boolean>(getBreakPointResult(breakpoint));
 
-    if (breakpoint.includes("max-width")) return window.innerWidth <= width;
-    return window.innerWidth >= width;
+  useEffect(() => {
+    const handleResize = () => {
+      const newBreakPointResult = getBreakPointResult(breakpoint);
+
+      if (breakPointResult !== newBreakPointResult) {
+        setBreakPointResult(newBreakPointResult);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [breakPointResult]);
+
+  return breakPointResult;
 };
