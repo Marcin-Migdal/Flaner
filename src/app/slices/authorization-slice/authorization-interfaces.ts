@@ -1,24 +1,24 @@
 import { FormErrorsType } from "@marcin-migdal/m-component-library";
+import { LanguageType } from "i18n";
 import { TFunction } from "i18next";
 
-import { ISignInState } from "@pages/SignIn/sign-in-formik-config";
-import { ISignUpState } from "@pages/SignUp/sign-up-formik-config";
-import { LanguageType } from "i18n";
+import { SignInState } from "@utils/formik-configs/sign-in-formik-config";
+import { SignUpState } from "@utils/formik-configs/sign-up-formik-config";
 
-interface ProviderData {
+type ProviderData = {
   providerId: string;
   uid: string;
   displayName: string;
   email: string;
   phoneNumber: string | null;
   photoURL: string;
-}
+};
 
-interface StsTokenManager {
+type StsTokenManager = {
   refreshToken: string;
   accessToken: string;
   expirationTime: number;
-}
+};
 
 //* Firebase user object, that is serializable
 export type ISerializedAuthUser = {
@@ -46,18 +46,18 @@ export type AuthUserConfigType = Omit<ISerializedAuthUser, "photoURL" | "display
 };
 
 //! Slice init state
-export interface IAuthUserInitialState {
+export type AuthUserInitialState = {
   authUser: AuthUserConfigType | null;
   isLoading: boolean;
-  authFormErrors: FormErrorsType<ISignInState | ISignUpState>;
-}
+  authFormErrors: FormErrorsType<SignInState | SignUpState>;
+};
 
 //! AsyncThunks payloads
 //* SIGN IN
-export type EmailSignInPayload = ISignInState;
+export type EmailSignInPayload = SignInState;
 
 //* SIGN UP
-export type EmailSignUpPayload = ISignUpState & {
+export type EmailSignUpPayload = SignUpState & {
   language: LanguageType;
 };
 

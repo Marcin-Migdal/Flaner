@@ -1,4 +1,5 @@
-import { ButtonWidth, Card, Col, Form, FormErrorsType, Icon, Row } from "@marcin-migdal/m-component-library";
+import { ButtonWidth, Card, Col, Form, FormErrorsType, Icon, Row, useForm } from "@marcin-migdal/m-component-library";
+import { LanguageType } from "i18n";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
@@ -11,10 +12,10 @@ import {
   signInWithGoogle,
   signOut,
 } from "@slices/authorization-slice";
+
 import { addToast } from "@slices/toast-slice";
 import { PATH_CONSTRANTS } from "@utils/enums";
-import { LanguageType } from "i18n";
-import { ISignInState, signInInitialValues, signInValidationSchema } from "./sign-in-formik-config";
+import { SignInState, signInInitialValues, signInValidationSchema } from "../../utils/formik-configs";
 
 import "../../commonAssets/css/auth-form.scss";
 
@@ -26,7 +27,7 @@ const SignIn = () => {
   const { isLoading, authFormErrors: authErrors } = useAppSelector(selectAuthorization);
   const dispatch = useAppDispatch();
 
-  const handleSubmit = async (values: ISignInState) => {
+  const handleSubmit = async (values: SignInState) => {
     dispatch(signInWithEmail({ ...values }))
       .unwrap()
       .then((user) => {
@@ -38,9 +39,17 @@ const SignIn = () => {
       });
   };
 
-  const onGoogleSignIn = async () => dispatch(signInWithGoogle({ language: i18n.language as LanguageType }));
+  const handleAuthErrorChange = (authError: FormErrorsType<SignInState>) => dispatch(setAuthError(authError));
 
-  const handleAuthErrorChange = (authError: FormErrorsType<ISignInState>) => dispatch(setAuthError(authError));
+  const formik = useForm({
+    initialValues: signInInitialValues,
+    onSubmit: handleSubmit,
+    validationSchema: signInValidationSchema,
+    additionalErrors: authErrors,
+    onAdditionalErrors: handleAuthErrorChange,
+  });
+
+  const onGoogleSignIn = async () => dispatch(signInWithGoogle({ language: i18n.language as LanguageType }));
 
   const handleNavigate = (to: PATH_CONSTRANTS) => {
     dispatch(setAuthError({}));
@@ -54,37 +63,23 @@ const SignIn = () => {
           <Col sm={12} mdFlex={1} className="left-col">
             <h2>{t("_Hello")}!</h2>
             <p data-cy="sign-in-description">{t("Please sign in to continue")}</p>
-            <Form<ISignInState>
-              initialValues={signInInitialValues}
-              onSubmit={handleSubmit}
-              validationSchema={signInValidationSchema}
-              externalErrors={authErrors}
-              onExternalErrorChange={handleAuthErrorChange}
-            >
-              {({ values, errors, handleChange, handleBlur, isValid }) => (
+            <Form formik={formik}>
+              {({ register, isValid }) => (
                 <>
                   <CustomTextfield
                     data-cy="email-input"
                     nameSpace={nameSpace}
                     label="Email"
-                    name="email"
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    value={values.email}
-                    error={errors.email}
                     labelType="floating"
+                    {...register("email")}
                   />
                   <CustomTextfield
                     data-cy="password-input"
                     nameSpace={nameSpace}
                     label="Password"
-                    name="password"
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    value={values.password}
-                    error={errors.password}
                     labelType="floating"
                     type="password"
+                    {...register("password")}
                   />
                   <CustomButton
                     data-cy="sign-in-submit-btn"

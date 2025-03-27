@@ -157,7 +157,7 @@ export const usersApi = firestoreApi.injectEndpoints({
           const sentFriendRequestsSnap = await getCollectionFilteredDocuments<RawFriendRequest>(
             COLLECTIONS.FRIEND_REQUEST,
             {
-              senderUid: [
+              senderRef: [
                 {
                   field: "senderRef",
                   condition: "==",
@@ -207,7 +207,7 @@ export const usersApi = firestoreApi.injectEndpoints({
           const receivedFriendRequestsSnap = await getCollectionFilteredDocuments<RawFriendRequest>(
             COLLECTIONS.FRIEND_REQUEST,
             {
-              senderUid: [
+              receiverRef: [
                 {
                   field: "receiverRef",
                   condition: "==",

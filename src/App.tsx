@@ -13,8 +13,6 @@ import { defaultThemeHue } from "@utils/constants/theme-hue";
 import { COLLECTIONS } from "@utils/enums";
 import { getCollectionDocumentById, retryDocumentRequest, toSerializable } from "@utils/helpers";
 
-//! rest of the pages (details will be planned when I will come to this point)
-
 function App() {
   const dispatch = useAppDispatch();
   const { authUser } = useAppSelector(selectAuthorization);

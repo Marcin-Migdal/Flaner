@@ -1,11 +1,11 @@
 import { FormErrorsType } from "@marcin-migdal/m-component-library";
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
-import { ISignInState } from "@pages/SignIn/sign-in-formik-config";
-import { ISignUpState } from "@pages/SignUp/sign-up-formik-config";
-import { AuthUserConfigType, FirebaseError, IAuthUserInitialState } from "./authorization-interfaces";
+import { SignInState } from "@utils/formik-configs/sign-in-formik-config";
+import { SignUpState } from "@utils/formik-configs/sign-up-formik-config";
+import { AuthUserConfigType, AuthUserInitialState, FirebaseError } from "./authorization-interfaces";
 
-const initialState: IAuthUserInitialState = {
+const initialState: AuthUserInitialState = {
   authUser: null,
   isLoading: true,
   authFormErrors: {},
@@ -22,7 +22,7 @@ const authorizationSlice = createSlice({
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
-    setAuthError: (state, action: PayloadAction<FormErrorsType<ISignInState | ISignUpState>>) => {
+    setAuthError: (state, action: PayloadAction<FormErrorsType<SignInState | SignUpState>>) => {
       state.authFormErrors = action.payload;
     },
   },
@@ -47,6 +47,6 @@ const authorizationSlice = createSlice({
 // Action creators are generated for each function in reducers object
 export const { setAuthUser, setIsLoading, setAuthError } = authorizationSlice.actions;
 
-export const selectAuthorization = (store: { authorization: IAuthUserInitialState }) => store.authorization;
+export const selectAuthorization = (store: { authorization: AuthUserInitialState }) => store.authorization;
 
 export default authorizationSlice.reducer;

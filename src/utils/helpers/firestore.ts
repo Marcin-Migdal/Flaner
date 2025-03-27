@@ -23,13 +23,13 @@ import { IError, authErrors } from "../constants";
 import { COLLECTIONS } from "../enums";
 import { CustomFirebaseError } from "../error-classes";
 
-export type DocumentFilter = {
-  field: string;
+export type DocumentFilter<TData extends DocumentData> = {
+  field: keyof TData;
   condition: WhereFilterOp;
   searchValue: string | boolean | number | DocumentReference;
 };
 
-export type DocumentFilterParams = Record<string, DocumentFilter[]>;
+export type DocumentFilterParams<TData extends DocumentData> = Partial<Record<keyof TData, DocumentFilter<TData>[]>>;
 
 const mapCollectionData = <TData extends DocumentData, TReturn extends DocumentData>(
   collectionSnapshots: QuerySnapshot<TData, TData> | QuerySnapshot<TData, TData>[],
@@ -84,15 +84,15 @@ export const getCollectionDocumentById = async <TData extends DocumentData>(
 
 export const getCollectionFilteredDocuments = async <TData extends DocumentData>(
   collectionName: COLLECTIONS,
-  params: DocumentFilterParams
+  params: DocumentFilterParams<TData>
 ): Promise<QuerySnapshot<TData, TData>> => {
   try {
     const filters: QueryFieldFilterConstraint[] = [];
 
     Object.entries(params).forEach(([_field, docFilters]) =>
-      docFilters.forEach((filter) => {
+      docFilters?.forEach((filter) => {
         const { field, condition, searchValue } = filter;
-        filters.push(where(field, condition, searchValue));
+        filters.push(where(field as string, condition, searchValue));
       })
     );
 

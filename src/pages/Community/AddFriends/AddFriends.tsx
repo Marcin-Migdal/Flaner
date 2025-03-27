@@ -45,7 +45,7 @@ const AddFriends = () => {
         <CustomButton size="large" icon="user-clock" onClick={handleOpen} disableDefaultMargin />
       </div>
 
-      <div className="user-tiles-container">
+      <div className="content-container">
         <ContentWrapper
           query={usersQuery}
           placeholdersConfig={{ noData: { message: "Search friends" } }}

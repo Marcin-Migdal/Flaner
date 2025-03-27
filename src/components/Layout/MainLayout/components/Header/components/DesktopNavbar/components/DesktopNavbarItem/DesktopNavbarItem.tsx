@@ -17,7 +17,7 @@ export const NavbarItemContext = createContext<NavbarItemContext>({
   depth: 0,
 });
 
-interface INavbarItemProps {
+type NavbarItemProps = {
   navbarItem: HeaderItem;
   depth?: number;
   openDirection?: OpenDirectionType;
@@ -26,7 +26,7 @@ interface INavbarItemProps {
   className?: string;
   onOpen?: (navbarItem: HeaderItem) => void;
   onClose?: (navbarItem: HeaderItem) => void;
-}
+};
 
 export const DesktopNavbarItem = ({
   children,
@@ -37,7 +37,7 @@ export const DesktopNavbarItem = ({
   className = "",
   onOpen,
   onClose,
-}: INavbarItemProps) => {
+}: NavbarItemProps) => {
   const itemRef = useRef<HTMLLIElement>(null);
 
   const [subMenuPosition, setSubMenuPosition] = useState<SubMenuPosition | undefined>(undefined);

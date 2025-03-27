@@ -33,7 +33,9 @@ const MyFriends = () => {
   };
 
   const handleDeleteFriend = async (friendToDelete: UserType) => {
-    if (!authUser || !friendToDelete) {return;}
+    if (!authUser || !friendToDelete) {
+      return;
+    }
 
     await deleteFriend({
       friend: friendToDelete,
@@ -55,10 +57,10 @@ const MyFriends = () => {
           nameSpace={nameSpace}
           marginBottomType="none"
         />
-        <CustomButton icon="user-plus" onClick={handleOpen} disableDefaultMargin />
+        <CustomButton icon="user-plus" size="large" onClick={handleOpen} disableDefaultMargin />
       </div>
 
-      <div className="user-tiles-container">
+      <div className="content-container">
         <ContentWrapper query={friendsQuery}>
           {({ data }) => (
             <FriendsTiles
