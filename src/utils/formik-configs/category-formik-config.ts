@@ -6,9 +6,9 @@ export type CategoryState = {
   icon: string;
 };
 
-export const categoryValues: CategoryState = {
+export const initCategoryValues: CategoryState = {
   name: "",
-  color: "",
+  color: "#ffffff",
   icon: "",
 };
 

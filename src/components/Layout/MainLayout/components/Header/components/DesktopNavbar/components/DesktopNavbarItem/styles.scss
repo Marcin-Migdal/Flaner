@@ -33,7 +33,6 @@
   .icon.arrow-indicator {
     width: 12px;
     height: 12px;
-    margin-left: auto;
     padding: unset;
   }
 
@@ -50,6 +49,7 @@
     width: 100%;
     height: 100%;
     padding: var(--spacing-0) var(--spacing-3);
+    gap: var(--spacing-2);
 
     transition: var(--transition-duration-fast);
   }
@@ -67,7 +67,6 @@
 
     p {
       font-size: var(--font-size-xl);
-      margin-left: var(--spacing-2);
     }
 
     .navbar-item-content {

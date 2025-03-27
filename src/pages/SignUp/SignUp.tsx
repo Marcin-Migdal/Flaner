@@ -1,4 +1,5 @@
-import { ButtonWidth, Card, Col, Form, Icon, Row } from "@marcin-migdal/m-component-library";
+import { ButtonWidth, Card, Col, Form, Icon, Row, useForm } from "@marcin-migdal/m-component-library";
+import { LanguageType } from "i18n";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
@@ -6,8 +7,7 @@ import { CustomButton, CustomTextfield } from "@components/index";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
 import { addToast, selectAuthorization, setAuthError, signInWithGoogle, signOut, signUpWithEmail } from "@slices/index";
 import { PATH_CONSTRANTS } from "@utils/enums";
-import { LanguageType } from "i18n";
-import { ISignUpState, signUpInitialValues, signUpValidationSchema } from "./sign-up-formik-config";
+import { signUpInitialValues, SignUpState, signUpValidationSchema } from "../../utils/formik-configs";
 
 import "../../commonAssets/css/auth-form.scss";
 
@@ -19,8 +19,8 @@ const SignUp = () => {
   const dispatch = useAppDispatch();
   const { isLoading, authFormErrors: authErrors } = useAppSelector(selectAuthorization);
 
-  const handleSubmit = async (values) => {
-    dispatch(signUpWithEmail({ ...values, language: i18n.language as LanguageType, t: t }))
+  const handleSubmit = async (values: SignUpState) => {
+    dispatch(signUpWithEmail({ ...values, language: i18n.language as LanguageType }))
       .unwrap()
       .then((user) => {
         if (!user.emailVerified) {
@@ -31,9 +31,17 @@ const SignUp = () => {
       });
   };
 
-  const onGoogleSignIn = async () => dispatch(signInWithGoogle({ language: i18n.language as LanguageType }));
-
   const handleAuthErrorChange = (newAuthErrors) => dispatch(setAuthError(newAuthErrors));
+
+  const formik = useForm<SignUpState>({
+    initialValues: signUpInitialValues,
+    validationSchema: signUpValidationSchema,
+    onSubmit: handleSubmit,
+    additionalErrors: authErrors,
+    onAdditionalErrors: handleAuthErrorChange,
+  });
+
+  const onGoogleSignIn = async () => dispatch(signInWithGoogle({ language: i18n.language as LanguageType }));
 
   const handleNavigate = (to: PATH_CONSTRANTS) => {
     dispatch(setAuthError({}));
@@ -47,59 +55,37 @@ const SignUp = () => {
           <Col sm={12} mdFlex={1} className="left-col">
             <h2>{t("_Hello")}!</h2>
             <p data-cy="sign-up-description">{t("Please sign up to continue")}</p>
-            <Form<ISignUpState>
-              initialValues={signUpInitialValues}
-              validationSchema={signUpValidationSchema}
-              onSubmit={handleSubmit}
-              externalErrors={authErrors}
-              onExternalErrorChange={handleAuthErrorChange}
-            >
-              {({ values, errors, handleBlur, handleChange, isValid }) => (
+            <Form formik={formik}>
+              {({ register, isValid }) => (
                 <>
                   <CustomTextfield
                     data-cy="username-input"
                     nameSpace={nameSpace}
                     label="Username"
-                    name="username"
-                    value={values.username}
-                    error={errors.username}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
                     labelType="floating"
+                    {...register("password")}
                   />
                   <CustomTextfield
                     data-cy="email-input"
                     nameSpace={nameSpace}
                     label="Email"
-                    name="email"
-                    value={values.email}
-                    error={errors.email}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
                     labelType="floating"
+                    {...register("email")}
                   />
                   <CustomTextfield
                     data-cy="password-input"
                     nameSpace={nameSpace}
                     label="Password"
-                    name="password"
-                    value={values.password}
-                    error={errors.password}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
                     labelType="floating"
+                    {...register("password")}
                     type="password"
                   />
                   <CustomTextfield
                     data-cy="validate-password-input"
                     nameSpace={nameSpace}
                     label="Verify password"
-                    name="verifyPassword"
-                    value={values.verifyPassword}
-                    error={errors.verifyPassword}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
                     labelType="floating"
+                    {...register("verifyPassword")}
                     type="password"
                   />
                   <CustomButton

@@ -9,10 +9,10 @@ import {
 } from "firebase/auth";
 
 import { fb } from "@firebase/firebase";
-import { ISignInState } from "@pages/SignIn/sign-in-formik-config";
-import { ISignUpState } from "@pages/SignUp/sign-up-formik-config";
 import { UserType } from "@services/users";
 import { COLLECTIONS } from "@utils/enums";
+import { SignInState } from "@utils/formik-configs/sign-in-formik-config";
+import { SignUpState } from "@utils/formik-configs/sign-up-formik-config";
 import {
   addCollectionDocument,
   getCollectionDocumentById,
@@ -28,7 +28,7 @@ import * as AI from "./authorization-interfaces";
 export const signInWithEmail = createAsyncThunk<
   AI.ISerializedAuthUser,
   AI.EmailSignInPayload,
-  { rejectValue: AI.FirebaseError<ISignInState> }
+  { rejectValue: AI.FirebaseError<SignInState> }
 >("authorization/async/signInWithEmail", async ({ email, password }, { rejectWithValue }) => {
   try {
     const { user } = await signInWithEmailAndPassword(fb.auth.auth, email, password);
@@ -42,7 +42,7 @@ export const signInWithEmail = createAsyncThunk<
 export const signUpWithEmail = createAsyncThunk<
   AI.ISerializedAuthUser,
   AI.EmailSignUpPayload,
-  { rejectValue: AI.FirebaseError<ISignUpState> }
+  { rejectValue: AI.FirebaseError<SignUpState> }
 >("authorization/async/signUpWithEmail", async ({ email, password, username, language }, { rejectWithValue }) => {
   try {
     // Validate if user with this username exists

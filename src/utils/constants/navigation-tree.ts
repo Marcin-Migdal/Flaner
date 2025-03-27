@@ -49,9 +49,16 @@ export const navigationTree: NavigationNode[] = [
         icon: ["fas", "cart-shopping"],
       },
       {
-        text: "Products",
-        path: PATH_CONSTRANTS.PRODUCTS,
+        text: "Planning settings",
+        path: PATH_CONSTRANTS.PLANNING_SETTINGS,
         icon: ["fas", "drumstick-bite"],
+        subItems: [
+          {
+            text: "Products",
+            path: PATH_CONSTRANTS.PRODUCTS,
+            icon: ["fas", "drumstick-bite"],
+          },
+        ],
       },
     ],
   },

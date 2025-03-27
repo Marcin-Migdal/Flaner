@@ -1,9 +1,9 @@
 import { ToastHandler, ToastVariant } from "@marcin-migdal/m-component-library";
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
-interface IToastInitialState {
+type ToastInitialState = {
   toastHandler: ToastHandler | null;
-}
+};
 
 type AddToastPayload = {
   type: ToastVariant;
@@ -11,7 +11,7 @@ type AddToastPayload = {
   transformContent?: (content: string) => string;
 };
 
-const initialState: IToastInitialState = {
+const initialState: ToastInitialState = {
   toastHandler: null,
 };
 

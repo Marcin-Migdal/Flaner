@@ -4,7 +4,8 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { SpinnerPlaceholder } from "@components/placeholders";
 import { useAppSelector } from "@hooks/redux-hooks";
-import { Breadcrumb, capitalize, Crumb } from "@marcin-migdal/m-component-library";
+import { useBreakpoint } from "@hooks/useBreakpoint";
+import { Breadcrumb, capitalize, CrumbType } from "@marcin-migdal/m-component-library";
 import { selectAuthorization } from "@slices/authorization-slice";
 import { PATH_CONSTRANTS } from "@utils/enums";
 import { useTranslation } from "react-i18next";
@@ -16,22 +17,27 @@ export default function MainLayout() {
   const { authUser, isLoading } = useAppSelector(selectAuthorization);
   const { t } = useTranslation();
 
-  const crumbs: Crumb[] = useMemo(() => {
+  const isMobile = useBreakpoint(`(max-width: 650px)`);
+
+  const crumbs: CrumbType[] = useMemo(() => {
     const splitPathName = location.pathname.split("/");
 
     if (location.pathname === PATH_CONSTRANTS.HOME) {
-      return [{ id: "index-home", label: t("Home"), path: PATH_CONSTRANTS.HOME }];
+      return [{ id: "index-home", label: t("Home"), path: PATH_CONSTRANTS.HOME, disabled: true }];
     }
 
-    return splitPathName.map((crumb, index): Crumb => {
+    return splitPathName.map((crumb, index): CrumbType => {
       if (index === 0) {
         return { id: "index-home", label: t("Home"), path: PATH_CONSTRANTS.HOME };
       }
 
+      const crumbPath = splitPathName.slice(0, index + 1).join("/");
+
       return {
         id: `index-${crumb}`,
         label: t(capitalize(crumb).replace("-", " ")),
-        path: splitPathName.slice(0, index + 1).join("/"),
+        path: crumbPath,
+        disabled: crumbPath === location.pathname,
       };
     });
   }, [location.pathname]);
@@ -57,8 +63,13 @@ export default function MainLayout() {
   return (
     <>
       <Header />
-      <Breadcrumb onClick={(crumb) => navigate(crumb.path)} crumbs={crumbs} />
-      <main style={{ height: "100%" }}>
+      <Breadcrumb
+        variant={isMobile ? "compact" : "default"}
+        onClick={(crumb) => navigate(crumb.path)}
+        crumbs={crumbs}
+        className="mr-4-rem"
+      />
+      <main>
         <Suspense>
           <Outlet />
         </Suspense>
