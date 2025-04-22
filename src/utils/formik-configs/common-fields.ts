@@ -25,7 +25,7 @@ export const requiredDropdownField = Yup.object()
   .nullable()
   .required("Required");
 
-const isFirebaseTimestamp = (value: any): value is Timestamp => {
+const isFirebaseTimestamp = (value: unknown): value is Timestamp => {
   return value instanceof Timestamp;
 };
 

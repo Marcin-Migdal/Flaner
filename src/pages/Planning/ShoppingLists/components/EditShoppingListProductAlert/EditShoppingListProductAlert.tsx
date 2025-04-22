@@ -50,24 +50,6 @@ export const EditShoppingListProductAlert = ({
 
   const [editShoppingListProduct] = useEditShoppingListProductMutation();
 
-  const formik = useForm<ShoppingListProductState>({
-    initialValues: initShoppingListProductValues,
-    validationSchema: shoppingListProductValidationSchema,
-    onSubmit: (formState: ShoppingListProductSubmitState) => handleSubmit(formState),
-  });
-
-  const productCategoriesQuery = useGetProductCategoriesQuery(
-    { currentUserUid: authUser?.uid },
-    { skip: alertOpen !== AlertOpenState.OPENED }
-  );
-
-  const { data: productOptions } = useGetProductsQuery(
-    { currentUserUid: authUser?.uid, categoryId: (formik.values.category as ProductCategory).id },
-    { skip: !formik.values.category || alertOpen !== AlertOpenState.OPENED }
-  );
-
-  const { data: unitsOptions } = useGetUnitsQuery(undefined, { skip: alertOpen !== AlertOpenState.OPENED });
-
   const handleSubmit = (formState: ShoppingListProductSubmitState) => {
     const { category, product, unit, amount, description } = formState;
 
@@ -100,6 +82,24 @@ export const EditShoppingListProductAlert = ({
       dispatch(addToast({ message: `Shopping list product has been edited` }));
     });
   };
+
+  const formik = useForm<ShoppingListProductState>({
+    initialValues: initShoppingListProductValues,
+    validationSchema: shoppingListProductValidationSchema,
+    onSubmit: (formState: ShoppingListProductSubmitState) => handleSubmit(formState),
+  });
+
+  const productCategoriesQuery = useGetProductCategoriesQuery(
+    { currentUserUid: authUser?.uid },
+    { skip: alertOpen !== AlertOpenState.OPENED }
+  );
+
+  const { data: productOptions } = useGetProductsQuery(
+    { currentUserUid: authUser?.uid, categoryId: (formik.values.category as ProductCategory).id },
+    { skip: !formik.values.category || alertOpen !== AlertOpenState.OPENED }
+  );
+
+  const { data: unitsOptions } = useGetUnitsQuery(undefined, { skip: alertOpen !== AlertOpenState.OPENED });
 
   useEffect(() => {
     if (

@@ -19,17 +19,17 @@ import { EditShoppingListAlert } from "../EditShoppingListAlert/EditShoppingList
 import { OnDeleteMutation } from "@components/alerts/DeleteAlert";
 import "./styles.scss";
 
-const filterShoppingList = (shoppingList: ShoppingList[] | undefined, shoppingListFilter: string): ShoppingList[] => {
-  if (!shoppingList) {
+const filterShoppingList = (shoppingLists: ShoppingList[] | undefined, shoppingListFilter: string): ShoppingList[] => {
+  if (!shoppingLists) {
     return [];
   }
 
   if (shoppingListFilter.trim().length > 0) {
-    return shoppingList.filter((shoppingList) =>
+    return shoppingLists.filter((shoppingList) =>
       shoppingList.name.toLocaleLowerCase().includes(shoppingListFilter.toLocaleLowerCase())
     );
   } else {
-    return shoppingList;
+    return shoppingLists;
   }
 };
 
