@@ -62,7 +62,7 @@ export const AddShoppingListProductAlert = ({ shoppingListId }: AddShoppingListP
   );
 
   const { data: productOptions } = useGetProductsQuery(
-    { currentUserUid: authUser?.uid, categoryId: (formik.values.category as ProductCategory).id },
+    { currentUserUid: authUser?.uid, categoryId: formik.values.category?.id as string },
     { skip: !formik.values.category || alertOpen !== AlertOpenState.OPENED }
   );
 
