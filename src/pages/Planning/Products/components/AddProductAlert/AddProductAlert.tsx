@@ -114,6 +114,7 @@ export const AddProductAlert = ({ category }: AddProductAlertProps) => {
               {({ registerChange, registerBlur }) => (
                 <>
                   <Textfield autoFocus placeholder="Name" {...registerChange("name")} />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   <Dropdown<any>
                     placeholder="Category"
                     options={categoryOptions}

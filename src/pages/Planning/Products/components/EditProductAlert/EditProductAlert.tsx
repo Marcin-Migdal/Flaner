@@ -91,6 +91,7 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
             {({ registerChange, registerBlur }) => (
               <>
                 <Textfield placeholder="Name" {...registerChange("name")} />
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Dropdown<any>
                   placeholder="Category"
                   options={categoryOptions}

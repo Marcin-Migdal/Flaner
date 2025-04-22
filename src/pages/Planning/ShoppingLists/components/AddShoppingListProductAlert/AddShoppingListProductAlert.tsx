@@ -131,6 +131,7 @@ export const AddShoppingListProductAlert = ({ shoppingListId }: AddShoppingListP
             <Form formik={formik} disableSubmitOnEnter>
               {({ values, registerChange, registerBlur }) => (
                 <>
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   <Dropdown<any>
                     disabled={!productCategoriesQuery.isSuccess}
                     placeholder="Category"
@@ -139,6 +140,7 @@ export const AddShoppingListProductAlert = ({ shoppingListId }: AddShoppingListP
                     valueKey="id"
                     {...registerBlur<"category", DropdownChangeEvent<ProductCategory>>("category")}
                   />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   <Dropdown<any>
                     disabled={!values.category || productOptions?.length === 0}
                     placeholder="Product"
