@@ -114,7 +114,7 @@ export const AddProductAlert = ({ category }: AddProductAlertProps) => {
               {({ registerChange, registerBlur }) => (
                 <>
                   <Textfield autoFocus placeholder="Name" {...registerChange("name")} />
-                  <Dropdown
+                  <Dropdown<any>
                     placeholder="Category"
                     options={categoryOptions}
                     labelKey={"name"}

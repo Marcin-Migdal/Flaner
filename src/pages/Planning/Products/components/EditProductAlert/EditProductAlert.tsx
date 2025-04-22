@@ -91,7 +91,7 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
             {({ registerChange, registerBlur }) => (
               <>
                 <Textfield placeholder="Name" {...registerChange("name")} />
-                <Dropdown
+                <Dropdown<any>
                   placeholder="Category"
                   options={categoryOptions}
                   labelKey={"name"}

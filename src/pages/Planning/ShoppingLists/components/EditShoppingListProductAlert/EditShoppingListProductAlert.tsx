@@ -139,7 +139,7 @@ export const EditShoppingListProductAlert = ({
           <Form formik={formik} disableSubmitOnEnter>
             {({ values, registerChange, registerBlur }) => (
               <>
-                <Dropdown
+                <Dropdown<any>
                   disabled={!productCategoriesQuery.isSuccess}
                   placeholder="Category"
                   options={productCategoriesOptions}
@@ -147,7 +147,7 @@ export const EditShoppingListProductAlert = ({
                   valueKey="id"
                   {...registerBlur<"category", DropdownChangeEvent<ProductCategory>>("category")}
                 />
-                <Dropdown
+                <Dropdown<any>
                   disabled={!values.category || productOptions?.length === 0}
                   placeholder="Product"
                   options={productOptions || []}
