@@ -1,11 +1,11 @@
 import { useAlert } from "@marcin-migdal/m-component-library";
 
 import { DeleteAlert } from "@components/index";
-import { useDeleteProductMutation } from "@services/Products/product-api";
-import { Product } from "@services/Products/product-types";
+import { Product, useDeleteProductMutation } from "@services/Products";
 import { EditProductAlert } from "../../../EditProductAlert/EditProductAlert";
 import { ProductItem } from "./components/Product/Product";
 
+import { OnDeleteMutation } from "@components/alerts/DeleteAlert";
 import "./styles.scss";
 
 type ProductListProps = {
@@ -18,12 +18,12 @@ export const ProductList = ({ products }: ProductListProps) => {
 
   const [deleteProduct] = useDeleteProductMutation();
 
-  const handleDelete = async () => {
+  const handleDelete = (): OnDeleteMutation => {
     if (alertDeleteProductProps.data === undefined) {
       return;
     }
 
-    await deleteProduct(alertDeleteProductProps.data);
+    return deleteProduct(alertDeleteProductProps.data);
   };
 
   return (

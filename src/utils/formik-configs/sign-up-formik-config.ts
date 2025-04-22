@@ -1,4 +1,6 @@
+import { InferSchemaType } from "@marcin-migdal/m-component-library";
 import * as Yup from "yup";
+import { schemaEmail } from "./common-fields";
 
 export type SignUpState = {
   email: string;
@@ -15,7 +17,7 @@ export const signUpInitialValues: SignUpState = {
 };
 
 export const signUpValidationSchema = Yup.object().shape({
-  email: Yup.string().email("Invalid email address").required("Required"),
+  email: schemaEmail,
 
   username: Yup.string()
     .matches(/^[a-zA-Z0-9_.]+$/, "Username can only contain letters, numbers, underscores, and periods.")
@@ -38,3 +40,5 @@ export const signUpValidationSchema = Yup.object().shape({
       return this.parent.password === value;
     }),
 });
+
+export type SignUpSubmitState = InferSchemaType<typeof signUpValidationSchema>;

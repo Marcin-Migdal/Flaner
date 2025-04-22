@@ -1,14 +1,27 @@
-import { Alert, AlertOpenState, Dropdown, Form, Textfield, useForm } from "@marcin-migdal/m-component-library";
-import { DropdownStringOption } from "@marcin-migdal/m-component-library/build/components/Inputs/Dropdown/types";
+import {
+  Alert,
+  AlertOpenState,
+  Dropdown,
+  DropdownChangeEvent,
+  Form,
+  Textfield,
+  useForm,
+} from "@marcin-migdal/m-component-library";
 import { useEffect } from "react";
 
-import { useAppSelector } from "@hooks/index";
-import { useGetProductCategoriesQuery } from "@services/ProductCategories";
-import { useEditProductMutation } from "@services/Products/product-api";
-import { Product, UpdateProduct } from "@services/Products/product-types";
+import { ContentWrapper } from "@components/ContentWrapper";
+import { useAppDispatch, useAppSelector } from "@hooks/index";
+import { ProductCategory, useGetProductCategoriesQuery } from "@services/ProductCategories";
+import { Product, UpdateProduct, useEditProductMutation } from "@services/Products";
 import { selectAuthorization } from "@slices/authorization-slice";
-import { ProductState, productValidationSchema } from "../../../../../utils/formik-configs";
-import { mapCategoryToDropdownOption } from "../../utils/mapCategoryToDropdownOption";
+import { addToast } from "@slices/toast-slice";
+
+import {
+  initProductValues,
+  ProductState,
+  ProductSubmitState,
+  productValidationSchema,
+} from "../../../../../utils/formik-configs";
 
 type EditProductAlertProps = {
   alertOpen: AlertOpenState;
@@ -17,14 +30,13 @@ type EditProductAlertProps = {
 };
 
 export const EditProductAlert = ({ data: product, handleClose, alertOpen }: EditProductAlertProps) => {
+  const dispatch = useAppDispatch();
   const { authUser } = useAppSelector(selectAuthorization);
 
-  const productCategoriesQuery = useGetProductCategoriesQuery({ currentUserUid: authUser?.uid });
+  const categoriesQuery = useGetProductCategoriesQuery({ currentUserUid: authUser?.uid });
   const [editProduct] = useEditProductMutation();
 
-  const categoryOptions: DropdownStringOption[] = productCategoriesQuery.data?.map(mapCategoryToDropdownOption) || [];
-
-  const handleSubmit = (formState: ProductState) => {
+  const handleSubmit = (formState: ProductSubmitState) => {
     if (!authUser || !product) {
       return;
     }
@@ -33,31 +45,30 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
       name: formState.name,
     };
 
-    if (formState.category?.value !== product.categoryId) {
-      payload.categoryId = formState.category?.value;
+    if (formState.category.id !== product.categoryId) {
+      payload.categoryId = formState.category.id;
     }
 
     editProduct({ productId: product.id, payload: payload }).then(() => {
       handleClose();
+      dispatch(addToast({ message: `Product has been edited` }));
     });
   };
 
   const formik = useForm<ProductState>({
-    initialValues: {
-      name: product?.name || "",
-      category: categoryOptions.find((category) => category.value === product?.categoryId),
-    },
+    initialValues: initProductValues,
     validationSchema: productValidationSchema,
-    onSubmit: (formState) => handleSubmit(formState),
+    onSubmit: (state: ProductSubmitState) => handleSubmit(state),
   });
 
   useEffect(() => {
-    alertOpen === AlertOpenState.OPENED &&
+    if (alertOpen === AlertOpenState.OPENED && product && categoriesQuery.data) {
       formik.setValues({
-        name: product?.name || "",
-        category: categoryOptions.find((category) => category.value === product?.categoryId),
+        name: product.name,
+        category: categoriesQuery.data.find((category) => category.id === product.categoryId) || null,
       });
-  }, [alertOpen]);
+    }
+  }, [alertOpen, categoriesQuery, product]);
 
   const handleCloseAlert = () => {
     handleClose();
@@ -74,21 +85,25 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
       declineBtnText="Close"
       onDecline={handleCloseAlert}
     >
-      <Form formik={formik}>
-        {({ register, handleChange }) => (
-          <>
-            <Textfield placeholder="Name" {...register("name")} />
-            <Dropdown
-              placeholder="Category"
-              options={categoryOptions}
-              {...register("category")}
-              // {...register<"category", DropdownChangeEvent<DropdownStringOption>>("category")}
-              onChange={(e) => handleChange(e)}
-            />
-            {/* <ImageField placeholder="Image" {...(register("image"))} /> */}
-          </>
+      <ContentWrapper query={categoriesQuery}>
+        {({ data: categoryOptions }) => (
+          <Form formik={formik} disableSubmitOnEnter>
+            {({ registerChange, registerBlur }) => (
+              <>
+                <Textfield placeholder="Name" {...registerChange("name")} />
+                <Dropdown
+                  placeholder="Category"
+                  options={categoryOptions}
+                  labelKey={"name"}
+                  valueKey={"id"}
+                  {...registerBlur<"category", DropdownChangeEvent<ProductCategory>>("category")}
+                />
+                {/* <ImageField placeholder="Image" {...(registerBlur("image"))} /> */}
+              </>
+            )}
+          </Form>
         )}
-      </Form>
+      </ContentWrapper>
     </Alert>
   );
 };

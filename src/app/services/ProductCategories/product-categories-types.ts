@@ -1,16 +1,12 @@
-import { Timestamp } from "firebase/firestore";
+import { AccessType, AuditType } from "@services/types";
 
 export type ProductCategory = {
   id: string;
   name: string;
   icon: string;
   color: string;
-  ownerId: string;
-  editAccess: string[];
-  viewAccess: string[];
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-};
+} & AccessType &
+  AuditType;
 
 export type FirestoreProductCategory = Omit<ProductCategory, "id">;
 export type CreateProductCategory = Omit<ProductCategory, "id" | "createdAt" | "updatedAt">;

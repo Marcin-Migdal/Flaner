@@ -51,6 +51,7 @@ const mapCollectionData = <TData extends DocumentData, TReturn extends DocumentD
   if (collectionSnapshots.empty) {
     return [];
   }
+
   return collectionSnapshots.docs.map((docSnapshot) => map(docSnapshot) as TReturn);
 };
 

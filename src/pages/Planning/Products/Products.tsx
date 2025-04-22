@@ -1,5 +1,5 @@
 import { Textfield, TextFieldChangeEvent } from "@marcin-migdal/m-component-library";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { ContentWrapper } from "@components/index";
 import { useAppSelector } from "@hooks/redux-hooks";
@@ -10,10 +10,17 @@ import { Category } from "./components/Category/Category";
 
 import "./styles.scss";
 
-const filterProductCategories = (categories: ProductCategory[], categoryName: string): ProductCategory[] => {
-  if (categoryName.trim().length > 0) {
+const filterProductCategories = (
+  categories: ProductCategory[] | undefined,
+  categoryFilter: string
+): ProductCategory[] => {
+  if (!categories) {
+    return [];
+  }
+
+  if (categoryFilter.trim().length > 0) {
     return categories.filter((category) =>
-      category.name.toLocaleLowerCase().includes(categoryName.toLocaleLowerCase())
+      category.name.toLocaleLowerCase().includes(categoryFilter.toLocaleLowerCase())
     );
   } else {
     return categories;
@@ -25,30 +32,17 @@ const Products = () => {
 
   const productCategoriesQuery = useGetProductCategoriesQuery({ currentUserUid: authUser?.uid });
 
-  const [filteredProductCategories, setFilteredProductCategories] = useState<ProductCategory[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>("");
-
-  useEffect(() => {
-    const handleInitData = (categories: ProductCategory[]) => {
-      setFilteredProductCategories(filterProductCategories(categories, categoryFilter));
-    };
-
-    productCategoriesQuery.isSuccess && handleInitData(productCategoriesQuery.data);
-  }, [productCategoriesQuery.isSuccess, productCategoriesQuery.data]);
 
   const handleChange = (event: TextFieldChangeEvent) => {
     const { value: categoryName } = event.target;
 
     setCategoryFilter(categoryName);
-
-    if (productCategoriesQuery.isSuccess) {
-      setFilteredProductCategories(filterProductCategories(productCategoriesQuery.data, categoryName));
-    }
   };
 
   return (
     <div className="product-page page p-4-rem">
-      <div className="content-container full flex flex-column ">
+      <div className="content-container full flex flex-column">
         <div className="product-top-section">
           <Textfield
             classNamesObj={{ container: "category-input-container" }}
@@ -62,9 +56,9 @@ const Products = () => {
           query={productCategoriesQuery}
           placeholdersConfig={{ noData: { message: "Please enter at least 3 characters to filter the categories." } }}
         >
-          {() => (
+          {({ data }) => (
             <div className="categories-container m-scroll">
-              {filteredProductCategories?.map((category) => (
+              {filterProductCategories(data, categoryFilter).map((category) => (
                 <Category key={category.id} category={category} />
               ))}
             </div>

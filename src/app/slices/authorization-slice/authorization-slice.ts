@@ -1,4 +1,4 @@
-import { FormErrorsType } from "@marcin-migdal/m-component-library";
+import { FormErrors } from "@marcin-migdal/m-component-library";
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
 import { SignInState } from "@utils/formik-configs/sign-in-formik-config";
@@ -22,7 +22,7 @@ const authorizationSlice = createSlice({
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
-    setAuthError: (state, action: PayloadAction<FormErrorsType<SignInState | SignUpState>>) => {
+    setAuthError: (state, action: PayloadAction<FormErrors<SignInState | SignUpState>>) => {
       state.authFormErrors = action.payload;
     },
   },

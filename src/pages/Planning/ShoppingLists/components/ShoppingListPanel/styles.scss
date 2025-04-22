@@ -1,0 +1,12 @@
+.shopping-list-context-menu-trigger {
+  text-align: center;
+  margin-left: auto;
+  width: 1.5rem;
+  cursor: pointer;
+
+  &:hover {
+    .m-icon {
+      color: var(--icon-hover-color);
+    }
+  }
+}

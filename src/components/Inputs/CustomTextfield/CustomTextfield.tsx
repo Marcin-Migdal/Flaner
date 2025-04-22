@@ -21,7 +21,8 @@ export const CustomTextfield = ({
       {...otherProps}
       label={label ? t(label, { ns: ns }) : undefined}
       placeholder={placeholder ? t(placeholder, { ns: ns }) : undefined}
-      error={error ? t(error, { ns: ns }) : undefined}
+      // error={error ? t(error, { ns: ns }) : undefined}
+      error={error}
       size={size}
     />
   );

@@ -55,6 +55,16 @@ export const productApi = firestoreApi.injectEndpoints({
             updatedAt: now,
           };
 
+          const snap = await getCollectionFilteredDocuments<FirestoreProduct>(COLLECTIONS.PRODUCTS, {
+            name: [{ field: "name", condition: "==", searchValue: payload.name }],
+            categoryId: [{ field: "categoryId", condition: "==", searchValue: payload.categoryId }],
+            viewAccess: [{ field: "viewAccess", condition: "array-contains", searchValue: payload.ownerId }],
+          });
+
+          if (!snap.empty) {
+            throw new Error("Product with this name already exists in this category");
+          }
+
           await addCollectionDocument(COLLECTIONS.PRODUCTS, id, payload);
 
           return { data: null };

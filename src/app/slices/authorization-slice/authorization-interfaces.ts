@@ -1,4 +1,4 @@
-import { FormErrorsType } from "@marcin-migdal/m-component-library";
+import { FormErrors } from "@marcin-migdal/m-component-library";
 import { LanguageType } from "i18n";
 import { TFunction } from "i18next";
 
@@ -49,7 +49,7 @@ export type AuthUserConfigType = Omit<ISerializedAuthUser, "photoURL" | "display
 export type AuthUserInitialState = {
   authUser: AuthUserConfigType | null;
   isLoading: boolean;
-  authFormErrors: FormErrorsType<SignInState | SignUpState>;
+  authFormErrors: FormErrors<SignInState | SignUpState>;
 };
 
 //! AsyncThunks payloads
@@ -70,7 +70,7 @@ export type GoogleSignInPayload = {
 export type FirebaseError<T = unknown> = {
   code: string;
   message: string;
-  formErrors: FormErrorsType<T>;
+  formErrors: FormErrors<T>;
 };
 
 //? Additional types

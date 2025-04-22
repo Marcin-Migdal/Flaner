@@ -1,9 +1,9 @@
-import { FormErrorsType } from "@marcin-migdal/m-component-library";
+import { FormErrors } from "@marcin-migdal/m-component-library";
 
 import { FirebaseError } from "@slices/authorization-slice";
 import { IError, authErrors } from "../constants/firebase-errors";
 
-const getFormFieldsErrors = (authError: IError): FormErrorsType<unknown> => {
+const getFormFieldsErrors = (authError: IError): FormErrors<unknown> => {
   const { fieldNames, message } = authError;
 
   if (!fieldNames) {
