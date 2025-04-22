@@ -7,22 +7,23 @@ import { toRelativeTime } from "@utils/helpers";
 import "./styles.scss";
 
 type NotificationSubMenuItemProps = {
-    notification: Notification;
+  notification: Notification;
 };
 
 export const NotificationSubMenuItem = ({ notification }: NotificationSubMenuItemProps) => {
-    const { t } = useTranslation();
-    return (
-        <div className={`notification-submenu-item`}>
-            <Avatar avatarUrl={notification.receivedFrom?.avatarUrl} />
-            <div className="right-content">
-                <div className="content-container">
-                    <span>
-                        {notification.receivedFrom?.name} {t(notification.content)}
-                    </span>
-                </div>
-                <p>{toRelativeTime(notification.createdAt)}</p>
-            </div>
+  const { t } = useTranslation();
+
+  return (
+    <div className={`notification-submenu-item`}>
+      <Avatar avatarUrl={notification.receivedFrom?.avatarUrl} />
+      <div className="right-content">
+        <div className="notification-content-container">
+          <span>
+            {notification.receivedFrom?.name} {t(notification.content)}
+          </span>
         </div>
-    );
+        <p>{toRelativeTime(notification.createdAt)}</p>
+      </div>
+    </div>
+  );
 };
