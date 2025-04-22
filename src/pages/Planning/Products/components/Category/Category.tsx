@@ -10,6 +10,7 @@ import { AddProductAlert } from "../AddProductAlert/AddProductAlert";
 import { EditCategoryAlert } from "../EditCategoryAlert/EditCategoryAlert";
 import { ProductList } from "./components/ProductList/ProductList";
 
+import { OnDeleteMutation } from "@components/alerts/DeleteAlert";
 import "./styles.scss";
 
 type CategoryProps = {
@@ -39,8 +40,8 @@ export const Category = ({ category }: CategoryProps) => {
     },
   ];
 
-  const handleDelete = async () => {
-    await deleteProductCategory(category.id);
+  const handleDelete = (): OnDeleteMutation => {
+    return deleteProductCategory(category.id);
   };
 
   return (

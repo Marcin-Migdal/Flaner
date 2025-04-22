@@ -15,7 +15,7 @@ type Conditions = {
   isUninitialized?: boolean;
 };
 
-type ContentWrapper<T> = {
+type ContentWrapperProps<T> = {
   query: UseQueryResult<T>;
   children: (childrenObject: ChildrenObject<T>) => ReactElement;
   placeholders?: Partial<Placeholders>;
@@ -44,7 +44,7 @@ export const ContentWrapper = <T,>({
   placeholdersConfig,
   conditions: customConditions,
   nameSpace,
-}: ContentWrapper<T>) => {
+}: ContentWrapperProps<T>) => {
   const placeholders: Placeholders = {
     spinner: customPlaceholders?.spinner ? (
       customPlaceholders.spinner
@@ -77,11 +77,14 @@ export const ContentWrapper = <T,>({
   if (conditions.isLoading) {
     return placeholders.spinner;
   }
+
   if (conditions.isError) {
     return placeholders.error;
   }
+
   if (conditions.isUninitialized) {
     return placeholders.noData;
   }
+
   return children({ data: query.data as T });
 };

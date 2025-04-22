@@ -8,10 +8,11 @@ import {
   useForm,
 } from "@marcin-migdal/m-component-library";
 
-import { useAppSelector } from "@hooks/index";
+import { useAppDispatch, useAppSelector } from "@hooks/index";
 import { ProductCategory, UpdateProductCategory, useEditProductCategoryMutation } from "@services/ProductCategories";
 import { selectAuthorization } from "@slices/authorization-slice";
-import { CategoryState, categoryValidationSchema } from "../../../../../utils/formik-configs";
+import { addToast } from "@slices/toast-slice";
+import { CategoryState, CategorySubmitState, categoryValidationSchema } from "../../../../../utils/formik-configs";
 
 type EditCategoryAlertProps = {
   category: ProductCategory;
@@ -20,11 +21,12 @@ type EditCategoryAlertProps = {
 };
 
 export const EditCategoryAlert = ({ category, handleClose, alertOpen }: EditCategoryAlertProps) => {
+  const dispatch = useAppDispatch();
   const { authUser } = useAppSelector(selectAuthorization);
 
   const [editProductCategory] = useEditProductCategoryMutation();
 
-  const handleSubmit = (formState: CategoryState) => {
+  const handleSubmit = (formState: CategorySubmitState) => {
     if (!authUser) {
       return;
     }
@@ -36,6 +38,7 @@ export const EditCategoryAlert = ({ category, handleClose, alertOpen }: EditCate
     };
 
     editProductCategory({ categoryId: category.id, payload: payload }).then(() => {
+      dispatch(addToast({ message: `Category has been edited` }));
       handleClose();
     });
   };
@@ -61,12 +64,12 @@ export const EditCategoryAlert = ({ category, handleClose, alertOpen }: EditCate
       declineBtnText="Close"
       onDecline={handleCloseAlert}
     >
-      <Form formik={formik}>
-        {({ register, values, handleChange }) => (
+      <Form formik={formik} disableSubmitOnEnter>
+        {({ values, registerChange, registerBlur, handleClear }) => (
           <>
-            <Textfield placeholder="Name" {...register("name")} />
-            <ColorPicker placeholder="Color" returnedColorType="hex" {...register("color")} />
-            <IconField placeholder="Icon" iconColor={values.color} onClear={handleChange} {...register("icon")} />
+            <Textfield placeholder="Name" {...registerChange("name")} />
+            <ColorPicker placeholder="Color" returnedColorType="hex" {...registerBlur("color")} />
+            <IconField placeholder="Icon" iconColor={values.color} onClear={handleClear} {...registerBlur("icon")} />
           </>
         )}
       </Form>

@@ -12,13 +12,15 @@ import {
 } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 
-import { useAppSelector } from "@hooks/index";
+import { useAppDispatch, useAppSelector } from "@hooks/index";
 import { CreateProductCategory, useAddProductCategoryMutation } from "@services/ProductCategories";
 import { selectAuthorization } from "@slices/authorization-slice";
-import { CategoryState, categoryValidationSchema, initCategoryValues } from "../../../../../utils/formik-configs";
+import { addToast } from "@slices/toast-slice";
+import { CategorySubmitState, categoryValidationSchema, initCategoryValues } from "../../../../../utils/formik-configs";
 
 export const AddCategoryAlert = () => {
   const { authUser } = useAppSelector(selectAuthorization);
+  const dispatch = useAppDispatch();
 
   const [addAnother, setAddAnother] = useState<boolean>(true);
 
@@ -28,7 +30,7 @@ export const AddCategoryAlert = () => {
     initialValues: initCategoryValues,
     validationSchema: categoryValidationSchema,
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    onSubmit: (formState) => handleSubmit(formState),
+    onSubmit: (formState: CategorySubmitState) => handleSubmit(formState),
   });
 
   const [handleOpenAlert, { alertOpen, handleClose }] = useAlert({
@@ -38,7 +40,7 @@ export const AddCategoryAlert = () => {
     },
   });
 
-  const handleSubmit = (formState: CategoryState) => {
+  const handleSubmit = (formState: CategorySubmitState) => {
     if (!authUser) {
       return;
     }
@@ -55,6 +57,8 @@ export const AddCategoryAlert = () => {
     };
 
     addProductCategory(payload).then(() => {
+      dispatch(addToast({ message: `Category has been added` }));
+
       if (!addAnother) {
         handleClose();
       } else {
@@ -80,12 +84,12 @@ export const AddCategoryAlert = () => {
         declineBtnText="Close"
         onDecline={handleClose}
       >
-        <Form formik={formik}>
-          {({ register, values, handleChange }) => (
+        <Form formik={formik} disableSubmitOnEnter>
+          {({ values, registerBlur, registerChange, handleClear }) => (
             <>
-              <Textfield autoFocus placeholder="Name" {...register("name")} />
-              <IconField placeholder="Icon" iconColor={values.color} onClear={handleChange} {...register("icon")} />
-              <ColorPicker placeholder="Color" returnedColorType="hex" {...register("color")} />
+              <Textfield autoFocus placeholder="Name" {...registerChange("name")} />
+              <IconField placeholder="Icon" iconColor={values.color} onClear={handleClear} {...registerBlur("icon")} />
+              <ColorPicker placeholder="Color" returnedColorType="hex" {...registerBlur("color")} />
             </>
           )}
         </Form>

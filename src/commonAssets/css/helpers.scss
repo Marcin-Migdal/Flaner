@@ -49,19 +49,30 @@
 
 .content-container {
   height: 100%;
+  width: 70%;
+
+  border-radius: var(--radius-md);
+
+  &.full {
+    width: 100%;
+  }
+
+  &:not(.transparent) {
+    padding: var(--spacing-2);
+    background-color: var(--popups-background-color);
+    box-shadow: var(--shadow-xl) var(--primary-color_680);
+  }
+}
+
+.panel {
+  height: 100%;
+  width: 100%;
 
   padding: var(--spacing-2);
   border-radius: var(--radius-md);
 
   background-color: var(--popups-background-color);
   box-shadow: var(--shadow-xl) var(--primary-color_680);
-
-  // default size
-  width: 70%;
-
-  &.full {
-    width: 100%;
-  }
 }
 
 @media (max-width: 2560px) {

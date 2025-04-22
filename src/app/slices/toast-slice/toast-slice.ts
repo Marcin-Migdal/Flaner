@@ -1,14 +1,8 @@
-import { ToastHandler, ToastVariant } from "@marcin-migdal/m-component-library";
+import { AddToastPayload, ToastHandler, ToastVariant } from "@marcin-migdal/m-component-library";
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
 type ToastInitialState = {
   toastHandler: ToastHandler | null;
-};
-
-type AddToastPayload = {
-  type: ToastVariant;
-  message: string;
-  transformContent?: (content: string) => string;
 };
 
 const initialState: ToastInitialState = {
@@ -22,7 +16,7 @@ const toastSlice = createSlice({
     setToastHandler: (state, action: PayloadAction<ToastHandler | null>) => {
       state.toastHandler = action.payload;
     },
-    addToast: (state, action: PayloadAction<AddToastPayload>) => {
+    addToast: (state, action: PayloadAction<AddToastPayload<ToastVariant>>) => {
       state.toastHandler?.addToast(action.payload);
     },
     clearToasts: (state) => {

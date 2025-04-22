@@ -1,10 +1,19 @@
-import { ButtonWidth, Card, Col, Form, FormErrorsType, Icon, Row, useForm } from "@marcin-migdal/m-component-library";
+import { ButtonWidth, Card, Col, Form, FormErrors, Icon, Row, useForm } from "@marcin-migdal/m-component-library";
 import { LanguageType } from "i18n";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import { CustomButton, CustomTextfield } from "@components/index";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
+import { addToast } from "@slices/toast-slice";
+import { PATH_CONSTRANTS } from "@utils/enums";
+import {
+  SignInState,
+  SignInSubmitState,
+  signInInitialValues,
+  signInValidationSchema,
+} from "../../utils/formik-configs";
+
 import {
   selectAuthorization,
   setAuthError,
@@ -12,10 +21,6 @@ import {
   signInWithGoogle,
   signOut,
 } from "@slices/authorization-slice";
-
-import { addToast } from "@slices/toast-slice";
-import { PATH_CONSTRANTS } from "@utils/enums";
-import { SignInState, signInInitialValues, signInValidationSchema } from "../../utils/formik-configs";
 
 import "../../commonAssets/css/auth-form.scss";
 
@@ -27,7 +32,7 @@ const SignIn = () => {
   const { isLoading, authFormErrors: authErrors } = useAppSelector(selectAuthorization);
   const dispatch = useAppDispatch();
 
-  const handleSubmit = async (values: SignInState) => {
+  const handleSubmit = async (values: SignInSubmitState) => {
     dispatch(signInWithEmail({ ...values }))
       .unwrap()
       .then((user) => {
@@ -39,9 +44,9 @@ const SignIn = () => {
       });
   };
 
-  const handleAuthErrorChange = (authError: FormErrorsType<SignInState>) => dispatch(setAuthError(authError));
+  const handleAuthErrorChange = (authError: FormErrors<SignInState>) => dispatch(setAuthError(authError));
 
-  const formik = useForm({
+  const formik = useForm<SignInState>({
     initialValues: signInInitialValues,
     onSubmit: handleSubmit,
     validationSchema: signInValidationSchema,
@@ -64,14 +69,14 @@ const SignIn = () => {
             <h2>{t("_Hello")}!</h2>
             <p data-cy="sign-in-description">{t("Please sign in to continue")}</p>
             <Form formik={formik}>
-              {({ register, isValid }) => (
+              {({ registerChange, isValid }) => (
                 <>
                   <CustomTextfield
                     data-cy="email-input"
                     nameSpace={nameSpace}
                     label="Email"
                     labelType="floating"
-                    {...register("email")}
+                    {...registerChange("email")}
                   />
                   <CustomTextfield
                     data-cy="password-input"
@@ -79,7 +84,7 @@ const SignIn = () => {
                     label="Password"
                     labelType="floating"
                     type="password"
-                    {...register("password")}
+                    {...registerChange("password")}
                   />
                   <CustomButton
                     data-cy="sign-in-submit-btn"

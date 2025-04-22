@@ -1,19 +1,23 @@
+import { ColorValue, InferSchemaType } from "@marcin-migdal/m-component-library";
 import * as Yup from "yup";
+import { schemaName } from "./common-fields";
 
 export type CategoryState = {
   name: string;
-  color: string;
-  icon: string;
+  icon: string | null;
+  color: ColorValue;
 };
 
 export const initCategoryValues: CategoryState = {
   name: "",
-  color: "#ffffff",
   icon: "",
+  color: "#ffffff",
 };
 
 export const categoryValidationSchema = Yup.object().shape({
-  name: Yup.string().required("Required").min(3, "Name is too short").max(20, "Name is too long"),
+  name: schemaName,
+  icon: Yup.string().nullable().required("Required"),
   color: Yup.string().required("Required"),
-  icon: Yup.string().required("Required"),
 });
+
+export type CategorySubmitState = InferSchemaType<typeof categoryValidationSchema>;

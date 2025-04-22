@@ -45,7 +45,7 @@ export const navigationTree: NavigationNode[] = [
       },
       {
         text: "Shopping",
-        path: PATH_CONSTRANTS.SHOPPING,
+        path: PATH_CONSTRANTS.SHOPPING_LISTS,
         icon: ["fas", "cart-shopping"],
       },
       {

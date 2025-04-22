@@ -6,39 +6,44 @@ import {
   Checkbox,
   CheckboxChangeEvent,
   Dropdown,
+  DropdownChangeEvent,
   Form,
   Textfield,
   useAlert,
   useForm,
 } from "@marcin-migdal/m-component-library";
-import { DropdownStringOption } from "@marcin-migdal/m-component-library/build/components/Inputs/Dropdown/types";
 import { useState } from "react";
 
-import { useAppSelector } from "@hooks/index";
+import { ContentWrapper } from "@components/ContentWrapper";
+import { useAppDispatch, useAppSelector } from "@hooks/index";
 import { ProductCategory, useGetProductCategoriesQuery } from "@services/ProductCategories";
-import { useAddProductMutation } from "@services/Products/product-api";
-import { CreateProduct } from "@services/Products/product-types";
+import { CreateProduct, useAddProductMutation } from "@services/Products";
 import { selectAuthorization } from "@slices/authorization-slice";
-import { initProductValues, ProductState, productValidationSchema } from "../../../../../utils/formik-configs";
-import { mapCategoryToDropdownOption } from "../../utils/mapCategoryToDropdownOption";
+import { addToast } from "@slices/toast-slice";
+
+import {
+  initProductValues,
+  ProductState,
+  ProductSubmitState,
+  productValidationSchema,
+} from "../../../../../utils/formik-configs";
 
 type AddProductAlertProps = { category: ProductCategory };
 
 export const AddProductAlert = ({ category }: AddProductAlertProps) => {
   const { authUser } = useAppSelector(selectAuthorization);
+  const dispatch = useAppDispatch();
 
   const [addAnother, setAddAnother] = useState<boolean>(true);
 
-  const productCategoriesQuery = useGetProductCategoriesQuery({ currentUserUid: authUser?.uid });
+  const categoriesQuery = useGetProductCategoriesQuery({ currentUserUid: authUser?.uid });
   const [addProduct] = useAddProductMutation();
 
-  const categoryOptions: DropdownStringOption[] = productCategoriesQuery.data?.map(mapCategoryToDropdownOption) || [];
-
   const formik = useForm<ProductState>({
-    initialValues: { ...initProductValues, category: mapCategoryToDropdownOption(category) },
+    initialValues: { ...initProductValues, category },
     validationSchema: productValidationSchema,
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    onSubmit: (formState) => handleSubmit(formState),
+    onSubmit: (formState: ProductSubmitState) => handleSubmit(formState),
   });
 
   const [handleOpenAlert, { alertOpen, handleClose }] = useAlert({
@@ -48,7 +53,7 @@ export const AddProductAlert = ({ category }: AddProductAlertProps) => {
     },
   });
 
-  const handleSubmit = (formState: ProductState) => {
+  const handleSubmit = (formState: ProductSubmitState) => {
     if (!authUser) {
       return;
     }
@@ -59,7 +64,7 @@ export const AddProductAlert = ({ category }: AddProductAlertProps) => {
       name: formState.name,
 
       // image: formState.image,
-      categoryId: formState.category?.value as string,
+      categoryId: formState.category.id,
 
       ownerId: authUserId,
       editAccess: [authUserId],
@@ -67,6 +72,8 @@ export const AddProductAlert = ({ category }: AddProductAlertProps) => {
     };
 
     addProduct(payload).then(() => {
+      dispatch(addToast({ message: `Product has been added` }));
+
       if (!addAnother) {
         handleClose();
       } else {
@@ -101,21 +108,26 @@ export const AddProductAlert = ({ category }: AddProductAlertProps) => {
         declineBtnText="Close"
         onDecline={handleClose}
       >
-        <Form formik={formik}>
-          {({ register, handleChange }) => (
-            <>
-              <Textfield autoFocus placeholder="Name" {...register("name")} />
-              <Dropdown
-                placeholder="Category"
-                options={categoryOptions}
-                {...register("category")}
-                // {...register<"category", DropdownChangeEvent<DropdownStringOption>>("category")}
-                onChange={(e) => handleChange(e)}
-              />
-              {/* <ImageField placeholder="Image" {...(register("image)} /> */}
-            </>
+        <ContentWrapper query={categoriesQuery}>
+          {({ data: categoryOptions }) => (
+            <Form formik={formik} disableSubmitOnEnter>
+              {({ registerChange, registerBlur }) => (
+                <>
+                  <Textfield autoFocus placeholder="Name" {...registerChange("name")} />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <Dropdown<any>
+                    placeholder="Category"
+                    options={categoryOptions}
+                    labelKey={"name"}
+                    valueKey={"id"}
+                    {...registerBlur<"category", DropdownChangeEvent<ProductCategory>>("category")}
+                  />
+                  {/* <ImageField placeholder="Image" {...(registerBlur("image)} /> */}
+                </>
+              )}
+            </Form>
           )}
-        </Form>
+        </ContentWrapper>
         <Checkbox
           labelType="right"
           labelWidth={90}

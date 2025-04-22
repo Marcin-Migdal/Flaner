@@ -7,7 +7,13 @@ import { CustomButton, CustomTextfield } from "@components/index";
 import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
 import { addToast, selectAuthorization, setAuthError, signInWithGoogle, signOut, signUpWithEmail } from "@slices/index";
 import { PATH_CONSTRANTS } from "@utils/enums";
-import { signUpInitialValues, SignUpState, signUpValidationSchema } from "../../utils/formik-configs";
+
+import {
+  signUpInitialValues,
+  SignUpState,
+  SignUpSubmitState,
+  signUpValidationSchema,
+} from "../../utils/formik-configs";
 
 import "../../commonAssets/css/auth-form.scss";
 
@@ -19,7 +25,7 @@ const SignUp = () => {
   const dispatch = useAppDispatch();
   const { isLoading, authFormErrors: authErrors } = useAppSelector(selectAuthorization);
 
-  const handleSubmit = async (values: SignUpState) => {
+  const handleSubmit = async (values: SignUpSubmitState) => {
     dispatch(signUpWithEmail({ ...values, language: i18n.language as LanguageType }))
       .unwrap()
       .then((user) => {
@@ -56,28 +62,28 @@ const SignUp = () => {
             <h2>{t("_Hello")}!</h2>
             <p data-cy="sign-up-description">{t("Please sign up to continue")}</p>
             <Form formik={formik}>
-              {({ register, isValid }) => (
+              {({ registerChange, isValid }) => (
                 <>
                   <CustomTextfield
                     data-cy="username-input"
                     nameSpace={nameSpace}
                     label="Username"
                     labelType="floating"
-                    {...register("password")}
+                    {...registerChange("username")}
                   />
                   <CustomTextfield
                     data-cy="email-input"
                     nameSpace={nameSpace}
                     label="Email"
                     labelType="floating"
-                    {...register("email")}
+                    {...registerChange("email")}
                   />
                   <CustomTextfield
                     data-cy="password-input"
                     nameSpace={nameSpace}
                     label="Password"
                     labelType="floating"
-                    {...register("password")}
+                    {...registerChange("password")}
                     type="password"
                   />
                   <CustomTextfield
@@ -85,7 +91,7 @@ const SignUp = () => {
                     nameSpace={nameSpace}
                     label="Verify password"
                     labelType="floating"
-                    {...register("verifyPassword")}
+                    {...registerChange("verifyPassword")}
                     type="password"
                   />
                   <CustomButton

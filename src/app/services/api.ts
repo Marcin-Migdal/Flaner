@@ -15,6 +15,9 @@ export const firestoreApi = createApi({
     "All-Notifications",
     "Product_Categories",
     "Products",
+    "Shopping_Lists",
+    "Shopping_Lists_Product",
+    "Units",
   ],
 
   endpoints: () => ({}),

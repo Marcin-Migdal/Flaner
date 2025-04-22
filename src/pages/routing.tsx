@@ -16,7 +16,7 @@ const MyFriendsPage = React.lazy(() => import("./Community/MyFriends"));
 const GroupsPage = React.lazy(() => import("./Community/Groups"));
 
 const ToDoPage = React.lazy(() => import("./Planning/ToDo"));
-const ShoppingPage = React.lazy(() => import("./Planning/Shopping"));
+const ShoppingListsPage = React.lazy(() => import("./Planning/ShoppingLists"));
 const ProductsPage = React.lazy(() => import("./Planning/Products"));
 
 const SettingsPage = React.lazy(() => import("./Settings"));
@@ -39,7 +39,7 @@ const authorizedRouting: RouteObject[] = [
   //! Products
   { path: PATH_CONSTRANTS.PLANNING, element: <PageTilesView /> },
   { path: PATH_CONSTRANTS.TODO, element: <ToDoPage /> },
-  { path: PATH_CONSTRANTS.SHOPPING, element: <ShoppingPage /> },
+  { path: PATH_CONSTRANTS.SHOPPING_LISTS, element: <ShoppingListsPage /> },
   { path: PATH_CONSTRANTS.PLANNING_SETTINGS, element: <PageTilesView /> },
   { path: PATH_CONSTRANTS.PRODUCTS, element: <ProductsPage /> },
 

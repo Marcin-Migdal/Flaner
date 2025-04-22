@@ -59,6 +59,15 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
             updatedAt: now,
           };
 
+          const snap = await getCollectionFilteredDocuments<FirestoreProductCategory>(COLLECTIONS.CATEGORIES, {
+            name: [{ field: "name", condition: "==", searchValue: payload.name }],
+            viewAccess: [{ field: "viewAccess", condition: "array-contains", searchValue: payload.ownerId }],
+          });
+
+          if (!snap.empty) {
+            throw new Error("Product category with this name already exists");
+          }
+
           await addCollectionDocument(COLLECTIONS.CATEGORIES, id, payload);
 
           return { data: null };
@@ -102,7 +111,7 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
       async queryFn(categoryId) {
         try {
           await deleteCollectionDocument(COLLECTIONS.CATEGORIES, categoryId);
-          // TODO! what to do with products that where assigned to this category
+          // TODO! show popup where user can choose to delete all products, or select category to which products will be moved
 
           return { data: null };
         } catch (error) {

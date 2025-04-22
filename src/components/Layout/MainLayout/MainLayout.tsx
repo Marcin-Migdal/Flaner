@@ -17,7 +17,7 @@ export default function MainLayout() {
   const { authUser, isLoading } = useAppSelector(selectAuthorization);
   const { t } = useTranslation();
 
-  const isMobile = useBreakpoint(`(max-width: 650px)`);
+  const isMobile = useBreakpoint(`(max-width: 768px)`);
 
   const crumbs: CrumbType[] = useMemo(() => {
     const splitPathName = location.pathname.split("/");

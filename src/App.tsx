@@ -80,7 +80,7 @@ function App() {
       darkMode={authUser?.darkMode === undefined ? true : authUser.darkMode}
     >
       <>
-        <ToastsContainer ref={toastRef} transformToastsContent={t} />
+        <ToastsContainer ref={toastRef} transformContent={t} />
         <RouterProvider router={router} />
       </>
     </ThemeWrapper>
