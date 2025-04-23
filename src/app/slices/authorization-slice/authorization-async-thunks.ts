@@ -21,6 +21,7 @@ import {
   validateUsername,
 } from "@utils/helpers";
 
+import { firestoreApi } from "@services/api";
 import { defaultThemeHue } from "@utils/constants/theme-hue";
 import * as AI from "./authorization-interfaces";
 
@@ -110,11 +111,14 @@ export const signInWithGoogle = createAsyncThunk<
 });
 
 // Sign out
-export const signOut = createAsyncThunk<Promise<void>, undefined, { rejectValue: AI.FirebaseError }>(
+export const signOut = createAsyncThunk<void, undefined, { rejectValue: AI.FirebaseError }>(
   "authorization/async/signOut",
-  (_params, { rejectWithValue }) => {
+  async (_params, { rejectWithValue, dispatch }) => {
     try {
-      return firebaseSignOut(fb.auth.auth);
+      await firebaseSignOut(fb.auth.auth);
+      dispatch(firestoreApi.util.resetApiState());
+
+      return;
     } catch (error) {
       return rejectWithValue(getRejectValue(error.code));
     }
