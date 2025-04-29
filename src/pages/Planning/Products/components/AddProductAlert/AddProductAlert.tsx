@@ -14,12 +14,11 @@ import {
 } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 
-import { ContentWrapper } from "@components/ContentWrapper";
-import { useAppDispatch, useAppSelector } from "@hooks/index";
-import { ProductCategory, useGetProductCategoriesQuery } from "@services/ProductCategories";
-import { CreateProduct, useAddProductMutation } from "@services/Products";
-import { selectAuthorization } from "@slices/authorization-slice";
-import { addToast } from "@slices/toast-slice";
+import { ProductCategory, useGetProductCategoriesQuery } from "../../../../../app/services/ProductCategories";
+import { CreateProduct, useAddProductMutation } from "../../../../../app/services/Products";
+import { addToast, selectAuthorization } from "../../../../../app/slices";
+import { ContentWrapper } from "../../../../../components";
+import { useAppDispatch, useAppSelector } from "../../../../../hooks";
 
 import {
   initProductValues,

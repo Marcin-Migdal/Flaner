@@ -1,12 +1,12 @@
-import { ButtonWidth, Card, Col, Form, Icon, Row, useForm } from "@marcin-migdal/m-component-library";
-import { LanguageType } from "i18n";
+import { ButtonWidth, Card, Col, Form, FormErrors, Icon, Row, useForm } from "@marcin-migdal/m-component-library";
+
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import { CustomButton, CustomTextfield } from "@components/index";
-import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
-import { addToast, selectAuthorization, setAuthError, signInWithGoogle, signOut, signUpWithEmail } from "@slices/index";
-import { PATH_CONSTRANTS } from "@utils/enums";
+import { CustomButton, CustomTextfield } from "../../components";
+import { useAppDispatch, useAppSelector } from "../../hooks";
+import { LanguageType } from "../../i18n";
+import { PATH_CONSTRANTS } from "../../utils/enums";
 
 import {
   signUpInitialValues,
@@ -14,6 +14,15 @@ import {
   SignUpSubmitState,
   signUpValidationSchema,
 } from "../../utils/formik-configs";
+
+import {
+  addToast,
+  selectAuthorization,
+  setAuthError,
+  signInWithGoogle,
+  signOut,
+  signUpWithEmail,
+} from "../../app/slices";
 
 import "../../commonAssets/css/auth-form.scss";
 
@@ -37,7 +46,7 @@ const SignUp = () => {
       });
   };
 
-  const handleAuthErrorChange = (newAuthErrors) => dispatch(setAuthError(newAuthErrors));
+  const handleAuthErrorChange = (newAuthErrors: FormErrors<SignUpState>) => dispatch(setAuthError(newAuthErrors));
 
   const formik = useForm<SignUpState>({
     initialValues: signUpInitialValues,
@@ -59,7 +68,7 @@ const SignUp = () => {
       <Card className="auth-card">
         <Row>
           <Col sm={12} mdFlex={1} className="left-col">
-            <h2>{t("_Hello")}!</h2>
+            <h2>{t("Hello")}!</h2>
             <p data-cy="sign-up-description">{t("Please sign up to continue")}</p>
             <Form formik={formik}>
               {({ registerChange, isValid }) => (
@@ -110,14 +119,14 @@ const SignUp = () => {
             </Form>
             <div className="bottom-section">
               <span>
-                {t("_or")} <br /> {t("Sign up with")}
+                {t("or")} <br /> {t("Sign up with")}
               </span>
               <Icon className="google-sign-in-icon" icon={["fab", "google"]} onClick={onGoogleSignIn} />
             </div>
           </Col>
           <Col sm={12} mdFlex={1} className="right-col">
             <Icon icon={["fas", "rectangle-list"]} />
-            <h2>{process.env.APP_NAME}</h2>
+            <h2>{import.meta.env.VITE_APP_NAME}</h2>
             <p>{t("Already have any account?")}</p>
             <CustomButton
               data-cy="go-to-sign-in-btn"

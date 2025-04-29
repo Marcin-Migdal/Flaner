@@ -1,4 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+
 import {
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
@@ -8,22 +9,21 @@ import {
   updateProfile,
 } from "firebase/auth";
 
-import { fb } from "@firebase/firebase";
-import { UserType } from "@services/users";
-import { COLLECTIONS } from "@utils/enums";
-import { SignInState } from "@utils/formik-configs/sign-in-formik-config";
-import { SignUpState } from "@utils/formik-configs/sign-up-formik-config";
+import { fb } from "../../../firebase/firebase";
+import { defaultThemeHue } from "../../../utils/constants/theme-hue";
+import { COLLECTIONS } from "../../../utils/enums";
+import { SignInState, SignUpState } from "../../../utils/formik-configs";
+import { firestoreApi } from "../../services/api";
+import { UserType } from "../../services/users";
+import * as AI from "./authorization-interfaces";
+
 import {
   addCollectionDocument,
   getCollectionDocumentById,
   getRejectValue,
   toSerializable,
   validateUsername,
-} from "@utils/helpers";
-
-import { firestoreApi } from "@services/api";
-import { defaultThemeHue } from "@utils/constants/theme-hue";
-import * as AI from "./authorization-interfaces";
+} from "../../../utils/helpers";
 
 // Sign in user using email and password
 export const signInWithEmail = createAsyncThunk<

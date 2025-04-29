@@ -9,14 +9,14 @@ import {
 } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 
-import { ContentWrapper, DeleteAlert, UseQueryResult } from "@components/index";
-import { useAppSelector } from "@hooks/redux-hooks";
-import { ShoppingList, useDeleteShoppingListMutation } from "@services/ShoppingLists";
-import { selectAuthorization } from "@slices/authorization-slice";
+import { ShoppingList, useDeleteShoppingListMutation } from "../../../../../app/services/ShoppingLists";
+import { selectAuthorization } from "../../../../../app/slices";
+import { ContentWrapper, DeleteAlert, UseQueryResult } from "../../../../../components";
+import { OnDeleteMutation } from "../../../../../components/alerts/DeleteAlert";
+import { useAppSelector } from "../../../../../hooks";
 import { AddShoppingListAlert } from "../AddShoppingListAlert/AddShoppingListAlert";
 import { EditShoppingListAlert } from "../EditShoppingListAlert/EditShoppingListAlert";
 
-import { OnDeleteMutation } from "@components/alerts/DeleteAlert";
 import "./styles.scss";
 
 const filterShoppingList = (shoppingLists: ShoppingList[] | undefined, shoppingListFilter: string): ShoppingList[] => {

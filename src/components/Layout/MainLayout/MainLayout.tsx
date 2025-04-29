@@ -2,13 +2,12 @@ import { Suspense, useEffect, useMemo } from "react";
 
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
-import { SpinnerPlaceholder } from "@components/placeholders";
-import { useAppSelector } from "@hooks/redux-hooks";
-import { useBreakpoint } from "@hooks/useBreakpoint";
-import { Breadcrumb, capitalize, CrumbType } from "@marcin-migdal/m-component-library";
-import { selectAuthorization } from "@slices/authorization-slice";
-import { PATH_CONSTRANTS } from "@utils/enums";
+import { Breadcrumb, CrumbType, capitalize } from "@marcin-migdal/m-component-library";
 import { useTranslation } from "react-i18next";
+import { selectAuthorization } from "../../../app/slices";
+import { useAppSelector, useBreakpoint } from "../../../hooks";
+import { PATH_CONSTRANTS } from "../../../utils/enums";
+import { SpinnerPlaceholder } from "../../placeholders";
 import { Header } from "./components/Header/Header";
 
 export default function MainLayout() {

@@ -1,13 +1,17 @@
+import { Icon } from "@marcin-migdal/m-component-library";
 import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { ContentWrapper } from "@components/ContentWrapper";
-import { useAppSelector } from "@hooks/redux-hooks";
-import { Icon } from "@marcin-migdal/m-component-library";
-import { useGetAllNotificationsQuery, useGetUnreadNotificationsQuery } from "@services/users";
-import { selectAuthorization } from "@slices/authorization-slice";
+import { selectAuthorization } from "../../../../../../../../../app/slices";
+import { useAppSelector } from "../../../../../../../../../hooks";
+import { ContentWrapper } from "../../../../../../../../ContentWrapper";
 import { DesktopNavbarItem, NavbarItemContext } from "../DesktopNavbarItem/DesktopNavbarItem";
 import { NotificationSubMenuItem } from "./NotificationSubMenuItem";
+
+import {
+  useGetAllNotificationsQuery,
+  useGetUnreadNotificationsQuery,
+} from "../../../../../../../../../app/services/users";
 
 import "./styles.scss";
 

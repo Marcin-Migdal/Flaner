@@ -1,9 +1,9 @@
-import { useAppDispatch } from "@hooks/redux-hooks";
 import { Alert, AlertOpenState } from "@marcin-migdal/m-component-library";
 import { BaseQueryFn, MutationActionCreatorResult, MutationDefinition } from "@reduxjs/toolkit/query";
-import { addToast } from "@slices/toast-slice";
-
 import { useTranslation } from "react-i18next";
+
+import { addToast } from "../../../app/slices";
+import { useAppDispatch } from "../../../hooks";
 
 export type OnDeleteMutation =
   | MutationActionCreatorResult<MutationDefinition<unknown, BaseQueryFn, string, unknown, string>>

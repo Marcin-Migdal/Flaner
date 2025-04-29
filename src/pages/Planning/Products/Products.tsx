@@ -1,10 +1,10 @@
 import { Textfield, TextFieldChangeEvent } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 
-import { ContentWrapper } from "@components/index";
-import { useAppSelector } from "@hooks/redux-hooks";
-import { ProductCategory, useGetProductCategoriesQuery } from "@services/ProductCategories";
-import { selectAuthorization } from "@slices/authorization-slice";
+import { ProductCategory, useGetProductCategoriesQuery } from "../../../app/services/ProductCategories";
+import { selectAuthorization } from "../../../app/slices";
+import { ContentWrapper } from "../../../components";
+import { useAppSelector } from "../../../hooks";
 import { AddCategoryAlert } from "./components/AddCategoryAlert/AddCategoryAlert";
 import { Category } from "./components/Category/Category";
 

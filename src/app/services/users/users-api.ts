@@ -1,11 +1,24 @@
 import { CollectionReference, collection, doc, getDoc, getDocs, query, where, writeBatch } from "firebase/firestore";
 import { v4 as uuid } from "uuid";
 
-import { fb } from "@firebase/firebase";
-import { AuthUserConfigType } from "@slices/authorization-slice";
-import { COLLECTIONS } from "@utils/enums";
+import { fb } from "../../../firebase/firebase";
+import { COLLECTIONS } from "../../../utils/enums";
+import { AuthUserConfigType } from "../../slices";
 import { firestoreApi } from "../api";
 import { getFriendRequestUid } from "./users-helpers";
+
+import {
+  addCollectionDocument,
+  deleteCollectionDocument,
+  editCollectionDocument,
+  getCollectionData,
+  getCollectionDataWithId,
+  getCollectionDocumentById,
+  getCollectionFilteredDocuments,
+  getDocumentReference,
+  getRtkTags,
+} from "../../../utils/helpers";
+
 import {
   EditUserRequest,
   Friendships,
@@ -18,18 +31,6 @@ import {
   SentFriendRequest,
   UserType,
 } from "./users-types";
-
-import {
-  addCollectionDocument,
-  deleteCollectionDocument,
-  editCollectionDocument,
-  getCollectionData,
-  getCollectionDataWithId,
-  getCollectionDocumentById,
-  getCollectionFilteredDocuments,
-  getDocumentReference,
-  getRtkTags,
-} from "@utils/helpers";
 
 export const usersApi = firestoreApi.injectEndpoints({
   endpoints: (build) => ({

@@ -1,4 +1,4 @@
-import { AccessType, AuditType } from "@services/types";
+import { AccessType, AuditType } from "../types";
 
 export type ProductCategory = {
   id: string;

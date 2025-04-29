@@ -8,11 +8,15 @@ import {
   useForm,
 } from "@marcin-migdal/m-component-library";
 
-import { useAppDispatch, useAppSelector } from "@hooks/index";
-import { ProductCategory, UpdateProductCategory, useEditProductCategoryMutation } from "@services/ProductCategories";
-import { selectAuthorization } from "@slices/authorization-slice";
-import { addToast } from "@slices/toast-slice";
+import { addToast, selectAuthorization } from "../../../../../app/slices";
+import { useAppDispatch, useAppSelector } from "../../../../../hooks";
 import { CategoryState, CategorySubmitState, categoryValidationSchema } from "../../../../../utils/formik-configs";
+
+import {
+  ProductCategory,
+  UpdateProductCategory,
+  useEditProductCategoryMutation,
+} from "../../../../../app/services/ProductCategories";
 
 type EditCategoryAlertProps = {
   category: ProductCategory;
@@ -46,7 +50,7 @@ export const EditCategoryAlert = ({ category, handleClose, alertOpen }: EditCate
   const formik = useForm<CategoryState>({
     initialValues: { name: category.name, color: category.color, icon: category.icon },
     validationSchema: categoryValidationSchema,
-    onSubmit: handleSubmit,
+    onSubmit: (formState: CategorySubmitState) => handleSubmit(formState),
   });
 
   const handleCloseAlert = () => {

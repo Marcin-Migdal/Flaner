@@ -1,24 +1,10 @@
-type IErrorObj = {
-  [key in ErrorCodeTypes]: IError | undefined;
-};
-
-type ErrorCodeTypes =
-  | "auth/invalid-login-credentials"
-  | "auth/user-not-found"
-  | "auth/wrong-password"
-  | "auth/username-already-in-use"
-  | "auth/email-already-in-use"
-  | "auth/invalid-email"
-  | "auth/too-many-requests"
-  | "unknown_error-occurred";
-
 export type IError = {
   message: string;
   code: string;
   fieldNames?: string | string[];
 };
 
-export const authErrors: IErrorObj = {
+export const authErrors = {
   "auth/invalid-login-credentials": {
     message: "Invalid credentials",
     code: "auth/invalid-login-credentials",

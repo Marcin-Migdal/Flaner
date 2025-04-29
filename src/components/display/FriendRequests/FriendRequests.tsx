@@ -1,7 +1,7 @@
 import { Icon } from "@marcin-migdal/m-component-library";
 
-import { NoDataPlaceholder } from "@components/placeholders";
-import { ReceivedFriendRequest, SentFriendRequest } from "@services/users";
+import { ReceivedFriendRequest, SentFriendRequest } from "../../../app/services/users";
+import { NoDataPlaceholder } from "../../placeholders";
 import { RequestLeftSection } from "./RequestLeftSection/RequestLeftSection";
 import { RequestsWrapper } from "./RequestsWrapper/RequestsWrapper";
 

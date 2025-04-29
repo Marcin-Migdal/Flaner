@@ -1,6 +1,6 @@
 import { useContext } from "react";
 
-import { Avatar } from "@components/Avatar";
+import { Avatar } from "../../../../../../../../Avatar";
 import { DesktopNavbarItem, NavbarItemContext } from "../DesktopNavbarItem/DesktopNavbarItem";
 import { NavigationItem } from "../Navigation/NavigationItem";
 

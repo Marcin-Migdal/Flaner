@@ -1,18 +1,13 @@
 import { Col, Row, SidePanel, useSidePanel } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 
-import { useAppSelector, useBreakpoint } from "@hooks/index";
-import { useGetShoppingListQuery } from "@services/ShoppingLists";
-import { selectAuthorization } from "@slices/authorization-slice";
+import { useGetShoppingListQuery } from "../../../app/services/ShoppingLists";
+import { selectAuthorization } from "../../../app/slices";
+import { useAppSelector, useBreakpoint } from "../../../hooks";
 import { ShoppingListPanel } from "./components/ShoppingListPanel/ShoppingListPanel";
 import { ShoppingListProductsPanel } from "./components/ShoppingListProductPanel/ShoppingListProductPanel";
 
 import "./styles.scss";
-
-export type ShoppingList = {
-  id: string;
-  name: string;
-};
 
 const ShoppingLists = () => {
   const { authUser } = useAppSelector(selectAuthorization);

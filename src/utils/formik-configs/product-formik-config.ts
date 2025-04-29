@@ -1,7 +1,7 @@
 import { InferSchemaType } from "@marcin-migdal/m-component-library";
 import * as Yup from "yup";
 
-import { ProductCategory } from "@services/ProductCategories";
+import { ProductCategory } from "../../app/services/ProductCategories";
 import { schemaAccessFields, schemaAuditFields, schemaName } from "./common-fields";
 
 export type ProductState = {

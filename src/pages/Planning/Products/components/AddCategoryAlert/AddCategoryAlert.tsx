@@ -12,10 +12,9 @@ import {
 } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "@hooks/index";
-import { CreateProductCategory, useAddProductCategoryMutation } from "@services/ProductCategories";
-import { selectAuthorization } from "@slices/authorization-slice";
-import { addToast } from "@slices/toast-slice";
+import { CreateProductCategory, useAddProductCategoryMutation } from "../../../../../app/services/ProductCategories";
+import { addToast, selectAuthorization } from "../../../../../app/slices";
+import { useAppDispatch, useAppSelector } from "../../../../../hooks";
 import { CategorySubmitState, categoryValidationSchema, initCategoryValues } from "../../../../../utils/formik-configs";
 
 export const AddCategoryAlert = () => {

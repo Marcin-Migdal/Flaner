@@ -1,8 +1,9 @@
 import { v4 as uuid } from "uuid";
 
-import { COLLECTIONS } from "@utils/enums";
-
+import { Timestamp } from "firebase/firestore";
+import { COLLECTIONS } from "../../../utils/enums";
 import { firestoreApi } from "../api";
+import { CreateProduct, FirestoreProduct, Product, UpdateProduct } from "./product-types";
 
 import {
   addCollectionDocument,
@@ -11,10 +12,7 @@ import {
   getCollectionDataWithId,
   getCollectionFilteredDocuments,
   getRtkTags,
-} from "@utils/helpers";
-
-import { Timestamp } from "firebase/firestore";
-import { CreateProduct, FirestoreProduct, Product, UpdateProduct } from "./product-types";
+} from "../../../utils/helpers";
 
 export const productApi = firestoreApi.injectEndpoints({
   endpoints: (build) => ({

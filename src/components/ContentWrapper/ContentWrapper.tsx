@@ -1,9 +1,16 @@
 import { ReactElement } from "react";
 
-import { ErrorPlaceholderProps, NoDataPlaceholderProps, SpinnerPlaceholderProps } from "@components/index";
-import { I18NameSpace } from "@hooks/useI18NameSpace";
-import { ErrorPlaceholder, NoDataPlaceholder, SpinnerPlaceholder } from "../placeholders";
+import { I18NameSpace } from "../../hooks";
 import { UseQueryResult } from "./types";
+
+import {
+  ErrorPlaceholder,
+  ErrorPlaceholderProps,
+  NoDataPlaceholder,
+  NoDataPlaceholderProps,
+  SpinnerPlaceholder,
+  SpinnerPlaceholderProps,
+} from "../placeholders";
 
 type ChildrenObject<T> = {
   data: T;

@@ -1,7 +1,7 @@
 import { CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 
-import { I18NameSpace, useI18NameSpace } from "@hooks/index";
+import { I18NameSpace, useI18NameSpace } from "../../../hooks";
 
 export type ErrorPlaceholderProps = {
   className?: string;
