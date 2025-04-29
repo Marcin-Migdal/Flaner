@@ -14,7 +14,7 @@ type UserTilesProps = {
 
 export const UserTiles = ({ users, message = "No users found", onAddFriend }: UserTilesProps) => {
   return (
-    <BaseUsersTiles users={users} message={message} nameSpace="addFriends">
+    <BaseUsersTiles users={users} message={message}>
       {(user) => (
         <CustomButton
           disabled={user.isFriend || user.invited}
@@ -37,7 +37,7 @@ type FriendsTilesProps = {
 
 export const FriendsTiles = ({ users, message = "No friends found", onDeleteFriend }: FriendsTilesProps) => {
   return (
-    <BaseUsersTiles users={users} message={message} nameSpace="myFriends">
+    <BaseUsersTiles users={users} message={message}>
       {(user) => (
         <CustomButton
           text="Delete"

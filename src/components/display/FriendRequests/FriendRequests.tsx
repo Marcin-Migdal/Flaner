@@ -24,7 +24,7 @@ export const ReceivedFriendRequests = ({
   onRequestDecline,
 }: ReceivedFriendRequestsProps) => {
   if (friendRequests.length === 0) {
-    return <NoDataPlaceholder message="No invitations received" nameSpace="myFriends" />;
+    return <NoDataPlaceholder message="No invitations received" />;
   }
 
   return (
@@ -46,7 +46,7 @@ export const ReceivedFriendRequests = ({
 
 export const SentFriendRequests = ({ friendRequests, onRequestDelete }: SentFriendRequestsProps) => {
   if (friendRequests.length === 0) {
-    return <NoDataPlaceholder message="No friend requests sent" nameSpace="addFriends" />;
+    return <NoDataPlaceholder message="No friend requests sent" />;
   }
 
   return (

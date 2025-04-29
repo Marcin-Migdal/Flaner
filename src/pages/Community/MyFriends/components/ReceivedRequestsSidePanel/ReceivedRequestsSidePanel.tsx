@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { selectAuthorization } from "../../../../../app/slices";
 import { ContentWrapper, ReceivedFriendRequests } from "../../../../../components";
-import { I18NameSpace, useAppSelector } from "../../../../../hooks";
+import { useAppSelector } from "../../../../../hooks";
 
 import {
   ReceivedFriendRequest,
@@ -13,17 +13,16 @@ import {
 } from "../../../../../app/services/users";
 
 type ReceivedRequestsSidePanelProps = {
-  nameSpace: I18NameSpace;
   sidePanelOpen: SidePanelOpenState;
   handleClose: () => void;
 };
 
-export const ReceivedRequestsSidePanel = ({ nameSpace, ...sidePanelProps }: ReceivedRequestsSidePanelProps) => {
-  const { t } = useTranslation(nameSpace);
+export const ReceivedRequestsSidePanel = (props: ReceivedRequestsSidePanelProps) => {
+  const { t } = useTranslation();
   const { authUser } = useAppSelector(selectAuthorization);
 
   const receivedFriendRequestQuery = useGetReceivedFriendRequestQueryQuery(authUser?.uid, {
-    skip: sidePanelProps.sidePanelOpen === SidePanelOpenState.CLOSED || !authUser,
+    skip: props.sidePanelOpen === SidePanelOpenState.CLOSED || !authUser,
   });
 
   const [confirmFriendRequest] = useConfirmFriendRequestMutation();
@@ -45,7 +44,7 @@ export const ReceivedRequestsSidePanel = ({ nameSpace, ...sidePanelProps }: Rece
   };
 
   return (
-    <SidePanel position="right" className="friends-page-request-side-panel" closeOnOutsideClick {...sidePanelProps}>
+    <SidePanel position="right" className="friends-page-request-side-panel" closeOnOutsideClick {...props}>
       <h3>{t("Received Requests")}</h3>
       <ContentWrapper query={receivedFriendRequestQuery}>
         {({ data }) => (

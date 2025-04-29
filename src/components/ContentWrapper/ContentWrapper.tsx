@@ -1,6 +1,5 @@
 import { ReactElement } from "react";
 
-import { I18NameSpace } from "../../hooks";
 import { UseQueryResult } from "./types";
 
 import {
@@ -28,7 +27,6 @@ type ContentWrapperProps<T> = {
   placeholders?: Partial<Placeholders>;
   placeholdersConfig?: PlaceholdersConfig;
   conditions?: Conditions;
-  nameSpace?: I18NameSpace;
 };
 
 type PlaceholdersConfig = {
@@ -50,7 +48,6 @@ export const ContentWrapper = <T,>({
   placeholders: customPlaceholders,
   placeholdersConfig,
   conditions: customConditions,
-  nameSpace,
 }: ContentWrapperProps<T>) => {
   const placeholders: Placeholders = {
     spinner: customPlaceholders?.spinner ? (
@@ -61,17 +58,12 @@ export const ContentWrapper = <T,>({
     error: customPlaceholders?.error ? (
       customPlaceholders.error
     ) : (
-      <ErrorPlaceholder {...placeholdersConfig?.common} {...placeholdersConfig?.error} nameSpace={nameSpace} />
+      <ErrorPlaceholder {...placeholdersConfig?.common} {...placeholdersConfig?.error} />
     ),
     noData: customPlaceholders?.noData ? (
       customPlaceholders.noData
     ) : (
-      <NoDataPlaceholder
-        message="No data"
-        {...placeholdersConfig?.common}
-        {...placeholdersConfig?.noData}
-        nameSpace={nameSpace}
-      />
+      <NoDataPlaceholder message="No data" {...placeholdersConfig?.common} {...placeholdersConfig?.noData} />
     ),
   };
 

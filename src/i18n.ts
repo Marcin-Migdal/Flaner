@@ -9,7 +9,10 @@ export enum LanguageType {
   PL = "pl",
 }
 
-export const lngLabelMap: Record<LanguageType, string> = { [LanguageType.PL]: "Polski", [LanguageType.EN]: "English" };
+export const lngLabelMap: Record<LanguageType, string> = {
+  [LanguageType.PL]: "Polski",
+  [LanguageType.EN]: "English",
+};
 
 export const availableLanguages: DropdownOption<LanguageType>[] = [
   { label: lngLabelMap[LanguageType.PL], value: LanguageType.PL },
@@ -25,14 +28,12 @@ i18n
   .use(initReactI18next)
   // init i18next, for all options read: https://www.i18next.com/overview/configuration-options
   .init({
-    // lng: "pl", // for tests
-    // lng: "en", // for tests
     debug: false,
     fallbackLng: "en",
-    fallbackNS: "common",
     interpolation: { escapeValue: false },
-    ns: ["common"],
-    defaultNS: "common",
+    // ns: ["common"],
+    // fallbackNS: "common",
+    // defaultNS: "common",
   });
 
 export default i18n;

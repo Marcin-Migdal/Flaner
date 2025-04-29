@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { selectAuthorization } from "../../../../../app/slices";
 import { ContentWrapper, SentFriendRequests } from "../../../../../components";
-import { I18NameSpace, useAppSelector } from "../../../../../hooks";
+import { useAppSelector } from "../../../../../hooks";
 
 import {
   SentFriendRequest,
@@ -12,17 +12,16 @@ import {
 } from "../../../../../app/services/users";
 
 type SentRequestSidePanelProps = {
-  nameSpace: I18NameSpace;
   sidePanelOpen: SidePanelOpenState;
   handleClose: () => void;
 };
 
-export const SentRequestSidePanel = ({ nameSpace, ...sidePanelProps }: SentRequestSidePanelProps) => {
-  const { t } = useTranslation(nameSpace);
+export const SentRequestSidePanel = (props: SentRequestSidePanelProps) => {
+  const { t } = useTranslation();
   const { authUser } = useAppSelector(selectAuthorization);
 
   const sentFriendRequestQuery = useGetSentFriendRequestQueryQuery(authUser?.uid, {
-    skip: sidePanelProps.sidePanelOpen === SidePanelOpenState.CLOSED || !authUser,
+    skip: props.sidePanelOpen === SidePanelOpenState.CLOSED || !authUser,
   });
 
   const [deleteFriendRequest] = useDeleteFriendRequestMutation();
@@ -32,9 +31,9 @@ export const SentRequestSidePanel = ({ nameSpace, ...sidePanelProps }: SentReque
   };
 
   return (
-    <SidePanel position="right" className="friends-page-request-side-panel" closeOnOutsideClick {...sidePanelProps}>
+    <SidePanel position="right" className="friends-page-request-side-panel" closeOnOutsideClick {...props}>
       <h3>{t("Sent Requests")}</h3>
-      <ContentWrapper query={sentFriendRequestQuery} nameSpace={nameSpace}>
+      <ContentWrapper query={sentFriendRequestQuery}>
         {({ data }) => <SentFriendRequests friendRequests={data} onRequestDelete={handleRequestDelete} />}
       </ContentWrapper>
     </SidePanel>

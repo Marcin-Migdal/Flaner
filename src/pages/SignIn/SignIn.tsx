@@ -26,9 +26,8 @@ import {
 
 import "../../commonAssets/css/auth-form.scss";
 
-const nameSpace = "auth";
 const SignIn = () => {
-  const { t, i18n } = useTranslation(nameSpace);
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
   const { isLoading, authFormErrors: authErrors } = useAppSelector(selectAuthorization);
@@ -75,14 +74,12 @@ const SignIn = () => {
                 <>
                   <CustomTextfield
                     data-cy="email-input"
-                    nameSpace={nameSpace}
                     label="Email"
                     labelType="floating"
                     {...registerChange("email")}
                   />
                   <CustomTextfield
                     data-cy="password-input"
-                    nameSpace={nameSpace}
                     label="Password"
                     labelType="floating"
                     type="password"
@@ -90,7 +87,6 @@ const SignIn = () => {
                   />
                   <CustomButton
                     data-cy="sign-in-submit-btn"
-                    nameSpace={nameSpace}
                     text="Sign in"
                     type="submit"
                     variant="full"
@@ -115,7 +111,6 @@ const SignIn = () => {
             <p>{t("Don't have any account?")}</p>
             <CustomButton
               data-cy="go-to-sign-up-btn"
-              nameSpace={nameSpace}
               text="Sign up"
               variant="full"
               onClick={() => handleNavigate(PATH_CONSTRANTS.SIGN_UP)}
