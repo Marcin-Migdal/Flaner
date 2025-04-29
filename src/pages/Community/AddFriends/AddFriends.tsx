@@ -4,12 +4,11 @@ import { useState } from "react";
 import { SearchedUserType, useGetSearchUsersQuery, useSendFriendRequestMutation } from "../../../app/services/users";
 import { selectAuthorization } from "../../../app/slices";
 import { ContentWrapper, CustomButton, DebounceTextfield, UserTiles } from "../../../components";
-import { I18NameSpace, useAppSelector } from "../../../hooks";
+import { useAppSelector } from "../../../hooks";
 import { SentRequestSidePanel } from "./components/SentRequestSidePanel/SentRequestSidePanel";
 
 import "../../../commonAssets/css/friends-page-styles.scss";
 
-const nameSpace: I18NameSpace = "addFriends";
 const AddFriends = () => {
   const { authUser } = useAppSelector(selectAuthorization);
   const [handleOpen, sidePanelProps] = useSidePanel();
@@ -40,23 +39,18 @@ const AddFriends = () => {
           placeholder="Search friends"
           labelType="left"
           size="large"
-          nameSpace={nameSpace}
           marginBottomType="none"
         />
         <CustomButton size="large" icon="user-clock" onClick={handleOpen} disableDefaultMargin />
       </div>
 
       <div className="content-container">
-        <ContentWrapper
-          query={usersQuery}
-          placeholdersConfig={{ noData: { message: "Search friends" } }}
-          nameSpace={nameSpace}
-        >
+        <ContentWrapper query={usersQuery} placeholdersConfig={{ noData: { message: "Search friends" } }}>
           {({ data }) => <UserTiles users={data} onAddFriend={handleAddFriend} />}
         </ContentWrapper>
       </div>
 
-      <SentRequestSidePanel nameSpace={nameSpace} {...sidePanelProps} />
+      <SentRequestSidePanel {...sidePanelProps} />
     </div>
   );
 };

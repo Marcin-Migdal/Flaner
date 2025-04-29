@@ -5,12 +5,11 @@ import { useTranslation } from "react-i18next";
 import { UserType, useDeleteFriendMutation, useGetFriendsByUsernameQuery } from "../../../app/services/users";
 import { selectAuthorization } from "../../../app/slices";
 import { ContentWrapper, CustomButton, DebounceTextfield, FriendsTiles } from "../../../components";
-import { I18NameSpace, useAppSelector } from "../../../hooks";
+import { useAppSelector } from "../../../hooks";
 import { ReceivedRequestsSidePanel } from "./components/ReceivedRequestsSidePanel/ReceivedRequestsSidePanel";
 
 import "../../../commonAssets/css/friends-page-styles.scss";
 
-const nameSpace: I18NameSpace = "addFriends";
 const MyFriends = () => {
   const { t } = useTranslation();
   const { authUser } = useAppSelector(selectAuthorization);
@@ -53,7 +52,6 @@ const MyFriends = () => {
           placeholder="Search friends"
           labelType="left"
           size="large"
-          nameSpace={nameSpace}
           marginBottomType="none"
         />
         <CustomButton icon="user-plus" size="large" onClick={handleOpen} disableDefaultMargin />
@@ -71,7 +69,7 @@ const MyFriends = () => {
         </ContentWrapper>
       </div>
 
-      <ReceivedRequestsSidePanel nameSpace={nameSpace} {...sidePanelProps} />
+      <ReceivedRequestsSidePanel {...sidePanelProps} />
 
       <Alert
         {...alertProps}

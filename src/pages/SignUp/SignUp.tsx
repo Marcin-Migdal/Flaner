@@ -26,10 +26,9 @@ import {
 
 import "../../commonAssets/css/auth-form.scss";
 
-const nameSpace: string = "auth";
 const SignUp = () => {
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation(nameSpace);
+  const { t, i18n } = useTranslation();
 
   const dispatch = useAppDispatch();
   const { isLoading, authFormErrors: authErrors } = useAppSelector(selectAuthorization);
@@ -75,21 +74,18 @@ const SignUp = () => {
                 <>
                   <CustomTextfield
                     data-cy="username-input"
-                    nameSpace={nameSpace}
                     label="Username"
                     labelType="floating"
                     {...registerChange("username")}
                   />
                   <CustomTextfield
                     data-cy="email-input"
-                    nameSpace={nameSpace}
                     label="Email"
                     labelType="floating"
                     {...registerChange("email")}
                   />
                   <CustomTextfield
                     data-cy="password-input"
-                    nameSpace={nameSpace}
                     label="Password"
                     labelType="floating"
                     {...registerChange("password")}
@@ -97,7 +93,6 @@ const SignUp = () => {
                   />
                   <CustomTextfield
                     data-cy="validate-password-input"
-                    nameSpace={nameSpace}
                     label="Verify password"
                     labelType="floating"
                     {...registerChange("verifyPassword")}
@@ -105,7 +100,6 @@ const SignUp = () => {
                   />
                   <CustomButton
                     data-cy="sign-up-submit-btn"
-                    nameSpace={nameSpace}
                     text="Sign up"
                     type="submit"
                     variant="full"
@@ -130,7 +124,6 @@ const SignUp = () => {
             <p>{t("Already have any account?")}</p>
             <CustomButton
               data-cy="go-to-sign-in-btn"
-              nameSpace={nameSpace}
               text="Sign in"
               variant="full"
               onClick={() => handleNavigate(PATH_CONSTRANTS.SIGN_IN)}
