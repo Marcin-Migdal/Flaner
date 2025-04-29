@@ -1,11 +1,10 @@
+import { useSidePanel } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 
-import { ContentWrapper, CustomButton, DebounceTextfield, UserTiles } from "@components/index";
-import { I18NameSpace, useAppSelector } from "@hooks/index";
-import { useSidePanel } from "@marcin-migdal/m-component-library";
-import { SearchedUserType } from "@services/users";
-import { useGetSearchUsersQuery, useSendFriendRequestMutation } from "@services/users/users-api";
-import { selectAuthorization } from "@slices/authorization-slice";
+import { SearchedUserType, useGetSearchUsersQuery, useSendFriendRequestMutation } from "../../../app/services/users";
+import { selectAuthorization } from "../../../app/slices";
+import { ContentWrapper, CustomButton, DebounceTextfield, UserTiles } from "../../../components";
+import { I18NameSpace, useAppSelector } from "../../../hooks";
 import { SentRequestSidePanel } from "./components/SentRequestSidePanel/SentRequestSidePanel";
 
 import "../../../commonAssets/css/friends-page-styles.scss";
@@ -25,7 +24,9 @@ const AddFriends = () => {
   const [sendFriendRequest] = useSendFriendRequestMutation();
 
   const handleAddFriend = (user: SearchedUserType) => {
-    if (!user || !authUser) {return;}
+    if (!user || !authUser) {
+      return;
+    }
 
     sendFriendRequest({ senderUid: authUser.uid, receiverUid: user.uid });
   };

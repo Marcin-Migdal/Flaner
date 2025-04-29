@@ -1,26 +1,28 @@
 import { ButtonWidth, Card, Col, Form, FormErrors, Icon, Row, useForm } from "@marcin-migdal/m-component-library";
-import { LanguageType } from "i18n";
+
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import { CustomButton, CustomTextfield } from "@components/index";
-import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
-import { addToast } from "@slices/toast-slice";
-import { PATH_CONSTRANTS } from "@utils/enums";
+import { CustomButton, CustomTextfield } from "../../components";
+import { useAppDispatch, useAppSelector } from "../../hooks";
+import { LanguageType } from "../../i18n";
+import { PATH_CONSTRANTS } from "../../utils/enums";
+
+import {
+  addToast,
+  selectAuthorization,
+  setAuthError,
+  signInWithEmail,
+  signInWithGoogle,
+  signOut,
+} from "../../app/slices";
+
 import {
   SignInState,
   SignInSubmitState,
   signInInitialValues,
   signInValidationSchema,
 } from "../../utils/formik-configs";
-
-import {
-  selectAuthorization,
-  setAuthError,
-  signInWithEmail,
-  signInWithGoogle,
-  signOut,
-} from "@slices/authorization-slice";
 
 import "../../commonAssets/css/auth-form.scss";
 
@@ -66,7 +68,7 @@ const SignIn = () => {
       <Card className="auth-card">
         <Row>
           <Col sm={12} mdFlex={1} className="left-col">
-            <h2>{t("_Hello")}!</h2>
+            <h2>{t("Hello")}!</h2>
             <p data-cy="sign-in-description">{t("Please sign in to continue")}</p>
             <Form formik={formik}>
               {({ registerChange, isValid }) => (
@@ -102,14 +104,14 @@ const SignIn = () => {
             </Form>
             <div className="bottom-section">
               <span>
-                {t("_or")} <br /> {t("Sign up with")}
+                {t("or")} <br /> {t("Sign up with")}
               </span>
               <Icon className="google-sign-in-icon" icon={["fab", "google"]} onClick={onGoogleSignIn} />
             </div>
           </Col>
           <Col sm={12} mdFlex={1} className="right-col">
             <Icon icon={["fas", "rectangle-list"]} />
-            <h2>{process.env.APP_NAME}</h2>
+            <h2>{import.meta.env.VITE_APP_NAME}</h2>
             <p>{t("Don't have any account?")}</p>
             <CustomButton
               data-cy="go-to-sign-up-btn"

@@ -1,8 +1,8 @@
 import { DropdownMenu, Icon } from "@marcin-migdal/m-component-library";
 
-import { useAppSelector } from "@hooks/redux-hooks";
-import { Product } from "@services/Products/product-types";
-import { selectAuthorization } from "@slices/authorization-slice";
+import { Product } from "../../../../../../../../../app/services/Products";
+import { selectAuthorization } from "../../../../../../../../../app/slices";
+import { useAppSelector } from "../../../../../../../../../hooks";
 
 import "./styles.scss";
 

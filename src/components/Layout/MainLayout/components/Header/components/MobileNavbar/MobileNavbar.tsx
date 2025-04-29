@@ -1,9 +1,12 @@
 import { Icon } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 
-import { useAppSelector } from "@hooks/redux-hooks";
-import { useGetUnreadNotificationsCountQuery, useUpdateReadNotificationMutation } from "@services/users";
-import { selectAuthorization } from "@slices/authorization-slice";
+import {
+  useGetUnreadNotificationsCountQuery,
+  useUpdateReadNotificationMutation,
+} from "../../../../../../../app/services/users";
+import { selectAuthorization } from "../../../../../../../app/slices";
+import { useAppSelector } from "../../../../../../../hooks";
 import { MobileHeaderMenuOpenType } from "../../interfaces";
 import { MobileMenu } from "./components/MobileMenu/MobileMenu";
 import { MobileNotifications } from "./components/MobileNotifications/MobileNotifications";

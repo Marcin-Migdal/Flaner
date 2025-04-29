@@ -1,11 +1,11 @@
 import { useAlert } from "@marcin-migdal/m-component-library";
 
-import { DeleteAlert } from "@components/index";
-import { Product, useDeleteProductMutation } from "@services/Products";
+import { Product, useDeleteProductMutation } from "../../../../../../../app/services/Products";
+import { DeleteAlert } from "../../../../../../../components";
+import { OnDeleteMutation } from "../../../../../../../components/alerts/DeleteAlert";
 import { EditProductAlert } from "../../../EditProductAlert/EditProductAlert";
 import { ProductItem } from "./components/Product/Product";
 
-import { OnDeleteMutation } from "@components/alerts/DeleteAlert";
 import "./styles.scss";
 
 type ProductListProps = {

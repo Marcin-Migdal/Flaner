@@ -1,5 +1,4 @@
 import deepEqual from "fast-deep-equal";
-import { availableLanguages, LanguageType, lngLabelMap } from "i18n";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -15,13 +14,13 @@ import {
   useAlert,
 } from "@marcin-migdal/m-component-library";
 
-import { CustomButton } from "@components/CustomButton";
-import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
-import { EditUserRequest, useEditUserMutation } from "@services/users";
-import { AuthUserConfigType, selectAuthorization, setAuthUser } from "@slices/authorization-slice";
-import { addToast } from "@slices/toast-slice";
-import { defaultThemeHue } from "@utils/constants/theme-hue";
-import { DropdownOption } from "@utils/types/DropdownOption";
+import { EditUserRequest, useEditUserMutation } from "../../app/services/users";
+import { addToast, AuthUserConfigType, selectAuthorization, setAuthUser } from "../../app/slices";
+import { CustomButton } from "../../components";
+import { useAppDispatch, useAppSelector } from "../../hooks";
+import { availableLanguages, LanguageType, lngLabelMap } from "../../i18n";
+import { defaultThemeHue } from "../../utils/constants/theme-hue";
+import { DropdownOption } from "../../utils/types";
 import { AccordionSettingsSectionToggle } from "./Components/AccordionSettingsSectionToggle/AccordionSettingsSectionToggle";
 import { HuePopup } from "./Components/HuePopup/HuePopup";
 

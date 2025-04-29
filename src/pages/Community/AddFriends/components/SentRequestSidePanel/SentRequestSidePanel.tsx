@@ -1,12 +1,15 @@
 import { SidePanel, SidePanelOpenState } from "@marcin-migdal/m-component-library";
 import { useTranslation } from "react-i18next";
 
-import { ContentWrapper } from "@components/ContentWrapper";
-import { SentFriendRequests } from "@components/display";
-import { useAppSelector } from "@hooks/redux-hooks";
-import { I18NameSpace } from "@hooks/useI18NameSpace";
-import { SentFriendRequest, useDeleteFriendRequestMutation, useGetSentFriendRequestQueryQuery } from "@services/users";
-import { selectAuthorization } from "@slices/authorization-slice";
+import { selectAuthorization } from "../../../../../app/slices";
+import { ContentWrapper, SentFriendRequests } from "../../../../../components";
+import { I18NameSpace, useAppSelector } from "../../../../../hooks";
+
+import {
+  SentFriendRequest,
+  useDeleteFriendRequestMutation,
+  useGetSentFriendRequestQueryQuery,
+} from "../../../../../app/services/users";
 
 type SentRequestSidePanelProps = {
   nameSpace: I18NameSpace;

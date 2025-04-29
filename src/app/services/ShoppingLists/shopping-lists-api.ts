@@ -1,7 +1,7 @@
 import { Timestamp } from "firebase/firestore";
 import { v4 as uuid } from "uuid";
 
-import { COLLECTIONS } from "@utils/enums";
+import { COLLECTIONS } from "../../../utils/enums";
 import { firestoreApi } from "../api";
 import { CreateShoppingList, FirestoreShoppingList, ShoppingList, UpdateShoppingList } from "./shopping-lists-types";
 
@@ -12,7 +12,7 @@ import {
   getCollectionDataWithId,
   getCollectionFilteredDocuments,
   getRtkTags,
-} from "@utils/helpers";
+} from "../../../utils/helpers";
 
 export const shoppingListsApi = firestoreApi.injectEndpoints({
   endpoints: (build) => ({

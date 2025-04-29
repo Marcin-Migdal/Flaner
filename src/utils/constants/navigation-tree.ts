@@ -1,6 +1,6 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 
-import { PATH_CONSTRANTS } from "@utils/enums";
+import { PATH_CONSTRANTS } from "../enums";
 
 export type NavigationNode = {
   text: string;

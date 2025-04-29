@@ -2,11 +2,10 @@ import { Alert, useAlert, useSidePanel } from "@marcin-migdal/m-component-librar
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { ContentWrapper, CustomButton, DebounceTextfield, FriendsTiles } from "@components/index";
-import { I18NameSpace, useAppSelector } from "@hooks/index";
-import { UserType } from "@services/users";
-import { useDeleteFriendMutation, useGetFriendsByUsernameQuery } from "@services/users/users-api";
-import { selectAuthorization } from "@slices/authorization-slice";
+import { UserType, useDeleteFriendMutation, useGetFriendsByUsernameQuery } from "../../../app/services/users";
+import { selectAuthorization } from "../../../app/slices";
+import { ContentWrapper, CustomButton, DebounceTextfield, FriendsTiles } from "../../../components";
+import { I18NameSpace, useAppSelector } from "../../../hooks";
 import { ReceivedRequestsSidePanel } from "./components/ReceivedRequestsSidePanel/ReceivedRequestsSidePanel";
 
 import "../../../commonAssets/css/friends-page-styles.scss";

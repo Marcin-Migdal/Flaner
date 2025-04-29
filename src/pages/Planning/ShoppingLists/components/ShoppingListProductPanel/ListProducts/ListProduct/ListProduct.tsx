@@ -1,12 +1,15 @@
 import { Accordion, Button, DropdownMenu, Icon, Textarea } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 
-import { useAppSelector } from "@hooks/redux-hooks";
-import { useBreakpoint } from "@hooks/useBreakpoint";
-import { ShoppingList } from "@services/ShoppingLists";
-import { ShoppingListProduct, useEditShoppingListProductMutation } from "@services/ShoppingListsProduct";
-import { selectAuthorization } from "@slices/authorization-slice";
+import { ShoppingList } from "../../../../../../../app/services/ShoppingLists";
+import { selectAuthorization } from "../../../../../../../app/slices";
+import { useAppSelector, useBreakpoint } from "../../../../../../../hooks";
 import { CategoryDisplay } from "./CategoryDisplay/CategoryDisplay";
+
+import {
+  ShoppingListProduct,
+  useEditShoppingListProductMutation,
+} from "../../../../../../../app/services/ShoppingListsProduct";
 
 import "./styles.scss";
 

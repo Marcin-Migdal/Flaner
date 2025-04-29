@@ -12,11 +12,10 @@ import {
 } from "firebase/firestore";
 import { v4 as uuid } from "uuid";
 
-import { fb } from "@firebase/firebase";
-import { COLLECTIONS } from "@utils/enums";
+import { fb } from "../../../firebase/firebase";
+import { COLLECTIONS } from "../../../utils/enums";
+import { getCollectionDataWithId, getRtkTags } from "../../../utils/helpers";
 import { firestoreApi } from "../api";
-
-import { getCollectionDataWithId, getRtkTags } from "@utils/helpers";
 
 import {
   CreateShoppingListProduct,

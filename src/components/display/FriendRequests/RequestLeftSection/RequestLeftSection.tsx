@@ -1,5 +1,5 @@
-import { Avatar } from "@components/Avatar";
-import { UserType } from "@services/users";
+import { UserType } from "../../../../app/services/users";
+import { Avatar } from "../../../Avatar";
 
 type LeftSectionProps = {
   user: UserType;

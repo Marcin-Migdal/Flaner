@@ -1,7 +1,7 @@
 import { Button, ButtonProps } from "@marcin-migdal/m-component-library";
 import { useTranslation } from "react-i18next";
 
-import { I18NameSpace, useI18NameSpace } from "@hooks/index";
+import { I18NameSpace, useI18NameSpace } from "../../hooks";
 
 type CustomButtonPropsType = ButtonProps & { nameSpace?: I18NameSpace };
 

@@ -1,7 +1,7 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { Icon } from "@marcin-migdal/m-component-library";
 
-import { ShoppingListProduct } from "@services/ShoppingListsProduct";
+import { ShoppingListProduct } from "../../../../../../../../app/services/ShoppingListsProduct";
 
 import "./styles.scss";
 

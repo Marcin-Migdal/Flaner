@@ -1,7 +1,7 @@
 import { v4 as uuid } from "uuid";
 
-import { COLLECTIONS } from "@utils/enums";
-
+import { Timestamp } from "firebase/firestore";
+import { COLLECTIONS } from "../../../utils/enums";
 import { firestoreApi } from "../api";
 
 import {
@@ -11,9 +11,8 @@ import {
   getCollectionDataWithId,
   getCollectionFilteredDocuments,
   getRtkTags,
-} from "@utils/helpers";
+} from "../../../utils/helpers";
 
-import { Timestamp } from "firebase/firestore";
 import {
   CreateProductCategory,
   FirestoreProductCategory,

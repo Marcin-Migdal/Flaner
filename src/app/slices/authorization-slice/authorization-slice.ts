@@ -1,8 +1,7 @@
 import { FormErrors } from "@marcin-migdal/m-component-library";
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
-import { SignInState } from "@utils/formik-configs/sign-in-formik-config";
-import { SignUpState } from "@utils/formik-configs/sign-up-formik-config";
+import { SignInState, SignUpState } from "../../../utils/formik-configs";
 import { AuthUserConfigType, AuthUserInitialState, FirebaseError } from "./authorization-interfaces";
 
 const initialState: AuthUserInitialState = {

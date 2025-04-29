@@ -1,14 +1,17 @@
 import { Accordion, useAlert } from "@marcin-migdal/m-component-library";
 
-import { DeleteAlert } from "@components/alerts";
-import { OnDeleteMutation } from "@components/alerts/DeleteAlert";
-import { NoDataPlaceholder } from "@components/placeholders";
-import { useAppSelector } from "@hooks/redux-hooks";
-import { useGetShoppingListQuery } from "@services/ShoppingLists";
-import { ShoppingListProduct, useDeleteShoppingListProductMutation } from "@services/ShoppingListsProduct";
-import { selectAuthorization } from "@slices/authorization-slice";
+import { useGetShoppingListQuery } from "../../../../../../app/services/ShoppingLists";
+import { selectAuthorization } from "../../../../../../app/slices";
+import { DeleteAlert, NoDataPlaceholder } from "../../../../../../components";
+import { OnDeleteMutation } from "../../../../../../components/alerts/DeleteAlert";
+import { useAppSelector } from "../../../../../../hooks";
 import { EditShoppingListProductAlert } from "../../EditShoppingListProductAlert/EditShoppingListProductAlert";
 import { ListProduct } from "./ListProduct/ListProduct";
+
+import {
+  ShoppingListProduct,
+  useDeleteShoppingListProductMutation,
+} from "../../../../../../app/services/ShoppingListsProduct";
 
 type ListProductsProps = {
   products: ShoppingListProduct[];

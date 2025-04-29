@@ -1,15 +1,15 @@
 import { Alert, Button, Form, Textfield, useAlert, useForm } from "@marcin-migdal/m-component-library";
 
-import { useAppDispatch, useAppSelector } from "@hooks/index";
-import { CreateShoppingList, useAddShoppingListMutation } from "@services/ShoppingLists";
-import { selectAuthorization } from "@slices/authorization-slice";
-import { addToast } from "@slices/toast-slice";
+import { CreateShoppingList, useAddShoppingListMutation } from "../../../../../app/services/ShoppingLists";
+import { addToast, selectAuthorization } from "../../../../../app/slices";
+import { useAppDispatch, useAppSelector } from "../../../../../hooks";
+
 import {
-  initShoppingListValues,
   ShoppingListState,
   ShoppingListSubmitState,
+  initShoppingListValues,
   shoppingListValidationSchema,
-} from "@utils/formik-configs";
+} from "../../../../../utils/formik-configs";
 
 export const AddShoppingListAlert = () => {
   const dispatch = useAppDispatch();

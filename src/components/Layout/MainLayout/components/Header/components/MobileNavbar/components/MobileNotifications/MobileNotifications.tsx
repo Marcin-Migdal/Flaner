@@ -1,12 +1,16 @@
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 
-import { ContentWrapper } from "@components/ContentWrapper";
-import { useGetAllNotificationsQuery, useGetUnreadNotificationsQuery } from "@services/users";
-import { AuthUserConfigType } from "@slices/authorization-slice";
+import { AuthUserConfigType } from "../../../../../../../../../app/slices";
+import { ContentWrapper } from "../../../../../../../../ContentWrapper";
 import { MobileHeaderMenuOpenType } from "../../../../interfaces";
 import { NotificationsTabs } from "../../MobileNavbar";
 import { MobileNotificationsItem } from "./MobileNotificationsItem";
+
+import {
+  useGetAllNotificationsQuery,
+  useGetUnreadNotificationsQuery,
+} from "../../../../../../../../../app/services/users";
 
 import "./styles.scss";
 

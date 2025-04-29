@@ -1,8 +1,9 @@
 import { InferSchemaType } from "@marcin-migdal/m-component-library";
-import { ProductCategory } from "@services/ProductCategories";
-import { Product } from "@services/Products";
-import { Unit } from "@services/Units";
 import * as Yup from "yup";
+
+import { ProductCategory } from "../../app/services/ProductCategories";
+import { Product } from "../../app/services/Products";
+import { Unit } from "../../app/services/Units";
 import { schemaAccessFields, schemaAmount, schemaAuditFields, schemaOptionalDescription } from "./common-fields";
 
 export type ShoppingListProductState = {

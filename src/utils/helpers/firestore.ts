@@ -18,7 +18,7 @@ import {
   where,
 } from "firebase/firestore";
 
-import { fb } from "@firebase/firebase";
+import { fb } from "../../firebase/firebase";
 import { IError, authErrors } from "../constants";
 import { COLLECTIONS } from "../enums";
 import { CustomFirebaseError } from "../error-classes";

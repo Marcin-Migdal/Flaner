@@ -2,19 +2,18 @@ import {
   Alert,
   AlertOpenState,
   Dropdown,
-  DropdownChangeEvent,
   Form,
+  SimpleChangeEvent,
   Textfield,
   useForm,
 } from "@marcin-migdal/m-component-library";
 import { useEffect } from "react";
 
-import { ContentWrapper } from "@components/ContentWrapper";
-import { useAppDispatch, useAppSelector } from "@hooks/index";
-import { ProductCategory, useGetProductCategoriesQuery } from "@services/ProductCategories";
-import { Product, UpdateProduct, useEditProductMutation } from "@services/Products";
-import { selectAuthorization } from "@slices/authorization-slice";
-import { addToast } from "@slices/toast-slice";
+import { useGetProductCategoriesQuery } from "../../../../../app/services/ProductCategories";
+import { Product, UpdateProduct, useEditProductMutation } from "../../../../../app/services/Products";
+import { addToast, selectAuthorization } from "../../../../../app/slices";
+import { ContentWrapper } from "../../../../../components";
+import { useAppDispatch, useAppSelector } from "../../../../../hooks";
 
 import {
   initProductValues,
@@ -58,7 +57,7 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
   const formik = useForm<ProductState>({
     initialValues: initProductValues,
     validationSchema: productValidationSchema,
-    onSubmit: (state: ProductSubmitState) => handleSubmit(state),
+    onSubmit: (formState: ProductSubmitState) => handleSubmit(formState),
   });
 
   useEffect(() => {
@@ -88,20 +87,22 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
       <ContentWrapper query={categoriesQuery}>
         {({ data: categoryOptions }) => (
           <Form formik={formik} disableSubmitOnEnter>
-            {({ registerChange, registerBlur }) => (
-              <>
-                <Textfield placeholder="Name" {...registerChange("name")} />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Dropdown<any>
-                  placeholder="Category"
-                  options={categoryOptions}
-                  labelKey={"name"}
-                  valueKey={"id"}
-                  {...registerBlur<"category", DropdownChangeEvent<ProductCategory>>("category")}
-                />
-                {/* <ImageField placeholder="Image" {...(registerBlur("image"))} /> */}
-              </>
-            )}
+            {({ registerChange, registerBlur }) => {
+              return (
+                <>
+                  <Textfield placeholder="Name" {...registerChange<"name", SimpleChangeEvent<ProductState>>("name")} />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <Dropdown<any>
+                    placeholder="Category"
+                    options={categoryOptions}
+                    labelKey={"name"}
+                    valueKey={"id"}
+                    {...registerBlur<"category", SimpleChangeEvent<ProductState>>("category")}
+                  />
+                  {/* <ImageField placeholder="Image" {...(registerBlur("image"))} /> */}
+                </>
+              );
+            }}
           </Form>
         )}
       </ContentWrapper>

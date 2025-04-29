@@ -1,15 +1,20 @@
 import { Alert, AlertOpenState, Form, Textfield, useForm } from "@marcin-migdal/m-component-library";
 import { useEffect } from "react";
 
-import { useAppDispatch, useAppSelector } from "@hooks/index";
-import { ShoppingList, UpdateShoppingList, useEditShoppingListMutation } from "@services/ShoppingLists";
-import { selectAuthorization } from "@slices/authorization-slice";
-import { addToast } from "@slices/toast-slice";
+import { addToast, selectAuthorization } from "../../../../../app/slices";
+import { useAppDispatch, useAppSelector } from "../../../../../hooks";
+
 import {
   initShoppingListValues,
   ShoppingListState,
   shoppingListValidationSchema,
 } from "../../../../../utils/formik-configs";
+
+import {
+  ShoppingList,
+  UpdateShoppingList,
+  useEditShoppingListMutation,
+} from "../../../../../app/services/ShoppingLists";
 
 type EditShoppingListAlertProps = {
   alertOpen: AlertOpenState;

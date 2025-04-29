@@ -1,8 +1,8 @@
 import { ReactElement } from "react";
 
-import { Avatar } from "@components/Avatar";
-import { NoDataPlaceholder } from "@components/placeholders";
-import { SearchedUserType, UserType } from "@services/users";
+import { SearchedUserType, UserType } from "../../../../app/services/users";
+import { Avatar } from "../../../Avatar";
+import { NoDataPlaceholder } from "../../../placeholders";
 
 type BaseUsersTilesProps<T extends UserType | SearchedUserType> = {
   users: T[];

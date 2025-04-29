@@ -3,15 +3,14 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { RouterProvider } from "react-router-dom";
-
-import { fb } from "@firebase/firebase";
-import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
-import router from "@pages/routing";
-import { UserType } from "@services/users";
-import { ISerializedAuthUser, addToast, selectAuthorization, setAuthUser, setToastHandler } from "@slices/index";
-import { defaultThemeHue } from "@utils/constants/theme-hue";
-import { COLLECTIONS } from "@utils/enums";
-import { getCollectionDocumentById, retryDocumentRequest, toSerializable } from "@utils/helpers";
+import { UserType } from "./app/services/users";
+import { ISerializedAuthUser, addToast, selectAuthorization, setAuthUser, setToastHandler } from "./app/slices";
+import { fb } from "./firebase/firebase";
+import { useAppDispatch, useAppSelector } from "./hooks";
+import router from "./pages/routing";
+import { defaultThemeHue } from "./utils/constants/theme-hue";
+import { COLLECTIONS } from "./utils/enums";
+import { getCollectionDocumentById, retryDocumentRequest, toSerializable } from "./utils/helpers";
 
 function App() {
   const dispatch = useAppDispatch();
