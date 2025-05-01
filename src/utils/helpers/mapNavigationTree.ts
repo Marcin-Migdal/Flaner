@@ -1,6 +1,7 @@
 import { NavigateFunction } from "react-router-dom";
 
-import { HeaderItem } from "../../components/Layout/MainLayout/components/Header/interfaces";
+import { HeaderItem } from "@components";
+
 import { NavigationNode } from "../constants";
 
 export const mapNavigationTree = (

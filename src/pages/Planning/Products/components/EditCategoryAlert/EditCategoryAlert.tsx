@@ -8,15 +8,10 @@ import {
   useForm,
 } from "@marcin-migdal/m-component-library";
 
-import { addToast, selectAuthorization } from "../../../../../app/slices";
-import { useAppDispatch, useAppSelector } from "../../../../../hooks";
-import { CategoryState, CategorySubmitState, categoryValidationSchema } from "../../../../../utils/formik-configs";
-
-import {
-  ProductCategory,
-  UpdateProductCategory,
-  useEditProductCategoryMutation,
-} from "../../../../../app/services/ProductCategories";
+import { useAppDispatch, useAppSelector } from "@hooks";
+import { ProductCategory, UpdateProductCategory, useEditProductCategoryMutation } from "@services/ProductCategories";
+import { addToast, selectAuthorization } from "@slices";
+import { CategoryState, CategorySubmitState, categoryValidationSchema } from "@utils/formik-configs";
 
 type EditCategoryAlertProps = {
   category: ProductCategory;

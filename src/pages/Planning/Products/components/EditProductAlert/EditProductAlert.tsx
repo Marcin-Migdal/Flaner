@@ -9,18 +9,12 @@ import {
 } from "@marcin-migdal/m-component-library";
 import { useEffect } from "react";
 
-import { useGetProductCategoriesQuery } from "../../../../../app/services/ProductCategories";
-import { Product, UpdateProduct, useEditProductMutation } from "../../../../../app/services/Products";
-import { addToast, selectAuthorization } from "../../../../../app/slices";
-import { ContentWrapper } from "../../../../../components";
-import { useAppDispatch, useAppSelector } from "../../../../../hooks";
-
-import {
-  initProductValues,
-  ProductState,
-  ProductSubmitState,
-  productValidationSchema,
-} from "../../../../../utils/formik-configs";
+import { ContentWrapper } from "@components";
+import { useAppDispatch, useAppSelector } from "@hooks";
+import { useGetProductCategoriesQuery } from "@services/ProductCategories";
+import { Product, UpdateProduct, useEditProductMutation } from "@services/Products";
+import { addToast, selectAuthorization } from "@slices";
+import { initProductValues, ProductState, ProductSubmitState, productValidationSchema } from "@utils/formik-configs";
 
 type EditProductAlertProps = {
   alertOpen: AlertOpenState;

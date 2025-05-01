@@ -1,13 +1,14 @@
 import { useSidePanel } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 
-import { SearchedUserType, useGetSearchUsersQuery, useSendFriendRequestMutation } from "../../../app/services/users";
-import { selectAuthorization } from "../../../app/slices";
-import { ContentWrapper, CustomButton, DebounceTextfield, UserTiles } from "../../../components";
-import { useAppSelector } from "../../../hooks";
+import { ContentWrapper, CustomButton, DebounceTextfield, UserTiles } from "@components";
+import { useAppSelector } from "@hooks";
+import { SearchedUserType, useGetSearchUsersQuery, useSendFriendRequestMutation } from "@services/users";
+import { selectAuthorization } from "@slices";
+
 import { SentRequestSidePanel } from "./components/SentRequestSidePanel/SentRequestSidePanel";
 
-import "../../../commonAssets/css/friends-page-styles.scss";
+import "@commonAssets/css/friends-page-styles.scss";
 
 const AddFriends = () => {
   const { authUser } = useAppSelector(selectAuthorization);

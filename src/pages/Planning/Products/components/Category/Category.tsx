@@ -1,12 +1,12 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { DropdownMenu, DropdownMenuOption, Icon, useAlert } from "@marcin-migdal/m-component-library";
 
-import { ProductCategory, useDeleteProductCategoryMutation } from "../../../../../app/services/ProductCategories";
-import { useGetProductsQuery } from "../../../../../app/services/Products";
-import { selectAuthorization } from "../../../../../app/slices";
-import { ContentWrapper, DeleteAlert } from "../../../../../components";
-import { OnDeleteMutation } from "../../../../../components/alerts/DeleteAlert";
-import { useAppSelector } from "../../../../../hooks";
+import { ContentWrapper, DeleteAlert, OnDeleteMutation } from "@components";
+import { useAppSelector } from "@hooks";
+import { ProductCategory, useDeleteProductCategoryMutation } from "@services/ProductCategories";
+import { useGetProductsQuery } from "@services/Products";
+import { selectAuthorization } from "@slices";
+
 import { AddProductAlert } from "../AddProductAlert/AddProductAlert";
 import { EditCategoryAlert } from "../EditCategoryAlert/EditCategoryAlert";
 import { ProductList } from "./components/ProductList/ProductList";

@@ -2,8 +2,8 @@ import { Icon } from "@marcin-migdal/m-component-library";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import { NavigationNode, getNodeByPath } from "../../utils/constants";
-import { PATH_CONSTRANTS } from "../../utils/enums";
+import { NavigationNode, getNodeByPath } from "@utils/constants";
+import { PATH_CONSTRANTS } from "@utils/enums";
 
 import "./styles.scss";
 

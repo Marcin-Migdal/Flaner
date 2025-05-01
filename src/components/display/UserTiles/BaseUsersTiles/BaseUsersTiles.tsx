@@ -1,6 +1,7 @@
 import { ReactElement } from "react";
 
-import { SearchedUserType, UserType } from "../../../../app/services/users";
+import { SearchedUserType, UserType } from "@services/users";
+
 import { Avatar } from "../../../Avatar";
 import { NoDataPlaceholder } from "../../../placeholders";
 

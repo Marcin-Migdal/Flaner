@@ -10,25 +10,26 @@ import {
 } from "@marcin-migdal/m-component-library";
 
 import { useEffect } from "react";
-import { ProductCategory, useGetProductCategoriesQuery } from "../../../../../app/services/ProductCategories";
-import { Product, useGetProductsQuery } from "../../../../../app/services/Products";
-import { Unit, useGetUnitsQuery } from "../../../../../app/services/Units";
-import { addToast, selectAuthorization } from "../../../../../app/slices";
-import { ContentWrapper } from "../../../../../components";
-import { useAppDispatch, useAppSelector } from "../../../../../hooks";
+
+import { ContentWrapper } from "@components";
+import { useAppDispatch, useAppSelector } from "@hooks";
+import { ProductCategory, useGetProductCategoriesQuery } from "@services/ProductCategories";
+import { Product, useGetProductsQuery } from "@services/Products";
+import { Unit, useGetUnitsQuery } from "@services/Units";
+import { addToast, selectAuthorization } from "@slices";
 
 import {
   ShoppingListProduct,
   UpdateShoppingListProduct,
   useEditShoppingListProductMutation,
-} from "../../../../../app/services/ShoppingListsProduct";
+} from "@services/ShoppingListsProduct";
 
 import {
   ShoppingListProductState,
   ShoppingListProductSubmitState,
   initShoppingListProductValues,
   shoppingListProductValidationSchema,
-} from "../../../../../utils/formik-configs/shopping-list-product-formik-config";
+} from "@utils/formik-configs/";
 
 type EditShoppingListProductAlertProps = {
   shoppingListId: string | null;

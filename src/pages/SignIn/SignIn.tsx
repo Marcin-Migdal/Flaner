@@ -1,30 +1,15 @@
 import { ButtonWidth, Card, Col, Form, FormErrors, Icon, Row, useForm } from "@marcin-migdal/m-component-library";
-
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import { CustomButton, CustomTextfield } from "../../components";
-import { useAppDispatch, useAppSelector } from "../../hooks";
-import { LanguageType } from "../../i18n";
-import { PATH_CONSTRANTS } from "../../utils/enums";
+import { CustomButton, CustomTextfield } from "@components";
+import { useAppDispatch, useAppSelector } from "@hooks";
+import { LanguageType } from "@i18n";
+import { addToast, selectAuthorization, setAuthError, signInWithEmail, signInWithGoogle, signOut } from "@slices";
+import { PATH_CONSTRANTS } from "@utils/enums";
+import { SignInState, SignInSubmitState, signInInitialValues, signInValidationSchema } from "@utils/formik-configs";
 
-import {
-  addToast,
-  selectAuthorization,
-  setAuthError,
-  signInWithEmail,
-  signInWithGoogle,
-  signOut,
-} from "../../app/slices";
-
-import {
-  SignInState,
-  SignInSubmitState,
-  signInInitialValues,
-  signInValidationSchema,
-} from "../../utils/formik-configs";
-
-import "../../commonAssets/css/auth-form.scss";
+import "@commonAssets/css/auth-form.scss";
 
 const SignIn = () => {
   const { t, i18n } = useTranslation();

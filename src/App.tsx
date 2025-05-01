@@ -3,6 +3,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { RouterProvider } from "react-router-dom";
+
 import { UserType } from "./app/services/users";
 import { ISerializedAuthUser, addToast, selectAuthorization, setAuthUser, setToastHandler } from "./app/slices";
 import { fb } from "./firebase/firebase";

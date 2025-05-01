@@ -1,8 +1,8 @@
 import { FormErrors } from "@marcin-migdal/m-component-library";
-
 import { TFunction } from "i18next";
-import { LanguageType } from "../../../i18n";
-import { SignInState, SignUpState } from "../../../utils/formik-configs";
+
+import { LanguageType } from "@i18n";
+import { SignInState, SignUpState } from "@utils/formik-configs";
 
 type ProviderData = {
   providerId: string;

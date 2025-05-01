@@ -1,6 +1,7 @@
 import { FormErrors } from "@marcin-migdal/m-component-library";
 
-import { FirebaseError } from "../../app/slices/authorization-slice";
+import { FirebaseError } from "@slices";
+
 import { IError, authErrors } from "../constants/firebase-errors";
 
 const getFormFieldsErrors = (authError: IError): FormErrors<unknown> => {

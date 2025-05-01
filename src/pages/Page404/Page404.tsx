@@ -1,10 +1,10 @@
 import { Icon } from "@marcin-migdal/m-component-library";
 import { useNavigate } from "react-router-dom";
 
-import { selectAuthorization } from "../../app/slices";
-import { CustomButton, SpinnerPlaceholder } from "../../components";
-import { useAppSelector } from "../../hooks";
-import { PATH_CONSTRANTS } from "../../utils/enums";
+import { CustomButton, SpinnerPlaceholder } from "@components";
+import { useAppSelector } from "@hooks";
+import { selectAuthorization } from "@slices";
+import { PATH_CONSTRANTS } from "@utils/enums";
 
 import "./styles.scss";
 

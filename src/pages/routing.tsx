@@ -1,9 +1,8 @@
 import React from "react";
 import { Navigate, RouteObject, createBrowserRouter } from "react-router-dom";
 
-import { MainLayout } from "../components";
-import UnAuthorizedMainLayout from "../components/Layout/UnAuthorizedMainLayout/UnAuthorizedMainLayout";
-import { PATH_CONSTRANTS } from "../utils/enums";
+import { MainLayout, UnAuthorizedMainLayout } from "@components";
+import { PATH_CONSTRANTS } from "@utils/enums";
 
 const PageTilesView = React.lazy(() => import("./PageTilesView"));
 

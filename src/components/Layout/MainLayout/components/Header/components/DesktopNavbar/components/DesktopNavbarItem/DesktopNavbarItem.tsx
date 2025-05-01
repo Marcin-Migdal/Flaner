@@ -1,6 +1,6 @@
 import { MouseEvent, ReactNode, createContext, useRef, useState } from "react";
 
-import { HeaderItem, OpenDirectionType, SubMenuPosition } from "../../../../interfaces";
+import { HeaderItem, OpenDirectionType, SubMenuPosition } from "../../../../types";
 
 import "./styles.scss";
 
