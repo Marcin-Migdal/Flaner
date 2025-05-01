@@ -48,7 +48,7 @@ const SignIn = () => {
   };
 
   return (
-    <div className="page auth-from-container">
+    <div data-testid="sign-in-content" className="page auth-from-container">
       <Card className="auth-card">
         <Row>
           <Col sm={12} mdFlex={1} className="left-col">
@@ -58,20 +58,19 @@ const SignIn = () => {
               {({ registerChange, isValid }) => (
                 <>
                   <CustomTextfield
-                    data-cy="email-input"
+                    data-testid="email-input"
                     label="Email"
                     labelType="floating"
                     {...registerChange("email")}
                   />
                   <CustomTextfield
-                    data-cy="password-input"
+                    data-testid="password-input"
                     label="Password"
                     labelType="floating"
                     type="password"
                     {...registerChange("password")}
                   />
                   <CustomButton
-                    data-cy="sign-in-submit-btn"
                     text="Sign in"
                     type="submit"
                     variant="full"
