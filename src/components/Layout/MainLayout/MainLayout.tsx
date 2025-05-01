@@ -1,14 +1,14 @@
+import { Breadcrumb, CrumbType, capitalize } from "@marcin-migdal/m-component-library";
 import { Suspense, useEffect, useMemo } from "react";
-
+import { useTranslation } from "react-i18next";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
-import { Breadcrumb, CrumbType, capitalize } from "@marcin-migdal/m-component-library";
-import { useTranslation } from "react-i18next";
-import { selectAuthorization } from "../../../app/slices";
-import { useAppSelector, useBreakpoint } from "../../../hooks";
-import { PATH_CONSTRANTS } from "../../../utils/enums";
+import { Header } from "@components";
+import { useAppSelector, useBreakpoint } from "@hooks";
+import { selectAuthorization } from "@slices";
+import { PATH_CONSTRANTS } from "@utils/enums";
+
 import { SpinnerPlaceholder } from "../../placeholders";
-import { Header } from "./components/Header/Header";
 
 export default function MainLayout() {
   const location = useLocation();

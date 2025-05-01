@@ -4,13 +4,14 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import { AuthUserConfigType } from "../../../../../../../../../app/slices";
-import { navigationTree } from "../../../../../../../../../utils/constants";
-import { PATH_CONSTRANTS } from "../../../../../../../../../utils/enums";
-import { mapNavigationTree } from "../../../../../../../../../utils/helpers/mapNavigationTree";
-import { SignOutAlert } from "../../../../../../../../alerts";
+import { SignOutAlert } from "@components";
+import { AuthUserConfigType } from "@slices";
+import { navigationTree } from "@utils/constants";
+import { PATH_CONSTRANTS } from "@utils/enums";
+import { mapNavigationTree } from "@utils/helpers";
+
 import { Avatar } from "../../../../../../../../Avatar";
-import { HeaderItem, MobileHeaderMenuOpenType } from "../../../../interfaces";
+import { HeaderItem, MobileHeaderMenuOpenType } from "../../../../types";
 import { MobileMenuItem, OpenMenuConfig } from "./MobileMenuItem";
 
 import "./styles.scss";

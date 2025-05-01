@@ -1,5 +1,6 @@
 import { InferSchemaType } from "@marcin-migdal/m-component-library";
 import * as Yup from "yup";
+
 import { schemaName } from "./common-fields";
 
 export type ShoppingListState = {

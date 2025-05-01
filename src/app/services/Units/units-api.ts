@@ -1,5 +1,6 @@
-import { COLLECTIONS } from "../../../utils/enums";
-import { getCollectionDataWithId, getCollectionDocuments, getRtkTags } from "../../../utils/helpers";
+import { COLLECTIONS } from "@utils/enums";
+import { getCollectionDataWithId, getCollectionDocuments, getRtkTags } from "@utils/helpers";
+
 import { firestoreApi } from "../api";
 import { FirestoreUnit, Unit } from "./units-types";
 

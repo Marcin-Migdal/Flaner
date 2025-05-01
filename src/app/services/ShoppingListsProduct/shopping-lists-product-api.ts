@@ -12,10 +12,8 @@ import {
 } from "firebase/firestore";
 import { v4 as uuid } from "uuid";
 
-import { fb } from "../../../firebase/firebase";
-import { COLLECTIONS } from "../../../utils/enums";
-import { getCollectionDataWithId, getRtkTags } from "../../../utils/helpers";
-import { firestoreApi } from "../api";
+import { COLLECTIONS } from "@utils/enums";
+import { getCollectionDataWithId, getRtkTags } from "@utils/helpers";
 
 import {
   CreateShoppingListProduct,
@@ -23,6 +21,9 @@ import {
   ShoppingListProduct,
   UpdateShoppingListProduct,
 } from "./shopping-lists-product-types";
+
+import { fb } from "../../../firebase/firebase";
+import { firestoreApi } from "../api";
 
 export const shoppingListProductApi = firestoreApi.injectEndpoints({
   endpoints: (build) => ({

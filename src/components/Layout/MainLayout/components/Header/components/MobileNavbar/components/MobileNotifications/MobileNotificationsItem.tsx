@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
-import { Avatar } from "../../../../../../../../Avatar";
 
-import { Notification } from "../../../../../../../../../app/services/users";
+import { Notification } from "@services/users";
+
+import { Avatar } from "../../../../../../../../Avatar";
 
 type MobileNotificationsItemProps = {
   notification: Notification;

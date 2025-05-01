@@ -2,13 +2,14 @@ import { Alert, useAlert, useSidePanel } from "@marcin-migdal/m-component-librar
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { UserType, useDeleteFriendMutation, useGetFriendsByUsernameQuery } from "../../../app/services/users";
-import { selectAuthorization } from "../../../app/slices";
-import { ContentWrapper, CustomButton, DebounceTextfield, FriendsTiles } from "../../../components";
-import { useAppSelector } from "../../../hooks";
+import { ContentWrapper, CustomButton, DebounceTextfield, FriendsTiles } from "@components";
+import { useAppSelector } from "@hooks";
+import { UserType, useDeleteFriendMutation, useGetFriendsByUsernameQuery } from "@services/users";
+import { selectAuthorization } from "@slices";
+
 import { ReceivedRequestsSidePanel } from "./components/ReceivedRequestsSidePanel/ReceivedRequestsSidePanel";
 
-import "../../../commonAssets/css/friends-page-styles.scss";
+import "@commonAssets/css/friends-page-styles.scss";
 
 const MyFriends = () => {
   const { t } = useTranslation();

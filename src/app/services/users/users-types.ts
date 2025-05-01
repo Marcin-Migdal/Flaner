@@ -1,5 +1,6 @@
 import { DocumentReference } from "firebase/firestore";
-import { LanguageType } from "../../../i18n";
+
+import { LanguageType } from "@i18n";
 
 //! USERS
 export type UserType = {

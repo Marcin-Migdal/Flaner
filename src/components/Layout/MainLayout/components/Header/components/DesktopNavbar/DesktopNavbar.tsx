@@ -2,17 +2,15 @@ import { useAlert } from "@marcin-migdal/m-component-library";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import {
-  useGetUnreadNotificationsCountQuery,
-  useUpdateReadNotificationMutation,
-} from "../../../../../../../app/services/users";
-import { selectAuthorization } from "../../../../../../../app/slices";
-import { useAppSelector } from "../../../../../../../hooks";
-import { navigationTree } from "../../../../../../../utils/constants";
-import { PATH_CONSTRANTS } from "../../../../../../../utils/enums";
-import { mapNavigationTree } from "../../../../../../../utils/helpers/mapNavigationTree";
+import { useAppSelector } from "@hooks";
+import { useGetUnreadNotificationsCountQuery, useUpdateReadNotificationMutation } from "@services/users";
+import { selectAuthorization } from "@slices";
+import { navigationTree } from "@utils/constants";
+import { PATH_CONSTRANTS } from "@utils/enums";
+import { mapNavigationTree } from "@utils/helpers";
+
 import { SignOutAlert } from "../../../../../../alerts";
-import { HeaderItem } from "../../interfaces";
+import { HeaderItem } from "../../types";
 import { DesktopNavbarItem } from "./components/DesktopNavbarItem/DesktopNavbarItem";
 import { NavigationItem } from "./components/Navigation/NavigationItem";
 import { NotificationItem } from "./components/Notifications/NotificationItem";

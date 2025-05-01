@@ -9,11 +9,11 @@ import {
 } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 
-import { ShoppingList, useDeleteShoppingListMutation } from "../../../../../app/services/ShoppingLists";
-import { selectAuthorization } from "../../../../../app/slices";
-import { ContentWrapper, DeleteAlert, UseQueryResult } from "../../../../../components";
-import { OnDeleteMutation } from "../../../../../components/alerts/DeleteAlert";
-import { useAppSelector } from "../../../../../hooks";
+import { ContentWrapper, DeleteAlert, OnDeleteMutation, UseQueryResult } from "@components";
+import { useAppSelector } from "@hooks";
+import { ShoppingList, useDeleteShoppingListMutation } from "@services/ShoppingLists";
+import { selectAuthorization } from "@slices";
+
 import { AddShoppingListAlert } from "../AddShoppingListAlert/AddShoppingListAlert";
 import { EditShoppingListAlert } from "../EditShoppingListAlert/EditShoppingListAlert";
 

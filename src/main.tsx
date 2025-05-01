@@ -7,11 +7,11 @@ import App from "./App";
 import store from "./app/store";
 
 // css files
-import "./commonAssets/css/helpers.scss";
+import "@commonAssets/css/helpers.scss";
 import "./index.css";
 
 // translation config
-import "./i18n";
+import "@i18n";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

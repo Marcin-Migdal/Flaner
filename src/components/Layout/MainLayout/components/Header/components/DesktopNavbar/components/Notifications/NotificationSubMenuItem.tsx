@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
 
-import { Notification } from "../../../../../../../../../app/services/users";
-import { toRelativeTime } from "../../../../../../../../../utils/helpers";
+import { Notification } from "@services/users";
+import { toRelativeTime } from "@utils/helpers";
+
 import { Avatar } from "../../../../../../../../Avatar";
 
 import "./styles.scss";

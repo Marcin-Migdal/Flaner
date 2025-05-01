@@ -1,6 +1,7 @@
 import { ChangeEvent, useEffect, useState } from "react";
 
-import { useDebounce } from "../../../hooks/useDebounce";
+import { useDebounce } from "@hooks";
+
 import { CustomTextfield, CustomTextfieldPropsType } from "../CustomTextfield/CustomTextfield";
 
 type DebounceTextfieldPropsType = Omit<CustomTextfieldPropsType, "value" | "onChange"> & {

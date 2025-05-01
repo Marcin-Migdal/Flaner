@@ -1,4 +1,5 @@
-import { UserType } from "../../../../app/services/users";
+import { UserType } from "@services/users";
+
 import { Avatar } from "../../../Avatar";
 
 type LeftSectionProps = {

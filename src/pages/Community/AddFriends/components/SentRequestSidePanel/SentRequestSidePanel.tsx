@@ -1,15 +1,11 @@
 import { SidePanel, SidePanelOpenState } from "@marcin-migdal/m-component-library";
 import { useTranslation } from "react-i18next";
 
-import { selectAuthorization } from "../../../../../app/slices";
-import { ContentWrapper, SentFriendRequests } from "../../../../../components";
-import { useAppSelector } from "../../../../../hooks";
+import { ContentWrapper, SentFriendRequests } from "@components";
+import { useAppSelector } from "@hooks";
+import { selectAuthorization } from "@slices";
 
-import {
-  SentFriendRequest,
-  useDeleteFriendRequestMutation,
-  useGetSentFriendRequestQueryQuery,
-} from "../../../../../app/services/users";
+import { SentFriendRequest, useDeleteFriendRequestMutation, useGetSentFriendRequestQueryQuery } from "@services/users";
 
 type SentRequestSidePanelProps = {
   sidePanelOpen: SidePanelOpenState;

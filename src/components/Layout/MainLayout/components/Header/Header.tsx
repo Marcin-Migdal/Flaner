@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 
-import { useBreakpoint } from "../../../../../hooks";
-import { PATH_CONSTRANTS } from "../../../../../utils/enums";
+import { useBreakpoint } from "@hooks";
+import { PATH_CONSTRANTS } from "@utils/enums";
+
 import { DesktopNavbar } from "./components/DesktopNavbar/DesktopNavbar";
 import { MobileNavbar } from "./components/MobileNavbar/MobileNavbar";
 

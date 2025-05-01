@@ -9,13 +9,9 @@ import {
   updateProfile,
 } from "firebase/auth";
 
-import { fb } from "../../../firebase/firebase";
-import { defaultThemeHue } from "../../../utils/constants/theme-hue";
-import { COLLECTIONS } from "../../../utils/enums";
-import { SignInState, SignUpState } from "../../../utils/formik-configs";
-import { firestoreApi } from "../../services/api";
-import { UserType } from "../../services/users";
-import * as AI from "./authorization-interfaces";
+import { defaultThemeHue } from "@utils/constants/theme-hue";
+import { COLLECTIONS } from "@utils/enums";
+import { SignInState, SignUpState } from "@utils/formik-configs";
 
 import {
   addCollectionDocument,
@@ -23,17 +19,29 @@ import {
   getRejectValue,
   toSerializable,
   validateUsername,
-} from "../../../utils/helpers";
+} from "@utils/helpers";
+
+import { fb } from "../../../firebase/firebase";
+import { firestoreApi } from "../../services/api";
+import { UserType } from "../../services/users";
+
+import {
+  EmailSignInPayload,
+  EmailSignUpPayload,
+  FirebaseError,
+  GoogleSignInPayload,
+  ISerializedAuthUser,
+} from "./authorization-interfaces";
 
 // Sign in user using email and password
 export const signInWithEmail = createAsyncThunk<
-  AI.ISerializedAuthUser,
-  AI.EmailSignInPayload,
-  { rejectValue: AI.FirebaseError<SignInState> }
+  ISerializedAuthUser,
+  EmailSignInPayload,
+  { rejectValue: FirebaseError<SignInState> }
 >("authorization/async/signInWithEmail", async ({ email, password }, { rejectWithValue }) => {
   try {
     const { user } = await signInWithEmailAndPassword(fb.auth.auth, email, password);
-    return toSerializable<AI.ISerializedAuthUser>(user);
+    return toSerializable<ISerializedAuthUser>(user);
   } catch (error) {
     return rejectWithValue(getRejectValue(error.code));
   }
@@ -41,9 +49,9 @@ export const signInWithEmail = createAsyncThunk<
 
 //Sign up user using email and password
 export const signUpWithEmail = createAsyncThunk<
-  AI.ISerializedAuthUser,
-  AI.EmailSignUpPayload,
-  { rejectValue: AI.FirebaseError<SignUpState> }
+  ISerializedAuthUser,
+  EmailSignUpPayload,
+  { rejectValue: FirebaseError<SignUpState> }
 >("authorization/async/signUpWithEmail", async ({ email, password, username, language }, { rejectWithValue }) => {
   try {
     // Validate if user with this username exists
@@ -68,7 +76,7 @@ export const signUpWithEmail = createAsyncThunk<
 
     await addCollectionDocument(COLLECTIONS.USERS, user.uid, documentPayload);
 
-    return toSerializable<AI.ISerializedAuthUser>(user);
+    return toSerializable<ISerializedAuthUser>(user);
   } catch (error) {
     return rejectWithValue(getRejectValue(error.code));
   }
@@ -76,9 +84,9 @@ export const signUpWithEmail = createAsyncThunk<
 
 // Sign in user using google account
 export const signInWithGoogle = createAsyncThunk<
-  AI.ISerializedAuthUser,
-  AI.GoogleSignInPayload,
-  { rejectValue: AI.FirebaseError }
+  ISerializedAuthUser,
+  GoogleSignInPayload,
+  { rejectValue: FirebaseError }
 >("authorization/async/signInWithGoogle", async ({ language }, { rejectWithValue }) => {
   try {
     // Sign in users
@@ -104,14 +112,14 @@ export const signInWithGoogle = createAsyncThunk<
       await addCollectionDocument(COLLECTIONS.USERS, uid, documentPayload);
     }
 
-    return toSerializable<AI.ISerializedAuthUser>(user);
+    return toSerializable<ISerializedAuthUser>(user);
   } catch (error) {
     return rejectWithValue(getRejectValue(error.code));
   }
 });
 
 // Sign out
-export const signOut = createAsyncThunk<void, undefined, { rejectValue: AI.FirebaseError }>(
+export const signOut = createAsyncThunk<void, undefined, { rejectValue: FirebaseError }>(
   "authorization/async/signOut",
   async (_params, { rejectWithValue, dispatch }) => {
     try {

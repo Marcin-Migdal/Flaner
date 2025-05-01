@@ -1,2 +1,2 @@
-export { DeleteAlert } from "./DeleteAlert";
+export * from "./DeleteAlert";
 export { SignOutAlert } from "./SignOutAlert";

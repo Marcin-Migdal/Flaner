@@ -1,5 +1,6 @@
 import { Middleware, isRejectedWithValue } from "@reduxjs/toolkit";
-import { addToast } from "../slices";
+
+import { addToast } from "@slices";
 
 export const errorIntersectMiddleware: Middleware = (api) => (next) => (action) => {
   if (isRejectedWithValue(action)) {

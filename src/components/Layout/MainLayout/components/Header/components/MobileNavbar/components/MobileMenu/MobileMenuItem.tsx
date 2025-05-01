@@ -2,7 +2,7 @@ import { Icon } from "@marcin-migdal/m-component-library";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { HeaderItem, MobileHeaderMenuOpenType } from "../../../../interfaces";
+import { HeaderItem, MobileHeaderMenuOpenType } from "../../../../types";
 
 type MobileHeaderMenuItemProps = {
   navigationItem: HeaderItem;

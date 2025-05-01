@@ -14,18 +14,13 @@ import {
 } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 
-import { ProductCategory, useGetProductCategoriesQuery } from "../../../../../app/services/ProductCategories";
-import { CreateProduct, useAddProductMutation } from "../../../../../app/services/Products";
-import { addToast, selectAuthorization } from "../../../../../app/slices";
-import { ContentWrapper } from "../../../../../components";
-import { useAppDispatch, useAppSelector } from "../../../../../hooks";
+import { ContentWrapper } from "@components";
+import { useAppDispatch, useAppSelector } from "@hooks";
+import { ProductCategory, useGetProductCategoriesQuery } from "@services/ProductCategories";
+import { CreateProduct, useAddProductMutation } from "@services/Products";
+import { addToast, selectAuthorization } from "@slices";
 
-import {
-  initProductValues,
-  ProductState,
-  ProductSubmitState,
-  productValidationSchema,
-} from "../../../../../utils/formik-configs";
+import { initProductValues, ProductState, ProductSubmitState, productValidationSchema } from "@utils/formik-configs";
 
 type AddProductAlertProps = { category: ProductCategory };
 

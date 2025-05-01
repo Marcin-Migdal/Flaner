@@ -2,12 +2,13 @@ import { Button, Dropdown } from "@marcin-migdal/m-component-library";
 import { DropdownStringOption } from "@marcin-migdal/m-component-library/build/components/Inputs/Dropdown/types";
 import { useState } from "react";
 
-import { useGetProductCategoriesQuery } from "../../../../../app/services/ProductCategories";
-import { useGetShoppingListProductsQuery } from "../../../../../app/services/ShoppingListsProduct";
-import { selectAuthorization } from "../../../../../app/slices";
-import { ContentWrapper } from "../../../../../components";
-import { useAppSelector, useBreakpoint } from "../../../../../hooks";
-import { arrToDropdownOptions } from "../../../../../utils/helpers";
+import { ContentWrapper } from "@components";
+import { useAppSelector, useBreakpoint } from "@hooks";
+import { useGetProductCategoriesQuery } from "@services/ProductCategories";
+import { useGetShoppingListProductsQuery } from "@services/ShoppingListsProduct";
+import { selectAuthorization } from "@slices";
+import { arrToDropdownOptions } from "@utils/helpers";
+
 import { AddShoppingListProductAlert } from "../AddShoppingListProductAlert/AddShoppingListProductAlert";
 import { ListProducts } from "./ListProducts/ListProducts";
 

@@ -1,2 +1,3 @@
 export { authErrors, type IError } from "./firebase-errors";
-export { navigationTree, getNodeByPath, type NavigationNode } from "./navigation-tree";
+export { getNodeByPath, navigationTree, type NavigationNode } from "./navigation-tree";
+export { defaultThemeHue } from "./theme-hue";

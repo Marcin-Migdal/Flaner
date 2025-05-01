@@ -1,11 +1,7 @@
 import { CollectionReference, collection, doc, getDoc, getDocs, query, where, writeBatch } from "firebase/firestore";
 import { v4 as uuid } from "uuid";
 
-import { fb } from "../../../firebase/firebase";
-import { COLLECTIONS } from "../../../utils/enums";
-import { AuthUserConfigType } from "../../slices";
-import { firestoreApi } from "../api";
-import { getFriendRequestUid } from "./users-helpers";
+import { COLLECTIONS } from "@utils/enums";
 
 import {
   addCollectionDocument,
@@ -17,7 +13,12 @@ import {
   getCollectionFilteredDocuments,
   getDocumentReference,
   getRtkTags,
-} from "../../../utils/helpers";
+} from "@utils/helpers";
+
+import { fb } from "../../../firebase/firebase";
+import { AuthUserConfigType } from "../../slices";
+import { firestoreApi } from "../api";
+import { getFriendRequestUid } from "./users-helpers";
 
 import {
   EditUserRequest,

@@ -1,8 +1,8 @@
 import { DropdownMenu, Icon } from "@marcin-migdal/m-component-library";
 
-import { Product } from "../../../../../../../../../app/services/Products";
-import { selectAuthorization } from "../../../../../../../../../app/slices";
-import { useAppSelector } from "../../../../../../../../../hooks";
+import { useAppSelector } from "@hooks";
+import { Product } from "@services/Products";
+import { selectAuthorization } from "@slices";
 
 import "./styles.scss";
 

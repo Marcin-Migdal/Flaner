@@ -1,8 +1,8 @@
 import { v4 as uuid } from "uuid";
 
 import { Timestamp } from "firebase/firestore";
-import { COLLECTIONS } from "../../../utils/enums";
-import { firestoreApi } from "../api";
+
+import { COLLECTIONS } from "@utils/enums";
 
 import {
   addCollectionDocument,
@@ -11,7 +11,7 @@ import {
   getCollectionDataWithId,
   getCollectionFilteredDocuments,
   getRtkTags,
-} from "../../../utils/helpers";
+} from "@utils/helpers";
 
 import {
   CreateProductCategory,
@@ -19,6 +19,8 @@ import {
   ProductCategory,
   UpdateProductCategory,
 } from "./product-categories-types";
+
+import { firestoreApi } from "../api";
 
 export const productCategoriesApi = firestoreApi.injectEndpoints({
   endpoints: (build) => ({

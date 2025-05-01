@@ -1,9 +1,9 @@
 import { Suspense, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 
-import { selectAuthorization } from "../../../app/slices";
-import { useAppSelector } from "../../../hooks";
-import { PATH_CONSTRANTS } from "../../../utils/enums";
+import { useAppSelector } from "@hooks";
+import { selectAuthorization } from "@slices";
+import { PATH_CONSTRANTS } from "@utils/enums";
 
 export default function UnAuthorizedMainLayout() {
   const navigate = useNavigate();

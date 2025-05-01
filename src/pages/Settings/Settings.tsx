@@ -14,13 +14,14 @@ import {
   useAlert,
 } from "@marcin-migdal/m-component-library";
 
-import { EditUserRequest, useEditUserMutation } from "../../app/services/users";
-import { addToast, AuthUserConfigType, selectAuthorization, setAuthUser } from "../../app/slices";
-import { CustomButton } from "../../components";
-import { useAppDispatch, useAppSelector } from "../../hooks";
-import { availableLanguages, LanguageType, lngLabelMap } from "../../i18n";
-import { defaultThemeHue } from "../../utils/constants/theme-hue";
-import { DropdownOption } from "../../utils/types";
+import { CustomButton } from "@components";
+import { useAppDispatch, useAppSelector } from "@hooks";
+import { availableLanguages, LanguageType, lngLabelMap } from "@i18n";
+import { EditUserRequest, useEditUserMutation } from "@services/users";
+import { addToast, AuthUserConfigType, selectAuthorization, setAuthUser } from "@slices";
+import { defaultThemeHue } from "@utils/constants";
+import { DropdownOption } from "@utils/types";
+
 import { AccordionSettingsSectionToggle } from "./Components/AccordionSettingsSectionToggle/AccordionSettingsSectionToggle";
 import { HuePopup } from "./Components/HuePopup/HuePopup";
 
