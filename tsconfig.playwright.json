@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": true,
+    "types": ["node", "@playwright/test"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@components": ["src/components/index.ts"],
+      "@hooks/*": ["src/hooks/*"],
+      "@hooks": ["src/hooks/index.ts"],
+      "@slices/*": ["src/app/slices/*"],
+      "@slices": ["src/app/slices/index.ts"],
+      "@utils/*": ["src/utils/*"],
+      "@commonAssets/*": ["src/commonAssets/*"],
+      "@services/*": ["src/app/services/*"],
+      "@i18n": ["src/i18n.ts"]
+    }
+  },
+  "include": ["tests", "playwright.config.ts", "playwright-ct.config.ts"]
+}
