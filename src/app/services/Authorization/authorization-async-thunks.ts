@@ -11,60 +11,55 @@ import {
 
 import { defaultThemeHue } from "@utils/constants/theme-hue";
 import { COLLECTIONS } from "@utils/enums";
-import { SignInState, SignUpState } from "@utils/formik-configs";
-
-import {
-  addCollectionDocument,
-  getCollectionDocumentById,
-  getRejectValue,
-  toSerializable,
-  validateUsername,
-} from "@utils/helpers";
+import { addCollectionDocument, getCollectionDocumentById, isUsernameTaken, toSerializable } from "@utils/helpers";
 
 import { fb } from "../../../firebase/firebase";
-import { firestoreApi } from "../../services/api";
-import { UserType } from "../../services/users";
+import { firestoreApi } from "../api";
+import { UserType } from "../users";
 
 import {
   EmailSignInPayload,
   EmailSignUpPayload,
-  FirebaseError,
   GoogleSignInPayload,
-  ISerializedAuthUser,
-} from "./authorization-interfaces";
+  SerializedAuthUser,
+} from "./authorization-async-thunks-types";
 
-// Sign in user using email and password
+type FirebaseAuthError = {
+  code?: string;
+  message?: string;
+};
+
+const getFirebaseAuthError = (error, fallbackErrorMessage: string): FirebaseAuthError => {
+  return "code" in error && typeof error.code === "string" ? { code: error.code } : { message: fallbackErrorMessage };
+};
+
 export const signInWithEmail = createAsyncThunk<
-  ISerializedAuthUser,
+  SerializedAuthUser,
   EmailSignInPayload,
-  { rejectValue: FirebaseError<SignInState> }
+  { rejectValue: FirebaseAuthError }
 >("authorization/async/signInWithEmail", async ({ email, password }, { rejectWithValue }) => {
   try {
     const { user } = await signInWithEmailAndPassword(fb.auth.auth, email, password);
-    return toSerializable<ISerializedAuthUser>(user);
+    return toSerializable<SerializedAuthUser>(user);
   } catch (error) {
-    return rejectWithValue(getRejectValue(error.code));
+    return rejectWithValue(getFirebaseAuthError(error, "Error occurred while signing in"));
   }
 });
 
-//Sign up user using email and password
 export const signUpWithEmail = createAsyncThunk<
-  ISerializedAuthUser,
+  SerializedAuthUser,
   EmailSignUpPayload,
-  { rejectValue: FirebaseError<SignUpState> }
+  { rejectValue: FirebaseAuthError }
 >("authorization/async/signUpWithEmail", async ({ email, password, username, language }, { rejectWithValue }) => {
   try {
-    // Validate if user with this username exists
-    await validateUsername(username);
+    await isUsernameTaken(username);
 
-    // creates users
     const { user } = await createUserWithEmailAndPassword(fb.auth.auth, email, password);
 
     await sendEmailVerification(user);
     await updateProfile(user, { displayName: username });
 
-    //creates user document in firestore db
-    const documentPayload = {
+    const userDocumentPayload = {
       uid: user.uid,
       username,
       email,
@@ -74,32 +69,30 @@ export const signUpWithEmail = createAsyncThunk<
       themeColorHue: defaultThemeHue,
     };
 
-    await addCollectionDocument(COLLECTIONS.USERS, user.uid, documentPayload);
+    await addCollectionDocument(COLLECTIONS.USERS, user.uid, userDocumentPayload);
 
-    return toSerializable<ISerializedAuthUser>(user);
+    return toSerializable<SerializedAuthUser>(user);
   } catch (error) {
-    return rejectWithValue(getRejectValue(error.code));
+    return rejectWithValue(getFirebaseAuthError(error, "Error occurred while signing up"));
   }
 });
 
-// Sign in user using google account
 export const signInWithGoogle = createAsyncThunk<
-  ISerializedAuthUser,
+  SerializedAuthUser,
   GoogleSignInPayload,
-  { rejectValue: FirebaseError }
+  { rejectValue: FirebaseAuthError }
 >("authorization/async/signInWithGoogle", async ({ language }, { rejectWithValue }) => {
   try {
-    // Sign in users
     const { user } = await signInWithPopup(fb.auth.auth, fb.auth.provider);
 
-    // Try to get document in user collection
     const userDocumentSnapshot = await getCollectionDocumentById<UserType>(COLLECTIONS.USERS, user.uid);
 
-    // Checks if user exists, and if it does not exists, creates user document in firestore db
-    if (!userDocumentSnapshot?.exists()) {
+    const userAlreadyExists = userDocumentSnapshot?.exists() && userDocumentSnapshot.data()?.uid === user.uid;
+
+    if (!userAlreadyExists) {
       const { displayName: username, photoURL, email, uid } = user;
 
-      const documentPayload = {
+      const userDocumentPayload = {
         uid,
         username,
         email,
@@ -109,17 +102,16 @@ export const signInWithGoogle = createAsyncThunk<
         themeColorHue: defaultThemeHue,
       };
 
-      await addCollectionDocument(COLLECTIONS.USERS, uid, documentPayload);
+      await addCollectionDocument(COLLECTIONS.USERS, uid, userDocumentPayload);
     }
 
-    return toSerializable<ISerializedAuthUser>(user);
+    return toSerializable<SerializedAuthUser>(user);
   } catch (error) {
-    return rejectWithValue(getRejectValue(error.code));
+    return rejectWithValue(getFirebaseAuthError(error, "Error occurred while signing in with Google"));
   }
 });
 
-// Sign out
-export const signOut = createAsyncThunk<void, undefined, { rejectValue: FirebaseError }>(
+export const signOut = createAsyncThunk<void, undefined, { rejectValue: FirebaseAuthError }>(
   "authorization/async/signOut",
   async (_params, { rejectWithValue, dispatch }) => {
     try {
@@ -128,7 +120,7 @@ export const signOut = createAsyncThunk<void, undefined, { rejectValue: Firebase
 
       return;
     } catch (error) {
-      return rejectWithValue(getRejectValue(error.code));
+      return rejectWithValue(getFirebaseAuthError(error, "Error occurred while signing out"));
     }
   }
 );

@@ -1,8 +1,7 @@
-export class CustomFirebaseError extends Error {
-    code: string;
+export class FlanerApiError {
+  code: string;
 
-    constructor(message: string, code: string) {
-        super(message);
-        this.code = code;
-    }
+  constructor(code: string) {
+    this.code = code;
+  }
 }

@@ -1,10 +1,11 @@
 import { FormErrors } from "@marcin-migdal/m-component-library";
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
+import { FirebaseApiError } from "@services/Authorization";
 import { SignInState, SignUpState } from "@utils/formik-configs";
-import { AuthUserConfigType, AuthUserInitialState, FirebaseError } from "./authorization-interfaces";
+import { AuthUser, AuthorizationInitialState } from "./authorization-slice-types";
 
-const initialState: AuthUserInitialState = {
+const initialState: AuthorizationInitialState = {
   authUser: null,
   isLoading: true,
   authFormErrors: {},
@@ -14,7 +15,7 @@ const authorizationSlice = createSlice({
   name: "authorization",
   initialState: initialState,
   reducers: {
-    setAuthUser: (state, action: PayloadAction<AuthUserConfigType | null>) => {
+    setAuthUser: (state, action: PayloadAction<AuthUser | null>) => {
       state.authUser = action.payload;
       state.isLoading = false;
     },
@@ -25,7 +26,6 @@ const authorizationSlice = createSlice({
       state.authFormErrors = action.payload;
     },
   },
-  //! There is no fulfilled addMatcher, fulfilled logic is handled in onAuthStateChanged
   extraReducers: (builder) => {
     builder.addMatcher(
       (action) => action.type.startsWith("authorization/") && action.type.endsWith("/pending"),
@@ -35,17 +35,16 @@ const authorizationSlice = createSlice({
     );
     builder.addMatcher(
       (action) => action.type.startsWith("authorization/") && action.type.endsWith("/rejected"),
-      (state, action: PayloadAction<FirebaseError>) => {
-        action.payload?.formErrors && (state.authFormErrors = action.payload.formErrors); // setting errors in form inputs
+      (state, action: PayloadAction<FirebaseApiError<SignInState | SignUpState>>) => {
         state.isLoading = false;
+        state.authFormErrors = action.payload.formErrors;
       }
     );
   },
 });
 
-// Action creators are generated for each function in reducers object
 export const { setAuthUser, setIsLoading, setAuthError } = authorizationSlice.actions;
 
-export const selectAuthorization = (store: { authorization: AuthUserInitialState }) => store.authorization;
+export const selectAuthorization = (store: { authorization: AuthorizationInitialState }) => store.authorization;
 
 export default authorizationSlice.reducer;

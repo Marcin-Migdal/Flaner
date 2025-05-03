@@ -10,7 +10,7 @@ import {
   useConfirmFriendRequestMutation,
   useDeclineFriendRequestMutation,
   useGetReceivedFriendRequestQueryQuery,
-} from "@services/users";
+} from "@services/FriendRequests";
 
 type ReceivedRequestsSidePanelProps = {
   sidePanelOpen: SidePanelOpenState;

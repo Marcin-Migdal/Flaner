@@ -1,1 +1,1 @@
-export { CustomFirebaseError } from "./firebase";
+export { FlanerApiError } from "./firebase";

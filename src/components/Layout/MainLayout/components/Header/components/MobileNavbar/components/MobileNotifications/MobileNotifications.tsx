@@ -1,8 +1,8 @@
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 
-import { useGetAllNotificationsQuery, useGetUnreadNotificationsQuery } from "@services/users";
-import { AuthUserConfigType } from "@slices";
+import { useGetAllNotificationsQuery, useGetUnreadNotificationsQuery } from "@services/Notifications";
+import { AuthUser } from "@slices";
 
 import { ContentWrapper } from "../../../../../../../../ContentWrapper";
 import { MobileHeaderMenuOpenType } from "../../../../types";
@@ -15,7 +15,7 @@ type MobileNotificationsProps = {
   notificationsOpen: MobileHeaderMenuOpenType;
   selectedNotificationTab: NotificationsTabs;
   onChangeTab: (tab: NotificationsTabs) => void;
-  authUser: AuthUserConfigType | null;
+  authUser: AuthUser | null;
 };
 
 export const MobileNotifications = ({

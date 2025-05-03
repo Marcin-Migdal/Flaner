@@ -3,6 +3,7 @@ import {
   DocumentData,
   DocumentReference,
   DocumentSnapshot,
+  Primitive,
   QueryDocumentSnapshot,
   QueryFieldFilterConstraint,
   QuerySnapshot,
@@ -19,9 +20,8 @@ import {
 } from "firebase/firestore";
 
 import { fb } from "../../firebase/firebase";
-import { IError, authErrors } from "../constants";
+import { ErrorObjKeys } from "../constants/firebase-errors";
 import { COLLECTIONS } from "../enums";
-import { CustomFirebaseError } from "../error-classes";
 
 export type DocumentFilter<TData extends DocumentData> = {
   field: keyof TData;
@@ -118,8 +118,7 @@ export const addCollectionDocument = async (collectionName: COLLECTIONS, documen
 export const editCollectionDocument = async (
   collectionName: COLLECTIONS,
   documentId: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload: { [x: string]: any }
+  payload: { [x: string]: Primitive | Primitive[] }
 ) => {
   try {
     await updateDoc(doc(fb.firestore, collectionName, documentId), payload);
@@ -136,15 +135,14 @@ export const deleteCollectionDocument = async (collectionName: COLLECTIONS, docu
   }
 };
 
-export const validateUsername = async (username: string) => {
+export const isUsernameTaken = async (username: string) => {
   try {
     const querySnapshot = await getDocs(
       query(collection(fb.firestore, COLLECTIONS.USERS), where("username", "==", username))
     );
 
     if (querySnapshot.size !== 0) {
-      const error: IError = authErrors["auth/username-already-in-use"] as IError;
-      throw new CustomFirebaseError(error.message, error.code);
+      throw new Error(ErrorObjKeys.AUTH_USERNAME_ALREADY_IN_USE);
     }
   } catch (e) {
     throw e;

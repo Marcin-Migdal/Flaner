@@ -2,7 +2,7 @@ import { Alert, AlertOpenState } from "@marcin-migdal/m-component-library";
 import { useTranslation } from "react-i18next";
 
 import { useAppDispatch } from "@hooks";
-import { signOut } from "@slices/authorization-slice";
+import { signOut } from "@services/Authorization";
 
 type SignOutAlertProps = {
   onAction?: () => void;

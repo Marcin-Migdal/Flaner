@@ -6,14 +6,13 @@ import {
   getDocs,
   query,
   setDoc,
-  Timestamp,
   updateDoc,
   where,
 } from "firebase/firestore";
 import { v4 as uuid } from "uuid";
 
 import { COLLECTIONS } from "@utils/enums";
-import { getCollectionDataWithId, getRtkTags } from "@utils/helpers";
+import { getCollectionDataWithId, getCurrentStringDate, getRtkTags } from "@utils/helpers";
 
 import {
   CreateShoppingListProduct,
@@ -59,7 +58,7 @@ export const shoppingListProductApi = firestoreApi.injectEndpoints({
       async queryFn({ shoppingListId, payload }) {
         try {
           const id = uuid();
-          const now = Timestamp.now();
+          const now = getCurrentStringDate();
 
           const fullPayload: FirestoreShoppingListProduct = {
             ...payload,
@@ -104,7 +103,7 @@ export const shoppingListProductApi = firestoreApi.injectEndpoints({
             ),
             {
               ...payload,
-              updatedAt: Timestamp.now(),
+              updatedAt: getCurrentStringDate(),
             }
           );
 

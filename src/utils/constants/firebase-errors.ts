@@ -1,47 +1,42 @@
+export enum ErrorObjKeys {
+  AUTH_INVALID_CREDENTIAL = "auth/invalid-credential",
+  AUTH_USERNAME_ALREADY_IN_USE = "auth/username-already-in-use",
+  AUTH_EMAIL_ALREADY_IN_USE = "auth/email-already-in-use",
+  AUTH_TOO_MANY_REQUESTS = "auth/too-many-requests",
+
+  USER_CURRENT_USER_UNAVAILABLE = "user/current-user-unavailable",
+
+  UNKNOWN_ERROR_OCCURRED = "unknown_error-occurred",
+}
+
 export type IError = {
   message: string;
-  code: string;
   fieldNames?: string | string[];
 };
 
-export const authErrors = {
-  "auth/invalid-login-credentials": {
+export const errorsObj: Record<ErrorObjKeys, IError> = {
+  [ErrorObjKeys.AUTH_INVALID_CREDENTIAL]: {
     message: "Invalid credentials",
-    code: "auth/invalid-login-credentials",
     fieldNames: ["email", "password"],
   },
-  "auth/user-not-found": {
-    message: "Email not found",
-    code: "auth/user-not-found",
-    fieldNames: "email",
-  },
-  "auth/wrong-password": {
-    message: "Invalid password",
-    code: "auth/wrong-password",
-    fieldNames: "password",
-  },
-  "auth/username-already-in-use": {
+  [ErrorObjKeys.AUTH_USERNAME_ALREADY_IN_USE]: {
     message: "Username already in use",
-    code: "auth/username-already-in-use",
     fieldNames: "username",
   },
-  "auth/email-already-in-use": {
+  [ErrorObjKeys.AUTH_EMAIL_ALREADY_IN_USE]: {
     message: "Email already in use",
-    code: "auth/email-already-in-use",
     fieldNames: "email",
   },
-  "auth/invalid-email": {
-    message: "Invalid email address",
-    code: "auth/invalid-email",
-    fieldNames: "email",
-  },
-  "auth/too-many-requests": {
+  [ErrorObjKeys.AUTH_TOO_MANY_REQUESTS]: {
     message:
       "Access to this account has been temporarily disabled due to many failed login attempts. You can try again later.",
-    code: "auth/too-many-requests",
   },
-  "unknown_error-occurred": {
+
+  [ErrorObjKeys.USER_CURRENT_USER_UNAVAILABLE]: {
+    message: "User is not available. Please check your internet connection or try again later.",
+  },
+
+  [ErrorObjKeys.UNKNOWN_ERROR_OCCURRED]: {
     message: "Error has occurred, please try again",
-    code: "unknown_error-occurred",
   },
 };

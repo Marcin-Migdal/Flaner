@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { RouterProvider } from "react-router-dom";
 
 import { UserType } from "./app/services/users";
-import { ISerializedAuthUser, addToast, selectAuthorization, setAuthUser, setToastHandler } from "./app/slices";
+import { SerializedAuthUser, addToast, selectAuthorization, setAuthUser, setToastHandler } from "./app/slices";
 import { fb } from "./firebase/firebase";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import router from "./pages/routing";
@@ -38,8 +38,8 @@ function App() {
         return;
       }
 
-      // Serializing signed-in user object, before sending it to the reducer
-      const serializedUser = toSerializable<ISerializedAuthUser>(user);
+      // Serializing signed-in user object, before saving it in redux store
+      const serializedUser = toSerializable<SerializedAuthUser>(user);
 
       try {
         const userResponse = await retryDocumentRequest<UserType>(() =>
@@ -80,7 +80,8 @@ function App() {
       darkMode={authUser?.darkMode === undefined ? true : authUser.darkMode}
     >
       <>
-        <ToastsContainer ref={toastRef} transformContent={t} />
+        {/* <ToastsContainer ref={toastRef} transformContent={t} /> */}
+        <ToastsContainer ref={toastRef} />
         <RouterProvider router={router} />
       </>
     </ThemeWrapper>

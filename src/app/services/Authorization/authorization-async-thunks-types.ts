@@ -1,7 +1,5 @@
-import { FormErrors } from "@marcin-migdal/m-component-library";
-import { TFunction } from "i18next";
-
 import { LanguageType } from "@i18n";
+import { FormErrors } from "@marcin-migdal/m-component-library";
 import { SignInState, SignUpState } from "@utils/formik-configs";
 
 type ProviderData = {
@@ -19,8 +17,7 @@ type StsTokenManager = {
   expirationTime: number;
 };
 
-//* Firebase user object, that is serializable
-export type ISerializedAuthUser = {
+export type SerializedAuthUser = {
   uid: string;
   email: string;
   emailVerified: boolean;
@@ -35,42 +32,17 @@ export type ISerializedAuthUser = {
   appName: string;
 };
 
-//* Authorization user type
-export type AuthUserConfigType = Omit<ISerializedAuthUser, "photoURL" | "displayName"> & {
-  username: string;
-  avatarUrl: string;
-  darkMode: boolean;
-  language: LanguageType;
-  themeColorHue: number;
-};
-
-//! Slice init state
-export type AuthUserInitialState = {
-  authUser: AuthUserConfigType | null;
-  isLoading: boolean;
-  authFormErrors: FormErrors<SignInState | SignUpState>;
-};
-
-//! AsyncThunks payloads
-//* SIGN IN
 export type EmailSignInPayload = SignInState;
 
-//* SIGN UP
 export type EmailSignUpPayload = SignUpState & {
   language: LanguageType;
 };
 
-//* GOOGLE SIGN IN
 export type GoogleSignInPayload = {
   language: LanguageType;
 };
 
-//! AsyncThunks error payload
-export type FirebaseError<T = unknown> = {
-  code: string;
+export type FirebaseApiError<T = unknown> = {
   message: string;
   formErrors: FormErrors<T>;
 };
-
-//? Additional types
-export type TranslateFunctionType = TFunction<[string, string], undefined>;

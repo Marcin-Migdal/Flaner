@@ -1,4 +1,3 @@
-import { Timestamp } from "firebase/firestore";
 import { v4 as uuid } from "uuid";
 
 import { COLLECTIONS } from "@utils/enums";
@@ -9,6 +8,7 @@ import {
   editCollectionDocument,
   getCollectionDataWithId,
   getCollectionFilteredDocuments,
+  getCurrentStringDate,
   getRtkTags,
 } from "@utils/helpers";
 
@@ -46,7 +46,7 @@ export const productApi = firestoreApi.injectEndpoints({
       async queryFn(product) {
         try {
           const id = uuid();
-          const now = Timestamp.now();
+          const now = getCurrentStringDate();
 
           const payload: FirestoreProduct = {
             ...product,
@@ -85,7 +85,10 @@ export const productApi = firestoreApi.injectEndpoints({
     editProduct: build.mutation<null, { productId: string; payload: UpdateProduct }>({
       async queryFn({ productId, payload }) {
         try {
-          await editCollectionDocument(COLLECTIONS.PRODUCTS, productId, { ...payload, updatedAt: Timestamp.now() });
+          await editCollectionDocument(COLLECTIONS.PRODUCTS, productId, {
+            ...payload,
+            updatedAt: getCurrentStringDate(),
+          });
 
           return { data: null };
         } catch (error) {

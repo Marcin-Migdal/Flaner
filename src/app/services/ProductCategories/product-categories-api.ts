@@ -1,7 +1,5 @@
 import { v4 as uuid } from "uuid";
 
-import { Timestamp } from "firebase/firestore";
-
 import { COLLECTIONS } from "@utils/enums";
 
 import {
@@ -10,6 +8,7 @@ import {
   editCollectionDocument,
   getCollectionDataWithId,
   getCollectionFilteredDocuments,
+  getCurrentStringDate,
   getRtkTags,
 } from "@utils/helpers";
 
@@ -20,6 +19,8 @@ import {
   UpdateProductCategory,
 } from "./product-categories-types";
 
+import { ErrorObjKeys } from "@utils/constants/firebase-errors";
+import { FlanerApiError } from "@utils/error-classes";
 import { firestoreApi } from "../api";
 
 export const productCategoriesApi = firestoreApi.injectEndpoints({
@@ -30,7 +31,7 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
           const { currentUserUid } = params;
 
           if (!currentUserUid) {
-            throw new Error("Error occurred while loading users");
+            throw new FlanerApiError(ErrorObjKeys.USER_CURRENT_USER_UNAVAILABLE);
           }
 
           const snap = await getCollectionFilteredDocuments<FirestoreProductCategory>(COLLECTIONS.CATEGORIES, {
@@ -39,10 +40,11 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
 
           return { data: getCollectionDataWithId(snap) };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
+          if (error instanceof FlanerApiError) {
+            return { error: { code: error.code } };
+          } else {
+            return { error: { message: "Error occurred while loading product categories" } };
           }
-          return { error: "Error occurred while loading product categories" };
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "Product_Categories"),
@@ -52,7 +54,7 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
       async queryFn(category) {
         try {
           const id = uuid();
-          const now = Timestamp.now();
+          const now = getCurrentStringDate();
 
           const payload: FirestoreProductCategory = {
             ...category,
@@ -90,7 +92,10 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
     editProductCategory: build.mutation<null, { categoryId: string; payload: UpdateProductCategory }>({
       async queryFn({ categoryId, payload }) {
         try {
-          await editCollectionDocument(COLLECTIONS.CATEGORIES, categoryId, { ...payload, updatedAt: Timestamp.now() });
+          await editCollectionDocument(COLLECTIONS.CATEGORIES, categoryId, {
+            ...payload,
+            updatedAt: getCurrentStringDate(),
+          });
 
           return { data: null };
         } catch (error) {

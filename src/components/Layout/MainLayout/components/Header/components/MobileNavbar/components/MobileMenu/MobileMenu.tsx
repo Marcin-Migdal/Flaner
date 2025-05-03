@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import { SignOutAlert } from "@components";
-import { AuthUserConfigType } from "@slices";
+import { AuthUser } from "@slices";
 import { navigationTree } from "@utils/constants";
 import { PATH_CONSTRANTS } from "@utils/enums";
 import { mapNavigationTree } from "@utils/helpers";
@@ -17,7 +17,7 @@ import { MobileMenuItem, OpenMenuConfig } from "./MobileMenuItem";
 import "./styles.scss";
 
 type MobileMenuProps = {
-  authUser: AuthUserConfigType | null;
+  authUser: AuthUser | null;
   menuOpen: MobileHeaderMenuOpenType;
   toggleMenuDropdown: () => void;
 };

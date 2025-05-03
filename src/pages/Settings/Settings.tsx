@@ -18,7 +18,7 @@ import { CustomButton } from "@components";
 import { useAppDispatch, useAppSelector } from "@hooks";
 import { availableLanguages, LanguageType, lngLabelMap } from "@i18n";
 import { EditUserRequest, useEditUserMutation } from "@services/users";
-import { addToast, AuthUserConfigType, selectAuthorization, setAuthUser } from "@slices";
+import { addToast, AuthUser, selectAuthorization, setAuthUser } from "@slices";
 import { defaultThemeHue } from "@utils/constants";
 import { DropdownOption } from "@utils/types";
 
@@ -29,7 +29,7 @@ import "./styles.scss";
 
 type AuthUserSettings = Required<Omit<EditUserRequest, "currentUserUid">>;
 
-const createEditUserRequest = (authUser: AuthUserConfigType): AuthUserSettings => {
+const createEditUserRequest = (authUser: AuthUser): AuthUserSettings => {
   return {
     themeColorHue: authUser.themeColorHue,
     darkMode: authUser.darkMode,

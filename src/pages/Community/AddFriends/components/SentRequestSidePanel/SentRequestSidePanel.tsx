@@ -5,7 +5,11 @@ import { ContentWrapper, SentFriendRequests } from "@components";
 import { useAppSelector } from "@hooks";
 import { selectAuthorization } from "@slices";
 
-import { SentFriendRequest, useDeleteFriendRequestMutation, useGetSentFriendRequestQueryQuery } from "@services/users";
+import {
+  SentFriendRequest,
+  useDeleteFriendRequestMutation,
+  useGetSentFriendRequestQueryQuery,
+} from "@services/FriendRequests";
 
 type SentRequestSidePanelProps = {
   sidePanelOpen: SidePanelOpenState;

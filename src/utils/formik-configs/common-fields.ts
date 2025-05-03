@@ -1,4 +1,3 @@
-import { Timestamp } from "firebase/firestore";
 import * as Yup from "yup";
 
 export const schemaAmount = Yup.number().nullable().min(1).max(999).required("Amount is required");
@@ -25,18 +24,9 @@ export const requiredDropdownField = Yup.object()
   .nullable()
   .required("Required");
 
-const isFirebaseTimestamp = (value: unknown): value is Timestamp => {
-  return value instanceof Timestamp;
-};
-
 export const schemaAuditFields = {
-  createdAt: Yup.mixed<Timestamp>()
-    .test("is-timestamp", "createdAt must be a valid Firebase Timestamp", isFirebaseTimestamp)
-    .required("The createdAt field is required"),
-
-  updatedAt: Yup.mixed<Timestamp>()
-    .test("is-timestamp", "updatedAt must be a valid Firebase Timestamp", isFirebaseTimestamp)
-    .required("The updatedAt field is required"),
+  createdAt: Yup.string().required("The createdAt field is required"),
+  updatedAt: Yup.string().required("The createdAt field is required"),
 };
 
 export const schemaAccessFields = {
