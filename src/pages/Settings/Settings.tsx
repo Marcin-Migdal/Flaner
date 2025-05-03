@@ -17,7 +17,7 @@ import {
 import { CustomButton } from "@components";
 import { useAppDispatch, useAppSelector } from "@hooks";
 import { availableLanguages, LanguageType, lngLabelMap } from "@i18n";
-import { EditUserRequest, useEditUserMutation } from "@services/users";
+import { EditUserRequest, useEditUserMutation } from "@services/Users";
 import { addToast, AuthUser, selectAuthorization, setAuthUser } from "@slices";
 import { defaultThemeHue } from "@utils/constants";
 import { DropdownOption } from "@utils/types";

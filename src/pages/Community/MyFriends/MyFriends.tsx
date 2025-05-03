@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { ContentWrapper, CustomButton, DebounceTextfield, FriendsTiles } from "@components";
 import { useAppSelector } from "@hooks";
-import { UserType, useDeleteFriendMutation, useGetFriendsByUsernameQuery } from "@services/users";
+import { UserType, useDeleteFriendMutation, useGetFriendsByUsernameQuery } from "@services/Users";
 import { selectAuthorization } from "@slices";
 
 import { ReceivedRequestsSidePanel } from "./components/ReceivedRequestsSidePanel/ReceivedRequestsSidePanel";

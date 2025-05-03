@@ -4,12 +4,14 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { RouterProvider } from "react-router-dom";
 
-import { UserType } from "./app/services/users";
-import { SerializedAuthUser, addToast, selectAuthorization, setAuthUser, setToastHandler } from "./app/slices";
+import { useAppDispatch, useAppSelector } from "@hooks";
+import { SerializedAuthUser } from "@services/Authorization";
+import { UserType } from "@services/Users";
+import { addToast, selectAuthorization, setAuthUser, setToastHandler } from "@slices";
+
 import { fb } from "./firebase/firebase";
-import { useAppDispatch, useAppSelector } from "./hooks";
 import router from "./pages/routing";
-import { defaultThemeHue } from "./utils/constants/theme-hue";
+import { defaultThemeHue } from "./utils/constants";
 import { COLLECTIONS } from "./utils/enums";
 import { getCollectionDocumentById, retryDocumentRequest, toSerializable } from "./utils/helpers";
 

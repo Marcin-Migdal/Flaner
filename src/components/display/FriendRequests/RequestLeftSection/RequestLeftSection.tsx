@@ -1,4 +1,4 @@
-import { UserType } from "@services/users";
+import { UserType } from "@services/Users";
 
 import { Avatar } from "../../../Avatar";
 

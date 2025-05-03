@@ -1,5 +1,5 @@
 import { DocumentReference } from "firebase/firestore";
-import { UserType } from "../users";
+import { UserType } from "../Users";
 
 export type RawNotification =
   | {

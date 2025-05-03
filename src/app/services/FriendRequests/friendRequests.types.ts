@@ -1,5 +1,5 @@
 import { DocumentReference } from "firebase/firestore";
-import { UserType } from "../users/users-types";
+import { UserType } from "../Users";
 
 export type FriendRequestStatus = "pending" | "confirmed" | "declined";
 

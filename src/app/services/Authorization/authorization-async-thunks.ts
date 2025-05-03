@@ -15,7 +15,7 @@ import { addCollectionDocument, getCollectionDocumentById, isUsernameTaken, toSe
 
 import { fb } from "../../../firebase/firebase";
 import { firestoreApi } from "../api";
-import { UserType } from "../users";
+import { UserType } from "../Users";
 
 import {
   EmailSignInPayload,

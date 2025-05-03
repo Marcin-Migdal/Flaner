@@ -16,7 +16,7 @@ import {
 import { fb } from "../../../firebase/firebase";
 import { firestoreApi } from "../api";
 import { NotificationType, RawNotification } from "../Notifications";
-import { Friendships, UserType } from "../users";
+import { Friendships, UserType } from "../Users";
 import { getFriendRequestUid } from "./friendRequests.helpers";
 import { RawFriendRequest, ReceivedFriendRequest, SentFriendRequest } from "./friendRequests.types";
 

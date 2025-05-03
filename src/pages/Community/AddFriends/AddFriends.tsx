@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ContentWrapper, CustomButton, DebounceTextfield, UserTiles } from "@components";
 import { useAppSelector } from "@hooks";
 import { useSendFriendRequestMutation } from "@services/FriendRequests";
-import { SearchedUserType, useGetSearchUsersQuery } from "@services/users";
+import { SearchedUserType, useGetSearchUsersQuery } from "@services/Users";
 import { selectAuthorization } from "@slices";
 
 import { SentRequestSidePanel } from "./components/SentRequestSidePanel/SentRequestSidePanel";
