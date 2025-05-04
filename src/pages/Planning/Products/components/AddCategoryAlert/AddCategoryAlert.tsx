@@ -13,8 +13,10 @@ import {
 import { useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "@hooks";
+import { constructFlanerApiErrorContent } from "@services/helpers";
 import { CreateProductCategory, useAddProductCategoryMutation } from "@services/ProductCategories";
 import { addToast, selectAuthorization } from "@slices";
+import { FlanerApiErrorData } from "@utils/error-classes";
 import { CategorySubmitState, categoryValidationSchema, initCategoryValues } from "@utils/formik-configs";
 
 export const AddCategoryAlert = () => {
@@ -39,7 +41,7 @@ export const AddCategoryAlert = () => {
     },
   });
 
-  const handleSubmit = (formState: CategorySubmitState) => {
+  const handleSubmit = async (formState: CategorySubmitState) => {
     if (!authUser) {
       return;
     }
@@ -55,7 +57,9 @@ export const AddCategoryAlert = () => {
       viewAccess: [authUserId],
     };
 
-    addProductCategory(payload).then(() => {
+    const { error } = await addProductCategory(payload);
+
+    if (!error) {
       dispatch(addToast({ message: `Category has been added` }));
 
       if (!addAnother) {
@@ -63,7 +67,9 @@ export const AddCategoryAlert = () => {
       } else {
         formik.resetForm();
       }
-    });
+    } else {
+      formik.setErrors(constructFlanerApiErrorContent(error as FlanerApiErrorData).formErrors);
+    }
   };
 
   const handleCheckboxChange = (event: CheckboxChangeEvent) => {

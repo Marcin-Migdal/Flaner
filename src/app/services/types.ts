@@ -1,5 +1,3 @@
-import { Timestamp } from "firebase/firestore";
-
 export type UserShares = {
   userId: string;
   sharedCategories: string[];
@@ -19,6 +17,6 @@ export type AccessType = {
 };
 
 export type AuditType = {
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: string;
+  updatedAt: string;
 };

@@ -2,7 +2,7 @@ import { Icon } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 
 import { useAppSelector } from "@hooks";
-import { useGetUnreadNotificationsCountQuery, useUpdateReadNotificationMutation } from "@services/users";
+import { useGetUnreadNotificationsCountQuery, useUpdateReadNotificationMutation } from "@services/Notifications";
 import { selectAuthorization } from "@slices";
 
 import { MobileHeaderMenuOpenType } from "../../types";

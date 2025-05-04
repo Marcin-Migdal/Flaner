@@ -1,7 +1,9 @@
-import { Timestamp } from "firebase/firestore";
 import { v4 as uuid } from "uuid";
 
+import { getRtkError } from "@services/helpers";
+import { FlanerApiErrorsContentKeys } from "@utils/constants";
 import { COLLECTIONS } from "@utils/enums";
+import { FlanerApiError } from "@utils/error-classes";
 
 import {
   addCollectionDocument,
@@ -9,6 +11,7 @@ import {
   editCollectionDocument,
   getCollectionDataWithId,
   getCollectionFilteredDocuments,
+  getCurrentStringDate,
   getRtkTags,
 } from "@utils/helpers";
 
@@ -21,7 +24,7 @@ export const productApi = firestoreApi.injectEndpoints({
       async queryFn({ currentUserUid, categoryId }) {
         try {
           if (!currentUserUid) {
-            throw new Error("Error occurred while loading users");
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE);
           }
 
           const snap = await getCollectionFilteredDocuments<FirestoreProduct>(COLLECTIONS.PRODUCTS, {
@@ -31,10 +34,10 @@ export const productApi = firestoreApi.injectEndpoints({
 
           return { data: getCollectionDataWithId(snap) };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while loading products" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            entity: "products",
+          });
         }
       },
       providesTags: (result, _err, { categoryId }) => [
@@ -46,7 +49,7 @@ export const productApi = firestoreApi.injectEndpoints({
       async queryFn(product) {
         try {
           const id = uuid();
-          const now = Timestamp.now();
+          const now = getCurrentStringDate();
 
           const payload: FirestoreProduct = {
             ...product,
@@ -61,17 +64,17 @@ export const productApi = firestoreApi.injectEndpoints({
           });
 
           if (!snap.empty) {
-            throw new Error("Product with this name already exists in this category");
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_ALREADY_EXIST, "Product");
           }
 
           await addCollectionDocument(COLLECTIONS.PRODUCTS, id, payload);
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while adding products" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_ADD_ERROR,
+            entity: "product",
+          });
         }
       },
       invalidatesTags: (_result, error) => {
@@ -85,14 +88,17 @@ export const productApi = firestoreApi.injectEndpoints({
     editProduct: build.mutation<null, { productId: string; payload: UpdateProduct }>({
       async queryFn({ productId, payload }) {
         try {
-          await editCollectionDocument(COLLECTIONS.PRODUCTS, productId, { ...payload, updatedAt: Timestamp.now() });
+          await editCollectionDocument(COLLECTIONS.PRODUCTS, productId, {
+            ...payload,
+            updatedAt: getCurrentStringDate(),
+          });
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while deleting product" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
+            entity: "product",
+          });
         }
       },
       invalidatesTags: (_result, error, { productId, payload }) => {
@@ -118,10 +124,10 @@ export const productApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while deleting product" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR,
+            entity: "product",
+          });
         }
       },
 

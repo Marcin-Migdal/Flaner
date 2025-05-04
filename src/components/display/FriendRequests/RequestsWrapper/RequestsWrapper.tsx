@@ -1,6 +1,6 @@
 import { ReactElement } from "react";
 
-import { ReceivedFriendRequest, SentFriendRequest } from "@services/users";
+import { ReceivedFriendRequest, SentFriendRequest } from "@services/FriendRequests";
 
 type RequestsWrapperProps<T extends ReceivedFriendRequest | SentFriendRequest> = {
   friendRequests: T[];

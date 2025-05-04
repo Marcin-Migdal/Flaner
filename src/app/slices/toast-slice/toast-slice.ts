@@ -25,7 +25,6 @@ const toastSlice = createSlice({
   },
 });
 
-// Action creators are generated for each function in reducers object
 export const { setToastHandler, addToast, clearToasts } = toastSlice.actions;
 
 export default toastSlice.reducer;

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import { useAppSelector } from "@hooks";
-import { useGetUnreadNotificationsCountQuery, useUpdateReadNotificationMutation } from "@services/users";
+import { useGetUnreadNotificationsCountQuery, useUpdateReadNotificationMutation } from "@services/Notifications";
 import { selectAuthorization } from "@slices";
 import { navigationTree } from "@utils/constants";
 import { PATH_CONSTRANTS } from "@utils/enums";

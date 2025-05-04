@@ -3,7 +3,8 @@ import { useState } from "react";
 
 import { ContentWrapper, CustomButton, DebounceTextfield, UserTiles } from "@components";
 import { useAppSelector } from "@hooks";
-import { SearchedUserType, useGetSearchUsersQuery, useSendFriendRequestMutation } from "@services/users";
+import { useSendFriendRequestMutation } from "@services/FriendRequests";
+import { SearchedUserType, useGetSearchUsersQuery } from "@services/Users";
 import { selectAuthorization } from "@slices";
 
 import { SentRequestSidePanel } from "./components/SentRequestSidePanel/SentRequestSidePanel";
@@ -28,7 +29,7 @@ const AddFriends = () => {
       return;
     }
 
-    sendFriendRequest({ senderUid: authUser.uid, receiverUid: user.uid });
+    sendFriendRequest({ currentUserUid: authUser.uid, receiverUid: user.uid });
   };
 
   return (

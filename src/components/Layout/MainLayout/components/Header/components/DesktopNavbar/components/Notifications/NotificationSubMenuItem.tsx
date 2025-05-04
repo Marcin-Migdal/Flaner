@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 
-import { Notification } from "@services/users";
+import { Notification } from "@services/Notifications";
 import { toRelativeTime } from "@utils/helpers";
 
 import { Avatar } from "../../../../../../../../Avatar";

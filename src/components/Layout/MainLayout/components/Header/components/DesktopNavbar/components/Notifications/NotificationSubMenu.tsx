@@ -3,7 +3,7 @@ import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useAppSelector } from "@hooks";
-import { useGetAllNotificationsQuery, useGetUnreadNotificationsQuery } from "@services/users";
+import { useGetAllNotificationsQuery, useGetUnreadNotificationsQuery } from "@services/Notifications";
 import { selectAuthorization } from "@slices";
 
 import { ContentWrapper } from "../../../../../../../../ContentWrapper";

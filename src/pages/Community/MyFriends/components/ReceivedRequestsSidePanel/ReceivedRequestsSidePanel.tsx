@@ -10,7 +10,7 @@ import {
   useConfirmFriendRequestMutation,
   useDeclineFriendRequestMutation,
   useGetReceivedFriendRequestQueryQuery,
-} from "@services/users";
+} from "@services/FriendRequests";
 
 type ReceivedRequestsSidePanelProps = {
   sidePanelOpen: SidePanelOpenState;
@@ -40,7 +40,7 @@ export const ReceivedRequestsSidePanel = (props: ReceivedRequestsSidePanelProps)
       return;
     }
 
-    declineFriendRequest({ friendRequest, currentUserUid: authUser.uid });
+    declineFriendRequest({ friendRequest });
   };
 
   return (

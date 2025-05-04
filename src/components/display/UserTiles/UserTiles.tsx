@@ -1,6 +1,6 @@
 import { ButtonWidth } from "@marcin-migdal/m-component-library";
 
-import { SearchedUserType, UserType } from "@services/users";
+import { SearchedUserType, UserType } from "@services/Users";
 
 import { CustomButton } from "../../CustomButton";
 import { BaseUsersTiles } from "./BaseUsersTiles/BaseUsersTiles";

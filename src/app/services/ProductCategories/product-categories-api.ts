@@ -1,8 +1,9 @@
 import { v4 as uuid } from "uuid";
 
-import { Timestamp } from "firebase/firestore";
-
+import { getRtkError } from "@services/helpers";
+import { FlanerApiErrorsContentKeys } from "@utils/constants";
 import { COLLECTIONS } from "@utils/enums";
+import { FlanerApiError } from "@utils/error-classes";
 
 import {
   addCollectionDocument,
@@ -10,6 +11,7 @@ import {
   editCollectionDocument,
   getCollectionDataWithId,
   getCollectionFilteredDocuments,
+  getCurrentStringDate,
   getRtkTags,
 } from "@utils/helpers";
 
@@ -25,12 +27,10 @@ import { firestoreApi } from "../api";
 export const productCategoriesApi = firestoreApi.injectEndpoints({
   endpoints: (build) => ({
     getProductCategories: build.query<ProductCategory[], { currentUserUid: string | undefined }>({
-      async queryFn(params) {
+      async queryFn({ currentUserUid }) {
         try {
-          const { currentUserUid } = params;
-
           if (!currentUserUid) {
-            throw new Error("Error occurred while loading users");
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE);
           }
 
           const snap = await getCollectionFilteredDocuments<FirestoreProductCategory>(COLLECTIONS.CATEGORIES, {
@@ -39,10 +39,10 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
 
           return { data: getCollectionDataWithId(snap) };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while loading product categories" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            entity: "product categories",
+          });
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "Product_Categories"),
@@ -52,7 +52,7 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
       async queryFn(category) {
         try {
           const id = uuid();
-          const now = Timestamp.now();
+          const now = getCurrentStringDate();
 
           const payload: FirestoreProductCategory = {
             ...category,
@@ -66,17 +66,17 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
           });
 
           if (!snap.empty) {
-            throw new Error("Product category with this name already exists");
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_ALREADY_EXIST, "Product category");
           }
 
           await addCollectionDocument(COLLECTIONS.CATEGORIES, id, payload);
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while adding product category" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_ADD_ERROR,
+            entity: "product category",
+          });
         }
       },
       invalidatesTags: (_result, error) => {
@@ -90,14 +90,17 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
     editProductCategory: build.mutation<null, { categoryId: string; payload: UpdateProductCategory }>({
       async queryFn({ categoryId, payload }) {
         try {
-          await editCollectionDocument(COLLECTIONS.CATEGORIES, categoryId, { ...payload, updatedAt: Timestamp.now() });
+          await editCollectionDocument(COLLECTIONS.CATEGORIES, categoryId, {
+            ...payload,
+            updatedAt: getCurrentStringDate(),
+          });
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while deleting product category" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR,
+            entity: "product category",
+          });
         }
       },
       invalidatesTags: (_result, error, { categoryId }) => {
@@ -116,10 +119,10 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while deleting product category" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
+            entity: "product category",
+          });
         }
       },
 

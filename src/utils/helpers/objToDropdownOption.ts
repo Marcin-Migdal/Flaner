@@ -1,10 +1,9 @@
 import { DropdownStringOption } from "@marcin-migdal/m-component-library/build/components/Inputs/Dropdown/types";
-import { Timestamp } from "firebase/firestore";
 
 export type KeysWithStringValue<TObj> = { [K in keyof TObj as TObj[K] extends string ? K : never]: TObj[K] };
 
 export const objToDropdownOption = <
-  TObj extends Record<string, string | string[] | Timestamp | boolean | undefined | null | number | number>
+  TObj extends Record<string, string | string[] | boolean | undefined | null | number | number>
 >(
   obj: TObj,
   labelField: keyof KeysWithStringValue<TObj>,

@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 
-import { Notification } from "@services/users";
+import { Notification } from "@services/Notifications";
 
 import { Avatar } from "../../../../../../../../Avatar";
 

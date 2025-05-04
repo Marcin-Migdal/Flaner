@@ -4,12 +4,15 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { RouterProvider } from "react-router-dom";
 
-import { UserType } from "./app/services/users";
-import { ISerializedAuthUser, addToast, selectAuthorization, setAuthUser, setToastHandler } from "./app/slices";
+import { useAppDispatch, useAppSelector } from "@hooks";
+import { SerializedAuthUser } from "@services/Authorization";
+import { UserType } from "@services/Users";
+import { addToast, selectAuthorization, setAuthUser, setToastHandler } from "@slices";
+
+import { FlanerApiError } from "@utils/error-classes";
 import { fb } from "./firebase/firebase";
-import { useAppDispatch, useAppSelector } from "./hooks";
 import router from "./pages/routing";
-import { defaultThemeHue } from "./utils/constants/theme-hue";
+import { defaultThemeHue, flanerApiErrorsContent, FlanerApiErrorsContentKeys } from "./utils/constants";
 import { COLLECTIONS } from "./utils/enums";
 import { getCollectionDocumentById, retryDocumentRequest, toSerializable } from "./utils/helpers";
 
@@ -38,8 +41,8 @@ function App() {
         return;
       }
 
-      // Serializing signed-in user object, before sending it to the reducer
-      const serializedUser = toSerializable<ISerializedAuthUser>(user);
+      // Serializing signed-in user object, before saving it in redux store
+      const serializedUser = toSerializable<SerializedAuthUser>(user);
 
       try {
         const userResponse = await retryDocumentRequest<UserType>(() =>
@@ -47,7 +50,7 @@ function App() {
         );
 
         if (!userResponse.exists()) {
-          throw new Error("Error occurred while loading user profile, please refresh page");
+          throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_FAILED_TO_LOAD_PROFILE);
         }
 
         const userConfig = userResponse.data();
@@ -65,8 +68,13 @@ function App() {
           })
         );
       } catch (error) {
-        if (error instanceof Error) {
-          dispatch(addToast({ type: "failure", message: error.message }));
+        if (error instanceof FlanerApiError) {
+          dispatch(
+            addToast({
+              type: "failure",
+              message: flanerApiErrorsContent[error.code as FlanerApiErrorsContentKeys].message,
+            })
+          );
         }
       }
     });

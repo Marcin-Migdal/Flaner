@@ -5,9 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { CustomButton, CustomTextfield } from "@components";
 import { useAppDispatch, useAppSelector } from "@hooks";
 import { LanguageType } from "@i18n";
-import { addToast, selectAuthorization, setAuthError, signInWithEmail, signInWithGoogle, signOut } from "@slices";
+import { SerializedAuthUser, signInWithEmail, signInWithGoogle, signOut } from "@services/Authorization";
+import { addToast, selectAuthorization, setAuthError } from "@slices";
 import { PATH_CONSTRANTS } from "@utils/enums";
-import { SignInState, SignInSubmitState, signInInitialValues, signInValidationSchema } from "@utils/formik-configs";
+import { signInInitialValues, SignInState, SignInSubmitState, signInValidationSchema } from "@utils/formik-configs";
 
 import "@commonAssets/css/auth-form.scss";
 
@@ -19,15 +20,13 @@ const SignIn = () => {
   const dispatch = useAppDispatch();
 
   const handleSubmit = async (values: SignInSubmitState) => {
-    dispatch(signInWithEmail({ ...values }))
-      .unwrap()
-      .then((user) => {
-        if (!user.emailVerified) {
-          dispatch(addToast({ type: "information", message: "To sign in, verify your email address" }));
-          dispatch(signOut());
-          navigate(PATH_CONSTRANTS.SIGN_IN);
-        }
-      });
+    const res = await dispatch(signInWithEmail({ ...values }));
+
+    if (res.meta.requestStatus === "fulfilled" && !(res.payload as SerializedAuthUser).emailVerified) {
+      dispatch(addToast({ type: "information", message: "To sign in, verify your email address" }));
+      dispatch(signOut());
+      navigate(PATH_CONSTRANTS.SIGN_IN);
+    }
   };
 
   const handleAuthErrorChange = (authError: FormErrors<SignInState>) => dispatch(setAuthError(authError));
@@ -53,7 +52,7 @@ const SignIn = () => {
         <Row>
           <Col sm={12} mdFlex={1} className="left-col">
             <h2>{t("Hello")}!</h2>
-            <p data-cy="sign-in-description">{t("Please sign in to continue")}</p>
+            <p>{t("Please sign in to continue")}</p>
             <Form formik={formik}>
               {({ registerChange, isValid }) => (
                 <>
@@ -94,7 +93,6 @@ const SignIn = () => {
             <h2>{import.meta.env.VITE_APP_NAME}</h2>
             <p>{t("Don't have any account?")}</p>
             <CustomButton
-              data-cy="go-to-sign-up-btn"
               text="Sign up"
               variant="full"
               onClick={() => handleNavigate(PATH_CONSTRANTS.SIGN_UP)}
