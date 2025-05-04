@@ -9,6 +9,7 @@ export enum FlanerApiErrorsContentKeys {
   AUTH_SIGN_IN_WITH_GOOGLE_FAILED = "auth/sign-in-with-google-failed",
 
   USER_CURRENT_USER_UNAVAILABLE = "user/current-user-unavailable",
+  USER_FAILED_TO_LOAD_PROFILE = "user/failed-to-load-profile",
 
   ENTITY_ALREADY_EXIST = "entity/already-exists",
   ENTITY_UNKNOWN_FETCH_ERROR = "entity/unknown-fetch-error",
@@ -64,6 +65,9 @@ export const flanerApiErrorsContent = {
 
   [FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE]: {
     message: "User is not available. Please check your internet connection or try again later.",
+  },
+  [FlanerApiErrorsContentKeys.USER_FAILED_TO_LOAD_PROFILE]: {
+    message: "Error occurred while loading user profile, please refresh page",
   },
 
   [FlanerApiErrorsContentKeys.ENTITY_ALREADY_EXIST]: {

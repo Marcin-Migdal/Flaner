@@ -9,9 +9,10 @@ import { SerializedAuthUser } from "@services/Authorization";
 import { UserType } from "@services/Users";
 import { addToast, selectAuthorization, setAuthUser, setToastHandler } from "@slices";
 
+import { FlanerApiError } from "@utils/error-classes";
 import { fb } from "./firebase/firebase";
 import router from "./pages/routing";
-import { defaultThemeHue } from "./utils/constants";
+import { defaultThemeHue, flanerApiErrorsContent, FlanerApiErrorsContentKeys } from "./utils/constants";
 import { COLLECTIONS } from "./utils/enums";
 import { getCollectionDocumentById, retryDocumentRequest, toSerializable } from "./utils/helpers";
 
@@ -49,7 +50,7 @@ function App() {
         );
 
         if (!userResponse.exists()) {
-          throw new Error("Error occurred while loading user profile, please refresh page");
+          throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_FAILED_TO_LOAD_PROFILE);
         }
 
         const userConfig = userResponse.data();
@@ -67,8 +68,13 @@ function App() {
           })
         );
       } catch (error) {
-        if (error instanceof Error) {
-          dispatch(addToast({ type: "failure", message: error.message }));
+        if (error instanceof FlanerApiError) {
+          dispatch(
+            addToast({
+              type: "failure",
+              message: flanerApiErrorsContent[error.code as FlanerApiErrorsContentKeys].message,
+            })
+          );
         }
       }
     });
@@ -82,8 +88,7 @@ function App() {
       darkMode={authUser?.darkMode === undefined ? true : authUser.darkMode}
     >
       <>
-        {/* <ToastsContainer ref={toastRef} transformContent={t} /> */}
-        <ToastsContainer ref={toastRef} />
+        <ToastsContainer ref={toastRef} transformContent={t} />
         <RouterProvider router={router} />
       </>
     </ThemeWrapper>

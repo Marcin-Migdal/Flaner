@@ -14,17 +14,15 @@ export async function retryDocumentRequest<T extends DocumentData>(
       const res = await fn();
 
       if (!res.exists()) {
-        throw new Error("Document not found");
+        throw new Error();
       }
 
       return res;
     } catch (error) {
-      if (i === retries - 1) {
-        throw error;
+      if (i < retries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        delayMs = delayMs * 2;
       }
-
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-      delayMs = delayMs * 2;
     }
   }
 
