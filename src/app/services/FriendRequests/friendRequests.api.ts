@@ -1,8 +1,11 @@
 import { doc, getDoc, writeBatch } from "firebase/firestore";
 import { v4 as uuid } from "uuid";
 
+import { getRtkError } from "@services/helpers";
 import { AuthUser } from "@slices/authorization-slice";
+import { FlanerApiErrorsContentKeys } from "@utils/constants";
 import { COLLECTIONS } from "@utils/enums";
+import { FlanerApiError } from "@utils/error-classes";
 
 import {
   addCollectionDocument,
@@ -20,30 +23,20 @@ import { Friendships, UserType } from "../Users";
 import { getFriendRequestUid } from "./friendRequests.helpers";
 import { RawFriendRequest, ReceivedFriendRequest, SentFriendRequest } from "./friendRequests.types";
 
-//! TODO commit
-//! TODO change user api folder to capitalized
-//! TODO commit
-//! TODO refactor the rest of the endpoints to use the new error handling method
-//! TODO check everything is working as expected
-//! TODO commit & push
-//! TODO check for "@/" imports
-
 export const friendRequestsApi = firestoreApi.injectEndpoints({
   endpoints: (build) => ({
-    sendFriendRequest: build.mutation<null, { senderUid: string; receiverUid: string }>({
-      async queryFn(params) {
+    sendFriendRequest: build.mutation<null, { currentUserUid: string; receiverUid: string }>({
+      async queryFn({ currentUserUid, receiverUid }) {
         try {
-          const { senderUid, receiverUid } = params;
-
-          if (!senderUid) {
-            throw new Error("Error occurred while sending friend requests");
+          if (!currentUserUid) {
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE);
           }
 
-          const friendRequestUid = getFriendRequestUid(senderUid, receiverUid);
+          const friendRequestUid = getFriendRequestUid(currentUserUid, receiverUid);
 
           const payload: RawFriendRequest = {
             id: friendRequestUid,
-            senderRef: getDocumentReference<UserType>(COLLECTIONS.USERS, senderUid),
+            senderRef: getDocumentReference<UserType>(COLLECTIONS.USERS, currentUserUid),
             receiverRef: getDocumentReference<UserType>(COLLECTIONS.USERS, receiverUid),
             status: "pending",
             sentAt: new Date().getTime(),
@@ -53,10 +46,7 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while sending friend request" };
+          return getRtkError(error, { code: FlanerApiErrorsContentKeys.SEND_FRIEND_REQUEST_ERROR });
         }
       },
       invalidatesTags: (_result, error, arg) => {
@@ -70,10 +60,10 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
       },
     }),
     getSentFriendRequestQuery: build.query<SentFriendRequest[], string | undefined>({
-      async queryFn(senderUid) {
+      async queryFn(currentUserUid) {
         try {
-          if (!senderUid) {
-            throw new Error("Error occurred while loading friend requests");
+          if (!currentUserUid) {
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE);
           }
 
           const sentFriendRequestsSnap = await getCollectionFilteredDocuments<RawFriendRequest>(
@@ -83,7 +73,7 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
                 {
                   field: "senderRef",
                   condition: "==",
-                  searchValue: getDocumentReference<UserType>(COLLECTIONS.USERS, senderUid),
+                  searchValue: getDocumentReference<UserType>(COLLECTIONS.USERS, currentUserUid),
                 },
               ],
             }
@@ -96,7 +86,7 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
               const userSnap = await getDoc(request.receiverRef);
 
               if (!userSnap.exists()) {
-                throw new Error("Error occurred while loading friend requests");
+                throw new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR, "sent friend requests");
               }
 
               sentFriendRequestsWithUserData.push({
@@ -111,19 +101,19 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
 
           return { data: sentFriendRequestsWithUserData };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while loading friend requests" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            entity: "sent friend requests",
+          });
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "Sent_Friend_Requests"),
     }),
     getReceivedFriendRequestQuery: build.query<ReceivedFriendRequest[], string | undefined>({
-      async queryFn(receiverUid) {
+      async queryFn(currentUserUid) {
         try {
-          if (!receiverUid) {
-            throw new Error("Error occurred while loading friend requests");
+          if (!currentUserUid) {
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE);
           }
 
           const receivedFriendRequestsSnap = await getCollectionFilteredDocuments<RawFriendRequest>(
@@ -133,7 +123,7 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
                 {
                   field: "receiverRef",
                   condition: "==",
-                  searchValue: getDocumentReference<UserType>(COLLECTIONS.USERS, receiverUid),
+                  searchValue: getDocumentReference<UserType>(COLLECTIONS.USERS, currentUserUid),
                 },
               ],
             }
@@ -146,7 +136,10 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
               const userSnap = await getDoc(request.senderRef);
 
               if (!userSnap.exists()) {
-                throw new Error("Error occurred while loading friend requests");
+                throw new FlanerApiError(
+                  FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+                  "received friend requests"
+                );
               }
 
               receivedFriendRequestsWithUserData.push({
@@ -161,21 +154,19 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
 
           return { data: receivedFriendRequestsWithUserData };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while loading friend requests" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            entity: "received friend requests",
+          });
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "Received_Friend_Requests"),
     }),
     confirmFriendRequest: build.mutation<null, { friendRequest: ReceivedFriendRequest; currentUser: AuthUser }>({
-      async queryFn(params) {
+      async queryFn({ friendRequest, currentUser }) {
         try {
-          const { friendRequest, currentUser } = params;
-
           const { uid: senderUid, username: senderUsername } = friendRequest.senderUser;
-          const { uid: receiverUid, username: receiverUsername } = currentUser;
+          const { uid: currentUserUid, username: currentUserName } = currentUser;
 
           const addReceiverFriendshipPayload: Friendships = {
             userRef: getDocumentReference<UserType>(COLLECTIONS.USERS, senderUid),
@@ -184,8 +175,8 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
           };
 
           const addSenderFriendshipPayload: Friendships = {
-            userRef: getDocumentReference<UserType>(COLLECTIONS.USERS, receiverUid),
-            username: receiverUsername,
+            userRef: getDocumentReference<UserType>(COLLECTIONS.USERS, currentUserUid),
+            username: currentUserName,
             createdAt: new Date().getTime(),
           };
 
@@ -194,18 +185,18 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
             createdAt: new Date().getTime(),
             content: `has accepted your friend request`,
             read: false,
-            userRef: getDocumentReference<UserType>(COLLECTIONS.USERS, receiverUid),
+            userRef: getDocumentReference<UserType>(COLLECTIONS.USERS, currentUserUid),
           };
 
           const batch = writeBatch(fb.firestore);
 
           batch.set(
-            doc(fb.firestore, COLLECTIONS.USERS, receiverUid, COLLECTIONS.FRIENDSHIPS, senderUid),
+            doc(fb.firestore, COLLECTIONS.USERS, currentUserUid, COLLECTIONS.FRIENDSHIPS, senderUid),
             addReceiverFriendshipPayload
           );
 
           batch.set(
-            doc(fb.firestore, COLLECTIONS.USERS, senderUid, COLLECTIONS.FRIENDSHIPS, receiverUid),
+            doc(fb.firestore, COLLECTIONS.USERS, senderUid, COLLECTIONS.FRIENDSHIPS, currentUserUid),
             addSenderFriendshipPayload
           );
 
@@ -214,17 +205,14 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
             addNotificationPayload
           );
 
-          batch.delete(doc(fb.firestore, COLLECTIONS.FRIEND_REQUEST, getFriendRequestUid(senderUid, receiverUid)));
-          batch.delete(doc(fb.firestore, COLLECTIONS.FRIEND_REQUEST, getFriendRequestUid(receiverUid, senderUid)));
+          batch.delete(doc(fb.firestore, COLLECTIONS.FRIEND_REQUEST, getFriendRequestUid(senderUid, currentUserUid)));
+          batch.delete(doc(fb.firestore, COLLECTIONS.FRIEND_REQUEST, getFriendRequestUid(currentUserUid, senderUid)));
 
           await batch.commit();
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while confirming friend request" };
+          return getRtkError(error, { code: FlanerApiErrorsContentKeys.CONFIRM_FRIEND_REQUEST_ERROR });
         }
       },
       invalidatesTags: (_result, error, arg) => {
@@ -238,20 +226,14 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
         ];
       },
     }),
-    declineFriendRequest: build.mutation<null, { friendRequest: ReceivedFriendRequest; currentUserUid: string }>({
-      async queryFn(params) {
+    declineFriendRequest: build.mutation<null, { friendRequest: ReceivedFriendRequest }>({
+      async queryFn({ friendRequest }) {
         try {
-          const { friendRequest, currentUserUid } = params;
-          const senderUid = friendRequest.senderUser.uid;
-
-          await deleteCollectionDocument(COLLECTIONS.FRIEND_REQUEST, getFriendRequestUid(senderUid, currentUserUid));
+          await deleteCollectionDocument(COLLECTIONS.FRIEND_REQUEST, friendRequest.id);
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while declining friend request" };
+          return getRtkError(error, { code: FlanerApiErrorsContentKeys.DECLINE_FRIEND_REQUEST_ERROR });
         }
       },
       invalidatesTags: (_result, error, arg) => {
@@ -262,16 +244,16 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
       },
     }),
     deleteFriendRequest: build.mutation<null, SentFriendRequest>({
-      async queryFn(request) {
+      async queryFn(sentFriendRequest) {
         try {
-          await deleteCollectionDocument(COLLECTIONS.FRIEND_REQUEST, request.id);
+          await deleteCollectionDocument(COLLECTIONS.FRIEND_REQUEST, sentFriendRequest.id);
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while deleting a friend request" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
+            entity: "sent friend request",
+          });
         }
       },
       invalidatesTags: (_result, error, arg) => {

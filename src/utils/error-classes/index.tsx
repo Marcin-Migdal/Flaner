@@ -1,1 +1,1 @@
-export { FlanerApiError } from "./firebase";
+export * from "./FlanerApiError";

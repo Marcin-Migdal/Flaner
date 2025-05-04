@@ -1,5 +1,4 @@
 import { LanguageType } from "@i18n";
-import { FormErrors } from "@marcin-migdal/m-component-library";
 import { SignInState, SignUpState } from "@utils/formik-configs";
 
 type ProviderData = {
@@ -40,9 +39,4 @@ export type EmailSignUpPayload = SignUpState & {
 
 export type GoogleSignInPayload = {
   language: LanguageType;
-};
-
-export type FirebaseApiError<T = unknown> = {
-  message: string;
-  formErrors: FormErrors<T>;
 };

@@ -29,7 +29,7 @@ const AddFriends = () => {
       return;
     }
 
-    sendFriendRequest({ senderUid: authUser.uid, receiverUid: user.uid });
+    sendFriendRequest({ currentUserUid: authUser.uid, receiverUid: user.uid });
   };
 
   return (

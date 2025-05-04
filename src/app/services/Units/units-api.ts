@@ -1,6 +1,8 @@
 import { COLLECTIONS } from "@utils/enums";
 import { getCollectionDataWithId, getCollectionDocuments, getRtkTags } from "@utils/helpers";
 
+import { getRtkError } from "@services/helpers";
+import { FlanerApiErrorsContentKeys } from "@utils/constants";
 import { firestoreApi } from "../api";
 import { FirestoreUnit, Unit } from "./units-types";
 
@@ -13,10 +15,10 @@ export const unitApi = firestoreApi.injectEndpoints({
 
           return { data: getCollectionDataWithId(snap) };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while loading shopping lists" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            entity: "units",
+          });
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "Units"),

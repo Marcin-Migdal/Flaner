@@ -9,8 +9,11 @@ import {
   updateProfile,
 } from "firebase/auth";
 
+import { getFlanerAuthError } from "@services/helpers";
+import { FlanerApiErrorsContentKeys } from "@utils/constants";
 import { defaultThemeHue } from "@utils/constants/theme-hue";
 import { COLLECTIONS } from "@utils/enums";
+import { FlanerApiErrorData } from "@utils/error-classes";
 import { addCollectionDocument, getCollectionDocumentById, isUsernameTaken, toSerializable } from "@utils/helpers";
 
 import { fb } from "../../../firebase/firebase";
@@ -24,32 +27,23 @@ import {
   SerializedAuthUser,
 } from "./authorization-async-thunks-types";
 
-type FirebaseAuthError = {
-  code?: string;
-  message?: string;
-};
-
-const getFirebaseAuthError = (error, fallbackErrorMessage: string): FirebaseAuthError => {
-  return "code" in error && typeof error.code === "string" ? { code: error.code } : { message: fallbackErrorMessage };
-};
-
 export const signInWithEmail = createAsyncThunk<
   SerializedAuthUser,
   EmailSignInPayload,
-  { rejectValue: FirebaseAuthError }
+  { rejectValue: FlanerApiErrorData }
 >("authorization/async/signInWithEmail", async ({ email, password }, { rejectWithValue }) => {
   try {
     const { user } = await signInWithEmailAndPassword(fb.auth.auth, email, password);
     return toSerializable<SerializedAuthUser>(user);
   } catch (error) {
-    return rejectWithValue(getFirebaseAuthError(error, "Error occurred while signing in"));
+    return rejectWithValue(getFlanerAuthError(error, { code: FlanerApiErrorsContentKeys.AUTH_SIGN_IN_FAILED }));
   }
 });
 
 export const signUpWithEmail = createAsyncThunk<
   SerializedAuthUser,
   EmailSignUpPayload,
-  { rejectValue: FirebaseAuthError }
+  { rejectValue: FlanerApiErrorData }
 >("authorization/async/signUpWithEmail", async ({ email, password, username, language }, { rejectWithValue }) => {
   try {
     await isUsernameTaken(username);
@@ -73,14 +67,14 @@ export const signUpWithEmail = createAsyncThunk<
 
     return toSerializable<SerializedAuthUser>(user);
   } catch (error) {
-    return rejectWithValue(getFirebaseAuthError(error, "Error occurred while signing up"));
+    return rejectWithValue(getFlanerAuthError(error, { code: FlanerApiErrorsContentKeys.AUTH_SIGN_UP_FAILED }));
   }
 });
 
 export const signInWithGoogle = createAsyncThunk<
   SerializedAuthUser,
   GoogleSignInPayload,
-  { rejectValue: FirebaseAuthError }
+  { rejectValue: FlanerApiErrorData }
 >("authorization/async/signInWithGoogle", async ({ language }, { rejectWithValue }) => {
   try {
     const { user } = await signInWithPopup(fb.auth.auth, fb.auth.provider);
@@ -107,11 +101,13 @@ export const signInWithGoogle = createAsyncThunk<
 
     return toSerializable<SerializedAuthUser>(user);
   } catch (error) {
-    return rejectWithValue(getFirebaseAuthError(error, "Error occurred while signing in with Google"));
+    return rejectWithValue(
+      getFlanerAuthError(error, { code: FlanerApiErrorsContentKeys.AUTH_SIGN_IN_WITH_GOOGLE_FAILED })
+    );
   }
 });
 
-export const signOut = createAsyncThunk<void, undefined, { rejectValue: FirebaseAuthError }>(
+export const signOut = createAsyncThunk<void, undefined, { rejectValue: FlanerApiErrorData }>(
   "authorization/async/signOut",
   async (_params, { rejectWithValue, dispatch }) => {
     try {
@@ -120,7 +116,7 @@ export const signOut = createAsyncThunk<void, undefined, { rejectValue: Firebase
 
       return;
     } catch (error) {
-      return rejectWithValue(getFirebaseAuthError(error, "Error occurred while signing out"));
+      return rejectWithValue(getFlanerAuthError(error, { code: FlanerApiErrorsContentKeys.AUTH_SIGN_OUT_FAILED }));
     }
   }
 );

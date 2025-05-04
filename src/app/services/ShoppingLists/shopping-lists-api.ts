@@ -1,6 +1,9 @@
 import { v4 as uuid } from "uuid";
 
+import { getRtkError } from "@services/helpers";
+import { FlanerApiErrorsContentKeys } from "@utils/constants";
 import { COLLECTIONS } from "@utils/enums";
+import { FlanerApiError } from "@utils/error-classes";
 
 import {
   addCollectionDocument,
@@ -18,12 +21,10 @@ import { CreateShoppingList, FirestoreShoppingList, ShoppingList, UpdateShopping
 export const shoppingListsApi = firestoreApi.injectEndpoints({
   endpoints: (build) => ({
     getShoppingList: build.query<ShoppingList[], { currentUserUid: string | undefined }>({
-      async queryFn(params) {
+      async queryFn({ currentUserUid }) {
         try {
-          const { currentUserUid } = params;
-
           if (!currentUserUid) {
-            throw new Error("Error occurred while loading users");
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE);
           }
 
           const snap = await getCollectionFilteredDocuments<FirestoreShoppingList>(COLLECTIONS.SHOPPING_LISTS, {
@@ -32,10 +33,10 @@ export const shoppingListsApi = firestoreApi.injectEndpoints({
 
           return { data: getCollectionDataWithId(snap) };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while loading shopping lists" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            entity: "shopping lists",
+          });
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "Shopping_Lists"),
@@ -59,17 +60,17 @@ export const shoppingListsApi = firestoreApi.injectEndpoints({
           });
 
           if (!snap.empty) {
-            throw new Error("Shopping list with this name already exists");
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_ALREADY_EXIST, "Shopping list");
           }
 
           await addCollectionDocument(COLLECTIONS.SHOPPING_LISTS, id, payload);
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while adding shopping lists" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_ADD_ERROR,
+            entity: "shopping list",
+          });
         }
       },
       invalidatesTags: (_result, error) => {
@@ -90,10 +91,10 @@ export const shoppingListsApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while adding shopping lists" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR,
+            entity: "shopping list",
+          });
         }
       },
       invalidatesTags: (_result, error, { shoppingListId }) => {
@@ -111,10 +112,10 @@ export const shoppingListsApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while deleting shopping lists" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
+            entity: "shopping list",
+          });
         }
       },
 

@@ -1,7 +1,9 @@
 import { collection, CollectionReference, doc, getDoc, getDocs, query, where, writeBatch } from "firebase/firestore";
 
 import { AuthUser } from "@slices/authorization-slice";
+import { FlanerApiErrorsContentKeys } from "@utils/constants";
 import { COLLECTIONS } from "@utils/enums";
+import { FlanerApiError } from "@utils/error-classes";
 
 import {
   editCollectionDocument,
@@ -11,6 +13,7 @@ import {
   getRtkTags,
 } from "@utils/helpers";
 
+import { getRtkError } from "@services/helpers";
 import { fb } from "../../../firebase/firebase";
 import { firestoreApi } from "../api";
 import { getFriendRequestUid, RawFriendRequest } from "../FriendRequests";
@@ -19,12 +22,10 @@ import { EditUserRequest, Friendships, SearchedUserType, UserType } from "./user
 export const usersApi = firestoreApi.injectEndpoints({
   endpoints: (build) => ({
     getUsersByUsername: build.query<UserType[], { username: string; currentUserUid: string | undefined }>({
-      async queryFn(params) {
+      async queryFn({ username, currentUserUid }) {
         try {
-          const { username, currentUserUid } = params;
-
           if (!currentUserUid) {
-            throw new Error("Error occurred while loading users");
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE);
           }
 
           const snap = await getCollectionFilteredDocuments<UserType>(COLLECTIONS.USERS, {
@@ -36,21 +37,19 @@ export const usersApi = firestoreApi.injectEndpoints({
 
           return { data: getCollectionData(snap).filter((users) => users.uid !== currentUserUid) };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while loading users" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            entity: "users",
+          });
         }
       },
       providesTags: (result) => getRtkTags(result, "uid", "Searched_Users"),
     }),
     getSearchUsers: build.query<SearchedUserType[], { username: string; currentUserUid: string | undefined }>({
-      async queryFn(params) {
+      async queryFn({ username, currentUserUid }) {
         try {
-          const { username, currentUserUid } = params;
-
           if (!currentUserUid) {
-            throw new Error("Error occurred while loading users");
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE);
           }
 
           const usersSnapshot = await getCollectionFilteredDocuments<UserType>(COLLECTIONS.USERS, {
@@ -85,22 +84,20 @@ export const usersApi = firestoreApi.injectEndpoints({
 
           return { data: mappedUsers };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while loading users" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            entity: "users",
+          });
         }
       },
       providesTags: (result) => getRtkTags(result, "uid", "Searched_Users"),
     }),
 
     getFriendsByUsername: build.query<UserType[], { currentUserUid: string | undefined; username: string }>({
-      async queryFn(params) {
+      async queryFn({ currentUserUid, username }) {
         try {
-          const { currentUserUid, username } = params;
-
           if (!currentUserUid) {
-            throw new Error("Error occurred while loading friends");
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE);
           }
 
           const userFriendshipsSnapshot = await getDocs(
@@ -118,7 +115,7 @@ export const usersApi = firestoreApi.injectEndpoints({
               const userSnap = await getDoc(friendship.userRef);
 
               if (!userSnap.exists()) {
-                throw new Error("Error occurred while loading friends");
+                throw new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR, "friends");
               }
 
               userFriends.push(userSnap.data());
@@ -127,19 +124,18 @@ export const usersApi = firestoreApi.injectEndpoints({
 
           return { data: userFriends };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while loading friends" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            entity: "friends",
+          });
         }
       },
       providesTags: (result) => getRtkTags(result, "uid", "Friends"),
     }),
 
     deleteFriend: build.mutation<null, { friend: UserType; currentUser: AuthUser }>({
-      async queryFn(params) {
+      async queryFn({ friend, currentUser }) {
         try {
-          const { friend, currentUser } = params;
           const batch = writeBatch(fb.firestore);
 
           batch.delete(doc(fb.firestore, COLLECTIONS.USERS, currentUser.uid, COLLECTIONS.FRIENDSHIPS, friend.uid));
@@ -149,10 +145,10 @@ export const usersApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while deleting a friend" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
+            entity: "friend",
+          });
         }
       },
       invalidatesTags: (_result, error, arg) => {
@@ -170,17 +166,17 @@ export const usersApi = firestoreApi.injectEndpoints({
       async queryFn({ currentUserUid, ...payload }) {
         try {
           if (!currentUserUid) {
-            throw new Error("Error occurred while editing user");
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE);
           }
 
           await editCollectionDocument(COLLECTIONS.USERS, currentUserUid, payload);
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while deleting a friend request" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR,
+            entity: "friend",
+          });
         }
       },
       invalidatesTags: (_result, error) => {

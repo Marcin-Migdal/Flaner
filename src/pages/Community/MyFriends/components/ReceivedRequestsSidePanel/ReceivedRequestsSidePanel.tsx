@@ -40,7 +40,7 @@ export const ReceivedRequestsSidePanel = (props: ReceivedRequestsSidePanelProps)
       return;
     }
 
-    declineFriendRequest({ friendRequest, currentUserUid: authUser.uid });
+    declineFriendRequest({ friendRequest });
   };
 
   return (

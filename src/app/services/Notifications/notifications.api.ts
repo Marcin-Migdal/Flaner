@@ -3,6 +3,9 @@ import { collection, CollectionReference, doc, getDoc, getDocs, query, where, wr
 import { COLLECTIONS } from "@utils/enums";
 import { getCollectionDataWithId, getRtkTags } from "@utils/helpers";
 
+import { getRtkError } from "@services/helpers";
+import { FlanerApiErrorsContentKeys } from "@utils/constants";
+import { FlanerApiError } from "@utils/error-classes";
 import { fb } from "../../../firebase/firebase";
 import { firestoreApi } from "../api";
 import { Notification, NotificationType, RawNotification } from "./notifications.types";
@@ -10,12 +13,10 @@ import { Notification, NotificationType, RawNotification } from "./notifications
 export const notificationsApi = firestoreApi.injectEndpoints({
   endpoints: (build) => ({
     getUnreadNotificationsCount: build.query<number, { currentUserUid: string | undefined }>({
-      async queryFn(params) {
+      async queryFn({ currentUserUid }) {
         try {
-          const { currentUserUid } = params;
-
           if (!currentUserUid) {
-            throw new Error("Error occurred while loading notifications");
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE);
           }
 
           const userNotificationsSnapshot = await getDocs(
@@ -27,21 +28,19 @@ export const notificationsApi = firestoreApi.injectEndpoints({
 
           return { data: userNotificationsSnapshot.size };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while loading notifications" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            entity: "notifications count",
+          });
         }
       },
       providesTags: ["Unread-Notifications-Count"],
     }),
     getUnreadNotifications: build.query<Notification[], { currentUserUid: string | undefined }>({
-      async queryFn(params) {
+      async queryFn({ currentUserUid }) {
         try {
-          const { currentUserUid } = params;
-
           if (!currentUserUid) {
-            throw new Error("Error occurred while loading unread notifications");
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE);
           }
 
           const unreadNotificationsSnapshot = await getDocs(
@@ -62,7 +61,10 @@ export const notificationsApi = firestoreApi.injectEndpoints({
                   const userSnap = await getDoc(notification.userRef);
 
                   if (!userSnap.exists()) {
-                    throw new Error("Error occurred while loading unread notification");
+                    throw new FlanerApiError(
+                      FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+                      "unread notifications"
+                    );
                   }
 
                   const { avatarUrl, uid, username } = userSnap.data();
@@ -83,21 +85,19 @@ export const notificationsApi = firestoreApi.injectEndpoints({
 
           return { data: notifications };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while loading unread notifications" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            entity: "unread notifications",
+          });
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "Unread-Notifications"),
     }),
     getAllNotifications: build.query<Notification[], { currentUserUid: string | undefined }>({
-      async queryFn(params) {
+      async queryFn({ currentUserUid }) {
         try {
-          const { currentUserUid } = params;
-
           if (!currentUserUid) {
-            throw new Error("Error occurred while loading notifications");
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE);
           }
 
           const allNotificationsSnapshot = await getDocs(
@@ -117,7 +117,10 @@ export const notificationsApi = firestoreApi.injectEndpoints({
                   const userSnap = await getDoc(notification.userRef);
 
                   if (!userSnap.exists()) {
-                    throw new Error("Error occurred while loading notification");
+                    throw new FlanerApiError(
+                      FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+                      "all notifications"
+                    );
                   }
 
                   const { avatarUrl, uid, username } = userSnap.data();
@@ -138,19 +141,17 @@ export const notificationsApi = firestoreApi.injectEndpoints({
 
           return { data: notifications };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while loading notifications" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            entity: "all notifications",
+          });
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "All-Notifications"),
     }),
     updateReadNotification: build.mutation<null, { currentUserUid: string }>({
-      async queryFn(params) {
+      async queryFn({ currentUserUid }) {
         try {
-          const { currentUserUid } = params;
-
           const unreadNotificationsSnapshot = await getDocs(
             query(
               collection(fb.firestore, COLLECTIONS.USERS, currentUserUid, COLLECTIONS.NOTIFICATIONS),
@@ -171,10 +172,7 @@ export const notificationsApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while deleting a friend" };
+          return getRtkError(error, { code: FlanerApiErrorsContentKeys.MARK_NOTIFICATION_AS_READ_ERROR });
         }
       },
       invalidatesTags: (_result, error) => {

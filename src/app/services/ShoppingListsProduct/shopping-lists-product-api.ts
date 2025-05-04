@@ -11,6 +11,8 @@ import {
 } from "firebase/firestore";
 import { v4 as uuid } from "uuid";
 
+import { getRtkError } from "@services/helpers";
+import { FlanerApiErrorsContentKeys } from "@utils/constants";
 import { COLLECTIONS } from "@utils/enums";
 import { getCollectionDataWithId, getCurrentStringDate, getRtkTags } from "@utils/helpers";
 
@@ -45,10 +47,10 @@ export const shoppingListProductApi = firestoreApi.injectEndpoints({
 
           return { data: getCollectionDataWithId(shoppingListProductsSnapshot) };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while loading shopping lists product" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            entity: "shopping list products",
+          });
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "Shopping_Lists_Product"),
@@ -73,10 +75,10 @@ export const shoppingListProductApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while adding shopping lists product" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_ADD_ERROR,
+            entity: "shopping list product",
+          });
         }
       },
       invalidatesTags: (_result, error) => {
@@ -109,10 +111,10 @@ export const shoppingListProductApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while adding shopping lists" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR,
+            entity: "shopping list product",
+          });
         }
       },
       invalidatesTags: (_result, error, { shoppingListProductId }) => {
@@ -138,10 +140,10 @@ export const shoppingListProductApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          if (error instanceof Error) {
-            return { error: error.message };
-          }
-          return { error: "Error occurred while deleting shopping lists" };
+          return getRtkError(error, {
+            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
+            entity: "shopping list product",
+          });
         }
       },
 

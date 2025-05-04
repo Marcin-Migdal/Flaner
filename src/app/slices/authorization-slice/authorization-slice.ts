@@ -1,8 +1,8 @@
 import { FormErrors } from "@marcin-migdal/m-component-library";
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
-import { FirebaseApiError } from "@services/Authorization";
 import { SignInState, SignUpState } from "@utils/formik-configs";
+import { ConstructedFlanerApiErrorContent } from "src/app/middleware/errorToasterMiddleware";
 import { AuthUser, AuthorizationInitialState } from "./authorization-slice-types";
 
 const initialState: AuthorizationInitialState = {
@@ -35,7 +35,7 @@ const authorizationSlice = createSlice({
     );
     builder.addMatcher(
       (action) => action.type.startsWith("authorization/") && action.type.endsWith("/rejected"),
-      (state, action: PayloadAction<FirebaseApiError<SignInState | SignUpState>>) => {
+      (state, action: PayloadAction<ConstructedFlanerApiErrorContent<SignInState | SignUpState>>) => {
         state.isLoading = false;
         state.authFormErrors = action.payload.formErrors;
       }

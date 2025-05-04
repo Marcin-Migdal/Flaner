@@ -19,8 +19,9 @@ import {
   where,
 } from "firebase/firestore";
 
+import { FlanerApiError } from "@utils/error-classes";
 import { fb } from "../../firebase/firebase";
-import { ErrorObjKeys } from "../constants/firebase-errors";
+import { FlanerApiErrorsContentKeys } from "../constants";
 import { COLLECTIONS } from "../enums";
 
 export type DocumentFilter<TData extends DocumentData> = {
@@ -142,7 +143,7 @@ export const isUsernameTaken = async (username: string) => {
     );
 
     if (querySnapshot.size !== 0) {
-      throw new Error(ErrorObjKeys.AUTH_USERNAME_ALREADY_IN_USE);
+      throw new FlanerApiError(FlanerApiErrorsContentKeys.AUTH_USERNAME_ALREADY_IN_USE);
     }
   } catch (e) {
     throw e;
