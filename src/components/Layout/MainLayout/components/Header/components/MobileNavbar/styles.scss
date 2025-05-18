@@ -66,6 +66,8 @@
   transition: var(--transition-duration-normal);
   overflow-y: auto;
 
+  z-index: 99;
+
   &.closing,
   &.mounted {
     top: calc(var(--mobile-menu-height) * -1);

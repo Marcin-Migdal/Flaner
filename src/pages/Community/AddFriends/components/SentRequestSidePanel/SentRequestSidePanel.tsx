@@ -31,7 +31,12 @@ export const SentRequestSidePanel = (props: SentRequestSidePanelProps) => {
   };
 
   return (
-    <SidePanel position="right" className="friends-page-request-side-panel" closeOnOutsideClick {...props}>
+    <SidePanel
+      position="right"
+      className="friends-page-request-side-panel flaner-side-panel"
+      closeOnOutsideClick
+      {...props}
+    >
       <h3>{t("Sent Requests")}</h3>
       <ContentWrapper query={sentFriendRequestQuery}>
         {({ data }) => <SentFriendRequests friendRequests={data} onRequestDelete={handleRequestDelete} />}

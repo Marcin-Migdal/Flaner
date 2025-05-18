@@ -33,7 +33,7 @@ const ShoppingLists = () => {
             <ShoppingListPanel shoppingListsQuery={shoppingListsQuery} onShoppingListSelect={selectShoppingList} />
           </Col>
         ) : (
-          <SidePanel {...sidePanelProps} position="right">
+          <SidePanel {...sidePanelProps} position="right" className="flaner-side-panel">
             <ShoppingListPanel shoppingListsQuery={shoppingListsQuery} onShoppingListSelect={selectShoppingList} />
           </SidePanel>
         )}

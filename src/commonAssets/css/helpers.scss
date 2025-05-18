@@ -107,12 +107,17 @@
   }
 }
 
-@media (max-width: 650px) {
+@media (max-width: 768px) {
   .page {
     &.single-column {
       width: 100%;
       min-width: 100%;
     }
+  }
+
+  .flaner-side-panel {
+    top: var(--header-height);
+    z-index: 20;
   }
 }
 
