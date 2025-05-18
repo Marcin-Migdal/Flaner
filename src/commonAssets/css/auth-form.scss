@@ -67,10 +67,6 @@
 
       background-color: var(--primary-color_740);
 
-      &.col-flex-md-1 {
-        min-height: 380px;
-      }
-
       svg {
         font-size: 3.75rem;
         color: var(--grey-color-000);
@@ -100,6 +96,14 @@
           color: var(--primary-color_740);
         }
       }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-from-container {
+    .auth-card {
+      width: unset;
     }
   }
 }

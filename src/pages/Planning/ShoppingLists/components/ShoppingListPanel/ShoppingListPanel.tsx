@@ -75,6 +75,7 @@ export const ShoppingListPanel = ({ shoppingListsQuery, onShoppingListSelect }: 
                   <Accordion.Toggle className="p-2-rem">
                     <span>{shoppingList.name}</span>
                     <DropdownMenu
+                      zIndex={100}
                       triggerContainerClassName="shopping-list-context-menu-trigger"
                       options={[
                         {

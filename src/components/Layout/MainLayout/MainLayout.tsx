@@ -10,6 +10,8 @@ import { PATH_CONSTRANTS } from "@utils/enums";
 
 import { SpinnerPlaceholder } from "../../placeholders";
 
+import "./styles.scss";
+
 export default function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -66,7 +68,7 @@ export default function MainLayout() {
         variant={isMobile ? "compact" : "default"}
         onClick={(crumb) => navigate(crumb.path)}
         crumbs={crumbs}
-        className="mr-4-rem"
+        className={`flaner-breadcrumb ${isMobile ? "mobile" : "desktop"}`}
       />
       <main>
         <Suspense>

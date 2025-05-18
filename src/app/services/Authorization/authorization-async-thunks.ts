@@ -101,6 +101,7 @@ export const signInWithGoogle = createAsyncThunk<
 
     return toSerializable<SerializedAuthUser>(user);
   } catch (error) {
+    console.log(error);
     return rejectWithValue(
       getFlanerAuthError(error, { code: FlanerApiErrorsContentKeys.AUTH_SIGN_IN_WITH_GOOGLE_FAILED })
     );

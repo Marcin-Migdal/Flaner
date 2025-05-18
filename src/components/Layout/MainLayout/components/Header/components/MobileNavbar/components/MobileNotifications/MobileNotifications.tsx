@@ -7,8 +7,8 @@ import { AuthUser } from "@slices";
 import { ContentWrapper } from "../../../../../../../../ContentWrapper";
 import { MobileHeaderMenuOpenType } from "../../../../types";
 import { NotificationsTabs } from "../../MobileNavbar";
-import { MobileNotificationsItem } from "./MobileNotificationsItem";
 
+import { MobileNotificationsItem } from "./MobileNotificationsItem";
 import "./styles.scss";
 
 type MobileNotificationsProps = {
@@ -65,7 +65,10 @@ export const MobileNotifications = ({
           query={currentNotificationsQuery}
           placeholdersConfig={{ noData: { message: "No notifications" } }}
           conditions={{
-            isUninitialized: currentNotificationsQuery.isUninitialized || currentNotificationsQuery.data?.length === 0,
+            isUninitialized:
+              currentNotificationsQuery.isUninitialized ||
+              currentNotificationsQuery.data === undefined ||
+              currentNotificationsQuery.data.length === 0,
           }}
         >
           {({ data }) => (

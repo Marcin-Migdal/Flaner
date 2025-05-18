@@ -44,7 +44,12 @@ export const ReceivedRequestsSidePanel = (props: ReceivedRequestsSidePanelProps)
   };
 
   return (
-    <SidePanel position="right" className="friends-page-request-side-panel" closeOnOutsideClick {...props}>
+    <SidePanel
+      position="right"
+      className="friends-page-request-side-panel flaner-side-panel"
+      closeOnOutsideClick
+      {...props}
+    >
       <h3>{t("Received Requests")}</h3>
       <ContentWrapper query={receivedFriendRequestQuery}>
         {({ data }) => (
