@@ -9,7 +9,7 @@
 
   overflow: auto;
 
-  &.no-data {
+  &.message {
     display: flex;
     flex-direction: column;
 
@@ -27,6 +27,7 @@
   h3 {
     color: inherit;
     text-align: center;
+    font-size: var(--font-size-lg);
   }
 }
 

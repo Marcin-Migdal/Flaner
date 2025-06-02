@@ -7,6 +7,8 @@ import {
   Textfield,
   useForm,
 } from "@marcin-migdal/m-component-library";
+import { useTranslation } from "react-i18next";
+1;
 
 import { useAppDispatch, useAppSelector } from "@hooks";
 import { ProductCategory, UpdateProductCategory, useEditProductCategoryMutation } from "@services/ProductCategories";
@@ -22,6 +24,7 @@ type EditCategoryAlertProps = {
 export const EditCategoryAlert = ({ category, handleClose, alertOpen }: EditCategoryAlertProps) => {
   const dispatch = useAppDispatch();
   const { authUser } = useAppSelector(selectAuthorization);
+  const { t } = useTranslation();
 
   const [editProductCategory] = useEditProductCategoryMutation();
 
@@ -37,7 +40,7 @@ export const EditCategoryAlert = ({ category, handleClose, alertOpen }: EditCate
     };
 
     editProductCategory({ categoryId: category.id, payload: payload }).then(() => {
-      dispatch(addToast({ message: `Category has been edited` }));
+      dispatch(addToast({ message: "products.categoryEdited" }));
       handleClose();
     });
   };
@@ -55,20 +58,31 @@ export const EditCategoryAlert = ({ category, handleClose, alertOpen }: EditCate
 
   return (
     <Alert
-      header="Edit category"
+      header={t("products.editCategory")}
       alertOpen={alertOpen}
       handleClose={handleCloseAlert}
-      confirmBtnText="Edit"
+      confirmBtnText={t("common.actions.edit")}
       onConfirm={formik.submitForm}
-      declineBtnText="Close"
+      declineBtnText={t("common.actions.close")}
       onDecline={handleCloseAlert}
     >
       <Form formik={formik} disableSubmitOnEnter>
-        {({ values, registerChange, registerBlur, handleClear }) => (
+        {({ errors, values, registerChange, registerBlur, handleClear }) => (
           <>
-            <Textfield placeholder="Name" {...registerChange("name")} />
-            <ColorPicker placeholder="Color" returnedColorType="hex" {...registerBlur("color")} />
-            <IconField placeholder="Icon" iconColor={values.color} onClear={handleClear} {...registerBlur("icon")} />
+            <Textfield {...registerChange("name")} placeholder={t("common.fields.name")} error={t(errors.name || "")} />
+            <ColorPicker
+              {...registerBlur("color")}
+              placeholder={t("common.fields.color")}
+              returnedColorType="hex"
+              error={t((errors.color as string) || "")}
+            />
+            <IconField
+              {...registerBlur("icon")}
+              placeholder={t("common.fields.icon")}
+              iconColor={values.color}
+              onClear={handleClear}
+              error={t(errors.icon || "")}
+            />
           </>
         )}
       </Form>

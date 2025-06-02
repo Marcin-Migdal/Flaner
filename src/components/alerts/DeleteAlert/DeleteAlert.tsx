@@ -13,10 +13,9 @@ type DeleteAlertProps = {
   alertOpen: AlertOpenState;
   onDelete: () => OnDeleteMutation;
   handleClose: () => void;
-  entity: string;
 };
 
-export const DeleteAlert = ({ entity, alertOpen, onDelete, handleClose }: DeleteAlertProps) => {
+export const DeleteAlert = ({ alertOpen, onDelete, handleClose }: DeleteAlertProps) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
 
@@ -25,12 +24,7 @@ export const DeleteAlert = ({ entity, alertOpen, onDelete, handleClose }: Delete
       ?.unwrap()
       .then(() => {
         handleClose();
-        dispatch(
-          addToast({
-            message: `${entity} has been deleted`,
-            disableTransformContent: true,
-          })
-        );
+        dispatch(addToast({ message: "common.actions.deleted" }));
       });
   };
 
@@ -39,13 +33,13 @@ export const DeleteAlert = ({ entity, alertOpen, onDelete, handleClose }: Delete
       className="w-350-px"
       alertOpen={alertOpen}
       handleClose={handleClose}
-      header={t("Delete")}
-      confirmBtnText={t("Delete")}
-      declineBtnText={t("Close")}
+      header={t("common.actions.delete")}
+      confirmBtnText={t("common.actions.delete")}
+      declineBtnText={t("common.actions.close")}
       onConfirm={handleConfirm}
       onDecline={handleClose}
     >
-      <p>{t(`Are you sure, you want to delete ${t(entity.toLocaleLowerCase())}?`)}</p>
+      <p>{t("common.actions.deleteConfirmation")}</p>
     </Alert>
   );
 };

@@ -1,4 +1,5 @@
 import { Alert, Button, Form, Textfield, useAlert, useForm } from "@marcin-migdal/m-component-library";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "@hooks";
 import { CreateShoppingList, useAddShoppingListMutation } from "@services/ShoppingLists";
@@ -14,6 +15,7 @@ import {
 export const AddShoppingListAlert = () => {
   const dispatch = useAppDispatch();
   const { authUser } = useAppSelector(selectAuthorization);
+  const { t } = useTranslation();
 
   const [addShoppingList] = useAddShoppingListMutation();
 
@@ -46,7 +48,7 @@ export const AddShoppingListAlert = () => {
       formik.resetForm();
       alertProps.handleClose();
 
-      dispatch(addToast({ message: `Shopping list has been added` }));
+      dispatch(addToast({ message: "shoppingLists.shoppingListAdded" }));
     });
   };
 
@@ -54,16 +56,23 @@ export const AddShoppingListAlert = () => {
     <>
       <Button onClick={() => handleOpenAlert()} icon="plus" variant="full" disableDefaultMargin />
       <Alert
-        header="Add shopping list"
+        header={t("shoppingLists.addShoppingList")}
         className="add-shopping-list-alert"
-        confirmBtnText="Add"
+        confirmBtnText={t("common.actions.add")}
         onConfirm={formik.submitForm}
-        declineBtnText="Close"
+        declineBtnText={t("common.actions.close")}
         onDecline={alertProps.handleClose}
         {...alertProps}
       >
         <Form formik={formik} disableSubmitOnEnter>
-          {({ registerChange }) => <Textfield autoFocus placeholder="Name" {...registerChange("name")} />}
+          {({ errors, registerChange }) => (
+            <Textfield
+              {...registerChange("name")}
+              autoFocus
+              placeholder={t("common.fields.name")}
+              error={t(errors.name || "")}
+            />
+          )}
         </Form>
       </Alert>
     </>

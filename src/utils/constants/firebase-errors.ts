@@ -35,39 +35,38 @@ export const ENTITY_TEXT_INJECTION_POINTER = "${entity}";
 
 export const flanerApiErrorsContent = {
   [FlanerApiErrorsContentKeys.AUTH_INVALID_CREDENTIAL]: {
-    message: "Invalid credentials",
+    message: "auth.errors.invalidCredentials",
     fieldNames: ["email", "password"],
   },
   [FlanerApiErrorsContentKeys.AUTH_USERNAME_ALREADY_IN_USE]: {
-    message: "Username already in use",
+    message: "auth.errors.usernameInUse",
     fieldNames: ["username"],
   },
   [FlanerApiErrorsContentKeys.AUTH_EMAIL_ALREADY_IN_USE]: {
-    message: "Email already in use",
+    message: "auth.errors.emailInUse",
     fieldNames: ["email"],
   },
   [FlanerApiErrorsContentKeys.AUTH_TOO_MANY_REQUESTS]: {
-    message:
-      "Access to this account has been temporarily disabled due to many failed login attempts. You can try again later.",
+    message: "auth.errors.tooManyAttempts",
   },
   [FlanerApiErrorsContentKeys.AUTH_SIGN_IN_FAILED]: {
-    message: "Error occurred while signing in",
+    message: "errors.generic.tryAgain",
   },
   [FlanerApiErrorsContentKeys.AUTH_SIGN_UP_FAILED]: {
-    message: "Error occurred while signing up",
+    message: "errors.generic.tryAgain",
   },
   [FlanerApiErrorsContentKeys.AUTH_SIGN_IN_WITH_GOOGLE_FAILED]: {
-    message: "Error occurred while signing in with Google",
+    message: "errors.generic.tryAgain",
   },
   [FlanerApiErrorsContentKeys.AUTH_SIGN_OUT_FAILED]: {
-    message: "Error occurred while signing out",
+    message: "errors.generic.tryAgain",
   },
 
   [FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE]: {
-    message: "User is not available. Please check your internet connection or try again later.",
+    message: "errors.generic.refreshPage",
   },
   [FlanerApiErrorsContentKeys.USER_FAILED_TO_LOAD_PROFILE]: {
-    message: "Error occurred while loading user profile, please refresh page",
+    message: "errors.generic.refreshPage",
   },
 
   [FlanerApiErrorsContentKeys.ENTITY_ALREADY_EXIST]: {
@@ -88,20 +87,20 @@ export const flanerApiErrorsContent = {
   },
 
   [FlanerApiErrorsContentKeys.SEND_FRIEND_REQUEST_ERROR]: {
-    message: "Error has occurred while sending friend request",
+    message: "friends.errors.sendingRequest",
   },
   [FlanerApiErrorsContentKeys.CONFIRM_FRIEND_REQUEST_ERROR]: {
-    message: "Error has occurred while confirming friend request",
+    message: "friends.errors.confirmingRequest",
   },
   [FlanerApiErrorsContentKeys.DECLINE_FRIEND_REQUEST_ERROR]: {
-    message: "Error has occurred while declining friend request",
+    message: "friends.errors.decliningRequest",
   },
 
   [FlanerApiErrorsContentKeys.MARK_NOTIFICATION_AS_READ_ERROR]: {
-    message: "Error has occurred when marking notifications as read",
+    message: "errors.notifications.markingAsRead",
   },
 
   [FlanerApiErrorsContentKeys.UNKNOWN_ERROR_OCCURRED]: {
-    message: "Error has occurred, please try again",
+    message: "errors.generic.tryAgain",
   },
 };

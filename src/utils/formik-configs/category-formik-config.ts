@@ -17,8 +17,8 @@ export const initCategoryValues: CategoryState = {
 
 export const categoryValidationSchema = Yup.object().shape({
   name: schemaName,
-  icon: Yup.string().nullable().required("Required"),
-  color: Yup.string().required("Required"),
+  icon: Yup.string().nullable().required("validation.required"),
+  color: Yup.string().required("validation.required"),
 });
 
 export type CategorySubmitState = InferSchemaType<typeof categoryValidationSchema>;

@@ -1,8 +1,9 @@
 import { Button, Dropdown } from "@marcin-migdal/m-component-library";
 import { DropdownStringOption } from "@marcin-migdal/m-component-library/build/components/Inputs/Dropdown/types";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
-import { ContentWrapper } from "@components";
+import { ContentWrapper, MessagePlaceholder } from "@components";
 import { useAppSelector, useBreakpoint } from "@hooks";
 import { useGetProductCategoriesQuery } from "@services/ProductCategories";
 import { useGetShoppingListProductsQuery } from "@services/ShoppingListsProduct";
@@ -24,6 +25,7 @@ export const ShoppingListProductsPanel = ({
   disableShoppingListsPanel,
 }: ShoppingListProductsPanelProps) => {
   const { authUser } = useAppSelector(selectAuthorization);
+  const { t } = useTranslation();
   const isMobile = useBreakpoint(`(max-width: 768px)`);
 
   const [categoryFilter, setCategoryFilter] = useState<DropdownStringOption | null>(null);
@@ -45,7 +47,7 @@ export const ShoppingListProductsPanel = ({
     <div style={{ overflowY: "auto" }} className="flex flex-column h-100-percent">
       <div className="flex g-2-rem">
         <Dropdown
-          placeholder="Category"
+          placeholder={t("products.category")}
           value={categoryFilter}
           classNamesObj={{ container: isMobile ? undefined : "w-240-px" }}
           options={categoryOptions}
@@ -65,7 +67,10 @@ export const ShoppingListProductsPanel = ({
       </div>
       <ContentWrapper
         query={shoppingListProductsQuery}
-        placeholdersConfig={{ noData: { message: selectedShoppingListId ? "No data" : "Select shopping list" } }}
+        placeholders={{
+          isUninitialized: <MessagePlaceholder message={t("shoppingLists.selectShoppingList")} />,
+          noData: <MessagePlaceholder message={t("shoppingLists.noProducts")} />,
+        }}
       >
         {({ data: products }) => <ListProducts products={products} selectedShoppingListId={selectedShoppingListId} />}
       </ContentWrapper>

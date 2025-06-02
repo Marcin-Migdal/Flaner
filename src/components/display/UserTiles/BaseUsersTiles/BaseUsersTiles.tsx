@@ -3,23 +3,13 @@ import { ReactElement } from "react";
 import { SearchedUserType, UserType } from "@services/Users";
 
 import { Avatar } from "../../../Avatar";
-import { NoDataPlaceholder } from "../../../placeholders";
 
 type BaseUsersTilesProps<T extends UserType | SearchedUserType> = {
   users: T[];
-  message: string;
   children: (request: T) => ReactElement;
 };
 
-export const BaseUsersTiles = <T extends UserType | SearchedUserType>({
-  users,
-  children,
-  message,
-}: BaseUsersTilesProps<T>) => {
-  if (users.length === 0) {
-    return <NoDataPlaceholder message={message} />;
-  }
-
+export const BaseUsersTiles = <T extends UserType | SearchedUserType>({ users, children }: BaseUsersTilesProps<T>) => {
   return (
     <div className="user-tiles">
       {users.map((user) => (

@@ -33,13 +33,13 @@ export const MobileMenu = ({ authUser, menuOpen, toggleMenuDropdown }: MobileMen
   const navigationItems: HeaderItem[] = mapNavigationTree(t, navigate, navigationTree);
 
   const settingsItem: HeaderItem = {
-    text: "Settings",
+    text: t("nav.main.settings"),
     onClick: () => navigate(PATH_CONSTRANTS.SETTINGS),
     icon: ["fas", "gear"],
   };
 
   const signOutItem: HeaderItem = {
-    text: "Sign out",
+    text: t("auth.signOut"),
     onClick: () => handleOpenAlert(),
     icon: ["fas", "sign-out"],
   };

@@ -13,6 +13,7 @@ import {
   useForm,
 } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { ContentWrapper } from "@components";
 import { useAppDispatch, useAppSelector } from "@hooks";
@@ -25,6 +26,7 @@ import { initProductValues, ProductState, ProductSubmitState, productValidationS
 type AddProductAlertProps = { category: ProductCategory };
 
 export const AddProductAlert = ({ category }: AddProductAlertProps) => {
+  const { t } = useTranslation();
   const { authUser } = useAppSelector(selectAuthorization);
   const dispatch = useAppDispatch();
 
@@ -66,7 +68,7 @@ export const AddProductAlert = ({ category }: AddProductAlertProps) => {
     };
 
     addProduct(payload).then(() => {
-      dispatch(addToast({ message: `Product has been added` }));
+      dispatch(addToast({ message: "products.productAdded" }));
 
       if (!addAnother) {
         handleClose();
@@ -84,7 +86,7 @@ export const AddProductAlert = ({ category }: AddProductAlertProps) => {
     <>
       <Button
         className="add-product-btn"
-        text="Add Product"
+        text={t("products.addProduct")}
         variant="text"
         icon="plus"
         iconPosition="left"
@@ -93,30 +95,40 @@ export const AddProductAlert = ({ category }: AddProductAlertProps) => {
         onClick={() => handleOpenAlert()}
       />
       <Alert
-        header="Add product"
+        header={t("products.addProduct")}
         className="add-product-alert"
         alertOpen={alertOpen}
         handleClose={handleClose}
-        confirmBtnText="Add"
+        confirmBtnText={t("common.actions.add")}
         onConfirm={formik.submitForm}
-        declineBtnText="Close"
+        declineBtnText={t("common.actions.close")}
         onDecline={handleClose}
       >
         <ContentWrapper query={categoriesQuery}>
           {({ data: categoryOptions }) => (
             <Form formik={formik} disableSubmitOnEnter>
-              {({ registerChange, registerBlur }) => (
+              {({ errors, registerChange, registerBlur }) => (
                 <>
-                  <Textfield autoFocus placeholder="Name" {...registerChange("name")} />
+                  <Textfield
+                    {...registerChange("name")}
+                    autoFocus
+                    placeholder={t("common.fields.name")}
+                    error={t(errors.name || "")}
+                  />
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   <Dropdown<any>
-                    placeholder="Category"
+                    {...registerBlur<"category", DropdownChangeEvent<ProductCategory>>("category")}
+                    placeholder={t("products.category")}
                     options={categoryOptions}
                     labelKey={"name"}
                     valueKey={"id"}
-                    {...registerBlur<"category", DropdownChangeEvent<ProductCategory>>("category")}
+                    error={t((errors.category as string) || "")}
                   />
-                  {/* <ImageField placeholder="Image" {...(registerBlur("image)} /> */}
+                  {/* <ImageField
+                    {...registerBlur("image")}
+                    placeholder="common.fields.image"
+                    error={t((errors.image as string) || "")}
+                  /> */}
                 </>
               )}
             </Form>
@@ -125,7 +137,7 @@ export const AddProductAlert = ({ category }: AddProductAlertProps) => {
         <Checkbox
           labelType="right"
           labelWidth={90}
-          label="Add another"
+          label={t("common.fields.addAnother")}
           checked={addAnother}
           onChange={handleCheckboxChange}
         />

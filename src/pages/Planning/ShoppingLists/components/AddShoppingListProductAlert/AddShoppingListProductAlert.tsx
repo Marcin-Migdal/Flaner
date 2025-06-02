@@ -13,6 +13,7 @@ import {
   useForm,
 } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { ContentWrapper } from "@components";
 import { useAppDispatch, useAppSelector } from "@hooks";
@@ -34,6 +35,7 @@ type AddShoppingListProductAlertProps = {
 };
 
 export const AddShoppingListProductAlert = ({ shoppingListId }: AddShoppingListProductAlertProps) => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { authUser } = useAppSelector(selectAuthorization);
 
@@ -98,7 +100,7 @@ export const AddShoppingListProductAlert = ({ shoppingListId }: AddShoppingListP
         formik.resetForm();
       }
 
-      dispatch(addToast({ message: `Shopping list product has been added` }));
+      dispatch(addToast({ message: "shoppingLists.shoppingListProductAdded" }));
     });
   };
 
@@ -116,11 +118,11 @@ export const AddShoppingListProductAlert = ({ shoppingListId }: AddShoppingListP
         disableDefaultMargin
       />
       <Alert
-        header="Add shopping list product"
+        header={t("shoppingLists.addProductToShoppingList")}
         className="add-shopping-list-product-alert"
-        confirmBtnText="Add"
+        confirmBtnText={t("common.actions.add")}
         onConfirm={formik.submitForm}
-        declineBtnText="Close"
+        declineBtnText={t("common.actions.close")}
         onDecline={handleClose}
         alertOpen={alertOpen}
         handleClose={handleClose}
@@ -128,44 +130,48 @@ export const AddShoppingListProductAlert = ({ shoppingListId }: AddShoppingListP
         <ContentWrapper query={productCategoriesQuery}>
           {({ data: productCategoriesOptions }) => (
             <Form formik={formik} disableSubmitOnEnter>
-              {({ values, registerChange, registerBlur }) => (
+              {({ values, errors, registerChange, registerBlur }) => (
                 <>
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   <Dropdown<any>
+                    {...registerBlur<"category", DropdownChangeEvent<ProductCategory>>("category")}
                     disabled={!productCategoriesQuery.isSuccess}
-                    placeholder="Category"
+                    placeholder={t("products.category")}
                     options={productCategoriesOptions}
                     labelKey="name"
                     valueKey="id"
-                    {...registerBlur<"category", DropdownChangeEvent<ProductCategory>>("category")}
+                    error={t((errors.category as string) || "")}
                   />
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   <Dropdown<any>
+                    {...registerBlur<"product", DropdownChangeEvent<Product>>("product")}
                     disabled={!values.category || productOptions?.length === 0}
-                    placeholder="Product"
+                    placeholder={t("products.entity")}
                     options={productOptions || []}
                     labelKey="name"
                     valueKey="id"
-                    {...registerBlur<"product", DropdownChangeEvent<Product>>("product")}
+                    error={t((errors.product as string) || "")}
                   />
                   <div className="flex g-2-rem">
                     <NumberField
-                      classNamesObj={{ container: "flex-8" }}
-                      placeholder="Amount"
                       {...registerChange("amount")}
+                      classNamesObj={{ container: "flex-8" }}
+                      placeholder={t("common.fields.amount")}
+                      error={t(errors.amount || "")}
                     />
                     {unitsOptions && unitsOptions.length > 0 && (
                       <Dropdown
+                        {...registerBlur<"unit", DropdownChangeEvent<Unit>>("unit")}
                         classNamesObj={{ container: "flex-4" }}
-                        placeholder="Unit"
+                        placeholder={t("common.fields.unit")}
                         options={unitsOptions}
                         labelKey="name"
                         valueKey="id"
-                        {...registerBlur<"unit", DropdownChangeEvent<Unit>>("unit")}
+                        error={t((errors.unit as string) || "")}
                       />
                     )}
                   </div>
-                  <Textarea placeholder="Description" {...registerChange("description")} />
+                  <Textarea {...registerChange("description")} placeholder={t("common.fields.description")} />
                 </>
               )}
             </Form>
@@ -174,7 +180,7 @@ export const AddShoppingListProductAlert = ({ shoppingListId }: AddShoppingListP
         <Checkbox
           labelType="right"
           labelWidth={90}
-          label="Add another"
+          label={t("common.fields.addAnother")}
           checked={addAnother}
           onChange={handleCheckboxChange}
         />

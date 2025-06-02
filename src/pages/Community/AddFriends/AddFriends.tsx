@@ -1,7 +1,8 @@
-import { useSidePanel } from "@marcin-migdal/m-component-library";
+import { Button, useSidePanel } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
-import { ContentWrapper, CustomButton, DebounceTextfield, UserTiles } from "@components";
+import { ContentWrapper, DebounceTextfield, MessagePlaceholder, UserTiles } from "@components";
 import { useAppSelector } from "@hooks";
 import { useSendFriendRequestMutation } from "@services/FriendRequests";
 import { SearchedUserType, useGetSearchUsersQuery } from "@services/Users";
@@ -12,6 +13,7 @@ import { SentRequestSidePanel } from "./components/SentRequestSidePanel/SentRequ
 import "@commonAssets/css/friends-page-styles.scss";
 
 const AddFriends = () => {
+  const { t } = useTranslation();
   const { authUser } = useAppSelector(selectAuthorization);
   const [handleOpen, sidePanelProps] = useSidePanel();
 
@@ -38,16 +40,22 @@ const AddFriends = () => {
         <DebounceTextfield
           name="username"
           onDebounce={(event) => setFilterValue(event.target.value)}
-          placeholder="Search friends"
+          placeholder={t("friends.search")}
           labelType="left"
           size="large"
           marginBottomType="none"
         />
-        <CustomButton size="large" icon="user-clock" onClick={handleOpen} disableDefaultMargin />
+        <Button size="large" icon="user-clock" onClick={handleOpen} disableDefaultMargin />
       </div>
 
       <div className="content-container">
-        <ContentWrapper query={usersQuery} placeholdersConfig={{ noData: { message: "Search friends" } }}>
+        <ContentWrapper
+          query={usersQuery}
+          placeholders={{
+            noData: <MessagePlaceholder message={t("friends.noResults")} />,
+            isUninitialized: <MessagePlaceholder message={t("friends.atLeast3Chars")} />,
+          }}
+        >
           {({ data }) => <UserTiles users={data} onAddFriend={handleAddFriend} />}
         </ContentWrapper>
       </div>

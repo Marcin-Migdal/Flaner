@@ -15,7 +15,7 @@ export const signInInitialValues: SignInState = {
 
 export const signInValidationSchema = Yup.object().shape({
   email: schemaEmail,
-  password: Yup.string().max(30, "Password cannot be longer than 30 characters.").required("Required"),
+  password: Yup.string().max(30, "validation.password.maxLength").required("validation.required"),
 });
 
 export type SignInSubmitState = InferSchemaType<typeof signInValidationSchema>;

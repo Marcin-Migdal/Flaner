@@ -33,39 +33,37 @@ export const shoppingListProductValidationSchema = Yup.object().shape({
 
   category: Yup.object()
     .shape({
-      id: Yup.string().nullable().required("Required"),
-      name: Yup.string().nullable().required("Required"),
-      icon: Yup.string().nullable().required("Required"),
-      color: Yup.string().nullable().required("Required"),
-
+      id: Yup.string().nullable().required("validation.required"),
+      name: Yup.string().nullable().required("validation.required"),
+      icon: Yup.string().nullable().required("validation.required"),
+      color: Yup.string().nullable().required("validation.required"),
       ...schemaAuditFields,
       ...schemaAccessFields,
     })
     .nullable()
-    .required("Required"),
+    .required("validation.required"),
 
   product: Yup.object()
     .shape({
-      id: Yup.string().nullable().required("Required"),
-      name: Yup.string().nullable().required("Required"),
-      categoryId: Yup.string().nullable().required("Required"),
-
+      id: Yup.string().nullable().required("validation.required"),
+      name: Yup.string().nullable().required("validation.required"),
+      categoryId: Yup.string().nullable().required("validation.required"),
       ...schemaAuditFields,
       ...schemaAccessFields,
     })
     .nullable()
-    .required("Required"),
+    .required("validation.required"),
 
   unit: Yup.object()
     .shape({
-      id: Yup.string().nullable().required("Required"),
-      name: Yup.string().nullable().required("Required"),
-      shortName: Yup.string().nullable().required("Required"),
+      id: Yup.string().nullable().required("validation.required"),
+      name: Yup.string().nullable().required("validation.required"),
+      shortName: Yup.string().nullable().required("validation.required"),
     })
     .nullable()
-    .required("Required"),
+    .required("validation.required"),
 
-  // image: Yup.string().required("Required"),
+  // image: Yup.string().required("validation.required"),
 });
 
 export type ShoppingListProductSubmitState = InferSchemaType<typeof shoppingListProductValidationSchema>;

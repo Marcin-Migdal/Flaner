@@ -51,25 +51,19 @@ export const MobileNotifications = ({
             className={selectedNotificationTab === "unread-notification" ? "selected" : ""}
             onClick={() => onChangeTab("unread-notification")}
           >
-            {t("Unread")}
+            {t("nav.notifications.unread")}
           </button>
           <button
             className={selectedNotificationTab === "all-notification" ? "selected" : ""}
             onClick={() => onChangeTab("all-notification")}
           >
-            {t("All notifications")}
+            {t("nav.notifications.all")}
           </button>
         </div>
 
         <ContentWrapper
           query={currentNotificationsQuery}
-          placeholdersConfig={{ noData: { message: "No notifications" } }}
-          conditions={{
-            isUninitialized:
-              currentNotificationsQuery.isUninitialized ||
-              currentNotificationsQuery.data === undefined ||
-              currentNotificationsQuery.data.length === 0,
-          }}
+          placeholdersConfig={{ noData: { message: t("notifications.noNotifications") } }}
         >
           {({ data }) => (
             <>

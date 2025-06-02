@@ -8,7 +8,6 @@ export enum PATH_CONSTRANTS {
   MY_FRIENDS = "/community/my-friends",
   PAGE_404 = "/404",
   PLANNING = "/planning",
-  TODO = "/planning/to-do",
   SHOPPING_LISTS = "/planning/shopping-lists",
   PLANNING_SETTINGS = "/planning/planning-settings",
   PRODUCTS = "/planning/planning-settings/products",

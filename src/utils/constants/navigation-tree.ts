@@ -12,49 +12,44 @@ export type NavigationNode = {
 
 export const navigationTree: NavigationNode[] = [
   {
-    text: "Community",
+    text: "nav.main.community",
     path: PATH_CONSTRANTS.COMMUNITY,
     icon: ["fas", "person"],
     subItems: [
       {
-        text: "Add friends",
+        text: "friends.add",
         path: PATH_CONSTRANTS.ADD_FRIENDS,
         icon: ["fas", "plus"],
       },
       {
-        text: "My friends",
+        text: "friends.myFriends",
         path: PATH_CONSTRANTS.MY_FRIENDS,
         icon: ["fas", "person"],
       },
       {
-        text: "Groups",
+        text: "nav.planning.groups",
         path: PATH_CONSTRANTS.GROUPS,
         icon: ["fas", "people-group"],
       },
     ],
   },
   {
-    text: "Planning",
+    text: "nav.main.planning",
     path: PATH_CONSTRANTS.PLANNING,
     icon: ["fas", "layer-group"],
     subItems: [
       {
-        text: "To Do",
-        path: PATH_CONSTRANTS.TODO,
-        icon: ["fas", "list"],
-      },
-      {
-        text: "Shopping",
+        text: "nav.planning.shopping",
         path: PATH_CONSTRANTS.SHOPPING_LISTS,
         icon: ["fas", "cart-shopping"],
       },
       {
-        text: "Planning settings",
+        text: "nav.planning.settings",
         path: PATH_CONSTRANTS.PLANNING_SETTINGS,
         icon: ["fas", "drumstick-bite"],
         subItems: [
           {
-            text: "Products",
+            text: "nav.planning.products",
             path: PATH_CONSTRANTS.PRODUCTS,
             icon: ["fas", "drumstick-bite"],
           },

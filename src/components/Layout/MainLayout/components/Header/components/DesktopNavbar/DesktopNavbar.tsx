@@ -37,8 +37,8 @@ export const DesktopNavbar = () => {
   const userProfileItem: HeaderItem = {
     metaData: { user: authUser },
     subItems: [
-      { text: "Settings", onClick: () => navigate(PATH_CONSTRANTS.SETTINGS), icon: ["fas", "gear"] },
-      { text: "Sign out", onClick: () => handleOpenAlert(), icon: ["fas", "sign-out"] },
+      { text: t("nav.main.settings"), onClick: () => navigate(PATH_CONSTRANTS.SETTINGS), icon: ["fas", "gear"] },
+      { text: t("auth.signOut"), onClick: () => handleOpenAlert(), icon: ["fas", "sign-out"] },
     ],
   };
 

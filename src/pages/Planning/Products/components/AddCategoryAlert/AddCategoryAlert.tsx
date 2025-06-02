@@ -11,6 +11,7 @@ import {
   useForm,
 } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "@hooks";
 import { constructFlanerApiErrorContent } from "@services/helpers";
@@ -20,6 +21,7 @@ import { FlanerApiErrorData } from "@utils/error-classes";
 import { CategorySubmitState, categoryValidationSchema, initCategoryValues } from "@utils/formik-configs";
 
 export const AddCategoryAlert = () => {
+  const { t } = useTranslation();
   const { authUser } = useAppSelector(selectAuthorization);
   const dispatch = useAppDispatch();
 
@@ -60,7 +62,7 @@ export const AddCategoryAlert = () => {
     const { error } = await addProductCategory(payload);
 
     if (!error) {
-      dispatch(addToast({ message: `Category has been added` }));
+      dispatch(addToast({ message: "products.categoryAdded" }));
 
       if (!addAnother) {
         handleClose();
@@ -80,28 +82,44 @@ export const AddCategoryAlert = () => {
     <>
       <Button onClick={() => handleOpenAlert()} icon="plus" variant="full" disableDefaultMargin />
       <Alert
-        header="Add category"
+        header={t("products.addCategory")}
         className="add-category-alert"
         alertOpen={alertOpen}
         handleClose={handleClose}
-        confirmBtnText="Add"
+        confirmBtnText={t("common.actions.add")}
         onConfirm={formik.submitForm}
-        declineBtnText="Close"
+        declineBtnText={t("common.actions.close")}
         onDecline={handleClose}
       >
         <Form formik={formik} disableSubmitOnEnter>
-          {({ values, registerBlur, registerChange, handleClear }) => (
+          {({ values, errors, registerBlur, registerChange, handleClear }) => (
             <>
-              <Textfield autoFocus placeholder="Name" {...registerChange("name")} />
-              <IconField placeholder="Icon" iconColor={values.color} onClear={handleClear} {...registerBlur("icon")} />
-              <ColorPicker placeholder="Color" returnedColorType="hex" {...registerBlur("color")} />
+              <Textfield
+                {...registerChange("name")}
+                autoFocus
+                placeholder={t("common.fields.name")}
+                error={t(errors.name || "")}
+              />
+              <IconField
+                {...registerBlur("icon")}
+                placeholder={t("common.fields.icon")}
+                iconColor={values.color}
+                onClear={handleClear}
+                error={t(errors.icon || "")}
+              />
+              <ColorPicker
+                {...registerBlur("color")}
+                placeholder={t("common.fields.color")}
+                returnedColorType="hex"
+                error={t((errors.color as string) || "")}
+              />
             </>
           )}
         </Form>
         <Checkbox
           labelType="right"
           labelWidth={90}
-          label="Add another"
+          label={t("common.fields.addAnother")}
           checked={addAnother}
           onChange={handleCheckboxChange}
         />

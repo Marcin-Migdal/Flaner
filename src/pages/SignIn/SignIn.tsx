@@ -1,8 +1,18 @@
-import { ButtonWidth, Card, Col, Form, FormErrors, Icon, Row, useForm } from "@marcin-migdal/m-component-library";
+import {
+  Button,
+  ButtonWidth,
+  Card,
+  Col,
+  Form,
+  FormErrors,
+  Icon,
+  Row,
+  Textfield,
+  useForm,
+} from "@marcin-migdal/m-component-library";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import { CustomButton, CustomTextfield } from "@components";
 import { useAppDispatch, useAppSelector } from "@hooks";
 import { LanguageType } from "@i18n";
 import { SerializedAuthUser, signInWithEmail, signInWithGoogle, signOut } from "@services/Authorization";
@@ -23,7 +33,7 @@ const SignIn = () => {
     const res = await dispatch(signInWithEmail({ ...values }));
 
     if (res.meta.requestStatus === "fulfilled" && !(res.payload as SerializedAuthUser).emailVerified) {
-      dispatch(addToast({ type: "information", message: "To sign in, verify your email address" }));
+      dispatch(addToast({ type: "information", message: "auth.verifyEmail" }));
       dispatch(signOut());
       navigate(PATH_CONSTRANTS.SIGN_IN);
     }
@@ -51,26 +61,28 @@ const SignIn = () => {
       <Card className="auth-card">
         <Row>
           <Col sm={12} mdFlex={1} className="left-col">
-            <h2>{t("Hello")}!</h2>
-            <p>{t("Please sign in to continue")}</p>
+            <h2>{t("auth.hello")}!</h2>
+            <p>{t("auth.pleaseSignIn")}</p>
             <Form formik={formik}>
-              {({ registerChange, isValid }) => (
+              {({ errors, registerChange, isValid }) => (
                 <>
-                  <CustomTextfield
-                    data-testid="email-input"
-                    label="Email"
-                    labelType="floating"
+                  <Textfield
                     {...registerChange("email")}
+                    data-testid="email-input"
+                    label={t("auth.email")}
+                    labelType="floating"
+                    error={t(errors.email || "")}
                   />
-                  <CustomTextfield
+                  <Textfield
+                    {...registerChange("password")}
                     data-testid="password-input"
-                    label="Password"
+                    label={t("auth.password")}
                     labelType="floating"
                     type="password"
-                    {...registerChange("password")}
+                    error={t(errors.password || "")}
                   />
-                  <CustomButton
-                    text="Sign in"
+                  <Button
+                    text={t("auth.signIn")}
                     type="submit"
                     variant="full"
                     disabled={!isValid}
@@ -83,7 +95,7 @@ const SignIn = () => {
             </Form>
             <div className="bottom-section">
               <span>
-                {t("or")} <br /> {t("Sign up with")}
+                {t("or")} <br /> {t("auth.signUpWith")}
               </span>
               <Icon className="google-sign-in-icon" icon={["fab", "google"]} onClick={onGoogleSignIn} />
             </div>
@@ -91,9 +103,9 @@ const SignIn = () => {
           <Col sm={12} mdFlex={1} className="right-col">
             <Icon icon={["fas", "rectangle-list"]} />
             <h2>{import.meta.env.VITE_APP_NAME}</h2>
-            <p>{t("Don't have any account?")}</p>
-            <CustomButton
-              text="Sign up"
+            <p>{t("auth.noAccount")}</p>
+            <Button
+              text={t("auth.signUp")}
               variant="full"
               onClick={() => handleNavigate(PATH_CONSTRANTS.SIGN_UP)}
               disableDefaultMargin

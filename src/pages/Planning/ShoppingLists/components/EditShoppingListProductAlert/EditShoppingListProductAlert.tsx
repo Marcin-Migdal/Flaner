@@ -8,8 +8,8 @@ import {
   Textarea,
   useForm,
 } from "@marcin-migdal/m-component-library";
-
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 import { ContentWrapper } from "@components";
 import { useAppDispatch, useAppSelector } from "@hooks";
@@ -44,6 +44,7 @@ export const EditShoppingListProductAlert = ({
   handleClose,
   alertOpen,
 }: EditShoppingListProductAlertProps) => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { authUser } = useAppSelector(selectAuthorization);
 
@@ -78,7 +79,7 @@ export const EditShoppingListProductAlert = ({
       payload: payload,
     }).then(() => {
       handleClose();
-      dispatch(addToast({ message: `Shopping list product has been edited` }));
+      dispatch(addToast({ message: "shoppingLists.shoppingListProductEdited" }));
     });
   };
 
@@ -125,55 +126,63 @@ export const EditShoppingListProductAlert = ({
 
   return (
     <Alert
-      header="Edit shopping list product"
+      header={t("shoppingLists.editShoppingListProduct")}
       alertOpen={alertOpen}
       handleClose={handleCloseAlert}
-      confirmBtnText="Edit"
+      confirmBtnText={t("common.actions.edit")}
       onConfirm={formik.submitForm}
-      declineBtnText="Close"
+      declineBtnText={t("common.actions.close")}
       onDecline={handleCloseAlert}
     >
       <ContentWrapper query={productCategoriesQuery}>
         {({ data: productCategoriesOptions }) => (
           <Form formik={formik} disableSubmitOnEnter>
-            {({ values, registerChange, registerBlur }) => (
+            {({ values, errors, registerChange, registerBlur }) => (
               <>
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Dropdown<any>
+                  {...registerBlur<"category", DropdownChangeEvent<ProductCategory>>("category")}
                   disabled={!productCategoriesQuery.isSuccess}
-                  placeholder="Category"
+                  placeholder={t("products.category")}
                   options={productCategoriesOptions}
                   labelKey="name"
                   valueKey="id"
-                  {...registerBlur<"category", DropdownChangeEvent<ProductCategory>>("category")}
+                  error={t((errors.category as string) || "")}
                 />
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Dropdown<any>
+                  {...registerBlur<"product", DropdownChangeEvent<Product>>("product")}
                   disabled={!values.category || productOptions?.length === 0}
-                  placeholder="Product"
+                  placeholder={t("products.entity")}
                   options={productOptions || []}
                   labelKey="name"
                   valueKey="id"
-                  {...registerBlur<"product", DropdownChangeEvent<Product>>("product")}
+                  error={t((errors.product as string) || "")}
                 />
                 <div className="flex g-2-rem">
                   <NumberField
-                    classNamesObj={{ container: "flex-8" }}
-                    placeholder="Amount"
                     {...registerChange("amount")}
+                    classNamesObj={{ container: "flex-8" }}
+                    placeholder={t("common.fields.amount")}
+                    error={t(errors.amount || "")}
                   />
                   {unitsOptions && unitsOptions.length > 0 && (
                     <Dropdown
+                      {...registerBlur<"unit", DropdownChangeEvent<Unit>>("unit")}
                       classNamesObj={{ container: "flex-4" }}
-                      placeholder="Unit"
+                      placeholder={t("common.fields.unit")}
                       options={unitsOptions}
                       labelKey="name"
                       valueKey="id"
-                      {...registerBlur<"unit", DropdownChangeEvent<Unit>>("unit")}
+                      error={t((errors.unit as string) || "")}
                     />
                   )}
                 </div>
-                <Textarea placeholder="Description" {...registerChange("description")} />
+                <Textarea
+                  {...registerChange("description")}
+                  placeholder={t("common.fields.description")}
+                  error={t(errors.description || "")}
+                />
               </>
             )}
           </Form>

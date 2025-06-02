@@ -1,6 +1,6 @@
 import { Accordion, useAlert } from "@marcin-migdal/m-component-library";
 
-import { DeleteAlert, NoDataPlaceholder, OnDeleteMutation } from "@components";
+import { DeleteAlert, OnDeleteMutation } from "@components";
 import { useAppSelector } from "@hooks";
 import { useGetShoppingListQuery } from "@services/ShoppingLists";
 import { ShoppingListProduct, useDeleteShoppingListProductMutation } from "@services/ShoppingListsProduct";
@@ -44,30 +44,24 @@ export const ListProducts = ({ products, selectedShoppingListId }: ListProductsP
 
   return (
     <>
-      {products.length > 0 ? (
-        <>
-          <Accordion
-            // icon="none"
-            expandOnIconClick
-            instanceClassName="shopping-list-products-accordion"
-            className="m-scroll pr-1-rem"
-            expansionMode="multiple"
-          >
-            {products.map((product) => (
-              <ListProduct
-                product={product}
-                key={product.id}
-                shoppingList={shoppingList}
-                handleOpenDeleteAlert={handleOpenDeleteAlert}
-                handleOpenEditAlert={handleOpenEditAlert}
-              />
-            ))}
-          </Accordion>
-          <DeleteAlert entity="Shopping list product" onDelete={handleListProductDelete} {...deleteAlertProps} />
-        </>
-      ) : (
-        <NoDataPlaceholder message="No products in shopping list" />
-      )}
+      <Accordion
+        // icon="none"
+        expandOnIconClick
+        instanceClassName="shopping-list-products-accordion"
+        className="m-scroll pr-1-rem"
+        expansionMode="multiple"
+      >
+        {products.map((product) => (
+          <ListProduct
+            product={product}
+            key={product.id}
+            shoppingList={shoppingList}
+            handleOpenDeleteAlert={handleOpenDeleteAlert}
+            handleOpenEditAlert={handleOpenEditAlert}
+          />
+        ))}
+      </Accordion>
+      <DeleteAlert onDelete={handleListProductDelete} {...deleteAlertProps} />
       <EditShoppingListProductAlert shoppingListId={selectedShoppingListId} {...editAlertProps} />
     </>
   );

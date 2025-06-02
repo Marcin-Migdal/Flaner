@@ -2,7 +2,6 @@ import { Icon } from "@marcin-migdal/m-component-library";
 
 import { ReceivedFriendRequest, SentFriendRequest } from "@services/FriendRequests";
 
-import { NoDataPlaceholder } from "../../placeholders";
 import { RequestLeftSection } from "./RequestLeftSection/RequestLeftSection";
 import { RequestsWrapper } from "./RequestsWrapper/RequestsWrapper";
 
@@ -24,10 +23,6 @@ export const ReceivedFriendRequests = ({
   onRequestConfirm,
   onRequestDecline,
 }: ReceivedFriendRequestsProps) => {
-  if (friendRequests.length === 0) {
-    return <NoDataPlaceholder message="No invitations received" />;
-  }
-
   return (
     <RequestsWrapper friendRequests={friendRequests}>
       {(request) => (
@@ -46,10 +41,6 @@ export const ReceivedFriendRequests = ({
 };
 
 export const SentFriendRequests = ({ friendRequests, onRequestDelete }: SentFriendRequestsProps) => {
-  if (friendRequests.length === 0) {
-    return <NoDataPlaceholder message="No friend requests sent" />;
-  }
-
   return (
     <RequestsWrapper friendRequests={friendRequests}>
       {(request) => (

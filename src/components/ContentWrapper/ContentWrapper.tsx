@@ -1,12 +1,12 @@
-import { ReactElement } from "react";
+import { ReactElement, ReactNode } from "react";
 
 import { UseQueryResult } from "./types";
 
 import {
   ErrorPlaceholder,
   ErrorPlaceholderProps,
-  NoDataPlaceholder,
-  NoDataPlaceholderProps,
+  MessagePlaceholder,
+  MessagePlaceholderProps,
   SpinnerPlaceholder,
   SpinnerPlaceholderProps,
 } from "../placeholders";
@@ -19,6 +19,7 @@ type Conditions = {
   isLoading?: boolean;
   isError?: boolean;
   isUninitialized?: boolean;
+  noData?: boolean;
 };
 
 type ContentWrapperProps<T> = {
@@ -32,14 +33,16 @@ type ContentWrapperProps<T> = {
 type PlaceholdersConfig = {
   spinner?: SpinnerPlaceholderProps;
   error?: ErrorPlaceholderProps;
-  noData?: NoDataPlaceholderProps;
-  common?: SpinnerPlaceholderProps & ErrorPlaceholderProps & NoDataPlaceholderProps;
+  noData?: MessagePlaceholderProps;
+
+  common?: SpinnerPlaceholderProps & ErrorPlaceholderProps & MessagePlaceholderProps;
 };
 
 type Placeholders = {
-  spinner: ReactElement;
-  error: ReactElement;
-  noData: ReactElement;
+  isUninitialized: ReactNode;
+  spinner: ReactNode;
+  error: ReactNode;
+  noData: ReactNode;
 };
 
 export const ContentWrapper = <T,>({
@@ -50,6 +53,7 @@ export const ContentWrapper = <T,>({
   conditions: customConditions,
 }: ContentWrapperProps<T>) => {
   const placeholders: Placeholders = {
+    isUninitialized: customPlaceholders?.isUninitialized ? customPlaceholders?.isUninitialized : null,
     spinner: customPlaceholders?.spinner ? (
       customPlaceholders.spinner
     ) : (
@@ -63,15 +67,24 @@ export const ContentWrapper = <T,>({
     noData: customPlaceholders?.noData ? (
       customPlaceholders.noData
     ) : (
-      <NoDataPlaceholder message="No data" {...placeholdersConfig?.common} {...placeholdersConfig?.noData} />
+      <MessagePlaceholder {...placeholdersConfig?.common} {...placeholdersConfig?.noData} />
     ),
   };
 
   const conditions: Conditions = {
-    isLoading: customConditions !== undefined ? customConditions.isLoading : query.isLoading,
-    isError: customConditions !== undefined ? customConditions.isError : query.isError,
-    isUninitialized: customConditions !== undefined ? customConditions.isUninitialized : query.isUninitialized,
+    isUninitialized: customConditions?.isUninitialized || query.isUninitialized,
+    isLoading: customConditions?.isLoading || query.isLoading,
+    isError: customConditions?.isError || query.isError,
+    noData:
+      customConditions?.noData ||
+      (query.isSuccess && Array.isArray(query.data)
+        ? query.data.length === 0
+        : query.data === undefined || query.data === null),
   };
+
+  if (conditions.isUninitialized) {
+    return placeholders.isUninitialized;
+  }
 
   if (conditions.isLoading) {
     return placeholders.spinner;
@@ -81,7 +94,7 @@ export const ContentWrapper = <T,>({
     return placeholders.error;
   }
 
-  if (conditions.isUninitialized) {
+  if (conditions.noData) {
     return placeholders.noData;
   }
 

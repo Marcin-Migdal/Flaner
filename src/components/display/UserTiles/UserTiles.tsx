@@ -1,25 +1,26 @@
-import { ButtonWidth } from "@marcin-migdal/m-component-library";
+import { Button, ButtonWidth } from "@marcin-migdal/m-component-library";
+import { useTranslation } from "react-i18next";
 
 import { SearchedUserType, UserType } from "@services/Users";
 
-import { CustomButton } from "../../CustomButton";
 import { BaseUsersTiles } from "./BaseUsersTiles/BaseUsersTiles";
 
 import "./styles.scss";
 
 type UserTilesProps = {
   users: SearchedUserType[];
-  message?: string;
   onAddFriend: (user: SearchedUserType) => void;
 };
 
-export const UserTiles = ({ users, message = "No users found", onAddFriend }: UserTilesProps) => {
+export const UserTiles = ({ users, onAddFriend }: UserTilesProps) => {
+  const { t } = useTranslation();
+
   return (
-    <BaseUsersTiles users={users} message={message}>
+    <BaseUsersTiles users={users}>
       {(user) => (
-        <CustomButton
+        <Button
           disabled={user.isFriend || user.invited}
-          text="Invite"
+          text={t("friends.invite")}
           onClick={() => onAddFriend(user)}
           variant="full"
           width={ButtonWidth.STRETCH}
@@ -32,16 +33,17 @@ export const UserTiles = ({ users, message = "No users found", onAddFriend }: Us
 
 type FriendsTilesProps = {
   users: UserType[];
-  message?: string;
   onDeleteFriend: (user: UserType) => void;
 };
 
-export const FriendsTiles = ({ users, message = "No friends found", onDeleteFriend }: FriendsTilesProps) => {
+export const FriendsTiles = ({ users, onDeleteFriend }: FriendsTilesProps) => {
+  const { t } = useTranslation();
+
   return (
-    <BaseUsersTiles users={users} message={message}>
+    <BaseUsersTiles users={users}>
       {(user) => (
-        <CustomButton
-          text="Delete"
+        <Button
+          text={t("common.actions.delete")}
           onClick={() => onDeleteFriend(user)}
           variant="full"
           width={ButtonWidth.STRETCH}

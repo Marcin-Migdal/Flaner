@@ -6,4 +6,3 @@ export * from "./Layout";
 export * from "./placeholders";
 
 export { Avatar } from "./Avatar";
-export { CustomButton } from "./CustomButton";

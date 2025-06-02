@@ -14,4 +14,10 @@
       --square-size: var(--medium-input-height);
     }
   }
+
+  .buttons-container {
+    display: flex;
+    margin-top: var(--spacing-2);
+    gap: var(--spacing-2);
+  }
 }

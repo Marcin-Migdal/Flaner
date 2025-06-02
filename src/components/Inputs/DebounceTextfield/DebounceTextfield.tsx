@@ -2,9 +2,9 @@ import { ChangeEvent, useEffect, useState } from "react";
 
 import { useDebounce } from "@hooks";
 
-import { CustomTextfield, CustomTextfieldPropsType } from "../CustomTextfield/CustomTextfield";
+import { Textfield, TextfieldProps } from "@marcin-migdal/m-component-library";
 
-type DebounceTextfieldPropsType = Omit<CustomTextfieldPropsType, "value" | "onChange"> & {
+type DebounceTextfieldPropsType = Omit<TextfieldProps, "value" | "onChange"> & {
   defaultValue?: string;
   onDebounce: (event: { target: { name: string; value: string } }) => void;
 } & (
@@ -48,7 +48,5 @@ export const DebounceTextfield = ({
     !isControlled && setInternalValue(event.target.value);
   };
 
-  return (
-    <CustomTextfield {...(otherProps as CustomTextfieldPropsType)} name={name} value={value} onChange={handleChange} />
-  );
+  return <Textfield {...otherProps} name={name} value={value} onChange={handleChange} />;
 };

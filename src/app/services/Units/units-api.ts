@@ -1,5 +1,6 @@
 import { COLLECTIONS } from "@utils/enums";
 import { getCollectionDataWithId, getCollectionDocuments, getRtkTags } from "@utils/helpers";
+import { t } from "i18next";
 
 import { getRtkError } from "@services/helpers";
 import { FlanerApiErrorsContentKeys } from "@utils/constants";
@@ -13,7 +14,7 @@ export const unitApi = firestoreApi.injectEndpoints({
         try {
           const snap = await getCollectionDocuments<FirestoreUnit>(COLLECTIONS.UNITS);
 
-          return { data: getCollectionDataWithId(snap) };
+          return { data: getCollectionDataWithId(snap).map((item) => ({ ...item, name: t(`units.${item.name}`) })) };
         } catch (error) {
           return getRtkError(error, {
             code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,

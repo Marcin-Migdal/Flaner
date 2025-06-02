@@ -18,28 +18,25 @@ export const signUpInitialValues: SignUpState = {
 };
 
 export const signUpValidationSchema = Yup.object().shape({
-  email: schemaEmail,
-
   username: Yup.string()
-    .matches(/^[a-zA-Z0-9_.]+$/, "Username can only contain letters, numbers, underscores, and periods.")
-    .min(3, "Username must be at least 3 characters.")
-    .max(30, "Username cannot be longer than 20 characters.")
-    .required("Required"),
-
+    .matches(/^[a-zA-Z0-9_.]+$/, "validation.username.format")
+    .min(3, "validation.username.minLength")
+    .max(30, "validation.username.maxLength")
+    .required("validation.required"),
+  email: schemaEmail,
   password: Yup.string()
-    .min(8, "Password must be at least 8 characters.")
-    .max(30, "Password cannot be longer than 30 characters.")
-    .matches(/[A-Z]/, "Password must contain at least one uppercase letter.")
-    .matches(/[a-z]/, "Password must contain at least one lowercase letter.")
-    .matches(/[0-9]/, "Password must contain at least one number.")
-    .matches(/[@$!%*?&]/, "Password must contain at least one special character.")
-    .required("Required"),
-
+    .min(8, "validation.password.minLength")
+    .max(30, "validation.password.maxLength")
+    .matches(/[A-Z]/, "validation.password.uppercase")
+    .matches(/[a-z]/, "validation.password.lowercase")
+    .matches(/[0-9]/, "validation.password.number")
+    .matches(/[@$!%*?&]/, "validation.password.special")
+    .required("validation.required"),
   verifyPassword: Yup.string()
-    .required("Required")
-    .test("passwords-match", "Passwords must match", function (value) {
+    .test("passwords-match", "validation.password.match", function (value) {
       return this.parent.password === value;
-    }),
+    })
+    .required("validation.required"),
 });
 
 export type SignUpSubmitState = InferSchemaType<typeof signUpValidationSchema>;

@@ -37,8 +37,8 @@ export const SentRequestSidePanel = (props: SentRequestSidePanelProps) => {
       closeOnOutsideClick
       {...props}
     >
-      <h3>{t("Sent Requests")}</h3>
-      <ContentWrapper query={sentFriendRequestQuery}>
+      <h3>{t("friends.sentRequests")}</h3>
+      <ContentWrapper query={sentFriendRequestQuery} placeholdersConfig={{ noData: { message: "friends.noRequests" } }}>
         {({ data }) => <SentFriendRequests friendRequests={data} onRequestDelete={handleRequestDelete} />}
       </ContentWrapper>
     </SidePanel>

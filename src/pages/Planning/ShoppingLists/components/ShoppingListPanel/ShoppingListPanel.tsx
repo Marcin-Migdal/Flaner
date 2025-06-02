@@ -8,6 +8,7 @@ import {
   useAlert,
 } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { ContentWrapper, DeleteAlert, OnDeleteMutation, UseQueryResult } from "@components";
 import { useAppSelector } from "@hooks";
@@ -40,6 +41,7 @@ type ShoppingListPanelProps = {
 
 export const ShoppingListPanel = ({ shoppingListsQuery, onShoppingListSelect }: ShoppingListPanelProps) => {
   const { authUser } = useAppSelector(selectAuthorization);
+  const { t } = useTranslation();
 
   const [handleOpenDeleteAlert, deleteAlertProps] = useAlert<string>();
   const [handleOpenEditAlert, editAlertProps] = useAlert<ShoppingList>();
@@ -63,7 +65,7 @@ export const ShoppingListPanel = ({ shoppingListsQuery, onShoppingListSelect }: 
   return (
     <>
       <div className="flex g-2-rem">
-        <Textfield placeholder="Shopping list" onChange={handleFilterChange} />
+        <Textfield placeholder={t("shoppingLists.entity")} onChange={handleFilterChange} />
         <AddShoppingListAlert />
       </div>
       <ContentWrapper query={shoppingListsQuery}>
@@ -79,12 +81,12 @@ export const ShoppingListPanel = ({ shoppingListsQuery, onShoppingListSelect }: 
                       triggerContainerClassName="shopping-list-context-menu-trigger"
                       options={[
                         {
-                          label: "Edit shopping list",
+                          label: t("shoppingLists.editShoppingList"),
                           onClick: () => handleOpenEditAlert(shoppingList),
                           disabled: !authUser?.uid || !shoppingList.editAccess.includes(authUser.uid),
                         },
                         {
-                          label: "Delete shopping list",
+                          label: t("shoppingLists.deleteShoppingList"),
                           onClick: () => handleOpenDeleteAlert(shoppingList.id),
                           disabled: shoppingList.ownerId !== authUser?.uid,
                         },
@@ -101,7 +103,7 @@ export const ShoppingListPanel = ({ shoppingListsQuery, onShoppingListSelect }: 
                 </Accordion.Section>
               ))}
             </Accordion>
-            <DeleteAlert onDelete={handleDelete} {...deleteAlertProps} entity="Shopping list" />
+            <DeleteAlert onDelete={handleDelete} {...deleteAlertProps} />
             <EditShoppingListAlert {...editAlertProps} />
           </>
         )}

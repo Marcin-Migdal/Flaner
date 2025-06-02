@@ -21,17 +21,16 @@ export const productValidationSchema = Yup.object().shape({
   name: schemaName,
   category: Yup.object()
     .shape({
-      id: Yup.string().nullable().required("Required"),
-      name: Yup.string().nullable().required("Required"),
-      icon: Yup.string().nullable().required("Required"),
-      color: Yup.string().nullable().required("Required"),
-
+      id: Yup.string().nullable().required("validation.required"),
+      name: Yup.string().nullable().required("validation.required"),
+      icon: Yup.string().nullable().required("validation.required"),
+      color: Yup.string().nullable().required("validation.required"),
       ...schemaAuditFields,
       ...schemaAccessFields,
     })
     .nullable()
-    .required("Required"),
-  // image: Yup.string().required("Required"),
+    .required("validation.required"),
+  // image: Yup.string().required("validation.required"),
 });
 
 export type ProductSubmitState = InferSchemaType<typeof productValidationSchema>;

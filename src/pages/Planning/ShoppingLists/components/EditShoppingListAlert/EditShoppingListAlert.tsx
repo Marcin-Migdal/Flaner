@@ -1,5 +1,6 @@
 import { Alert, AlertOpenState, Form, Textfield, useForm } from "@marcin-migdal/m-component-library";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "@hooks";
 import { ShoppingList, UpdateShoppingList, useEditShoppingListMutation } from "@services/ShoppingLists";
@@ -15,6 +16,7 @@ type EditShoppingListAlertProps = {
 export const EditShoppingListAlert = ({ data: shoppingList, handleClose, alertOpen }: EditShoppingListAlertProps) => {
   const dispatch = useAppDispatch();
   const { authUser } = useAppSelector(selectAuthorization);
+  const { t } = useTranslation();
 
   const [editShoppingList] = useEditShoppingListMutation();
 
@@ -29,7 +31,7 @@ export const EditShoppingListAlert = ({ data: shoppingList, handleClose, alertOp
 
     editShoppingList({ shoppingListId: shoppingList.id, payload: payload }).then(() => {
       handleClose();
-      dispatch(addToast({ message: `Shopping list has been edited` }));
+      dispatch(addToast({ message: "shoppingLists.shoppingListEdited", type: "success" }));
     });
   };
 
@@ -52,16 +54,18 @@ export const EditShoppingListAlert = ({ data: shoppingList, handleClose, alertOp
 
   return (
     <Alert
-      header="Edit shopping list"
+      header={t("shoppingLists.editShoppingList")}
       alertOpen={alertOpen}
       handleClose={handleCloseAlert}
-      confirmBtnText="Edit"
+      confirmBtnText={t("common.actions.edit")}
       onConfirm={formik.submitForm}
-      declineBtnText="Close"
+      declineBtnText={t("common.actions.close")}
       onDecline={handleCloseAlert}
     >
       <Form formik={formik} disableSubmitOnEnter>
-        {({ registerChange }) => <Textfield placeholder="Name" {...registerChange("name")} />}
+        {({ errors, registerChange }) => (
+          <Textfield {...registerChange("name")} placeholder={t("common.fields.name")} error={t(errors.name || "")} />
+        )}
       </Form>
     </Alert>
   );
