@@ -1,8 +1,8 @@
-import { Alert, useAlert, useSidePanel } from "@marcin-migdal/m-component-library";
+import { Alert, Button, useAlert, useSidePanel } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { ContentWrapper, CustomButton, DebounceTextfield, FriendsTiles } from "@components";
+import { ContentWrapper, DebounceTextfield, FriendsTiles } from "@components";
 import { useAppSelector } from "@hooks";
 import { UserType, useDeleteFriendMutation, useGetFriendsByUsernameQuery } from "@services/Users";
 import { selectAuthorization } from "@slices";
@@ -50,23 +50,22 @@ const MyFriends = () => {
         <DebounceTextfield
           name="username"
           onDebounce={(event) => setFilterValue(event.target.value)}
-          placeholder="Search friends"
+          placeholder={t("friends.search")}
           labelType="left"
           size="large"
           marginBottomType="none"
         />
-        <CustomButton icon="user-plus" size="large" onClick={handleOpen} disableDefaultMargin />
+        <Button icon="user-plus" size="large" onClick={handleOpen} disableDefaultMargin />
       </div>
 
       <div className="content-container">
-        <ContentWrapper query={friendsQuery}>
-          {({ data }) => (
-            <FriendsTiles
-              users={data || []}
-              message={filterValue.trim().length !== 0 ? "No friends found" : "Add friends"}
-              onDeleteFriend={handleOpenDeleteAlert}
-            />
-          )}
+        <ContentWrapper
+          query={friendsQuery}
+          placeholdersConfig={{
+            noData: { message: filterValue.trim().length !== 0 ? t("friends.noFriendsFound") : t("friends.add") },
+          }}
+        >
+          {({ data }) => <FriendsTiles users={data || []} onDeleteFriend={handleOpenDeleteAlert} />}
         </ContentWrapper>
       </div>
 
@@ -74,12 +73,12 @@ const MyFriends = () => {
 
       <Alert
         {...alertProps}
-        header={t("Delete friend")}
-        confirmBtnText={t("Delete")}
+        header={t("friends.delete")}
+        confirmBtnText={t("common.actions.delete")}
         onConfirm={handleDeleteFriend}
-        declineBtnText={t("Close")}
+        declineBtnText={t("common.actions.close")}
       >
-        <p>{t("Are you sure, you want to delete a friend?")}</p>
+        <p>{t("friends.confirmDelete")}</p>
       </Alert>
     </div>
   );

@@ -22,7 +22,7 @@ function App() {
 
   const toastRef = useRef<ToastHandler>(null);
 
-  const { t, i18n } = useTranslation("errors");
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     if (toastRef.current) {
@@ -69,12 +69,7 @@ function App() {
         );
       } catch (error) {
         if (error instanceof FlanerApiError) {
-          dispatch(
-            addToast({
-              type: "failure",
-              message: flanerApiErrorsContent[error.code as FlanerApiErrorsContentKeys].message,
-            })
-          );
+          dispatch(addToast({ message: flanerApiErrorsContent[error.code as FlanerApiErrorsContentKeys].message }));
         }
       }
     });
@@ -88,7 +83,7 @@ function App() {
       darkMode={authUser?.darkMode === undefined ? true : authUser.darkMode}
     >
       <>
-        <ToastsContainer ref={toastRef} transformContent={t} />
+        <ToastsContainer ref={toastRef} transformContent={(text) => t(text)} />
         <RouterProvider router={router} />
       </>
     </ThemeWrapper>

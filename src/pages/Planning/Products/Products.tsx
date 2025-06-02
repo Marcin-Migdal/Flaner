@@ -1,5 +1,6 @@
 import { Textfield, TextFieldChangeEvent } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { ContentWrapper } from "@components";
 import { useAppSelector } from "@hooks";
@@ -30,6 +31,7 @@ const filterProductCategories = (
 
 const Products = () => {
   const { authUser } = useAppSelector(selectAuthorization);
+  const { t } = useTranslation();
 
   const productCategoriesQuery = useGetProductCategoriesQuery({ currentUserUid: authUser?.uid });
 
@@ -47,16 +49,13 @@ const Products = () => {
         <div className="product-top-section">
           <Textfield
             classNamesObj={{ container: "category-input-container" }}
-            placeholder="Category..."
+            placeholder={t("products.category")}
             onChange={handleChange}
             disabled={!productCategoriesQuery.isSuccess}
           />
           <AddCategoryAlert />
         </div>
-        <ContentWrapper
-          query={productCategoriesQuery}
-          placeholdersConfig={{ noData: { message: "Please enter at least 3 characters to filter the categories." } }}
-        >
+        <ContentWrapper query={productCategoriesQuery}>
           {({ data }) => (
             <div className="categories-container m-scroll">
               {filterProductCategories(data, categoryFilter).map((category) => (

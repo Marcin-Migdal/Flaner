@@ -1,6 +1,5 @@
-import { Breadcrumb, CrumbType, capitalize } from "@marcin-migdal/m-component-library";
+import { Breadcrumb, CrumbType } from "@marcin-migdal/m-component-library";
 import { Suspense, useEffect, useMemo } from "react";
-import { useTranslation } from "react-i18next";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { Header } from "@components";
@@ -10,13 +9,21 @@ import { PATH_CONSTRANTS } from "@utils/enums";
 
 import { SpinnerPlaceholder } from "../../placeholders";
 
+import { useTranslation } from "react-i18next";
 import "./styles.scss";
 
+const toCamelCase = (str: string) => {
+  return str
+    .split("-")
+    .map((word, index) => (index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()))
+    .join("");
+};
+
 export default function MainLayout() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { authUser, isLoading } = useAppSelector(selectAuthorization);
-  const { t } = useTranslation();
 
   const isMobile = useBreakpoint(`(max-width: 768px)`);
 
@@ -24,19 +31,19 @@ export default function MainLayout() {
     const splitPathName = location.pathname.split("/");
 
     if (location.pathname === PATH_CONSTRANTS.HOME) {
-      return [{ id: "index-home", label: t("Home"), path: PATH_CONSTRANTS.HOME, disabled: true }];
+      return [{ id: "index-home", label: t("nav.main.home"), path: PATH_CONSTRANTS.HOME, disabled: true }];
     }
 
     return splitPathName.map((crumb, index): CrumbType => {
       if (index === 0) {
-        return { id: "index-home", label: t("Home"), path: PATH_CONSTRANTS.HOME };
+        return { id: "index-home", label: t("nav.main.home"), path: PATH_CONSTRANTS.HOME };
       }
 
       const crumbPath = splitPathName.slice(0, index + 1).join("/");
 
       return {
         id: `index-${crumb}`,
-        label: t(capitalize(crumb).replace("-", " ")),
+        label: t(`nav.main.${toCamelCase(crumb)}`),
         path: crumbPath,
         disabled: crumbPath === location.pathname,
       };

@@ -7,11 +7,7 @@ export type ErrorPlaceholderProps = {
   message?: string;
 };
 
-export const ErrorPlaceholder = ({
-  className = "",
-  style = {},
-  message = "Error has occurred",
-}: ErrorPlaceholderProps) => {
+export const ErrorPlaceholder = ({ className = "", style = {}, message = "errors.default" }: ErrorPlaceholderProps) => {
   const { t } = useTranslation();
 
   return (

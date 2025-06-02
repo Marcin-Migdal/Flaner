@@ -36,7 +36,7 @@ export const ProductList = ({ products }: ProductListProps) => {
           handleOpenEditProductAlert={handleOpenEditProductAlert}
         />
       ))}
-      <DeleteAlert {...alertDeleteProductProps} onDelete={handleDelete} entity="product" />
+      <DeleteAlert {...alertDeleteProductProps} onDelete={handleDelete} />
       <EditProductAlert {...alertEditProductProps} />
     </ul>
   );

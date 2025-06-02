@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import {
   Accordion,
+  Button,
   ColorPreviewSquare,
   Dropdown,
   hslToHex,
@@ -14,9 +15,9 @@ import {
   useAlert,
 } from "@marcin-migdal/m-component-library";
 
-import { CustomButton } from "@components";
 import { useAppDispatch, useAppSelector } from "@hooks";
 import { availableLanguages, LanguageType, lngLabelMap } from "@i18n";
+import { firestoreApi } from "@services/api";
 import { EditUserRequest, useEditUserMutation } from "@services/Users";
 import { addToast, AuthUser, selectAuthorization, setAuthUser } from "@slices";
 import { defaultThemeHue } from "@utils/constants";
@@ -42,7 +43,7 @@ const createEditUserRequest = (authUser: AuthUser): AuthUserSettings => {
 const Settings = () => {
   const dispatch = useAppDispatch();
   const { authUser } = useAppSelector(selectAuthorization);
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   const [handleOpenAlert, alertProps] = useAlert();
 
@@ -103,7 +104,8 @@ const Settings = () => {
         authUser && dispatch(setAuthUser({ ...authUser, ...authUserSettings }));
         i18n.changeLanguage(authUserSettings?.language);
 
-        dispatch(addToast({ type: "success", message: "Settings has been successfully saved." }));
+        dispatch(firestoreApi.util.resetApiState());
+        dispatch(addToast({ type: "success", message: "common.status.success" }));
       });
   };
 
@@ -123,7 +125,10 @@ const Settings = () => {
     <div className="page single-column settings-page">
       <Accordion expansionMode="multiple">
         <Accordion.Section sectionId="language">
-          <AccordionSettingsSectionToggle title="Language" description="Choose your application language" />
+          <AccordionSettingsSectionToggle
+            title={t("settings.languageTitle")}
+            description={t("settings.languageDescription")}
+          />
           <Accordion.Content>
             <Dropdown
               name="language"
@@ -135,11 +140,14 @@ const Settings = () => {
           </Accordion.Content>
         </Accordion.Section>
         <Accordion.Section sectionId="theme">
-          <AccordionSettingsSectionToggle title="Theme" description="Choose your application theme and mode" />
+          <AccordionSettingsSectionToggle
+            title={t("settings.themeTitle")}
+            description={t("settings.themeDescription")}
+          />
           <Accordion.Content>
             <div className="hue-placeholder-container">
               <Textfield
-                label="Theme color"
+                label={t("settings.themeColor")}
                 onClick={handleOpenHuePopup}
                 value={hexColor}
                 readOnly
@@ -150,7 +158,7 @@ const Settings = () => {
               <ColorPreviewSquare onClick={handleOpenHuePopup} color={hexColor} />
             </div>
             <ToggleSwitch
-              label="Dark Mode"
+              label={t("settings.darkMode")}
               name="darkMode"
               checked={authUserSettings?.darkMode}
               onChange={handleSettingsChange}
@@ -159,32 +167,35 @@ const Settings = () => {
           </Accordion.Content>
         </Accordion.Section>
         <Accordion.Section sectionId="profile">
-          <AccordionSettingsSectionToggle title="Profile" description="Edit profile information" />
+          <AccordionSettingsSectionToggle
+            title={t("settings.profileTitle")}
+            description={t("settings.profileDescription")}
+          />
           <Accordion.Content>
             <Textfield
               name="username"
               value={authUserSettings?.username}
-              label="Display name"
+              label={t("settings.displayName")}
               classNamesObj={{ container: "mt-4-rem" }}
               onChange={handleSettingsChange}
               debounceDelay={300}
             />
-            <ImageField label="Avatar" onChange={handleAvatarChange} marginBottomType="none" disabled />
+            <ImageField label={t("settings.avatar")} onChange={handleAvatarChange} marginBottomType="none" disabled />
           </Accordion.Content>
         </Accordion.Section>
       </Accordion>
       <HuePopup hue={currentThemeHue} {...alertProps} onConfirm={handleChangeThemeColorHue} />
-      <div className="flex mt-2-rem g-2-rem">
-        <CustomButton
+      <div className="buttons-container">
+        <Button
           display={didSettingsChange}
-          text="Save settings"
+          text={t("common.actions.save")}
           className="ml-auto"
           onClick={handleSettingsSave}
           disableDefaultMargin
         />
-        <CustomButton
+        <Button
           display={didSettingsChange}
-          text="Revert"
+          text={t("common.actions.revert")}
           onClick={revertSettings}
           icon={["fas", "undo"]}
           disableDefaultMargin

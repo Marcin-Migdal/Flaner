@@ -45,17 +45,20 @@ export const NotificationSubMenu = () => {
           className={selectedTab === "unread-notification" ? "selected" : ""}
           onClick={handleChangeTab("unread-notification")}
         >
-          {t("Unread")}
+          {t("nav.notifications.unread")}
         </div>
         <div
           className={selectedTab === "all-notification" ? "selected" : ""}
           onClick={handleChangeTab("all-notification")}
         >
-          {t("All")}
+          {t("nav.notifications.all")}
         </div>
       </div>
 
-      <ContentWrapper query={currentQuery}>
+      <ContentWrapper
+        query={currentQuery}
+        placeholdersConfig={{ noData: { message: t("notifications.noNotifications") } }}
+      >
         {({ data }) => {
           return data.length === 0 ? (
             <DesktopNavbarItem
@@ -66,7 +69,7 @@ export const NotificationSubMenu = () => {
               openDirection={subMenuPosition?.openDirection}
             >
               <Icon icon={["fas", "triangle-exclamation"]} />
-              <h3>{t("No notifications")}</h3>
+              <h3>{t("notifications.noNotifications")}</h3>
             </DesktopNavbarItem>
           ) : (
             <>

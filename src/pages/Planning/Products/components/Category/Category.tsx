@@ -1,5 +1,6 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { DropdownMenu, DropdownMenuOption, Icon, useAlert } from "@marcin-migdal/m-component-library";
+import { useTranslation } from "react-i18next";
 
 import { ContentWrapper, DeleteAlert, OnDeleteMutation } from "@components";
 import { useAppSelector } from "@hooks";
@@ -18,6 +19,7 @@ type CategoryProps = {
 };
 
 export const Category = ({ category }: CategoryProps) => {
+  const { t } = useTranslation();
   const { authUser } = useAppSelector(selectAuthorization);
 
   const query = useGetProductsQuery({ categoryId: category.id, currentUserUid: authUser?.uid });
@@ -29,12 +31,12 @@ export const Category = ({ category }: CategoryProps) => {
 
   const categoryContextMenuOptions: DropdownMenuOption[] = [
     {
-      label: "Edit category",
+      label: t("products.editCategory"),
       onClick: () => handleOpenEditCategoryAlert(),
       disabled: !authUser?.uid || !category.editAccess.includes(authUser.uid),
     },
     {
-      label: "Delete category",
+      label: t("products.deleteCategory"),
       onClick: () => handleOpenDeleteCategoryAlert(),
       disabled: category.ownerId !== authUser?.uid,
     },
@@ -67,7 +69,7 @@ export const Category = ({ category }: CategoryProps) => {
         <AddProductAlert category={category} />
         <ContentWrapper query={query}>{({ data: products }) => <ProductList products={products} />}</ContentWrapper>
       </div>
-      <DeleteAlert {...alertDeleteCategoryProps} onDelete={handleDelete} entity="category" />
+      <DeleteAlert {...alertDeleteCategoryProps} onDelete={handleDelete} />
       <EditCategoryAlert category={category} {...alertEditCategoryProps} />
     </>
   );

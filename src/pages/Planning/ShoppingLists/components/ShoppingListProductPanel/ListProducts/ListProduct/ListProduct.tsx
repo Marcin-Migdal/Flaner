@@ -1,5 +1,6 @@
 import { Accordion, Button, DropdownMenu, Icon, Textarea } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppSelector, useBreakpoint } from "@hooks";
 import { ShoppingList } from "@services/ShoppingLists";
@@ -24,6 +25,7 @@ export const ListProduct = ({
   handleOpenDeleteAlert,
 }: ListProductProps) => {
   const { authUser } = useAppSelector(selectAuthorization);
+  const { t } = useTranslation();
   const [editShoppingListProduct] = useEditShoppingListProductMutation();
 
   const isMobile = useBreakpoint(`(max-width: 768px)`);
@@ -60,12 +62,12 @@ export const ListProduct = ({
           triggerContainerClassName="shopping-list-product-context-menu-trigger"
           options={[
             {
-              label: "Edit product",
+              label: t("products.editProduct"),
               onClick: () => handleOpenEditAlert(product),
               disabled: !authUser?.uid || !shoppingList?.editAccess.includes(authUser.uid),
             },
             {
-              label: "Delete product",
+              label: t("products.deleteProduct"),
               onClick: () => handleOpenDeleteAlert(product.id),
               disabled: shoppingList?.ownerId !== authUser?.uid,
             },

@@ -1,4 +1,5 @@
 import { DropdownMenu, Icon } from "@marcin-migdal/m-component-library";
+import { useTranslation } from "react-i18next";
 
 import { useAppSelector } from "@hooks";
 import { Product } from "@services/Products";
@@ -14,6 +15,7 @@ type ProductProps = {
 
 export const ProductItem = ({ product, handleOpenDeleteProductAlert, handleOpenEditProductAlert }: ProductProps) => {
   const { authUser } = useAppSelector(selectAuthorization);
+  const { t } = useTranslation();
 
   return (
     <li className="products-list-item" key={product.id}>
@@ -23,12 +25,12 @@ export const ProductItem = ({ product, handleOpenDeleteProductAlert, handleOpenE
         triggerContainerClassName="product-context-menu-trigger"
         options={[
           {
-            label: "Edit product",
+            label: t("products.editProduct"),
             onClick: () => handleOpenEditProductAlert(product),
             disabled: !authUser?.uid || !product.editAccess.includes(authUser.uid),
           },
           {
-            label: "Delete product",
+            label: t("products.deleteProduct"),
             onClick: () => handleOpenDeleteProductAlert(product.id),
             disabled: product.ownerId !== authUser?.uid,
           },

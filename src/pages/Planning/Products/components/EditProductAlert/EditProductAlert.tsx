@@ -8,6 +8,7 @@ import {
   useForm,
 } from "@marcin-migdal/m-component-library";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 import { ContentWrapper } from "@components";
 import { useAppDispatch, useAppSelector } from "@hooks";
@@ -25,6 +26,7 @@ type EditProductAlertProps = {
 export const EditProductAlert = ({ data: product, handleClose, alertOpen }: EditProductAlertProps) => {
   const dispatch = useAppDispatch();
   const { authUser } = useAppSelector(selectAuthorization);
+  const { t } = useTranslation();
 
   const categoriesQuery = useGetProductCategoriesQuery({ currentUserUid: authUser?.uid });
   const [editProduct] = useEditProductMutation();
@@ -44,7 +46,7 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
 
     editProduct({ productId: product.id, payload: payload }).then(() => {
       handleClose();
-      dispatch(addToast({ message: `Product has been edited` }));
+      dispatch(addToast({ message: "products.productEdited" }));
     });
   };
 
@@ -70,30 +72,39 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
 
   return (
     <Alert
-      header="Edit product"
+      header={t("products.editProduct")}
       alertOpen={alertOpen}
       handleClose={handleCloseAlert}
-      confirmBtnText="Edit"
+      confirmBtnText={t("common.actions.edit")}
       onConfirm={formik.submitForm}
-      declineBtnText="Close"
+      declineBtnText={t("common.actions.close")}
       onDecline={handleCloseAlert}
     >
       <ContentWrapper query={categoriesQuery}>
         {({ data: categoryOptions }) => (
           <Form formik={formik} disableSubmitOnEnter>
-            {({ registerChange, registerBlur }) => {
+            {({ errors, registerChange, registerBlur }) => {
               return (
                 <>
-                  <Textfield placeholder="Name" {...registerChange<"name", SimpleChangeEvent<ProductState>>("name")} />
+                  <Textfield
+                    {...registerChange<"name", SimpleChangeEvent<ProductState>>("name")}
+                    placeholder={t("common.fields.name")}
+                    error={t(errors.name || "")}
+                  />
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   <Dropdown<any>
-                    placeholder="Category"
+                    {...registerBlur<"category", SimpleChangeEvent<ProductState>>("category")}
+                    placeholder={t("products.category")}
                     options={categoryOptions}
                     labelKey={"name"}
                     valueKey={"id"}
-                    {...registerBlur<"category", SimpleChangeEvent<ProductState>>("category")}
+                    error={t((errors.category as string) || "")}
                   />
-                  {/* <ImageField placeholder="Image" {...(registerBlur("image"))} /> */}
+                  {/* <ImageField
+                    {...registerBlur("image")}
+                    placeholder="common.fields.image"
+                    error={t((errors.image as string) || "")}
+                  /> */}
                 </>
               );
             }}

@@ -39,6 +39,10 @@
         padding: var(--spacing-0) var(--spacing-2);
         min-width: fit-content;
 
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+
         background-color: var(--primary-color_680);
 
         transition: var(--transition-duration-fast);
@@ -58,7 +62,7 @@
     }
 
     .placeholder {
-      width: var(--notification-item-width);
+      min-width: var(--notification-item-width);
       height: var(--submenu-item-height);
       padding: unset;
       background-color: var(--primary-color_780);
@@ -72,7 +76,7 @@
       height: unset;
 
       &.no-notification-item {
-        width: var(--notification-item-width);
+        min-width: var(--notification-item-width);
         height: var(--submenu-item-height);
         display: flex;
         align-items: center;
@@ -96,7 +100,7 @@
       .notification-submenu-item {
         display: flex;
 
-        width: var(--notification-item-width);
+        min-width: var(--notification-item-width);
         height: var(--submenu-item-height);
         padding: var(--spacing-2);
         gap: var(--spacing-2);

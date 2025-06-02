@@ -50,11 +50,14 @@ export const ReceivedRequestsSidePanel = (props: ReceivedRequestsSidePanelProps)
       closeOnOutsideClick
       {...props}
     >
-      <h3>{t("Received Requests")}</h3>
-      <ContentWrapper query={receivedFriendRequestQuery}>
+      <h3>{t("friends.receivedRequests")}</h3>
+      <ContentWrapper
+        query={receivedFriendRequestQuery}
+        placeholdersConfig={{ noData: { message: "friends.noInvitations" } }}
+      >
         {({ data }) => (
           <ReceivedFriendRequests
-            friendRequests={data || []}
+            friendRequests={data}
             onRequestConfirm={handleRequestConfirm}
             onRequestDecline={handleRequestDecline}
           />
