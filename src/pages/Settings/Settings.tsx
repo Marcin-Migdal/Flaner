@@ -123,7 +123,7 @@ const Settings = () => {
 
   return (
     <div className="page single-column settings-page">
-      <Accordion expansionMode="multiple">
+      <Accordion instanceClassName="settings" expansionMode="multiple">
         <Accordion.Section sectionId="language">
           <AccordionSettingsSectionToggle
             title={t("settings.languageTitle")}
