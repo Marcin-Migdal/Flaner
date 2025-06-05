@@ -1,5 +1,6 @@
 .product-page {
   --min-category-width: 214px;
+  --category-height: 400px;
 
   .product-top-section {
     display: grid;
@@ -16,15 +17,13 @@
   }
 
   .categories-container {
-    max-height: 100%;
-
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(var(--min-category-width), 1fr));
     gap: var(--spacing-2);
+    align-items: start;
     padding-right: var(--spacing-1);
 
     overflow-y: auto;
-    overflow-x: hidden;
   }
 }
 
@@ -32,26 +31,10 @@
   .product-page {
     .product-top-section {
       display: flex;
-
       gap: var(--spacing-2);
 
       .category-input-container {
         max-width: unset;
-      }
-    }
-
-    .categories-container {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-2);
-
-      .category {
-        max-width: 100%;
-
-        .products-list {
-          max-height: unset;
-          overflow: visible;
-        }
       }
     }
   }
