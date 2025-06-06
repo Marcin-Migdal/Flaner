@@ -2,8 +2,10 @@ import { Alert, Button, Form, Textfield, useAlert, useForm } from "@marcin-migda
 import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "@hooks";
+import { constructFlanerApiErrorContent } from "@services/helpers";
 import { CreateShoppingList, useAddShoppingListMutation } from "@services/ShoppingLists";
 import { addToast, selectAuthorization } from "@slices";
+import { FlanerApiErrorData } from "@utils/error-classes";
 
 import {
   ShoppingListState,
@@ -30,7 +32,7 @@ export const AddShoppingListAlert = () => {
     onClose: () => formik.resetForm(),
   });
 
-  const handleSubmit = (formState: ShoppingListSubmitState) => {
+  const handleSubmit = async (formState: ShoppingListSubmitState) => {
     if (!authUser) {
       return;
     }
@@ -44,12 +46,16 @@ export const AddShoppingListAlert = () => {
       viewAccess: [authUserId],
     };
 
-    addShoppingList(payload).then(() => {
-      formik.resetForm();
-      alertProps.handleClose();
+    const { error } = await addShoppingList(payload);
 
+    if (!error) {
       dispatch(addToast({ message: "shoppingLists.shoppingListAdded" }));
-    });
+
+      alertProps.handleClose();
+      formik.resetForm();
+    } else {
+      formik.setErrors(constructFlanerApiErrorContent(error as FlanerApiErrorData).formErrors);
+    }
   };
 
   return (

@@ -3,8 +3,10 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "@hooks";
+import { constructFlanerApiErrorContent } from "@services/helpers";
 import { ShoppingList, UpdateShoppingList, useEditShoppingListMutation } from "@services/ShoppingLists";
 import { addToast, selectAuthorization } from "@slices";
+import { FlanerApiErrorData } from "@utils/error-classes";
 import { initShoppingListValues, ShoppingListState, shoppingListValidationSchema } from "@utils/formik-configs";
 
 type EditShoppingListAlertProps = {
@@ -20,19 +22,24 @@ export const EditShoppingListAlert = ({ data: shoppingList, handleClose, alertOp
 
   const [editShoppingList] = useEditShoppingListMutation();
 
-  const handleSubmit = (formState: ShoppingListState) => {
+  const handleSubmit = async (formState: ShoppingListState) => {
     if (!authUser || !shoppingList) {
       return;
     }
 
     const payload: UpdateShoppingList = {
       name: formState.name,
+      currentUserId: authUser.uid,
     };
 
-    editShoppingList({ shoppingListId: shoppingList.id, payload: payload }).then(() => {
+    const { error } = await editShoppingList({ shoppingListId: shoppingList.id, payload: payload });
+
+    if (!error) {
+      dispatch(addToast({ message: "shoppingLists.shoppingListEdited" }));
       handleClose();
-      dispatch(addToast({ message: "shoppingLists.shoppingListEdited", type: "success" }));
-    });
+    } else {
+      formik.setErrors(constructFlanerApiErrorContent(error as FlanerApiErrorData).formErrors);
+    }
   };
 
   const formik = useForm<ShoppingListState>({

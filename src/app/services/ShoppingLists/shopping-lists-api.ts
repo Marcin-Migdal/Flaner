@@ -84,6 +84,15 @@ export const shoppingListsApi = firestoreApi.injectEndpoints({
     editShoppingList: build.mutation<null, { shoppingListId: string; payload: UpdateShoppingList }>({
       async queryFn({ shoppingListId, payload }) {
         try {
+          const snap = await getCollectionFilteredDocuments<FirestoreShoppingList>(COLLECTIONS.SHOPPING_LISTS, {
+            name: [{ field: "name", condition: "==", searchValue: payload.name }],
+            viewAccess: [{ field: "viewAccess", condition: "array-contains", searchValue: payload.currentUserId }],
+          });
+
+          if (!snap.empty) {
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_ALREADY_EXIST, "Shopping list");
+          }
+
           await editCollectionDocument(COLLECTIONS.SHOPPING_LISTS, shoppingListId, {
             ...payload,
             updatedAt: getCurrentStringDate(),

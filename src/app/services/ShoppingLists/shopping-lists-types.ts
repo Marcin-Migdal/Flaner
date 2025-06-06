@@ -8,4 +8,5 @@ export type ShoppingList = {
 
 export type FirestoreShoppingList = Omit<ShoppingList, "id">;
 export type CreateShoppingList = Omit<ShoppingList, "id" | "createdAt" | "updatedAt">;
-export type UpdateShoppingList = Partial<Omit<ShoppingList, "id" | "ownerId" | "createdAt">>;
+export type UpdateShoppingList = { currentUserId: string } & Pick<ShoppingList, "name"> &
+  Partial<Omit<ShoppingList, "id" | "ownerId" | "name" | "createdAt">>;

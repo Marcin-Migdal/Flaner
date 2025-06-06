@@ -90,6 +90,15 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
     editProductCategory: build.mutation<null, { categoryId: string; payload: UpdateProductCategory }>({
       async queryFn({ categoryId, payload }) {
         try {
+          const snap = await getCollectionFilteredDocuments<FirestoreProductCategory>(COLLECTIONS.CATEGORIES, {
+            name: [{ field: "name", condition: "==", searchValue: payload.name }],
+            viewAccess: [{ field: "viewAccess", condition: "array-contains", searchValue: payload.currentUserId }],
+          });
+
+          if (!snap.empty) {
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_ALREADY_EXIST, "Product category");
+          }
+
           await editCollectionDocument(COLLECTIONS.CATEGORIES, categoryId, {
             ...payload,
             updatedAt: getCurrentStringDate(),
