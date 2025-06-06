@@ -12,9 +12,11 @@ import { useTranslation } from "react-i18next";
 
 import { ContentWrapper } from "@components";
 import { useAppDispatch, useAppSelector } from "@hooks";
+import { constructFlanerApiErrorContent } from "@services/helpers";
 import { useGetProductCategoriesQuery } from "@services/ProductCategories";
 import { Product, UpdateProduct, useEditProductMutation } from "@services/Products";
 import { addToast, selectAuthorization } from "@slices";
+import { FlanerApiErrorData } from "@utils/error-classes";
 import { initProductValues, ProductState, ProductSubmitState, productValidationSchema } from "@utils/formik-configs";
 
 type EditProductAlertProps = {
@@ -31,23 +33,32 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
   const categoriesQuery = useGetProductCategoriesQuery({ currentUserUid: authUser?.uid });
   const [editProduct] = useEditProductMutation();
 
-  const handleSubmit = (formState: ProductSubmitState) => {
+  const handleSubmit = async (formState: ProductSubmitState) => {
     if (!authUser || !product) {
       return;
     }
 
     const payload: UpdateProduct = {
       name: formState.name,
+      currentUserId: authUser.uid,
     };
 
     if (formState.category.id !== product.categoryId) {
       payload.categoryId = formState.category.id;
     }
 
-    editProduct({ productId: product.id, payload: payload }).then(() => {
-      handleClose();
-      dispatch(addToast({ message: "products.productEdited" }));
+    const { error } = await editProduct({
+      productId: product.id,
+      payload: payload,
+      categoryId: formState.category.id,
     });
+
+    if (!error) {
+      dispatch(addToast({ message: "products.productEdited" }));
+      handleClose();
+    } else {
+      formik.setErrors(constructFlanerApiErrorContent(error as FlanerApiErrorData).formErrors);
+    }
   };
 
   const formik = useForm<ProductState>({

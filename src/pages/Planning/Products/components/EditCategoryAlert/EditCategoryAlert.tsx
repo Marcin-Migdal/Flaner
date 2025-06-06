@@ -11,8 +11,10 @@ import { useTranslation } from "react-i18next";
 1;
 
 import { useAppDispatch, useAppSelector } from "@hooks";
+import { constructFlanerApiErrorContent } from "@services/helpers";
 import { ProductCategory, UpdateProductCategory, useEditProductCategoryMutation } from "@services/ProductCategories";
 import { addToast, selectAuthorization } from "@slices";
+import { FlanerApiErrorData } from "@utils/error-classes";
 import { CategoryState, CategorySubmitState, categoryValidationSchema } from "@utils/formik-configs";
 
 type EditCategoryAlertProps = {
@@ -28,21 +30,26 @@ export const EditCategoryAlert = ({ category, handleClose, alertOpen }: EditCate
 
   const [editProductCategory] = useEditProductCategoryMutation();
 
-  const handleSubmit = (formState: CategorySubmitState) => {
+  const handleSubmit = async (formState: CategorySubmitState) => {
     if (!authUser) {
       return;
     }
 
     const payload: UpdateProductCategory = {
       name: formState.name,
+      currentUserId: authUser.uid,
       icon: formState.icon,
       color: formState.color as string,
     };
 
-    editProductCategory({ categoryId: category.id, payload: payload }).then(() => {
+    const { error } = await editProductCategory({ categoryId: category.id, payload: payload });
+
+    if (!error) {
       dispatch(addToast({ message: "products.categoryEdited" }));
       handleClose();
-    });
+    } else {
+      formik.setErrors(constructFlanerApiErrorContent(error as FlanerApiErrorData).formErrors);
+    }
   };
 
   const formik = useForm<CategoryState>({

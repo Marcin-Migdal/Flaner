@@ -17,11 +17,13 @@ import { useTranslation } from "react-i18next";
 
 import { ContentWrapper } from "@components";
 import { useAppDispatch, useAppSelector } from "@hooks";
+import { constructFlanerApiErrorContent } from "@services/helpers";
 import { ProductCategory, useGetProductCategoriesQuery } from "@services/ProductCategories";
 import { Product, useGetProductsQuery } from "@services/Products";
 import { CreateShoppingListProduct, useAddShoppingListProductMutation } from "@services/ShoppingListsProduct";
 import { Unit, useGetUnitsQuery } from "@services/Units";
 import { addToast, selectAuthorization } from "@slices";
+import { FlanerApiErrorData } from "@utils/error-classes";
 
 import {
   ShoppingListProductState,
@@ -69,7 +71,7 @@ export const AddShoppingListProductAlert = ({ shoppingListId }: AddShoppingListP
 
   const { data: unitsOptions } = useGetUnitsQuery(undefined, { skip: alertOpen !== AlertOpenState.OPENED });
 
-  const handleSubmit = (formState: ShoppingListProductSubmitState) => {
+  const handleSubmit = async (formState: ShoppingListProductSubmitState) => {
     const { category, product, unit, amount, description } = formState;
 
     if (!authUser || !shoppingListId) {
@@ -93,15 +95,19 @@ export const AddShoppingListProductAlert = ({ shoppingListId }: AddShoppingListP
       unit: unit,
     };
 
-    addShoppingListProduct({ shoppingListId, payload }).then(() => {
+    const { error } = await addShoppingListProduct({ shoppingListId, payload });
+
+    if (!error) {
+      dispatch(addToast({ message: "shoppingLists.shoppingListProductAdded" }));
+
       if (!addAnother) {
         handleClose();
       } else {
         formik.resetForm();
       }
-
-      dispatch(addToast({ message: "shoppingLists.shoppingListProductAdded" }));
-    });
+    } else {
+      formik.setErrors(constructFlanerApiErrorContent(error as FlanerApiErrorData).formErrors);
+    }
   };
 
   const handleCheckboxChange = (event: CheckboxChangeEvent) => {

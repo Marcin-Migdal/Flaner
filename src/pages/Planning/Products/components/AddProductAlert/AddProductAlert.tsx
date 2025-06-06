@@ -17,10 +17,11 @@ import { useTranslation } from "react-i18next";
 
 import { ContentWrapper } from "@components";
 import { useAppDispatch, useAppSelector } from "@hooks";
+import { constructFlanerApiErrorContent } from "@services/helpers";
 import { ProductCategory, useGetProductCategoriesQuery } from "@services/ProductCategories";
 import { CreateProduct, useAddProductMutation } from "@services/Products";
 import { addToast, selectAuthorization } from "@slices";
-
+import { FlanerApiErrorData } from "@utils/error-classes";
 import { initProductValues, ProductState, ProductSubmitState, productValidationSchema } from "@utils/formik-configs";
 
 type AddProductAlertProps = { category: ProductCategory };
@@ -49,7 +50,7 @@ export const AddProductAlert = ({ category }: AddProductAlertProps) => {
     },
   });
 
-  const handleSubmit = (formState: ProductSubmitState) => {
+  const handleSubmit = async (formState: ProductSubmitState) => {
     if (!authUser) {
       return;
     }
@@ -67,7 +68,9 @@ export const AddProductAlert = ({ category }: AddProductAlertProps) => {
       viewAccess: [authUserId],
     };
 
-    addProduct(payload).then(() => {
+    const { error } = await addProduct(payload);
+
+    if (!error) {
       dispatch(addToast({ message: "products.productAdded" }));
 
       if (!addAnother) {
@@ -75,7 +78,9 @@ export const AddProductAlert = ({ category }: AddProductAlertProps) => {
       } else {
         formik.resetForm();
       }
-    });
+    } else {
+      formik.setErrors(constructFlanerApiErrorContent(error as FlanerApiErrorData).formErrors);
+    }
   };
 
   const handleCheckboxChange = (event: CheckboxChangeEvent) => {

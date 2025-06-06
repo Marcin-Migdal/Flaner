@@ -85,11 +85,21 @@ export const productApi = firestoreApi.injectEndpoints({
       },
     }),
 
-    editProduct: build.mutation<null, { productId: string; payload: UpdateProduct }>({
-      async queryFn({ productId, payload }) {
+    editProduct: build.mutation<null, { productId: string; payload: UpdateProduct; categoryId: string }>({
+      async queryFn({ productId, payload: { currentUserId, ...rest }, categoryId }) {
         try {
+          const snap = await getCollectionFilteredDocuments<FirestoreProduct>(COLLECTIONS.PRODUCTS, {
+            name: [{ field: "name", condition: "==", searchValue: rest.name }],
+            categoryId: [{ field: "categoryId", condition: "==", searchValue: categoryId }],
+            viewAccess: [{ field: "viewAccess", condition: "array-contains", searchValue: currentUserId }],
+          });
+
+          if (!snap.empty) {
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_ALREADY_EXIST, "Product");
+          }
+
           await editCollectionDocument(COLLECTIONS.PRODUCTS, productId, {
-            ...payload,
+            ...rest,
             updatedAt: getCurrentStringDate(),
           });
 

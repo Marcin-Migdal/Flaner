@@ -10,4 +10,5 @@ export type Product = {
 
 export type FirestoreProduct = Omit<Product, "id">;
 export type CreateProduct = Omit<Product, "id" | "createdAt" | "updatedAt">;
-export type UpdateProduct = Partial<Omit<Product, "id" | "ownerId" | "createdAt">>;
+export type UpdateProduct = { currentUserId: string } & Pick<Product, "name"> &
+  Partial<Omit<Product, "id" | "name" | "ownerId" | "createdAt">>;
