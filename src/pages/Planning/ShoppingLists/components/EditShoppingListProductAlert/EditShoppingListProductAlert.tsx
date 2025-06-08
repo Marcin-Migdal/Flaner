@@ -25,7 +25,7 @@ import {
 } from "@services/ShoppingListsProduct";
 
 import { constructFlanerApiErrorContent } from "@services/helpers";
-import { FlanerApiErrorData } from "@utils/error-classes";
+import { FlanerApiError } from "@utils/error-classes";
 import {
   ShoppingListProductState,
   ShoppingListProductSubmitState,
@@ -51,6 +51,13 @@ export const EditShoppingListProductAlert = ({
   const { authUser } = useAppSelector(selectAuthorization);
 
   const [editShoppingListProduct] = useEditShoppingListProductMutation();
+
+  const formik = useForm<ShoppingListProductState>({
+    initialValues: initShoppingListProductValues,
+    validationSchema: shoppingListProductValidationSchema,
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    onSubmit: (formState: ShoppingListProductSubmitState) => handleSubmit(formState),
+  });
 
   const handleSubmit = async (formState: ShoppingListProductSubmitState) => {
     const { category, product, unit, amount, description } = formState;
@@ -81,19 +88,13 @@ export const EditShoppingListProductAlert = ({
       payload: payload,
     });
 
-    if (!error) {
+    if (error instanceof FlanerApiError) {
+      formik.setErrors(constructFlanerApiErrorContent(error).formErrors);
+    } else {
       dispatch(addToast({ message: "shoppingLists.shoppingListProductEdited" }));
       handleClose();
-    } else {
-      formik.setErrors(constructFlanerApiErrorContent(error as FlanerApiErrorData).formErrors);
     }
   };
-
-  const formik = useForm<ShoppingListProductState>({
-    initialValues: initShoppingListProductValues,
-    validationSchema: shoppingListProductValidationSchema,
-    onSubmit: (formState: ShoppingListProductSubmitState) => handleSubmit(formState),
-  });
 
   const productCategoriesQuery = useGetProductCategoriesQuery(
     { currentUserUid: authUser?.uid },

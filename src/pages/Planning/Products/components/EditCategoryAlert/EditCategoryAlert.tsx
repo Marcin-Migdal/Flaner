@@ -14,7 +14,7 @@ import { useAppDispatch, useAppSelector } from "@hooks";
 import { constructFlanerApiErrorContent } from "@services/helpers";
 import { ProductCategory, UpdateProductCategory, useEditProductCategoryMutation } from "@services/ProductCategories";
 import { addToast, selectAuthorization } from "@slices";
-import { FlanerApiErrorData } from "@utils/error-classes";
+import { FlanerApiError } from "@utils/error-classes";
 import { CategoryState, CategorySubmitState, categoryValidationSchema } from "@utils/formik-configs";
 
 type EditCategoryAlertProps = {
@@ -30,6 +30,13 @@ export const EditCategoryAlert = ({ category, handleClose, alertOpen }: EditCate
 
   const [editProductCategory] = useEditProductCategoryMutation();
 
+  const formik = useForm<CategoryState>({
+    initialValues: { name: category.name, color: category.color, icon: category.icon },
+    validationSchema: categoryValidationSchema,
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    onSubmit: (formState: CategorySubmitState) => handleSubmit(formState),
+  });
+
   const handleSubmit = async (formState: CategorySubmitState) => {
     if (!authUser) {
       return;
@@ -44,19 +51,13 @@ export const EditCategoryAlert = ({ category, handleClose, alertOpen }: EditCate
 
     const { error } = await editProductCategory({ categoryId: category.id, payload: payload });
 
-    if (!error) {
+    if (error instanceof FlanerApiError) {
+      formik.setErrors(constructFlanerApiErrorContent(error).formErrors);
+    } else {
       dispatch(addToast({ message: "products.categoryEdited" }));
       handleClose();
-    } else {
-      formik.setErrors(constructFlanerApiErrorContent(error as FlanerApiErrorData).formErrors);
     }
   };
-
-  const formik = useForm<CategoryState>({
-    initialValues: { name: category.name, color: category.color, icon: category.icon },
-    validationSchema: categoryValidationSchema,
-    onSubmit: (formState: CategorySubmitState) => handleSubmit(formState),
-  });
 
   const handleCloseAlert = () => {
     handleClose();

@@ -69,7 +69,7 @@ function App() {
         );
       } catch (error) {
         if (error instanceof FlanerApiError) {
-          dispatch(addToast({ message: flanerApiErrorsContent[error.code as FlanerApiErrorsContentKeys].message }));
+          dispatch(addToast({ message: flanerApiErrorsContent[error.code].message }));
         }
       }
     });

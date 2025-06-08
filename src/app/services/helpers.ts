@@ -1,21 +1,26 @@
 import { FormErrors } from "@marcin-migdal/m-component-library";
 
-import { ENTITY_TEXT_INJECTION_POINTER, FlanerApiErrorContent, flanerApiErrorsContent } from "@utils/constants";
-import { FlanerApiError, FlanerApiErrorData } from "@utils/error-classes";
+import {
+  ENTITY_TEXT_INJECTION_POINTER,
+  FlanerApiErrorContent,
+  flanerApiErrorsContent,
+  FlanerApiErrorsContentKeys,
+} from "@utils/constants";
+import { FlanerApiError } from "@utils/error-classes";
 
-export const getFlanerAuthError = (error, fallbackError: FlanerApiErrorData): FlanerApiErrorData => {
-  if (error instanceof FlanerApiError || ("code" in error && typeof error.code === "string")) {
-    return { code: error.code };
+export const getFlanerAuthError = (error, fallbackError: FlanerApiError): FlanerApiError => {
+  if (Object.values(FlanerApiErrorsContentKeys).includes(error?.code)) {
+    return new FlanerApiError(error.code);
   }
 
-  return { code: fallbackError.code };
+  return fallbackError;
 };
 
-type GetRtkErrorResult = { error: FlanerApiErrorData };
+type GetRtkErrorResult = { error: FlanerApiError };
 
-export const getRtkError = (error, fallbackError: FlanerApiErrorData): GetRtkErrorResult => {
+export const getRtkError = (error: unknown, fallbackError: FlanerApiError): GetRtkErrorResult => {
   if (error instanceof FlanerApiError) {
-    return { error: error.getErrorData() };
+    return { error };
   }
 
   return { error: fallbackError };
@@ -34,7 +39,7 @@ export type ConstructedFlanerApiErrorContent<T = unknown> = {
   formErrors: FormErrors<T>;
 };
 
-export const constructFlanerApiErrorContent = (errorValues: FlanerApiErrorData): ConstructedFlanerApiErrorContent => {
+export const constructFlanerApiErrorContent = (errorValues: FlanerApiError): ConstructedFlanerApiErrorContent => {
   const errorContent: FlanerApiErrorContent = flanerApiErrorsContent[errorValues.code];
 
   let message = errorContent.message;

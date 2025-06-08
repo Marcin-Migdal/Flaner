@@ -1,8 +1,8 @@
 import { FormErrors } from "@marcin-migdal/m-component-library";
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
+import { ConstructedFlanerApiErrorContent } from "@services/helpers";
 import { SignInState, SignUpState } from "@utils/formik-configs";
-import { ConstructedFlanerApiErrorContent } from "src/app/middleware/errorToasterMiddleware";
 import { AuthUser, AuthorizationInitialState } from "./authorization-slice-types";
 
 const initialState: AuthorizationInitialState = {

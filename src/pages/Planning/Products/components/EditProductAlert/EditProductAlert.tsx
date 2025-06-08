@@ -16,7 +16,7 @@ import { constructFlanerApiErrorContent } from "@services/helpers";
 import { useGetProductCategoriesQuery } from "@services/ProductCategories";
 import { Product, UpdateProduct, useEditProductMutation } from "@services/Products";
 import { addToast, selectAuthorization } from "@slices";
-import { FlanerApiErrorData } from "@utils/error-classes";
+import { FlanerApiError } from "@utils/error-classes";
 import { initProductValues, ProductState, ProductSubmitState, productValidationSchema } from "@utils/formik-configs";
 
 type EditProductAlertProps = {
@@ -32,6 +32,13 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
 
   const categoriesQuery = useGetProductCategoriesQuery({ currentUserUid: authUser?.uid });
   const [editProduct] = useEditProductMutation();
+
+  const formik = useForm<ProductState>({
+    initialValues: initProductValues,
+    validationSchema: productValidationSchema,
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    onSubmit: (formState: ProductSubmitState) => handleSubmit(formState),
+  });
 
   const handleSubmit = async (formState: ProductSubmitState) => {
     if (!authUser || !product) {
@@ -53,19 +60,13 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
       categoryId: formState.category.id,
     });
 
-    if (!error) {
+    if (error instanceof FlanerApiError) {
+      formik.setErrors(constructFlanerApiErrorContent(error).formErrors);
+    } else {
       dispatch(addToast({ message: "products.productEdited" }));
       handleClose();
-    } else {
-      formik.setErrors(constructFlanerApiErrorContent(error as FlanerApiErrorData).formErrors);
     }
   };
-
-  const formik = useForm<ProductState>({
-    initialValues: initProductValues,
-    validationSchema: productValidationSchema,
-    onSubmit: (formState: ProductSubmitState) => handleSubmit(formState),
-  });
 
   useEffect(() => {
     if (alertOpen === AlertOpenState.OPENED && product && categoriesQuery.data) {

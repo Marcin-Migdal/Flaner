@@ -34,10 +34,8 @@ export const productApi = firestoreApi.injectEndpoints({
 
           return { data: getCollectionDataWithId(snap) };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
-            entity: "products",
-          });
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR, "products");
+          return getRtkError(error, fallbackError);
         }
       },
       providesTags: (result, _err, { categoryId }) => [
@@ -71,10 +69,8 @@ export const productApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_ADD_ERROR,
-            entity: "product",
-          });
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_ADD_ERROR, "product");
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error) => {
@@ -105,10 +101,8 @@ export const productApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
-            entity: "product",
-          });
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR, "product");
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error, { productId, payload }) => {
@@ -134,10 +128,8 @@ export const productApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR,
-            entity: "product",
-          });
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR, "product");
+          return getRtkError(error, fallbackError);
         }
       },
 

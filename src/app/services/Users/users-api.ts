@@ -37,10 +37,8 @@ export const usersApi = firestoreApi.injectEndpoints({
 
           return { data: getCollectionData(snap).filter((users) => users.uid !== currentUserUid) };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
-            entity: "users",
-          });
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR, "users");
+          return getRtkError(error, fallbackError);
         }
       },
       providesTags: (result) => getRtkTags(result, "uid", "Searched_Users"),
@@ -84,10 +82,8 @@ export const usersApi = firestoreApi.injectEndpoints({
 
           return { data: mappedUsers };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
-            entity: "users",
-          });
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR, "users");
+          return getRtkError(error, fallbackError);
         }
       },
       providesTags: (result) => getRtkTags(result, "uid", "Searched_Users"),
@@ -124,10 +120,8 @@ export const usersApi = firestoreApi.injectEndpoints({
 
           return { data: userFriends };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
-            entity: "friends",
-          });
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR, "friends");
+          return getRtkError(error, fallbackError);
         }
       },
       providesTags: (result) => getRtkTags(result, "uid", "Friends"),
@@ -145,10 +139,8 @@ export const usersApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
-            entity: "friend",
-          });
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR, "friend");
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error, arg) => {
@@ -173,10 +165,8 @@ export const usersApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR,
-            entity: "friend",
-          });
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR, "friend");
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error) => {

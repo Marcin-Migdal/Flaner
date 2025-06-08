@@ -46,7 +46,8 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, { code: FlanerApiErrorsContentKeys.SEND_FRIEND_REQUEST_ERROR });
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.SEND_FRIEND_REQUEST_ERROR);
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error, arg) => {
@@ -101,10 +102,11 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
 
           return { data: sentFriendRequestsWithUserData };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
-            entity: "sent friend requests",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            "sent friend requests"
+          );
+          return getRtkError(error, fallbackError);
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "Sent_Friend_Requests"),
@@ -154,10 +156,11 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
 
           return { data: receivedFriendRequestsWithUserData };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
-            entity: "received friend requests",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            "received friend requests"
+          );
+          return getRtkError(error, fallbackError);
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "Received_Friend_Requests"),
@@ -212,7 +215,8 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, { code: FlanerApiErrorsContentKeys.CONFIRM_FRIEND_REQUEST_ERROR });
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.CONFIRM_FRIEND_REQUEST_ERROR);
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error, arg) => {
@@ -233,7 +237,8 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, { code: FlanerApiErrorsContentKeys.DECLINE_FRIEND_REQUEST_ERROR });
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.DECLINE_FRIEND_REQUEST_ERROR);
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error, arg) => {
@@ -250,10 +255,12 @@ export const friendRequestsApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
-            entity: "sent friend request",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
+            "sent friend request"
+          );
+
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error, arg) => {

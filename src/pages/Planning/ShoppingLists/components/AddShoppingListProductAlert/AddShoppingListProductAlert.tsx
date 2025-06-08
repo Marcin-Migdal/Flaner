@@ -23,7 +23,7 @@ import { Product, useGetProductsQuery } from "@services/Products";
 import { CreateShoppingListProduct, useAddShoppingListProductMutation } from "@services/ShoppingListsProduct";
 import { Unit, useGetUnitsQuery } from "@services/Units";
 import { addToast, selectAuthorization } from "@slices";
-import { FlanerApiErrorData } from "@utils/error-classes";
+import { FlanerApiError } from "@utils/error-classes";
 
 import {
   ShoppingListProductState,
@@ -97,7 +97,9 @@ export const AddShoppingListProductAlert = ({ shoppingListId }: AddShoppingListP
 
     const { error } = await addShoppingListProduct({ shoppingListId, payload });
 
-    if (!error) {
+    if (error instanceof FlanerApiError) {
+      formik.setErrors(constructFlanerApiErrorContent(error).formErrors);
+    } else {
       dispatch(addToast({ message: "shoppingLists.shoppingListProductAdded" }));
 
       if (!addAnother) {
@@ -105,8 +107,6 @@ export const AddShoppingListProductAlert = ({ shoppingListId }: AddShoppingListP
       } else {
         formik.resetForm();
       }
-    } else {
-      formik.setErrors(constructFlanerApiErrorContent(error as FlanerApiErrorData).formErrors);
     }
   };
 

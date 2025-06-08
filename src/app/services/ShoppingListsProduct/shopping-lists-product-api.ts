@@ -14,6 +14,7 @@ import { v4 as uuid } from "uuid";
 import { getRtkError } from "@services/helpers";
 import { FlanerApiErrorsContentKeys } from "@utils/constants";
 import { COLLECTIONS } from "@utils/enums";
+import { FlanerApiError } from "@utils/error-classes";
 import { getCollectionDataWithId, getCurrentStringDate, getRtkTags } from "@utils/helpers";
 
 import {
@@ -47,10 +48,11 @@ export const shoppingListProductApi = firestoreApi.injectEndpoints({
 
           return { data: getCollectionDataWithId(shoppingListProductsSnapshot) };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
-            entity: "shopping list products",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            "shopping list products"
+          );
+          return getRtkError(error, fallbackError);
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "Shopping_Lists_Product"),
@@ -75,10 +77,11 @@ export const shoppingListProductApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_ADD_ERROR,
-            entity: "shopping list product",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_ADD_ERROR,
+            "shopping list product"
+          );
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error) => {
@@ -111,10 +114,11 @@ export const shoppingListProductApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR,
-            entity: "shopping list product",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR,
+            "shopping list product"
+          );
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error, { shoppingListProductId }) => {
@@ -140,10 +144,11 @@ export const shoppingListProductApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
-            entity: "shopping list product",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
+            "shopping list product"
+          );
+          return getRtkError(error, fallbackError);
         }
       },
 
