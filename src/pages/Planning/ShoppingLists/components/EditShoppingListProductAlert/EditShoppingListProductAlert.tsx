@@ -52,6 +52,13 @@ export const EditShoppingListProductAlert = ({
 
   const [editShoppingListProduct] = useEditShoppingListProductMutation();
 
+  const formik = useForm<ShoppingListProductState>({
+    initialValues: initShoppingListProductValues,
+    validationSchema: shoppingListProductValidationSchema,
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    onSubmit: (formState: ShoppingListProductSubmitState) => handleSubmit(formState),
+  });
+
   const handleSubmit = async (formState: ShoppingListProductSubmitState) => {
     const { category, product, unit, amount, description } = formState;
 
@@ -88,12 +95,6 @@ export const EditShoppingListProductAlert = ({
       handleClose();
     }
   };
-
-  const formik = useForm<ShoppingListProductState>({
-    initialValues: initShoppingListProductValues,
-    validationSchema: shoppingListProductValidationSchema,
-    onSubmit: (formState: ShoppingListProductSubmitState) => handleSubmit(formState),
-  });
 
   const productCategoriesQuery = useGetProductCategoriesQuery(
     { currentUserUid: authUser?.uid },

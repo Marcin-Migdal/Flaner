@@ -33,6 +33,13 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
   const categoriesQuery = useGetProductCategoriesQuery({ currentUserUid: authUser?.uid });
   const [editProduct] = useEditProductMutation();
 
+  const formik = useForm<ProductState>({
+    initialValues: initProductValues,
+    validationSchema: productValidationSchema,
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    onSubmit: (formState: ProductSubmitState) => handleSubmit(formState),
+  });
+
   const handleSubmit = async (formState: ProductSubmitState) => {
     if (!authUser || !product) {
       return;
@@ -60,12 +67,6 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
       handleClose();
     }
   };
-
-  const formik = useForm<ProductState>({
-    initialValues: initProductValues,
-    validationSchema: productValidationSchema,
-    onSubmit: (formState: ProductSubmitState) => handleSubmit(formState),
-  });
 
   useEffect(() => {
     if (alertOpen === AlertOpenState.OPENED && product && categoriesQuery.data) {

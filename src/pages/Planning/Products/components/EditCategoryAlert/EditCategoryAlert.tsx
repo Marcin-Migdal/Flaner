@@ -30,6 +30,13 @@ export const EditCategoryAlert = ({ category, handleClose, alertOpen }: EditCate
 
   const [editProductCategory] = useEditProductCategoryMutation();
 
+  const formik = useForm<CategoryState>({
+    initialValues: { name: category.name, color: category.color, icon: category.icon },
+    validationSchema: categoryValidationSchema,
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    onSubmit: (formState: CategorySubmitState) => handleSubmit(formState),
+  });
+
   const handleSubmit = async (formState: CategorySubmitState) => {
     if (!authUser) {
       return;
@@ -51,12 +58,6 @@ export const EditCategoryAlert = ({ category, handleClose, alertOpen }: EditCate
       handleClose();
     }
   };
-
-  const formik = useForm<CategoryState>({
-    initialValues: { name: category.name, color: category.color, icon: category.icon },
-    validationSchema: categoryValidationSchema,
-    onSubmit: (formState: CategorySubmitState) => handleSubmit(formState),
-  });
 
   const handleCloseAlert = () => {
     handleClose();

@@ -22,6 +22,13 @@ export const EditShoppingListAlert = ({ data: shoppingList, handleClose, alertOp
 
   const [editShoppingList] = useEditShoppingListMutation();
 
+  const formik = useForm<ShoppingListState>({
+    initialValues: initShoppingListValues,
+    validationSchema: shoppingListValidationSchema,
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    onSubmit: (formState) => handleSubmit(formState),
+  });
+
   const handleSubmit = async (formState: ShoppingListState) => {
     if (!authUser || !shoppingList) {
       return;
@@ -41,12 +48,6 @@ export const EditShoppingListAlert = ({ data: shoppingList, handleClose, alertOp
       handleClose();
     }
   };
-
-  const formik = useForm<ShoppingListState>({
-    initialValues: initShoppingListValues,
-    validationSchema: shoppingListValidationSchema,
-    onSubmit: (formState) => handleSubmit(formState),
-  });
 
   useEffect(() => {
     if (alertOpen === AlertOpenState.OPENED && shoppingList) {
