@@ -101,7 +101,7 @@ export const productApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR, "product");
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR, "product");
           return getRtkError(error, fallbackError);
         }
       },
@@ -128,7 +128,7 @@ export const productApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR, "product");
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR, "product");
           return getRtkError(error, fallbackError);
         }
       },
