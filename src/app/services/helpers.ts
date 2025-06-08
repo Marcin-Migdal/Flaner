@@ -11,11 +11,11 @@ export const getFlanerAuthError = (error, fallbackError: FlanerApiErrorData): Fl
   return { code: fallbackError.code };
 };
 
-type GetRtkErrorResult = { error: FlanerApiErrorData };
+type GetRtkErrorResult = { error: FlanerApiError };
 
-export const getRtkError = (error, fallbackError: FlanerApiErrorData): GetRtkErrorResult => {
+export const getRtkError = (error: unknown, fallbackError: FlanerApiError): GetRtkErrorResult => {
   if (error instanceof FlanerApiError) {
-    return { error: error.getErrorData() };
+    return { error };
   }
 
   return { error: fallbackError };
@@ -34,7 +34,7 @@ export type ConstructedFlanerApiErrorContent<T = unknown> = {
   formErrors: FormErrors<T>;
 };
 
-export const constructFlanerApiErrorContent = (errorValues: FlanerApiErrorData): ConstructedFlanerApiErrorContent => {
+export const constructFlanerApiErrorContent = (errorValues: FlanerApiError): ConstructedFlanerApiErrorContent => {
   const errorContent: FlanerApiErrorContent = flanerApiErrorsContent[errorValues.code];
 
   let message = errorContent.message;

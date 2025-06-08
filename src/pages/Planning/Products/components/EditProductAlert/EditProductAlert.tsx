@@ -16,7 +16,7 @@ import { constructFlanerApiErrorContent } from "@services/helpers";
 import { useGetProductCategoriesQuery } from "@services/ProductCategories";
 import { Product, UpdateProduct, useEditProductMutation } from "@services/Products";
 import { addToast, selectAuthorization } from "@slices";
-import { FlanerApiErrorData } from "@utils/error-classes";
+import { FlanerApiError } from "@utils/error-classes";
 import { initProductValues, ProductState, ProductSubmitState, productValidationSchema } from "@utils/formik-configs";
 
 type EditProductAlertProps = {
@@ -53,11 +53,11 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
       categoryId: formState.category.id,
     });
 
-    if (!error) {
+    if (error instanceof FlanerApiError) {
+      formik.setErrors(constructFlanerApiErrorContent(error).formErrors);
+    } else {
       dispatch(addToast({ message: "products.productEdited" }));
       handleClose();
-    } else {
-      formik.setErrors(constructFlanerApiErrorContent(error as FlanerApiErrorData).formErrors);
     }
   };
 

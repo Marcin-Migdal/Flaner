@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from "@hooks";
 import { constructFlanerApiErrorContent } from "@services/helpers";
 import { CreateShoppingList, useAddShoppingListMutation } from "@services/ShoppingLists";
 import { addToast, selectAuthorization } from "@slices";
-import { FlanerApiErrorData } from "@utils/error-classes";
+import { FlanerApiError } from "@utils/error-classes";
 
 import {
   ShoppingListState,
@@ -48,13 +48,13 @@ export const AddShoppingListAlert = () => {
 
     const { error } = await addShoppingList(payload);
 
-    if (!error) {
+    if (error instanceof FlanerApiError) {
+      formik.setErrors(constructFlanerApiErrorContent(error).formErrors);
+    } else {
       dispatch(addToast({ message: "shoppingLists.shoppingListAdded" }));
 
       alertProps.handleClose();
       formik.resetForm();
-    } else {
-      formik.setErrors(constructFlanerApiErrorContent(error as FlanerApiErrorData).formErrors);
     }
   };
 

@@ -17,7 +17,7 @@ import { useAppDispatch, useAppSelector } from "@hooks";
 import { constructFlanerApiErrorContent } from "@services/helpers";
 import { CreateProductCategory, useAddProductCategoryMutation } from "@services/ProductCategories";
 import { addToast, selectAuthorization } from "@slices";
-import { FlanerApiErrorData } from "@utils/error-classes";
+import { FlanerApiError } from "@utils/error-classes";
 import { CategorySubmitState, categoryValidationSchema, initCategoryValues } from "@utils/formik-configs";
 
 export const AddCategoryAlert = () => {
@@ -61,7 +61,9 @@ export const AddCategoryAlert = () => {
 
     const { error } = await addProductCategory(payload);
 
-    if (!error) {
+    if (error instanceof FlanerApiError) {
+      formik.setErrors(constructFlanerApiErrorContent(error).formErrors);
+    } else {
       dispatch(addToast({ message: "products.categoryAdded" }));
 
       if (!addAnother) {
@@ -69,8 +71,6 @@ export const AddCategoryAlert = () => {
       } else {
         formik.resetForm();
       }
-    } else {
-      formik.setErrors(constructFlanerApiErrorContent(error as FlanerApiErrorData).formErrors);
     }
   };
 

@@ -1,13 +1,15 @@
+import { FlanerApiErrorsContentKeys } from "@utils/constants";
+
 export type FlanerApiErrorData = {
-  code: string;
+  code: FlanerApiErrorsContentKeys;
   entity?: string;
 };
 
 export class FlanerApiError {
-  code: string;
+  code: FlanerApiErrorsContentKeys;
   entity?: string;
 
-  constructor(code: string, entity?: string) {
+  constructor(code: FlanerApiErrorsContentKeys, entity?: string) {
     this.code = code;
     this.entity = entity;
   }

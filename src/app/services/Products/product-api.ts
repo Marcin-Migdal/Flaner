@@ -71,10 +71,8 @@ export const productApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_ADD_ERROR,
-            entity: "product",
-          });
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_ADD_ERROR, "product");
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error) => {

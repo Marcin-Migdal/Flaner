@@ -25,7 +25,7 @@ import {
 } from "@services/ShoppingListsProduct";
 
 import { constructFlanerApiErrorContent } from "@services/helpers";
-import { FlanerApiErrorData } from "@utils/error-classes";
+import { FlanerApiError } from "@utils/error-classes";
 import {
   ShoppingListProductState,
   ShoppingListProductSubmitState,
@@ -81,11 +81,11 @@ export const EditShoppingListProductAlert = ({
       payload: payload,
     });
 
-    if (!error) {
+    if (error instanceof FlanerApiError) {
+      formik.setErrors(constructFlanerApiErrorContent(error).formErrors);
+    } else {
       dispatch(addToast({ message: "shoppingLists.shoppingListProductEdited" }));
       handleClose();
-    } else {
-      formik.setErrors(constructFlanerApiErrorContent(error as FlanerApiErrorData).formErrors);
     }
   };
 

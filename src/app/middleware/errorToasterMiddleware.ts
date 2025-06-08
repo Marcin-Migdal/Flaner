@@ -3,7 +3,7 @@ import { isRejectedWithValue, Middleware } from "@reduxjs/toolkit";
 import { ConstructedFlanerApiErrorContent, constructFlanerApiErrorContent } from "@services/helpers";
 import { addToast } from "@slices/toast-slice";
 import { flanerApiErrorsContent, FlanerApiErrorsContentKeys } from "@utils/constants";
-import { FlanerApiErrorData } from "@utils/error-classes";
+import { FlanerApiError } from "@utils/error-classes";
 
 export const errorIntersectMiddleware: Middleware = (api) => (next) => (action) => {
   if (isRejectedWithValue(action)) {
@@ -15,8 +15,8 @@ export const errorIntersectMiddleware: Middleware = (api) => (next) => (action) 
     };
 
     if (typeof payload === "object" && payload !== null) {
-      if ("code" in payload && typeof payload.code === "string" && flanerApiErrorsContent[payload.code]) {
-        error = constructFlanerApiErrorContent(payload as FlanerApiErrorData);
+      if (payload instanceof FlanerApiError) {
+        error = constructFlanerApiErrorContent(payload);
       } else if ("message" in payload && typeof payload.message === "string") {
         error.message = payload.message;
       }
