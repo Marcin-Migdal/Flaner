@@ -28,10 +28,11 @@ export const notificationsApi = firestoreApi.injectEndpoints({
 
           return { data: userNotificationsSnapshot.size };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
-            entity: "notifications count",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            "notifications count"
+          );
+          return getRtkError(error, fallbackError);
         }
       },
       providesTags: ["Unread-Notifications-Count"],
@@ -85,10 +86,11 @@ export const notificationsApi = firestoreApi.injectEndpoints({
 
           return { data: notifications };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
-            entity: "unread notifications",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            "unread notifications"
+          );
+          return getRtkError(error, fallbackError);
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "Unread-Notifications"),
@@ -141,10 +143,11 @@ export const notificationsApi = firestoreApi.injectEndpoints({
 
           return { data: notifications };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
-            entity: "all notifications",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            "all notifications"
+          );
+          return getRtkError(error, fallbackError);
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "All-Notifications"),
@@ -172,7 +175,8 @@ export const notificationsApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, { code: FlanerApiErrorsContentKeys.MARK_NOTIFICATION_AS_READ_ERROR });
+          const fallbackError = new FlanerApiError(FlanerApiErrorsContentKeys.MARK_NOTIFICATION_AS_READ_ERROR);
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error) => {

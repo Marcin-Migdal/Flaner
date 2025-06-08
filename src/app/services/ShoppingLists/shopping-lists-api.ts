@@ -33,10 +33,11 @@ export const shoppingListsApi = firestoreApi.injectEndpoints({
 
           return { data: getCollectionDataWithId(snap) };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
-            entity: "shopping lists",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            "shopping lists"
+          );
+          return getRtkError(error, fallbackError);
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "Shopping_Lists"),
@@ -67,10 +68,11 @@ export const shoppingListsApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_ADD_ERROR,
-            entity: "shopping list",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_ADD_ERROR,
+            "shopping list"
+          );
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error) => {
@@ -100,10 +102,11 @@ export const shoppingListsApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR,
-            entity: "shopping list",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR,
+            "shopping list"
+          );
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error, { shoppingListId }) => {
@@ -121,10 +124,11 @@ export const shoppingListsApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
-            entity: "shopping list",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
+            "shopping list"
+          );
+          return getRtkError(error, fallbackError);
         }
       },
 

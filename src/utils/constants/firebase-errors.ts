@@ -50,23 +50,23 @@ export const flanerApiErrorsContent = {
     message: "auth.errors.tooManyAttempts",
   },
   [FlanerApiErrorsContentKeys.AUTH_SIGN_IN_FAILED]: {
-    message: "errors.generic.tryAgain",
+    message: "errors.tryAgain",
   },
   [FlanerApiErrorsContentKeys.AUTH_SIGN_UP_FAILED]: {
-    message: "errors.generic.tryAgain",
+    message: "errors.tryAgain",
   },
   [FlanerApiErrorsContentKeys.AUTH_SIGN_IN_WITH_GOOGLE_FAILED]: {
-    message: "errors.generic.tryAgain",
+    message: "errors.tryAgain",
   },
   [FlanerApiErrorsContentKeys.AUTH_SIGN_OUT_FAILED]: {
-    message: "errors.generic.tryAgain",
+    message: "errors.tryAgain",
   },
 
   [FlanerApiErrorsContentKeys.USER_CURRENT_USER_UNAVAILABLE]: {
-    message: "errors.generic.refreshPage",
+    message: "errors.refreshPage",
   },
   [FlanerApiErrorsContentKeys.USER_FAILED_TO_LOAD_PROFILE]: {
-    message: "errors.generic.refreshPage",
+    message: "errors.refreshPage",
   },
 
   [FlanerApiErrorsContentKeys.ENTITY_ALREADY_EXIST]: {
@@ -101,6 +101,6 @@ export const flanerApiErrorsContent = {
   },
 
   [FlanerApiErrorsContentKeys.UNKNOWN_ERROR_OCCURRED]: {
-    message: "errors.generic.tryAgain",
+    message: "errors.tryAgain",
   },
 };

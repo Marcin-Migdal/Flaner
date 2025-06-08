@@ -14,7 +14,14 @@ const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: {
         // Ignore these action types
-        ignoredActions: ["toast/setToastHandler", "firestoreApi/executeMutation/rejected"],
+        ignoredActions: [
+          "toast/setToastHandler",
+          "firestoreApi/executeMutation/rejected",
+          "authorization/async/signInWithEmail/rejected",
+          "authorization/async/signUpWithEmail/rejected",
+          "authorization/async/signInWithGoogle/rejected",
+          "authorization/async/signOut/rejected",
+        ],
         // Ignore these paths in the state
         ignoredPaths: ["toast.toastHandler"],
       },

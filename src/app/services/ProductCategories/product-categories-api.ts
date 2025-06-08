@@ -39,10 +39,11 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
 
           return { data: getCollectionDataWithId(snap) };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
-            entity: "product categories",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_FETCH_ERROR,
+            "product categories"
+          );
+          return getRtkError(error, fallbackError);
         }
       },
       providesTags: (result) => getRtkTags(result, "id", "Product_Categories"),
@@ -73,10 +74,11 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_ADD_ERROR,
-            entity: "product category",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_ADD_ERROR,
+            "product category"
+          );
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error) => {
@@ -106,10 +108,12 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR,
-            entity: "product category",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_EDIT_ERROR,
+            "product category"
+          );
+
+          return getRtkError(error, fallbackError);
         }
       },
       invalidatesTags: (_result, error, { categoryId }) => {
@@ -128,10 +132,12 @@ export const productCategoriesApi = firestoreApi.injectEndpoints({
 
           return { data: null };
         } catch (error) {
-          return getRtkError(error, {
-            code: FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
-            entity: "product category",
-          });
+          const fallbackError = new FlanerApiError(
+            FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR,
+            "product category"
+          );
+
+          return getRtkError(error, fallbackError);
         }
       },
 
