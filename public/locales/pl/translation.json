@@ -1,0 +1,240 @@
+{
+  "auth": {
+    "hello": "Witaj",
+    "signIn": "Zaloguj się",
+    "signUp": "Zarejestruj się",
+    "signUpWith": "Zarejestruj się za pomocą",
+    "signOut": "Wyloguj się",
+    "confirmSignOut": "Czy na pewno chcesz się wylogować?",
+    "email": "Email",
+    "username": "Nazwa użytkownika",
+    "password": "Hasło",
+    "verifyPassword": "Potwierdź hasło",
+    "noAccount": "Nie masz żadnego konta?",
+    "haveAccount": "Masz już konto?",
+    "pleaseSignIn": "Zaloguj się, aby kontynuować",
+    "pleaseSignUp": "Zarejestruj się, aby kontynuować",
+    "verifyEmail": "Aby się zalogować, zweryfikuj swój adres e-mail",
+    "errors": {
+      "emailInUse": "Adres e-mail jest już zajęty",
+      "usernameInUse": "Nazwa użytkownika jest już zajęta",
+      "invalidCredentials": "Nieprawidłowe dane logowania",
+      "invalidEmail": "Nieprawidłowy adres e-mail",
+      "invalidPassword": "Nieprawidłowe hasło",
+      "emailNotFound": "Nie znaleziono adresu e-mail",
+      "tooManyAttempts": "Dostęp do tego konta został tymczasowo zablokowany z powodu wielu nieudanych prób logowania. Możesz spróbować ponownie później."
+    }
+  },
+
+  "friends": {
+    "search": "Szukaj przyjaciół",
+    "noRequests": "Brak wysłanych zaproszeń",
+    "noResults": "Nie znaleziono żadnego użytkownika",
+    "atLeast3Chars": "Wprowadź co najmniej 3 znaki do wyszukiwania aby znaleźć użytkowników",
+    "noInvitations": "Brak zaproszeń",
+    "noFriendsFound": "Nie znaleziono żadnego przyjaciela",
+    "add": "Dodaj przyjaciół",
+    "invite": "Zaproś",
+    "confirmDelete": "Czy jesteś pewny, że chcesz usunąć przyjaciela?",
+    "myFriends": "Moi przyjaciele",
+    "requestAccepted": "przyjął twoje zaproszenie do znajomych",
+    "sentRequests": "Wysłane zaproszenia",
+    "receivedRequests": "Otrzymane zaproszenia",
+    "errors": {
+      "loadingUsers": "Wystąpił błąd podczas ładowania użytkowników",
+      "sendingRequest": "Wystąpił błąd podczas wysyłania zaproszeń do znajomych",
+      "loadingRequests": "Wystąpił błąd podczas ładowania zaproszeń do znajomych",
+      "loadingFriends": "Wystąpił błąd podczas ładowania znajomych",
+      "confirmingRequest": "Wystąpił błąd podczas potwierdzania zaproszenia do znajomych",
+      "decliningRequest": "Wystąpił błąd podczas odrzucania zaproszenia do znajomych",
+      "deletingFriend": "Wystąpił błąd podczas usuwania znajomego",
+      "deletingRequest": "Wystąpił błąd podczas usuwania zaproszenia do znajomych"
+    }
+  },
+
+  "products": {
+    "entity": "Produkt",
+    "category": "Kategoria",
+    "categoryAdded": "Kategoria została dodana",
+    "categoryEdited": "Kategoria została edytowana",
+    "addProduct": "Dodaj produkt",
+    "addCategory": "Dodaj kategorię",
+    "productAdded": "Produkt został dodany",
+    "productEdited": "Produkt został edytowany",
+    "editCategory": "Edytuj kategorię",
+    "deleteCategory": "Usuń kategorię",
+    "editProduct": "Edytuj produkt",
+    "deleteProduct": "Usuń produkt"
+  },
+
+  "shoppingLists": {
+    "entity": "Lista zakupów",
+    "selectShoppingList": "Wybierz listę zakupów",
+    "noProducts": "Brak produktów w liście zakupów",
+    "product": "Produkt listy zakupów",
+    "addShoppingList": "Dodaj listę zakupów",
+    "shoppingListAdded": "Lista zakupów została dodana",
+    "shoppingListEdited": "Lista zakupów została edytowana",
+    "editShoppingList": "Edytuj listę zakupów",
+    "deleteShoppingList": "Usuń listę zakupów",
+    "addProductToShoppingList": "Dodaj produkt do listy zakupów",
+    "shoppingListProductAdded": "Produkt listy zakupów został dodany",
+    "shoppingListProductEdited": "Produkt listy zakupów został edytowany",
+    "editShoppingListProduct": "Edytuj produkt listy zakupów"
+  },
+
+  "common": {
+    "actions": {
+      "add": "Dodaj",
+      "edit": "Edytuj",
+      "save": "Zapisz",
+      "delete": "Usuń",
+      "confirm": "Potwierdź",
+      "close": "Zamknij",
+      "revert": "Cofnij",
+      "select": "Wybierz",
+      "deleted": "Usunięto",
+      "deleteConfirmation": "Czy na pewno chcesz to usunąć?"
+    },
+    "fields": {
+      "name": "Nazwa",
+      "icon": "Ikona",
+      "color": "Kolor",
+      "addAnother": "Dodaj kolejne",
+      "image": "Obraz",
+      "description": "Opis",
+      "amount": "Ilość",
+      "unit": "Jednostka"
+    },
+    "status": {
+      "success": "Sukces",
+      "failure": "Niepowodzenie",
+      "warning": "Ostrzeżenie",
+      "information": "Informacja"
+    },
+    "or": "lub",
+    "noData": "Brak danych do wyświetlenia"
+  },
+
+  "units": {
+    "Liter": "Litr",
+    "Gram": "Gram",
+    "Milliliter": "Mililiter",
+    "Kilogram": "Kilogram",
+    "Dekagram": "Dekagram",
+    "Piece": "Sztuka"
+  },
+
+  "nav": {
+    "main": {
+      "home": "Strona główna",
+      "community": "Społeczność",
+      "planning": "Planowanie",
+      "settings": "Ustawienia",
+      "addFriends": "Dodaj znajomych",
+      "myFriends": "Moi znajomi",
+      "groups": "Grupy",
+      "shoppingLists": "Listy zakupów",
+      "planningSettings": "Ustawienia planowania",
+      "products": "Produkty"
+    },
+    "notifications": {
+      "all": "Wszystkie powiadomienia",
+      "unread": "Nieprzeczytane"
+    },
+    "planning": {
+      "shopping": "Zakupy",
+      "products": "Produkty",
+      "groups": "Grupy",
+      "settings": "Ustawienia planowania"
+    }
+  },
+
+  "notifications": {
+    "noNotifications": "Brak powiadomień",
+    "loading": "Ładowanie powiadomień...",
+    "errors": {
+      "loading": "Wystąpił błąd podczas ładowania powiadomień",
+      "loadingUnread": "Wystąpił błąd podczas ładowania nieprzeczytanych powiadomień",
+      "markingAsRead": "Wystąpił błąd podczas oznaczania powiadomień jako przeczytane"
+    }
+  },
+
+  "errors": {
+    "default": "Wystąpił błąd",
+    "tryAgain": "Wystąpił błąd, spróbuj ponownie",
+    "refreshPage": "Wystąpił błąd, odśwież stronę",
+    "page404Title": "Strona nie istnieje"
+  },
+
+  "validation": {
+    "required": "Wymagane",
+    "username": {
+      "format": "Nazwa użytkownika może zawierać tylko litery, cyfry, podkreślenia i kropki.",
+      "minLength": "Nazwa użytkownika musi mieć co najmniej 3 znaki.",
+      "maxLength": "Nazwa użytkownika nie może być dłuższa niż 20 znaków."
+    },
+    "password": {
+      "match": "Hasła muszą się zgadzać",
+      "minLength": "Hasło musi mieć co najmniej 8 znaków.",
+      "maxLength": "Hasło nie może być dłuższe niż 30 znaków.",
+      "uppercase": "Hasło musi zawierać co najmniej jedną wielką literę.",
+      "lowercase": "Hasło musi zawierać co najmniej jedną małą literę.",
+      "number": "Hasło musi zawierać co najmniej jedną cyfrę.",
+      "special": "Hasło musi zawierać co najmniej jeden znak specjalny."
+    },
+    "name": {
+      "minLength": "Nazwa musi mieć co najmniej 3 znaki.",
+      "maxLength": "Nazwa nie może być dłuższa niż 30 znaków."
+    },
+    "description": {
+      "minLength": "Opis musi mieć co najmniej 3 znaki.",
+      "maxLength": "Opis jest za długi."
+    },
+    "array": {
+      "itemRequired": "Każdy element jest wymagany",
+      "minLength": "Wymagany jest co najmniej jeden element"
+    },
+    "audit": {
+      "createdAt": "Pole createdAt jest wymagane",
+      "updatedAt": "Pole updatedAt jest wymagane"
+    },
+    "access": {
+      "editRequired": "Pole editAccess jest wymagane",
+      "viewRequired": "Pole viewAccess jest wymagane"
+    }
+  },
+
+  "settings": {
+    "languageTitle": "Język",
+    "languageDescription": "Wybierz język aplikacji",
+    "themeTitle": "Motyw",
+    "themeDescription": "Wybierz motyw i tryb aplikacji",
+    "themeColor": "Kolor motywu",
+    "darkMode": "Tryb ciemny",
+    "profileTitle": "Profil",
+    "profileDescription": "Edytuj informacje profilowe",
+    "displayName": "Nazwa wyświetlana",
+    "avatar": "Awatar"
+  },
+
+  "time": {
+    "ago": "{{value}} {{unit}} temu",
+    "justNow": "przed chwilą",
+    "week_one": "tydzień",
+    "week_few": "tygodnie",
+    "week_many": "tygodni",
+    "day_one": "dzień",
+    "day_few": "dni",
+    "day_many": "dni",
+    "hour_one": "godzina",
+    "hour_few": "godziny",
+    "hour_many": "godzin",
+    "minute_one": "minuta",
+    "minute_few": "minuty",
+    "minute_many": "minut",
+    "second_one": "sekunda",
+    "second_few": "sekundy",
+    "second_many": "sekund"
+  }
+}

@@ -1,10 +1,11 @@
 import { Icon } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 
-import { useAppSelector } from "@hooks/redux-hooks";
-import { useGetUnreadNotificationsCountQuery, useUpdateReadNotificationMutation } from "@services/users";
-import { selectAuthorization } from "@slices/authorization-slice";
-import { MobileHeaderMenuOpenType } from "../../interfaces";
+import { useAppSelector } from "@hooks";
+import { useGetUnreadNotificationsCountQuery, useUpdateReadNotificationMutation } from "@services/Notifications";
+import { selectAuthorization } from "@slices";
+
+import { MobileHeaderMenuOpenType } from "../../types";
 import { MobileMenu } from "./components/MobileMenu/MobileMenu";
 import { MobileNotifications } from "./components/MobileNotifications/MobileNotifications";
 
@@ -25,6 +26,24 @@ export const MobileNavbar = () => {
   );
   const [updateReadNotification] = useUpdateReadNotificationMutation();
 
+  const closeMenuDropdown = () => {
+    setMenuOpen("closing");
+
+    setTimeout(() => {
+      setMenuOpen("closed");
+    }, 150);
+
+    return;
+  };
+
+  const closeNotificationsDropdown = () => {
+    setNotificationsOpen("closing");
+
+    setTimeout(() => {
+      setNotificationsOpen("closed");
+    }, 150);
+  };
+
   const toggleMenuDropdown = () => {
     if (["mounted", "opened"].includes(menuOpen)) {
       closeMenuDropdown();
@@ -41,16 +60,6 @@ export const MobileNavbar = () => {
     setTimeout(() => {
       setMenuOpen("opened");
     }, 0);
-  };
-
-  const closeMenuDropdown = () => {
-    setMenuOpen("closing");
-
-    setTimeout(() => {
-      setMenuOpen("closed");
-    }, 150);
-
-    return;
   };
 
   const toggleNotificationsDropdown = () => {
@@ -74,14 +83,6 @@ export const MobileNavbar = () => {
     setTimeout(() => {
       setNotificationsOpen("opened");
     }, 0);
-  };
-
-  const closeNotificationsDropdown = () => {
-    setNotificationsOpen("closing");
-
-    setTimeout(() => {
-      setNotificationsOpen("closed");
-    }, 150);
   };
 
   const handleChangeTab = (tab: NotificationsTabs) => {

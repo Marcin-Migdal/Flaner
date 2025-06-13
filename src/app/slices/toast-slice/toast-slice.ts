@@ -1,17 +1,11 @@
-import { ToastHandler, ToastVariant } from "@marcin-migdal/m-component-library";
+import { AddToastPayload, ToastHandler, ToastVariant } from "@marcin-migdal/m-component-library";
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
-interface IToastInitialState {
+type ToastInitialState = {
   toastHandler: ToastHandler | null;
-}
-
-type AddToastPayload = {
-  type: ToastVariant;
-  message: string;
-  transformContent?: (content: string) => string;
 };
 
-const initialState: IToastInitialState = {
+const initialState: ToastInitialState = {
   toastHandler: null,
 };
 
@@ -22,7 +16,7 @@ const toastSlice = createSlice({
     setToastHandler: (state, action: PayloadAction<ToastHandler | null>) => {
       state.toastHandler = action.payload;
     },
-    addToast: (state, action: PayloadAction<AddToastPayload>) => {
+    addToast: (state, action: PayloadAction<AddToastPayload<ToastVariant>>) => {
       state.toastHandler?.addToast(action.payload);
     },
     clearToasts: (state) => {
@@ -31,7 +25,6 @@ const toastSlice = createSlice({
   },
 });
 
-// Action creators are generated for each function in reducers object
 export const { setToastHandler, addToast, clearToasts } = toastSlice.actions;
 
 export default toastSlice.reducer;

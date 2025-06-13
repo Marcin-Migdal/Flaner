@@ -1,21 +1,8 @@
 {
-    "compilerOptions": {
-        "target": "es2017",
-        "module": "commonjs",
-        "strictNullChecks": true,
-        "esModuleInterop": true,
-        "jsx": "react-jsx",
-        "baseUrl": "./src",
-        "paths": {
-            "@components/*": ["./components/*"],
-            "@pages/*": ["./pages/*"],
-            "@hooks/*": ["./hooks/*"],
-            "@utils/*": ["./utils/*"],
-            "@slices/*": ["./app/slices/*"],
-            "@services/*": ["./app/services/*"],
-            "@firebase/*": ["./firebase/*"],
-            "@commonAssets/*": ["./commonAssets/*"]
-        }
-    },
-    "include": ["cypress", "src"]
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.playwright.json" }
+  ]
 }

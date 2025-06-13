@@ -4,16 +4,17 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { RouterProvider } from "react-router-dom";
 
-import { fb } from "@firebase/firebase";
-import { useAppDispatch, useAppSelector } from "@hooks/redux-hooks";
-import router from "@pages/routing";
-import { UserType } from "@services/users";
-import { ISerializedAuthUser, addToast, selectAuthorization, setAuthUser, setToastHandler } from "@slices/index";
-import { defaultThemeHue } from "@utils/constants/theme-hue";
-import { COLLECTIONS } from "@utils/enums";
-import { getCollectionDocumentById, retryDocumentRequest, toSerializable } from "@utils/helpers";
+import { useAppDispatch, useAppSelector } from "@hooks";
+import { SerializedAuthUser } from "@services/Authorization";
+import { UserType } from "@services/Users";
+import { addToast, selectAuthorization, setAuthUser, setToastHandler } from "@slices";
 
-//! rest of the pages (details will be planned when I will come to this point)
+import { FlanerApiError } from "@utils/error-classes";
+import { fb } from "./firebase/firebase";
+import router from "./pages/routing";
+import { defaultThemeHue, flanerApiErrorsContent, FlanerApiErrorsContentKeys } from "./utils/constants";
+import { COLLECTIONS } from "./utils/enums";
+import { getCollectionDocumentById, retryDocumentRequest, toSerializable } from "./utils/helpers";
 
 function App() {
   const dispatch = useAppDispatch();
@@ -21,10 +22,12 @@ function App() {
 
   const toastRef = useRef<ToastHandler>(null);
 
-  const { t, i18n } = useTranslation("errors");
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
-    if (toastRef.current) dispatch(setToastHandler(toastRef.current));
+    if (toastRef.current) {
+      dispatch(setToastHandler(toastRef.current));
+    }
   }, []);
 
   useEffect(() => {
@@ -38,16 +41,17 @@ function App() {
         return;
       }
 
-      // Serializing signed-in user object, before sending it to the reducer
-      const serializedUser = toSerializable<ISerializedAuthUser>(user);
-      const { photoURL, ...otherProperties } = serializedUser;
+      // Serializing signed-in user object, before saving it in redux store
+      const serializedUser = toSerializable<SerializedAuthUser>(user);
 
       try {
         const userResponse = await retryDocumentRequest<UserType>(() =>
           getCollectionDocumentById(COLLECTIONS.USERS, serializedUser.uid)
         );
 
-        if (!userResponse.exists()) throw new Error("Error occurred while loading user profile, please refresh page");
+        if (!userResponse.exists()) {
+          throw new FlanerApiError(FlanerApiErrorsContentKeys.USER_FAILED_TO_LOAD_PROFILE);
+        }
 
         const userConfig = userResponse.data();
 
@@ -55,7 +59,8 @@ function App() {
 
         dispatch(
           setAuthUser({
-            ...otherProperties,
+            ...serializedUser,
+            username: userConfig.username,
             avatarUrl: userConfig.avatarUrl,
             language: userConfig.language,
             darkMode: userConfig.darkMode,
@@ -63,8 +68,8 @@ function App() {
           })
         );
       } catch (error) {
-        if (error instanceof Error) {
-          dispatch(addToast({ type: "failure", message: error.message }));
+        if (error instanceof FlanerApiError) {
+          dispatch(addToast({ message: flanerApiErrorsContent[error.code].message }));
         }
       }
     });
@@ -73,9 +78,12 @@ function App() {
   }, []);
 
   return (
-    <ThemeWrapper hue={authUser?.themeColorHue || defaultThemeHue} darkMode>
+    <ThemeWrapper
+      hue={authUser?.themeColorHue || defaultThemeHue}
+      darkMode={authUser?.darkMode === undefined ? true : authUser.darkMode}
+    >
       <>
-        <ToastsContainer ref={toastRef} transformToastsContent={t} />
+        <ToastsContainer ref={toastRef} transformContent={(text) => t(text)} />
         <RouterProvider router={router} />
       </>
     </ThemeWrapper>

@@ -1,4 +1,8 @@
 .auth-from-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
   .auth-card {
     padding: unset;
     width: 640px;
@@ -22,12 +26,8 @@
         margin-bottom: var(--spacing-5);
       }
 
-      .m-form {
-        .m-button {
-          width: 100%;
-          margin: unset;
-          margin-top: 0.35em;
-        }
+      .m-button {
+        margin-top: 0.35em;
       }
 
       .bottom-section {
@@ -67,10 +67,6 @@
 
       background-color: var(--primary-color_740);
 
-      &.col-flex-md-1 {
-        min-height: 380px;
-      }
-
       svg {
         font-size: 3.75rem;
         color: var(--grey-color-000);
@@ -100,6 +96,14 @@
           color: var(--primary-color_740);
         }
       }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-from-container {
+    .auth-card {
+      width: unset;
     }
   }
 }

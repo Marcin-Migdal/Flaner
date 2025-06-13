@@ -14,13 +14,11 @@ export const TransparentSpinnerPlaceholder = ({
   children,
 }: PropsWithChildren<TransparentSpinnerPlaceholderProps>) => {
   return (
-    <>
-      <div style={style} className={`placeholder-container ${className}`}>
+    <div style={style} className={`placeholder-container ${className}`}>
         {children}
         <div className="placeholder transparent-spinner-placeholder">
           <ProgressSpinner />
         </div>
       </div>
-    </>
   );
 };

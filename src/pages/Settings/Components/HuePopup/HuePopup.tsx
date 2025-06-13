@@ -1,5 +1,6 @@
 import { Alert, AlertOpenState, HueSliderCanvas } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import "./styles.scss";
 
@@ -12,6 +13,7 @@ type HuePopupProps = {
 
 export const HuePopup = ({ hue, alertOpen, onConfirm, handleClose }: HuePopupProps) => {
   const [selectedHue, setSelectedHue] = useState(hue);
+  const { t } = useTranslation();
 
   const handleConfirm = () => {
     onConfirm(selectedHue);
@@ -22,11 +24,11 @@ export const HuePopup = ({ hue, alertOpen, onConfirm, handleClose }: HuePopupPro
     <Alert
       alertOpen={alertOpen}
       handleClose={handleClose}
-      header="Select theme color"
+      header={t("settings.themeColor")}
       onConfirm={handleConfirm}
       onDecline={handleClose}
-      confirmBtnText="Select"
-      declineBtnText="Close"
+      confirmBtnText={t("common.actions.select")}
+      declineBtnText={t("common.actions.close")}
       className="hue-popup"
     >
       <HueSliderCanvas hue={selectedHue} onChange={setSelectedHue} />

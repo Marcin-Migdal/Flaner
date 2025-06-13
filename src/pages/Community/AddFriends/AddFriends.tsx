@@ -1,23 +1,21 @@
-import { Col, Row } from "@marcin-migdal/m-component-library";
+import { Button, useSidePanel } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
-import { ContentWrapper, DebounceTextfield, Page, SentFriendRequests, UserTiles } from "@components/index";
-import { I18NameSpace, useAppSelector } from "@hooks/index";
-import { SearchedUserType, SentFriendRequest } from "@services/users";
-import { selectAuthorization } from "@slices/authorization-slice";
+import { ContentWrapper, DebounceTextfield, MessagePlaceholder, UserTiles } from "@components";
+import { useAppSelector } from "@hooks";
+import { useSendFriendRequestMutation } from "@services/FriendRequests";
+import { SearchedUserType, useGetSearchUsersQuery } from "@services/Users";
+import { selectAuthorization } from "@slices";
 
-import {
-  useDeleteFriendRequestMutation,
-  useGetSearchUsersQuery,
-  useGetSentFriendRequestQueryQuery,
-  useSendFriendRequestMutation,
-} from "@services/users/users-api";
+import { SentRequestSidePanel } from "./components/SentRequestSidePanel/SentRequestSidePanel";
 
-import "../../../commonAssets/css/friends-page-styles.scss";
+import "@commonAssets/css/friends-page-styles.scss";
 
-const nameSpace: I18NameSpace = "addFriends";
 const AddFriends = () => {
+  const { t } = useTranslation();
   const { authUser } = useAppSelector(selectAuthorization);
+  const [handleOpen, sidePanelProps] = useSidePanel();
 
   const [filterValue, setFilterValue] = useState<string>("");
 
@@ -26,48 +24,44 @@ const AddFriends = () => {
     { skip: filterValue.length < 3 || !authUser?.uid }
   );
 
-  const sentFriendRequestQuery = useGetSentFriendRequestQueryQuery(authUser?.uid, { skip: !authUser });
-
   const [sendFriendRequest] = useSendFriendRequestMutation();
-  const [deleteFriendRequest] = useDeleteFriendRequestMutation();
 
   const handleAddFriend = (user: SearchedUserType) => {
-    if (!user || !authUser) return;
+    if (!user || !authUser) {
+      return;
+    }
 
-    sendFriendRequest({ senderUid: authUser.uid, receiverUid: user.uid });
-  };
-
-  const handleRequestDelete = async (request: SentFriendRequest) => {
-    await deleteFriendRequest(request);
+    sendFriendRequest({ currentUserUid: authUser.uid, receiverUid: user.uid });
   };
 
   return (
-    <Page flex flex-column center className="friends-page">
-      <DebounceTextfield
-        name="username"
-        onDebounce={(event) => setFilterValue(event.target.value)}
-        placeholder="Search friends"
-        labelType="left"
-        size="large"
-        nameSpace={nameSpace}
-      />
-      <Row>
-        <Col smFlex={1} mdFlex={7}>
-          <ContentWrapper
-            query={usersQuery}
-            placeholdersConfig={{ noData: { message: "Search friends" } }}
-            nameSpace={nameSpace}
-          >
-            {({ data }) => <UserTiles users={data} onAddFriend={handleAddFriend} />}
-          </ContentWrapper>
-        </Col>
-        <Col smFlex={1} mdFlex={2}>
-          <ContentWrapper query={sentFriendRequestQuery} nameSpace={nameSpace}>
-            {({ data }) => <SentFriendRequests friendRequests={data} onRequestDelete={handleRequestDelete} />}
-          </ContentWrapper>
-        </Col>
-      </Row>
-    </Page>
+    <div className="page friends-page">
+      <div className="top-section-container">
+        <DebounceTextfield
+          name="username"
+          onDebounce={(event) => setFilterValue(event.target.value)}
+          placeholder={t("friends.search")}
+          labelType="left"
+          size="large"
+          marginBottomType="none"
+        />
+        <Button size="large" icon="user-clock" onClick={handleOpen} disableDefaultMargin />
+      </div>
+
+      <div className="content-container">
+        <ContentWrapper
+          query={usersQuery}
+          placeholders={{
+            noData: <MessagePlaceholder message={t("friends.noResults")} />,
+            isUninitialized: <MessagePlaceholder message={t("friends.atLeast3Chars")} />,
+          }}
+        >
+          {({ data }) => <UserTiles users={data} onAddFriend={handleAddFriend} />}
+        </ContentWrapper>
+      </div>
+
+      <SentRequestSidePanel {...sidePanelProps} />
+    </div>
   );
 };
 

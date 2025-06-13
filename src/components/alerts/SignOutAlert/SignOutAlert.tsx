@@ -1,8 +1,8 @@
 import { Alert, AlertOpenState } from "@marcin-migdal/m-component-library";
-
-import { useAppDispatch } from "@hooks/redux-hooks";
-import { signOut } from "@slices/authorization-slice";
 import { useTranslation } from "react-i18next";
+
+import { useAppDispatch } from "@hooks";
+import { signOut } from "@services/Authorization";
 
 type SignOutAlertProps = {
   onAction?: () => void;
@@ -21,15 +21,16 @@ export const SignOutAlert = ({ onAction, alertOpen, handleClose }: SignOutAlertP
 
   return (
     <Alert
+      className="w-350-px"
       alertOpen={alertOpen}
       handleClose={handleClose}
-      header={t("Sign out")}
-      confirmBtnText={t("Sign out")}
-      declineBtnText={t("Close")}
+      header={t("auth.signOut")}
+      confirmBtnText={t("auth.signOut")}
+      declineBtnText={t("common.close")}
       onConfirm={handleSignOut}
       onDecline={onAction}
     >
-      <p>{t("Are you sure, you want to sing out?")}</p>
+      <p>{t("auth.confirmSignOut")}</p>
     </Alert>
   );
 };

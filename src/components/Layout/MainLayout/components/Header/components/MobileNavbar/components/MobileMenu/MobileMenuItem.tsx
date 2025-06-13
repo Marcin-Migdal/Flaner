@@ -2,7 +2,7 @@ import { Icon } from "@marcin-migdal/m-component-library";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { HeaderItem, MobileHeaderMenuOpenType } from "../../../../interfaces";
+import { HeaderItem, MobileHeaderMenuOpenType } from "../../../../types";
 
 type MobileHeaderMenuItemProps = {
   navigationItem: HeaderItem;
@@ -38,22 +38,6 @@ export const MobileMenuItem = ({
     disabled || (!onClick && !hasActiveSubItems) ? "disabled" : ""
   } unselectable`;
 
-  useEffect(() => {
-    openSubMenuItem.openStatus === "opened" && handleCloseSubMenuItem();
-  }, [openMenuItem?.openStatus]);
-
-  const toggleSubMenuItem = (text: string) => {
-    if (["mounted", "opened"].includes(openSubMenuItem.openStatus)) {
-      handleCloseSubMenuItem();
-
-      if (openSubMenuItem.item !== text) handleOpenSubMenuItem(text);
-
-      return;
-    }
-
-    handleOpenSubMenuItem(text);
-  };
-
   const handleCloseSubMenuItem = () => {
     setOpenSubMenuItem({ openStatus: "closing", item: openSubMenuItem.item });
 
@@ -62,12 +46,30 @@ export const MobileMenuItem = ({
     }, 150);
   };
 
-  const handleOpenSubMenuItem = (text: string) => {
-    setOpenSubMenuItem({ openStatus: "mounted", item: text });
+  const handleOpenSubMenuItem = (itemText: string) => {
+    setOpenSubMenuItem({ openStatus: "mounted", item: itemText });
 
     setTimeout(() => {
-      setOpenSubMenuItem({ openStatus: "opened", item: text });
+      setOpenSubMenuItem({ openStatus: "opened", item: itemText });
     }, 150);
+  };
+
+  useEffect(() => {
+    openSubMenuItem.openStatus === "opened" && handleCloseSubMenuItem();
+  }, [openMenuItem?.openStatus]);
+
+  const toggleSubMenuItem = (itemText: string) => {
+    if (["mounted", "opened"].includes(openSubMenuItem.openStatus)) {
+      handleCloseSubMenuItem();
+
+      if (openSubMenuItem.item !== itemText) {
+        handleOpenSubMenuItem(itemText);
+      }
+
+      return;
+    }
+
+    handleOpenSubMenuItem(itemText);
   };
 
   const handleClick = (event: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
@@ -101,10 +103,10 @@ export const MobileMenuItem = ({
           className={`mobile-submenu-list ${openMenuItem?.openStatus} `}
           style={{ borderColor: depth % 2 ? "var(--grey-color-000)" : "var(--primary-color_680)" }}
         >
-          {navigationItem.subItems.map((navigationItem, index) => (
+          {navigationItem.subItems.map((subNavigationItem, index) => (
             <MobileMenuItem
               key={index}
-              navigationItem={navigationItem}
+              navigationItem={subNavigationItem}
               closeMenuDropdown={closeMenuDropdown}
               itemPath={`${itemPath}/${text as string}`}
               openMenuItem={openSubMenuItem}

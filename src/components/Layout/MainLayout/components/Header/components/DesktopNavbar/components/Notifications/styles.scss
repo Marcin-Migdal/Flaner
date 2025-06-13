@@ -20,6 +20,8 @@
 
   .desktop-navbar-sub-menu {
     --submenu-item-height: 5.75rem;
+    --notification-item-width: 325px;
+
     max-height: calc(var(--submenu-item-height) * 7);
 
     overflow-y: auto;
@@ -36,6 +38,10 @@
         flex: 1;
         padding: var(--spacing-0) var(--spacing-2);
         min-width: fit-content;
+
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
 
         background-color: var(--primary-color_680);
 
@@ -56,7 +62,7 @@
     }
 
     .placeholder {
-      width: 250px;
+      min-width: var(--notification-item-width);
       height: var(--submenu-item-height);
       padding: unset;
       background-color: var(--primary-color_780);
@@ -70,7 +76,7 @@
       height: unset;
 
       &.no-notification-item {
-        width: 250px;
+        min-width: var(--notification-item-width);
         height: var(--submenu-item-height);
         display: flex;
         align-items: center;
@@ -94,9 +100,10 @@
       .notification-submenu-item {
         display: flex;
 
-        width: 250px;
+        min-width: var(--notification-item-width);
         height: var(--submenu-item-height);
         padding: var(--spacing-2);
+        gap: var(--spacing-2);
 
         background-color: var(--primary-color_780);
 
@@ -104,6 +111,9 @@
 
         .avatar-container {
           --avatar-size: var(--notification-icon-size);
+
+          height: var(--avatar-size);
+          width: var(--avatar-size);
         }
 
         .right-content {
@@ -111,7 +121,7 @@
           flex-direction: column;
           justify-content: space-between;
 
-          .content-container {
+          .notification-content-container {
             height: var(--notification-icon-size);
 
             span {
@@ -123,7 +133,6 @@
 
               overflow: hidden;
               line-height: calc(var(--notification-icon-size) / var(--notification-content-line-clamp));
-              margin-left: var(--spacing-2);
 
               color: var(--primary-text-color_400);
             }

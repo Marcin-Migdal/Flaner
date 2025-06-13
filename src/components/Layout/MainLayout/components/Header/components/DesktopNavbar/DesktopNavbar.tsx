@@ -2,14 +2,15 @@ import { useAlert } from "@marcin-migdal/m-component-library";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import { SignOutAlert } from "@components/alerts";
-import { useAppSelector } from "@hooks/index";
-import { useGetUnreadNotificationsCountQuery, useUpdateReadNotificationMutation } from "@services/users";
-import { selectAuthorization } from "@slices/authorization-slice";
+import { useAppSelector } from "@hooks";
+import { useGetUnreadNotificationsCountQuery, useUpdateReadNotificationMutation } from "@services/Notifications";
+import { selectAuthorization } from "@slices";
 import { navigationTree } from "@utils/constants";
 import { PATH_CONSTRANTS } from "@utils/enums";
-import { mapNavigationTree } from "@utils/helpers/mapNavigationTree";
-import { HeaderItem } from "../../interfaces";
+import { mapNavigationTree } from "@utils/helpers";
+
+import { SignOutAlert } from "../../../../../../alerts";
+import { HeaderItem } from "../../types";
 import { DesktopNavbarItem } from "./components/DesktopNavbarItem/DesktopNavbarItem";
 import { NavigationItem } from "./components/Navigation/NavigationItem";
 import { NotificationItem } from "./components/Notifications/NotificationItem";
@@ -36,8 +37,8 @@ export const DesktopNavbar = () => {
   const userProfileItem: HeaderItem = {
     metaData: { user: authUser },
     subItems: [
-      { text: "Settings", onClick: () => navigate(PATH_CONSTRANTS.SETTINGS), icon: ["fas", "gear"] },
-      { text: "Sign out", onClick: () => handleOpenAlert(), icon: ["fas", "sign-out"] },
+      { text: t("nav.main.settings"), onClick: () => navigate(PATH_CONSTRANTS.SETTINGS), icon: ["fas", "gear"] },
+      { text: t("auth.signOut"), onClick: () => handleOpenAlert(), icon: ["fas", "sign-out"] },
     ],
   };
 

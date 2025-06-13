@@ -1,2 +1,3 @@
+export * from "./MainLayout/components/Header";
 export { default as MainLayout } from "./MainLayout/MainLayout";
-export { Page } from "./Page/Page";
+export { default as UnAuthorizedMainLayout } from "./UnAuthorizedMainLayout/UnAuthorizedMainLayout";

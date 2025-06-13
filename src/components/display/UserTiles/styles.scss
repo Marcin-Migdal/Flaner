@@ -1,4 +1,4 @@
-.user-tiles-container {
+.user-tiles {
   --min-tile-width: 185px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--min-tile-width), 1fr));
@@ -39,15 +39,10 @@
       overflow-wrap: break-word;
       margin-top: var(--spacing-3);
     }
-
-    .m-button {
-      width: 100%;
-      margin: unset;
-    }
   }
 }
 
-@media (min-width: 650px) {
+@media (min-width: 768px) {
   .friends-page {
     .m-grid-row {
       width: 65%;
@@ -55,10 +50,10 @@
   }
 }
 
-@media (max-width: 650px) {
+@media (max-width: 768px) {
   .friends-page {
     .m-grid-row {
-      .user-tiles-container {
+      .user-tiles {
         grid-template-columns: 100%;
 
         .user-tile {

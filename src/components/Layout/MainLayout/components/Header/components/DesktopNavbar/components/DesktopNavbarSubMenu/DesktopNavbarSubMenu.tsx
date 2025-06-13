@@ -4,16 +4,16 @@ import { NavbarItemContext } from "../DesktopNavbarItem/DesktopNavbarItem";
 
 import "./styles.scss";
 
-interface IHeaderSubListProps {
-    children: React.ReactElement;
-}
+type HeaderSubListProps = {
+  children: React.ReactElement;
+};
 
-export const DesktopNavbarSubMenu = ({ children }: IHeaderSubListProps) => {
-    const { subMenuPosition } = useContext(NavbarItemContext);
+export const DesktopNavbarSubMenu = ({ children }: HeaderSubListProps) => {
+  const { subMenuPosition } = useContext(NavbarItemContext);
 
-    return (
-        <ul className="desktop-navbar-sub-menu" style={subMenuPosition}>
-            {children}
-        </ul>
-    );
+  return (
+    <ul className="desktop-navbar-sub-menu" style={subMenuPosition}>
+      {children}
+    </ul>
+  );
 };

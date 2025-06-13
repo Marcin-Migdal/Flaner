@@ -1,11 +1,12 @@
+import { Icon } from "@marcin-migdal/m-component-library";
 import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { ContentWrapper } from "@components/ContentWrapper";
-import { useAppSelector } from "@hooks/redux-hooks";
-import { Icon } from "@marcin-migdal/m-component-library";
-import { useGetAllNotificationsQuery, useGetUnreadNotificationsQuery } from "@services/users";
-import { selectAuthorization } from "@slices/authorization-slice";
+import { useAppSelector } from "@hooks";
+import { useGetAllNotificationsQuery, useGetUnreadNotificationsQuery } from "@services/Notifications";
+import { selectAuthorization } from "@slices";
+
+import { ContentWrapper } from "../../../../../../../../ContentWrapper";
 import { DesktopNavbarItem, NavbarItemContext } from "../DesktopNavbarItem/DesktopNavbarItem";
 import { NotificationSubMenuItem } from "./NotificationSubMenuItem";
 
@@ -44,32 +45,35 @@ export const NotificationSubMenu = () => {
           className={selectedTab === "unread-notification" ? "selected" : ""}
           onClick={handleChangeTab("unread-notification")}
         >
-          {t("Unread")}
+          {t("nav.notifications.unread")}
         </div>
         <div
           className={selectedTab === "all-notification" ? "selected" : ""}
           onClick={handleChangeTab("all-notification")}
         >
-          {t("All")}
+          {t("nav.notifications.all")}
         </div>
       </div>
 
-      <ContentWrapper query={currentQuery}>
-        {({ data }) => (
-          <>
-            {data.length === 0 ? (
-              <DesktopNavbarItem
-                className="no-notification-item"
-                key="no-notification-message"
-                navbarItem={{}}
-                depth={depth + 1}
-                openDirection={subMenuPosition?.openDirection}
-              >
-                <Icon icon={["fas", "triangle-exclamation"]} />
-                <h3>{t("No notifications")}</h3>
-              </DesktopNavbarItem>
-            ) : (
-              data.map((notification) => {
+      <ContentWrapper
+        query={currentQuery}
+        placeholdersConfig={{ noData: { message: t("notifications.noNotifications") } }}
+      >
+        {({ data }) => {
+          return data.length === 0 ? (
+            <DesktopNavbarItem
+              className="no-notification-item"
+              key="no-notification-message"
+              navbarItem={{}}
+              depth={depth + 1}
+              openDirection={subMenuPosition?.openDirection}
+            >
+              <Icon icon={["fas", "triangle-exclamation"]} />
+              <h3>{t("notifications.noNotifications")}</h3>
+            </DesktopNavbarItem>
+          ) : (
+            <>
+              {data.map((notification) => {
                 return (
                   <DesktopNavbarItem
                     key={notification.createdAt}
@@ -80,10 +84,10 @@ export const NotificationSubMenu = () => {
                     <NotificationSubMenuItem notification={notification} />
                   </DesktopNavbarItem>
                 );
-              })
-            )}
-          </>
-        )}
+              })}
+            </>
+          );
+        }}
       </ContentWrapper>
     </div>
   );
