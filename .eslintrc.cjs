@@ -5,6 +5,7 @@ module.exports = {
   ignorePatterns: ["build", ".eslintrc.cjs"],
   parser: "@typescript-eslint/parser",
   plugins: ["react"],
+  ignorePatterns: ["dist/"],
   rules: {
     curly: "error",
     "@typescript-eslint/no-use-before-define": "error",
