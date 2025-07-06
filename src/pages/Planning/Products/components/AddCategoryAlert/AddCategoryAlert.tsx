@@ -6,6 +6,7 @@ import {
   ColorPicker,
   Form,
   IconField,
+  ReturnedColor,
   Textfield,
   useAlert,
   useForm,
@@ -53,7 +54,7 @@ export const AddCategoryAlert = () => {
     const payload: CreateProductCategory = {
       name: formState.name,
       icon: formState.icon,
-      color: formState.color as string,
+      color: formState.color,
       ownerId: authUserId,
       editAccess: [authUserId],
       viewAccess: [authUserId],
@@ -110,8 +111,8 @@ export const AddCategoryAlert = () => {
               <ColorPicker
                 {...registerBlur("color")}
                 placeholder={t("common.fields.color")}
-                returnedColorType="hex"
-                error={t((errors.color as string) || "")}
+                returnedColorType={ReturnedColor.HEX}
+                error={t(errors.color || "")}
               />
             </>
           )}

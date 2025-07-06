@@ -1,5 +1,4 @@
-import { Button, Dropdown } from "@marcin-migdal/m-component-library";
-import { DropdownStringOption } from "@marcin-migdal/m-component-library/build/components/Inputs/Dropdown/types";
+import { Button, Dropdown, DropdownStringOption } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -33,7 +32,7 @@ export const ShoppingListProductsPanel = ({
   const productCategoriesQuery = useGetProductCategoriesQuery({ currentUserUid: authUser?.uid });
 
   const shoppingListProductsQuery = useGetShoppingListProductsQuery(
-    { shoppingListId: selectedShoppingListId as string, categoryId: categoryFilter?.value },
+    { shoppingListId: selectedShoppingListId, categoryId: categoryFilter?.value },
     { skip: !selectedShoppingListId }
   );
 
@@ -49,7 +48,7 @@ export const ShoppingListProductsPanel = ({
         <Dropdown
           placeholder={t("products.category")}
           value={categoryFilter}
-          classNamesObj={{ container: isMobile ? undefined : "w-240-px" }}
+          classNamesObj={{ containerClassName: isMobile ? undefined : "w-240-px" }}
           options={categoryOptions}
           onChange={(_event, value) => handleCategoryFilterChange(value)}
           onClear={(_event, value) => handleCategoryFilterChange(value)}

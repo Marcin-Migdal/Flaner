@@ -121,12 +121,12 @@ export const AddProductAlert = ({ category }: AddProductAlertProps) => {
                     error={t(errors.name || "")}
                   />
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  <Dropdown<any>
+                  <Dropdown
                     {...registerBlur<"category", DropdownChangeEvent<ProductCategory>>("category")}
                     placeholder={t("products.category")}
                     options={categoryOptions}
-                    labelKey={"name"}
-                    valueKey={"id"}
+                    labelKey="name"
+                    valueKey="id"
                     error={t((errors.category as string) || "")}
                   />
                   {/* <ImageField

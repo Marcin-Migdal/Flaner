@@ -16,6 +16,7 @@ export enum FlanerApiErrorsContentKeys {
   ENTITY_UNKNOWN_ADD_ERROR = "entity/unknown-add-error",
   ENTITY_UNKNOWN_EDIT_ERROR = "entity/unknown-edit-error",
   ENTITY_UNKNOWN_DELETE_ERROR = "entity/unknown-delete-error",
+  ENTITY_NOT_SELECTED = "entity/not-selected",
 
   SEND_FRIEND_REQUEST_ERROR = "friend-request/send-request-error",
   CONFIRM_FRIEND_REQUEST_ERROR = "friend-request/confirm-request-error",
@@ -84,6 +85,9 @@ export const flanerApiErrorsContent = {
   },
   [FlanerApiErrorsContentKeys.ENTITY_UNKNOWN_DELETE_ERROR]: {
     message: `Error occurred while deleting ${ENTITY_TEXT_INJECTION_POINTER}`,
+  },
+  [FlanerApiErrorsContentKeys.ENTITY_NOT_SELECTED]: {
+    message: `${ENTITY_TEXT_INJECTION_POINTER} has not been selected`,
   },
 
   [FlanerApiErrorsContentKeys.SEND_FRIEND_REQUEST_ERROR]: {

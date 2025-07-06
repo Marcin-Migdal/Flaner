@@ -4,6 +4,7 @@ import {
   ColorPicker,
   Form,
   IconField,
+  ReturnedColor,
   Textfield,
   useForm,
 } from "@marcin-migdal/m-component-library";
@@ -46,7 +47,7 @@ export const EditCategoryAlert = ({ category, handleClose, alertOpen }: EditCate
       name: formState.name,
       currentUserId: authUser.uid,
       icon: formState.icon,
-      color: formState.color as string,
+      color: formState.color,
     };
 
     const { error } = await editProductCategory({ categoryId: category.id, payload: payload });
@@ -81,8 +82,8 @@ export const EditCategoryAlert = ({ category, handleClose, alertOpen }: EditCate
             <ColorPicker
               {...registerBlur("color")}
               placeholder={t("common.fields.color")}
-              returnedColorType="hex"
-              error={t((errors.color as string) || "")}
+              returnedColorType={ReturnedColor.HEX}
+              error={t(errors.color || "")}
             />
             <IconField
               {...registerBlur("icon")}
