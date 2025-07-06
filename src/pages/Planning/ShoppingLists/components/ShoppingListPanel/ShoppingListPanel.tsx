@@ -2,7 +2,6 @@ import {
   Accordion,
   DropdownMenu,
   Icon,
-  SectionState,
   Textfield,
   TextFieldChangeEvent,
   useAlert,
@@ -36,7 +35,7 @@ const filterShoppingList = (shoppingLists: ShoppingList[] | undefined, shoppingL
 
 type ShoppingListPanelProps = {
   shoppingListsQuery: UseQueryResult<ShoppingList[]>;
-  onShoppingListSelect: (shoppingListId: SectionState) => void;
+  onShoppingListSelect: (shoppingListId: string | null) => void;
 };
 
 export const ShoppingListPanel = ({ shoppingListsQuery, onShoppingListSelect }: ShoppingListPanelProps) => {
@@ -93,7 +92,7 @@ export const ShoppingListPanel = ({ shoppingListsQuery, onShoppingListSelect }: 
                       ]}
                       openEvent="click"
                       openPosition="auto-bottom"
-                      centerConsumer
+                      positionAlignment="center"
                       hideDisabledOptions
                       hideOnDisabledOptions
                     >

@@ -151,7 +151,7 @@ const Settings = () => {
                 onClick={handleOpenHuePopup}
                 value={hexColor}
                 readOnly
-                classNamesObj={{ container: "mr-2-rem" }}
+                classNamesObj={{ containerClassName: "mr-2-rem" }}
                 labelWidth={26}
                 marginBottomType="none"
               />
@@ -176,7 +176,7 @@ const Settings = () => {
               name="username"
               value={authUserSettings?.username}
               label={t("settings.displayName")}
-              classNamesObj={{ container: "mt-4-rem" }}
+              classNamesObj={{ containerClassName: "mt-4-rem" }}
               onChange={handleSettingsChange}
               debounceDelay={300}
             />

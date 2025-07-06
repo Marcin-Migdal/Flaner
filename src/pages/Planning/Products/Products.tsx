@@ -48,7 +48,7 @@ const Products = () => {
       <div className="content-container full flex flex-column">
         <div className="product-top-section">
           <Textfield
-            classNamesObj={{ container: "category-input-container" }}
+            classNamesObj={{ containerClassName: "category-input-container" }}
             placeholder={t("products.category")}
             onChange={handleChange}
             disabled={!productCategoriesQuery.isSuccess}

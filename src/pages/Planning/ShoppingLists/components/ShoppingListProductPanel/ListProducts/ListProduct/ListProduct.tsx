@@ -74,7 +74,7 @@ export const ListProduct = ({
           ]}
           openEvent="click"
           openPosition="auto-bottom"
-          centerConsumer
+          positionAlignment="center"
           hideDisabledOptions
           hideOnDisabledOptions
         >

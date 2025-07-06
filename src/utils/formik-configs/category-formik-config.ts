@@ -1,4 +1,4 @@
-import { ColorValue, InferSchemaType } from "@marcin-migdal/m-component-library";
+import { InferSchemaType } from "@marcin-migdal/m-component-library";
 import * as Yup from "yup";
 
 import { schemaName } from "./common-fields";
@@ -6,7 +6,7 @@ import { schemaName } from "./common-fields";
 export type CategoryState = {
   name: string;
   icon: string | null;
-  color: ColorValue;
+  color: string;
 };
 
 export const initCategoryValues: CategoryState = {

@@ -1,4 +1,4 @@
-import { DropdownStringOption } from "@marcin-migdal/m-component-library/build/components/Inputs/Dropdown/types";
+import { DropdownStringOption } from "@marcin-migdal/m-component-library";
 
 export type KeysWithStringValue<TObj> = { [K in keyof TObj as TObj[K] extends string ? K : never]: TObj[K] };
 

@@ -37,7 +37,7 @@ export const ProductItem = ({ product, handleOpenDeleteProductAlert, handleOpenE
         ]}
         openEvent="click"
         openPosition="auto-bottom"
-        centerConsumer
+        positionAlignment="center"
         hideDisabledOptions
         hideOnDisabledOptions
       >

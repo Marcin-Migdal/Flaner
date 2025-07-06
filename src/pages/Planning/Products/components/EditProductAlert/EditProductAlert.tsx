@@ -2,6 +2,7 @@ import {
   Alert,
   AlertOpenState,
   Dropdown,
+  DropdownChangeEvent,
   Form,
   SimpleChangeEvent,
   Textfield,
@@ -13,7 +14,7 @@ import { useTranslation } from "react-i18next";
 import { ContentWrapper } from "@components";
 import { useAppDispatch, useAppSelector } from "@hooks";
 import { constructFlanerApiErrorContent } from "@services/helpers";
-import { useGetProductCategoriesQuery } from "@services/ProductCategories";
+import { ProductCategory, useGetProductCategoriesQuery } from "@services/ProductCategories";
 import { Product, UpdateProduct, useEditProductMutation } from "@services/Products";
 import { addToast, selectAuthorization } from "@slices";
 import { FlanerApiError } from "@utils/error-classes";
@@ -104,8 +105,8 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
                     error={t(errors.name || "")}
                   />
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  <Dropdown<any>
-                    {...registerBlur<"category", SimpleChangeEvent<ProductState>>("category")}
+                  <Dropdown
+                    {...registerBlur<"category", DropdownChangeEvent<ProductCategory>>("category")}
                     placeholder={t("products.category")}
                     options={categoryOptions}
                     labelKey={"name"}

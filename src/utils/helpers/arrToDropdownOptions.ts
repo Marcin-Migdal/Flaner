@@ -1,5 +1,4 @@
-import { DropdownStringOption } from "@marcin-migdal/m-component-library/build/components/Inputs/Dropdown/types";
-
+import { DropdownStringOption } from "@marcin-migdal/m-component-library";
 import { KeysWithStringValue, objToDropdownOption } from "./objToDropdownOption";
 
 export const arrToDropdownOptions = <

@@ -27,14 +27,17 @@ import {
 import { fb } from "../../../firebase/firebase";
 import { firestoreApi } from "../api";
 
+type GetShoppingListProductsArgs = { shoppingListId: string | null; categoryId: string | undefined };
+
 export const shoppingListProductApi = firestoreApi.injectEndpoints({
   endpoints: (build) => ({
-    getShoppingListProducts: build.query<
-      ShoppingListProduct[],
-      { shoppingListId: string; categoryId: string | undefined }
-    >({
+    getShoppingListProducts: build.query<ShoppingListProduct[], GetShoppingListProductsArgs>({
       async queryFn({ shoppingListId, categoryId }) {
         try {
+          if (!shoppingListId) {
+            throw new FlanerApiError(FlanerApiErrorsContentKeys.ENTITY_NOT_SELECTED, "Shopping list");
+          }
+
           const collectionReference = collection(
             fb.firestore,
             COLLECTIONS.SHOPPING_LISTS,

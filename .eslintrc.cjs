@@ -2,9 +2,9 @@ module.exports = {
   root: true,
   env: { browser: true, es2020: true },
   extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:react-hooks/recommended"],
-  ignorePatterns: ["build", ".eslintrc.cjs"],
   parser: "@typescript-eslint/parser",
   plugins: ["react"],
+  ignorePatterns: [".eslintrc.cjs", "dist/"],
   rules: {
     curly: "error",
     "@typescript-eslint/no-use-before-define": "error",

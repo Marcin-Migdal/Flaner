@@ -139,7 +139,7 @@ export const AddShoppingListProductAlert = ({ shoppingListId }: AddShoppingListP
               {({ values, errors, registerChange, registerBlur }) => (
                 <>
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  <Dropdown<any>
+                  <Dropdown
                     {...registerBlur<"category", DropdownChangeEvent<ProductCategory>>("category")}
                     disabled={!productCategoriesQuery.isSuccess}
                     placeholder={t("products.category")}
@@ -149,7 +149,7 @@ export const AddShoppingListProductAlert = ({ shoppingListId }: AddShoppingListP
                     error={t((errors.category as string) || "")}
                   />
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  <Dropdown<any>
+                  <Dropdown
                     {...registerBlur<"product", DropdownChangeEvent<Product>>("product")}
                     disabled={!values.category || productOptions?.length === 0}
                     placeholder={t("products.entity")}
@@ -158,25 +158,24 @@ export const AddShoppingListProductAlert = ({ shoppingListId }: AddShoppingListP
                     valueKey="id"
                     error={t((errors.product as string) || "")}
                   />
-                  <div className="flex g-2-rem">
-                    <NumberField
-                      {...registerChange("amount")}
-                      classNamesObj={{ container: "flex-8" }}
-                      placeholder={t("common.fields.amount")}
-                      error={t(errors.amount || "")}
-                    />
-                    {unitsOptions && unitsOptions.length > 0 && (
+                  <NumberField
+                    {...registerChange("amount")}
+                    classNamesObj={{ standAloneTextfieldContainerClassName: "flex g-2-rem" }}
+                    placeholder={t("common.fields.amount")}
+                    error={t(errors.amount || "")}
+                    standAloneTextfieldChildren={
                       <Dropdown
                         {...registerBlur<"unit", DropdownChangeEvent<Unit>>("unit")}
-                        classNamesObj={{ container: "flex-4" }}
+                        disabled={!unitsOptions || unitsOptions.length === 0}
                         placeholder={t("common.fields.unit")}
                         options={unitsOptions}
                         labelKey="name"
                         valueKey="id"
                         error={t((errors.unit as string) || "")}
+                        marginBottomType="none"
                       />
-                    )}
-                  </div>
+                    }
+                  />
                   <Textarea {...registerChange("description")} placeholder={t("common.fields.description")} />
                 </>
               )}
