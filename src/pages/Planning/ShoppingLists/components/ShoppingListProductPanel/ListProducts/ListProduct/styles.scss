@@ -14,17 +14,16 @@
       }
 
       .shopping-list-product-name {
-        width: 100%;
+        white-space: nowrap;
       }
 
       .shopping-list-product-amount-details {
-        width: fit-content;
         white-space: nowrap;
-        margin: 0 var(--spacing-2);
+        margin-left: auto;
       }
 
       .m-dropdown-menu-trigger-container {
-        padding: var(--spacing-2);
+        margin-right: var(--spacing-2);
 
         &:hover {
           .m-icon {

@@ -45,7 +45,6 @@ export const ListProducts = ({ products, selectedShoppingListId }: ListProductsP
   return (
     <>
       <Accordion
-        // icon="none"
         expandOnIconClick
         instanceClassName="shopping-list-products-accordion"
         className="m-scroll pr-1-rem"

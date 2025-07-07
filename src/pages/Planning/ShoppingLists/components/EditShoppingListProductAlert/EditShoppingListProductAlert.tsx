@@ -59,6 +59,20 @@ export const EditShoppingListProductAlert = ({
     onSubmit: (formState: ShoppingListProductSubmitState) => handleSubmit(formState),
   });
 
+  useEffect(() => {
+    if (shoppingListProduct && alertOpen === AlertOpenState.OPENED) {
+      formik.setValues({
+        amount: shoppingListProduct.amount,
+        description: shoppingListProduct.description,
+
+        category: shoppingListProduct.category,
+        product: shoppingListProduct.productDetails,
+        unit: shoppingListProduct.unit,
+        // image: "",
+      });
+    }
+  }, [alertOpen]);
+
   const handleSubmit = async (formState: ShoppingListProductSubmitState) => {
     const { category, product, unit, amount, description } = formState;
 

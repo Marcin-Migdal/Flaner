@@ -1,28 +1,32 @@
 import { AuditType } from "../types";
 
+export type ShoppingListProductCategory = {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+};
+
+export type ShoppingListProductDetails = {
+  id: string;
+  name: string;
+};
+
+export type ShoppingListProductUnit = {
+  id: string;
+  name: string;
+  shortName: string;
+};
+
 export type ShoppingListProduct = {
   id: string;
   description: string;
   amount: number;
   completed: boolean;
 
-  category: {
-    id: string;
-    name: string;
-    icon: string;
-    color: string;
-  };
-
-  productDetails: {
-    id: string;
-    name: string;
-  };
-
-  unit: {
-    id: string;
-    name: string;
-    shortName: string;
-  };
+  category: ShoppingListProductCategory;
+  productDetails: ShoppingListProductDetails;
+  unit: ShoppingListProductUnit;
 
   // image: string;
 } & AuditType;
