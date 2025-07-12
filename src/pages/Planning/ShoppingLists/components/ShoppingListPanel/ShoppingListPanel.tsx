@@ -1,7 +1,6 @@
 import {
   Accordion,
-  DropdownMenu,
-  Icon,
+  DropdownMenuOption,
   Textfield,
   TextFieldChangeEvent,
   useAlert,
@@ -9,7 +8,7 @@ import {
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { ContentWrapper, DeleteAlert, OnDeleteMutation, UseQueryResult } from "@components";
+import { ContentWrapper, DeleteAlert, KebabMenu, OnDeleteMutation, UseQueryResult } from "@components";
 import { useAppSelector } from "@hooks";
 import { ShoppingList, useDeleteShoppingListMutation } from "@services/ShoppingLists";
 import { selectAuthorization } from "@slices";
@@ -61,6 +60,19 @@ export const ShoppingListPanel = ({ shoppingListsQuery, onShoppingListSelect }: 
     return deleteShoppingList(deleteAlertProps.data);
   };
 
+  const getKebabMenuOptions = (shoppingList: ShoppingList): DropdownMenuOption[] => [
+    {
+      label: t("shoppingLists.editShoppingList"),
+      onClick: () => handleOpenEditAlert(shoppingList),
+      disabled: !authUser?.uid || !shoppingList.editAccess.includes(authUser.uid),
+    },
+    {
+      label: t("shoppingLists.deleteShoppingList"),
+      onClick: () => handleOpenDeleteAlert(shoppingList.id),
+      disabled: shoppingList.ownerId !== authUser?.uid,
+    },
+  ];
+
   return (
     <>
       <div className="flex g-2-rem">
@@ -70,34 +82,12 @@ export const ShoppingListPanel = ({ shoppingListsQuery, onShoppingListSelect }: 
       <ContentWrapper query={shoppingListsQuery}>
         {({ data: shoppingLists }) => (
           <>
-            <Accordion selectionMode="single" onSelect={onShoppingListSelect}>
+            <Accordion instanceClassName="shopping-list-panel" selectionMode="single" onSelect={onShoppingListSelect}>
               {filterShoppingList(shoppingLists, shoppingListsFilter).map((shoppingList) => (
                 <Accordion.Section sectionId={shoppingList.id} key={shoppingList.id}>
                   <Accordion.Toggle className="p-2-rem">
                     <span>{shoppingList.name}</span>
-                    <DropdownMenu
-                      zIndex={100}
-                      triggerContainerClassName="shopping-list-context-menu-trigger"
-                      options={[
-                        {
-                          label: t("shoppingLists.editShoppingList"),
-                          onClick: () => handleOpenEditAlert(shoppingList),
-                          disabled: !authUser?.uid || !shoppingList.editAccess.includes(authUser.uid),
-                        },
-                        {
-                          label: t("shoppingLists.deleteShoppingList"),
-                          onClick: () => handleOpenDeleteAlert(shoppingList.id),
-                          disabled: shoppingList.ownerId !== authUser?.uid,
-                        },
-                      ]}
-                      openEvent="click"
-                      openPosition="auto-bottom"
-                      positionAlignment="center"
-                      hideDisabledOptions
-                      hideOnDisabledOptions
-                    >
-                      <Icon icon="ellipsis-vertical" />
-                    </DropdownMenu>
+                    <KebabMenu options={getKebabMenuOptions(shoppingList)} />
                   </Accordion.Toggle>
                 </Accordion.Section>
               ))}

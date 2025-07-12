@@ -1,8 +1,8 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
-import { DropdownMenu, DropdownMenuOption, Icon, useAlert } from "@marcin-migdal/m-component-library";
+import { DropdownMenuOption, Icon, useAlert } from "@marcin-migdal/m-component-library";
 import { useTranslation } from "react-i18next";
 
-import { ContentWrapper, DeleteAlert, OnDeleteMutation } from "@components";
+import { ContentWrapper, DeleteAlert, KebabMenu, OnDeleteMutation } from "@components";
 import { useAppSelector } from "@hooks";
 import { ProductCategory, useDeleteProductCategoryMutation } from "@services/ProductCategories";
 import { useGetProductsQuery } from "@services/Products";
@@ -29,7 +29,7 @@ export const Category = ({ category }: CategoryProps) => {
   const [handleOpenEditCategoryAlert, alertEditCategoryProps] = useAlert();
   const [handleOpenDeleteCategoryAlert, alertDeleteCategoryProps] = useAlert();
 
-  const categoryContextMenuOptions: DropdownMenuOption[] = [
+  const kebabMenuOptions: DropdownMenuOption[] = [
     {
       label: t("products.editCategory"),
       onClick: () => handleOpenEditCategoryAlert(),
@@ -54,17 +54,7 @@ export const Category = ({ category }: CategoryProps) => {
           <span style={{ color: category.color }} className="category-name">
             {category.name}
           </span>
-          <DropdownMenu
-            triggerContainerClassName="category-context-menu-trigger"
-            options={categoryContextMenuOptions}
-            openEvent="click"
-            openPosition="auto-bottom"
-            positionAlignment="center"
-            hideDisabledOptions
-            hideOnDisabledOptions
-          >
-            <Icon icon="ellipsis-vertical" />
-          </DropdownMenu>
+          <KebabMenu options={kebabMenuOptions} />
         </div>
         <AddProductAlert category={category} />
         <ContentWrapper query={query}>{({ data: products }) => <ProductList products={products} />}</ContentWrapper>

@@ -1,0 +1,13 @@
+.kebab-menu-trigger {
+  text-align: center;
+  width: 1.5rem;
+  cursor: pointer;
+  color: var(--icon-color);
+
+  &.opened,
+  &:hover {
+    .m-icon {
+      color: var(--icon-hover-color);
+    }
+  }
+}

@@ -13,14 +13,8 @@
         }
       }
 
-      .m-dropdown-menu-trigger-container {
+      .kebab-menu-trigger {
         margin-right: var(--spacing-2);
-
-        &:hover {
-          .m-icon {
-            color: var(--icon-hover-color);
-          }
-        }
       }
 
       .m-button {
