@@ -1,23 +1,19 @@
-.shopping-list-product-category-container {
-  width: 100%;
+.shopping-list-product-category {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+
+  min-width: 192px;
   height: 100%;
+  border-radius: var(--radius-base);
+  padding: 0 var(--spacing-2);
+  margin: 0 var(--spacing-2);
 
-  .shopping-list-product-category {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-2);
+  background-color: var(--popups-background-color);
 
-    max-width: 214px;
-    height: inherit;
-    border-radius: var(--radius-base);
-    padding: 0 var(--spacing-2);
-
-    background-color: var(--popups-background-color);
-
-    .shopping-list-product-category-name {
-      font-size: var(--font-size-base);
-      font-weight: var(--font-weight-regular);
-      color: var(--primary-text-color_200);
-    }
+  .shopping-list-product-category-name {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-regular);
+    color: var(--primary-text-color_200);
   }
 }

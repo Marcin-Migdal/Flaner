@@ -1,4 +1,17 @@
+import { Unit } from "@services/Units";
 import { AuditType } from "../types";
+
+export type ShoppingListProductCategory = {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+};
+
+export type ShoppingListProductDetails = {
+  id: string;
+  name: string;
+};
 
 export type ShoppingListProduct = {
   id: string;
@@ -6,23 +19,9 @@ export type ShoppingListProduct = {
   amount: number;
   completed: boolean;
 
-  category: {
-    id: string;
-    name: string;
-    icon: string;
-    color: string;
-  };
-
-  productDetails: {
-    id: string;
-    name: string;
-  };
-
-  unit: {
-    id: string;
-    name: string;
-    shortName: string;
-  };
+  category: ShoppingListProductCategory;
+  productDetails: ShoppingListProductDetails;
+  unit: Unit;
 
   // image: string;
 } & AuditType;
