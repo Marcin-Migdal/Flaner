@@ -1,21 +1,19 @@
 import { InferSchemaType } from "@marcin-migdal/m-component-library";
 import * as Yup from "yup";
 
-import { schemaAmount, schemaOptionalDescription } from "./common-fields";
+import { schemaAccessFields, schemaAmount, schemaAuditFields, schemaOptionalDescription } from "./common-fields";
 
-import {
-  ShoppingListProductCategory,
-  ShoppingListProductDetails,
-  ShoppingListProductUnit,
-} from "@services/ShoppingListsProduct";
+import { ProductCategory } from "@services/ProductCategories";
+import { Product } from "@services/Products";
+import { Unit } from "@services/Units";
 
 export type ShoppingListProductState = {
   amount: number | null;
   description: string;
 
-  category: ShoppingListProductCategory | null;
-  product: ShoppingListProductDetails | null;
-  unit: ShoppingListProductUnit | null;
+  category: ProductCategory | null;
+  product: Product | null;
+  unit: Unit | null;
   // image: string;
 };
 
@@ -39,6 +37,8 @@ export const shoppingListProductValidationSchema = Yup.object().shape({
       name: Yup.string().nullable().required("validation.required"),
       icon: Yup.string().nullable().required("validation.required"),
       color: Yup.string().nullable().required("validation.required"),
+      ...schemaAuditFields,
+      ...schemaAccessFields,
     })
     .nullable()
     .required("validation.required"),
@@ -48,6 +48,8 @@ export const shoppingListProductValidationSchema = Yup.object().shape({
       id: Yup.string().nullable().required("validation.required"),
       name: Yup.string().nullable().required("validation.required"),
       categoryId: Yup.string().nullable().required("validation.required"),
+      ...schemaAuditFields,
+      ...schemaAccessFields,
     })
     .nullable()
     .required("validation.required"),

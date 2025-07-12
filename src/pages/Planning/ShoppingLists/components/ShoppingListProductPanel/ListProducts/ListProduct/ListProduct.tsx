@@ -55,10 +55,10 @@ export const ListProduct = ({
       <Accordion.Toggle>
         <Row className="w-100-percent">
           <Col sm={3} md={3} lg={3} xl={3}>
-            <span className="shopping-list-product-name truncate-text">{product.productDetails.name}</span>
+            <span className="truncate-text">{product.productDetails.name}</span>
           </Col>
           <Col className="flex justify-end" sm={7} md={8} lg={8} xl={6}>
-            <span className="shopping-list-product-amount-details truncate-text">{`${product.amount} ${
+            <span className="truncate-text">{`${product.amount} ${
               isMobile ? product.unit.shortName : product.unit.name
             }`}</span>
             <CategoryDisplay category={product.category} />

@@ -2,7 +2,9 @@ import {
   Alert,
   AlertOpenState,
   Dropdown,
+  DropdownBlurEvent,
   DropdownChangeEvent,
+  DropdownValue,
   Form,
   NumberField,
   Textarea,
@@ -59,20 +61,6 @@ export const EditShoppingListProductAlert = ({
     onSubmit: (formState: ShoppingListProductSubmitState) => handleSubmit(formState),
   });
 
-  useEffect(() => {
-    if (shoppingListProduct && alertOpen === AlertOpenState.OPENED) {
-      formik.setValues({
-        amount: shoppingListProduct.amount,
-        description: shoppingListProduct.description,
-
-        category: shoppingListProduct.category,
-        product: shoppingListProduct.productDetails,
-        unit: shoppingListProduct.unit,
-        // image: "",
-      });
-    }
-  }, [alertOpen]);
-
   const handleSubmit = async (formState: ShoppingListProductSubmitState) => {
     const { category, product, unit, amount, description } = formState;
 
@@ -110,39 +98,50 @@ export const EditShoppingListProductAlert = ({
     }
   };
 
+  const handleCloseAlert = () => {
+    handleClose();
+    formik.resetForm();
+  };
+
   const productCategoriesQuery = useGetProductCategoriesQuery(
     { currentUserUid: authUser?.uid },
     { skip: alertOpen !== AlertOpenState.OPENED }
   );
 
-  const { data: productOptions } = useGetProductsQuery(
-    { currentUserUid: authUser?.uid, categoryId: formik.values.category?.id as string },
-    { skip: !formik.values.category || alertOpen !== AlertOpenState.OPENED }
+  const { data: productOptions, isSuccess: productsQueryIsSuccess } = useGetProductsQuery(
+    {
+      currentUserUid: authUser?.uid,
+      categoryId: (formik.values.category?.id || shoppingListProduct?.category.id) as string,
+    },
+    { skip: alertOpen !== AlertOpenState.OPENED }
   );
 
-  const { data: unitsOptions } = useGetUnitsQuery(undefined, { skip: alertOpen !== AlertOpenState.OPENED });
+  const { data: unitsOptions, isSuccess: unitsQueryIsSuccess } = useGetUnitsQuery(undefined, {
+    skip: alertOpen !== AlertOpenState.OPENED,
+  });
 
   useEffect(() => {
-    if (
-      alertOpen === AlertOpenState.OPENED &&
-      shoppingListProduct &&
-      productCategoriesQuery.data &&
-      productOptions &&
-      unitsOptions
-    ) {
+    const hasOptionsFetched = productCategoriesQuery.isSuccess && productsQueryIsSuccess && unitsQueryIsSuccess;
+    const hasFormInitValuesBeenSet = !!formik.values.category && !!formik.values.unit;
+
+    if (alertOpen === AlertOpenState.OPENED && shoppingListProduct && hasOptionsFetched && !hasFormInitValuesBeenSet) {
       formik.setValues({
         amount: shoppingListProduct.amount,
         description: shoppingListProduct.description,
-        category: productCategoriesQuery.data.find((item) => item.id === shoppingListProduct.category.id) || null,
-        product: productOptions.find((item) => item.id === shoppingListProduct.productDetails.id) || null,
-        unit: unitsOptions.find((item) => item.id === shoppingListProduct.unit.id) || null,
+        category: productCategoriesQuery.data?.find((item) => item.id === shoppingListProduct.category.id) || null,
+        product: productOptions?.find((item) => item.id === shoppingListProduct.productDetails.id) || null,
+        unit: unitsOptions?.find((item) => item.id === shoppingListProduct.unit.id) || null,
       });
     }
-  }, [alertOpen, productCategoriesQuery, productOptions, unitsOptions]);
+  }, [alertOpen, shoppingListProduct, productCategoriesQuery, productOptions, unitsOptions]);
 
-  const handleCloseAlert = () => {
-    handleClose();
-    formik.resetForm();
+  const handleCategoryChange = (event: DropdownBlurEvent<DropdownValue<ProductCategory>>) => {
+    formik.setFieldTouched("product", false);
+    formik.setValues({
+      ...formik.values,
+      category: event.target.value,
+      product: null,
+    });
   };
 
   return (
@@ -162,13 +161,15 @@ export const EditShoppingListProductAlert = ({
               <>
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Dropdown
-                  {...registerBlur<"category", DropdownChangeEvent<ProductCategory>>("category")}
+                  value={values.category}
+                  name="category"
+                  error={t((errors.category as string) || "")}
+                  onBlur={handleCategoryChange}
                   disabled={!productCategoriesQuery.isSuccess}
                   placeholder={t("products.category")}
                   options={productCategoriesOptions}
                   labelKey="name"
                   valueKey="id"
-                  error={t((errors.category as string) || "")}
                 />
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Dropdown

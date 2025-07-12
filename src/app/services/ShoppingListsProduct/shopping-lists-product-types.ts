@@ -1,3 +1,4 @@
+import { Unit } from "@services/Units";
 import { AuditType } from "../types";
 
 export type ShoppingListProductCategory = {
@@ -12,12 +13,6 @@ export type ShoppingListProductDetails = {
   name: string;
 };
 
-export type ShoppingListProductUnit = {
-  id: string;
-  name: string;
-  shortName: string;
-};
-
 export type ShoppingListProduct = {
   id: string;
   description: string;
@@ -26,7 +21,7 @@ export type ShoppingListProduct = {
 
   category: ShoppingListProductCategory;
   productDetails: ShoppingListProductDetails;
-  unit: ShoppingListProductUnit;
+  unit: Unit;
 
   // image: string;
 } & AuditType;

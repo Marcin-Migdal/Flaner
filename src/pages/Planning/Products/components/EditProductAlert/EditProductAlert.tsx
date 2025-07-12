@@ -70,7 +70,9 @@ export const EditProductAlert = ({ data: product, handleClose, alertOpen }: Edit
   };
 
   useEffect(() => {
-    if (alertOpen === AlertOpenState.OPENED && product && categoriesQuery.data) {
+    const hasOptionsFetched = categoriesQuery.isSuccess;
+
+    if (alertOpen === AlertOpenState.OPENED && product && hasOptionsFetched) {
       formik.setValues({
         name: product.name,
         category: categoriesQuery.data.find((category) => category.id === product.categoryId) || null,
