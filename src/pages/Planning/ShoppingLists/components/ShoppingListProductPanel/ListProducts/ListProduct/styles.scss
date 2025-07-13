@@ -6,13 +6,6 @@
       font-size: var(--font-size-lg);
       font-weight: var(--font-weight-medium);
 
-      .m-icon {
-        &.fa-grip {
-          opacity: 0;
-          //   cursor: grab;
-        }
-      }
-
       .kebab-menu-trigger {
         margin-right: var(--spacing-2);
       }
@@ -21,6 +14,21 @@
         padding: 0;
         height: 100%;
         aspect-ratio: 1 / 1;
+      }
+
+      .m-grid-row {
+        width: 100%;
+        height: 100%;
+
+        .m-grid-col {
+          display: flex;
+          align-items: center;
+
+          &.details-col,
+          &.control-col {
+            justify-content: end;
+          }
+        }
       }
     }
   }
