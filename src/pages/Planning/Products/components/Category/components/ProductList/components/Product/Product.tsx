@@ -1,6 +1,7 @@
-import { DropdownMenu, Icon } from "@marcin-migdal/m-component-library";
+import { DropdownMenuOption, Icon } from "@marcin-migdal/m-component-library";
 import { useTranslation } from "react-i18next";
 
+import { KebabMenu } from "@components";
 import { useAppSelector } from "@hooks";
 import { Product } from "@services/Products";
 import { selectAuthorization } from "@slices";
@@ -17,32 +18,24 @@ export const ProductItem = ({ product, handleOpenDeleteProductAlert, handleOpenE
   const { authUser } = useAppSelector(selectAuthorization);
   const { t } = useTranslation();
 
+  const kebabMenuOptions: DropdownMenuOption[] = [
+    {
+      label: t("products.editProduct"),
+      onClick: () => handleOpenEditProductAlert(product),
+      disabled: !authUser?.uid || !product.editAccess.includes(authUser.uid),
+    },
+    {
+      label: t("products.deleteProduct"),
+      onClick: () => handleOpenDeleteProductAlert(product.id),
+      disabled: product.ownerId !== authUser?.uid,
+    },
+  ];
+
   return (
     <li className="products-list-item" key={product.id}>
       <Icon icon="grip" />
       <span>{product.name}</span>
-      <DropdownMenu
-        triggerContainerClassName="product-context-menu-trigger"
-        options={[
-          {
-            label: t("products.editProduct"),
-            onClick: () => handleOpenEditProductAlert(product),
-            disabled: !authUser?.uid || !product.editAccess.includes(authUser.uid),
-          },
-          {
-            label: t("products.deleteProduct"),
-            onClick: () => handleOpenDeleteProductAlert(product.id),
-            disabled: product.ownerId !== authUser?.uid,
-          },
-        ]}
-        openEvent="click"
-        openPosition="auto-bottom"
-        positionAlignment="center"
-        hideDisabledOptions
-        hideOnDisabledOptions
-      >
-        <Icon icon="ellipsis-vertical" />
-      </DropdownMenu>
+      <KebabMenu options={kebabMenuOptions} />
     </li>
   );
 };

@@ -1,12 +1,16 @@
-.shopping-list-context-menu-trigger {
-  text-align: center;
-  margin-left: auto;
-  width: 1.5rem;
-  cursor: pointer;
-
+.shopping-list-panel-toggle {
+  &:has(.kebab-menu-trigger.opened),
   &:hover {
     .m-icon {
       color: var(--icon-hover-color);
     }
+  }
+
+  .m-icon {
+    color: transparent;
+  }
+
+  .kebab-menu-trigger {
+    margin-left: auto;
   }
 }

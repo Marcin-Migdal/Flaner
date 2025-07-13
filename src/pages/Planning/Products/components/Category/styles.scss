@@ -16,16 +16,18 @@
 
     background-color: var(--grey-color-650);
 
-    .category-context-menu-trigger {
-      text-align: center;
+    .kebab-menu-trigger {
       margin-left: auto;
-      width: 1.5rem;
-      cursor: pointer;
+    }
 
-      &:hover {
-        .m-icon {
-          color: var(--icon-hover-color);
-        }
+    .m-icon {
+      color: transparent;
+    }
+
+    &:has(.kebab-menu-trigger.opened),
+    &:hover {
+      .m-icon {
+        color: var(--icon-hover-color);
       }
     }
   }

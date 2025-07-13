@@ -1,7 +1,8 @@
-import { Accordion, Button, Col, DropdownMenu, Icon, Row, Textarea } from "@marcin-migdal/m-component-library";
+import { Accordion, Button, Col, DropdownMenuOption, Row, Textarea } from "@marcin-migdal/m-component-library";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { KebabMenu } from "@components";
 import { useAppSelector, useBreakpoint } from "@hooks";
 import { ShoppingList } from "@services/ShoppingLists";
 import { ShoppingListProduct, useEditShoppingListProductMutation } from "@services/ShoppingListsProduct";
@@ -50,6 +51,19 @@ export const ListProduct = ({
     setIsBusy(false);
   };
 
+  const kebabMenuOptions: DropdownMenuOption[] = [
+    {
+      label: t("products.editProduct"),
+      onClick: () => handleOpenEditAlert(product),
+      disabled: !authUser?.uid || !shoppingList?.editAccess.includes(authUser.uid),
+    },
+    {
+      label: t("products.deleteProduct"),
+      onClick: () => handleOpenDeleteAlert(product.id),
+      disabled: shoppingList?.ownerId !== authUser?.uid,
+    },
+  ];
+
   return (
     <Accordion.Section sectionId={product.id}>
       <Accordion.Toggle>
@@ -64,28 +78,7 @@ export const ListProduct = ({
             <CategoryDisplay category={product.category} />
           </Col>
           <Col className="flex justify-end" sm={2} md={1} lg={1} xl={3}>
-            <DropdownMenu
-              triggerContainerClassName="shopping-list-product-context-menu-trigger"
-              options={[
-                {
-                  label: t("products.editProduct"),
-                  onClick: () => handleOpenEditAlert(product),
-                  disabled: !authUser?.uid || !shoppingList?.editAccess.includes(authUser.uid),
-                },
-                {
-                  label: t("products.deleteProduct"),
-                  onClick: () => handleOpenDeleteAlert(product.id),
-                  disabled: shoppingList?.ownerId !== authUser?.uid,
-                },
-              ]}
-              openEvent="click"
-              openPosition="auto-bottom"
-              positionAlignment="center"
-              hideDisabledOptions
-              hideOnDisabledOptions
-            >
-              <Icon icon="ellipsis-vertical" />
-            </DropdownMenu>
+            <KebabMenu options={kebabMenuOptions} />
             <Button
               variant="full"
               icon={product.completed ? "xmark" : "check"}

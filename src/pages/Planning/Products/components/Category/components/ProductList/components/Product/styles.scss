@@ -10,7 +10,7 @@
   border-left-width: 2px;
   border-right-width: 2px;
 
-  &:has(.product-context-menu-trigger.opened),
+  &:has(.kebab-menu-trigger.opened),
   &:hover {
     background-color: var(--background-color);
 
@@ -18,14 +18,8 @@
       color: var(--primary-text-color_300);
     }
 
-    .product-context-menu-trigger {
-      .m-icon:not(.fa-grip) {
-        color: var(--icon-color);
-
-        &:hover {
-          color: var(--icon-hover-color);
-        }
-      }
+    .m-icon {
+      color: var(--icon-hover-color);
     }
   }
 
@@ -38,21 +32,7 @@
     font-size: var(--font-size-sm);
   }
 
-  .product-context-menu-trigger {
+  .kebab-menu-trigger {
     margin-left: auto;
-
-    .m-icon {
-      &.fa-grip {
-        // cursor: grab;
-      }
-
-      &.fa-ellipsis-vertical {
-        min-width: 1rem;
-      }
-
-      &.fa-ellipsis-vertical {
-        cursor: pointer;
-      }
-    }
   }
 }
