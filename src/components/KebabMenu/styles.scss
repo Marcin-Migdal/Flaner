@@ -5,7 +5,8 @@
   color: var(--icon-color);
 
   &.opened,
-  &:hover {
+  &:hover,
+  &:focus-visible {
     .m-icon {
       color: var(--icon-hover-color);
     }
