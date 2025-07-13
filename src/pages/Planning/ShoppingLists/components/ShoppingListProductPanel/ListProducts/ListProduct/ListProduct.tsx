@@ -67,17 +67,17 @@ export const ListProduct = ({
   return (
     <Accordion.Section sectionId={product.id}>
       <Accordion.Toggle>
-        <Row className="w-100-percent">
-          <Col sm={3} md={3} lg={3} xl={3}>
+        <Row>
+          <Col className="name-col" sm={3} md={3} lg={3} xl={3}>
             <span className="truncate-text">{product.productDetails.name}</span>
           </Col>
-          <Col className="flex justify-end" sm={7} md={8} lg={8} xl={6}>
+          <Col className="details-col" sm={7} md={8} lg={8} xl={6}>
             <span className="truncate-text">{`${product.amount} ${
               isMobile ? product.unit.shortName : product.unit.name
             }`}</span>
             <CategoryDisplay category={product.category} />
           </Col>
-          <Col className="flex justify-end" sm={2} md={1} lg={1} xl={3}>
+          <Col className="control-col" sm={2} md={1} lg={1} xl={3}>
             <KebabMenu options={kebabMenuOptions} />
             <Button
               variant="full"
