@@ -80,7 +80,7 @@ registerRoute(navigationRoute);
 // 5. Offline fallback
 setCatchHandler(async ({ request }) => {
   if (request.mode === "navigate") {
-    return (await matchPrecache("/offline.html")) || Response.error();
+    return (await matchPrecache("offline.html")) || (await matchPrecache("/offline.html")) || Response.error();
   }
   return Response.error();
 });

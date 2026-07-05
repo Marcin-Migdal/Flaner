@@ -4,7 +4,7 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/((?!assets/|flaner-icon.png|flaner-maskable.png|manifest.json|offline.html|locales/|sw.js).*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ]

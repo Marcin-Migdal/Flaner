@@ -49,3 +49,5 @@ vitest.config.*.timestamp*
 # Module Federation diagnostic logs
 .mf/
 **/.mf/
+.vercel
+.env*
