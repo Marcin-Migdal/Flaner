@@ -23,7 +23,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!assets/|remoteEntry.js|locales/).*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ]
