@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flaner - Offline</title>
+  <style>
+    :root {
+      --bg: #09090b; /* zinc-950 */
+      --fg: #f4f4f5; /* zinc-100 */
+      --muted: #a1a1aa; /* zinc-400 */
+      --brand: #edad5e; /* Flaner gold */
+      --border: #27272a; /* zinc-800 */
+    }
+
+    /* Light mode override if browser is in light mode */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #fafaf9; /* alabaster cream */
+        --fg: #1c1917; /* charcoal */
+        --muted: #78716c; /* warm grey */
+        --border: #e7e5e4;
+      }
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 400px;
+      padding: 32px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background-color: rgba(255, 255, 255, 0.01);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: var(--brand);
+      margin: 0 0 8px 0;
+    }
+
+    .logo-container {
+      margin-bottom: 24px;
+    }
+
+    .offline-icon {
+      width: 64px;
+      height: 64px;
+      stroke: var(--brand);
+      stroke-width: 1.5;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 12px 0;
+    }
+
+    p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin: 0 0 24px 0;
+    }
+
+    .btn {
+      display: inline-block;
+      background-color: var(--brand);
+      color: #09090b;
+      font-weight: 700;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: opacity 0.2s ease;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo-container">
+      <svg class="offline-icon" viewBox="0 0 24 24">
+        <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.5M5 12.5a10.94 10.94 0 0 1 5.83-2.84M8.5 16.5a4.48 4.48 0 0 1 2.33-1.43M13.17 15.07a4.48 4.48 0 0 1 2.33 1.43M12 20h.01" />
+      </svg>
+    </div>
+    <h1>FLANER</h1>
+    <h2>Brak połączenia z siecią</h2>
+    <p>Wygląda na to, że jesteś offline. Nie martw się! Twoje wcześniej wczytane dane i listy zakupowe zostaną załadowane z pamięci podręcznej.</p>
+    <button class="btn" onclick="window.location.reload()">Spróbuj ponownie</button>
+  </div>
+</body>
+</html>

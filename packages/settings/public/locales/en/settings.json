@@ -1,0 +1,35 @@
+{
+  "title": "Settings",
+  "profile": {
+    "sectionTitle": "Profile Details",
+    "sectionDesc": "Manage your public profile settings and nickname.",
+    "username": "Username",
+    "usernamePlaceholder": "Enter your username",
+    "avatar": "Profile picture",
+    "avatarDesc": "Drag and drop or click to upload a new profile picture (max. 1MB)."
+  },
+  "preferences": {
+    "sectionTitle": "App Preferences",
+    "sectionDesc": "Customize your app experience, language, and theme.",
+    "darkMode": "Dark Mode",
+    "darkModeDesc": "Enable dark colors for the user interface.",
+    "language": "App Language",
+    "languageDesc": "Choose your preferred language.",
+    "langs": {
+      "en": "English",
+      "pl": "Polish"
+    }
+  },
+  "actions": {
+    "save": "Save Changes",
+    "saving": "Saving..."
+  },
+  "notifications": {
+    "success": "Settings updated successfully!",
+    "error": "Failed to update settings."
+  },
+  "validation": {
+    "usernameRequired": "Username is required",
+    "usernameMin": "Username must be at least 3 characters"
+  }
+}

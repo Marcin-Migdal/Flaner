@@ -1,0 +1,35 @@
+{
+  "title": "Ustawienia",
+  "profile": {
+    "sectionTitle": "Szczegóły profilu",
+    "sectionDesc": "Zarządzaj ustawieniami swojego profilu publicznego i pseudonimem.",
+    "username": "Nazwa użytkownika",
+    "usernamePlaceholder": "Wpisz swoją nazwę użytkownika",
+    "avatar": "Zdjęcie profilowe",
+    "avatarDesc": "Przeciągnij i upuść lub kliknij, aby wgrać nowe zdjęcie profilowe (maks. 1MB)."
+  },
+  "preferences": {
+    "sectionTitle": "Preferencje aplikacji",
+    "sectionDesc": "Dostosuj działanie aplikacji, język i motyw graficzny.",
+    "darkMode": "Tryb ciemny",
+    "darkModeDesc": "Włącz ciemną kolorystykę interfejsu.",
+    "language": "Język aplikacji",
+    "languageDesc": "Wybierz preferowany język.",
+    "langs": {
+      "en": "Angielski",
+      "pl": "Polski"
+    }
+  },
+  "actions": {
+    "save": "Zapisz zmiany",
+    "saving": "Zapisywanie..."
+  },
+  "notifications": {
+    "success": "Ustawienia zostały pomyślnie zaktualizowane!",
+    "error": "Nie udało się zaktualizować ustawień."
+  },
+  "validation": {
+    "usernameRequired": "Nazwa użytkownika jest wymagana",
+    "usernameMin": "Nazwa użytkownika musi mieć co najmniej 3 znaki"
+  }
+}

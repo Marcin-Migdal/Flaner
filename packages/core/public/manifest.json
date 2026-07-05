@@ -1,0 +1,23 @@
+{
+  "name": "Flaner",
+  "short_name": "Flaner",
+  "description": "Flaner – plan, shop, and connect",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#edad5e",
+  "icons": [
+    {
+      "src": "/flaner-icon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/flaner-maskable.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

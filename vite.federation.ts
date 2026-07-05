@@ -1,0 +1,15 @@
+export const sharedFederationConfig = {
+  react: { singleton: true },
+  'react-dom': { singleton: true },
+  'react-router': { singleton: true },
+  'react-hook-form': { singleton: true },
+  '@tanstack/react-query': { singleton: true },
+  'react-i18next': { singleton: true },
+  i18next: { singleton: true },
+  '@flaner-v2/shared': { singleton: true },
+  '@flaner-v2/ui-components': { singleton: true },
+  'firebase/app': { singleton: true },
+  'firebase/auth': { singleton: true },
+  'firebase/firestore': { singleton: true },
+  'sonner': { singleton: true },
+};
