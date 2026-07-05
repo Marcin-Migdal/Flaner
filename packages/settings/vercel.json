@@ -1,7 +1,6 @@
 {
   "buildCommand": "cd ../.. && npx nx run settings:build",
   "outputDirectory": "dist",
-  "cleanUrls": true,
   "headers": [
     {
       "source": "/(.*)",
