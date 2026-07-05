@@ -10,22 +10,22 @@ const PROVIDERS: Array<{ alias: string; name: string; entry: string }> = [
   {
     "alias": "settings",
     "name": "settings",
-    "entry": "http://127.0.0.1:4201/remoteEntry.js"
+    "entry": `${import.meta.env.VITE_MFE_SETTINGS_URL || 'http://127.0.0.1:4201'}/remoteEntry.js`
   },
   {
     "alias": "community",
     "name": "community",
-    "entry": "http://127.0.0.1:4202/remoteEntry.js"
+    "entry": `${import.meta.env.VITE_MFE_COMMUNITY_URL || 'http://127.0.0.1:4202'}/remoteEntry.js`
   },
   {
     "alias": "shopping",
     "name": "shopping",
-    "entry": "http://127.0.0.1:4203/remoteEntry.js"
+    "entry": `${import.meta.env.VITE_MFE_SHOPPING_URL || 'http://127.0.0.1:4203'}/remoteEntry.js`
   },
   {
     "alias": "scheduling",
     "name": "scheduling",
-    "entry": "http://127.0.0.1:4204/remoteEntry.js"
+    "entry": `${import.meta.env.VITE_MFE_SCHEDULING_URL || 'http://127.0.0.1:4204'}/remoteEntry.js`
   }
 ];
 

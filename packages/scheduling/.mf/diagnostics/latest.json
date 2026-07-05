@@ -1,10 +1,10 @@
 {
   "latestErrorEvent": {
     "code": "TYPE-001",
-    "message": "Failed to generate type declaration. Execute the below cmd to reproduce and fix the error. #TYPE-001\nargs: {\"cmd\":\"npx tsc --project \\\"E:\\\\\\\\Dom projekty\\\\\\\\Flaner v2\\\\\\\\packages\\\\\\\\scheduling\\\\\\\\node_modules\\\\\\\\.federation\\\\\\\\tsconfig.104bfb3eb2b05fff6a1ae303be344895.json\\\"\"}\nView the docs to see how to solve: https://module-federation.io/guide/troubleshooting/type#type-001",
+    "message": "Failed to generate type declaration. Execute the below cmd to reproduce and fix the error. #TYPE-001\nargs: {\"cmd\":\"npx tsc --project \\\"E:\\\\\\\\Dom projekty\\\\\\\\Flaner v2\\\\\\\\packages\\\\\\\\scheduling\\\\\\\\node_modules\\\\\\\\.federation\\\\\\\\tsconfig.c2d143d4c3ac87771f8f1fb8d3a25659.json\\\"\"}\nView the docs to see how to solve: https://module-federation.io/guide/troubleshooting/type#type-001",
     "args": {
-      "cmd": "npx tsc --project \"E:\\\\Dom projekty\\\\Flaner v2\\\\packages\\\\scheduling\\\\node_modules\\\\.federation\\\\tsconfig.104bfb3eb2b05fff6a1ae303be344895.json\""
+      "cmd": "npx tsc --project \"E:\\\\Dom projekty\\\\Flaner v2\\\\packages\\\\scheduling\\\\node_modules\\\\.federation\\\\tsconfig.c2d143d4c3ac87771f8f1fb8d3a25659.json\""
     },
-    "timestamp": 1783254451497
+    "timestamp": 1783268200857
   }
 }

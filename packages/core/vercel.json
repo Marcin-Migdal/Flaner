@@ -1,0 +1,11 @@
+{
+  "buildCommand": "cd ../.. && npx nx run core:build",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/((?!assets/|flaner-icon.png|flaner-maskable.png|manifest.json|offline.html|locales/|sw.js).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
