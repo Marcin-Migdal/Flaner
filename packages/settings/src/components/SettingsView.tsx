@@ -22,7 +22,11 @@ export function SettingsView() {
     },
   });
 
-  const { handleSubmit, reset } = settingsForm;
+  const {
+    handleSubmit,
+    reset,
+    formState: { isDirty },
+  } = settingsForm;
 
   // Keep form in sync if auth user details load later
   useEffect(() => {
@@ -172,7 +176,7 @@ export function SettingsView() {
             <Button
               type="submit"
               variant="brand"
-              disabled={mutation.isPending}
+              disabled={mutation.isPending || !isDirty}
               className="px-6 h-10 shadow-lg shadow-brand/10"
             >
               {mutation.isPending ? t("actions.saving") : t("actions.save")}

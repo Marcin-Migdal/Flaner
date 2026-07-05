@@ -3,5 +3,12 @@
   "cancel": "Cancel",
   "confirm": "Confirm",
   "loading": "Loading...",
-  "error": "An error occurred"
+  "error": "An error occurred",
+  "nav": {
+    "community": "Community",
+    "shopping": "Shopping",
+    "scheduling": "Scheduling",
+    "settings": "Settings",
+    "signOut": "Sign Out"
+  }
 }

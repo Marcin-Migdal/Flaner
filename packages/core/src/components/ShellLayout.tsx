@@ -7,15 +7,15 @@ import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
 
 const NAV_LINKS = [
-  { path: '/community', label: 'Community' },
-  { path: '/shopping', label: 'Shopping' },
-  { path: '/scheduling', label: 'Scheduling' },
-  { path: '/settings', label: 'Settings' },
+  { path: '/community', labelKey: 'nav.community' },
+  { path: '/shopping', labelKey: 'nav.shopping' },
+  { path: '/scheduling', labelKey: 'nav.scheduling' },
+  { path: '/settings', labelKey: 'nav.settings' },
 ];
 
 export function ShellLayout() {
   const { user, signOutUser } = useAuth();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     if (user?.language) {
@@ -47,7 +47,7 @@ export function ShellLayout() {
                   }`
                 }
               >
-                {link.label}
+                {t(link.labelKey)}
               </NavLink>
             ))}
           </nav>
@@ -66,7 +66,7 @@ export function ShellLayout() {
               variant="outline"
               size="xs"
             >
-              Sign Out
+              {t('nav.signOut')}
             </Button>
           </div>
         </div>

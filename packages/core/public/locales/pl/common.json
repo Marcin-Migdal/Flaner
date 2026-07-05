@@ -3,5 +3,12 @@
   "cancel": "Anuluj",
   "confirm": "Potwierdź",
   "loading": "Ładowanie...",
-  "error": "Wystąpił błąd"
+  "error": "Wystąpił błąd",
+  "nav": {
+    "community": "Społeczność",
+    "shopping": "Zakupy",
+    "scheduling": "Harmonogram",
+    "settings": "Ustawienia",
+    "signOut": "Wyloguj się"
+  }
 }
