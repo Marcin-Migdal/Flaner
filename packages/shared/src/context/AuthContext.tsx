@@ -109,9 +109,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signInWithGoogleUser = async (language: LanguageType) => {
     isManualAuth.current = true;
-    setIsLoading(true);
     try {
       const { user: firebaseUser } = await signInWithPopup(fb.auth.auth, fb.auth.provider);
+      setIsLoading(true);
       const userDocRef = doc(fb.firestore, "users", firebaseUser.uid);
       const userDocSnap = await getDoc(userDocRef);
 
