@@ -1,5 +1,5 @@
-import React from 'react';
 import { NavLink } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 function LinkCard({ title, description, to }: { title: string; description: string; to: string }) {
   return (
@@ -13,36 +13,38 @@ function LinkCard({ title, description, to }: { title: string; description: stri
   );
 }
 
-export function HomeDashboard() {
+export function HomeView() {
+  const { t } = useTranslation('common');
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8 animate-in fade-in duration-300">
       <div className="bg-gradient-to-r from-brand-dark/40 via-card to-card border border-brand/20 rounded-2xl p-8 relative overflow-hidden shadow-xl">
         <div className="absolute right-0 top-0 w-72 h-72 bg-brand/10 rounded-full blur-3xl pointer-events-none" />
-        <h1 className="text-3xl font-bold mb-2 text-foreground">Welcome to Flaner</h1>
+        <h1 className="text-3xl font-bold mb-2 text-foreground">{t('home.title')}</h1>
         <p className="text-brand-light/80 text-sm md:text-base max-w-xl">
-          Your personal planning and organization assistant in the new monorepo architecture.
+          {t('home.subtitle')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <LinkCard
-          title="Shopping"
-          description="Manage your shopping lists and product categories without delays."
+          title={t('nav.shopping')}
+          description={t('home.cards.shopping')}
           to="/shopping"
         />
         <LinkCard
-          title="Scheduling"
-          description="Plan events with friends in an interactive calendar."
+          title={t('nav.scheduling')}
+          description={t('home.cards.scheduling')}
           to="/scheduling"
         />
         <LinkCard
-          title="Community"
-          description="Connect, search for friends, and create groups."
+          title={t('nav.community')}
+          description={t('home.cards.community')}
           to="/community"
         />
         <LinkCard
-          title="Settings"
-          description="Customize dark theme, change display name and avatar."
+          title={t('nav.settings')}
+          description={t('home.cards.settings')}
           to="/settings"
         />
       </div>
@@ -50,4 +52,4 @@ export function HomeDashboard() {
   );
 }
 
-export default HomeDashboard;
+export default HomeView;

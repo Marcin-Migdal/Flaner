@@ -3,5 +3,50 @@
   "friends": "Friends",
   "groups": "Groups",
   "search": "Search users",
-  "addFriend": "Add Friend"
+  "addFriend": "Add Friend",
+  "tabs": {
+    "friendsList": "My Friends",
+    "searchUsers": "Find Friends"
+  },
+  "invitations": {
+    "button": "Invitations",
+    "title": "Friend Invitations",
+    "desc": "Manage sent and received friend requests here.",
+    "received": "Received Requests",
+    "sent": "Sent Requests",
+    "emptyReceived": "No received invitations.",
+    "emptySent": "No sent invitations.",
+    "accept": "Accept",
+    "reject": "Decline",
+    "cancel": "Cancel"
+  },
+  "friendsList": {
+    "placeholder": "Filter friends by username...",
+    "empty": "You have no friends yet.",
+    "remove": "Remove",
+    "removing": "Removing...",
+    "addedAt": "added {{date}}"
+  },
+  "searchTab": {
+    "placeholder": "Enter username...",
+    "empty": "No users found.",
+    "isFriend": "Friend",
+    "pending": "Pending...",
+    "cancel": "Cancel",
+    "accept": "Accept",
+    "add": "Add Friend"
+  },
+  "toasts": {
+    "sendSuccess": "Friend request sent.",
+    "sendError": "Failed to send friend request.",
+    "cancelSuccess": "Friend request canceled.",
+    "cancelError": "Failed to cancel friend request.",
+    "acceptSuccess": "Friend request accepted.",
+    "acceptError": "Failed to accept friend request.",
+    "rejectSuccess": "Friend request declined.",
+    "rejectError": "Failed to decline friend request.",
+    "removeSuccess": "Friend removed.",
+    "removeError": "Failed to remove friend.",
+    "notAuthenticated": "You must be logged in."
+  }
 }

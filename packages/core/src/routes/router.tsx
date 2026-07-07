@@ -1,22 +1,21 @@
-import React, { Component, Suspense, type ReactNode } from 'react';
-import { createBrowserRouter, Navigate } from 'react-router';
-import { ProtectedRoute, PublicRoute } from './guards';
-import { ShellLayout } from '../components/ShellLayout';
-import { HomeDashboard } from '../components/HomeDashboard';
-import { AuthPage } from '../components/AuthPage';
-import { lazyProvider } from '../mf';
+import { Component, Suspense, type ReactNode } from "react";
+import { createBrowserRouter, Navigate } from "react-router";
+import { AuthView } from "../pages/AuthView";
+import { HomeView } from "../pages/HomeView";
+import { ShellLayout } from "../components/ShellLayout";
+import { lazyProvider } from "../mf";
+import { ProtectedRoute, PublicRoute } from "./guards";
 
 // Lazy loaded MFE components
-const SettingsMFE = lazyProvider('settings', 'App');
-const CommunityMFE = lazyProvider('community', 'App');
-const ShoppingMFE = lazyProvider('shopping', 'App');
-const SchedulingMFE = lazyProvider('scheduling', 'App');
+const SettingsMFE = lazyProvider("settings", "App");
+const CommunityMFE = lazyProvider("community", "App");
+const ShoppingMFE = lazyProvider("shopping", "App");
+const SchedulingMFE = lazyProvider("scheduling", "App");
 
-// Error boundary to catch lazy load rejections for each MFE
-class MFEBoundary extends Component<
-  { children: ReactNode; name: string },
-  { error: Error | null }
-> {
+import { useTranslation } from "react-i18next";
+
+// Error boundary class component to catch lazy load rejections
+class ErrorBoundaryClass extends Component<{ children: ReactNode; name: string; t: (key: string, options?: any) => string }, { error: Error | null }> {
   state = { error: null as Error | null };
 
   static getDerivedStateFromError(error: Error) {
@@ -30,15 +29,19 @@ class MFEBoundary extends Component<
   }
 
   render() {
+    const { t, name, children } = this.props;
+
     if (this.state.error) {
       return (
         <div className="flex flex-col items-center justify-center p-8 bg-zinc-900/50 border border-red-900/50 rounded-xl text-center max-w-md mx-auto my-12 animate-in fade-in duration-300">
           <div className="w-12 h-12 rounded-full bg-red-950 flex items-center justify-center text-red-500 mb-4 font-bold text-xl">
             !
           </div>
-          <h2 className="text-red-400 font-semibold mb-2">Module Unavailable</h2>
+          <h2 className="text-red-400 font-semibold mb-2">
+            {t("errorBoundary.title", { name })}
+          </h2>
           <p className="text-zinc-400 text-sm mb-4">
-            The feature &quot;{this.props.name}&quot; is temporarily disabled or has not been started.
+            {t("errorBoundary.desc")}
           </p>
           <code className="text-xs bg-red-950/40 text-red-300 px-2 py-1 rounded font-mono">
             {this.state.error.message}
@@ -55,10 +58,15 @@ class MFEBoundary extends Component<
           </div>
         }
       >
-        {this.props.children}
+        {children}
       </Suspense>
     );
   }
+}
+
+function ErrorBoundary(props: { children: ReactNode; name: string }) {
+  const { t } = useTranslation();
+  return <ErrorBoundaryClass {...props} t={t} />;
 }
 
 export const router = createBrowserRouter([
@@ -67,8 +75,8 @@ export const router = createBrowserRouter([
     element: <PublicRoute />,
     children: [
       {
-        path: '/login',
-        element: <AuthPage />,
+        path: "/login",
+        element: <AuthView />,
       },
     ],
   },
@@ -80,39 +88,39 @@ export const router = createBrowserRouter([
         element: <ShellLayout />,
         children: [
           {
-            path: '/',
-            element: <HomeDashboard />,
+            path: "/",
+            element: <HomeView />,
           },
           {
-            path: '/community/*',
+            path: "/community/*",
             element: (
-              <MFEBoundary name="community">
+              <ErrorBoundary name="community">
                 <CommunityMFE />
-              </MFEBoundary>
+              </ErrorBoundary>
             ),
           },
           {
-            path: '/shopping/*',
+            path: "/shopping/*",
             element: (
-              <MFEBoundary name="shopping">
+              <ErrorBoundary name="shopping">
                 <ShoppingMFE />
-              </MFEBoundary>
+              </ErrorBoundary>
             ),
           },
           {
-            path: '/scheduling/*',
+            path: "/scheduling/*",
             element: (
-              <MFEBoundary name="scheduling">
+              <ErrorBoundary name="scheduling">
                 <SchedulingMFE />
-              </MFEBoundary>
+              </ErrorBoundary>
             ),
           },
           {
-            path: '/settings/*',
+            path: "/settings/*",
             element: (
-              <MFEBoundary name="settings">
+              <ErrorBoundary name="settings">
                 <SettingsMFE />
-              </MFEBoundary>
+              </ErrorBoundary>
             ),
           },
         ],
@@ -121,7 +129,7 @@ export const router = createBrowserRouter([
   },
   // Catch-all — redirect unknown routes to root
   {
-    path: '*',
+    path: "*",
     element: <Navigate to="/" replace />,
   },
 ]);

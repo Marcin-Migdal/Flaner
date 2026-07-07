@@ -16,5 +16,5 @@ export * from './components/ImagePicker';
 export * from './components/FormImagePicker';
 export * from './components/Profile';
 export * from './components/ui/avatar';
-
-
+export * from './components/ui/sheet';
+export * from './components/ui/tabs';
