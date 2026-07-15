@@ -6,7 +6,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { getLoginSchema, getSignUpSchema, type LoginFormData, type SignUpFormData } from "../utils/schemas";
 
-export function AuthPage() {
+export function AuthView() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const { signInWithGoogleUser, signInWithEmailUser, signUpWithEmailUser } = useAuth();
@@ -99,7 +99,7 @@ export function AuthPage() {
         {/* Credentials Form */}
         {isSignUp ? (
           <FormProvider {...signUpForm}>
-            <form onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-4 text-left">
+            <form key="signup-form" onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-4 text-left">
               <FormTextField 
                 name="username" 
                 label={t("usernameLabel")} 
@@ -127,7 +127,7 @@ export function AuthPage() {
           </FormProvider>
         ) : (
           <FormProvider {...loginForm}>
-            <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4 text-left">
+            <form key="login-form" onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4 text-left">
               <FormTextField 
                 name="email" 
                 type="email" 
@@ -165,4 +165,4 @@ export function AuthPage() {
   );
 }
 
-export default AuthPage;
+export default AuthView;

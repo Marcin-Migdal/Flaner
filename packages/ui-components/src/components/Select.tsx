@@ -1,4 +1,4 @@
-import React, { useId } from 'react';
+import { useId } from 'react';
 import ReactSelect, { Props as SelectProps } from 'react-select';
 import { clsx } from 'clsx';
 import { Field, FieldLabel, FieldDescription, FieldError } from './ui/field';

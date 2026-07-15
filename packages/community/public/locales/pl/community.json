@@ -3,5 +3,50 @@
   "friends": "Znajomi",
   "groups": "Grupy",
   "search": "Szukaj użytkowników",
-  "addFriend": "Dodaj znajomego"
+  "addFriend": "Dodaj znajomego",
+  "tabs": {
+    "friendsList": "Moi znajomi",
+    "searchUsers": "Szukaj znajomych"
+  },
+  "invitations": {
+    "button": "Zaproszenia",
+    "title": "Zaproszenia do znajomych",
+    "desc": "Zarządzaj wysłanymi i odebranymi zaproszeniami do znajomych.",
+    "received": "Odebrane zaproszenia",
+    "sent": "Wysłane zaproszenia",
+    "emptyReceived": "Brak odebranych zaproszeń.",
+    "emptySent": "Brak wysłanych zaproszeń.",
+    "accept": "Akceptuj",
+    "reject": "Odrzuć",
+    "cancel": "Cofnij"
+  },
+  "friendsList": {
+    "placeholder": "Filtruj znajomych po nazwie...",
+    "empty": "Nie masz jeszcze żadnych znajomych.",
+    "remove": "Usuń",
+    "removing": "Usuwanie...",
+    "addedAt": "dodano {{date}}"
+  },
+  "searchTab": {
+    "placeholder": "Wpisz nazwę użytkownika...",
+    "empty": "Nie znaleziono użytkowników.",
+    "isFriend": "Znajomy",
+    "pending": "Wysłano",
+    "cancel": "Cofnij",
+    "accept": "Akceptuj",
+    "add": "Dodaj"
+  },
+  "toasts": {
+    "sendSuccess": "Wysłano zaproszenie do znajomych.",
+    "sendError": "Nie udało się wysłać zaproszenia.",
+    "cancelSuccess": "Cofnięto zaproszenie do znajomych.",
+    "cancelError": "Nie udało się cofnąć zaproszenia.",
+    "acceptSuccess": "Zaakceptowano zaproszenie do znajomych.",
+    "acceptError": "Nie udało się zaakceptować zaproszenia.",
+    "rejectSuccess": "Odrzucono zaproszenie do znajomych.",
+    "rejectError": "Nie udało się odrzucić zaproszenia.",
+    "removeSuccess": "Usunięto ze znajomych.",
+    "removeError": "Nie udało się usunąć znajomego.",
+    "notAuthenticated": "Musisz być zalogowany."
+  }
 }

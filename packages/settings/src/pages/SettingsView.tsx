@@ -1,4 +1,4 @@
-import { compressImage, toast, uploadToCloudinary, useAuth } from "@flaner-v2/shared";
+import { compressImage, toast, uploadToCloudinary, useAuth, ONE_MB } from "@flaner-v2/shared";
 import { Button, FormImagePicker, FormSelect, FormSwitch, FormTextField, Separator } from "@flaner-v2/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
@@ -22,7 +22,11 @@ export function SettingsView() {
     },
   });
 
-  const { handleSubmit, reset } = settingsForm;
+  const {
+    handleSubmit,
+    reset,
+    formState: { isDirty },
+  } = settingsForm;
 
   // Keep form in sync if auth user details load later
   useEffect(() => {
@@ -42,12 +46,12 @@ export function SettingsView() {
     if (data.avatar instanceof File) {
       try {
         // Compress avatar (max 1MB)
-        const compressed = await compressImage(data.avatar, 1048576);
+        const compressed = await compressImage(data.avatar, ONE_MB);
         // Upload to Cloudinary
         avatarUrl = await uploadToCloudinary(compressed);
       } catch (err: any) {
         console.error(err);
-        toast.failure(err?.message || "Nie udało się przesłać zdjęcia.");
+        toast.failure(err?.message || t("notifications.avatarError"));
         return;
       }
     } else if (data.avatar === null) {
@@ -134,9 +138,9 @@ export function SettingsView() {
 
                 <FormImagePicker
                   name="avatar"
-                  label={t("profile.avatar") || "Zdjęcie profilowe"}
-                  description={t("profile.avatarDesc") || "Wybierz plik do 1MB."}
-                  maxSize={1048576} // 1MB
+                  label={t("profile.avatar")}
+                  description={t("profile.avatarDesc")}
+                  maxSize={ONE_MB} // 1MB
                 />
               </div>
             </div>
@@ -172,7 +176,7 @@ export function SettingsView() {
             <Button
               type="submit"
               variant="brand"
-              disabled={mutation.isPending}
+              disabled={mutation.isPending || !isDirty}
               className="px-6 h-10 shadow-lg shadow-brand/10"
             >
               {mutation.isPending ? t("actions.saving") : t("actions.save")}

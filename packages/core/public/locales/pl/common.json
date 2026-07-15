@@ -3,5 +3,34 @@
   "cancel": "Anuluj",
   "confirm": "Potwierdź",
   "loading": "Ładowanie...",
-  "error": "Wystąpił błąd"
+  "error": "Wystąpił błąd",
+  "nav": {
+    "community": "Społeczność",
+    "shopping": "Zakupy",
+    "scheduling": "Harmonogram",
+    "settings": "Ustawienia",
+    "signOut": "Wyloguj się"
+  },
+  "community": {
+    "friends": "Znajomi"
+  },
+  "home": {
+    "title": "Witaj w Flaner",
+    "subtitle": "Twój osobisty asystent planowania i organizacji.",
+    "cards": {
+      "shopping": "Zarządzaj listami zakupów i kategoriami produktów bez opóźnień.",
+      "scheduling": "Planuj wydarzenia ze znajomymi w interaktywnym kalendarzu.",
+      "community": "Znajdź znajomych i twórz grupy.",
+      "settings": "Dostosuj motyw, zmień nazwę wyświetlaną i awatar."
+    }
+  },
+  "errorBoundary": {
+    "title": "Nie udało się załadować modułu {{name}}",
+    "desc": "Spróbuj odświeżyć stronę. Jeśli problem będzie się powtarzał, skontaktuj się ze wsparciem.",
+    "unknownError": "Nieznany błąd"
+  },
+  "mfe": {
+    "noViewsTitle": "Brak podstron",
+    "noViewsDesc": "Ten moduł nie ma jeszcze skonfigurowanych podstron."
+  }
 }

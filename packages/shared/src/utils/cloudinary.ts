@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 
 export enum FlanerUploadPreset {
   PRODUCT_ICONS = "flaner_product_icons",
@@ -17,23 +16,28 @@ export const uploadToCloudinary = async (
   file: File,
   uploadPreset: string = FlanerUploadPreset.AVATARS
 ): Promise<string> => {
-  const cloudName = getValidatedCloudName();
+  try {
+    const cloudName = getValidatedCloudName();
 
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", uploadPreset);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
 
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-    method: "POST",
-    body: formData,
-  });
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      method: "POST",
+      body: formData,
+    });
 
-  if (!response.ok) {
-    throw new Error("Nie udało się przesłać pliku na serwer Cloudinary.");
+    if (!response.ok) {
+      throw new Error("Nie udało się przesłać pliku na serwer Cloudinary.");
+    }
+
+    const data = await response.json();
+    return data.secure_url;
+  } catch (error) {
+    console.error("uploadToCloudinary failed:", error);
+    throw error;
   }
-
-  const data = await response.json();
-  return data.secure_url;
 };
 
 const MAX_COMPRESSION_ATTEMPTS = 5;

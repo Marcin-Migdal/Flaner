@@ -26,7 +26,8 @@
   },
   "notifications": {
     "success": "Ustawienia zostały pomyślnie zaktualizowane!",
-    "error": "Nie udało się zaktualizować ustawień."
+    "error": "Nie udało się zaktualizować ustawień.",
+    "avatarError": "Nie udało się przesłać zdjęcia profilowego."
   },
   "validation": {
     "usernameRequired": "Nazwa użytkownika jest wymagana",
