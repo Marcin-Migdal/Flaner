@@ -1,6 +1,6 @@
 import React, { useId, useRef, useState, useEffect } from "react";
 import { Image as ImageIcon, UploadCloud, Trash2 } from "lucide-react";
-import { cn } from "@flaner-v2/shared";
+import { cn, ONE_KB, ONE_MB } from "@flaner-v2/shared";
 import { 
   Field, 
   FieldLabel, 
@@ -16,6 +16,24 @@ import {
   AttachmentActions,
   AttachmentAction,
 } from "./ui/attachment";
+import { useUiTranslations } from "../hooks/useUiTranslations";
+
+export interface ImagePickerLabels {
+  invalidFileType?: string;
+  fileTooSmall?: string;
+  fileTooLarge?: string;
+  resolutionTooSmall?: string;
+  resolutionTooLarge?: string;
+  dimensionReadError?: string;
+  fileLoadError?: string;
+  networkImageDefaultName?: string;
+  cloudImageDesc?: string;
+  noImageSelectedTitle?: string;
+  noImageSelectedDesc?: string;
+  dropzoneActiveText?: string;
+  dropzoneIdleText?: string;
+  acceptedFormatsDesc?: string;
+}
 
 export interface ImagePickerProps {
   id?: string;
@@ -30,11 +48,12 @@ export interface ImagePickerProps {
   error?: string;
   containerClassName?: string;
   labelClassName?: string;
+  labels?: Partial<ImagePickerLabels>;
 }
 
 const formatSize = (bytes: number): string => {
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes >= ONE_MB) return `${(bytes / ONE_MB).toFixed(1)} MB`;
+  return `${(bytes / ONE_KB).toFixed(1)} KB`;
 };
 
 export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
@@ -52,6 +71,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
       error,
       containerClassName,
       labelClassName,
+      labels,
     },
     ref
   ) => {
@@ -63,19 +83,25 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
     const [isDragging, setIsDragging] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+    const { t } = useUiTranslations();
+
     // Sync file preview object URLs
     useEffect(() => {
+      let url: string | null = null;
       if (value instanceof File) {
-        const url = URL.createObjectURL(value);
+        url = URL.createObjectURL(value);
         setPreviewUrl(url);
-        return () => {
-          URL.revokeObjectURL(url);
-        };
       } else if (typeof value === "string") {
         setPreviewUrl(value);
       } else {
         setPreviewUrl(null);
       }
+
+      return () => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      };
     }, [value]);
 
     const validateAndProcessFile = async (file: File) => {
@@ -83,17 +109,17 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
 
       // 1. File Type check
       if (!file.type.startsWith("image/")) {
-        setLocalError("Wybrany plik musi być obrazem (JPEG, PNG itp.).");
+        setLocalError(labels?.invalidFileType || t("imagePicker.invalidFileType"));
         return;
       }
 
       // 2. File Size check
       if (minSize !== undefined && file.size < minSize) {
-        setLocalError(`Plik jest za mały (minimum ${formatSize(minSize)}).`);
+        setLocalError(labels?.fileTooSmall || t("imagePicker.fileTooSmall", { size: formatSize(minSize) }));
         return;
       }
       if (maxSize !== undefined && file.size > maxSize) {
-        setLocalError(`Plik jest za duży (maksimum ${formatSize(maxSize)}).`);
+        setLocalError(labels?.fileTooLarge || t("imagePicker.fileTooLarge", { size: formatSize(maxSize) }));
         return;
       }
 
@@ -102,13 +128,13 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
         const checkResolution = (): Promise<string | null> => {
           return new Promise((resolve) => {
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = (e: ProgressEvent<FileReader>) => {
               const img = new Image();
               img.onload = () => {
                 if (minResolution) {
                   if (img.naturalWidth < minResolution.width || img.naturalHeight < minResolution.height) {
                     resolve(
-                      `Rozdzielczość jest za mała (minimum ${minResolution.width}x${minResolution.height}px).`
+                      labels?.resolutionTooSmall || t("imagePicker.resolutionTooSmall", { res: `${minResolution.width}x${minResolution.height}px` })
                     );
                     return;
                   }
@@ -116,7 +142,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
                 if (maxResolution) {
                   if (img.naturalWidth > maxResolution.width || img.naturalHeight > maxResolution.height) {
                     resolve(
-                      `Rozdzielczość jest za duża (maksimum ${maxResolution.width}x${maxResolution.height}px).`
+                      labels?.resolutionTooLarge || t("imagePicker.resolutionTooLarge", { res: `${maxResolution.width}x${maxResolution.height}px` })
                     );
                     return;
                   }
@@ -124,12 +150,12 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
                 resolve(null);
               };
               img.onerror = () => {
-                resolve("Nie udało się odczytać wymiarów obrazu.");
+                resolve(labels?.dimensionReadError || t("imagePicker.dimensionReadError"));
               };
               img.src = e.target?.result as string;
             };
             reader.onerror = () => {
-              resolve("Nie udało się wczytać pliku.");
+              resolve(labels?.fileLoadError || t("imagePicker.fileLoadError"));
             };
             reader.readAsDataURL(file);
           });
@@ -149,7 +175,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
+      const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
         validateAndProcessFile(file);
       }
@@ -198,15 +224,15 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
           desc: `${fileTypeDisplay(value.type)} · ${formatSize(value.size)}`,
         };
       } else if (typeof value === "string") {
-        const cleanName = value.split("/").pop()?.split("?")[0] || "Obraz sieciowy";
+        const cleanName = value.split("/").pop()?.split("?")[0] || (labels?.networkImageDefaultName || t("imagePicker.networkImageDefaultName"));
         return {
           title: cleanName,
-          desc: "Obraz z chmury",
+          desc: labels?.cloudImageDesc || t("imagePicker.cloudImageDesc"),
         };
       }
       return {
-        title: "Brak wybranego obrazu",
-        desc: "Przeciągnij plik lub kliknij dropzone",
+        title: labels?.noImageSelectedTitle || t("imagePicker.noImageSelectedTitle"),
+        desc: labels?.noImageSelectedDesc || t("imagePicker.noImageSelectedDesc"),
       };
     };
 
@@ -286,10 +312,10 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
             />
             <UploadCloud className={cn("size-6 text-muted-foreground mb-2 transition-colors", isDragging && "text-brand")} />
             <span className="text-xs font-semibold text-foreground/80">
-              {isDragging ? "Upuść plik tutaj..." : "Kliknij, aby wybrać lub przeciągnij plik"}
+              {isDragging ? (labels?.dropzoneActiveText || t("imagePicker.dropzoneActiveText")) : (labels?.dropzoneIdleText || t("imagePicker.dropzoneIdleText"))}
             </span>
             <span className="text-[10px] text-muted-foreground mt-0.5">
-              JPG, PNG, GIF lub WEBP
+              {labels?.acceptedFormatsDesc || t("imagePicker.acceptedFormatsDesc")}
             </span>
           </div>
         </div>

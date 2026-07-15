@@ -11,6 +11,9 @@
     "settings": "Ustawienia",
     "signOut": "Wyloguj się"
   },
+  "community": {
+    "friends": "Znajomi"
+  },
   "home": {
     "title": "Witaj w Flaner",
     "subtitle": "Twój osobisty asystent planowania i organizacji.",
@@ -23,6 +26,11 @@
   },
   "errorBoundary": {
     "title": "Nie udało się załadować modułu {{name}}",
-    "desc": "Spróbuj odświeżyć stronę. Jeśli problem będzie się powtarzał, skontaktuj się ze wsparciem."
+    "desc": "Spróbuj odświeżyć stronę. Jeśli problem będzie się powtarzał, skontaktuj się ze wsparciem.",
+    "unknownError": "Nieznany błąd"
+  },
+  "mfe": {
+    "noViewsTitle": "Brak podstron",
+    "noViewsDesc": "Ten moduł nie ma jeszcze skonfigurowanych podstron."
   }
 }

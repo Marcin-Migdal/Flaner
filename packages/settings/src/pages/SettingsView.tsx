@@ -1,4 +1,4 @@
-import { compressImage, toast, uploadToCloudinary, useAuth } from "@flaner-v2/shared";
+import { compressImage, toast, uploadToCloudinary, useAuth, ONE_MB } from "@flaner-v2/shared";
 import { Button, FormImagePicker, FormSelect, FormSwitch, FormTextField, Separator } from "@flaner-v2/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
@@ -46,12 +46,12 @@ export function SettingsView() {
     if (data.avatar instanceof File) {
       try {
         // Compress avatar (max 1MB)
-        const compressed = await compressImage(data.avatar, 1048576);
+        const compressed = await compressImage(data.avatar, ONE_MB);
         // Upload to Cloudinary
         avatarUrl = await uploadToCloudinary(compressed);
       } catch (err: any) {
         console.error(err);
-        toast.failure(err?.message || "Nie udało się przesłać zdjęcia.");
+        toast.failure(err?.message || t("notifications.avatarError"));
         return;
       }
     } else if (data.avatar === null) {
@@ -138,9 +138,9 @@ export function SettingsView() {
 
                 <FormImagePicker
                   name="avatar"
-                  label={t("profile.avatar") || "Zdjęcie profilowe"}
-                  description={t("profile.avatarDesc") || "Wybierz plik do 1MB."}
-                  maxSize={1048576} // 1MB
+                  label={t("profile.avatar")}
+                  description={t("profile.avatarDesc")}
+                  maxSize={ONE_MB} // 1MB
                 />
               </div>
             </div>

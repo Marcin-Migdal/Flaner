@@ -1,0 +1,19 @@
+{
+  "loading": "Loading...",
+  "imagePicker": {
+    "invalidFileType": "Selected file must be an image (JPEG, PNG, etc.).",
+    "fileTooSmall": "File is too small (minimum {{size}}).",
+    "fileTooLarge": "File is too large (maximum {{size}}).",
+    "resolutionTooSmall": "Resolution is too small (minimum {{res}}).",
+    "resolutionTooLarge": "Resolution is too large (maximum {{res}}).",
+    "dimensionReadError": "Failed to read image dimensions.",
+    "fileLoadError": "Failed to load the file.",
+    "networkImageDefaultName": "Network image",
+    "cloudImageDesc": "Cloud image",
+    "noImageSelectedTitle": "No image selected",
+    "noImageSelectedDesc": "Drag and drop or click dropzone",
+    "dropzoneActiveText": "Drop file here...",
+    "dropzoneIdleText": "Click to select or drag and drop a file",
+    "acceptedFormatsDesc": "JPG, PNG, GIF or WEBP"
+  }
+}

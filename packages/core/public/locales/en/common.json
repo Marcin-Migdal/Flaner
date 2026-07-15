@@ -11,6 +11,9 @@
     "settings": "Settings",
     "signOut": "Sign Out"
   },
+  "community": {
+    "friends": "Friends"
+  },
   "home": {
     "title": "Welcome to Flaner",
     "subtitle": "Your personal planning and organization assistant.",
@@ -23,6 +26,11 @@
   },
   "errorBoundary": {
     "title": "Failed to load {{name}} module",
-    "desc": "Please try reloading the page. If the issue persists, contact support."
+    "desc": "Please try reloading the page. If the issue persists, contact support.",
+    "unknownError": "Unknown error"
+  },
+  "mfe": {
+    "noViewsTitle": "No sub-pages",
+    "noViewsDesc": "This module does not have any sub-pages configured yet."
   }
 }

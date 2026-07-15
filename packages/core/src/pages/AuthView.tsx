@@ -99,7 +99,7 @@ export function AuthView() {
         {/* Credentials Form */}
         {isSignUp ? (
           <FormProvider {...signUpForm}>
-            <form onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-4 text-left">
+            <form key="signup-form" onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-4 text-left">
               <FormTextField 
                 name="username" 
                 label={t("usernameLabel")} 
@@ -127,7 +127,7 @@ export function AuthView() {
           </FormProvider>
         ) : (
           <FormProvider {...loginForm}>
-            <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4 text-left">
+            <form key="login-form" onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4 text-left">
               <FormTextField 
                 name="email" 
                 type="email" 

@@ -1,21 +1,21 @@
-import React from 'react';
-import { NavLink } from 'react-router';
-import { Outlet } from 'react-router';
-import { useAuth } from '@flaner-v2/shared';
-import { Button, Profile } from '@flaner-v2/ui-components';
-import { useTranslation } from 'react-i18next';
-import { useEffect } from 'react';
+import { useAuth } from "@flaner-v2/shared";
+import { Button, Profile, LoadingFallback } from "@flaner-v2/ui-components";
+import { Suspense, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { NavLink, Outlet, useNavigation } from "react-router";
 
 const NAV_LINKS = [
-  { path: '/community', labelKey: 'nav.community' },
-  { path: '/shopping', labelKey: 'nav.shopping' },
-  { path: '/scheduling', labelKey: 'nav.scheduling' },
-  { path: '/settings', labelKey: 'nav.settings' },
+  { path: "/community", labelKey: "nav.community" },
+  { path: "/shopping", labelKey: "nav.shopping" },
+  { path: "/scheduling", labelKey: "nav.scheduling" },
+  { path: "/settings", labelKey: "nav.settings" },
 ];
 
 export function ShellLayout() {
   const { user, signOutUser } = useAuth();
   const { t, i18n } = useTranslation();
+  const navigation = useNavigation();
+  const isNavigating = navigation.state === "loading";
 
   useEffect(() => {
     if (user?.language) {
@@ -42,8 +42,8 @@ export function ShellLayout() {
                 className={({ isActive }) =>
                   `px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${
                     isActive
-                      ? 'bg-brand text-zinc-950 font-semibold shadow-md shadow-brand/10'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/80'
+                      ? "bg-brand text-zinc-950 font-semibold shadow-md shadow-brand/10"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/80"
                   }`
                 }
               >
@@ -55,25 +55,22 @@ export function ShellLayout() {
           <div className="h-6 w-[1px] bg-border hidden sm:block" />
 
           <div className="flex items-center gap-4">
-            <Profile
-              username={user?.username}
-              avatarUrl={user?.avatarUrl}
-              size="sm"
-              nameClassName="hidden md:block"
-            />
-            <Button
-              onClick={() => signOutUser()}
-              variant="outline"
-              size="xs"
-            >
-              {t('nav.signOut')}
+            <Profile username={user?.username} avatarUrl={user?.avatarUrl} size="sm" nameClassName="hidden md:block" />
+            <Button onClick={() => signOutUser()} variant="outline" size="xs">
+              {t("nav.signOut")}
             </Button>
           </div>
         </div>
       </header>
 
       <main className="flex-1 py-8 px-6 overflow-x-hidden">
-        <Outlet />
+        {isNavigating ? (
+          <LoadingFallback />
+        ) : (
+          <Suspense fallback={<LoadingFallback />}>
+            <Outlet />
+          </Suspense>
+        )}
       </main>
     </div>
   );

@@ -7,6 +7,7 @@ import { InvitationsSheet } from "../components/InvitationsSheet";
 import { SearchTabContent } from "../components/SearchTabContent";
 
 export function FriendsView() {
+  console.log("[FriendsView] rendering component...");
   const { t } = useCommunityTranslations();
   const { data: friends = [] } = useGetFriendsListQuery();
 
