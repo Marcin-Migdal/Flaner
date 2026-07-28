@@ -1,10 +1,8 @@
-import React from "react";
 import { useController, UseControllerProps } from "react-hook-form";
 import { Switch, SwitchProps } from "./Switch";
 
-export interface FormSwitchProps
-  extends Omit<SwitchProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur" | "checked">,
-    UseControllerProps {}
+export type FormSwitchProps = Omit<SwitchProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur" | "checked"> &
+  UseControllerProps;
 
 export function FormSwitch({
   name,

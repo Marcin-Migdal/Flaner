@@ -1,6 +1,6 @@
 import { toast as sonnerToast } from "sonner";
 
-export interface ToastOptions {
+export type ToastOptions = {
   description?: string;
   duration?: number;
 }

@@ -2,7 +2,7 @@ import React, { useId } from "react";
 import { Field, FieldLabel, FieldDescription, FieldError } from "./ui/field";
 import { cn } from "@flaner-v2/shared";
 
-export interface SwitchProps extends Omit<React.ComponentPropsWithoutRef<"input">, "id" | "type"> {
+export type SwitchProps = Omit<React.ComponentPropsWithoutRef<"input">, "id" | "type"> & {
   id?: string;
   label?: string;
   description?: string;

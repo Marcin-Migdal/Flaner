@@ -5,22 +5,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 const sizeClasses = {
   sm: {
     container: "gap-2.5",
-    avatar: "w-8 h-8 text-xs border border-brand/20",
+    avatar: "w-8 h-8 shrink-0 text-xs border border-brand/20",
     name: "text-xs font-semibold text-foreground/80",
   },
   md: {
     container: "gap-3",
-    avatar: "w-10 h-10 text-sm border-2 border-brand/20 shadow-sm",
+    avatar: "w-10 h-10 shrink-0 text-sm border-2 border-brand/20 shadow-sm",
     name: "text-sm font-semibold text-foreground",
   },
   lg: {
     container: "gap-4",
-    avatar: "w-16 h-16 text-xl border-2 border-brand/20 shadow-md",
+    avatar: "w-16 h-16 shrink-0 text-xl border-2 border-brand/20 shadow-md",
     name: "text-base font-bold text-foreground",
   },
 };
 
-export interface ProfileProps {
+export type ProfileProps = {
   username?: string;
   avatarUrl?: string | null;
   className?: string;

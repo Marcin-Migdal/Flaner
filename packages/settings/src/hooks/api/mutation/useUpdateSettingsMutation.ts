@@ -1,6 +1,6 @@
 import { useAuth } from "@flaner-v2/shared";
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { updateUserProfile, type UpdateProfilePayload } from "../api";
+import { updateUserProfile, type UpdateProfilePayload } from "../../../api";
 
 export const useUpdateSettingsMutation = (options?: UseMutationOptions<void, Error, UpdateProfilePayload>) => {
   const { user, updateUser } = useAuth();

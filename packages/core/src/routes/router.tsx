@@ -1,65 +1,32 @@
-import React, { Component, Suspense, type ReactNode } from 'react';
-import { createBrowserRouter, Navigate } from 'react-router';
-import { ProtectedRoute, PublicRoute } from './guards';
-import { ShellLayout } from '../components/ShellLayout';
-import { HomeDashboard } from '../components/HomeDashboard';
-import { AuthPage } from '../components/AuthPage';
-import { lazyProvider } from '../mf';
+import { MFE_NAMES } from "@flaner-v2/shared";
+import { LoadingFallback } from "@flaner-v2/ui-components";
+import React, { Suspense } from "react";
+import { createBrowserRouter, Navigate, Outlet } from "react-router";
+import { MfeRouteErrorBoundary } from "../components/MfeRouteErrorBoundary";
+import { ShellLayout } from "../components/ShellLayout";
+import { lazyMfeRoutes, lazyProvider } from "../mf";
+import { AuthView } from "../pages/AuthView";
+import { HomeView } from "../pages/HomeView";
+import { PageTilesView } from "../pages/PageTilesView";
+import { ProtectedRoute, PublicRoute } from "./guards";
 
 // Lazy loaded MFE components
-const SettingsMFE = lazyProvider('settings', 'App');
-const CommunityMFE = lazyProvider('community', 'App');
-const ShoppingMFE = lazyProvider('shopping', 'App');
-const SchedulingMFE = lazyProvider('scheduling', 'App');
+const SettingsMFE = lazyProvider(MFE_NAMES.SETTINGS, "App");
+const ShoppingMFE = lazyProvider(MFE_NAMES.SHOPPING, "App");
+const SchedulingMFE = lazyProvider(MFE_NAMES.SCHEDULING, "App");
 
-// Error boundary to catch lazy load rejections for each MFE
-class MFEBoundary extends Component<
-  { children: ReactNode; name: string },
-  { error: Error | null }
-> {
-  state = { error: null as Error | null };
-
-  static getDerivedStateFromError(error: Error) {
-    return { error };
-  }
-
-  componentDidUpdate(prevProps: { name: string }) {
-    if (this.props.name !== prevProps.name) {
-      this.setState({ error: null });
-    }
-  }
-
-  render() {
-    if (this.state.error) {
-      return (
-        <div className="flex flex-col items-center justify-center p-8 bg-zinc-900/50 border border-red-900/50 rounded-xl text-center max-w-md mx-auto my-12 animate-in fade-in duration-300">
-          <div className="w-12 h-12 rounded-full bg-red-950 flex items-center justify-center text-red-500 mb-4 font-bold text-xl">
-            !
-          </div>
-          <h2 className="text-red-400 font-semibold mb-2">Module Unavailable</h2>
-          <p className="text-zinc-400 text-sm mb-4">
-            The feature &quot;{this.props.name}&quot; is temporarily disabled or has not been started.
-          </p>
-          <code className="text-xs bg-red-950/40 text-red-300 px-2 py-1 rounded font-mono">
-            {this.state.error.message}
-          </code>
-        </div>
-      );
-    }
-
+// Helper to wrap component in Suspense container to show loader immediately during transition
+const withSuspense = (Component: React.ComponentType) => {
+  const Wrapped = () => {
     return (
-      <Suspense
-        fallback={
-          <div className="flex items-center justify-center p-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand" />
-          </div>
-        }
-      >
-        {this.props.children}
+      <Suspense fallback={<LoadingFallback />}>
+        <Component />
       </Suspense>
     );
-  }
-}
+  };
+
+  return <Wrapped />;
+};
 
 export const router = createBrowserRouter([
   // Public routes — only accessible when logged out
@@ -67,8 +34,8 @@ export const router = createBrowserRouter([
     element: <PublicRoute />,
     children: [
       {
-        path: '/login',
-        element: <AuthPage />,
+        path: "/login",
+        element: <AuthView />,
       },
     ],
   },
@@ -80,40 +47,42 @@ export const router = createBrowserRouter([
         element: <ShellLayout />,
         children: [
           {
-            path: '/',
-            element: <HomeDashboard />,
+            path: "/",
+            element: <HomeView />,
           },
           {
-            path: '/community/*',
-            element: (
-              <MFEBoundary name="community">
-                <CommunityMFE />
-              </MFEBoundary>
-            ),
-          },
-          {
-            path: '/shopping/*',
-            element: (
-              <MFEBoundary name="shopping">
-                <ShoppingMFE />
-              </MFEBoundary>
-            ),
-          },
-          {
-            path: '/scheduling/*',
-            element: (
-              <MFEBoundary name="scheduling">
-                <SchedulingMFE />
-              </MFEBoundary>
-            ),
-          },
-          {
-            path: '/settings/*',
-            element: (
-              <MFEBoundary name="settings">
-                <SettingsMFE />
-              </MFEBoundary>
-            ),
+            element: <Outlet />,
+            ErrorBoundary: MfeRouteErrorBoundary,
+            children: [
+              {
+                path: `/${MFE_NAMES.COMMUNITY}`,
+                element: <PageTilesView mfe={MFE_NAMES.COMMUNITY} />,
+              },
+              {
+                path: `/${MFE_NAMES.COMMUNITY}/*`,
+                lazy: lazyMfeRoutes(MFE_NAMES.COMMUNITY),
+              },
+              {
+                path: `/${MFE_NAMES.SHOPPING}`,
+                element: <PageTilesView mfe={MFE_NAMES.SHOPPING} />,
+              },
+              {
+                path: `/${MFE_NAMES.SHOPPING}/*`,
+                element: withSuspense(ShoppingMFE),
+              },
+              {
+                path: `/${MFE_NAMES.SCHEDULING}`,
+                element: <PageTilesView mfe={MFE_NAMES.SCHEDULING} />,
+              },
+              {
+                path: `/${MFE_NAMES.SCHEDULING}/*`,
+                element: withSuspense(SchedulingMFE),
+              },
+              {
+                path: `/${MFE_NAMES.SETTINGS}/*`,
+                element: withSuspense(SettingsMFE),
+              },
+            ],
           },
         ],
       },
@@ -121,7 +90,7 @@ export const router = createBrowserRouter([
   },
   // Catch-all — redirect unknown routes to root
   {
-    path: '*',
+    path: "*",
     element: <Navigate to="/" replace />,
   },
 ]);

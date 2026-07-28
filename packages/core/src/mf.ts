@@ -1,5 +1,7 @@
-import { lazy, type ComponentType } from 'react';
+import React, { lazy, type ComponentType } from 'react';
 import { registerRemotes, loadRemote } from '@module-federation/runtime';
+import { type RouteObject } from 'react-router';
+import { MFE_NAMES } from '@flaner-v2/shared';
 
 // The providers this consumer loads at runtime. Edit `entry` to point at a
 // different URL (`remoteEntry.js` is what every supported bundler emits at dev
@@ -8,23 +10,23 @@ import { registerRemotes, loadRemote } from '@module-federation/runtime';
 // loadRemote()/lazyProvider().
 const PROVIDERS: Array<{ alias: string; name: string; entry: string }> = [
   {
-    "alias": "settings",
-    "name": "settings",
+    "alias": MFE_NAMES.SETTINGS,
+    "name": MFE_NAMES.SETTINGS,
     "entry": `${import.meta.env.VITE_MFE_SETTINGS_URL || 'http://127.0.0.1:4201'}/remoteEntry.js`
   },
   {
-    "alias": "community",
-    "name": "community",
+    "alias": MFE_NAMES.COMMUNITY,
+    "name": MFE_NAMES.COMMUNITY,
     "entry": `${import.meta.env.VITE_MFE_COMMUNITY_URL || 'http://127.0.0.1:4202'}/remoteEntry.js`
   },
   {
-    "alias": "shopping",
-    "name": "shopping",
+    "alias": MFE_NAMES.SHOPPING,
+    "name": MFE_NAMES.SHOPPING,
     "entry": `${import.meta.env.VITE_MFE_SHOPPING_URL || 'http://127.0.0.1:4203'}/remoteEntry.js`
   },
   {
-    "alias": "scheduling",
-    "name": "scheduling",
+    "alias": MFE_NAMES.SCHEDULING,
+    "name": MFE_NAMES.SCHEDULING,
     "entry": `${import.meta.env.VITE_MFE_SCHEDULING_URL || 'http://127.0.0.1:4204'}/remoteEntry.js`
   }
 ];
@@ -45,4 +47,32 @@ export function lazyProvider<Props = unknown>(
     );
     return { default: mod!.default };
   });
+}
+
+export function lazyMfeRoutes(alias: string) {
+  return async () => {
+    const { loadRemote } = await import('@module-federation/runtime');
+    const { useRoutes } = await import('react-router');
+    const { routes } = await loadRemote<{ routes: RouteObject[] }>(`${alias}/routes`) ?? { routes: [] };
+
+    const Component = () => {
+      const element = useRoutes(routes);
+      return element;
+    };
+
+    return {
+      element: React.createElement(Component)
+    };
+  };
+}
+
+export async function loadMfeNavigation(alias: string) {
+  try {
+    const { loadRemote } = await import('@module-federation/runtime');
+    const mod = await loadRemote<any>(`${alias}/navigation`);
+    return mod?.navigation || [];
+  } catch (err) {
+    console.warn(`Failed to load navigation from ${alias}`, err);
+    return [];
+  }
 }

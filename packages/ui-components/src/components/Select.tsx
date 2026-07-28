@@ -1,14 +1,14 @@
-import React, { useId } from 'react';
+import { useId } from 'react';
 import ReactSelect, { Props as SelectProps } from 'react-select';
 import { clsx } from 'clsx';
 import { Field, FieldLabel, FieldDescription, FieldError } from './ui/field';
 
-export interface SelectOption {
+export type SelectOption = {
   label: string;
   value: string;
 }
 
-export interface CustomSelectProps extends Omit<SelectProps<SelectOption, false>, 'size'> {
+export type CustomSelectProps = Omit<SelectProps<SelectOption, false>, 'size'> & {
   label?: string;
   description?: string;
   error?: string;

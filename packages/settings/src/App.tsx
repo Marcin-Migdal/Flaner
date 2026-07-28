@@ -1,4 +1,4 @@
-import { SettingsView } from "./components/SettingsView";
+import { SettingsView } from "./pages/SettingsView";
 
 // Exposed by the federation plugin as 'settings/App'.
 // Consumers render it lazily via `lazyProvider('settings', 'App')`.

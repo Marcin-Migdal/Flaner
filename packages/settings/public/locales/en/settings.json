@@ -26,7 +26,8 @@
   },
   "notifications": {
     "success": "Settings updated successfully!",
-    "error": "Failed to update settings."
+    "error": "Failed to update settings.",
+    "avatarError": "Failed to upload profile picture."
   },
   "validation": {
     "usernameRequired": "Username is required",

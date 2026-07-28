@@ -1,0 +1,20 @@
+{
+  "loading": "Ładowanie...",
+  "imagePicker": {
+    "invalidFileType": "Wybrany plik musi być obrazem (JPEG, PNG itp.).",
+    "fileTooSmall": "Plik jest za mały (minimum {{size}}).",
+    "fileTooLarge": "Plik jest za duży (maksimum {{size}}).",
+    "resolutionTooSmall": "Rozdzielczość jest za mała (minimum {{res}}).",
+    "resolutionTooLarge": "Rozdzielczość jest za duża (maksimum {{res}}).",
+    "dimensionReadError": "Nie udało się odczytać wymiarów obrazu.",
+    "fileLoadError": "Nie udało się wczytać pliku.",
+    "networkImageDefaultName": "Obraz sieciowy",
+    "cloudImageDesc": "Obraz z chmury",
+    "noImageSelectedTitle": "Brak wybranego obrazu",
+    "noImageSelectedDesc": "Przeciągnij plik lub kliknij dropzone",
+    "dropzoneActiveText": "Upuść plik tutaj...",
+    "dropzoneIdleText": "Kliknij, aby wybrać lub przeciągnij plik",
+    "acceptedFormatsDesc": "JPG, PNG, GIF lub WEBP",
+    "compressing": "Kompresowanie obrazu..."
+  }
+}

@@ -6,7 +6,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { getLoginSchema, getSignUpSchema, type LoginFormData, type SignUpFormData } from "../utils/schemas";
 
-export function AuthPage() {
+export function AuthView() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const { signInWithGoogleUser, signInWithEmailUser, signUpWithEmailUser } = useAuth();
@@ -99,7 +99,7 @@ export function AuthPage() {
         {/* Credentials Form */}
         {isSignUp ? (
           <FormProvider {...signUpForm}>
-            <form onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-4 text-left">
+            <form key="signup-form" onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-4 text-left">
               <FormTextField 
                 name="username" 
                 label={t("usernameLabel")} 
@@ -120,14 +120,14 @@ export function AuthPage() {
                 placeholder={t("passwordPlaceholderSignUp")} 
               />
 
-              <Button type="submit" size="xl" variant="brand" className="w-full mt-2">
+              <Button type="submit" size="xl" variant="brand" className="w-full mt-2" isBusy={signUpForm.formState.isSubmitting}>
                 {t("signUpButton")}
               </Button>
             </form>
           </FormProvider>
         ) : (
           <FormProvider {...loginForm}>
-            <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4 text-left">
+            <form key="login-form" onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4 text-left">
               <FormTextField 
                 name="email" 
                 type="email" 
@@ -142,7 +142,7 @@ export function AuthPage() {
                 placeholder={t("passwordPlaceholderLogin")} 
               />
 
-              <Button type="submit" size="xl" variant="brand" className="w-full mt-2">
+              <Button type="submit" size="xl" variant="brand" className="w-full mt-2" isBusy={loginForm.formState.isSubmitting}>
                 {t("signInButton")}
               </Button>
             </form>
@@ -165,4 +165,4 @@ export function AuthPage() {
   );
 }
 
-export default AuthPage;
+export default AuthView;
