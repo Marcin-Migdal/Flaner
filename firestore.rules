@@ -1,0 +1,159 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==========================================
+    // FUNKCJE POMOCNICZE DLA GRUP
+    // ==========================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getRole(groupId) {
+      return get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role;
+    }
+    
+    function isAdminOrOwner(groupId) {
+      let role = getRole(groupId);
+      return role == 'admin' || role == 'owner';
+    }
+
+    function getRolePriority(role) {
+      return role == 'owner' ? 4 : (role == 'admin' ? 3 : (role == 'moderator' ? 2 : 1));
+    }
+
+    function hasHigherPriority(groupId, targetUserId, newRole) {
+      let callerPriority = getRolePriority(getRole(groupId));
+      let targetDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(targetUserId));
+      let targetPriority = targetDoc != null ? getRolePriority(targetDoc.data.role) : 0;
+      
+      let assignPriority = newRole != null ? getRolePriority(newRole) : 0;
+      
+      return callerPriority > targetPriority && callerPriority > assignPriority;
+    }
+
+    // ==========================================
+    // COLLECTION GROUP: ZAPYTANIA O CZŁONKOSTWA I ZAPROSZENIA
+    // ==========================================
+    match /{path=**}/members/{memberDocId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    match /{path=**}/invitations/{invDocId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Reguły dla kolekcji użytkowników
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+
+      // Subkolekcja znajomości (friendships)
+      match /friendships/{friendId} {
+        allow write: if request.auth != null && (request.auth.uid == userId || request.auth.uid == friendId);
+        allow read: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Subkolekcja powiadomień (notifications)
+      match /notifications/{notifId} {
+        allow create: if request.auth != null;
+        allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Subkolekcja zaproszeń do grup (groupInvitations)
+      match /groupInvitations/{groupId} {
+        allow create, update: if isAuthenticated() && 
+          exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+        allow read, delete: if isAuthenticated() && request.auth.uid == userId;
+      }
+    }
+    
+    // Reguły dla zaproszeń do znajomych
+    match /friendRequests/{requestId} {
+      allow read, write: if request.auth != null && (
+        request.auth.uid == resource.data.senderUid || 
+        request.auth.uid == resource.data.receiverUid ||
+        request.auth.uid == request.resource.data.senderUid ||
+        request.auth.uid == request.resource.data.receiverUid
+      );
+      allow create: if request.auth != null && (
+        request.auth.uid == request.resource.data.senderUid ||
+        request.auth.uid == request.resource.data.receiverUid
+      );
+    }
+
+    // ==========================================
+    // GRUPY (KOLEKCJA GŁÓWNA)
+    // ==========================================
+    match /groups/{groupId} {
+      allow read: if isAuthenticated() && (
+        resource.data.type == 'public' || 
+        exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)) ||
+        exists(/databases/$(database)/documents/groups/$(groupId)/invitations/$(request.auth.uid))
+      );
+      
+      allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
+      
+      allow update: if isAuthenticated() && (
+        getRole(groupId) == 'owner' || 
+        (isAdminOrOwner(groupId) && request.resource.data.ownerId == resource.data.ownerId)
+      );
+      allow delete: if isAuthenticated() && getRole(groupId) == 'owner';
+
+      // ------------------------------------------
+      // PODKOLEKCJA: CZŁONKOWIE (MEMBERS)
+      // ------------------------------------------
+      match /members/{userId} {
+        allow read: if isAuthenticated() && exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+        
+        allow create: if isAuthenticated() && (
+          (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
+          isAdminOrOwner(groupId) ||
+          (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.type == 'public' && get(/databases/$(database)/documents/groups/$(groupId)).data.requiresApproval == false) ||
+          (userId == request.auth.uid && exists(/databases/$(database)/documents/groups/$(groupId)/invitations/$(request.auth.uid)))
+        );
+
+        allow update: if isAuthenticated() && (
+          hasHigherPriority(groupId, userId, request.resource.data.role) ||
+          (getRole(groupId) == 'owner' && request.resource.data.role == 'owner') ||
+          (userId == request.auth.uid && getRole(groupId) == 'owner' && request.resource.data.role == 'admin')
+        );
+
+        allow delete: if isAuthenticated() && (
+          userId == request.auth.uid || 
+          hasHigherPriority(groupId, userId, null)
+        );
+      }
+
+      // ------------------------------------------
+      // PODKOLEKCJA: ZAPROSZENIA DO GRUPY (INVITATIONS)
+      // ------------------------------------------
+      match /invitations/{userId} {
+        allow read: if isAuthenticated() && (
+          userId == request.auth.uid || 
+          exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid))
+        );
+        allow create, update: if isAuthenticated() && 
+          exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)) && (
+            get(/databases/$(database)/documents/groups/$(groupId)).data.type != 'private' ||
+            isAdminOrOwner(groupId) ||
+            getRole(groupId) == 'moderator'
+          );
+        allow delete: if isAuthenticated() && (
+          userId == request.auth.uid || 
+          isAdminOrOwner(groupId) || 
+          getRole(groupId) == 'moderator'
+        );
+      }
+
+      // ------------------------------------------
+      // PODKOLEKCJA: PROŚBY O DOŁĄCZENIE (REQUESTS)
+      // ------------------------------------------
+      match /requests/{userId} {
+        allow read: if isAuthenticated() && (userId == request.auth.uid || isAdminOrOwner(groupId));
+        allow create: if isAuthenticated() && userId == request.auth.uid;
+        allow delete: if isAuthenticated() && (userId == request.auth.uid || isAdminOrOwner(groupId));
+      }
+    }
+  }
+}

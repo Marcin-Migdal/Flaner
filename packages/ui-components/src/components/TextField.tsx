@@ -2,7 +2,7 @@ import React, { useId } from "react";
 import { Input } from "./ui/input";
 import { Field, FieldLabel, FieldDescription, FieldError } from "./ui/field";
 
-export interface TextFieldProps extends Omit<React.ComponentPropsWithoutRef<"input">, "id"> {
+export type TextFieldProps = Omit<React.ComponentPropsWithoutRef<"input">, "id"> & {
   id?: string;
   label?: string;
   description?: string;

@@ -6,24 +6,34 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, type RouteObject } from "react-router";
 
-export interface PageTilesViewProps {
+export type PageTilesViewProps = {
   mfe: MfeName;
-}
+};
+
+// Module-level cache to prevent flashing loading spinners when routes are already loaded
+const routesCache = new Map<string, RouteObject[]>();
 
 export function PageTilesView({ mfe }: PageTilesViewProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [routes, setRoutes] = useState<RouteObject[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const cached = routesCache.get(mfe);
+  const [routes, setRoutes] = useState<RouteObject[]>(cached || []);
+  const [loading, setLoading] = useState(!cached);
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
+
+    if (!routesCache.has(mfe)) {
+      setLoading(true);
+    }
 
     loadRemote<{ routes: RouteObject[] }>(`${mfe}/routes`)
       .then((mod) => {
+        const loadedRoutes = mod?.routes || [];
+        routesCache.set(mfe, loadedRoutes);
         if (active) {
-          setRoutes(mod?.routes || []);
+          setRoutes(loadedRoutes);
           setLoading(false);
         }
       })
@@ -33,7 +43,7 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
 
         if (isNotExposed) {
           console.warn(
-            `[PageTilesView] MFE "${mfe}" does not expose './routes' yet. This is expected if the MFE has no sub-views.`,
+            `[PageTilesView] MFE "${mfe}" does not expose './routes' yet. This is expected if the MFE has no sub-views.`
           );
         } else {
           console.error(`[PageTilesView] Failed to load routes for MFE: ${mfe}`, err);
@@ -54,8 +64,22 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
     return <LoadingFallback />;
   }
 
-  // Filter routes that have handle metadata (label) and are not empty
-  const tiles = routes.filter((route) => route.path && route.handle && (route.handle as any).label);
+  // Helper to extract displayable tile routes recursively
+  const getTileRoutes = (items: RouteObject[]): RouteObject[] => {
+    const tilesList: RouteObject[] = [];
+    for (const route of items) {
+      const handle = route.handle as { label?: string; hideInNav?: boolean } | undefined;
+      if (route.path && handle?.label && !handle.hideInNav) {
+        tilesList.push(route);
+      }
+      if (route.children && route.children.length > 0) {
+        tilesList.push(...getTileRoutes(route.children));
+      }
+    }
+    return tilesList;
+  };
+
+  const tiles = getTileRoutes(routes);
 
   return (
     <div className="max-w-6xl mx-auto py-6 space-y-6">
@@ -72,20 +96,21 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
           <p className="text-zinc-500 text-sm">{t("mfe.noViewsDesc")}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-6 animate-in fade-in duration-200">
           {tiles.map((route, index) => {
             const handle = route.handle as { label: string; icon?: string };
             const IconComponent = handle.icon ? (Lucide as any)[handle.icon] : null;
 
-            // Translate key in core common.json: e.g. "community.friends"
-            const translationKey = `${mfe}.${handle.label}`;
+            const labelKey = handle.label;
+            const labelText = t(labelKey, {
+              defaultValue: t(`${mfe}.${labelKey}`, { defaultValue: labelKey }),
+            });
 
             return (
               <div
-                key={index}
+                key={route.path || index}
                 onClick={() => navigate(`/${mfe}/${route.path!}`)}
-                className="flex flex-col items-center justify-center p-8 bg-zinc-900/50 hover:bg-zinc-800/40 border border-border/50 hover:border-brand/40 rounded-2xl cursor-pointer transition-all duration-300 group hover:-translate-y-1 shadow-sm hover:shadow-md hover:shadow-brand/5 animate-in fade-in slide-in-from-bottom-2 duration-300"
-                style={{ animationDelay: `${index * 50}ms` }}
+                className="flex flex-col items-center justify-center p-8 bg-zinc-900/50 hover:bg-zinc-800/40 border border-border/50 hover:border-brand/40 rounded-2xl cursor-pointer transition-all duration-300 group hover:-translate-y-1 shadow-sm hover:shadow-md hover:shadow-brand/5"
               >
                 {IconComponent ? (
                   <div className="p-4 bg-brand/10 text-brand group-hover:bg-brand/20 group-hover:scale-110 rounded-2xl mb-4 transition-all duration-300">
@@ -95,7 +120,7 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
                   <div className="p-4 bg-zinc-800 text-muted-foreground rounded-2xl mb-4" />
                 )}
                 <h3 className="font-semibold text-lg text-foreground group-hover:text-brand transition-colors duration-300">
-                  {t(translationKey)}
+                  {labelText}
                 </h3>
               </div>
             );

@@ -1,25 +1,6 @@
-import { collection, doc, setDoc, getDocs, deleteDoc, query, where, limit } from "firebase/firestore";
+import type { FriendRequest, Friendship } from "./types";
+import { collection, doc, setDoc, getDocs, deleteDoc, query, where, limit, onSnapshot } from "firebase/firestore";
 import { fb, type UserType } from "@flaner-v2/shared";
-
-export interface FriendRequest {
-  id: string;
-  senderUid: string;
-  receiverUid: string;
-  senderUsername: string;
-  senderAvatarUrl: string;
-  receiverUsername: string;
-  receiverAvatarUrl: string;
-  status: "pending" | "accepted" | "rejected";
-  createdAt: number;
-}
-
-export interface Friendship {
-  userRef: any;
-  username: string;
-  usernameLower: string;
-  createdAt: number;
-  uid: string; // The friend's UID
-}
 
 // 1. Search users by username (prefix match, case-insensitive)
 export const searchUsers = async (searchQuery: string, currentUserUid: string): Promise<UserType[]> => {
@@ -109,6 +90,7 @@ export const acceptFriendRequest = async (
       userRef: doc(fb.firestore, "users", sender.uid),
       username: sender.username,
       usernameLower: sender.username.toLowerCase(),
+      avatarUrl: sender.avatarUrl || "",
       createdAt: Date.now(),
     });
 
@@ -118,6 +100,7 @@ export const acceptFriendRequest = async (
       userRef: doc(fb.firestore, "users", receiver.uid),
       username: receiver.username,
       usernameLower: receiver.username.toLowerCase(),
+      avatarUrl: receiver.avatarUrl || "",
       createdAt: Date.now(),
     });
 
@@ -195,6 +178,21 @@ export const getFriendsList = async (userUid: string): Promise<Friendship[]> => 
   }
 };
 
+export const subscribeToFriendsList = (
+  userUid: string,
+  onUpdate: (friends: Friendship[]) => void
+) => {
+  return onSnapshot(collection(fb.firestore, `users/${userUid}/friendships`), (snapshot) => {
+    const friends = snapshot.docs.map((d) => ({
+      ...d.data(),
+      uid: d.id,
+    })) as Friendship[];
+    onUpdate(friends);
+  }, (error) => {
+    console.error("subscribeToFriendsList failed:", error);
+  });
+};
+
 // Get sent friend requests for a user
 export const getSentFriendRequests = async (userUid: string): Promise<FriendRequest[]> => {
   try {
@@ -214,6 +212,27 @@ export const getSentFriendRequests = async (userUid: string): Promise<FriendRequ
   }
 };
 
+export const subscribeToSentFriendRequests = (
+  userUid: string,
+  onUpdate: (requests: FriendRequest[]) => void
+) => {
+  const q = query(
+    collection(fb.firestore, "friendRequests"),
+    where("senderUid", "==", userUid),
+    where("status", "==", "pending")
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const requests = snapshot.docs.map((d) => ({
+      ...d.data(),
+      id: d.id,
+    })) as FriendRequest[];
+    onUpdate(requests);
+  }, (error) => {
+    console.error("subscribeToSentFriendRequests failed:", error);
+  });
+};
+
 // Get received friend requests for a user
 export const getReceivedFriendRequests = async (userUid: string): Promise<FriendRequest[]> => {
   try {
@@ -231,4 +250,25 @@ export const getReceivedFriendRequests = async (userUid: string): Promise<Friend
     console.error("getReceivedFriendRequests failed:", error);
     throw error;
   }
+};
+
+export const subscribeToReceivedFriendRequests = (
+  userUid: string,
+  onUpdate: (requests: FriendRequest[]) => void
+) => {
+  const q = query(
+    collection(fb.firestore, "friendRequests"),
+    where("receiverUid", "==", userUid),
+    where("status", "==", "pending")
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const requests = snapshot.docs.map((d) => ({
+      ...d.data(),
+      id: d.id,
+    })) as FriendRequest[];
+    onUpdate(requests);
+  }, (error) => {
+    console.error("subscribeToReceivedFriendRequests failed:", error);
+  });
 };

@@ -1,11 +1,10 @@
 import { useController, UseControllerProps } from "react-hook-form";
 import { Select, CustomSelectProps } from "./Select";
 
-export interface FormSelectProps
-  extends Omit<CustomSelectProps, "name" | "value" | "onChange" | "onBlur" | "defaultValue">,
-    Omit<UseControllerProps, "defaultValue"> {
+export type FormSelectProps = Omit<CustomSelectProps, "name" | "value" | "onChange" | "onBlur" | "defaultValue"> &
+  Omit<UseControllerProps, "defaultValue"> & {
   defaultValue?: any;
-}
+};
 
 export function FormSelect({
   name,

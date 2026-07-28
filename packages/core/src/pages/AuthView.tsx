@@ -120,7 +120,7 @@ export function AuthView() {
                 placeholder={t("passwordPlaceholderSignUp")} 
               />
 
-              <Button type="submit" size="xl" variant="brand" className="w-full mt-2">
+              <Button type="submit" size="xl" variant="brand" className="w-full mt-2" isBusy={signUpForm.formState.isSubmitting}>
                 {t("signUpButton")}
               </Button>
             </form>
@@ -142,7 +142,7 @@ export function AuthView() {
                 placeholder={t("passwordPlaceholderLogin")} 
               />
 
-              <Button type="submit" size="xl" variant="brand" className="w-full mt-2">
+              <Button type="submit" size="xl" variant="brand" className="w-full mt-2" isBusy={loginForm.formState.isSubmitting}>
                 {t("signInButton")}
               </Button>
             </form>

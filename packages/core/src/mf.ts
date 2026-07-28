@@ -65,3 +65,14 @@ export function lazyMfeRoutes(alias: string) {
     };
   };
 }
+
+export async function loadMfeNavigation(alias: string) {
+  try {
+    const { loadRemote } = await import('@module-federation/runtime');
+    const mod = await loadRemote<any>(`${alias}/navigation`);
+    return mod?.navigation || [];
+  } catch (err) {
+    console.warn(`Failed to load navigation from ${alias}`, err);
+    return [];
+  }
+}

@@ -1,20 +1,41 @@
-import { Avatar, AvatarFallback, Button, Input, TabsContent } from "@flaner-v2/ui-components";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Button,
+  ConfirmationPopup,
+  Input,
+  TabsContent,
+} from "@flaner-v2/ui-components";
 import { Loader2, Search, UserMinus, Users, X } from "lucide-react";
 import { useState } from "react";
+import { useGetFriendsListRealtimeQuery, useGetUsersQuery, useRemoveFriendMutation } from "../hooks";
 import { useCommunityTranslations } from "../hooks/useCommunityTranslations";
-import { useGetFriendsListQuery } from "../hooks/useGetFriendsListQuery";
-import { useRemoveFriendMutation } from "../hooks/useRemoveFriendMutation";
 
 export function FriendsTabContent() {
   const { t } = useCommunityTranslations();
   const [filterQuery, setFilterQuery] = useState("");
+  const [friendToRemove, setFriendToRemove] = useState<{ uid: string; username: string } | null>(null);
 
-  const { data: friends = [], isLoading: loadingFriends } = useGetFriendsListQuery();
+  const { data: friends = [], isLoading: loadingFriends } = useGetFriendsListRealtimeQuery();
+  const friendUids = friends.map((f) => f.uid);
+  const { data: friendProfiles = [] } = useGetUsersQuery(friendUids);
+
   const deleteFriend = useRemoveFriendMutation();
 
   const getInitials = (name: string) => {
     if (!name) return "??";
     return name.slice(0, 2).toUpperCase();
+  };
+
+  const handleConfirmRemove = async () => {
+    if (!friendToRemove) return;
+    try {
+      await deleteFriend.mutateAsync(friendToRemove.uid);
+      setFriendToRemove(null);
+    } catch (err) {
+      // Handled by mutation / global toast
+    }
   };
 
   const filteredFriends = friends.filter((friend) => friend.username.toLowerCase().includes(filterQuery.toLowerCase()));
@@ -57,6 +78,8 @@ export function FriendsTabContent() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredFriends.map((friend) => {
             const isDeleting = deleteFriend.isPending && deleteFriend.variables === friend.uid;
+            const profile = friendProfiles.find((p) => p.uid === friend.uid);
+            const avatarUrl = profile?.avatarUrl || friend.avatarUrl;
 
             return (
               <div
@@ -65,6 +88,7 @@ export function FriendsTabContent() {
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <Avatar className="size-11 border border-border shadow-sm">
+                    {avatarUrl && <AvatarImage src={avatarUrl} alt={friend.username} />}
                     <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-bold text-sm">
                       {getInitials(friend.username)}
                     </AvatarFallback>
@@ -81,7 +105,7 @@ export function FriendsTabContent() {
                   size="sm"
                   variant="outline"
                   disabled={isDeleting}
-                  onClick={() => deleteFriend.mutate(friend.uid)}
+                  onClick={() => setFriendToRemove({ uid: friend.uid, username: friend.username })}
                   className="h-9 px-3 rounded-lg border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-xs gap-1.5"
                 >
                   {isDeleting ? (
@@ -98,6 +122,18 @@ export function FriendsTabContent() {
           })}
         </div>
       )}
+
+      <ConfirmationPopup
+        open={!!friendToRemove}
+        onOpenChange={(isOpen) => !isOpen && setFriendToRemove(null)}
+        title={t("friendsList.removeConfirmTitle")}
+        description={t("friendsList.removeConfirmDesc", { name: friendToRemove?.username || "" })}
+        confirmLabel={t("friendsList.removeConfirmBtn")}
+        cancelLabel={t("groupDetails.cancelBtn")}
+        variant="destructive"
+        isConfirming={deleteFriend.isPending}
+        onConfirm={handleConfirmRemove}
+      />
     </TabsContent>
   );
 }

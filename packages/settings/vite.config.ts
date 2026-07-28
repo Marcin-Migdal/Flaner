@@ -33,6 +33,8 @@ export default defineConfig({
       filename: 'remoteEntry.js',
       exposes: {
         './App': './src/App.tsx',
+        './routes': './src/routes.tsx',
+        './navigation': './src/navigation.ts',
       },
       shared: sharedFederationConfig,
     }),

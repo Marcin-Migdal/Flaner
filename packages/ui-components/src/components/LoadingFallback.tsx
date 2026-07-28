@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '@flaner-v2/shared';
 import { useUiTranslations } from '../hooks/useUiTranslations';
 
-export interface LoadingFallbackProps extends React.HTMLAttributes<HTMLDivElement> {
+export type LoadingFallbackProps = React.HTMLAttributes<HTMLDivElement> & {
   text?: React.ReactNode | boolean;
 }
 

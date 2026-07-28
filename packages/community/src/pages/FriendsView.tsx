@@ -1,15 +1,14 @@
 import { Tabs, TabsList, TabsTrigger } from "@flaner-v2/ui-components";
 import { Users } from "lucide-react";
 import { useCommunityTranslations } from "../hooks/useCommunityTranslations";
-import { useGetFriendsListQuery } from "../hooks/useGetFriendsListQuery";
+import { useGetFriendsListRealtimeQuery } from "../hooks";
 import { FriendsTabContent } from "../components/FriendsTabContent";
 import { InvitationsSheet } from "../components/InvitationsSheet";
 import { SearchTabContent } from "../components/SearchTabContent";
 
 export function FriendsView() {
-  console.log("[FriendsView] rendering component...");
   const { t } = useCommunityTranslations();
-  const { data: friends = [] } = useGetFriendsListQuery();
+  const { data: friends = [] } = useGetFriendsListRealtimeQuery();
 
   return (
     <div className="max-w-4xl mx-auto py-4 space-y-6">

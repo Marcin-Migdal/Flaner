@@ -5,14 +5,35 @@
   "loading": "Ładowanie...",
   "error": "Wystąpił błąd",
   "nav": {
+    "home": "Start",
     "community": "Społeczność",
     "shopping": "Zakupy",
     "scheduling": "Harmonogram",
     "settings": "Ustawienia",
-    "signOut": "Wyloguj się"
+    "signOut": "Wyloguj się",
+    "theme": "Motyw",
+    "themeDark": "Ciemny",
+    "themeLight": "Jasny",
+    "language": "Język",
+    "langPl": "Polski",
+    "langEn": "English",
+    "friends": "Znajomi",
+    "groups": "Grupy",
+    "toggleSidebar": "Przełącz panel boczny",
+    "profile": "Profil",
+    "notifications": "Powiadomienia"
   },
   "community": {
-    "friends": "Znajomi"
+    "friends": "Znajomi",
+    "groups": {
+      "private": "Wymaga akceptacji",
+      "public": "Publiczna",
+      "members": "członk."
+    }
+  },
+  "searchBar": {
+    "showMore": "Pokaż więcej",
+    "emptySearch": "Brak wyników"
   },
   "home": {
     "title": "Witaj w Flaner",
@@ -32,5 +53,25 @@
   "mfe": {
     "noViewsTitle": "Brak podstron",
     "noViewsDesc": "Ten moduł nie ma jeszcze skonfigurowanych podstron."
+  },
+  "notifications": {
+    "tabs": {
+      "new": "Nowe",
+      "read": "Przeczytane"
+    },
+    "markAllRead": "Oznacz wszystkie",
+    "empty": {
+      "title": "Jesteś na bieżąco!",
+      "subtitle": "Nie masz żadnych nowych powiadomień."
+    },
+    "readPlaceholder": {
+      "title": "Historia w budowie",
+      "subtitle": "Przeglądanie przeczytanych powiadomień będzie dostępne wkrótce."
+    },
+    "friendRequest": "Wysłał(a) Ci zaproszenie do znajomych.",
+    "friendAccepted": "Zaakceptował(a) Twoje zaproszenie.",
+    "friendRejected": "Odrzucił(a) Twoje zaproszenie.",
+    "groupInvitation": "Zaprosił(a) Cię do grupy.",
+    "system": "Masz nowe powiadomienie."
   }
 }

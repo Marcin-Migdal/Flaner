@@ -14,6 +14,7 @@
     "noImageSelectedDesc": "Przeciągnij plik lub kliknij dropzone",
     "dropzoneActiveText": "Upuść plik tutaj...",
     "dropzoneIdleText": "Kliknij, aby wybrać lub przeciągnij plik",
-    "acceptedFormatsDesc": "JPG, PNG, GIF lub WEBP"
+    "acceptedFormatsDesc": "JPG, PNG, GIF lub WEBP",
+    "compressing": "Kompresowanie obrazu..."
   }
 }

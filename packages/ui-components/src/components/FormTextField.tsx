@@ -1,9 +1,8 @@
 import { useController, UseControllerProps } from "react-hook-form";
 import { TextField, TextFieldProps } from "./TextField";
 
-export interface FormTextFieldProps
-  extends Omit<TextFieldProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur">,
-    UseControllerProps {}
+export type FormTextFieldProps = Omit<TextFieldProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur"> &
+  UseControllerProps;
 
 export function FormTextField({
   name,

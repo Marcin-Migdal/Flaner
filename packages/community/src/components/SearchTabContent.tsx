@@ -1,14 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage, Button, Input, TabsContent } from "@flaner-v2/ui-components";
 import { Loader2, Search, UserCheck, UserPlus, X } from "lucide-react";
 import { useState } from "react";
-import { useAcceptFriendRequestMutation } from "../hooks/useAcceptFriendRequestMutation";
-import { useCancelFriendRequestMutation } from "../hooks/useCancelFriendRequestMutation";
+import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useGetFriendsListRealtimeQuery, useGetReceivedFriendRequestRealtimeQuery, useGetSentFriendRequestRealtimeQuery, useSearchUsersQuery, useSendFriendRequestMutation } from "../hooks";
 import { useCommunityTranslations } from "../hooks/useCommunityTranslations";
-import { useGetFriendsListQuery } from "../hooks/useGetFriendsListQuery";
-import { useGetReceivedFriendRequestQuery } from "../hooks/useGetReceivedFriendRequestQuery";
-import { useGetSentFriendRequestQuery } from "../hooks/useGetSentFriendRequestQuery";
-import { useSearchUsersQuery } from "../hooks/useSearchUsersQuery";
-import { useSendFriendRequestMutation } from "../hooks/useSendFriendRequestMutation";
 
 import { useDebounce } from "@flaner-v2/shared";
 
@@ -18,9 +12,9 @@ export function SearchTabContent() {
   const debouncedSearch = useDebounce(searchText, 300);
 
   // Queries
-  const { data: friends = [] } = useGetFriendsListQuery();
-  const { data: sentRequests = [] } = useGetSentFriendRequestQuery();
-  const { data: receivedRequests = [] } = useGetReceivedFriendRequestQuery();
+  const { data: friends = [] } = useGetFriendsListRealtimeQuery();
+  const { data: sentRequests = [] } = useGetSentFriendRequestRealtimeQuery();
+  const { data: receivedRequests = [] } = useGetReceivedFriendRequestRealtimeQuery();
   const { data: searchResults = [], isFetching: searchingUsers } = useSearchUsersQuery(debouncedSearch);
 
   // Mutations

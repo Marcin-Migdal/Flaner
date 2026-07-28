@@ -1,9 +1,8 @@
 import { useController, UseControllerProps } from "react-hook-form";
 import { ImagePicker, ImagePickerProps } from "./ImagePicker";
 
-export interface FormImagePickerProps
-  extends Omit<ImagePickerProps, "value" | "onChange" | "name" | "defaultValue">,
-    UseControllerProps {}
+export type FormImagePickerProps = Omit<ImagePickerProps, "value" | "onChange" | "name" | "defaultValue"> &
+  UseControllerProps;
 
 export function FormImagePicker({
   name,

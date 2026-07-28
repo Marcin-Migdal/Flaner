@@ -14,6 +14,7 @@
     "noImageSelectedDesc": "Drag and drop or click dropzone",
     "dropzoneActiveText": "Drop file here...",
     "dropzoneIdleText": "Click to select or drag and drop a file",
-    "acceptedFormatsDesc": "JPG, PNG, GIF or WEBP"
+    "acceptedFormatsDesc": "JPG, PNG, GIF or WEBP",
+    "compressing": "Compressing image..."
   }
 }

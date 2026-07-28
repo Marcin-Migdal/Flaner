@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router";
 import {
   Button,
   Sheet,
@@ -13,18 +15,25 @@ import {
 } from "@flaner-v2/ui-components";
 import { Inbox, Send, Loader2 } from "lucide-react";
 import { useCommunityTranslations } from "../hooks/useCommunityTranslations";
-import { useGetReceivedFriendRequestQuery } from "../hooks/useGetReceivedFriendRequestQuery";
-import { useGetSentFriendRequestQuery } from "../hooks/useGetSentFriendRequestQuery";
-import { useAcceptFriendRequestMutation } from "../hooks/useAcceptFriendRequestMutation";
-import { useRejectFriendRequestMutation } from "../hooks/useRejectFriendRequestMutation";
-import { useCancelFriendRequestMutation } from "../hooks/useCancelFriendRequestMutation";
+import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useGetReceivedFriendRequestRealtimeQuery, useGetSentFriendRequestRealtimeQuery, useRejectFriendRequestMutation } from "../hooks";
+import { RequestItem } from "./common/RequestItem";
 
 export function InvitationsSheet() {
   const { t } = useCommunityTranslations();
+  const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (location.hash === "#friend-requests") {
+      setOpen(true);
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location, navigate]);
 
   // Queries
-  const { data: receivedRequests = [], isLoading: loadingReceived } = useGetReceivedFriendRequestQuery();
-  const { data: sentRequests = [], isLoading: loadingSent } = useGetSentFriendRequestQuery();
+  const { data: receivedRequests = [], isLoading: loadingReceived } = useGetReceivedFriendRequestRealtimeQuery();
+  const { data: sentRequests = [], isLoading: loadingSent } = useGetSentFriendRequestRealtimeQuery();
 
   // Mutations
   const acceptRequest = useAcceptFriendRequestMutation();
@@ -39,7 +48,7 @@ export function InvitationsSheet() {
   const pendingCount = receivedRequests.length;
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button 
           variant="outline" 
@@ -85,59 +94,26 @@ export function InvitationsSheet() {
                   const isRejecting = rejectRequest.isPending && rejectRequest.variables?.uid === req.senderUid;
 
                   return (
-                    <div 
-                      key={req.id} 
-                      className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-card/40 hover:bg-card/80 transition-all gap-4"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <Avatar className="size-10 border border-border">
-                          <AvatarImage src={req.senderAvatarUrl} alt={req.senderUsername} />
-                          <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-bold text-sm">
-                            {getInitials(req.senderUsername)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium text-sm text-foreground/90 truncate">
-                          {req.senderUsername}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <Button
-                          size="xs"
-                          variant="brand"
-                          disabled={isAccepting || isRejecting}
-                          onClick={() => acceptRequest.mutate({ 
-                            uid: req.senderUid, 
-                            username: req.senderUsername, 
-                            avatarUrl: req.senderAvatarUrl 
-                          })}
-                          className="h-8 rounded-lg px-3"
-                        >
-                          {isAccepting ? (
-                            <Loader2 className="size-3.5 animate-spin" />
-                          ) : (
-                            t("invitations.accept")
-                          )}
-                        </Button>
-                        <Button
-                          size="xs"
-                          variant="destructive"
-                          disabled={isAccepting || isRejecting}
-                          onClick={() => rejectRequest.mutate({ 
-                            uid: req.senderUid, 
-                            username: req.senderUsername, 
-                            avatarUrl: req.senderAvatarUrl 
-                          })}
-                          className="h-8 rounded-lg px-3"
-                        >
-                          {isRejecting ? (
-                            <Loader2 className="size-3.5 animate-spin" />
-                          ) : (
-                            t("invitations.reject")
-                          )}
-                        </Button>
-                      </div>
-                    </div>
+                    <RequestItem
+                      key={req.id}
+                      id={req.senderUid}
+                      username={req.senderUsername}
+                      avatarUrl={req.senderAvatarUrl}
+                      acceptLabel={t("invitations.accept")}
+                      rejectLabel={t("invitations.reject")}
+                      onAccept={() => acceptRequest.mutate({ 
+                        uid: req.senderUid, 
+                        username: req.senderUsername, 
+                        avatarUrl: req.senderAvatarUrl 
+                      })}
+                      onReject={() => rejectRequest.mutate({ 
+                        uid: req.senderUid, 
+                        username: req.senderUsername, 
+                        avatarUrl: req.senderAvatarUrl 
+                      })}
+                      isAccepting={isAccepting}
+                      isRejecting={isRejecting}
+                    />
                   );
                 })}
               </div>

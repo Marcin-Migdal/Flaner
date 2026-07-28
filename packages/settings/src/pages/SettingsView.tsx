@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useSettingsTranslations } from "../hooks/useSettingsTranslations";
-import { useUpdateSettingsMutation } from "../hooks/useUpdateSettingsMutation";
+import { useUpdateSettingsMutation } from "../hooks";
 import getSettingsSchema from "../utils/schemas/settings-schema";
 
 export function SettingsView() {
@@ -176,10 +176,11 @@ export function SettingsView() {
             <Button
               type="submit"
               variant="brand"
-              disabled={mutation.isPending || !isDirty}
+              disabled={!isDirty}
+              isBusy={mutation.isPending}
               className="px-6 h-10 shadow-lg shadow-brand/10"
             >
-              {mutation.isPending ? t("actions.saving") : t("actions.save")}
+              {t("actions.save")}
             </Button>
           </div>
         </form>
