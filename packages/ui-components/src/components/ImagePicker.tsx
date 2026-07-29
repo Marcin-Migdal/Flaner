@@ -71,7 +71,7 @@ const compressImageToSize = (file: File, maxSize: number): Promise<File> => {
       URL.revokeObjectURL(url);
       let width = img.naturalWidth;
       let height = img.naturalHeight;
-      let quality = 0.9;
+
       const mimeType = file.type === "image/webp" || file.type === "image/png" ? "image/webp" : "image/jpeg";
       const fileExtension = mimeType === "image/webp" ? "webp" : "jpg";
       const newFileName = file.name.replace(/\.[^/.]+$/, "") + `.${fileExtension}`;
