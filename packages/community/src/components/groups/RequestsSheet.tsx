@@ -15,6 +15,7 @@ import {
   useRejectJoinRequestMutation,
 } from "../../hooks";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
+import { useSheet } from "@flaner/shared/hooks";
 import { RequestItem } from "../common/RequestItem";
 
 interface RequestsSheetProps {
@@ -30,10 +31,12 @@ export function RequestsSheet({ groupId }: RequestsSheetProps) {
   const requestUserIds = requests.map((r) => r.userId);
   const { data: usersData } = useGetUsersQuery(requestUserIds);
 
+  const [isOpen, { setOpen }] = useSheet();
+
   if (requests.length === 0) return null; // Or show empty button
 
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" className="rounded-xl relative">
           <UserPlus className="size-4" />

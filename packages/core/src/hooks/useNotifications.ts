@@ -12,17 +12,24 @@ export const useNotifications = () => {
   const { user } = useAuth();
   const invalidateReadNotifications = useInvalidateReadNotificationsQuery();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!user?.uid ? false : true);
+  const [prevUid, setPrevUid] = useState(user?.uid);
+
+  if (user?.uid !== prevUid) {
+    setPrevUid(user?.uid);
+    if (!user?.uid) {
+      setNotifications([]);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }
 
   useEffect(() => {
     if (!user?.uid) {
-       
-      setNotifications([]);
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
     const unsubscribe = subscribeToNotifications(user.uid, (newNotifications) => {
       setNotifications(newNotifications);
       setLoading(false);

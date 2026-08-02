@@ -12,8 +12,6 @@ import {
   SheetTrigger,
 } from "@flaner/ui-components";
 import { Inbox, Loader2, Send } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router";
 import {
   useAcceptFriendRequestMutation,
   useCancelFriendRequestMutation,
@@ -22,20 +20,12 @@ import {
   useRejectFriendRequestMutation,
 } from "../hooks";
 import { useCommunityTranslations } from "../hooks/useCommunityTranslations";
+import { useSheet } from "@flaner/shared/hooks";
 import { RequestItem } from "./common/RequestItem";
 
 export function InvitationsSheet() {
   const { t } = useCommunityTranslations();
-  const [open, setOpen] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (location.hash === "#friend-requests") {
-      setOpen(true);
-      navigate(location.pathname, { replace: true });
-    }
-  }, [location, navigate]);
+  const [open, { setOpen }] = useSheet({ hashTarget: "#friend-requests" });
 
   // Queries
   const { data: receivedRequests = [], isLoading: loadingReceived } = useGetReceivedFriendRequestRealtimeQuery();

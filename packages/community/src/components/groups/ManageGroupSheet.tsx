@@ -1,4 +1,5 @@
 import { useAuth } from "@flaner/shared/context";
+import { useSheet } from "@flaner/shared/hooks";
 import {
   Avatar,
   AvatarFallback,
@@ -20,7 +21,7 @@ import { Crown, MoreVertical, Settings, Shield, ShieldAlert, ShieldCheck, Trash2
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import type { GroupMember, GroupRole } from '../../api/groups';
+import type { GroupMember, GroupRole } from "../../api/groups";
 import {
   useDeleteGroupMutation,
   useGetGroupMembersQuery,
@@ -38,6 +39,7 @@ interface ManageGroupSheetProps {
 export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
   const { t } = useCommunityTranslations();
   const { user } = useAuth();
+  const [isOpen, { setOpen }] = useSheet();
 
   const { data: members = [], isLoading: membersLoading } = useGetGroupMembersQuery(groupId);
   const memberUserIds = members.map((m) => m.userId);
@@ -178,7 +180,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
 
   return (
     <>
-      <Sheet>
+      <Sheet open={isOpen} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button variant="primary" className="rounded-xl flex-1 md:flex-none">
             <Settings className="size-4" />

@@ -13,7 +13,7 @@ import {
 } from "@flaner/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useCreateGroupMutation } from "../hooks";
 import { useCommunityTranslations } from "../hooks/useCommunityTranslations";
 import { createGroupSchema, type CreateGroupSchema } from "../utils/schemas/groups";
@@ -40,8 +40,8 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
     },
   });
 
-  const { handleSubmit, watch, reset, control } = methods;
-  const groupType = watch("type");
+  const { handleSubmit, reset, control } = methods;
+  const groupType = useWatch({ control, name: "type" });
 
   useEffect(() => {
     if (open) {

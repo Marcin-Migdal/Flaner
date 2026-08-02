@@ -21,14 +21,17 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
   const cached = routesCache.get(mfe);
   const [routes, setRoutes] = useState<AppRouteObject[]>(cached || []);
   const [loading, setLoading] = useState(!cached);
+  const [prevMfe, setPrevMfe] = useState(mfe);
+
+  if (mfe !== prevMfe) {
+    setPrevMfe(mfe);
+    const newCached = routesCache.get(mfe);
+    setRoutes(newCached || []);
+    setLoading(!newCached);
+  }
 
   useEffect(() => {
     let active = true;
-
-    if (!routesCache.has(mfe)) {
-       
-      setLoading(true);
-    }
 
     loadRemote<{ routes: AppRouteObject[] }>(`${mfe}/routes`)
       .then((mod) => {

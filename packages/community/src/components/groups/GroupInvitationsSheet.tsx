@@ -3,25 +3,15 @@ import { Check, Loader2, Mail, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@flaner/shared/context";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
+import { useSheet } from "@flaner/shared/hooks";
+import { useState } from "react";
 import { useAcceptGroupInvitationMutation, useGetUserGroupInvitationsQuery, useGetUsersQuery, useRejectGroupInvitationMutation } from "../../hooks";
-import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router";
 
 export function GroupInvitationsSheet() {
   const { t } = useCommunityTranslations();
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [open, { setOpen }] = useSheet({ hashTarget: "#group-invitations" });
   const [processingId, setProcessingId] = useState<string | null>(null);
-
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (location.hash === "#group-invitations") {
-      setOpen(true);
-      navigate(location.pathname, { replace: true });
-    }
-  }, [location, navigate]);
 
   const { data: invitations = [], isLoading } = useGetUserGroupInvitationsQuery(user?.uid);
   const acceptMutation = useAcceptGroupInvitationMutation();

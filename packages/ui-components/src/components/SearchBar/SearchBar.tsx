@@ -55,9 +55,13 @@ export function SearchBar<T>({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
+  const [prevValue, setPrevValue] = useState(value);
+  const [prevResults, setPrevResults] = useState(results);
+  if (value !== prevValue || results !== prevResults) {
+    setPrevValue(value);
+    setPrevResults(results);
     setSelectedIndex(-1);
-  }, [results, value]);
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!isOpen && e.key !== "Escape") {
