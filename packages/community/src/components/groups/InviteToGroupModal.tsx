@@ -1,5 +1,6 @@
-import { useAuth, useDebounce } from "@flaner-v2/shared";
-import { Avatar, AvatarFallback, Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Input } from "@flaner-v2/ui-components";
+import { useAuth } from "@flaner/shared/context";
+import { useDebounce } from "@flaner/shared/hooks";
+import { Avatar, AvatarFallback, Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Input } from "@flaner/ui-components";
 import { Check, Clock, Loader2, Search, UserPlus, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -51,7 +52,7 @@ export function InviteToGroupModal({
         invitedByUserId: user.uid,
       });
       toast.success(t("inviteToGroup.inviteSuccess"));
-    } catch (err: any) {
+    } catch {
       toast.error(t("inviteToGroup.inviteError"));
     } finally {
       setInvitingId(null);

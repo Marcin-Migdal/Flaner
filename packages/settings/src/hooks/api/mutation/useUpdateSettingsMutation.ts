@@ -1,6 +1,6 @@
-import { useAuth } from "@flaner-v2/shared";
+import { useAuth } from "@flaner/shared/context";
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { updateUserProfile, type UpdateProfilePayload } from "../../../api";
+import { updateUserProfile, type UpdateProfilePayload } from "../../../api/users";
 
 export const useUpdateSettingsMutation = (options?: UseMutationOptions<void, Error, UpdateProfilePayload>) => {
   const { user, updateUser } = useAuth();
@@ -13,13 +13,12 @@ export const useUpdateSettingsMutation = (options?: UseMutationOptions<void, Err
       await updateUserProfile(user.uid, payload);
     },
     ...options,
-    onSuccess: async (data, variables, context) => {
-      // Sync local context state
+    onSuccess: async (...args) => {
+      const [_data, variables] = args;
       updateUser(variables);
 
-      // Call parent onSuccess if provided
       if (options?.onSuccess) {
-        await (options.onSuccess as any)(data, variables, context);
+        await options.onSuccess(...args);
       }
     },
   });

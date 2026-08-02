@@ -36,11 +36,11 @@ h-10 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-2 text
 
 ## Field + FieldLabel + FieldError (from `field.tsx`)
 
-Use the `Field` / `FieldLabel` / `FieldError` pattern from `@flaner-v2/ui-components` for all form fields. **Never** create custom label+input wrappers from scratch.
+Use the `Field` / `FieldLabel` / `FieldError` pattern from `@flaner/ui-components` for all form fields. **Never** create custom label+input wrappers from scratch.
 
 ### Pattern:
 ```tsx
-import { Input, Field, FieldLabel, FieldError } from '@flaner-v2/ui-components';
+import { Input, Field, FieldLabel, FieldError } from '@flaner/ui-components';
 
 <Field data-invalid={!!errors.email}>
   <FieldLabel htmlFor="email">Email</FieldLabel>
@@ -82,7 +82,7 @@ For auth forms and primary actions always use `size="default"` or `size="lg"`.
 All shadcn components live in **`packages/ui-components/src/components/`** and are exported from `packages/ui-components/src/index.ts`.
 
 - **Never** define shadcn components locally inside a feature package (e.g., inside `packages/core/src/components/ui/`)
-- **Always** import from `@flaner-v2/ui-components`
+- **Always** import from `@flaner/ui-components`
 - To add a new shadcn component, run `npx shadcn add <component>` from inside `packages/ui-components/`
 
 ---
@@ -93,4 +93,4 @@ All shadcn components live in **`packages/ui-components/src/components/`** and a
 2. `npx shadcn add <component-name>`
 3. After adding, **check** the generated component for compact defaults and apply the corrections above if needed
 4. Export it from `packages/ui-components/src/index.ts`
-5. Import in consuming packages via `@flaner-v2/ui-components`
+5. Import in consuming packages via `@flaner/ui-components`

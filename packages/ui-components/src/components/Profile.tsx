@@ -1,4 +1,4 @@
-import { cn } from "@flaner-v2/shared";
+import { cn } from "@flaner/shared/utils";
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 

@@ -1,9 +1,7 @@
-import React from "react";
-import { Avatar, AvatarImage, AvatarFallback, Button } from "@flaner-v2/ui-components";
+import { Avatar, AvatarFallback, AvatarImage, Button } from "@flaner/ui-components";
 import { Loader2 } from "lucide-react";
 
 interface RequestItemProps {
-  id: string;
   avatarUrl?: string | null;
   username: string;
   acceptLabel: string;
@@ -15,7 +13,6 @@ interface RequestItemProps {
 }
 
 export function RequestItem({
-  id,
   avatarUrl,
   username,
   acceptLabel,
@@ -39,9 +36,7 @@ export function RequestItem({
             {getInitials(username)}
           </AvatarFallback>
         </Avatar>
-        <span className="font-medium text-sm text-foreground/90 truncate">
-          {username}
-        </span>
+        <span className="font-medium text-sm text-foreground/90 truncate">{username}</span>
       </div>
 
       <div className="flex items-center gap-1.5 shrink-0">
@@ -52,11 +47,7 @@ export function RequestItem({
           onClick={onAccept}
           className="h-8 rounded-lg px-3"
         >
-          {isAccepting ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            acceptLabel
-          )}
+          {isAccepting ? <Loader2 className="size-3.5 animate-spin" /> : acceptLabel}
         </Button>
         {onReject && rejectLabel && (
           <Button
@@ -66,11 +57,7 @@ export function RequestItem({
             onClick={onReject}
             className="h-8 rounded-lg px-3"
           >
-            {isRejecting ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              rejectLabel
-            )}
+            {isRejecting ? <Loader2 className="size-3.5 animate-spin" /> : rejectLabel}
           </Button>
         )}
       </div>

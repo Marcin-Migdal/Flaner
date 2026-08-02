@@ -1,18 +1,19 @@
-import { compressImage, toast, uploadToCloudinary, useAuth, ONE_MB } from "@flaner-v2/shared";
-import { Button, FormImagePicker, FormSelect, FormSwitch, FormTextField, Separator } from "@flaner-v2/ui-components";
+import { compressImage, ONE_MB, toast, uploadToCloudinary } from "@flaner/shared/utils";
+import { useAuth } from "@flaner/shared/context";
+import { Button, FormImagePicker, FormSelect, FormSwitch, FormTextField, Separator } from "@flaner/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { useSettingsTranslations } from "../hooks/useSettingsTranslations";
 import { useUpdateSettingsMutation } from "../hooks";
-import getSettingsSchema from "../utils/schemas/settings-schema";
+import { useSettingsTranslations } from "../hooks/useSettingsTranslations";
+import getSettingsSchema, { type SettingsFormData } from "../utils/schemas/settings-schema";
 
 export function SettingsView() {
   const { user } = useAuth();
   const { t, i18n } = useSettingsTranslations();
   const mutation = useUpdateSettingsMutation();
 
-  const settingsForm = useForm({
+  const settingsForm = useForm<SettingsFormData>({
     resolver: zodResolver(getSettingsSchema(t)),
     defaultValues: {
       username: user?.username || "",
@@ -40,7 +41,7 @@ export function SettingsView() {
     }
   }, [user, reset]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: SettingsFormData) => {
     let avatarUrl = user?.avatarUrl || "";
 
     if (data.avatar instanceof File) {
@@ -49,9 +50,9 @@ export function SettingsView() {
         const compressed = await compressImage(data.avatar, ONE_MB);
         // Upload to Cloudinary
         avatarUrl = await uploadToCloudinary(compressed);
-      } catch (err: any) {
+      } catch (err) {
         console.error(err);
-        toast.failure(err?.message || t("notifications.avatarError"));
+        toast.failure((err as Error)?.message || t("notifications.avatarError"));
         return;
       }
     } else if (data.avatar === null) {
@@ -59,16 +60,16 @@ export function SettingsView() {
     }
 
     const payload = {
-      username: data.username,
-      language: data.language,
-      darkMode: data.darkMode,
+      username: data.username as string,
+      language: data.language as "pl" | "en",
+      darkMode: data.darkMode as boolean,
       avatarUrl,
     };
 
     mutation.mutate(payload, {
       onSuccess: () => {
         // Sync global app translation language immediately
-        i18n.changeLanguage(data.language);
+        i18n.changeLanguage(data.language as string);
         toast.success(t("notifications.success"));
       },
       onError: (err) => {
@@ -113,7 +114,7 @@ export function SettingsView() {
                       className="w-16 h-16 rounded-full object-cover border-2 border-border bg-background"
                       onError={(e) => {
                         // Fallback on broken URL
-                        (e.target as any).src =
+                        (e.target as HTMLImageElement).src =
                           `https://api.dicebear.com/7.x/initials/svg?seed=${user?.username || "User"}`;
                       }}
                     />

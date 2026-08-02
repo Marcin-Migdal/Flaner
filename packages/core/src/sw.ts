@@ -4,7 +4,7 @@ import { cleanupOutdatedCaches, matchPrecache, precacheAndRoute } from "workbox-
 import { NavigationRoute, registerRoute, setCatchHandler } from "workbox-routing";
 import { NetworkFirst, StaleWhileRevalidate } from "workbox-strategies";
 
-declare let self: any;
+declare let self: ServiceWorkerGlobalScope;
 
 // Take control immediately
 skipWaiting();

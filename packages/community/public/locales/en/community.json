@@ -11,6 +11,7 @@
   "manageGroupSheet": {
     "title": "Manage Members",
     "desc": "Manage roles and permissions in the group.",
+    "you": "(You)",
     "role_owner": "Owner",
     "role_admin": "Admin",
     "role_moderator": "Moderator",

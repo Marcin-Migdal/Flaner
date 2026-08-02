@@ -1,6 +1,6 @@
 import React from "react";
 import { Toaster as Sonner } from "sonner";
-import { useTheme } from "@flaner-v2/shared";
+import { useTheme } from "@flaner/shared/hooks";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 

@@ -1,10 +1,16 @@
-import { useController, UseControllerProps } from "react-hook-form";
+import { useController, type UseControllerProps, type FieldValues, type FieldPath } from "react-hook-form";
 import { Switch, SwitchProps } from "./Switch";
 
-export type FormSwitchProps = Omit<SwitchProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur" | "checked"> &
-  UseControllerProps;
+export type FormSwitchProps<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+> = Omit<SwitchProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur" | "checked"> &
+  UseControllerProps<TFieldValues, TName>;
 
-export function FormSwitch({
+export function FormSwitch<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+>({
   name,
   rules,
   shouldUnregister,
@@ -12,7 +18,7 @@ export function FormSwitch({
   control,
   disabled,
   ...props
-}: FormSwitchProps) {
+}: FormSwitchProps<TFieldValues, TName>) {
   const { field, fieldState } = useController({
     name,
     rules,

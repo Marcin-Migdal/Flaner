@@ -1,7 +1,7 @@
-import { Avatar, AvatarFallback, AvatarImage, Button, Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@flaner-v2/ui-components";
+import { Avatar, AvatarFallback, AvatarImage, Button, Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@flaner/ui-components";
 import { Check, Loader2, Mail, X } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@flaner-v2/shared";
+import { useAuth } from "@flaner/shared/context";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
 import { useAcceptGroupInvitationMutation, useGetUserGroupInvitationsQuery, useGetUsersQuery, useRejectGroupInvitationMutation } from "../../hooks";
 import { useState, useEffect } from "react";
@@ -42,7 +42,7 @@ export function GroupInvitationsSheet() {
       await acceptMutation.mutateAsync({ groupId, userId: user.uid });
       toast.success(t("groupInvitations.acceptSuccess"));
       if (invitations.length === 1) setOpen(false); // Close if it was the last one
-    } catch (err: any) {
+    } catch {
       toast.error(t("groupInvitations.acceptError"));
     } finally {
       setProcessingId(null);
@@ -56,7 +56,7 @@ export function GroupInvitationsSheet() {
       await rejectMutation.mutateAsync({ groupId, userId: user.uid });
       toast.success(t("groupInvitations.rejectSuccess"));
       if (invitations.length === 1) setOpen(false); // Close if it was the last one
-    } catch (err: any) {
+    } catch {
       toast.error(t("groupInvitations.rejectError"));
     } finally {
       setProcessingId(null);

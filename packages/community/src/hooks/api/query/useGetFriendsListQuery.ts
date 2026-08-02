@@ -1,12 +1,12 @@
-import { useQuery, type UseQueryOptions, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@flaner-v2/shared";
-import { getFriendsList } from "../../../api/endpoints";
-import type { Friendship } from "../../../api/types";
+import { useAuth } from "@flaner/shared/context";
+import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
+import { getFriendsList } from '../../../api/users';
+import type { Friendship } from '../../../api/users';
 
 const getFriendsListQueryKeys = (userId: string) => ["friendsList", userId];
 
 export const useGetFriendsListQuery = (
-  options?: Omit<UseQueryOptions<Friendship[], Error>, "queryKey" | "queryFn">
+  options?: Omit<UseQueryOptions<Friendship[], Error>, "queryKey" | "queryFn">,
 ) => {
   const { user } = useAuth();
   return useQuery<Friendship[], Error>({

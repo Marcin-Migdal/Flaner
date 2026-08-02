@@ -1,6 +1,6 @@
 import React, { useId, useRef, useState, useEffect } from "react";
 import { Image as ImageIcon, UploadCloud, Trash2, Loader2 } from "lucide-react";
-import { cn, ONE_KB, ONE_MB } from "@flaner-v2/shared";
+import { cn, ONE_KB, ONE_MB } from "@flaner/shared/utils";
 import { 
   Field, 
   FieldLabel, 

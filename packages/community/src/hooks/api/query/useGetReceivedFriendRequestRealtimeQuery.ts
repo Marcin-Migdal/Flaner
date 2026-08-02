@@ -1,13 +1,13 @@
-import React, { useEffect } from "react";
-import { useQuery, type UseQueryOptions, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@flaner-v2/shared";
-import { getReceivedFriendRequests, subscribeToReceivedFriendRequests } from "../../../api/endpoints";
-import type { FriendRequest } from "../../../api/types";
+import { useAuth } from "@flaner/shared/context";
+import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { getReceivedFriendRequests, subscribeToReceivedFriendRequests } from '../../../api/users';
+import type { FriendRequest } from '../../../api/users';
 
 const getReceivedFriendRequestsRealtimeQueryKeys = (userId: string) => ["receivedFriendRequestsRealtime", userId];
 
 export const useGetReceivedFriendRequestRealtimeQuery = (
-  options?: Omit<UseQueryOptions<FriendRequest[], Error>, "queryKey" | "queryFn">
+  options?: Omit<UseQueryOptions<FriendRequest[], Error>, "queryKey" | "queryFn">,
 ) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -15,9 +15,9 @@ export const useGetReceivedFriendRequestRealtimeQuery = (
 
   useEffect(() => {
     if (!user?.uid) return;
-    
+
     const unsubscribe = subscribeToReceivedFriendRequests(user.uid, (requests: FriendRequest[]) => {
-      queryClient.setQueryData(queryKey, requests);
+      queryClient.setQueryData(getReceivedFriendRequestsRealtimeQueryKeys(user.uid), requests);
     });
 
     return () => unsubscribe();

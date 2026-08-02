@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@flaner-v2/shared";
+import { useAuth } from "@flaner/shared/context";
 import { 
   AppNotification, 
   subscribeToNotifications, 
@@ -16,6 +16,7 @@ export const useNotifications = () => {
 
   useEffect(() => {
     if (!user?.uid) {
+       
       setNotifications([]);
       setLoading(false);
       return;

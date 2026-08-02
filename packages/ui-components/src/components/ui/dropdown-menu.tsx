@@ -2,7 +2,7 @@ import * as React from "react"
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
 import { ChevronRightIcon, CheckIcon, CircleIcon } from "lucide-react"
 
-import { cn } from "@flaner-v2/shared"
+import { cn } from "@flaner/shared/utils";
 
 function DropdownMenu({
   ...props

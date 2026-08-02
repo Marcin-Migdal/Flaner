@@ -1,8 +1,8 @@
 import React from 'react';
 import { RouterProvider } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '@flaner-v2/shared';
-import { Toaster } from '@flaner-v2/ui-components';
+import { AuthProvider } from "@flaner/shared/context";
+import { Toaster } from '@flaner/ui-components';
 import { router } from './routes/router';
 
 const queryClient = new QueryClient({

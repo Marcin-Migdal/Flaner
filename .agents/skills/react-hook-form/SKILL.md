@@ -27,7 +27,7 @@ import React from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@flaner-v2/ui-components';
+import { Button } from '@flaner/ui-components';
 import { getExampleSchema, ExampleFormData } from '../../utils/schemas';
 
 // Import our custom Form components (using prefix "Form" which use useController internally)
@@ -90,7 +90,7 @@ Components prefixed with `Form` are designed to be self-registering. They do not
 ```tsx
 import React from 'react';
 import { useController, UseControllerProps } from 'react-hook-form';
-import { Input, Field, FieldLabel, FieldError } from '@flaner-v2/ui-components';
+import { Input, Field, FieldLabel, FieldError } from '@flaner/ui-components';
 
 interface FormInputProps extends UseControllerProps {
   label: string;

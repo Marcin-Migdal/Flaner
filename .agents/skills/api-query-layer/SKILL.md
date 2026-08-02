@@ -6,29 +6,47 @@ description: Unified guidelines for API management (endpoints.ts) and the query/
 
 Use this skill to design consistent, robust API endpoints and TanStack Query hooks. This prevents boilerplate code duplication and avoids bugs caused by mismatched query keys during cache invalidation.
 
-## 1. API Endpoints (`endpoints.ts`)
+## 1. API Directory Structure (`src/api/<collection>/`)
 
-All database calls, Firestore interactions, or HTTP requests for a feature must be written as async functions in `src/features/<feature-name>/api/endpoints.ts`.
+All database calls, Firestore interactions, or HTTP requests for an MFE must be organized under `src/api/` divided into subfolders named after their respective Firestore collection or subcollection (e.g. `groups`, `users`, `notifications`).
+
+### Folder Architecture:
+```
+src/api/<collection_name>/
+├── endpoints.ts       # Async functions executing Firestore queries & mutations
+├── types.ts           # Typescript interfaces representing documents/subdocuments
+├── helpers.ts         # (Optional) Helper functions specific to this collection
+└── index.ts           # Barrel file re-exporting endpoints and types
+```
 
 ### Rules:
-- Keep the endpoints stateless. Pass contextual parameters (like `userId`) explicitly.
-- Return clean Typescript interfaces (defined in `types.ts`).
-- Example Firestore fetch endpoint:
-  ```typescript
-  import { collection, getDocs, query, where } from 'firebase/firestore';
-  import { db } from '../../../config/firebase';
-  import { type Item } from './types';
+1. **Barrel Export (`index.ts`)**: Every collection folder MUST contain an `index.ts` re-exporting endpoints and types:
+   ```typescript
+   export * from "./endpoints";
+   export * from "./types";
+   ```
+2. **Clean Imports**: Consume both functions and types from the collection barrel path:
+   ```typescript
+   import { getUserGroupRequest, type GroupRequest } from "../../api/groups";
+   ```
+3. **Stateless Endpoints**: Pass contextual parameters (like `userId`) explicitly.
+4. **Example Firestore `endpoints.ts`**:
+   ```typescript
+   import { collection, getDocs, query, where } from 'firebase/firestore';
+   import { fb } from '@flaner/shared/firebase';
+   import { firestoreConverter } from '@flaner/shared/utils';
+   import { type Item } from './types';
 
-  export const fetchItems = async (userId: string): Promise<Item[]> => {
-    const q = query(collection(db, 'items'), where('userId', '==', userId));
-    const querySnapshot = await getDocs(q);
-    const items: Item[] = [];
-    querySnapshot.forEach((doc) => {
-      items.push({ id: doc.id, ...doc.data() } as Item);
-    });
-    return items;
-  };
-  ```
+   const refs = {
+     items: () => collection(fb.firestore, 'items').withConverter(firestoreConverter<Item>()),
+   };
+
+   export const fetchItems = async (userId: string): Promise<Item[]> => {
+     const q = query(refs.items(), where('userId', '==', userId));
+     const querySnapshot = await getDocs(q);
+     return querySnapshot.docs.map((doc) => doc.data());
+   };
+   ```
 
 ---
 
@@ -52,7 +70,7 @@ Create a separate hook file under `src/features/<feature-name>/hooks/` for each 
 ### Template:
 ```typescript
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '@flaner/shared/context';
 import { type Item, fetchItems } from '../api';
 
 export const getItemsQueryKeys = (userId: string) => ['items', userId];
@@ -79,7 +97,7 @@ For every query, provide a dedicated invalidation hook so mutations can easily r
 ### Template:
 ```typescript
 import { useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '@flaner/shared/context';
 import { getItemsQueryKeys } from './useGetItemsQuery';
 
 export const useInvalidateGetItemsQuery = () => {
@@ -103,7 +121,7 @@ Create a separate hook file under `src/features/<feature-name>/hooks/` for each 
 ### Template:
 ```typescript
 import { useMutation, type UseMutationOptions } from '@tanstack/react-query';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '@flaner/shared/context';
 import { addItem, type ItemInput } from '../api';
 import { useInvalidateGetItemsQuery } from './useGetItemsQuery';
 

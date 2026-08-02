@@ -1,5 +1,5 @@
-import { MFE_NAMES } from "@flaner-v2/shared";
-import { LoadingFallback } from "@flaner-v2/ui-components";
+import { MFE_NAMES } from "@flaner/shared/constants";
+import { LoadingFallback } from "@flaner/ui-components";
 import React, { Suspense } from "react";
 import { createBrowserRouter, Navigate, Outlet } from "react-router";
 import { MfeRouteErrorBoundary } from "../components/MfeRouteErrorBoundary";

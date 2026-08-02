@@ -1,22 +1,22 @@
-import React, { useEffect, useState } from "react";
-import { useForm, FormProvider } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { compressImage, ONE_MB, toast, uploadToCloudinary } from "@flaner/shared/utils";
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  Button,
-  FormTextField,
-  FormTextArea,
+  FormImagePicker,
   FormSelect,
   FormSwitch,
-  FormImagePicker,
-} from "@flaner-v2/ui-components";
-import { createGroupSchema, type CreateGroupSchema } from "../utils/schemas/groups";
+  FormTextArea,
+  FormTextField,
+} from "@flaner/ui-components";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
 import { useCreateGroupMutation } from "../hooks";
-import { uploadToCloudinary, toast, compressImage, ONE_MB } from "@flaner-v2/shared";
 import { useCommunityTranslations } from "../hooks/useCommunityTranslations";
+import { createGroupSchema, type CreateGroupSchema } from "../utils/schemas/groups";
 
 export interface CreateGroupModalProps {
   open: boolean;
@@ -59,14 +59,14 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
     try {
       setIsUploading(true);
       let finalAvatarUrl: string | null = null;
-      
+
       if (data.avatarUrl instanceof File) {
         const compressed = await compressImage(data.avatarUrl, ONE_MB);
         finalAvatarUrl = await uploadToCloudinary(compressed);
       } else if (typeof data.avatarUrl === "string" && data.avatarUrl) {
         finalAvatarUrl = data.avatarUrl;
       }
-      
+
       const payload = {
         ...data,
         description: data.description || "",
@@ -93,7 +93,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
             <FormImagePicker
-              control={control as any}
+              control={control}
               name="avatarUrl"
               label={t("groupsView.createModal.avatarLabel")}
               disabled={isPending}
@@ -101,7 +101,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
             />
 
             <FormTextField
-              control={control as any}
+              control={control}
               name="name"
               label={t("groupsView.createModal.nameLabel")}
               placeholder={t("groupsView.createModal.namePlaceholder")}
@@ -109,7 +109,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
             />
 
             <FormTextArea
-              control={control as any}
+              control={control}
               name="description"
               label={t("groupsView.createModal.descLabel")}
               placeholder={t("groupsView.createModal.descPlaceholder")}
@@ -118,7 +118,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
             />
 
             <FormSelect
-              control={control as any}
+              control={control}
               name="type"
               label={t("groupsView.createModal.typeLabel")}
               options={[
@@ -130,7 +130,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
 
             {groupType === "public" && (
               <FormSwitch
-                control={control as any}
+                control={control}
                 name="requiresApproval"
                 label={t("groupsView.createModal.requiresApprovalLabel")}
                 description={t("groupsView.createModal.requiresApprovalDesc")}

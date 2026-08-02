@@ -23,3 +23,12 @@ This file defines the absolute technological foundations for the Flaner v2 proje
 - For example, if you edited code in the `community` package, run:
   `npx nx run community:lint --fix`
 - **Always run the linter for modified packages immediately after writing/changing code in them.** Ensure that any errors detected by ESLint are fixed immediately.
+
+## TypeScript & Type Safety
+- **Rule 0:** We write strongly typed code out-of-the-box. Types should naturally flow through the application without manual overrides.
+- 🚨 **NO TYPE CASTING ALLOWED:** Avoid using the `as` keyword (e.g., `value as MyType` or `as unknown as MyType`). Do not use casting as a shortcut to silence the compiler.
+  - **BAD APPROACH:** Bypassing TS errors by forcing types via casting `(options as SelectOption[]).find(...)`.
+  - **GOOD APPROACH:** Designing props and structures so they are strictly defined from the start, or using native TypeScript features like **Type Guards** and **Type Narrowing** (e.g., `if ("options" in item) { ... }`) to safely deduce the underlying type.
+- 🚨 **NO `any` OR `unknown`:** Do not use `any` or `unknown` as a lazy placeholder for undefined structures. Always provide exact types.
+- **Library Types:** When working with external libraries (e.g., Firebase, React Query, react-select), always look for and import their officially exported types (e.g., `DocumentReference`, `UseMutationOptions`) rather than re-creating them or using `unknown`/`any`.
+- **Type vs Interface:** Prefer using `type` aliases for defining structures on a daily basis. Only use `interface` if it is 100% necessary (e.g., when you specifically need declaration merging).

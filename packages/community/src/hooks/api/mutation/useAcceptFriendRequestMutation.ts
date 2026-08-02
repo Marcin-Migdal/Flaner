@@ -1,19 +1,18 @@
+import { toast } from "@flaner/shared/utils";
+import { useAuth } from "@flaner/shared/context";
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth, toast } from "@flaner-v2/shared";
-import { acceptFriendRequest } from "../../../api/endpoints";
+import { acceptFriendRequest } from '../../../api/users';
+import { useCommunityTranslations } from "../../useCommunityTranslations";
 import { useInvalidateGetFriendsListQuery } from "../query/useGetFriendsListQuery";
 import { useInvalidateSearchUsersQuery } from "../query/useSearchUsersQuery";
-import { useCommunityTranslations } from "../../useCommunityTranslations";
 
 type SenderInput = {
   uid: string;
   username: string;
   avatarUrl?: string;
-}
+};
 
-export const useAcceptFriendRequestMutation = (
-  options?: UseMutationOptions<void, Error, SenderInput>
-) => {
+export const useAcceptFriendRequestMutation = (options?: UseMutationOptions<void, Error, SenderInput>) => {
   const { user } = useAuth();
   const invalidateFriendsList = useInvalidateGetFriendsListQuery();
   const invalidateSearchUsers = useInvalidateSearchUsersQuery();
@@ -22,21 +21,20 @@ export const useAcceptFriendRequestMutation = (
   return useMutation<void, Error, SenderInput>({
     mutationFn: async (sender) => {
       if (!user) throw new Error("toasts.notAuthenticated");
-      await acceptFriendRequest(
-        sender,
-        { uid: user.uid, username: user.username, avatarUrl: user.avatarUrl }
-      );
+      await acceptFriendRequest(sender, { uid: user.uid, username: user.username, avatarUrl: user.avatarUrl });
     },
     ...options,
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (...args) => {
       invalidateFriendsList();
       invalidateSearchUsers();
       toast.success(t("toasts.acceptSuccess"));
+
       if (options?.onSuccess) {
-        await (options.onSuccess as any)(data, variables, context);
+        await options.onSuccess(...args);
       }
     },
-    onError: (err: any) => {
+    onError: (...args) => {
+      const [err] = args;
       const isKey = err?.message && err.message.startsWith("toasts.");
       toast.failure(isKey ? t(err.message) : t("toasts.acceptError"));
     },

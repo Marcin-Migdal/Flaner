@@ -1,4 +1,4 @@
-import { cn } from "@flaner-v2/shared";
+import { cn } from "@flaner/shared/utils";
 import { Loader2 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -24,7 +24,7 @@ export function SearchBar<T>({
   isLoading = false,
   onSelect,
   renderResult,
-  keyExtractor = (item: any) => item.id || String(item),
+  keyExtractor = (item: T) => ((item as Record<string, unknown>).id as string | number) || String(item),
   emptyStateText = "searchBar.emptySearch",
   onChange,
   value,
@@ -124,7 +124,7 @@ export function SearchBar<T>({
     <div ref={containerRef} className={cn("relative z-50", alwaysOpen ? "w-full" : "w-fit", className)}>
       <IconTextField
         value={value}
-        onChange={handleChange as any}
+        onChange={handleChange}
         onFocus={handleFocus}
         onKeyDown={handleKeyDown}
         alwaysOpen={alwaysOpen}
@@ -145,7 +145,13 @@ export function SearchBar<T>({
             <Loader2 className="size-6 animate-spin text-brand" />
           </div>
         ) : results.length > 0 ? (
-          <ul ref={listRef} className={cn("max-h-80 overflow-y-auto py-2 outline-none transition-opacity duration-200", isLoading ? "opacity-50 pointer-events-none" : "opacity-100")}>
+          <ul
+            ref={listRef}
+            className={cn(
+              "max-h-80 overflow-y-auto py-2 outline-none transition-opacity duration-200",
+              isLoading ? "opacity-50 pointer-events-none" : "opacity-100",
+            )}
+          >
             {results.map((item, index) => {
               const isSelected = index === selectedIndex;
               return (

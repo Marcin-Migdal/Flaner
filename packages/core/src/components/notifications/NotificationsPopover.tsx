@@ -9,7 +9,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@flaner-v2/ui-components";
+} from "@flaner/ui-components";
 import { Bell, Check, Inbox, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -30,7 +30,7 @@ export function NotificationsPopover() {
   const [open, setOpen] = useState(false);
 
   const unreadNotifications = notifications.filter((n) => !n.read);
-  const readNotifications = readData?.pages.flatMap((page: any) => page.notifications) || [];
+  const readNotifications = readData?.pages.flatMap((page) => page.notifications) || [];
 
   return (
     <SidebarMenuItem>

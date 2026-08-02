@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@flaner-v2/ui-components";
+import { Avatar, AvatarFallback, AvatarImage } from "@flaner/ui-components";
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
 import { TFunction } from "i18next";

@@ -1,9 +1,7 @@
-import React from 'react';
-import type { Group } from "../../api/types";;
-import { Users, Lock } from 'lucide-react';
+import { Lock, Users } from "lucide-react";
 import { useNavigate } from "react-router";
+import type { Group } from '../../api/groups';
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
-
 interface GroupCardProps {
   group: Group;
 }
@@ -11,9 +9,9 @@ interface GroupCardProps {
 export function GroupCard({ group }: GroupCardProps) {
   const { t } = useCommunityTranslations();
   const navigate = useNavigate();
-  
+
   return (
-    <div 
+    <div
       onClick={() => navigate(group.id)}
       className="relative flex flex-col p-5 bg-white/5 backdrop-blur-xl border border-white/10 hover:border-brand/40 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl cursor-pointer group-card-hover overflow-hidden"
     >
@@ -29,8 +27,8 @@ export function GroupCard({ group }: GroupCardProps) {
         <div className="flex-1 overflow-hidden">
           <h3 className="font-semibold text-lg text-foreground truncate">{group.name}</h3>
           <div className="flex items-center text-xs text-muted-foreground mt-0.5 gap-1.5">
-            {group.type === 'private' ? <Lock className="size-3" /> : <Users className="size-3" />}
-            <span>{group.type === 'private' ? t("groupsView.card.private") : t("groupsView.card.public")}</span>
+            {group.type === "private" ? <Lock className="size-3" /> : <Users className="size-3" />}
+            <span>{group.type === "private" ? t("groupsView.card.private") : t("groupsView.card.public")}</span>
           </div>
         </div>
       </div>

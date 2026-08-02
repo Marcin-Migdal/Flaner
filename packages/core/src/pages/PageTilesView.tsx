@@ -1,34 +1,36 @@
-import { type MfeName } from "@flaner-v2/shared";
-import { LoadingFallback } from "@flaner-v2/ui-components";
+import { type MfeName } from "@flaner/shared/constants";
+import { type AppRouteObject } from "@flaner/shared/types";
+import { LoadingFallback } from "@flaner/ui-components";
 import { loadRemote } from "@module-federation/runtime";
-import * as Lucide from "lucide-react";
+import { DynamicIcon } from "lucide-react/dynamic";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, type RouteObject } from "react-router";
+import { useNavigate } from "react-router";
 
 export type PageTilesViewProps = {
   mfe: MfeName;
 };
 
 // Module-level cache to prevent flashing loading spinners when routes are already loaded
-const routesCache = new Map<string, RouteObject[]>();
+const routesCache = new Map<string, AppRouteObject[]>();
 
 export function PageTilesView({ mfe }: PageTilesViewProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   const cached = routesCache.get(mfe);
-  const [routes, setRoutes] = useState<RouteObject[]>(cached || []);
+  const [routes, setRoutes] = useState<AppRouteObject[]>(cached || []);
   const [loading, setLoading] = useState(!cached);
 
   useEffect(() => {
     let active = true;
 
     if (!routesCache.has(mfe)) {
+       
       setLoading(true);
     }
 
-    loadRemote<{ routes: RouteObject[] }>(`${mfe}/routes`)
+    loadRemote<{ routes: AppRouteObject[] }>(`${mfe}/routes`)
       .then((mod) => {
         const loadedRoutes = mod?.routes || [];
         routesCache.set(mfe, loadedRoutes);
@@ -65,10 +67,10 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
   }
 
   // Helper to extract displayable tile routes recursively
-  const getTileRoutes = (items: RouteObject[]): RouteObject[] => {
-    const tilesList: RouteObject[] = [];
+  const getTileRoutes = (items: AppRouteObject[]): AppRouteObject[] => {
+    const tilesList: AppRouteObject[] = [];
     for (const route of items) {
-      const handle = route.handle as { label?: string; hideInNav?: boolean } | undefined;
+      const handle = route.handle;
       if (route.path && handle?.label && !handle.hideInNav) {
         tilesList.push(route);
       }
@@ -98,10 +100,9 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-6 animate-in fade-in duration-200">
           {tiles.map((route, index) => {
-            const handle = route.handle as { label: string; icon?: string };
-            const IconComponent = handle.icon ? (Lucide as any)[handle.icon] : null;
+            const handle = route.handle;
 
-            const labelKey = handle.label;
+            const labelKey = handle?.label || "";
             const labelText = t(labelKey, {
               defaultValue: t(`${mfe}.${labelKey}`, { defaultValue: labelKey }),
             });
@@ -109,12 +110,12 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
             return (
               <div
                 key={route.path || index}
-                onClick={() => navigate(`/${mfe}/${route.path!}`)}
+                onClick={() => navigate(`/${mfe}/${route.path || ""}`)}
                 className="flex flex-col items-center justify-center p-8 bg-zinc-900/50 hover:bg-zinc-800/40 border border-border/50 hover:border-brand/40 rounded-2xl cursor-pointer transition-all duration-300 group hover:-translate-y-1 shadow-sm hover:shadow-md hover:shadow-brand/5"
               >
-                {IconComponent ? (
+                {handle?.icon ? (
                   <div className="p-4 bg-brand/10 text-brand group-hover:bg-brand/20 group-hover:scale-110 rounded-2xl mb-4 transition-all duration-300">
-                    <IconComponent className="size-8" />
+                    <DynamicIcon name={handle.icon} className="size-8" />
                   </div>
                 ) : (
                   <div className="p-4 bg-zinc-800 text-muted-foreground rounded-2xl mb-4" />

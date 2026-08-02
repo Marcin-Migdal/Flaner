@@ -1,4 +1,4 @@
-import { cn } from "@flaner-v2/shared";
+import { cn } from "@flaner/shared/utils";
 import { X } from "lucide-react";
 import React, { useId, useRef, useState } from "react";
 import { Button } from "./ui/button";

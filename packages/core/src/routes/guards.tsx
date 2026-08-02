@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router';
-import { useAuth } from '@flaner-v2/shared';
+import { useAuth } from "@flaner/shared/context";
 
 export function ProtectedRoute() {
   const { user, isLoading } = useAuth();

@@ -1,21 +1,21 @@
-import { useId } from 'react';
-import ReactSelect, { Props as SelectProps } from 'react-select';
-import { clsx } from 'clsx';
-import { Field, FieldLabel, FieldDescription, FieldError } from './ui/field';
+import { clsx } from "clsx";
+import { useId } from "react";
+import ReactSelect, { Props as SelectProps } from "react-select";
+import { Field, FieldDescription, FieldError, FieldLabel } from "./ui/field";
 
 export type SelectOption = {
   label: string;
   value: string;
-}
+};
 
-export type CustomSelectProps = Omit<SelectProps<SelectOption, false>, 'size'> & {
+export type CustomSelectProps = Omit<SelectProps<SelectOption, false>, "size"> & {
   label?: string;
   description?: string;
   error?: string;
   containerClassName?: string;
   labelClassName?: string;
   disabled?: boolean;
-}
+};
 
 export const Select = ({
   label,
@@ -41,8 +41,8 @@ export const Select = ({
         error
           ? "border-destructive focus-visible:ring-destructive"
           : isFocused
-          ? "border-ring ring-1 ring-ring"
-          : "border-input hover:border-accent"
+            ? "border-ring ring-1 ring-ring"
+            : "border-input hover:border-accent",
       ),
     valueContainer: () => "px-3 py-1.5 flex items-center gap-1",
     singleValue: () => "text-foreground",
@@ -56,8 +56,8 @@ export const Select = ({
         isSelected
           ? "bg-brand text-zinc-950 font-semibold"
           : isFocused
-          ? "bg-accent text-accent-foreground"
-          : "text-foreground/80 hover:text-foreground"
+            ? "bg-accent text-accent-foreground"
+            : "text-foreground/80 hover:text-foreground",
       ),
     indicatorsContainer: () => "px-2 gap-1",
     dropdownIndicator: () => "text-muted-foreground hover:text-foreground",
@@ -81,7 +81,7 @@ export const Select = ({
           isDisabled={disabled}
           placeholder={placeholder}
           unstyled
-          classNames={customClassNames as any}
+          classNames={customClassNames}
           {...props}
         />
       </div>

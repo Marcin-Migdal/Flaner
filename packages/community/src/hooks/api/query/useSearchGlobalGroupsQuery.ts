@@ -1,24 +1,33 @@
-import { useInfiniteQuery, type UseInfiniteQueryOptions, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import type { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
-import { searchGlobalGroups } from "../../../api/groups";
+import { type AppInfiniteQueryOptions, type FirestorePageParam } from "@flaner/shared/types";
+import { keepPreviousData, useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
+import { searchGlobalGroups } from '../../../api/groups';
+import type { Group } from '../../../api/groups';
+
+type SearchGroupsResponse = {
+  groups: Group[];
+  nextCursor?: FirestorePageParam<Group>;
+};
 
 const getSearchGlobalGroupsQueryKeys = (searchQuery: string) => ["searchGlobalGroups", searchQuery];
 
 export const useSearchGlobalGroupsQuery = (
   searchQuery: string,
   pageSize: number = 10,
-  options?: Omit<
-    UseInfiniteQueryOptions<any, any, any, any, any>,
-    "queryKey" | "queryFn" | "getNextPageParam" | "initialPageParam" | "placeholderData"
-  >,
+  options?: AppInfiniteQueryOptions<SearchGroupsResponse, string[], "placeholderData", FirestorePageParam<Group>>,
 ) => {
-  return useInfiniteQuery({
+  return useInfiniteQuery<
+    SearchGroupsResponse,
+    Error,
+    InfiniteData<SearchGroupsResponse, FirestorePageParam<Group>>,
+    string[],
+    FirestorePageParam<Group>
+  >({
     queryKey: getSearchGlobalGroupsQueryKeys(searchQuery),
     queryFn: ({ pageParam }) => {
       if (!searchQuery.trim()) return { groups: [], nextCursor: undefined };
       return searchGlobalGroups(searchQuery, pageSize, pageParam);
     },
-    initialPageParam: undefined as QueryDocumentSnapshot<DocumentData, DocumentData> | undefined,
+    initialPageParam: undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     enabled: !!searchQuery.trim(),
     staleTime: 5000,

@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 
 export enum FlanerUploadPreset {
   PRODUCT_ICONS = "flaner_product_icons",

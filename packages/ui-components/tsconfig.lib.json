@@ -5,10 +5,10 @@
     "lib": ["es2022", "dom"],
     "types": [
       "node",
+      "vite/client",
       "@nx/react/typings/cssmodule.d.ts",
       "@nx/react/typings/image.d.ts"
     ],
-    "rootDir": "src",
     "jsx": "react-jsx",
     "module": "esnext",
     "moduleResolution": "bundler",
@@ -43,5 +43,6 @@
     "src/**/*.jsx",
     "src/**/*.ts",
     "src/**/*.tsx"
-  ]
+  ],
+  "references": []
 }

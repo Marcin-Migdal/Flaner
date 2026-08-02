@@ -41,7 +41,7 @@ Every input type must have these files in `packages/ui-components/src/components
 ```tsx
 import React, { useId } from "react";
 import { Field, FieldLabel, FieldDescription, FieldError } from "./field";
-import { cn } from "@flaner-v2/shared";
+import { cn } from "@flaner/shared/utils";
 
 export interface MyInputProps extends Omit<React.ComponentPropsWithoutRef<"input">, "id"> {
   id?: string;

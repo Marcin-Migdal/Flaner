@@ -1,5 +1,5 @@
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { rejectGroupInvitation } from "../../../api/groups";
+import { rejectGroupInvitation } from '../../../api/groups';
 import { useInvalidateUserGroupInvitationsQuery } from "../query/useGetUserGroupInvitationsQuery";
 import { useInvalidateGroupPendingInvitationsQuery } from "../query/useGetGroupPendingInvitationsQuery";
 
@@ -18,7 +18,7 @@ export const useRejectGroupInvitationMutation = (
       invalidateGroupPendingInvitations(variables.groupId);
       
       if (options?.onSuccess) {
-        await (options.onSuccess as any)(...args);
+        await options.onSuccess(...args);
       }
     },
   });

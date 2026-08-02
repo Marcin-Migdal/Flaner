@@ -1,5 +1,5 @@
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { acceptJoinRequest } from "../../../api/groups";
+import { acceptJoinRequest } from '../../../api/groups';
 import { useInvalidateGroupMembersQuery } from "../query/useGetGroupMembersQuery";
 import { useInvalidateGroupRequestsQuery } from "../query/useGetGroupRequestsQuery";
 
@@ -18,7 +18,7 @@ export const useAcceptJoinRequestMutation = (
       invalidateMembers(args[1].groupId);
       invalidateRequests(args[1].groupId);
       if (options?.onSuccess) {
-        await (options.onSuccess as any)(...args);
+        await options.onSuccess(...args);
       }
     },
   });

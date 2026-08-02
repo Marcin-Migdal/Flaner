@@ -15,6 +15,7 @@ export function useTheme() {
   // Read current class state and observe DOM changes
   useEffect(() => {
     const isDark = document.documentElement.classList.contains("dark");
+     
     setThemeState(isDark ? "dark" : "light");
 
     const observer = new MutationObserver(() => {

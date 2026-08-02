@@ -1,10 +1,10 @@
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { updateGroupMemberRole } from "../../../api/groups";
-import type { GroupRole } from "../../../api/types";
+import { updateGroupMemberRole } from '../../../api/groups';
+import type { GroupRole } from '../../../api/groups';
 import { useInvalidateGroupMembersQuery } from "../query/useGetGroupMembersQuery";
 
 export const useUpdateGroupMemberRoleMutation = (
-  options?: UseMutationOptions<void, Error, { groupId: string; userId: string; role: GroupRole }>
+  options?: UseMutationOptions<void, Error, { groupId: string; userId: string; role: GroupRole }>,
 ) => {
   const invalidateGroupMembers = useInvalidateGroupMembersQuery();
 
@@ -14,9 +14,9 @@ export const useUpdateGroupMemberRoleMutation = (
     onSuccess: async (...args) => {
       const [, variables] = args;
       invalidateGroupMembers(variables.groupId);
-      
+
       if (options?.onSuccess) {
-        await (options.onSuccess as any)(...args);
+        await options.onSuccess(...args);
       }
     },
   });

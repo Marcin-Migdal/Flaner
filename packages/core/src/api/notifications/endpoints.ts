@@ -1,17 +1,12 @@
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, writeBatch, getDocs, where, limit, startAfter, QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
-import { fb } from "@flaner-v2/shared";
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, writeBatch, getDocs, where, limit, startAfter, type QueryDocumentSnapshot, type DocumentData } from "firebase/firestore";
+import { fb } from "@flaner/shared/firebase";
+import { firestoreConverter } from "@flaner/shared/utils";
+import type { AppNotification } from "./types";
 
-export type NotificationType = "friend_request" | "friend_request_accepted" | "friend_request_rejected" | "group_invitation" | "system_alert";
-
-export type AppNotification = {
-  id: string;
-  type: NotificationType;
-  senderUid: string;
-  senderUsername: string;
-  senderAvatarUrl: string;
-  createdAt: number;
-  read: boolean;
-}
+const refs = {
+  notifications: (uid: string) => collection(fb.firestore, `users/${uid}/notifications`).withConverter(firestoreConverter<AppNotification>()),
+  notification: (uid: string, notificationId: string) => doc(fb.firestore, `users/${uid}/notifications`, notificationId).withConverter(firestoreConverter<AppNotification>()),
+};
 
 /**
  * Subscribes to real-time updates for a user's NEW (unread) notifications.
@@ -24,16 +19,13 @@ export const subscribeToNotifications = (
   onUpdate: (notifications: AppNotification[]) => void
 ) => {
   const q = query(
-    collection(fb.firestore, `users/${uid}/notifications`),
+    refs.notifications(uid),
     where("read", "==", false),
     orderBy("createdAt", "desc")
   );
 
   return onSnapshot(q, (snapshot) => {
-    const notifications = snapshot.docs.map((doc) => ({
-      ...doc.data(),
-      id: doc.id,
-    })) as AppNotification[];
+    const notifications = snapshot.docs.map((doc) => doc.data());
     onUpdate(notifications);
   }, (error) => {
     console.error("Error subscribing to notifications:", error);
@@ -45,8 +37,7 @@ export const subscribeToNotifications = (
  */
 export const markNotificationAsRead = async (uid: string, notificationId: string): Promise<void> => {
   try {
-    const notifRef = doc(fb.firestore, `users/${uid}/notifications`, notificationId);
-    await updateDoc(notifRef, { read: true });
+    await updateDoc(refs.notification(uid, notificationId), { read: true });
   } catch (error) {
     console.error("Error marking notification as read:", error);
     throw error;
@@ -59,7 +50,7 @@ export const markNotificationAsRead = async (uid: string, notificationId: string
 export const markAllNotificationsAsRead = async (uid: string): Promise<void> => {
   try {
     const unreadQuery = query(
-      collection(fb.firestore, `users/${uid}/notifications`),
+      refs.notifications(uid),
       where("read", "==", false)
     );
     const snapshot = await getDocs(unreadQuery);
@@ -67,8 +58,8 @@ export const markAllNotificationsAsRead = async (uid: string): Promise<void> => 
     if (snapshot.empty) return;
 
     const batch = writeBatch(fb.firestore);
-    snapshot.docs.forEach((doc) => {
-      batch.update(doc.ref, { read: true });
+    snapshot.docs.forEach((docSnap) => {
+      batch.update(docSnap.ref, { read: true });
     });
     
     await batch.commit();
@@ -87,10 +78,10 @@ export const markAllNotificationsAsRead = async (uid: string): Promise<void> => 
 export const getReadNotificationsPage = async (
   uid: string,
   pageSize: number = 15,
-  pageParam?: QueryDocumentSnapshot<DocumentData, DocumentData>
+  pageParam?: QueryDocumentSnapshot<AppNotification, DocumentData>
 ) => {
   let q = query(
-    collection(fb.firestore, `users/${uid}/notifications`),
+    refs.notifications(uid),
     where("read", "==", true),
     orderBy("createdAt", "desc"),
     limit(pageSize)
@@ -102,11 +93,7 @@ export const getReadNotificationsPage = async (
 
   const snapshot = await getDocs(q);
   
-  const notifications = snapshot.docs.map((doc) => ({
-    ...doc.data(),
-    id: doc.id,
-  })) as AppNotification[];
-
+  const notifications = snapshot.docs.map((doc) => doc.data());
   const lastVisible = snapshot.docs[snapshot.docs.length - 1];
 
   return {

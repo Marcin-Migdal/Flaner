@@ -2,7 +2,7 @@ import * as React from "react"
 import { Slot, Tooltip as TooltipPrimitive } from "radix-ui"
 import { PanelLeft } from "lucide-react"
 
-import { cn } from "@flaner-v2/shared"
+import { cn } from "@flaner/shared/utils";
 import { Sheet, SheetContent } from "./sheet"
 import { Button } from "./button"
 

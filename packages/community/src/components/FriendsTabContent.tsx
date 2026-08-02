@@ -6,7 +6,7 @@ import {
   ConfirmationPopup,
   Input,
   TabsContent,
-} from "@flaner-v2/ui-components";
+} from "@flaner/ui-components";
 import { Loader2, Search, UserMinus, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useGetFriendsListRealtimeQuery, useGetUsersQuery, useRemoveFriendMutation } from "../hooks";
@@ -33,7 +33,7 @@ export function FriendsTabContent() {
     try {
       await deleteFriend.mutateAsync(friendToRemove.uid);
       setFriendToRemove(null);
-    } catch (err) {
+    } catch {
       // Handled by mutation / global toast
     }
   };

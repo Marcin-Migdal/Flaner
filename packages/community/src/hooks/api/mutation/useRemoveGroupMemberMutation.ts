@@ -1,5 +1,5 @@
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { removeGroupMember } from "../../../api/groups";
+import { removeGroupMember } from '../../../api/groups';
 import { useInvalidateGroupMembersQuery } from "../query/useGetGroupMembersQuery";
 import { useInvalidateUserGroupsQuery } from "../query/useGetUserGroupsQuery";
 
@@ -19,7 +19,7 @@ export const useRemoveGroupMemberMutation = (
       
 
       if (options?.onSuccess) {
-        await (options.onSuccess as any)(...args);
+        await options.onSuccess(...args);
       }
     },
   });

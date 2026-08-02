@@ -33,3 +33,49 @@ Firebase Firestore requires a NoSQL-first mindset. Denormalization and reading e
 ## 4. Security Rules
 - Always assume the client is compromised.
 - Write strict `firestore.rules` for any new collection you design. Verify that users can only read/write their own data or data they have explicit access to.
+
+## 5. Type-Safe Firestore API & References Pattern
+- **NEVER use manual type casting** (e.g. `doc.data() as Group` or `collection(...) as CollectionReference<Group>`).
+- **Global Converter**: Import `firestoreConverter` from `@flaner/shared/utils`.
+- **Centralized `refs` Dictionary**: In every Firestore collection API endpoints file (e.g., `src/api/groups/endpoints.ts`), define a top-level `refs` object mapping collections and documents with `.withConverter(firestoreConverter<T>())`.
+
+### Template (`src/api/<collection>/endpoints.ts`):
+```typescript
+import { collection, doc, collectionGroup } from "firebase/firestore";
+import { fb } from "@flaner/shared/firebase";
+import { firestoreConverter } from "@flaner/shared/utils";
+import type { Group, GroupMember } from "./types";
+
+const refs = {
+  groups: () => collection(fb.firestore, "groups").withConverter(firestoreConverter<Group>()),
+  group: (id: string) => doc(fb.firestore, "groups", id).withConverter(firestoreConverter<Group>()),
+  members: (groupId: string) => collection(fb.firestore, `groups/${groupId}/members`).withConverter(firestoreConverter<GroupMember>()),
+  member: (groupId: string, userId: string) => doc(fb.firestore, `groups/${groupId}/members`, userId).withConverter(firestoreConverter<GroupMember>()),
+  membersGroup: () => collectionGroup(fb.firestore, "members").withConverter(firestoreConverter<GroupMember>()),
+};
+```
+
+### Usage in API functions:
+```typescript
+// Fetch typed document - snap.data() automatically returns Group
+export const getGroup = async (groupId: string): Promise<Group | null> => {
+  const snap = await getDoc(refs.group(groupId));
+  return snap.exists() ? snap.data() : null;
+};
+
+// Query typed collection - snap.docs.map(d => d.data()) returns GroupMember[]
+export const getGroupMembers = async (groupId: string): Promise<GroupMember[]> => {
+  const snap = await getDocs(refs.members(groupId));
+  return snap.docs.map(d => d.data());
+};
+
+// Save typed document - type-checked against GroupMember
+export const addGroupMember = async (groupId: string, userId: string): Promise<void> => {
+  await setDoc(refs.member(groupId, userId), {
+    userId,
+    role: "member",
+    joinedAt: Date.now(),
+  });
+};
+```
+
