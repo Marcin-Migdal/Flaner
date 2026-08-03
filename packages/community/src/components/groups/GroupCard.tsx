@@ -11,9 +11,10 @@ export function GroupCard({ group }: GroupCardProps) {
   const navigate = useNavigate();
 
   return (
-    <div
+    <button
+      type="button"
       onClick={() => navigate(group.id)}
-      className="relative flex flex-col p-5 bg-white/5 backdrop-blur-xl border border-white/10 hover:border-brand/40 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl cursor-pointer group-card-hover overflow-hidden"
+      className="relative flex flex-col p-5 bg-white/5 backdrop-blur-xl border border-white/10 hover:border-brand/40 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl cursor-pointer group-card-hover overflow-hidden text-left w-full"
     >
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand/20 to-brand/5" />
       <div className="flex items-center gap-4 mb-3">
@@ -35,6 +36,6 @@ export function GroupCard({ group }: GroupCardProps) {
       <p className="text-sm text-muted-foreground line-clamp-2 mt-1 flex-1">
         {group.description || t("groupsView.card.noDescription")}
       </p>
-    </div>
+    </button>
   );
 }

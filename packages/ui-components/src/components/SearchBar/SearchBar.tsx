@@ -159,34 +159,39 @@ export function SearchBar<T>({
             {results.map((item, index) => {
               const isSelected = index === selectedIndex;
               return (
-                <li
-                  key={keyExtractor(item)}
-                  onClick={() => {
-                    onSelect?.(item);
-                    setIsOpen(false);
-                  }}
-                  className={cn(
-                    "cursor-pointer px-4 py-2.5 transition-colors",
-                    isSelected ? "bg-accent text-accent-foreground" : "hover:bg-accent/50",
-                  )}
-                >
-                  {renderResult(item)}
+                <li key={keyExtractor(item)}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelect?.(item);
+                      setIsOpen(false);
+                    }}
+                    className={cn(
+                      "w-full text-left cursor-pointer px-4 py-2.5 transition-colors",
+                      isSelected ? "bg-accent text-accent-foreground" : "hover:bg-accent/50",
+                    )}
+                  >
+                    {renderResult(item)}
+                  </button>
                 </li>
               );
             })}
 
             {hasMore && (
-              <li
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onShowMore?.();
-                }}
-                className={cn(
-                  "cursor-pointer px-4 py-3 text-center text-sm font-medium text-brand transition-colors",
-                  selectedIndex === results.length ? "bg-accent text-brand" : "hover:bg-accent/50",
-                )}
-              >
-                {isFetchingNextPage ? <Loader2 className="size-4 animate-spin mx-auto" /> : t(showMoreText)}
+              <li className="p-1 text-center">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onShowMore?.();
+                  }}
+                  className={cn(
+                    "w-full cursor-pointer px-4 py-2 text-center text-sm font-medium text-brand transition-colors rounded-lg",
+                    selectedIndex === results.length ? "bg-accent text-brand" : "hover:bg-accent/50",
+                  )}
+                >
+                  {isFetchingNextPage ? <Loader2 className="size-4 animate-spin mx-auto" /> : t(showMoreText)}
+                </button>
               </li>
             )}
           </ul>

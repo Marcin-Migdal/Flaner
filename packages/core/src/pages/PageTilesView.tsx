@@ -111,10 +111,11 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
             });
 
             return (
-              <div
+              <button
+                type="button"
                 key={route.path || index}
                 onClick={() => navigate(`/${mfe}/${route.path || ""}`)}
-                className="flex flex-col items-center justify-center p-8 bg-zinc-900/50 hover:bg-zinc-800/40 border border-border/50 hover:border-brand/40 rounded-2xl cursor-pointer transition-all duration-300 group hover:-translate-y-1 shadow-sm hover:shadow-md hover:shadow-brand/5"
+                className="flex flex-col items-center justify-center p-8 bg-zinc-900/50 hover:bg-zinc-800/40 border border-border/50 hover:border-brand/40 rounded-2xl cursor-pointer transition-all duration-300 group hover:-translate-y-1 shadow-sm hover:shadow-md hover:shadow-brand/5 w-full text-left"
               >
                 {handle?.icon ? (
                   <div className="p-4 bg-brand/10 text-brand group-hover:bg-brand/20 group-hover:scale-110 rounded-2xl mb-4 transition-all duration-300">
@@ -126,7 +127,7 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
                 <h3 className="font-semibold text-lg text-foreground group-hover:text-brand transition-colors duration-300">
                   {labelText}
                 </h3>
-              </div>
+              </button>
             );
           })}
         </div>

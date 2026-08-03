@@ -114,7 +114,19 @@ export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldPro
         {label && <FieldLabel htmlFor={inputId}>{label}</FieldLabel>}
 
         <div
+          role={!isExpanded ? "button" : undefined}
+          tabIndex={!isExpanded ? 0 : undefined}
           onClick={!isExpanded ? handleToggleExpand : undefined}
+          onKeyDown={
+            !isExpanded
+              ? (e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleToggleExpand();
+                  }
+                }
+              : undefined
+          }
           className={cn(
             "relative flex w-full items-center overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] rounded-lg border",
             containerHeight,

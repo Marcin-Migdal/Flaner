@@ -46,22 +46,13 @@ export default tseslint.config(
 
 
 
-      // React Compiler / Strict mode rules that we disable:
       // 1. refs: False positive with react-hook-form's `field.ref`, which we must pass to inputs.
       "react-hooks/refs": "off",
 
-      // False positives with react-hook-form (void type in handleSubmit)
+      // 2. no-invalid-void-type: False positive with TanStack Query / React Query mutations (e.g. useMutation<void, ...>)
       "@typescript-eslint/no-invalid-void-type": "off",
-
-      // Accessibility relaxations for onClick on div
-      "jsx-a11y/click-events-have-key-events": "off",
-      "jsx-a11y/no-static-element-interactions": "off",
-      "jsx-a11y/no-noninteractive-element-interactions": "off",
-
-      // Overrides/Relaxing for monorepo
       "react/prop-types": "off", // We use TS instead
       "react/display-name": "off",
-      "@typescript-eslint/no-non-null-assertion": "warn",
     },
   },
   {
