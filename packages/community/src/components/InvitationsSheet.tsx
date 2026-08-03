@@ -137,7 +137,7 @@ export function InvitationsSheet() {
                   return (
                     <div
                       key={req.id}
-                      className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-card/40 hover:bg-card/80 transition-all gap-4"
+                      className="flex items-center justify-between p-3 rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-all gap-4"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <Avatar className="size-10 border border-border">

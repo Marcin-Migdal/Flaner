@@ -51,7 +51,7 @@ export function FriendsTabContent() {
           value={filterQuery}
           onChange={(e) => setFilterQuery(e.target.value)}
           disabled={friends.length === 0}
-          className="pl-10 h-10 rounded-xl bg-card/20 border-border"
+          className="pl-10 h-10 rounded-xl bg-card border-border shadow-sm"
         />
         {filterQuery && (
           <button
@@ -68,7 +68,7 @@ export function FriendsTabContent() {
           <Loader2 className="size-8 animate-spin text-brand" />
         </div>
       ) : filteredFriends.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border/60 bg-card/10 rounded-2xl p-6">
+        <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border bg-card/50 rounded-2xl p-6 shadow-sm">
           <Users className="size-12 text-muted-foreground/40 mb-3" />
           <p className="text-sm text-muted-foreground max-w-xs">
             {filterQuery ? t("searchTab.empty") : t("friendsList.empty")}
@@ -84,7 +84,7 @@ export function FriendsTabContent() {
             return (
               <div
                 key={friend.uid}
-                className="flex items-center justify-between p-4 rounded-2xl border border-border/60 bg-card/30 hover:bg-card/60 transition-all gap-4"
+                className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card shadow-sm hover:shadow-md hover:border-brand/30 transition-all gap-4"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <Avatar className="size-11 border border-border shadow-sm">

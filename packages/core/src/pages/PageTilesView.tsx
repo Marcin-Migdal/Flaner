@@ -94,11 +94,11 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
 
       {tiles.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 text-center max-w-md mx-auto my-12 animate-in fade-in duration-300">
-          <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center text-muted-foreground mb-4 font-bold text-xl">
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground mb-4 font-bold text-xl">
             ?
           </div>
-          <h2 className="text-zinc-300 font-semibold mb-2">{t("mfe.noViewsTitle")}</h2>
-          <p className="text-zinc-500 text-sm">{t("mfe.noViewsDesc")}</p>
+          <h2 className="text-foreground font-semibold mb-2">{t("mfe.noViewsTitle")}</h2>
+          <p className="text-muted-foreground text-sm">{t("mfe.noViewsDesc")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-6 animate-in fade-in duration-200">
@@ -115,7 +115,7 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
                 type="button"
                 key={route.path || index}
                 onClick={() => navigate(`/${mfe}/${route.path || ""}`)}
-                className="flex flex-col items-center justify-center p-8 bg-zinc-900/50 hover:bg-zinc-800/40 border border-border/50 hover:border-brand/40 rounded-2xl cursor-pointer transition-all duration-300 group hover:-translate-y-1 shadow-sm hover:shadow-md hover:shadow-brand/5 w-full text-left"
+                className="flex flex-col items-center justify-center p-8 bg-card text-card-foreground border border-border hover:border-brand/40 rounded-2xl cursor-pointer transition-all duration-300 group hover:-translate-y-1 shadow-sm hover:shadow-md hover:shadow-brand/5 w-full text-left"
               >
                 {handle?.icon ? (
                   <div className="p-4 bg-brand/10 text-brand group-hover:bg-brand/20 group-hover:scale-110 rounded-2xl mb-4 transition-all duration-300">
