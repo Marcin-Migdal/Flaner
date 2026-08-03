@@ -212,7 +212,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                   return (
                     <div
                       key={member.userId}
-                      className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/30 transition-colors border border-transparent hover:border-border/50"
+                      className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/60 hover:border-border shadow-2xs transition-all"
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="size-10 border border-border">

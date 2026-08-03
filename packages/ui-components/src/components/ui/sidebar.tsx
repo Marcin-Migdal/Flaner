@@ -217,7 +217,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         {/* Actual floating sidebar */}
         <div
           className={cn(
-            "fixed inset-y-0 z-10 flex h-screen w-[var(--sidebar-width)] flex-col bg-sidebar border-sidebar-border select-none",
+            "fixed inset-y-0 z-10 flex h-screen w-[var(--sidebar-width)] flex-col bg-sidebar border-sidebar-border shadow-xs dark:shadow-none select-none",
             side === "left"
               ? "left-0 border-r"
               : "right-0 border-l",

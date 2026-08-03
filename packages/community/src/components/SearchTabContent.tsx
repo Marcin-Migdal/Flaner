@@ -40,7 +40,7 @@ export function SearchTabContent() {
           placeholder={t("searchTab.placeholder")}
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          className="pl-10 h-10 rounded-xl bg-card/20 border-border"
+          className="pl-10 h-10 rounded-xl bg-card border-border shadow-sm"
         />
         {searchText && (
           <button
@@ -57,7 +57,7 @@ export function SearchTabContent() {
           <Loader2 className="size-8 animate-spin text-brand" />
         </div>
       ) : debouncedSearch && searchResults.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border/60 bg-card/10 rounded-2xl p-6">
+        <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border bg-card/50 rounded-2xl p-6 shadow-sm">
           <Search className="size-12 text-muted-foreground/40 mb-3" />
           <p className="text-sm text-muted-foreground">{t("searchTab.empty")}</p>
         </div>
@@ -75,7 +75,7 @@ export function SearchTabContent() {
             return (
               <div
                 key={match.uid}
-                className="flex items-center justify-between p-4 rounded-2xl border border-border/60 bg-card/30 hover:bg-card/60 transition-all gap-4"
+                className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card shadow-sm hover:shadow-md hover:border-brand/30 transition-all gap-4"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <Avatar className="size-11 border border-border shadow-sm">
@@ -166,7 +166,7 @@ export function SearchTabContent() {
           })}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border/60 bg-card/10 rounded-2xl p-6">
+        <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border bg-card/50 rounded-2xl p-6 shadow-sm">
           <Search className="size-12 text-muted-foreground/40 mb-3" />
           <p className="text-sm text-muted-foreground">{t("search")}</p>
         </div>

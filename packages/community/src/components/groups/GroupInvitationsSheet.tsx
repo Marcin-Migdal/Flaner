@@ -89,7 +89,7 @@ export function GroupInvitationsSheet() {
                 const isBusy = !!processingId;
                 
                 return (
-                  <div key={inv.groupId} className="p-4 rounded-xl border border-border bg-muted/20 flex flex-col gap-3">
+                  <div key={inv.groupId} className="p-4 rounded-xl border border-border bg-card shadow-sm flex flex-col gap-3">
                     <div className="flex items-center gap-3">
                       <Avatar className="size-12 border border-border shrink-0">
                         {inv.groupAvatarUrl && <AvatarImage src={inv.groupAvatarUrl} alt={inv.groupName} />}
