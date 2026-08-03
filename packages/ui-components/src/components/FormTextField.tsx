@@ -1,10 +1,16 @@
-import { useController, UseControllerProps } from "react-hook-form";
+import { useController, type UseControllerProps, type FieldValues, type FieldPath } from "react-hook-form";
 import { TextField, TextFieldProps } from "./TextField";
 
-export type FormTextFieldProps = Omit<TextFieldProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur"> &
-  UseControllerProps;
+export type FormTextFieldProps<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+> = Omit<TextFieldProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur"> &
+  UseControllerProps<TFieldValues, TName>;
 
-export function FormTextField({
+export function FormTextField<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+>({
   name,
   rules,
   shouldUnregister,
@@ -12,7 +18,7 @@ export function FormTextField({
   control,
   disabled,
   ...props
-}: FormTextFieldProps) {
+}: FormTextFieldProps<TFieldValues, TName>) {
   const { field, fieldState } = useController({
     name,
     rules,

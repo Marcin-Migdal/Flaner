@@ -1,13 +1,11 @@
-import { useQuery, type UseQueryOptions, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@flaner-v2/shared";
-import type { Group } from "../../../api/types";
-import { getUserGroups } from "../../../api/groups";
+import { useAuth } from "@flaner/shared/context";
+import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
+import { getUserGroups } from '../../../api/groups';
+import type { Group } from '../../../api/groups';
 
 const getUserGroupsQueryKeys = (userId: string) => ["userGroups", userId];
 
-export const useGetUserGroupsQuery = (
-  options?: Omit<UseQueryOptions<Group[], Error>, "queryKey" | "queryFn">
-) => {
+export const useGetUserGroupsQuery = (options?: Omit<UseQueryOptions<Group[], Error>, "queryKey" | "queryFn">) => {
   const { user } = useAuth();
   return useQuery<Group[], Error>({
     queryKey: getUserGroupsQueryKeys(user?.uid ?? ""),

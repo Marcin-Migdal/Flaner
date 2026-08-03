@@ -1,14 +1,12 @@
+import { useAuth } from "@flaner/shared/context";
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth } from "@flaner-v2/shared";
-import type { Group } from "../../../api/types";
-import { createGroup } from "../../../api/groups";
+import { createGroup } from '../../../api/groups';
+import type { Group } from '../../../api/groups';
 import { useInvalidateUserGroupsQuery } from "../query/useGetUserGroupsQuery";
 
 type CreateGroupInput = Omit<Group, "id" | "createdAt" | "updatedAt" | "nameLower" | "ownerId">;
 
-export const useCreateGroupMutation = (
-  options?: UseMutationOptions<string, Error, CreateGroupInput>
-) => {
+export const useCreateGroupMutation = (options?: UseMutationOptions<string, Error, CreateGroupInput>) => {
   const { user } = useAuth();
   const invalidateUserGroups = useInvalidateUserGroupsQuery();
 
@@ -21,7 +19,7 @@ export const useCreateGroupMutation = (
     onSuccess: async (...args) => {
       invalidateUserGroups();
       if (options?.onSuccess) {
-        await (options.onSuccess as any)(...args);
+        await options.onSuccess(...args);
       }
     },
   });

@@ -1,10 +1,10 @@
-import { Avatar, AvatarFallback, AvatarImage, Button, Input, TabsContent } from "@flaner-v2/ui-components";
+import { Avatar, AvatarFallback, AvatarImage, Button, Input, TabsContent } from "@flaner/ui-components";
 import { Loader2, Search, UserCheck, UserPlus, X } from "lucide-react";
 import { useState } from "react";
 import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useGetFriendsListRealtimeQuery, useGetReceivedFriendRequestRealtimeQuery, useGetSentFriendRequestRealtimeQuery, useSearchUsersQuery, useSendFriendRequestMutation } from "../hooks";
 import { useCommunityTranslations } from "../hooks/useCommunityTranslations";
 
-import { useDebounce } from "@flaner-v2/shared";
+import { useDebounce } from "@flaner/shared/hooks";
 
 export function SearchTabContent() {
   const { t } = useCommunityTranslations();

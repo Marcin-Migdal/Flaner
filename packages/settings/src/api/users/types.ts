@@ -1,3 +1,3 @@
-import { type EditUserRequest } from "@flaner-v2/shared";
+import { type EditUserRequest } from "@flaner/shared/types";
 
 export type UpdateProfilePayload = Omit<EditUserRequest, "currentUserUid">;

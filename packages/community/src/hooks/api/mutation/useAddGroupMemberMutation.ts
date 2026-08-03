@@ -1,11 +1,11 @@
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { addGroupMember } from "../../../api/groups";
+import { addGroupMember } from '../../../api/groups';
 import { useInvalidateGroupMembersQuery } from "../query/useGetGroupMembersQuery";
 import { useInvalidateUserGroupsQuery } from "../query/useGetUserGroupsQuery";
 
 export const useAddGroupMemberMutation = (
   options?: UseMutationOptions<void, Error, { groupId: string; userId: string }>,
-  invalidateUserGroups?: boolean
+  invalidateUserGroups?: boolean,
 ) => {
   const invalidateMembers = useInvalidateGroupMembersQuery();
   const invalidateGroups = useInvalidateUserGroupsQuery();
@@ -16,13 +16,15 @@ export const useAddGroupMemberMutation = (
     },
     ...options,
     onSuccess: async (...args) => {
-      const [data, variables, context] = args;
+      const [_data, variables] = args;
       invalidateMembers(variables.groupId);
+
       if (invalidateUserGroups) {
         invalidateGroups();
       }
+
       if (options?.onSuccess) {
-        await (options.onSuccess as any)(...args);
+        await options.onSuccess(...args);
       }
     },
   });

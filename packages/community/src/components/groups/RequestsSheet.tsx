@@ -1,7 +1,21 @@
-import { Button, Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@flaner-v2/ui-components";
+import {
+  Button,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@flaner/ui-components";
 import { UserPlus } from "lucide-react";
-import { useAcceptJoinRequestMutation, useGetGroupRequestsQuery, useGetUsersQuery, useRejectJoinRequestMutation } from "../../hooks";
+import {
+  useAcceptJoinRequestMutation,
+  useGetGroupRequestsQuery,
+  useGetUsersQuery,
+  useRejectJoinRequestMutation,
+} from "../../hooks";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
+import { useSheet } from "@flaner/shared/hooks";
 import { RequestItem } from "../common/RequestItem";
 
 interface RequestsSheetProps {
@@ -14,13 +28,15 @@ export function RequestsSheet({ groupId }: RequestsSheetProps) {
   const acceptRequestMutation = useAcceptJoinRequestMutation();
   const rejectRequestMutation = useRejectJoinRequestMutation();
 
-  const requestUserIds = requests.map(r => r.userId);
+  const requestUserIds = requests.map((r) => r.userId);
   const { data: usersData } = useGetUsersQuery(requestUserIds);
+
+  const [isOpen, { setOpen }] = useSheet();
 
   if (requests.length === 0) return null; // Or show empty button
 
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" className="rounded-xl relative">
           <UserPlus className="size-4" />
@@ -35,9 +51,7 @@ export function RequestsSheet({ groupId }: RequestsSheetProps) {
       <SheetContent className="w-full sm:max-w-md p-6 bg-card/95 backdrop-blur-md border-l border-border flex flex-col h-full shadow-2xl">
         <SheetHeader className="p-0 border-b border-border pb-4">
           <SheetTitle className="text-xl font-bold font-heading">{t("requestsSheet.title")}</SheetTitle>
-          <SheetDescription className="text-xs text-muted-foreground mt-1">
-            {t("requestsSheet.desc")}
-          </SheetDescription>
+          <SheetDescription className="text-xs text-muted-foreground mt-1">{t("requestsSheet.desc")}</SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto space-y-6 py-4 pr-1 scrollbar-none">
           <div className="space-y-3">
@@ -50,9 +64,7 @@ export function RequestsSheet({ groupId }: RequestsSheetProps) {
                 <div className="text-center text-muted-foreground">{t("groupDetails.loading")}</div>
               </div>
             ) : requests.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic py-2 pl-2">
-                {t("requestsSheet.empty")}
-              </p>
+              <p className="text-xs text-muted-foreground italic py-2 pl-2">{t("requestsSheet.empty")}</p>
             ) : (
               <div className="space-y-2">
                 {requests.map((req) => {
@@ -68,7 +80,6 @@ export function RequestsSheet({ groupId }: RequestsSheetProps) {
                   return (
                     <RequestItem
                       key={req.userId}
-                      id={req.userId}
                       username={displayUsername}
                       avatarUrl={displayAvatar}
                       acceptLabel={t("requestsSheet.accept")}

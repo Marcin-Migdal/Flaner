@@ -1,5 +1,5 @@
-import { useAuth } from "@flaner-v2/shared";
-import { Button, FormTextField, GoogleIcon } from "@flaner-v2/ui-components";
+import { useAuth } from "@flaner/shared/context";
+import { Button, FormTextField, GoogleIcon } from "@flaner/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -33,7 +33,7 @@ export function AuthView() {
     setAuthError(null);
     try {
       await signInWithEmailUser(data.email, data.password);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       setAuthError(t("errors.loginFailed"));
     }
@@ -43,7 +43,7 @@ export function AuthView() {
     setAuthError(null);
     try {
       await signUpWithEmailUser(data.email, data.password, data.username, "pl");
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       setAuthError(t("errors.registrationFailed"));
     }
@@ -53,7 +53,7 @@ export function AuthView() {
     setAuthError(null);
     try {
       await signInWithGoogleUser("pl");
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       setAuthError(t("errors.googleFailed"));
     }
@@ -83,7 +83,13 @@ export function AuthView() {
         )}
 
         {/* Google OAuth Button */}
-        <Button onClick={onGoogleSignIn} type="button" size="xl" variant="outline" className="w-full hover:bg-accent/40 transition-colors">
+        <Button
+          onClick={onGoogleSignIn}
+          type="button"
+          size="xl"
+          variant="outline"
+          className="w-full hover:bg-accent/40 transition-colors"
+        >
           <span className="flex items-center justify-center gap-3 w-full">
             <GoogleIcon />
             {t("googleButton")}
@@ -92,7 +98,9 @@ export function AuthView() {
 
         <div className="relative flex py-2 items-center">
           <div className="flex-grow border-t border-border"></div>
-          <span className="flex-shrink mx-4 text-muted-foreground/60 text-xs uppercase tracking-wider font-semibold">{t("or")}</span>
+          <span className="flex-shrink mx-4 text-muted-foreground/60 text-xs uppercase tracking-wider font-semibold">
+            {t("or")}
+          </span>
           <div className="flex-grow border-t border-border"></div>
         </div>
 
@@ -100,27 +108,24 @@ export function AuthView() {
         {isSignUp ? (
           <FormProvider {...signUpForm}>
             <form key="signup-form" onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-4 text-left">
-              <FormTextField 
-                name="username" 
-                label={t("usernameLabel")} 
-                placeholder={t("usernamePlaceholder")} 
+              <FormTextField name="username" label={t("usernameLabel")} placeholder={t("usernamePlaceholder")} />
+
+              <FormTextField name="email" type="email" label={t("emailLabel")} placeholder={t("emailPlaceholder")} />
+
+              <FormTextField
+                name="password"
+                type="password"
+                label={t("passwordLabel")}
+                placeholder={t("passwordPlaceholderSignUp")}
               />
 
-              <FormTextField 
-                name="email" 
-                type="email" 
-                label={t("emailLabel")} 
-                placeholder={t("emailPlaceholder")} 
-              />
-
-              <FormTextField 
-                name="password" 
-                type="password" 
-                label={t("passwordLabel")} 
-                placeholder={t("passwordPlaceholderSignUp")} 
-              />
-
-              <Button type="submit" size="xl" variant="brand" className="w-full mt-2" isBusy={signUpForm.formState.isSubmitting}>
+              <Button
+                type="submit"
+                size="xl"
+                variant="brand"
+                className="w-full mt-2"
+                isBusy={signUpForm.formState.isSubmitting}
+              >
                 {t("signUpButton")}
               </Button>
             </form>
@@ -128,21 +133,22 @@ export function AuthView() {
         ) : (
           <FormProvider {...loginForm}>
             <form key="login-form" onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4 text-left">
-              <FormTextField 
-                name="email" 
-                type="email" 
-                label={t("emailLabel")} 
-                placeholder={t("emailPlaceholder")} 
+              <FormTextField name="email" type="email" label={t("emailLabel")} placeholder={t("emailPlaceholder")} />
+
+              <FormTextField
+                name="password"
+                type="password"
+                label={t("passwordLabel")}
+                placeholder={t("passwordPlaceholderLogin")}
               />
 
-              <FormTextField 
-                name="password" 
-                type="password" 
-                label={t("passwordLabel")} 
-                placeholder={t("passwordPlaceholderLogin")} 
-              />
-
-              <Button type="submit" size="xl" variant="brand" className="w-full mt-2" isBusy={loginForm.formState.isSubmitting}>
+              <Button
+                type="submit"
+                size="xl"
+                variant="brand"
+                className="w-full mt-2"
+                isBusy={loginForm.formState.isSubmitting}
+              >
                 {t("signInButton")}
               </Button>
             </form>

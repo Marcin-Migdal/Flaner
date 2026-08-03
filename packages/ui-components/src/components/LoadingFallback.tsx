@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@flaner-v2/shared';
+import { cn } from "@flaner/shared/utils";
 import { useUiTranslations } from '../hooks/useUiTranslations';
 
 export type LoadingFallbackProps = React.HTMLAttributes<HTMLDivElement> & {

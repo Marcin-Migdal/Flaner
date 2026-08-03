@@ -1,12 +1,12 @@
-import { useQuery, type UseQueryOptions, useQueryClient } from "@tanstack/react-query";
-import type { GroupMember } from "../../../api/types";
-import { getGroupMembers } from "../../../api/groups";
+import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
+import { getGroupMembers } from '../../../api/groups';
+import type { GroupMember } from '../../../api/groups';
 
 const getGroupMembersQueryKeys = (groupId: string) => ["groupMembers", groupId];
 
 export const useGetGroupMembersQuery = (
   groupId: string,
-  options?: Omit<UseQueryOptions<GroupMember[], Error>, "queryKey" | "queryFn">
+  options?: Omit<UseQueryOptions<GroupMember[], Error>, "queryKey" | "queryFn">,
 ) => {
   return useQuery<GroupMember[], Error>({
     queryKey: getGroupMembersQueryKeys(groupId),

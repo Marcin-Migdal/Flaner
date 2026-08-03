@@ -1,5 +1,5 @@
-import { useAuth } from "@flaner-v2/shared";
-import { Avatar, AvatarFallback, AvatarImage, Button, ConfirmationPopup } from "@flaner-v2/ui-components";
+import { useAuth } from "@flaner/shared/context";
+import { Avatar, AvatarFallback, AvatarImage, Button, ConfirmationPopup } from "@flaner/ui-components";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Copy, Loader2, LogOut, Shield, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
@@ -70,7 +70,7 @@ export function GroupDetailsView() {
       toast.success(t("groupDetails.joinSuccess"));
       queryClient.invalidateQueries({ queryKey: ["groupMembers", group.id] });
       queryClient.invalidateQueries({ queryKey: ["userGroups", user.uid] });
-    } catch (err) {
+    } catch {
       toast.error(t("groupDetails.joinError"));
     }
   };
@@ -81,7 +81,7 @@ export function GroupDetailsView() {
       await requestJoin(group.id);
       toast.success(t("groupDetails.requestSuccess"));
       queryClient.invalidateQueries({ queryKey: ["groupRequests", group.id] });
-    } catch (err) {
+    } catch {
       toast.error(t("groupDetails.requestError"));
     }
   };
@@ -93,7 +93,7 @@ export function GroupDetailsView() {
       setIsLeaveConfirmOpen(false);
       toast.success(t("groupDetails.leaveSuccess"));
       navigate("/community/groups");
-    } catch (err) {
+    } catch {
       toast.error(t("groupDetails.leaveError"));
     }
   };

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getGroupInvitations } from "../../../api/groups";
-import type { GroupInvitation } from "../../../api/types";
+import { getGroupInvitations } from '../../../api/groups';
+import type { GroupInvitation } from '../../../api/groups';
 
 const getGroupPendingInvitationsQueryKey = (groupId: string) => ["groupPendingInvitations", groupId];
 

@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
-import { cn } from "@flaner-v2/shared"
+import { cn } from "@flaner/shared/utils";
 import { Label } from "./label"
 import { Separator } from "./separator"
 

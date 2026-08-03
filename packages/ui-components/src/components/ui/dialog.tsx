@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
-import { cn } from "@flaner-v2/shared"
+import { cn } from "@flaner/shared/utils";
 import { Button } from "./button"
 import { XIcon } from "lucide-react"
 

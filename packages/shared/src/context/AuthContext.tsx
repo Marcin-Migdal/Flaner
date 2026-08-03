@@ -7,7 +7,7 @@ import {
   User,
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { createContext, ReactNode, useContext, useEffect, useState, useRef } from "react";
 import { fb } from "../firebase/firebase";
 import { useTheme } from "../hooks/useTheme";
 import { LanguageType, UserType } from "../types";
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserType | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   // Prevents onAuthStateChanged from interfering while a manual sign-in is running
-  const isManualAuth = { current: false };
+  const isManualAuth = useRef(false);
 
   const { setTheme } = useTheme();
 

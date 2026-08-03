@@ -1,21 +1,21 @@
-import type { RouteObject } from 'react-router';
-import type { NavigationItem } from '../types/navigation';
+import type { AppRouteObject, NavigationItem } from "../types/navigation";
 
-export function generateNavigation(routes: RouteObject[], basePath: string): NavigationItem[] {
+export function generateNavigation(routes: AppRouteObject[], basePath: string): NavigationItem[] {
   const items: NavigationItem[] = [];
 
   for (const route of routes) {
     if (route.handle?.hideInNav === true) continue;
-    if (route.path && route.path.includes(':')) continue;
+    if (route.path && route.path.includes(":")) continue;
 
-    const fullPath = route.path ? (route.path.startsWith('/') ? route.path : `${basePath}/${route.path}`) : basePath;
-    const cleanPath = fullPath.replace(/\/+/g, '/').replace(/\/$/, ''); // cleanup double slashes and trailing slashes
+    const fullPath = route.path ? (route.path.startsWith("/") ? route.path : `${basePath}/${route.path}`) : basePath;
+    const cleanPath = fullPath.replace(/\/+/g, "/").replace(/\/$/, ""); // cleanup double slashes and trailing slashes
 
-    if (route.handle?.label && route.handle?.icon) {
+    const handle = route.handle;
+    if (handle?.label && handle?.icon) {
       const item: NavigationItem = {
         path: cleanPath,
-        labelKey: route.handle.label as string,
-        icon: route.handle.icon as string,
+        labelKey: handle.label,
+        icon: handle.icon,
       };
 
       if (route.children && route.children.length > 0) {

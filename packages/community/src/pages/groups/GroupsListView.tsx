@@ -1,15 +1,15 @@
-import { useDebounce } from "@flaner-v2/shared";
-import { Button, GroupSearchResultItem, IconTextField, SearchBar } from "@flaner-v2/ui-components";
+import { useDebounce } from "@flaner/shared/hooks";
+import { Button, GroupSearchResultItem, IconTextField, SearchBar } from "@flaner/ui-components";
 import { Filter, Plus, Search, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import type { Group } from "../../api/types";
+import type { Group } from '../../api/groups';
 import { CreateGroupModal } from "../../components/CreateGroupModal";
 import { GroupCard } from "../../components/groups/GroupCard";
+import { GroupInvitationsSheet } from "../../components/groups/GroupInvitationsSheet";
 import { useGetUserGroupsQuery, useSearchGlobalGroupsQuery } from "../../hooks";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
-import { GroupInvitationsSheet } from "../../components/groups/GroupInvitationsSheet";
 
 export function GroupsListView() {
   const { t } = useCommunityTranslations();
@@ -37,11 +37,11 @@ export function GroupsListView() {
   useEffect(() => {
     if (searchError) {
       console.error("Search error:", searchError);
-      toast.error(`Błąd wyszukiwania: ${(searchError as any).message}`);
+      toast.error(`Błąd wyszukiwania: ${searchError.message}`);
     }
   }, [searchError]);
 
-  const globalGroups = (searchData?.pages.flatMap((page: any) => page.groups) || []) as Group[];
+  const globalGroups = searchData?.pages.flatMap((page) => page.groups) ?? [];
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 

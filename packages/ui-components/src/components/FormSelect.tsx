@@ -1,12 +1,17 @@
-import { useController, UseControllerProps } from "react-hook-form";
-import { Select, CustomSelectProps } from "./Select";
+import { useMemo } from "react";
+import { useController, type UseControllerProps, type FieldValues, type FieldPath, type PathValue } from "react-hook-form";
+import { CustomSelectProps, Select } from "./Select";
 
-export type FormSelectProps = Omit<CustomSelectProps, "name" | "value" | "onChange" | "onBlur" | "defaultValue"> &
-  Omit<UseControllerProps, "defaultValue"> & {
-  defaultValue?: any;
-};
+export type FormSelectProps<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+> = Omit<CustomSelectProps, "name" | "value" | "onChange" | "onBlur" | "defaultValue"> &
+  UseControllerProps<TFieldValues, TName>;
 
-export function FormSelect({
+export function FormSelect<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+>({
   name,
   rules,
   shouldUnregister,
@@ -14,7 +19,7 @@ export function FormSelect({
   control,
   disabled,
   ...props
-}: FormSelectProps) {
+}: FormSelectProps<TFieldValues, TName>) {
   const { field, fieldState } = useController({
     name,
     rules,
@@ -24,14 +29,25 @@ export function FormSelect({
     disabled,
   });
 
-  const selectedOption = (props.options as any)?.find((opt: any) => opt.value === field.value) || null;
+  const selectedOption = useMemo(() => {
+    if (!props.options) return null;
+    for (const item of props.options) {
+      if ("options" in item) {
+        const found = item.options.find((opt) => opt.value === field.value);
+        if (found) return found;
+      } else if (item.value === field.value) {
+        return item;
+      }
+    }
+    return null;
+  }, [props.options, field.value]);
 
   return (
     <Select
       {...props}
       {...field}
-      value={selectedOption as any}
-      onChange={(option: any) => field.onChange(option?.value)}
+      value={selectedOption}
+      onChange={(option) => field.onChange(option?.value as PathValue<TFieldValues, TName>)}
       error={fieldState.error?.message}
     />
   );

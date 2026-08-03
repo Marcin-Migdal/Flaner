@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@flaner-v2/shared";
+import { useAuth } from "@flaner/shared/context";
 import { 
   AppNotification, 
   subscribeToNotifications, 
@@ -12,16 +12,24 @@ export const useNotifications = () => {
   const { user } = useAuth();
   const invalidateReadNotifications = useInvalidateReadNotificationsQuery();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!user?.uid ? false : true);
+  const [prevUid, setPrevUid] = useState(user?.uid);
 
-  useEffect(() => {
+  if (user?.uid !== prevUid) {
+    setPrevUid(user?.uid);
     if (!user?.uid) {
       setNotifications([]);
       setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }
+
+  useEffect(() => {
+    if (!user?.uid) {
       return;
     }
 
-    setLoading(true);
     const unsubscribe = subscribeToNotifications(user.uid, (newNotifications) => {
       setNotifications(newNotifications);
       setLoading(false);

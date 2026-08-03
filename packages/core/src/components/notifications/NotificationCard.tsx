@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@flaner-v2/ui-components";
+import { Avatar, AvatarFallback, AvatarImage } from "@flaner/ui-components";
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
 import { TFunction } from "i18next";
@@ -72,9 +72,10 @@ export function NotificationCard({ notification, onRead, onClosePopover }: Notif
   });
 
   return (
-    <div
+    <button
+      type="button"
       onClick={handleCardClick}
-      className="flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors cursor-pointer rounded-lg border border-transparent hover:border-border/50"
+      className="flex items-start text-left w-full gap-3 p-3 hover:bg-muted/50 transition-colors cursor-pointer rounded-lg border border-transparent hover:border-border/50"
     >
       <div className="relative shrink-0">
         <Avatar className="size-10 border border-border/50 shadow-sm">
@@ -101,6 +102,6 @@ export function NotificationCard({ notification, onRead, onClosePopover }: Notif
           <div className="size-2 rounded-full bg-brand" />
         </div>
       )}
-    </div>
+    </button>
   );
 }

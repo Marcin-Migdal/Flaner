@@ -1,5 +1,5 @@
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { transferGroupOwnership } from "../../../api/groups";
+import { transferGroupOwnership } from '../../../api/groups';
 import { useInvalidateGroupQuery } from "../query/useGetGroupQuery";
 import { useInvalidateGroupMembersQuery } from "../query/useGetGroupMembersQuery";
 import { useInvalidateUserGroupsQuery } from "../query/useGetUserGroupsQuery";
@@ -21,7 +21,7 @@ export const useTransferGroupOwnershipMutation = (
       invalidateUserGroups();
       
       if (options?.onSuccess) {
-        await (options.onSuccess as any)(...args);
+        await options.onSuccess(...args);
       }
     },
   });

@@ -1,13 +1,12 @@
+import { toast } from "@flaner/shared/utils";
+import { useAuth } from "@flaner/shared/context";
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth, toast } from "@flaner-v2/shared";
-import { removeFriend } from "../../../api/endpoints";
+import { removeFriend } from '../../../api/users';
+import { useCommunityTranslations } from "../../useCommunityTranslations";
 import { useInvalidateGetFriendsListQuery } from "../query/useGetFriendsListQuery";
 import { useInvalidateSearchUsersQuery } from "../query/useSearchUsersQuery";
-import { useCommunityTranslations } from "../../useCommunityTranslations";
 
-export const useRemoveFriendMutation = (
-  options?: UseMutationOptions<void, Error, string>
-) => {
+export const useRemoveFriendMutation = (options?: UseMutationOptions<void, Error, string>) => {
   const { user } = useAuth();
   const invalidateFriendsList = useInvalidateGetFriendsListQuery();
   const invalidateSearchUsers = useInvalidateSearchUsersQuery();
@@ -19,15 +18,17 @@ export const useRemoveFriendMutation = (
       await removeFriend(user.uid, friendUid);
     },
     ...options,
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (...args) => {
       invalidateFriendsList();
       invalidateSearchUsers();
       toast.success(t("toasts.removeSuccess"));
+
       if (options?.onSuccess) {
-        await (options.onSuccess as any)(data, variables, context);
+        await options.onSuccess(...args);
       }
     },
-    onError: (err: any) => {
+    onError: (...args) => {
+      const [err] = args;
       const isKey = err?.message && err.message.startsWith("toasts.");
       toast.failure(isKey ? t(err.message) : t("toasts.removeError"));
     },

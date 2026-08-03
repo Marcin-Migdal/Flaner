@@ -1,4 +1,4 @@
-import { Tabs, TabsList, TabsTrigger } from "@flaner-v2/ui-components";
+import { Tabs, TabsList, TabsTrigger } from "@flaner/ui-components";
 import { Users } from "lucide-react";
 import { useCommunityTranslations } from "../hooks/useCommunityTranslations";
 import { useGetFriendsListRealtimeQuery } from "../hooks";

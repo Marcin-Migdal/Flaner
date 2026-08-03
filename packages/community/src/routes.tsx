@@ -1,23 +1,23 @@
+import type { AppRouteObject } from "@flaner/shared/types";
 import React from "react";
-import type { RouteObject } from "react-router";
 import { Outlet } from "react-router";
 
 const FriendsView = React.lazy(() => import("./pages/FriendsView"));
 const GroupsListView = React.lazy(() => import("./pages/groups/GroupsListView"));
 const GroupDetailsView = React.lazy(() => import("./pages/groups/GroupDetailsView"));
 
-export const routes: RouteObject[] = [
+export const routes: AppRouteObject[] = [
   {
     path: "",
     element: <Outlet />,
-    handle: { label: "nav.community", icon: "Users" },
+    handle: { label: "nav.community", icon: "users" },
     children: [
       {
         path: "friends",
         element: <FriendsView />,
         handle: {
           label: "nav.friends",
-          icon: "Users",
+          icon: "users",
         },
       },
       {
@@ -25,7 +25,7 @@ export const routes: RouteObject[] = [
         element: <GroupsListView />,
         handle: {
           label: "nav.groups",
-          icon: "Users",
+          icon: "users",
         },
       },
       {
@@ -34,7 +34,7 @@ export const routes: RouteObject[] = [
         handle: {
           hideInNav: true,
           label: "groupDetails",
-          icon: "Users",
+          icon: "users",
         },
       },
     ],

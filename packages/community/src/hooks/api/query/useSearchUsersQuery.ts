@@ -1,6 +1,7 @@
 import { useQuery, type UseQueryOptions, useQueryClient } from "@tanstack/react-query";
-import { useAuth, type UserType } from "@flaner-v2/shared";
-import { searchUsers } from "../../../api/endpoints";
+import { useAuth } from "@flaner/shared/context";
+import { type UserType } from "@flaner/shared/types";
+import { searchUsers } from '../../../api/users';
 
 const getSearchUsersQueryKeys = (searchQuery: string, userId: string) => ["searchUsers", searchQuery, userId];
 

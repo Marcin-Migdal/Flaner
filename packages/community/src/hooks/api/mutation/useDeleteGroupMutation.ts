@@ -1,5 +1,5 @@
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { deleteGroup } from "../../../api/groups";
+import { deleteGroup } from '../../../api/groups';
 import { useInvalidateUserGroupsQuery } from "../query/useGetUserGroupsQuery";
 import { useInvalidateSearchGlobalGroupsQuery } from "../query/useSearchGlobalGroupsQuery";
 
@@ -16,7 +16,7 @@ export const useDeleteGroupMutation = (
       invalidateUserGroups();
       invalidateSearchGlobalGroups();
       if (options?.onSuccess) {
-        await (options.onSuccess as any)(...args);
+        await options.onSuccess(...args);
       }
     },
   });

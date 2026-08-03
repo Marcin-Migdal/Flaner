@@ -1,6 +1,6 @@
 import React, { useId } from "react";
 import { Field, FieldLabel, FieldDescription, FieldError } from "./ui/field";
-import { cn } from "@flaner-v2/shared";
+import { cn } from "@flaner/shared/utils";
 
 export type SwitchProps = Omit<React.ComponentPropsWithoutRef<"input">, "id" | "type"> & {
   id?: string;

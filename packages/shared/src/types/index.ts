@@ -1,4 +1,4 @@
-export type LanguageType = 'pl' | 'en';
+export type LanguageType = "pl" | "en";
 
 export type UserType = {
   avatarUrl: string;
@@ -21,12 +21,5 @@ export type EditUserRequest = {
 
 export type SearchedUserType = UserType & { invited: boolean; isFriend: boolean };
 
-export type Friendships = {
-  userRef: any; // Using any for DocumentReference to decouple from direct firestore dependency in types if needed, or we can use DocumentReference
-  username: string;
-  usernameLower: string;
-  createdAt: number;
-};
-
-
-export * from './navigation';
+export * from "./navigation";
+export * from "./api";

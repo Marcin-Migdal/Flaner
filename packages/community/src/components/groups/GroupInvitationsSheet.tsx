@@ -1,27 +1,17 @@
-import { Avatar, AvatarFallback, AvatarImage, Button, Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@flaner-v2/ui-components";
+import { Avatar, AvatarFallback, AvatarImage, Button, Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@flaner/ui-components";
 import { Check, Loader2, Mail, X } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@flaner-v2/shared";
+import { useAuth } from "@flaner/shared/context";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
+import { useSheet } from "@flaner/shared/hooks";
+import { useState } from "react";
 import { useAcceptGroupInvitationMutation, useGetUserGroupInvitationsQuery, useGetUsersQuery, useRejectGroupInvitationMutation } from "../../hooks";
-import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router";
 
 export function GroupInvitationsSheet() {
   const { t } = useCommunityTranslations();
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [open, { setOpen }] = useSheet({ hashTarget: "#group-invitations" });
   const [processingId, setProcessingId] = useState<string | null>(null);
-
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (location.hash === "#group-invitations") {
-      setOpen(true);
-      navigate(location.pathname, { replace: true });
-    }
-  }, [location, navigate]);
 
   const { data: invitations = [], isLoading } = useGetUserGroupInvitationsQuery(user?.uid);
   const acceptMutation = useAcceptGroupInvitationMutation();
@@ -42,7 +32,7 @@ export function GroupInvitationsSheet() {
       await acceptMutation.mutateAsync({ groupId, userId: user.uid });
       toast.success(t("groupInvitations.acceptSuccess"));
       if (invitations.length === 1) setOpen(false); // Close if it was the last one
-    } catch (err: any) {
+    } catch {
       toast.error(t("groupInvitations.acceptError"));
     } finally {
       setProcessingId(null);
@@ -56,7 +46,7 @@ export function GroupInvitationsSheet() {
       await rejectMutation.mutateAsync({ groupId, userId: user.uid });
       toast.success(t("groupInvitations.rejectSuccess"));
       if (invitations.length === 1) setOpen(false); // Close if it was the last one
-    } catch (err: any) {
+    } catch {
       toast.error(t("groupInvitations.rejectError"));
     } finally {
       setProcessingId(null);

@@ -1,4 +1,9 @@
-import { cn, fb, useAuth, useTheme, MFE_NAMES, type NavigationItem } from "@flaner-v2/shared";
+import { cn } from "@flaner/shared/utils";
+import { fb } from "@flaner/shared/firebase";
+import { MFE_NAMES } from "@flaner/shared/constants";
+import { useAuth } from "@flaner/shared/context";
+import { useTheme } from "@flaner/shared/hooks";
+import { type NavigationItem } from "@flaner/shared/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,16 +29,9 @@ import {
   SidebarMenuSubItem,
   SidebarProvider,
   SidebarTrigger,
-} from "@flaner-v2/ui-components";
+} from "@flaner/ui-components";
 import { doc, updateDoc } from "firebase/firestore";
-import {
-  ChevronRight,
-  ChevronsUpDown,
-  Globe,
-  LogOut,
-  Settings,
-  SunMoon,
-} from "lucide-react";
+import { ChevronRight, ChevronsUpDown, Globe, LogOut, Settings, SunMoon } from "lucide-react";
 import { DynamicIcon } from "lucide-react/dynamic";
 import { Suspense, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -63,12 +61,9 @@ export function ShellLayout() {
       const mfeNavs = await Promise.all(
         Object.values(MFE_NAMES)
           .filter((name) => name !== MFE_NAMES.SETTINGS)
-          .map((mfeName) => loadMfeNavigation(mfeName))
+          .map((mfeName) => loadMfeNavigation(mfeName)),
       );
-      setNavItems([
-        HOME_NAV_ITEM,
-        ...mfeNavs.flat()
-      ]);
+      setNavItems([HOME_NAV_ITEM, ...mfeNavs.flat()]);
     }
     loadNavigation();
   }, []);
@@ -144,16 +139,13 @@ export function ShellLayout() {
               {navItems.map((item) => {
                 const hasChildren = item.children && item.children.length > 0;
                 const isExpanded = expandedItems[item.path] || false;
-                
-                // Convert PascalCase icon name to kebab-case for DynamicIcon
-                const iconName = item.icon.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 
                 return (
                   <SidebarMenuItem key={item.path}>
                     <div className="relative w-full flex items-center">
                       <SidebarMenuButton asChild isActive={isLinkActive(item.path)} tooltip={t(item.labelKey)}>
                         <NavLink to={item.path}>
-                          <DynamicIcon name={iconName as any} />
+                          <DynamicIcon name={item.icon} />
                           <span>{t(item.labelKey)}</span>
                         </NavLink>
                       </SidebarMenuButton>
@@ -169,7 +161,7 @@ export function ShellLayout() {
 
                     {hasChildren && isExpanded && (
                       <SidebarMenuSub>
-                        {item.children!.map((subItem) => (
+                        {item.children?.map((subItem) => (
                           <SidebarMenuSubItem key={subItem.path}>
                             <SidebarMenuSubButton asChild isActive={location.pathname === subItem.path}>
                               <NavLink to={subItem.path}>

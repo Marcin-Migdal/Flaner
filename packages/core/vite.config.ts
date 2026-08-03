@@ -28,7 +28,7 @@ export default defineConfig({
   preview: { port: PORT, strictPort: true },
   build: { target: 'chrome89' },
   optimizeDeps: {
-    exclude: ['@flaner-v2/ui-components', '@flaner-v2/shared'],
+    exclude: ['@flaner/ui-components'],
   },
   plugins: [
     tailwindcss(),

@@ -1,6 +1,6 @@
 import React, { useId, useRef, useState, useEffect } from "react";
 import { Image as ImageIcon, UploadCloud, Trash2, Loader2 } from "lucide-react";
-import { cn, ONE_KB, ONE_MB } from "@flaner-v2/shared";
+import { cn, ONE_KB, ONE_MB } from "@flaner/shared/utils";
 import { 
   Field, 
   FieldLabel, 
@@ -393,10 +393,18 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
 
           {/* Right Column: Dropzone */}
           <div
+            role="button"
+            tabIndex={0}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={triggerFileSelect}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                triggerFileSelect();
+              }
+            }}
             className={cn(
               "flex-1 w-full border-2 border-dashed border-border bg-card/10 hover:bg-card/30 hover:border-accent rounded-xl flex flex-col items-center justify-center p-6 cursor-pointer transition-all duration-200 text-center select-none min-h-[96px]",
               isDragging && "border-brand bg-brand/5 scale-[1.01]",

@@ -1,6 +1,6 @@
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth } from "@flaner-v2/shared";
-import { requestJoinGroup } from "../../../api/groups";
+import { useAuth } from "@flaner/shared/context";
+import { requestJoinGroup } from '../../../api/groups';
 import { useInvalidateGroupRequestsQuery } from "../query/useGetGroupRequestsQuery";
 import { useInvalidateUserGroupRequestQuery } from "../query/useGetUserGroupRequestQuery";
 
@@ -23,7 +23,7 @@ export const useRequestJoinGroupMutation = (
         invalidateUserGroupRequest(args[1]);
       }
       if (options?.onSuccess) {
-        await (options.onSuccess as any)(...args);
+        await options.onSuccess(...args);
       }
     },
   });

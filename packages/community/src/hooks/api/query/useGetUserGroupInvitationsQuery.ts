@@ -1,7 +1,7 @@
-import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getUserGroupInvitations, subscribeToUserGroupInvitations } from "../../../api/groups";
-import type { GroupInvitation } from "../../../api/types";
+import { useEffect } from "react";
+import { getUserGroupInvitations, subscribeToUserGroupInvitations } from '../../../api/groups';
+import type { GroupInvitation } from '../../../api/groups';
 
 const getGroupInvitationsQueryKey = (userId: string) => ["groupInvitations", userId];
 
@@ -13,7 +13,7 @@ export const useGetUserGroupInvitationsQuery = (userId: string | undefined) => {
     if (!userId) return;
 
     const unsubscribe = subscribeToUserGroupInvitations(userId, (invitations: GroupInvitation[]) => {
-      queryClient.setQueryData(queryKey, invitations);
+      queryClient.setQueryData(getGroupInvitationsQueryKey(userId), invitations);
     });
 
     return () => unsubscribe();

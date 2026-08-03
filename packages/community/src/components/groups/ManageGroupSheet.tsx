@@ -1,28 +1,36 @@
-import React, { useState } from "react";
-import { 
-  Button, 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetDescription, 
-  SheetTrigger,
+import { useAuth } from "@flaner/shared/context";
+import { useSheet } from "@flaner/shared/hooks";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Button,
+  ConfirmationPopup,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  ConfirmationPopup,
-  Avatar,
-  AvatarImage,
-  AvatarFallback
-} from "@flaner-v2/ui-components";
-import { Settings, MoreVertical, ShieldAlert, ShieldCheck, Shield, UserMinus, Crown, Trash2 } from "lucide-react";
-import { useAuth } from "@flaner-v2/shared";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@flaner/ui-components";
+import { Crown, MoreVertical, Settings, Shield, ShieldAlert, ShieldCheck, Trash2, UserMinus } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { useDeleteGroupMutation, useGetGroupMembersQuery, useGetUsersQuery, useRemoveGroupMemberMutation, useTransferGroupOwnershipMutation, useUpdateGroupMemberRoleMutation } from "../../hooks";
+import type { GroupMember, GroupRole } from "../../api/groups";
+import {
+  useDeleteGroupMutation,
+  useGetGroupMembersQuery,
+  useGetUsersQuery,
+  useRemoveGroupMemberMutation,
+  useTransferGroupOwnershipMutation,
+  useUpdateGroupMemberRoleMutation,
+} from "../../hooks";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
-import type { GroupRole, GroupMember } from "../../api/types";
 
 interface ManageGroupSheetProps {
   groupId: string;
@@ -31,9 +39,10 @@ interface ManageGroupSheetProps {
 export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
   const { t } = useCommunityTranslations();
   const { user } = useAuth();
-  
+  const [isOpen, { setOpen }] = useSheet();
+
   const { data: members = [], isLoading: membersLoading } = useGetGroupMembersQuery(groupId);
-  const memberUserIds = members.map(m => m.userId);
+  const memberUserIds = members.map((m) => m.userId);
   const { data: membersProfiles, isLoading: profilesLoading } = useGetUsersQuery(memberUserIds);
 
   const navigate = useNavigate();
@@ -46,7 +55,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
   const [confirmRemoveUserId, setConfirmRemoveUserId] = useState<string | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
-  const currentUserRole = members.find(m => m.userId === user?.uid)?.role;
+  const currentUserRole = members.find((m) => m.userId === user?.uid)?.role;
 
   // Helpers
   const ROLE_PRIORITY: Record<GroupRole, number> = {
@@ -94,8 +103,8 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
     try {
       await updateRoleMutation.mutateAsync({ groupId, userId: targetUserId, role: newRole });
       toast.success(t("manageGroupSheet.roleUpdateSuccess"));
-    } catch (err: any) {
-      if (err.message?.includes('permission-denied')) {
+    } catch (err) {
+      if ((err as Error).message?.includes("permission-denied")) {
         toast.error(t("manageGroupSheet.permissionDenied"));
       } else {
         toast.error(t("manageGroupSheet.roleUpdateError"));
@@ -106,15 +115,15 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
   const handleTransferOwnership = async () => {
     if (!user || !confirmTransferUserId) return;
     try {
-      await transferOwnershipMutation.mutateAsync({ 
-        groupId, 
-        currentOwnerId: user.uid, 
-        newOwnerId: confirmTransferUserId 
+      await transferOwnershipMutation.mutateAsync({
+        groupId,
+        currentOwnerId: user.uid,
+        newOwnerId: confirmTransferUserId,
       });
       setConfirmTransferUserId(null);
       toast.success(t("manageGroupSheet.transferSuccess"));
-    } catch (err: any) {
-      if (err.message?.includes('permission-denied')) {
+    } catch (err) {
+      if ((err as Error).message?.includes("permission-denied")) {
         toast.error(t("manageGroupSheet.permissionDenied"));
       } else {
         toast.error(t("manageGroupSheet.transferError"));
@@ -128,8 +137,8 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
       await removeMemberMutation.mutateAsync({ groupId, userId: confirmRemoveUserId });
       setConfirmRemoveUserId(null);
       toast.success(t("manageGroupSheet.removeSuccess"));
-    } catch (err: any) {
-      if (err.message?.includes('permission-denied')) {
+    } catch (err) {
+      if ((err as Error).message?.includes("permission-denied")) {
         toast.error(t("manageGroupSheet.permissionDenied"));
       } else {
         toast.error(t("manageGroupSheet.removeError"));
@@ -143,8 +152,8 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
       setIsDeleteConfirmOpen(false);
       toast.success(t("manageGroupSheet.deleteSuccess"));
       navigate("/community/groups");
-    } catch (err: any) {
-      if (err.message?.includes('permission-denied')) {
+    } catch (err) {
+      if ((err as Error).message?.includes("permission-denied")) {
         toast.error(t("manageGroupSheet.permissionDenied"));
       } else {
         toast.error(t("manageGroupSheet.deleteError"));
@@ -154,10 +163,14 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
 
   const getRoleIcon = (role: GroupRole) => {
     switch (role) {
-      case 'owner': return <Crown className="size-4 text-yellow-500" />;
-      case 'admin': return <ShieldCheck className="size-4 text-blue-500" />;
-      case 'moderator': return <ShieldAlert className="size-4 text-orange-500" />;
-      default: return <Shield className="size-4 text-muted-foreground" />;
+      case "owner":
+        return <Crown className="size-4 text-yellow-500" />;
+      case "admin":
+        return <ShieldCheck className="size-4 text-blue-500" />;
+      case "moderator":
+        return <ShieldAlert className="size-4 text-orange-500" />;
+      default:
+        return <Shield className="size-4 text-muted-foreground" />;
     }
   };
 
@@ -167,7 +180,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
 
   return (
     <>
-      <Sheet>
+      <Sheet open={isOpen} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button variant="primary" className="rounded-xl flex-1 md:flex-none">
             <Settings className="size-4" />
@@ -190,14 +203,17 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
             ) : (
               <div className="space-y-2">
                 {members.map((member: GroupMember) => {
-                  const profile = membersProfiles?.find(p => p.uid === member.userId);
+                  const profile = membersProfiles?.find((p) => p.uid === member.userId);
                   const displayName = profile?.username || member.userId;
                   const initials = displayName.substring(0, 2).toUpperCase();
-                  
+
                   const canManage = canManageMember(member.role) && member.userId !== user?.uid;
 
                   return (
-                    <div key={member.userId} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/30 transition-colors border border-transparent hover:border-border/50">
+                    <div
+                      key={member.userId}
+                      className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/30 transition-colors border border-transparent hover:border-border/50"
+                    >
                       <div className="flex items-center gap-3">
                         <Avatar className="size-10 border border-border">
                           {profile?.avatarUrl && <AvatarImage src={profile.avatarUrl} alt={displayName} />}
@@ -209,7 +225,9 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                           <div className="font-medium text-sm flex items-center gap-1.5">
                             {displayName}
                             {member.userId === user?.uid && (
-                              <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm ml-1">(Ty)</span>
+                              <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm ml-1">
+                                {t("manageGroupSheet.you")}
+                              </span>
                             )}
                           </div>
                           <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
@@ -235,16 +253,19 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                               if (!option) return null;
 
                               return (
-                                <DropdownMenuItem key={roleToAssign} onClick={() => handleUpdateRole(member.userId, roleToAssign)}>
+                                <DropdownMenuItem
+                                  key={roleToAssign}
+                                  onClick={() => handleUpdateRole(member.userId, roleToAssign)}
+                                >
                                   {option.icon}
                                   {option.label}
                                 </DropdownMenuItem>
                               );
                             })}
 
-                            {currentUserRole === 'owner' && (
-                              <DropdownMenuItem 
-                                className="text-yellow-600 focus:text-yellow-700" 
+                            {currentUserRole === "owner" && (
+                              <DropdownMenuItem
+                                className="text-yellow-600 focus:text-yellow-700"
                                 onClick={() => setConfirmTransferUserId(member.userId)}
                               >
                                 <Crown className="size-4 mr-2" />
@@ -252,7 +273,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                               </DropdownMenuItem>
                             )}
 
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
                               onClick={() => setConfirmRemoveUserId(member.userId)}
                             >

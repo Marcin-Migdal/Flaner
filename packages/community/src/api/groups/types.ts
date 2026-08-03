@@ -26,27 +26,6 @@ export type GroupRequest = {
   requestedAt: number;
 };
 
-export type FriendRequest = {
-  id: string;
-  senderUid: string;
-  receiverUid: string;
-  senderUsername: string;
-  senderAvatarUrl: string;
-  receiverUsername: string;
-  receiverAvatarUrl: string;
-  status: "pending" | "accepted" | "rejected";
-  createdAt: number;
-};
-
-export type Friendship = {
-  userRef: any;
-  username: string;
-  usernameLower: string;
-  avatarUrl?: string;
-  createdAt: number;
-  uid: string;
-};
-
 export type GroupInvitation = {
   groupId: string;
   groupName: string;

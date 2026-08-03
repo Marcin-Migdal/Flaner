@@ -1,10 +1,16 @@
-import { useController, UseControllerProps } from "react-hook-form";
+import { useController, type UseControllerProps, type FieldValues, type FieldPath } from "react-hook-form";
 import { ImagePicker, ImagePickerProps } from "./ImagePicker";
 
-export type FormImagePickerProps = Omit<ImagePickerProps, "value" | "onChange" | "name" | "defaultValue"> &
-  UseControllerProps;
+export type FormImagePickerProps<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+> = Omit<ImagePickerProps, "value" | "onChange" | "name" | "defaultValue"> &
+  UseControllerProps<TFieldValues, TName>;
 
-export function FormImagePicker({
+export function FormImagePicker<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+>({
   name,
   rules,
   shouldUnregister,
@@ -12,7 +18,7 @@ export function FormImagePicker({
   control,
   disabled,
   ...props
-}: FormImagePickerProps) {
+}: FormImagePickerProps<TFieldValues, TName>) {
   const { field, fieldState } = useController({
     name,
     rules,
@@ -23,6 +29,7 @@ export function FormImagePicker({
   });
 
   return (
+     
     <ImagePicker
       {...props}
       value={field.value}

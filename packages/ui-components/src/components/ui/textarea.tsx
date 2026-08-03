@@ -1,6 +1,6 @@
 import * as React from "react"
 
-import { cn } from "@flaner-v2/shared"
+import { cn } from "@flaner/shared/utils";
 
 function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
   return (

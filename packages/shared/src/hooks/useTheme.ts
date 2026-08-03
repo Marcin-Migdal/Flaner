@@ -1,7 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 
 export function useTheme() {
-  const [theme, setThemeState] = useState<"light" | "dark">("dark");
+  const [theme, setThemeState] = useState<"light" | "dark">(() => {
+    if (typeof document !== "undefined") {
+      return document.documentElement.classList.contains("dark") ? "dark" : "light";
+    }
+    return "dark";
+  });
 
   // Setter function to modify the DOM class
   const setTheme = useCallback((nextTheme: "light" | "dark") => {
@@ -14,9 +19,6 @@ export function useTheme() {
 
   // Read current class state and observe DOM changes
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains("dark");
-    setThemeState(isDark ? "dark" : "light");
-
     const observer = new MutationObserver(() => {
       const isCurrentlyDark = document.documentElement.classList.contains("dark");
       setThemeState(isCurrentlyDark ? "dark" : "light");
