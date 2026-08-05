@@ -1,8 +1,8 @@
-import { toast } from "@flaner/shared/utils";
+
 import { useAuth } from "@flaner/shared/context";
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 import { acceptFriendRequest } from '../../../api/users';
-import { useCommunityTranslations } from "../../useCommunityTranslations";
+
 import { useInvalidateGetFriendsListQuery } from "../query/useGetFriendsListQuery";
 import { useInvalidateSearchUsersQuery } from "../query/useSearchUsersQuery";
 
@@ -16,27 +16,24 @@ export const useAcceptFriendRequestMutation = (options?: UseMutationOptions<void
   const { user } = useAuth();
   const invalidateFriendsList = useInvalidateGetFriendsListQuery();
   const invalidateSearchUsers = useInvalidateSearchUsersQuery();
-  const { t } = useCommunityTranslations();
+
 
   return useMutation<void, Error, SenderInput>({
     mutationFn: async (sender) => {
-      if (!user) throw new Error("toasts.notAuthenticated");
+      if (!user) throw new Error("errors.userNotAuthenticated");
       await acceptFriendRequest(sender, { uid: user.uid, username: user.username, avatarUrl: user.avatarUrl });
+    },
+    meta: {
+      successMessageKey: "community:toasts.acceptSuccess",
+      errorMessageKey: "community:toasts.acceptError",
     },
     ...options,
     onSuccess: async (...args) => {
       invalidateFriendsList();
       invalidateSearchUsers();
-      toast.success(t("toasts.acceptSuccess"));
-
       if (options?.onSuccess) {
         await options.onSuccess(...args);
       }
-    },
-    onError: (...args) => {
-      const [err] = args;
-      const isKey = err?.message && err.message.startsWith("toasts.");
-      toast.failure(isKey ? t(err.message) : t("toasts.acceptError"));
     },
   });
 };

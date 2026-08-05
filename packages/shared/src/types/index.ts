@@ -23,3 +23,17 @@ export type SearchedUserType = UserType & { invited: boolean; isFriend: boolean 
 
 export * from "./navigation";
 export * from "./api";
+
+import "@tanstack/react-query";
+
+declare module "@tanstack/react-query" {
+  interface Register {
+    mutationMeta: {
+      successMessageKey?: string;
+      errorMessageKey?: string;
+    };
+    queryMeta: {
+      errorMessageKey?: string;
+    };
+  }
+}

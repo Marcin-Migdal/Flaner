@@ -30,10 +30,10 @@ export function GroupInvitationsSheet() {
     setProcessingId(`accept-${groupId}`);
     try {
       await acceptMutation.mutateAsync({ groupId, userId: user.uid });
-      toast.success(t("groupInvitations.acceptSuccess"));
+      
       if (invitations.length === 1) setOpen(false); // Close if it was the last one
     } catch {
-      toast.error(t("groupInvitations.acceptError"));
+      
     } finally {
       setProcessingId(null);
     }
@@ -44,10 +44,10 @@ export function GroupInvitationsSheet() {
     setProcessingId(`reject-${groupId}`);
     try {
       await rejectMutation.mutateAsync({ groupId, userId: user.uid });
-      toast.success(t("groupInvitations.rejectSuccess"));
+      
       if (invitations.length === 1) setOpen(false); // Close if it was the last one
     } catch {
-      toast.error(t("groupInvitations.rejectError"));
+      
     } finally {
       setProcessingId(null);
     }

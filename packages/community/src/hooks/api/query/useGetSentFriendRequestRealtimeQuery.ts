@@ -3,6 +3,8 @@ import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-
 import { useEffect } from "react";
 import { getSentFriendRequests, subscribeToSentFriendRequests } from '../../../api/users';
 import type { FriendRequest } from '../../../api/users';
+import { reactQueryMeta } from "@flaner/shared/constants";
+
 
 const getSentFriendRequestsRealtimeQueryKeys = (userId: string) => ["sentFriendRequestsRealtime", userId];
 
@@ -23,9 +25,15 @@ export const useGetSentFriendRequestRealtimeQuery = (
     return () => unsubscribe();
   }, [user?.uid, queryClient]);
 
+
+
   return useQuery<FriendRequest[], Error>({
+      meta: reactQueryMeta.fetch,
     queryKey,
-    queryFn: () => (user ? getSentFriendRequests(user.uid) : []),
+    queryFn: () => {
+      if (!user) throw new Error("errors.userNotAuthenticated");
+      return getSentFriendRequests(user.uid);
+    },
     enabled: !!user,
     staleTime: Infinity, // Realtime listener handles updates
     ...options,

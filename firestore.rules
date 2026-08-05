@@ -1,18 +1,17 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
     // ==========================================
     // FUNKCJE POMOCNICZE DLA GRUP
     // ==========================================
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function getRole(groupId) {
       return get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role;
     }
-    
+
     function isAdminOrOwner(groupId) {
       let role = getRole(groupId);
       return role == 'admin' || role == 'owner';
@@ -38,36 +37,18 @@ service cloud.firestore {
     match /{path=**}/members/{memberDocId} {
       allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
-    
+
     match /{path=**}/invitations/{invDocId} {
       allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
-    
-    // Reguły dla kolekcji użytkowników
-    match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
 
-      // Subkolekcja znajomości (friendships)
-      match /friendships/{friendId} {
-        allow write: if request.auth != null && (request.auth.uid == userId || request.auth.uid == friendId);
-        allow read: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      // Subkolekcja powiadomień (notifications)
-      match /notifications/{notifId} {
-        allow create: if request.auth != null;
-        allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      }
-
-      // Subkolekcja zaproszeń do grup (groupInvitations)
-      match /groupInvitations/{groupId} {
-        allow create, update: if isAuthenticated() && 
-          exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
-        allow read, delete: if isAuthenticated() && request.auth.uid == userId;
-      }
+    // Kolekcja nazw użytkowników (do weryfikacji unikalności)
+    match /usernames/{username} {
+      allow read: if true;
+      allow create, update: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
-    
+
     // Reguły dla zaproszeń do znajomych
     match /friendRequests/{requestId} {
       allow read, write: if request.auth != null && (
@@ -80,6 +61,31 @@ service cloud.firestore {
         request.auth.uid == request.resource.data.senderUid ||
         request.auth.uid == request.resource.data.receiverUid
       );
+    }
+
+    // Reguły dla kolekcji użytkowników
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+
+      // Subkolekcja znajomości (friendships)
+      match /friendships/{friendId} {
+        allow write: if request.auth != null && (request.auth.uid == userId || request.auth.uid == friendId);
+        allow read: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Subkolekcja powiadomień (notifications)
+      match /notifications/{notifId} {
+        allow create: if request.auth != null;
+        allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Subkolekcja zaproszeń do grup (groupInvitations)
+      match /groupInvitations/{groupId} {
+        allow create, update: if isAuthenticated() && 
+          exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+        allow read, delete: if isAuthenticated() && request.auth.uid == userId;
+      }
     }
 
     // ==========================================

@@ -102,12 +102,12 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
   const handleUpdateRole = async (targetUserId: string, newRole: GroupRole) => {
     try {
       await updateRoleMutation.mutateAsync({ groupId, userId: targetUserId, role: newRole });
-      toast.success(t("manageGroupSheet.roleUpdateSuccess"));
+      
     } catch (err) {
       if ((err as Error).message?.includes("permission-denied")) {
-        toast.error(t("manageGroupSheet.permissionDenied"));
+        
       } else {
-        toast.error(t("manageGroupSheet.roleUpdateError"));
+        
       }
     }
   };
@@ -121,12 +121,12 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
         newOwnerId: confirmTransferUserId,
       });
       setConfirmTransferUserId(null);
-      toast.success(t("manageGroupSheet.transferSuccess"));
+      
     } catch (err) {
       if ((err as Error).message?.includes("permission-denied")) {
-        toast.error(t("manageGroupSheet.permissionDenied"));
+        
       } else {
-        toast.error(t("manageGroupSheet.transferError"));
+        
       }
     }
   };
@@ -136,12 +136,12 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
     try {
       await removeMemberMutation.mutateAsync({ groupId, userId: confirmRemoveUserId });
       setConfirmRemoveUserId(null);
-      toast.success(t("manageGroupSheet.removeSuccess"));
+      
     } catch (err) {
       if ((err as Error).message?.includes("permission-denied")) {
-        toast.error(t("manageGroupSheet.permissionDenied"));
+        
       } else {
-        toast.error(t("manageGroupSheet.removeError"));
+        
       }
     }
   };
@@ -150,13 +150,13 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
     try {
       await deleteGroupMutation.mutateAsync(groupId);
       setIsDeleteConfirmOpen(false);
-      toast.success(t("manageGroupSheet.deleteSuccess"));
+      
       navigate("/community/groups");
     } catch (err) {
       if ((err as Error).message?.includes("permission-denied")) {
-        toast.error(t("manageGroupSheet.permissionDenied"));
+        
       } else {
-        toast.error(t("manageGroupSheet.deleteError"));
+        
       }
     }
   };

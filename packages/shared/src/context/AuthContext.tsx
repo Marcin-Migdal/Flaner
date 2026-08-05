@@ -6,7 +6,8 @@ import {
   signInWithPopup,
   User,
 } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { FirebaseError } from "firebase/app";
+import { doc, getDoc, setDoc, writeBatch } from "firebase/firestore";
 import { createContext, ReactNode, useContext, useEffect, useState, useRef } from "react";
 import { fb } from "../firebase/firebase";
 import { useTheme } from "../hooks/useTheme";
@@ -111,7 +112,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isManualAuth.current = true;
     try {
       const { user: firebaseUser } = await signInWithPopup(fb.auth.auth, fb.auth.provider);
-      setIsLoading(true);
       const userDocRef = doc(fb.firestore, "users", firebaseUser.uid);
       const userDocSnap = await getDoc(userDocRef);
 
@@ -142,13 +142,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw error;
     } finally {
       isManualAuth.current = false;
-      setIsLoading(false);
     }
   };
 
   const signInWithEmailUser = async (email: string, password: string) => {
     isManualAuth.current = true;
-    setIsLoading(true);
     try {
       const { user: firebaseUser } = await signInWithEmailAndPassword(fb.auth.auth, email, password);
       const userDocRef = doc(fb.firestore, "users", firebaseUser.uid);
@@ -164,35 +162,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw error;
     } finally {
       isManualAuth.current = false;
-      setIsLoading(false);
     }
   };
 
   const signUpWithEmailUser = async (email: string, password: string, username: string, language: LanguageType) => {
     isManualAuth.current = true;
-    setIsLoading(true);
     try {
+      const usernameLower = username.toLowerCase();
+      
+      const usernameDocRef = doc(fb.firestore, "usernames", usernameLower);
+      const usernameDocSnap = await getDoc(usernameDocRef);
+      
+      if (usernameDocSnap.exists()) {
+        throw new FirebaseError("app/username-already-in-use", "This username is already taken");
+      }
+
       const { user: firebaseUser } = await createUserWithEmailAndPassword(fb.auth.auth, email, password);
       const userDocRef = doc(fb.firestore, "users", firebaseUser.uid);
 
       const userProfile: UserType = {
         uid: firebaseUser.uid,
         username,
-        usernameLower: username.toLowerCase(),
+        usernameLower,
         email,
         avatarUrl: "",
         darkMode: true,
         language,
       };
 
-      await setDoc(userDocRef, userProfile);
+      const batch = writeBatch(fb.firestore);
+      batch.set(userDocRef, userProfile);
+      batch.set(usernameDocRef, { uid: firebaseUser.uid });
+      
+      await batch.commit();
+
       setUser(userProfile);
     } catch (error) {
       console.error("Email Sign Up failed", error);
       throw error;
     } finally {
       isManualAuth.current = false;
-      setIsLoading(false);
     }
   };
 

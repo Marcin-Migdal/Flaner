@@ -30,23 +30,14 @@
     "transferConfirmTitle": "Przekazanie własności",
     "transferConfirmDesc": "Czy na pewno chcesz przekazać własność tej grupy? Po tej akcji staniesz się administratorem i stracisz pełne prawa do zarządzania.",
     "transferConfirmBtn": "Tak, przekaż",
-    "transferSuccess": "Pomyślnie przekazano własność.",
-    "transferError": "Błąd podczas przekazywania własności.",
-    "roleUpdateSuccess": "Pomyślnie zmieniono rolę.",
-    "roleUpdateError": "Błąd podczas zmiany roli.",
     "removeConfirmTitle": "Wyrzucenie z grupy",
     "removeConfirmDesc": "Czy na pewno chcesz wyrzucić tego użytkownika z grupy?",
     "removeConfirmBtn": "Tak, wyrzuć",
-    "removeSuccess": "Użytkownik został usunięty z grupy.",
-    "removeError": "Błąd podczas usuwania użytkownika.",
-    "permissionDenied": "Odmowa dostępu. Twoje uprawnienia mogły ulec zmianie.",
     "dangerZoneTitle": "Strefa zagrożenia",
     "deleteGroupBtn": "Usuń grupę",
     "deleteConfirmTitle": "Usuwanie grupy",
     "deleteConfirmDesc": "Czy na pewno chcesz bezpowrotnie usunąć tę grupę? Wszyscy członkowie stracą dostęp, a dane grupy zostaną skasowane.",
-    "deleteConfirmBtn": "Tak, usuń grupę",
-    "deleteSuccess": "Grupa została pomyślnie usunięta.",
-    "deleteError": "Błąd podczas usuwania grupy."
+    "deleteConfirmBtn": "Tak, usuń grupę"
   },
   "invitations": {
     "button": "Zaproszenia",
@@ -90,7 +81,46 @@
     "rejectError": "Nie udało się odrzucić zaproszenia.",
     "removeSuccess": "Usunięto ze znajomych.",
     "removeError": "Nie udało się usunąć znajomego.",
-    "notAuthenticated": "Musisz być zalogowany."
+    "notAuthenticated": "Musisz być zalogowany.",
+    "groupsView": {
+      "createModal": {
+        "error": "Wystąpił błąd podczas tworzenia grupy."
+      }
+    },
+    "groupInvitations": {
+      "acceptSuccess": "Dołączono do grupy",
+      "acceptError": "Błąd podczas akceptacji zaproszenia.",
+      "rejectSuccess": "Odrzucono zaproszenie",
+      "rejectError": "Błąd podczas odrzucania zaproszenia."
+    },
+    "inviteToGroup": {
+      "inviteSuccess": "Wysłano zaproszenie",
+      "inviteError": "Błąd podczas wysyłania zaproszenia."
+    },
+    "manageGroupSheet": {
+      "roleUpdateSuccess": "Pomyślnie zmieniono rolę.",
+      "permissionDenied": "Odmowa dostępu. Twoje uprawnienia mogły ulec zmianie.",
+      "roleUpdateError": "Błąd podczas zmiany roli.",
+      "transferSuccess": "Pomyślnie przekazano własność.",
+      "transferError": "Błąd podczas przekazywania własności.",
+      "removeSuccess": "Użytkownik został usunięty z grupy.",
+      "removeError": "Błąd podczas usuwania użytkownika.",
+      "deleteSuccess": "Grupa została pomyślnie usunięta.",
+      "deleteError": "Błąd podczas usuwania grupy."
+    },
+    "requestsSheet": {
+      "acceptSuccess": "Zaakceptowano prośbę.",
+      "error": "Wystąpił błąd przy zmianie statusu."
+    },
+    "groupDetails": {
+      "copySuccess": "Skopiowano link do grupy",
+      "joinSuccess": "Dołączyłeś do grupy!",
+      "joinError": "Błąd podczas dołączania",
+      "requestSuccess": "Wysłano prośbę o dołączenie!",
+      "requestError": "Błąd podczas wysyłania prośby",
+      "leaveSuccess": "Opuszczono grupę.",
+      "leaveError": "Błąd podczas opuszczania grupy."
+    }
   },
   "groupsView": {
     "title": "Grupy",
@@ -120,14 +150,12 @@
       "requiresApprovalLabel": "Wymaga akceptacji członków",
       "requiresApprovalDesc": "Jeśli włączone, nowi członkowie będą musieli zostać zaakceptowani przez admina.",
       "cancel": "Anuluj",
-      "submit": "Utwórz grupę",
-      "error": "Wystąpił błąd podczas tworzenia grupy."
+      "submit": "Utwórz grupę"
     }
   },
   "groupDetails": {
     "loading": "Ładowanie...",
     "notFound": "Nie znaleziono grupy.",
-    "copySuccess": "Skopiowano link do grupy",
     "backToList": "Wróć do listy grup",
     "membersCount": "{{count}} członków",
     "private": "Prywatna",
@@ -137,16 +165,10 @@
     "membersTitle": "Członkowie",
     "loadingMembers": "Ładowanie członków...",
     "accessDenied": "Odmowa dostępu. Nie jesteś członkiem tej grupy prywatnej.",
-    "joinSuccess": "Dołączyłeś do grupy!",
-    "joinError": "Błąd podczas dołączania",
-    "requestSuccess": "Wysłano prośbę o dołączenie!",
-    "requestError": "Błąd podczas wysyłania prośby",
     "requestPending": "Oczekuje na akceptację",
     "requestToJoin": "Wyślij prośbę",
     "joinGroup": "Dołącz do grupy",
     "leaveGroup": "Opuść grupę",
-    "leaveSuccess": "Opuszczono grupę.",
-    "leaveError": "Błąd podczas opuszczania grupy.",
     "leaveConfirmTitle": "Opuścić grupę?",
     "leaveConfirmDesc": "Czy na pewno chcesz opuścić tę grupę? Stracisz dostęp do wszystkich materiałów.",
     "cancelBtn": "Anuluj",
@@ -160,9 +182,7 @@
     "empty": "Brak oczekujących próśb.",
     "accept": "Akceptuj",
     "reject": "Odrzuć",
-    "acceptSuccess": "Zaakceptowano prośbę.",
-    "rejectSuccess": "Odrzucono prośbę.",
-    "error": "Wystąpił błąd przy zmianie statusu."
+    "rejectSuccess": "Odrzucono prośbę."
   },
   "hybridSearchbar": {
     "placeholder": "Znajdź grupę lub szukaj publicznych...",
@@ -175,11 +195,7 @@
     "accept": "Akceptuj",
     "reject": "Odrzuć",
     "invitedBy": "Zaprosił(a):",
-    "empty": "Brak zaproszeń",
-    "acceptSuccess": "Dołączono do grupy",
-    "acceptError": "Błąd podczas akceptacji zaproszenia.",
-    "rejectSuccess": "Odrzucono zaproszenie",
-    "rejectError": "Błąd podczas odrzucania zaproszenia."
+    "empty": "Brak zaproszeń"
   },
   "inviteToGroup": {
     "title": "Zaproś użytkowników",
@@ -188,8 +204,6 @@
     "inviteBtn": "Zaproś",
     "invitedBtn": "Zaproszono",
     "alreadyMember": "Już w grupie",
-    "inviteSuccess": "Wysłano zaproszenie",
-    "inviteError": "Błąd podczas wysyłania zaproszenia.",
     "loading": "Ładowanie...",
     "sending": "Wysyłanie...",
     "emptyTitle": "Nikogo nie znaleziono",

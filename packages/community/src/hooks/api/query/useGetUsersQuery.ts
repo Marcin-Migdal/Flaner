@@ -1,11 +1,15 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getUsers } from '../../../api/users';
 import { type UserType } from "@flaner/shared/types";
+import { reactQueryMeta } from "@flaner/shared/constants";
+
 
 const getUsersQueryKeys = (uids: string[]) => ["users", uids];
 
 export const useGetUsersQuery = (uids: string[]) => {
+
   return useQuery<UserType[], Error>({
+      meta: reactQueryMeta.fetch,
     queryKey: getUsersQueryKeys(uids),
     queryFn: async () => {
       if (!uids || uids.length === 0) return [];

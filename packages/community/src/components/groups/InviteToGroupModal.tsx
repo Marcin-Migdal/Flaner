@@ -51,9 +51,9 @@ export function InviteToGroupModal({
         userId: targetUserId,
         invitedByUserId: user.uid,
       });
-      toast.success(t("inviteToGroup.inviteSuccess"));
+      
     } catch {
-      toast.error(t("inviteToGroup.inviteError"));
+      
     } finally {
       setInvitingId(null);
     }

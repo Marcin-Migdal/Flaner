@@ -1,6 +1,8 @@
 import { useAuth } from "@flaner/shared/context";
+import { toast } from "@flaner/shared/utils";
 import { Button, FormTextField, GoogleIcon } from "@flaner/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { FirebaseError } from "firebase/app";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -8,7 +10,6 @@ import { getLoginSchema, getSignUpSchema, type LoginFormData, type SignUpFormDat
 
 export function AuthView() {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
   const { signInWithGoogleUser, signInWithEmailUser, signUpWithEmailUser } = useAuth();
   const { t } = useTranslation("auth");
 
@@ -30,37 +31,66 @@ export function AuthView() {
   });
 
   const onLogin = async (data: LoginFormData) => {
-    setAuthError(null);
     try {
       await signInWithEmailUser(data.email, data.password);
     } catch (err) {
       console.error(err);
-      setAuthError(t("errors.loginFailed"));
+
+      if (!(err instanceof FirebaseError)) {
+        toast.failure(t("errors.loginFailed"));
+        return;
+      }
+
+      if (
+        err.code === "auth/invalid-credential" ||
+        err.code === "auth/user-not-found" ||
+        err.code === "auth/wrong-password"
+      ) {
+        loginForm.setError("email", { type: "manual", message: t("errors.invalidCredentials") });
+        loginForm.setError("password", { type: "manual", message: t("errors.invalidCredentials") });
+      } else if (err.code === "auth/too-many-requests") {
+        loginForm.setError("email", { type: "manual", message: t("errors.tooManyRequests") });
+      } else {
+        toast.failure(t("errors.loginFailed"));
+      }
     }
   };
 
   const onSignUp = async (data: SignUpFormData) => {
-    setAuthError(null);
     try {
       await signUpWithEmailUser(data.email, data.password, data.username, "pl");
     } catch (err) {
       console.error(err);
-      setAuthError(t("errors.registrationFailed"));
+
+      if (!(err instanceof FirebaseError)) {
+        toast.failure(t("errors.registrationFailed"));
+        return;
+      }
+
+      if (err.code === "app/username-already-in-use") {
+        signUpForm.setError("username", { type: "manual", message: t("errors.usernameInUse") });
+      } else if (err.code === "auth/email-already-in-use") {
+        signUpForm.setError("email", { type: "manual", message: t("errors.emailInUse") });
+      } else if (err.code === "auth/weak-password") {
+        signUpForm.setError("password", { type: "manual", message: t("errors.weakPassword") });
+      } else if (err.code === "auth/invalid-email") {
+        signUpForm.setError("email", { type: "manual", message: t("errors.invalidEmail") });
+      } else {
+        toast.failure(t("errors.registrationFailed"));
+      }
     }
   };
 
   const onGoogleSignIn = async () => {
-    setAuthError(null);
     try {
       await signInWithGoogleUser("pl");
     } catch (err) {
       console.error(err);
-      setAuthError(t("errors.googleFailed"));
+      toast.failure(t("errors.googleFailed"));
     }
   };
 
   const toggleMode = () => {
-    setAuthError(null);
     setIsSignUp(!isSignUp);
     loginForm.reset();
     signUpForm.reset();
@@ -74,13 +104,6 @@ export function AuthView() {
           <h1 className="text-3xl font-black tracking-wider text-brand mb-1">FLANER</h1>
           <p className="text-muted-foreground text-sm">{isSignUp ? t("signUpSubtitle") : t("signInSubtitle")}</p>
         </div>
-
-        {/* Error Alert */}
-        {authError && (
-          <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-xs text-center font-medium">
-            {authError}
-          </div>
-        )}
 
         {/* Google OAuth Button */}
         <Button

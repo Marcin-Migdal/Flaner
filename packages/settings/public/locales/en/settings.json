@@ -25,12 +25,16 @@
     "saving": "Saving..."
   },
   "notifications": {
-    "success": "Settings updated successfully!",
-    "error": "Failed to update settings.",
     "avatarError": "Failed to upload profile picture."
   },
   "validation": {
     "usernameRequired": "Username is required",
     "usernameMin": "Username must be at least 3 characters"
+  },
+  "toasts": {
+    "notifications": {
+      "success": "Settings updated successfully!",
+      "error": "Failed to update settings."
+    }
   }
 }
