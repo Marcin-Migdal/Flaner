@@ -3,6 +3,8 @@ import { useAuth } from "@flaner/shared/context";
 import { requestJoinGroup } from '../../../api/groups';
 import { useInvalidateGroupRequestsQuery } from "../query/useGetGroupRequestsQuery";
 import { useInvalidateUserGroupRequestQuery } from "../query/useGetUserGroupRequestQuery";
+import { reactQueryMeta } from "@flaner/shared/constants";
+
 
 export const useRequestJoinGroupMutation = (
   options?: UseMutationOptions<void, Error, string>
@@ -11,9 +13,12 @@ export const useRequestJoinGroupMutation = (
   const invalidateRequests = useInvalidateGroupRequestsQuery();
   const invalidateUserGroupRequest = useInvalidateUserGroupRequestQuery();
 
+
+
   return useMutation<void, Error, string>({
+    meta: reactQueryMeta.mutate,
     mutationFn: async (groupId) => {
-      if (!user) throw new Error("Unauthenticated");
+      if (!user) throw new Error("errors.userNotAuthenticated");
       await requestJoinGroup(groupId, user.uid);
     },
     ...options,

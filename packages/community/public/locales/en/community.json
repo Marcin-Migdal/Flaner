@@ -30,23 +30,14 @@
     "transferConfirmTitle": "Transfer Ownership",
     "transferConfirmDesc": "Are you sure you want to transfer ownership of this group? You will become an admin and lose full management rights.",
     "transferConfirmBtn": "Yes, transfer",
-    "transferSuccess": "Ownership transferred successfully.",
-    "transferError": "Failed to transfer ownership.",
-    "roleUpdateSuccess": "Role updated successfully.",
-    "roleUpdateError": "Failed to update role.",
     "removeConfirmTitle": "Remove Member",
     "removeConfirmDesc": "Are you sure you want to remove this user from the group?",
     "removeConfirmBtn": "Yes, remove",
-    "removeSuccess": "User removed from group.",
-    "removeError": "Failed to remove user.",
-    "permissionDenied": "Permission denied. Your role might have changed.",
     "dangerZoneTitle": "Danger Zone",
     "deleteGroupBtn": "Delete group",
     "deleteConfirmTitle": "Delete Group",
     "deleteConfirmDesc": "Are you sure you want to permanently delete this group? All members will lose access and group data will be erased.",
-    "deleteConfirmBtn": "Yes, delete group",
-    "deleteSuccess": "Group deleted successfully.",
-    "deleteError": "Failed to delete group."
+    "deleteConfirmBtn": "Yes, delete group"
   },
   "invitations": {
     "button": "Invitations",
@@ -90,7 +81,46 @@
     "rejectError": "Failed to decline friend request.",
     "removeSuccess": "Friend removed.",
     "removeError": "Failed to remove friend.",
-    "notAuthenticated": "You must be logged in."
+    "notAuthenticated": "You must be logged in.",
+    "manageGroupSheet": {
+      "transferSuccess": "Ownership transferred successfully.",
+      "transferError": "Failed to transfer ownership.",
+      "roleUpdateSuccess": "Role updated successfully.",
+      "roleUpdateError": "Failed to update role.",
+      "removeSuccess": "User removed from group.",
+      "removeError": "Failed to remove user.",
+      "permissionDenied": "Permission denied. Your role might have changed.",
+      "deleteSuccess": "Group deleted successfully.",
+      "deleteError": "Failed to delete group."
+    },
+    "groupsView": {
+      "createModal": {
+        "error": "An error occurred while creating the group."
+      }
+    },
+    "groupDetails": {
+      "copySuccess": "Group link copied",
+      "joinSuccess": "Successfully joined the group!",
+      "joinError": "Failed to join group",
+      "requestSuccess": "Join request sent!",
+      "requestError": "Failed to send request",
+      "leaveSuccess": "You have left the group.",
+      "leaveError": "Failed to leave the group."
+    },
+    "requestsSheet": {
+      "acceptSuccess": "Request accepted.",
+      "error": "Error updating status."
+    },
+    "groupInvitations": {
+      "acceptSuccess": "Joined the group",
+      "acceptError": "Failed to accept invitation.",
+      "rejectSuccess": "Invitation rejected",
+      "rejectError": "Failed to reject invitation."
+    },
+    "inviteToGroup": {
+      "inviteSuccess": "Invitation sent",
+      "inviteError": "Failed to send invitation."
+    }
   },
   "groupsView": {
     "title": "Groups",
@@ -120,14 +150,12 @@
       "requiresApprovalLabel": "Requires member approval",
       "requiresApprovalDesc": "If enabled, new members will need to be approved by an admin.",
       "cancel": "Cancel",
-      "submit": "Create group",
-      "error": "An error occurred while creating the group."
+      "submit": "Create group"
     }
   },
   "groupDetails": {
     "loading": "Loading...",
     "notFound": "Group not found.",
-    "copySuccess": "Group link copied",
     "backToList": "Back to groups list",
     "membersCount": "{{count}} members",
     "private": "Private",
@@ -137,16 +165,10 @@
     "membersTitle": "Members",
     "loadingMembers": "Loading members...",
     "accessDenied": "Access Denied. You are not a member of this private group.",
-    "joinSuccess": "Successfully joined the group!",
-    "joinError": "Failed to join group",
-    "requestSuccess": "Join request sent!",
-    "requestError": "Failed to send request",
     "requestPending": "Pending approval",
     "requestToJoin": "Request to join",
     "joinGroup": "Join Group",
     "leaveGroup": "Leave Group",
-    "leaveSuccess": "You have left the group.",
-    "leaveError": "Failed to leave the group.",
     "leaveConfirmTitle": "Leave group?",
     "leaveConfirmDesc": "Are you sure you want to leave this group? You will lose access to all its content.",
     "cancelBtn": "Cancel",
@@ -160,9 +182,7 @@
     "empty": "No pending requests.",
     "accept": "Accept",
     "reject": "Decline",
-    "acceptSuccess": "Request accepted.",
-    "rejectSuccess": "Request declined.",
-    "error": "Error updating status."
+    "rejectSuccess": "Request declined."
   },
   "hybridSearchbar": {
     "placeholder": "Find your group or search public ones...",
@@ -175,11 +195,7 @@
     "accept": "Accept",
     "reject": "Reject",
     "invitedBy": "Invited by:",
-    "empty": "No invitations",
-    "acceptSuccess": "Joined the group",
-    "acceptError": "Failed to accept invitation.",
-    "rejectSuccess": "Invitation rejected",
-    "rejectError": "Failed to reject invitation."
+    "empty": "No invitations"
   },
   "inviteToGroup": {
     "title": "Invite Users",
@@ -188,8 +204,6 @@
     "inviteBtn": "Invite",
     "invitedBtn": "Invited",
     "alreadyMember": "Already a member",
-    "inviteSuccess": "Invitation sent",
-    "inviteError": "Failed to send invitation.",
     "loading": "Loading...",
     "sending": "Sending...",
     "emptyTitle": "No users found",

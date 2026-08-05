@@ -1,10 +1,9 @@
 import { useDebounce } from "@flaner/shared/hooks";
 import { Button, GroupSearchResultItem, IconTextField, SearchBar } from "@flaner/ui-components";
 import { Filter, Plus, Search, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
-import type { Group } from '../../api/groups';
+import type { Group } from "../../api/groups";
 import { CreateGroupModal } from "../../components/CreateGroupModal";
 import { GroupCard } from "../../components/groups/GroupCard";
 import { GroupInvitationsSheet } from "../../components/groups/GroupInvitationsSheet";
@@ -31,15 +30,7 @@ export function GroupsListView() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    error: searchError,
   } = useSearchGlobalGroupsQuery(debouncedSearch);
-
-  useEffect(() => {
-    if (searchError) {
-      console.error("Search error:", searchError);
-      toast.error(`Błąd wyszukiwania: ${searchError.message}`);
-    }
-  }, [searchError]);
 
   const globalGroups = searchData?.pages.flatMap((page) => page.groups) ?? [];
 

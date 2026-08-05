@@ -1,5 +1,6 @@
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 import { acceptGroupInvitation } from '../../../api/groups';
+
 import { useInvalidateUserGroupInvitationsQuery } from "../query/useGetUserGroupInvitationsQuery";
 import { useInvalidateGroupPendingInvitationsQuery } from "../query/useGetGroupPendingInvitationsQuery";
 import { useInvalidateGroupMembersQuery } from "../query/useGetGroupMembersQuery";
@@ -13,8 +14,14 @@ export const useAcceptGroupInvitationMutation = (
   const invalidateGroupMembers = useInvalidateGroupMembersQuery();
   const invalidateUserGroups = useInvalidateUserGroupsQuery();
 
+
+
   return useMutation<void, Error, { groupId: string; userId: string }>({
     mutationFn: ({ groupId, userId }) => acceptGroupInvitation(groupId, userId),
+    meta: {
+      successMessageKey: "community:toasts.groupInvitations.acceptSuccess",
+      errorMessageKey: "community:toasts.groupInvitations.acceptError"
+    },
     ...options,
     onSuccess: async (...args) => {
       const [, variables] = args;

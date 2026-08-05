@@ -77,7 +77,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to create group", error);
-      toast.failure(t("groupsView.createModal.error"));
+      
     } finally {
       setIsUploading(false);
     }

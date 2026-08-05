@@ -2,6 +2,8 @@ import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 import { addGroupMember } from '../../../api/groups';
 import { useInvalidateGroupMembersQuery } from "../query/useGetGroupMembersQuery";
 import { useInvalidateUserGroupsQuery } from "../query/useGetUserGroupsQuery";
+import { reactQueryMeta } from "@flaner/shared/constants";
+
 
 export const useAddGroupMemberMutation = (
   options?: UseMutationOptions<void, Error, { groupId: string; userId: string }>,
@@ -10,7 +12,10 @@ export const useAddGroupMemberMutation = (
   const invalidateMembers = useInvalidateGroupMembersQuery();
   const invalidateGroups = useInvalidateUserGroupsQuery();
 
+
+
   return useMutation<void, Error, { groupId: string; userId: string }>({
+    meta: reactQueryMeta.mutate,
     mutationFn: async ({ groupId, userId }) => {
       await addGroupMember(groupId, userId, "member");
     },

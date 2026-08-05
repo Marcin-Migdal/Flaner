@@ -73,5 +73,14 @@
     "friendRejected": "Odrzucił(a) Twoje zaproszenie.",
     "groupInvitation": "Zaprosił(a) Cię do grupy.",
     "system": "Masz nowe powiadomienie."
+  },
+  "errors": {
+    "fetchError": "Wystąpił błąd podczas pobierania danych.",
+    "mutationError": "Wystąpił błąd podczas wykonywania operacji.",
+    "permissionDenied": "Odmowa dostępu. Twoje uprawnienia mogły ulec zmianie.",
+    "userNotAuthenticated": "Użytkownik nie jest uwierzytelniony."
+  },
+  "success": {
+    "mutationSuccess": "Operacja zakończona sukcesem."
   }
 }

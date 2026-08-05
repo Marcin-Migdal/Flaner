@@ -3,14 +3,21 @@ import { deleteGroup } from '../../../api/groups';
 import { useInvalidateUserGroupsQuery } from "../query/useGetUserGroupsQuery";
 import { useInvalidateSearchGlobalGroupsQuery } from "../query/useSearchGlobalGroupsQuery";
 
+
+
 export const useDeleteGroupMutation = (
   options?: UseMutationOptions<void, Error, string>
 ) => {
   const invalidateUserGroups = useInvalidateUserGroupsQuery();
   const invalidateSearchGlobalGroups = useInvalidateSearchGlobalGroupsQuery();
 
+
   return useMutation<void, Error, string>({
     mutationFn: (groupId: string) => deleteGroup(groupId),
+    meta: {
+      successMessageKey: "community:toasts.manageGroupSheet.deleteSuccess",
+      errorMessageKey: "community:toasts.manageGroupSheet.deleteError",
+    },
     ...options,
     onSuccess: async (...args) => {
       invalidateUserGroups();

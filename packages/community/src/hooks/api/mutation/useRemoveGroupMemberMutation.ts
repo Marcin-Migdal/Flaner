@@ -9,7 +9,13 @@ export const useRemoveGroupMemberMutation = (
   const invalidateGroupMembers = useInvalidateGroupMembersQuery();
   const invalidateUserGroups = useInvalidateUserGroupsQuery();
 
+
+
   return useMutation<void, Error, { groupId: string; userId: string }>({
+    meta: {
+      successMessageKey: "community:toasts.manageGroupSheet.removeSuccess",
+      errorMessageKey: "errors.mutationError",
+    },
     mutationFn: ({ groupId, userId }) => removeGroupMember(groupId, userId),
     ...options,
     onSuccess: async (...args) => {

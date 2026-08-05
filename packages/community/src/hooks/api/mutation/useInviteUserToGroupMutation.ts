@@ -2,6 +2,8 @@ import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 import { inviteUserToGroup } from '../../../api/groups';
 import { useInvalidateUserGroupInvitationsQuery } from "../query/useGetUserGroupInvitationsQuery";
 import { useInvalidateGroupPendingInvitationsQuery } from "../query/useGetGroupPendingInvitationsQuery";
+import { reactQueryMeta } from "@flaner/shared/constants";
+
 
 export const useInviteUserToGroupMutation = (
   options?: UseMutationOptions<void, Error, { groupId: string; groupName: string; userId: string; invitedByUserId: string; groupAvatarUrl?: string | null }>
@@ -9,11 +11,14 @@ export const useInviteUserToGroupMutation = (
   const invalidateUserGroupInvitations = useInvalidateUserGroupInvitationsQuery();
   const invalidateGroupPendingInvitations = useInvalidateGroupPendingInvitationsQuery();
 
+
+
   return useMutation<
     void,
     Error,
     { groupId: string; groupName: string; userId: string; invitedByUserId: string; groupAvatarUrl?: string | null }
   >({
+    meta: reactQueryMeta.mutate,
     mutationFn: ({ groupId, groupName, userId, invitedByUserId, groupAvatarUrl }) =>
       inviteUserToGroup(groupId, groupName, userId, invitedByUserId, groupAvatarUrl),
     ...options,

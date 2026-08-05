@@ -25,12 +25,16 @@
     "saving": "Zapisywanie..."
   },
   "notifications": {
-    "success": "Ustawienia zostały pomyślnie zaktualizowane!",
-    "error": "Nie udało się zaktualizować ustawień.",
     "avatarError": "Nie udało się przesłać zdjęcia profilowego."
   },
   "validation": {
     "usernameRequired": "Nazwa użytkownika jest wymagana",
     "usernameMin": "Nazwa użytkownika musi mieć co najmniej 3 znaki"
+  },
+  "toasts": {
+    "notifications": {
+      "success": "Ustawienia zostały pomyślnie zaktualizowane!",
+      "error": "Nie udało się zaktualizować ustawień."
+    }
   }
 }

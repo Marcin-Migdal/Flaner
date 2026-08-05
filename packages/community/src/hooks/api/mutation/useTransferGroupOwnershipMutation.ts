@@ -3,7 +3,6 @@ import { transferGroupOwnership } from '../../../api/groups';
 import { useInvalidateGroupQuery } from "../query/useGetGroupQuery";
 import { useInvalidateGroupMembersQuery } from "../query/useGetGroupMembersQuery";
 import { useInvalidateUserGroupsQuery } from "../query/useGetUserGroupsQuery";
-
 export const useTransferGroupOwnershipMutation = (
   options?: UseMutationOptions<void, Error, { groupId: string; currentOwnerId: string; newOwnerId: string }>
 ) => {
@@ -11,7 +10,13 @@ export const useTransferGroupOwnershipMutation = (
   const invalidateGroupMembers = useInvalidateGroupMembersQuery();
   const invalidateUserGroups = useInvalidateUserGroupsQuery();
 
+
+
   return useMutation<void, Error, { groupId: string; currentOwnerId: string; newOwnerId: string }>({
+    meta: {
+      successMessageKey: "community:toasts.manageGroupSheet.transferSuccess",
+      errorMessageKey: "errors.mutationError",
+    },
     mutationFn: ({ groupId, currentOwnerId, newOwnerId }) => transferGroupOwnership(groupId, currentOwnerId, newOwnerId),
     ...options,
     onSuccess: async (...args) => {

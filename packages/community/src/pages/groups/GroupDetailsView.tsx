@@ -8,7 +8,15 @@ import { toast } from "sonner";
 import { InviteToGroupModal } from "../../components/groups/InviteToGroupModal";
 import { ManageGroupSheet } from "../../components/groups/ManageGroupSheet";
 import { RequestsSheet } from "../../components/groups/RequestsSheet";
-import { useAddGroupMemberMutation, useGetGroupMembersQuery, useGetGroupQuery, useGetUserGroupRequestQuery, useGetUsersQuery, useRemoveGroupMemberMutation, useRequestJoinGroupMutation } from "../../hooks";
+import {
+  useAddGroupMemberMutation,
+  useGetGroupMembersQuery,
+  useGetGroupQuery,
+  useGetUserGroupRequestQuery,
+  useGetUsersQuery,
+  useRemoveGroupMemberMutation,
+  useRequestJoinGroupMutation,
+} from "../../hooks";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
 
 export function GroupDetailsView() {
@@ -31,7 +39,12 @@ export function GroupDetailsView() {
 
   const { mutateAsync: joinGroup, isPending: isJoining } = useAddGroupMemberMutation();
   const { mutateAsync: requestJoin, isPending: isRequesting } = useRequestJoinGroupMutation();
-  const { mutateAsync: leaveGroup, isPending: isLeaving } = useRemoveGroupMemberMutation();
+  const { mutateAsync: leaveGroup, isPending: isLeaving } = useRemoveGroupMemberMutation({
+    meta: {
+      successMessageKey: "community:toasts.groupDetails.leaveSuccess",
+      errorMessageKey: "community:toasts.groupDetails.leaveError",
+    },
+  });
 
   if (groupLoading || membersLoading) return <div className="p-8 text-center">{t("groupDetails.loading")}</div>;
   if (!group) return <div className="p-8 text-center text-destructive">{t("groupDetails.notFound")}</div>;
@@ -60,30 +73,26 @@ export function GroupDetailsView() {
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
-    toast.success(t("groupDetails.copySuccess"));
+    toast.success(t("toasts.groupDetails.copySuccess"));
   };
 
   const handleJoin = async () => {
     if (!user) return;
     try {
       await joinGroup({ groupId: group.id, userId: user.uid });
-      toast.success(t("groupDetails.joinSuccess"));
+
       queryClient.invalidateQueries({ queryKey: ["groupMembers", group.id] });
       queryClient.invalidateQueries({ queryKey: ["userGroups", user.uid] });
-    } catch {
-      toast.error(t("groupDetails.joinError"));
-    }
+    } catch {}
   };
 
   const handleRequestJoin = async () => {
     if (!user) return;
     try {
       await requestJoin(group.id);
-      toast.success(t("groupDetails.requestSuccess"));
+
       queryClient.invalidateQueries({ queryKey: ["groupRequests", group.id] });
-    } catch {
-      toast.error(t("groupDetails.requestError"));
-    }
+    } catch {}
   };
 
   const handleLeaveGroup = async () => {
@@ -91,11 +100,9 @@ export function GroupDetailsView() {
     try {
       await leaveGroup({ groupId: group.id, userId: user.uid });
       setIsLeaveConfirmOpen(false);
-      toast.success(t("groupDetails.leaveSuccess"));
+
       navigate("/community/groups");
-    } catch {
-      toast.error(t("groupDetails.leaveError"));
-    }
+    } catch {}
   };
 
   const renderRestrictedActions = () => {
@@ -194,11 +201,7 @@ export function GroupDetailsView() {
                       onClick={() => setIsLeaveConfirmOpen(true)}
                       disabled={isLeaving}
                     >
-                      {isLeaving ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <LogOut className="size-4" />
-                      )}
+                      {isLeaving ? <Loader2 className="size-4 animate-spin" /> : <LogOut className="size-4" />}
                       {t("groupDetails.leaveGroup")}
                     </Button>
 

@@ -70,11 +70,11 @@ export function SettingsView() {
       onSuccess: () => {
         // Sync global app translation language immediately
         i18n.changeLanguage(data.language as string);
-        toast.success(t("notifications.success"));
+        
       },
       onError: (err) => {
         console.error(err);
-        toast.failure(t("notifications.error"));
+        
       },
     });
   };

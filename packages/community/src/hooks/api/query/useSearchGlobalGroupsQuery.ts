@@ -2,6 +2,8 @@ import { type AppInfiniteQueryOptions, type FirestorePageParam } from "@flaner/s
 import { keepPreviousData, useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { searchGlobalGroups } from '../../../api/groups';
 import type { Group } from '../../../api/groups';
+import { reactQueryMeta } from "@flaner/shared/constants";
+
 
 type SearchGroupsResponse = {
   groups: Group[];
@@ -15,6 +17,7 @@ export const useSearchGlobalGroupsQuery = (
   pageSize: number = 10,
   options?: AppInfiniteQueryOptions<SearchGroupsResponse, string[], "placeholderData", FirestorePageParam<Group>>,
 ) => {
+
   return useInfiniteQuery<
     SearchGroupsResponse,
     Error,
@@ -22,6 +25,7 @@ export const useSearchGlobalGroupsQuery = (
     string[],
     FirestorePageParam<Group>
   >({
+      meta: reactQueryMeta.fetch,
     queryKey: getSearchGlobalGroupsQueryKeys(searchQuery),
     queryFn: ({ pageParam }) => {
       if (!searchQuery.trim()) return { groups: [], nextCursor: undefined };

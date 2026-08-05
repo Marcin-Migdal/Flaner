@@ -6,14 +6,20 @@ import { useInvalidateUserGroupsQuery } from "../query/useGetUserGroupsQuery";
 
 type CreateGroupInput = Omit<Group, "id" | "createdAt" | "updatedAt" | "nameLower" | "ownerId">;
 
+
+
 export const useCreateGroupMutation = (options?: UseMutationOptions<string, Error, CreateGroupInput>) => {
   const { user } = useAuth();
   const invalidateUserGroups = useInvalidateUserGroupsQuery();
 
+
   return useMutation<string, Error, CreateGroupInput>({
     mutationFn: async (data) => {
-      if (!user) throw new Error("Unauthenticated");
+      if (!user) throw new Error("errors.userNotAuthenticated");
       return await createGroup(data, user.uid);
+    },
+    meta: {
+      errorMessageKey: "community:toasts.groupsView.createModal.error",
     },
     ...options,
     onSuccess: async (...args) => {

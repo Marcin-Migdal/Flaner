@@ -23,13 +23,7 @@
     "profile": "Profile",
     "notifications": "Notifications"
   },
-  "groupsView": {
-    "title": "Groups",
-    "searchPlaceholder": "Search public groups...",
-    "createBtn": "Create",
-    "requiresApprovalToast": "You must join this group to view its content.",
-    "alreadyRequestedToast": "You have already sent a request to join. Please wait for approval."
-  },
+
   "community": {
     "friends": "Friends",
     "groups": {
@@ -80,5 +74,14 @@
     "friendRejected": "Declined your friend request.",
     "groupInvitation": "Invited you to a group.",
     "system": "You have a new notification."
+  },
+  "errors": {
+    "fetchError": "An error occurred while fetching data.",
+    "mutationError": "An error occurred while performing the operation.",
+    "permissionDenied": "Permission denied. Your role might have changed.",
+    "userNotAuthenticated": "User is not authenticated."
+  },
+  "success": {
+    "mutationSuccess": "Operation completed successfully."
   }
 }
