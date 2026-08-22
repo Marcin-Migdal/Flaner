@@ -8,7 +8,8 @@
     "home": "Home",
     "community": "Community",
     "shopping": "Shopping",
-    "scheduling": "Scheduling",
+    "planning": "Planning",
+    "scheduling": "Scheduler",
     "settings": "Settings",
     "signOut": "Sign Out",
     "theme": "Theme",
@@ -41,7 +42,7 @@
     "subtitle": "Your personal planning and organization assistant.",
     "cards": {
       "shopping": "Manage your shopping lists and product categories without delays.",
-      "scheduling": "Plan events with friends in an interactive calendar.",
+      "planning": "Plan trips and coordinate events with your friends.",
       "community": "Connect, search for friends, and create groups.",
       "settings": "Customize dark theme, change display name and avatar."
     }
@@ -61,18 +62,22 @@
       "read": "Read"
     },
     "markAllRead": "Mark all as read",
+    "loadMore": "Load more",
     "empty": {
       "title": "You're all caught up!",
       "subtitle": "You don't have any new notifications."
     },
     "readPlaceholder": {
-      "title": "History under construction",
-      "subtitle": "Browsing read notifications will be available soon."
+      "title": "No read notifications",
+      "subtitle": "Here you will find your read notifications."
     },
     "friendRequest": "Sent you a friend request.",
     "friendAccepted": "Accepted your friend request.",
     "friendRejected": "Declined your friend request.",
     "groupInvitation": "Invited you to a group.",
+    "eventInvitation": "Invited you to an event.",
+    "eventReopened": "Reopened voting in an event.",
+    "systemAlert": "Important system alert.",
     "system": "You have a new notification."
   },
   "errors": {

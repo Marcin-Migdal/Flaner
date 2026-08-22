@@ -9,3 +9,6 @@ export const createGroupSchema = z.object({
 });
 
 export type CreateGroupSchema = z.infer<typeof createGroupSchema>;
+
+export const updateGroupSchema = createGroupSchema;
+export type UpdateGroupSchema = z.infer<typeof updateGroupSchema>;

@@ -2,7 +2,7 @@
 @source "../../ui-components/src";
 @source "../../settings/src";
 @source "../../community/src";
-@source "../../scheduling/src";
+@source "../../planning/src";
 @source "../../shopping/src";
 @source "../../shared/src";
 @import "tw-animate-css";

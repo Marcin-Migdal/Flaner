@@ -21,6 +21,13 @@
         "command": "vite build",
         "cwd": "packages/settings"
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p tsconfig.json --noEmit",
+        "cwd": "packages/settings"
+      }
     }
   }
 }

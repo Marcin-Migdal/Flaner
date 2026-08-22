@@ -9,6 +9,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  useSidebar,
 } from "@flaner/ui-components";
 import { Bell, Check, Inbox, Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -18,6 +19,7 @@ import { useReadNotifications } from "../../hooks";
 import { NotificationCard } from "./NotificationCard";
 
 export function NotificationsPopover() {
+  const { isMobile } = useSidebar();
   const { t } = useTranslation("common");
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const {
@@ -50,16 +52,16 @@ export function NotificationsPopover() {
           </SidebarMenuButton>
         </PopoverTrigger>
         <PopoverContent
-          className="w-80 p-0 sm:w-96 rounded-xl border-border/50 shadow-lg overflow-hidden flex flex-col"
-          side="right"
-          align="end"
-          sideOffset={8}
+          className="w-[calc(100vw-2.5rem)] max-w-[340px] sm:w-96 p-0 rounded-xl border-border/50 shadow-lg overflow-hidden flex flex-col"
+          side={isMobile ? "top" : "right"}
+          align={isMobile ? "center" : "end"}
+          sideOffset={isMobile ? 10 : 8}
         >
           <Tabs defaultValue="new" className="w-full flex flex-col h-[430px]">
-            <div className="flex items-center justify-between p-3 border-b border-border/50 bg-muted/20 shrink-0">
-              <TabsList className="h-8 bg-muted/40">
+            <div className="flex items-center justify-between p-3 border-b border-border/50 bg-muted/20 shrink-0 gap-2">
+              <TabsList className="h-8 bg-muted/40 shrink-0">
                 <TabsTrigger value="new" className="text-xs">
-                  {t("notifications.tabs.new", { defaultValue: "Nowe" })}
+                  {t("notifications.tabs.new")}
                   {unreadCount > 0 && (
                     <span className="ml-1.5 bg-brand/20 text-brand px-1.5 py-0.5 rounded-full text-[10px] font-bold">
                       {unreadCount}
@@ -67,7 +69,7 @@ export function NotificationsPopover() {
                   )}
                 </TabsTrigger>
                 <TabsTrigger value="read" className="text-xs">
-                  {t("notifications.tabs.read", { defaultValue: "Przeczytane" })}
+                  {t("notifications.tabs.read")}
                 </TabsTrigger>
               </TabsList>
 
@@ -75,11 +77,13 @@ export function NotificationsPopover() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                  className="h-8 text-xs text-brand bg-brand/10 hover:bg-brand/20 border border-brand/20 rounded-lg shrink-0 px-2.5 flex items-center gap-1.5 font-semibold transition-all shadow-sm"
                   onClick={() => markAllAsRead()}
+                  title={t("notifications.markAllRead")}
+                  aria-label={t("notifications.markAllRead")}
                 >
-                  <Check className="size-3" />
-                  {t("notifications.markAllRead", { defaultValue: "Oznacz jako przeczytane" })}
+                  <Check className="size-3.5 stroke-[2.5]" />
+                  <span className="hidden sm:inline">{t("notifications.markAllRead")}</span>
                 </Button>
               )}
             </div>
@@ -153,7 +157,7 @@ export function NotificationsPopover() {
                       {isFetchingNextPage ? (
                         <Loader2 className="size-4 animate-spin" />
                       ) : (
-                        t("notifications.loadMore", { defaultValue: "Załaduj starsze" })
+                        t("notifications.loadMore")
                       )}
                     </Button>
                   )}

@@ -1,0 +1,116 @@
+{
+  "hub": {
+    "event": "Wydarzenie",
+    "selectEvent": "Wybierz wydarzenie",
+    "noEvents": "Brak wydarzeń",
+    "participants": "Uczestnicy",
+    "status": {
+      "creator": "Twórca",
+      "going": "Bierze udział",
+      "invited": "Zaproszony",
+      "unvoted": "Brak głosu"
+    },
+    "noParticipants": "Brak uczestników do wyświetlenia.",
+    "emptyStateTitle": "Wybierz wydarzenie, aby zobaczyć kalendarz",
+    "emptyStateDesc": "Nie bierzesz jeszcze udziału w żadnym wydarzeniu. Kliknij przycisk +, aby je utworzyć."
+  },
+  "views": {
+    "month": "Kalendarz",
+    "grid": "Dostępność"
+  },
+  "calendar": {
+    "more": "więcej"
+  },
+  "create": {
+    "title": "Utwórz nowe wydarzenie",
+    "participants": "Zaproś uczestników",
+    "searchFriends": "Szukaj znajomych i grup...",
+    "proposeDates": "Zaproponuj daty",
+    "resultGroup": "Grupa",
+    "resultUser": "Znajomy"
+  },
+  "edit": {
+    "title": "Edytuj wydarzenie"
+  },
+  "deleteModal": {
+    "title": "Usuń wydarzenie",
+    "description": "Czy na pewno chcesz usunąć wydarzenie \"{{name}}\"? Ta akcja jest nieodwracalna."
+  },
+  "fields": {
+    "name": "Nazwa wydarzenia",
+    "description": "Opis (opcjonalnie)",
+    "endDate": "Czas na wybór dat"
+  },
+  "validation": {
+    "nameRequired": "Nazwa wydarzenia jest wymagana",
+    "datesRequired": "Wybierz przynajmniej jedną datę",
+    "endDateRequired": "Czas na wybór dat jest wymagany",
+    "endDatePast": "Data nie może być z przeszłości",
+    "endDateAfterProposed": "Czas na wybór musi przypadać przed pierwszą proponowaną datą wydarzenia",
+    "descriptionMax": "Opis może mieć maksymalnie 300 znaków",
+    "proposedDatePast": "Proponowana data nie może być z przeszłości"
+  },
+  "toasts": {
+    "events": {
+      "addSuccess": "Wydarzenie zostało utworzone",
+      "addError": "Nie udało się utworzyć wydarzenia",
+      "deleteSuccess": "Wydarzenie zostało usunięte",
+      "deleteError": "Nie udało się usunąć wydarzenia",
+      "updateSuccess": "Wydarzenie zostało zaktualizowane",
+      "updateError": "Nie udało się zaktualizować wydarzenia",
+      "finalizeSuccess": "Termin wydarzenia został zatwierdzony",
+      "finalizeError": "Nie udało się zatwierdzić terminu",
+      "unfinalizeSuccess": "Głosowanie zostało wznowione",
+      "unfinalizeError": "Nie udało się wznowić głosowania",
+      "voteError": "Nie udało się zapisać głosu"
+    }
+  },
+  "actions": {
+    "add": "Dodaj",
+    "save": "Zapisz",
+    "saving": "Zapisywanie...",
+    "cancel": "Anuluj",
+    "delete": "Usuń",
+    "finalizeEvent": "Zatwierdź ostateczny termin",
+    "reopenVoting": "Wznów głosowanie"
+  },
+  "reopenConfirm": {
+    "title": "Wznowić głosowanie nad terminem?",
+    "description": "Wybrany termin zostanie odblokowany, a wszyscy uczestnicy otrzymają powiadomienie. Terminy z przeszłości zostaną automatycznie usunięte."
+  },
+  "roles": {
+    "creator": "Twórca"
+  },
+  "voting": {
+    "popoverTitle": "Głosowanie na termin",
+    "yes": "Mogę",
+    "maybe": "Ewentualnie",
+    "no": "Nie mogę",
+    "unvoted": "Brak głosu",
+    "yourVote": "Twój głos",
+    "summary": "Głosy: {{yes}} tak · {{maybe}} może"
+  },
+  "finalizeModal": {
+    "eyebrow": "Zatwierdzenie terminu",
+    "title": "Wybierz ostateczny termin",
+    "description": "Wybierz jeden z terminów poniżej. Po zatwierdzeniu głosowanie zostanie zamknięte, a termin zablokowany.",
+    "topPick": "Najpopularniejszy",
+    "confirmButton": "Zatwierdź ten termin"
+  },
+  "finalizedCard": {
+    "status": "Termin potwierdzony",
+    "lockedNotice": "Głosowanie zostało zamknięte przez organizatora."
+  },
+  "rankedSheet": {
+    "eyebrow": "Ranking terminów",
+    "description": "Terminy uporządkowane od najwyższego poparcia uczestników."
+  },
+  "grid": {
+    "participants": "Uczestnicy",
+    "matchRate": "Zgodność",
+    "available": "osób",
+    "winner": "Wybrany",
+    "status": "Status",
+    "you": "TY"
+  }
+}

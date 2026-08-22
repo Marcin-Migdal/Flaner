@@ -55,8 +55,17 @@ export function SearchBar<T>({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const [prevIsExpanded, setPrevIsExpanded] = useState(props.isExpanded);
   const [prevValue, setPrevValue] = useState(value);
   const [prevResults, setPrevResults] = useState(results);
+
+  if (props.isExpanded !== prevIsExpanded) {
+    setPrevIsExpanded(props.isExpanded);
+    if (props.isExpanded === false) {
+      setIsOpen(false);
+    }
+  }
+
   if (value !== prevValue || results !== prevResults) {
     setPrevValue(value);
     setPrevResults(results);

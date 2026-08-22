@@ -1,8 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@flaner/ui-components";
 import { formatDistanceToNow } from "date-fns";
-import { pl } from "date-fns/locale";
+import { pl, enUS } from "date-fns/locale";
 import { TFunction } from "i18next";
-import { Bell, CheckCircle, UserPlus, Users, XCircle } from "lucide-react";
+import { AlertCircle, Bell, Calendar, CheckCircle, UserPlus, Users, XCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { AppNotification, NotificationType } from "../../api/notifications";
@@ -17,6 +17,11 @@ const getIcon = (notificationType: NotificationType) => {
       return <XCircle className="size-4 text-red-500" />;
     case "group_invitation":
       return <Users className="size-4 text-brand" />;
+    case "event_invitation":
+    case "event_reopened":
+      return <Calendar className="size-4 text-brand" />;
+    case "system_alert":
+      return <AlertCircle className="size-4 text-amber-500" />;
     default:
       return <Bell className="size-4 text-brand" />;
   }
@@ -32,6 +37,12 @@ const getText = (notificationType: NotificationType, t: TFunction) => {
       return t("notifications.friendRejected", { defaultValue: "Odrzucił(a) Twoje zaproszenie." });
     case "group_invitation":
       return t("notifications.groupInvitation", { defaultValue: "Zaprosił(a) Cię do grupy." });
+    case "event_invitation":
+      return t("notifications.eventInvitation", { defaultValue: "Zaprosił(a) Cię do wydarzenia." });
+    case "event_reopened":
+      return t("notifications.eventReopened", { defaultValue: "Wznowił(a) głosowanie w wydarzeniu." });
+    case "system_alert":
+      return t("notifications.systemAlert", { defaultValue: "Ważne powiadomienie systemowe." });
     default:
       return t("notifications.system", { defaultValue: "Masz nowe powiadomienie." });
   }
@@ -60,6 +71,8 @@ export function NotificationCard({ notification, onRead, onClosePopover }: Notif
       navigate("/community/friends");
     } else if (notification.type === "group_invitation") {
       navigate("/community/groups#group-invitations");
+    } else if (notification.type === "event_invitation" || notification.type === "event_reopened") {
+      navigate("/planning");
     }
 
     // 3. Close the popover
@@ -68,7 +81,7 @@ export function NotificationCard({ notification, onRead, onClosePopover }: Notif
 
   const timeAgo = formatDistanceToNow(notification.createdAt, {
     addSuffix: true,
-    locale: i18n.language === "pl" ? pl : undefined, // fallback to en if undefined
+    locale: i18n.language.startsWith("pl") ? pl : enUS,
   });
 
   return (

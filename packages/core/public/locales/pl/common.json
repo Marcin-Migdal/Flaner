@@ -8,7 +8,8 @@
     "home": "Start",
     "community": "Społeczność",
     "shopping": "Zakupy",
-    "scheduling": "Harmonogram",
+    "planning": "Planowanie",
+    "scheduling": "Terminarz",
     "settings": "Ustawienia",
     "signOut": "Wyloguj się",
     "theme": "Motyw",
@@ -40,7 +41,7 @@
     "subtitle": "Twój osobisty asystent planowania i organizacji.",
     "cards": {
       "shopping": "Zarządzaj listami zakupów i kategoriami produktów bez opóźnień.",
-      "scheduling": "Planuj wydarzenia ze znajomymi w interaktywnym kalendarzu.",
+      "planning": "Planuj wyjazdy i koordynuj wydarzenia ze swoimi znajomymi.",
       "community": "Znajdź znajomych i twórz grupy.",
       "settings": "Dostosuj motyw, zmień nazwę wyświetlaną i awatar."
     }
@@ -59,19 +60,23 @@
       "new": "Nowe",
       "read": "Przeczytane"
     },
-    "markAllRead": "Oznacz wszystkie",
+    "markAllRead": "Oznacz jako przeczytane",
+    "loadMore": "Wczytaj więcej",
     "empty": {
       "title": "Jesteś na bieżąco!",
       "subtitle": "Nie masz żadnych nowych powiadomień."
     },
     "readPlaceholder": {
-      "title": "Historia w budowie",
-      "subtitle": "Przeglądanie przeczytanych powiadomień będzie dostępne wkrótce."
+      "title": "Brak przeczytanych powiadomień",
+      "subtitle": "Tutaj znajdziesz swoje przeczytane powiadomienia."
     },
     "friendRequest": "Wysłał(a) Ci zaproszenie do znajomych.",
     "friendAccepted": "Zaakceptował(a) Twoje zaproszenie.",
     "friendRejected": "Odrzucił(a) Twoje zaproszenie.",
     "groupInvitation": "Zaprosił(a) Cię do grupy.",
+    "eventInvitation": "Zaprosił(a) Cię do wydarzenia.",
+    "eventReopened": "Wznowił(a) głosowanie w wydarzeniu.",
+    "systemAlert": "Ważne powiadomienie systemowe.",
     "system": "Masz nowe powiadomienie."
   },
   "errors": {

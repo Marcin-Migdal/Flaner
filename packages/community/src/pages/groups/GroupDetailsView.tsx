@@ -83,7 +83,9 @@ export function GroupDetailsView() {
 
       queryClient.invalidateQueries({ queryKey: ["groupMembers", group.id] });
       queryClient.invalidateQueries({ queryKey: ["userGroups", user.uid] });
-    } catch {}
+    } catch {
+      // Handled globally
+    }
   };
 
   const handleRequestJoin = async () => {
@@ -92,7 +94,9 @@ export function GroupDetailsView() {
       await requestJoin(group.id);
 
       queryClient.invalidateQueries({ queryKey: ["groupRequests", group.id] });
-    } catch {}
+    } catch {
+      // Handled globally
+    }
   };
 
   const handleLeaveGroup = async () => {
@@ -102,7 +106,9 @@ export function GroupDetailsView() {
       setIsLeaveConfirmOpen(false);
 
       navigate("/community/groups");
-    } catch {}
+    } catch {
+      // Handled globally
+    }
   };
 
   const renderRestrictedActions = () => {
@@ -145,20 +151,44 @@ export function GroupDetailsView() {
         <span className="text-sm font-medium text-muted-foreground">{t("groupDetails.backToList")}</span>
       </div>
 
-      <div className="relative bg-card border border-border/50 rounded-3xl p-6 shadow-sm overflow-hidden">
-        <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
-          <div className="flex-shrink-0 size-24 rounded-2xl bg-gradient-to-br from-brand/20 to-brand/5 flex items-center justify-center text-brand font-bold text-3xl shadow-inner border border-brand/10">
-            {group.avatarUrl ? (
-              <img src={group.avatarUrl} alt={group.name} className="size-full object-cover rounded-2xl" />
-            ) : (
-              group.name.substring(0, 2).toUpperCase()
-            )}
+      <div className="relative bg-card border border-border/50 rounded-3xl p-5 md:p-6 shadow-sm overflow-hidden flex flex-col md:flex-row gap-4 md:gap-6 md:items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-4 md:gap-6 items-start sm:items-center flex-1 min-w-0">
+          <div className="flex gap-4 items-center sm:block w-full sm:w-auto">
+            <div className="flex-shrink-0 size-28 sm:size-24 md:size-24 rounded-2xl bg-gradient-to-br from-brand/20 to-brand/5 flex items-center justify-center text-brand font-bold text-3xl shadow-inner border border-brand/10 overflow-hidden">
+              {group.avatarUrl ? (
+                <img src={group.avatarUrl} alt={group.name} className="size-full object-cover" />
+              ) : (
+                group.name.substring(0, 2).toUpperCase()
+              )}
+            </div>
+            <div className="sm:hidden flex-1 min-w-0">
+              <h1 className="text-xl font-extrabold text-foreground tracking-tight break-words">
+                {group.name}
+              </h1>
+              <div className="flex flex-wrap items-center gap-1.5 mt-2 text-xs font-semibold text-muted-foreground">
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-muted/60 rounded-full border border-border/40 text-[11px]">
+                  <Users className="size-3" />
+                  {t("groupDetails.membersCount", { count: members.length })}
+                </span>
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-muted/60 rounded-full border border-border/40 text-[11px]">
+                  <Shield className="size-3" />
+                  {group.type === "private" ? t("groupDetails.private") : t("groupDetails.public")}
+                </span>
+              </div>
+            </div>
           </div>
-          <div className="flex-1">
-            <h1 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">{group.name}</h1>
-            {group.description && <p className="text-muted-foreground text-sm mt-1 max-w-2xl">{group.description}</p>}
 
-            <div className="flex flex-wrap items-center gap-4 mt-4 text-xs font-semibold text-muted-foreground">
+          <div className="hidden sm:block flex-1 min-w-0">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight break-words">
+              {group.name}
+            </h1>
+            {group.description && (
+              <p className="text-muted-foreground text-sm mt-1 max-w-2xl leading-relaxed">
+                {group.description}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-3 mt-3.5 text-xs font-semibold text-muted-foreground">
               <span className="flex items-center gap-1.5 px-3 py-1 bg-muted/60 rounded-full border border-border/40">
                 <Users className="size-3.5" />
                 {t("groupDetails.membersCount", { count: members.length })}
@@ -169,58 +199,71 @@ export function GroupDetailsView() {
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <Button variant="outline" className="rounded-xl flex-1 md:flex-none" onClick={handleCopyLink}>
-              <Copy className="size-4" />
-              {t("groupDetails.copyLinkBtn")}
-            </Button>
+        </div>
 
-            {!isMember ? (
-              renderRestrictedActions()
-            ) : (
-              <>
-                {canInvite && (
+        {/* Mobile Description (clean text without line divider) */}
+        {group.description && (
+          <p className="sm:hidden text-muted-foreground text-xs leading-relaxed -mt-1">
+            {group.description}
+          </p>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap md:flex-nowrap items-center gap-2 w-full md:w-auto shrink-0 mt-1 md:mt-0">
+          <Button
+            variant="outline"
+            className="rounded-xl h-9 md:h-10 px-3 md:px-4 text-xs md:text-sm font-medium flex-1 md:flex-none flex items-center justify-center gap-1.5"
+            onClick={handleCopyLink}
+          >
+            <Copy className="size-3.5 md:size-4 shrink-0" />
+            <span>{t("groupDetails.copyLinkBtn")}</span>
+          </Button>
+
+          {!isMember ? (
+            renderRestrictedActions()
+          ) : (
+            <>
+              {canInvite && (
+                <Button
+                  variant="brand"
+                  className="rounded-xl h-9 md:h-10 px-3 md:px-4 text-xs md:text-sm font-semibold flex-1 md:flex-none flex items-center justify-center gap-1.5"
+                  onClick={() => setIsInviteModalOpen(true)}
+                >
+                  <UserPlus className="size-3.5 md:size-4 shrink-0" />
+                  <span>{t("manageGroupSheet.inviteFriends")}</span>
+                </Button>
+              )}
+              {(currentUserRole === "owner" || currentUserRole === "admin") && <RequestsSheet groupId={group.id} />}
+              {(currentUserRole === "owner" || currentUserRole === "admin" || currentUserRole === "moderator") && (
+                <ManageGroupSheet groupId={group.id} />
+              )}
+              {currentUserRole !== "owner" && (
+                <>
                   <Button
-                    variant="primary"
-                    className="rounded-xl flex-1 md:flex-none font-semibold"
-                    onClick={() => setIsInviteModalOpen(true)}
+                    variant="outline"
+                    className="rounded-xl h-9 md:h-10 px-3 md:px-4 text-xs md:text-sm text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30 flex-1 md:flex-none flex items-center justify-center gap-1.5"
+                    onClick={() => setIsLeaveConfirmOpen(true)}
+                    disabled={isLeaving}
                   >
-                    <UserPlus className="size-4" />
-                    {t("manageGroupSheet.inviteFriends")}
+                    {isLeaving ? <Loader2 className="size-3.5 md:size-4 animate-spin shrink-0" /> : <LogOut className="size-3.5 md:size-4 shrink-0" />}
+                    <span>{t("groupDetails.leaveGroup")}</span>
                   </Button>
-                )}
-                {(currentUserRole === "owner" || currentUserRole === "admin") && <RequestsSheet groupId={group.id} />}
-                {(currentUserRole === "owner" || currentUserRole === "admin" || currentUserRole === "moderator") && (
-                  <ManageGroupSheet groupId={group.id} />
-                )}
-                {currentUserRole !== "owner" && (
-                  <>
-                    <Button
-                      variant="outline"
-                      className="rounded-xl flex-1 md:flex-none text-destructive hover:bg-destructive hover:text-white"
-                      onClick={() => setIsLeaveConfirmOpen(true)}
-                      disabled={isLeaving}
-                    >
-                      {isLeaving ? <Loader2 className="size-4 animate-spin" /> : <LogOut className="size-4" />}
-                      {t("groupDetails.leaveGroup")}
-                    </Button>
 
-                    <ConfirmationPopup
-                      open={isLeaveConfirmOpen}
-                      onOpenChange={setIsLeaveConfirmOpen}
-                      title={t("groupDetails.leaveConfirmTitle")}
-                      description={t("groupDetails.leaveConfirmDesc")}
-                      confirmLabel={t("groupDetails.confirmLeaveBtn")}
-                      cancelLabel={t("groupDetails.cancelBtn")}
-                      variant="destructive"
-                      isConfirming={isLeaving}
-                      onConfirm={handleLeaveGroup}
-                    />
-                  </>
-                )}
-              </>
-            )}
-          </div>
+                  <ConfirmationPopup
+                    open={isLeaveConfirmOpen}
+                    onOpenChange={setIsLeaveConfirmOpen}
+                    title={t("groupDetails.leaveConfirmTitle")}
+                    description={t("groupDetails.leaveConfirmDesc")}
+                    confirmLabel={t("groupDetails.confirmLeaveBtn")}
+                    cancelLabel={t("groupDetails.cancelBtn")}
+                    variant="destructive"
+                    isConfirming={isLeaving}
+                    onConfirm={handleLeaveGroup}
+                  />
+                </>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -254,7 +297,7 @@ export function GroupDetailsView() {
                       </div>
                       <div>
                         <span className="text-xs font-medium px-2 py-1 bg-brand/10 text-brand rounded-md uppercase tracking-wider">
-                          {member.role}
+                          {t(`manageGroupSheet.role_${member.role}`) || member.role}
                         </span>
                       </div>
                     </div>

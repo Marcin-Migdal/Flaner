@@ -28,7 +28,7 @@ Firebase Firestore requires a NoSQL-first mindset. Denormalization and reading e
 - Firestore cannot do `LIKE '%text%'` searches. 
 - For simple prefix searches, store a lowercase version of the string in a dedicated field (e.g., `nameLower`) and query using:
   `where("nameLower", ">=", queryText)` and `where("nameLower", "<=", queryText + "\uf8ff")`
-- If you use complex compound queries (e.g., sorting by Date AND filtering by Category), note that this will require a Composite Index in Firestore. You must mention this to the user so they can create the index in the Firebase Console.
+- If you use complex compound queries (e.g., sorting by Date AND filtering by Category), note that this will require a Composite Index in Firestore. Define the index in `firestore.indexes.json` at the root and deploy it using `npx firebase-tools deploy --only firestore:indexes --project flaner-v2`.
 
 ## 4. Security Rules
 - Always assume the client is compromised.

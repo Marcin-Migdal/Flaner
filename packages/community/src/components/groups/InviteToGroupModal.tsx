@@ -3,7 +3,6 @@ import { useDebounce } from "@flaner/shared/hooks";
 import { Avatar, AvatarFallback, Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Input } from "@flaner/ui-components";
 import { Check, Clock, Loader2, Search, UserPlus, X } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
 import { useGetFriendsListQuery, useGetGroupMembersQuery, useGetGroupPendingInvitationsQuery, useInviteUserToGroupMutation, useSearchUsersQuery } from "../../hooks";
 
@@ -51,9 +50,8 @@ export function InviteToGroupModal({
         userId: targetUserId,
         invitedByUserId: user.uid,
       });
-      
     } catch {
-      
+      // Handled globally
     } finally {
       setInvitingId(null);
     }

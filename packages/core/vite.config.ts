@@ -18,14 +18,15 @@ export default defineConfig({
   server: {
     port: PORT,
     strictPort: true,
-    host: '127.0.0.1',
+    host: '0.0.0.0',
+    cors: true,
     headers: {
       // Set to unsafe-none to completely bypass COOP restrictions on localhost,
       // which eliminates the browser console error regarding window.closed.
       'Cross-Origin-Opener-Policy': 'unsafe-none',
     },
   },
-  preview: { port: PORT, strictPort: true },
+  preview: { port: PORT, strictPort: true, host: '0.0.0.0', cors: true },
   build: { target: 'chrome89' },
   optimizeDeps: {
     exclude: ['@flaner/ui-components'],

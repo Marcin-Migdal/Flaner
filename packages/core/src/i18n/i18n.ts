@@ -3,11 +3,20 @@ import Backend from 'i18next-http-backend';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
 
+const getDevHost = () => {
+  if (typeof window !== 'undefined' && window.location.hostname) {
+    return window.location.hostname;
+  }
+  return '127.0.0.1';
+};
+
+const devHost = getDevHost();
+
 const MFE_URLS: Record<string, string> = {
-  settings: import.meta.env.VITE_MFE_SETTINGS_URL || 'http://127.0.0.1:4201',
-  community: import.meta.env.VITE_MFE_COMMUNITY_URL || 'http://127.0.0.1:4202',
-  shopping: import.meta.env.VITE_MFE_SHOPPING_URL || 'http://127.0.0.1:4203',
-  scheduling: import.meta.env.VITE_MFE_SCHEDULING_URL || 'http://127.0.0.1:4204',
+  settings: import.meta.env.VITE_MFE_SETTINGS_URL || `http://${devHost}:4201`,
+  community: import.meta.env.VITE_MFE_COMMUNITY_URL || `http://${devHost}:4202`,
+  shopping: import.meta.env.VITE_MFE_SHOPPING_URL || `http://${devHost}:4203`,
+  planning: import.meta.env.VITE_MFE_PLANNING_URL || `http://${devHost}:4204`,
 };
 
 i18n
@@ -18,9 +27,9 @@ i18n
     fallbackLng: 'en',
     defaultNS: 'common',
     // Only eagerly load core namespaces served by the host.
-    // MFE namespaces (settings, community, shopping, scheduling) are loaded
+    // MFE namespaces (settings, community, shopping, planning) are loaded
     // lazily on-demand when useTranslation('settings') etc. is called.
-    ns: ['common', 'auth'],
+    ns: ['common', 'auth', 'ui'],
     partialBundledLanguages: true,
     interpolation: { escapeValue: false },
     backend: {

@@ -1,4 +1,4 @@
-import { useDebounce } from "@flaner/shared/hooks";
+import { useDebounce, useIsMobile } from "@flaner/shared/hooks";
 import { Button, GroupSearchResultItem, IconTextField, SearchBar } from "@flaner/ui-components";
 import { Filter, Plus, Search, Users } from "lucide-react";
 import { useState } from "react";
@@ -34,6 +34,33 @@ export function GroupsListView() {
 
   const globalGroups = searchData?.pages.flatMap((page) => page.groups) ?? [];
 
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const isMobile = useIsMobile();
+
+  const handleFilterOpen = () => {
+    setIsFilterExpanded(true);
+    if (isMobile) {
+      setIsSearchExpanded(false);
+    }
+  };
+
+  const handleFilterClose = () => {
+    setIsFilterExpanded(false);
+  };
+
+  const handleSearchOpen = () => {
+    setIsSearchExpanded(true);
+    if (isMobile) {
+      setIsFilterExpanded(false);
+    }
+  };
+
+  const handleSearchClose = () => {
+    setIsSearchExpanded(false);
+    setSearchQuery("");
+  };
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const filteredMyGroups = myGroups.filter((g) => g.name.toLowerCase().includes(myGroupsSearchQuery.toLowerCase()));
@@ -62,6 +89,9 @@ export function GroupsListView() {
             placeholder={t("groupsView.filterPlaceholder")}
             isClearable
             onClear={() => setMyGroupsSearchQuery("")}
+            isExpanded={isFilterExpanded}
+            onOpen={handleFilterOpen}
+            onClose={handleFilterClose}
           />
           <SearchBar
             icon={<Search className="size-4" />}
@@ -71,7 +101,9 @@ export function GroupsListView() {
             placeholder={t("groupsView.searchPlaceholder")}
             isClearable
             onClear={() => setSearchQuery("")}
-            onClose={() => setSearchQuery("")}
+            onClose={handleSearchClose}
+            onOpen={handleSearchOpen}
+            isExpanded={isSearchExpanded}
             results={globalGroups}
             isLoading={isFetching && !isFetchingNextPage}
             hasMore={hasNextPage}
@@ -88,9 +120,15 @@ export function GroupsListView() {
             alwaysOpen={false}
           />
           <GroupInvitationsSheet />
-          <Button size="lg" onClick={() => setIsCreateModalOpen(true)}>
+          <Button
+            size="lg"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="shrink-0 px-3 sm:px-4 flex items-center gap-1.5"
+            title={t("groupsView.createBtn")}
+            aria-label={t("groupsView.createBtn")}
+          >
             <Plus className="size-4" />
-            {t("groupsView.createBtn")}
+            <span className="hidden sm:inline">{t("groupsView.createBtn")}</span>
           </Button>
         </div>
       </div>

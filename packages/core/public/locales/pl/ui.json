@@ -16,5 +16,35 @@
     "dropzoneIdleText": "Kliknij, aby wybrać lub przeciągnij plik",
     "acceptedFormatsDesc": "JPG, PNG, GIF lub WEBP",
     "compressing": "Kompresowanie obrazu..."
+  },
+  "calendar": {
+    "today": "Dziś",
+    "weekOf": "Tydzień {{date}}",
+    "moreEvents": "+{{count}} więcej",
+    "rankedSlotsTooltip": "Ranking terminów",
+    "views": {
+      "day": "Dzień",
+      "week": "Tydzień",
+      "month": "Miesiąc",
+      "grid": "Dostępność"
+    },
+    "days": {
+      "mon": "Pn",
+      "tue": "Wt",
+      "wed": "Śr",
+      "thu": "Czw",
+      "fri": "Pt",
+      "sat": "Sob",
+      "sun": "Nd"
+    },
+    "daysFull": {
+      "mon": "Poniedziałek",
+      "tue": "Wtorek",
+      "wed": "Środa",
+      "thu": "Czwartek",
+      "fri": "Piątek",
+      "sat": "Sobota",
+      "sun": "Niedziela"
+    }
   }
 }

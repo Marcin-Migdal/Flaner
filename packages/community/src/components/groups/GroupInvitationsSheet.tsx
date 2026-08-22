@@ -1,6 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage, Button, Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@flaner/ui-components";
 import { Check, Loader2, Mail, X } from "lucide-react";
-import { toast } from "sonner";
 import { useAuth } from "@flaner/shared/context";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
 import { useSheet } from "@flaner/shared/hooks";
@@ -30,10 +29,9 @@ export function GroupInvitationsSheet() {
     setProcessingId(`accept-${groupId}`);
     try {
       await acceptMutation.mutateAsync({ groupId, userId: user.uid });
-      
       if (invitations.length === 1) setOpen(false); // Close if it was the last one
     } catch {
-      
+      // Handled globally
     } finally {
       setProcessingId(null);
     }
@@ -44,10 +42,9 @@ export function GroupInvitationsSheet() {
     setProcessingId(`reject-${groupId}`);
     try {
       await rejectMutation.mutateAsync({ groupId, userId: user.uid });
-      
       if (invitations.length === 1) setOpen(false); // Close if it was the last one
     } catch {
-      
+      // Handled globally
     } finally {
       setProcessingId(null);
     }

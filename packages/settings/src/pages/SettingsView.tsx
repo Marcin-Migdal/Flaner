@@ -2,7 +2,6 @@ import { compressImage, ONE_MB, toast, uploadToCloudinary } from "@flaner/shared
 import { useAuth } from "@flaner/shared/context";
 import { Button, FormImagePicker, FormSelect, FormSwitch, FormTextField, Separator } from "@flaner/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useUpdateSettingsMutation } from "../hooks";
 import { useSettingsTranslations } from "../hooks/useSettingsTranslations";
@@ -15,11 +14,16 @@ export function SettingsView() {
 
   const settingsForm = useForm<SettingsFormData>({
     resolver: zodResolver(getSettingsSchema(t)),
-    defaultValues: {
-      username: user?.username || "",
-      language: user?.language || "pl",
-      darkMode: user?.darkMode ?? true,
-      avatar: user?.avatarUrl || null,
+    values: user
+      ? {
+          username: user.username || "",
+          language: user.language || "pl",
+          darkMode: user.darkMode ?? true,
+          avatar: user.avatarUrl || null,
+        }
+      : undefined,
+    resetOptions: {
+      keepDirtyValues: true,
     },
   });
 
@@ -29,20 +33,8 @@ export function SettingsView() {
     formState: { isDirty },
   } = settingsForm;
 
-  // Keep form in sync if auth user details load later
-  useEffect(() => {
-    if (user) {
-      reset({
-        username: user.username,
-        language: user.language,
-        darkMode: user.darkMode,
-        avatar: user.avatarUrl || null,
-      });
-    }
-  }, [user, reset]);
-
   const onSubmit = async (data: SettingsFormData) => {
-    let avatarUrl = user?.avatarUrl || "";
+    let avatarUrl = typeof data.avatar === "string" ? data.avatar : user?.avatarUrl || "";
 
     if (data.avatar instanceof File) {
       try {
@@ -70,11 +62,10 @@ export function SettingsView() {
       onSuccess: () => {
         // Sync global app translation language immediately
         i18n.changeLanguage(data.language as string);
-        
+        reset(data);
       },
       onError: (err) => {
         console.error(err);
-        
       },
     });
   };
@@ -162,6 +153,7 @@ export function SettingsView() {
                 label={t("preferences.language")}
                 description={t("preferences.languageDesc")}
                 options={languageOptions}
+                isSearchable={false}
               />
 
               <FormSwitch

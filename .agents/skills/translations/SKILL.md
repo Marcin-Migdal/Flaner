@@ -46,12 +46,21 @@ import Backend from 'i18next-http-backend';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
 
-// Dynamic URLs for MFEs from env variables
+const getDevHost = () => {
+  if (typeof window !== 'undefined' && window.location.hostname) {
+    return window.location.hostname;
+  }
+  return '127.0.0.1';
+};
+
+const devHost = getDevHost();
+
+// Dynamic URLs for MFEs from env variables or devHost
 const MFE_URLS: Record<string, string> = {
-  settings: import.meta.env.VITE_MFE_SETTINGS_URL || 'http://localhost:4201',
-  community: import.meta.env.VITE_MFE_COMMUNITY_URL || 'http://localhost:4202',
-  shopping: import.meta.env.VITE_MFE_SHOPPING_URL || 'http://localhost:4203',
-  scheduling: import.meta.env.VITE_MFE_SCHEDULING_URL || 'http://localhost:4204',
+  settings: import.meta.env.VITE_MFE_SETTINGS_URL || `http://${devHost}:4201`,
+  community: import.meta.env.VITE_MFE_COMMUNITY_URL || `http://${devHost}:4202`,
+  shopping: import.meta.env.VITE_MFE_SHOPPING_URL || `http://${devHost}:4203`,
+  planning: import.meta.env.VITE_MFE_PLANNING_URL || `http://${devHost}:4204`,
 };
 
 i18n

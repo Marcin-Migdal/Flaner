@@ -1,4 +1,4 @@
-import { compressImage, ONE_MB, toast, uploadToCloudinary } from "@flaner/shared/utils";
+import { compressImage, ONE_MB, uploadToCloudinary } from "@flaner/shared/utils";
 import {
   Button,
   Dialog,
@@ -125,6 +125,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
                 { label: t("groupsView.createModal.typePrivate"), value: "private" },
                 { label: t("groupsView.createModal.typePublic"), value: "public" },
               ]}
+              isSearchable={false}
               disabled={isPending}
             />
 

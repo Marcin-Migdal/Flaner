@@ -70,7 +70,7 @@ To ensure consistent invalidation across the app, always define a query key gene
 
 ## 3. Custom Query Hooks
 
-Create a separate hook file under `src/features/<feature-name>/hooks/` for each query (e.g. `useGetItemsQuery.ts`).
+Create a separate hook file under `src/hooks/api/queries/` for each query (e.g. `useGetItemsQuery.ts`).
 
 ### Template:
 
@@ -138,7 +138,7 @@ export const useInvalidateGetItemsQuery = () => {
 
 ## 5. Custom Mutation Hooks
 
-Create a separate hook file under `src/features/<feature-name>/hooks/` for each mutation (e.g. `useAddItemMutation.ts`).
+Create a separate hook file under `src/hooks/api/mutations/` for each mutation (e.g. `useAddItemMutation.ts`).
 
 ### Rules:
 
