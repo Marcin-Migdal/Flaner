@@ -76,8 +76,12 @@ export const FinalizeEventModal = ({
 
   const sortedSlots = [...slotsWithScores].sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
-    return b.yesCount - a.yesCount;
+    if (b.yesCount !== a.yesCount) return b.yesCount - a.yesCount;
+    return a.originalIndex - b.originalIndex;
   });
+
+  const topScore = sortedSlots[0]?.score ?? 0;
+  const topYesCount = sortedSlots[0]?.yesCount ?? 0;
 
   const [selectedSlotIndex, setSelectedSlotIndex] = useState<number>(() => {
     return sortedSlots[0]?.originalIndex ?? 0;
@@ -108,9 +112,9 @@ export const FinalizeEventModal = ({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-2.5">
-          {sortedSlots.map((item, rankIndex) => {
+          {sortedSlots.map((item) => {
             const isSelected = selectedSlotIndex === item.originalIndex;
-            const isTop = rankIndex === 0;
+            const isTop = item.score > 0 && item.score === topScore && item.yesCount === topYesCount;
             const startDate = parseISO(item.slot.start);
             const endDate = parseISO(item.slot.end);
 

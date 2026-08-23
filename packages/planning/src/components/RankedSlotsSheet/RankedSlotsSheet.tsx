@@ -1,6 +1,6 @@
 import { format, parseISO, Locale } from "date-fns";
 import { pl, enUS } from "date-fns/locale";
-import { Trophy, Medal, Award, Check, HelpCircle, Minus, Plus } from "lucide-react";
+import { Trophy, Medal, Award, Check, X } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -47,6 +47,32 @@ const formatRankedSlotDate = (
   return `${format(startDate, "dd.MM.yyyy")} (${startDay}) - ${format(endDate, "dd.MM.yyyy")} (${endDay})`;
 };
 
+function computeRankedSlots<T extends { score: number; yesVoters: string[]; maybeVoters: string[] }>(
+  sortedSlots: T[]
+): (T & { rank: number })[] {
+  let lastRank = 1;
+  const result: (T & { rank: number })[] = [];
+  for (let i = 0; i < sortedSlots.length; i++) {
+    const item = sortedSlots[i];
+    if (i > 0) {
+      const prev = sortedSlots[i - 1];
+      const isSameScore =
+        item.score === prev.score &&
+        item.yesVoters.length === prev.yesVoters.length &&
+        item.maybeVoters.length === prev.maybeVoters.length;
+
+      if (!isSameScore) {
+        lastRank = i + 1;
+      }
+    }
+    result.push({
+      ...item,
+      rank: lastRank,
+    });
+  }
+  return result;
+}
+
 export const RankedSlotsSheet = ({
   open,
   onOpenChange,
@@ -89,8 +115,12 @@ export const RankedSlotsSheet = ({
 
   const sortedSlots = [...slotsWithScores].sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
-    return b.yesVoters.length - a.yesVoters.length;
+    if (b.yesVoters.length !== a.yesVoters.length) return b.yesVoters.length - a.yesVoters.length;
+    return a.originalIndex - b.originalIndex;
   });
+
+  // Calculate tie / ex-aequo ranking
+  const rankedSlots = computeRankedSlots(sortedSlots);
 
   const getProfile = (uid: string) => {
     return participantsProfiles.find((p) => p.id === uid);
@@ -116,31 +146,31 @@ export const RankedSlotsSheet = ({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 sm:space-y-4">
-          {sortedSlots.map((item, rankIndex) => {
-            const rank = rankIndex + 1;
+          {rankedSlots.map((item) => {
             const startDate = parseISO(item.slot.start);
             const endDate = parseISO(item.slot.end);
             const isSameDay = item.slot.start === item.slot.end;
             const dateDisplay = formatRankedSlotDate(startDate, endDate, isSameDay, dateLocale);
 
             const isWinning = event.isFinalized && event.finalizedSlotIndex === item.originalIndex;
+            const isRankOne = item.score > 0 && item.rank === 1;
 
             let rankBadge = null;
-            if (rank === 1) {
+            if (isRankOne) {
               rankBadge = (
                 <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-500/15 text-yellow-500 border border-yellow-500/30 shrink-0">
                   <Trophy className="w-3.5 h-3.5" />
                   <span>#1</span>
                 </div>
               );
-            } else if (rank === 2) {
+            } else if (item.score > 0 && item.rank === 2) {
               rankBadge = (
                 <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-slate-400/15 text-slate-400 border border-slate-400/30 shrink-0">
                   <Medal className="w-3.5 h-3.5" />
                   <span>#2</span>
                 </div>
               );
-            } else if (rank === 3) {
+            } else if (item.score > 0 && item.rank === 3) {
               rankBadge = (
                 <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-700/15 text-amber-600 border border-amber-700/30 shrink-0">
                   <Award className="w-3.5 h-3.5" />
@@ -150,7 +180,7 @@ export const RankedSlotsSheet = ({
             } else {
               rankBadge = (
                 <div className="px-2 py-0.5 rounded-full text-xs font-semibold text-muted-foreground bg-muted shrink-0">
-                  #{rank}
+                  #{item.rank}
                 </div>
               );
             }
@@ -161,7 +191,7 @@ export const RankedSlotsSheet = ({
                 className={`relative flex flex-col gap-3 p-3.5 sm:p-4 rounded-xl border transition-all ${
                   isWinning
                     ? "bg-emerald-500/10 border-emerald-500 ring-2 ring-emerald-500/30"
-                    : rank === 1
+                    : isRankOne
                     ? "bg-card border-yellow-500/40 shadow-sm"
                     : "bg-card/70 border-border/60"
                 }`}
@@ -182,7 +212,7 @@ export const RankedSlotsSheet = ({
                 <div className="w-full bg-muted/40 rounded-full h-2 overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-300 ${
-                      rank === 1 ? "bg-amber-500" : "bg-emerald-500"
+                      isRankOne ? "bg-amber-500" : "bg-emerald-500"
                     }`}
                     style={{ width: `${item.matchPercentage}%` }}
                   />
@@ -192,7 +222,7 @@ export const RankedSlotsSheet = ({
                 <div className="flex flex-col gap-2 pt-1">
                   {/* YES Voters */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold bg-vote-yes-tint text-vote-yes-text border border-vote-yes-border/30">
                       <Check className="w-3 h-3 stroke-[3]" />
                       <span>{item.yesVoters.length}</span>
                     </span>
@@ -219,13 +249,41 @@ export const RankedSlotsSheet = ({
                   {/* MAYBE Voters */}
                   {item.maybeVoters.length > 0 && (
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                        <HelpCircle className="w-3 h-3 stroke-[3]" />
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold bg-vote-maybe-tint text-vote-maybe-text border border-vote-maybe-border/30">
+                        <span className="font-extrabold text-[11px] leading-none select-none">?</span>
                         <span>{item.maybeVoters.length}</span>
                       </span>
 
                       <div className="flex items-center -space-x-1.5 overflow-hidden">
                         {item.maybeVoters.map((uid) => {
+                          const profile = getProfile(uid);
+                          return (
+                            <Avatar
+                              key={uid}
+                              className="w-5 h-5 ring-2 ring-card border-0"
+                              title={profile?.name || uid}
+                            >
+                              <AvatarImage src={profile?.avatarUrl} />
+                              <AvatarFallback className="text-[9px]">
+                                {profile?.name?.[0]?.toUpperCase() || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* NO Voters */}
+                  {item.noVoters.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold bg-vote-no-tint text-vote-no-text border border-vote-no-border/30">
+                        <X className="w-3 h-3 stroke-[3]" />
+                        <span>{item.noVoters.length}</span>
+                      </span>
+
+                      <div className="flex items-center -space-x-1.5 overflow-hidden">
+                        {item.noVoters.map((uid) => {
                           const profile = getProfile(uid);
                           return (
                             <Avatar
@@ -255,10 +313,10 @@ export const RankedSlotsSheet = ({
                     {/* Button 1: Tak (Yes) */}
                     <button
                       type="button"
-                      className={`shrink-0 p-0 border flex items-center justify-center w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl cursor-pointer transition-all duration-200 ease-in-out group/voteYes ${
+                      className={`shrink-0 p-0 border flex items-center justify-center w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl cursor-pointer transition-all duration-200 ease-in-out ${
                         item.currentUserVote === "yes"
-                          ? "bg-emerald-500/20 text-emerald-500 border-emerald-500/40 hover:bg-rose-500/20 hover:text-rose-500 hover:border-rose-500/40"
-                          : "bg-muted/40 text-muted-foreground/60 border-border/40 hover:bg-emerald-500/15 hover:text-emerald-500 hover:border-emerald-500/30"
+                          ? "bg-vote-yes text-white border-vote-yes-border/60 shadow-sm hover:bg-vote-yes-hover scale-105"
+                          : "bg-vote-yes-tint text-vote-yes-text hover:bg-vote-yes/30 border-vote-yes-border/20 hover:border-vote-yes-border/50 hover:scale-105"
                       }`}
                       onClick={() =>
                         onVoteSlot(
@@ -268,26 +326,16 @@ export const RankedSlotsSheet = ({
                       }
                       title={item.currentUserVote === "yes" ? t("voting.unvoted") : t("voting.yes")}
                     >
-                      {item.currentUserVote === "yes" ? (
-                        <>
-                          <Check className="w-4 h-4 stroke-[3] group-hover/voteYes:hidden" />
-                          <Minus className="w-4 h-4 stroke-[3] hidden group-hover/voteYes:block" />
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-4 h-4 stroke-[2] group-hover/voteYes:hidden" />
-                          <Check className="w-4 h-4 stroke-[3] hidden group-hover/voteYes:block" />
-                        </>
-                      )}
+                      <Check className="w-4 h-4 stroke-[3]" />
                     </button>
 
                     {/* Button 2: Może (Maybe) */}
                     <button
                       type="button"
-                      className={`shrink-0 p-0 border flex items-center justify-center w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl cursor-pointer transition-all duration-200 ease-in-out group/voteMaybe ${
+                      className={`shrink-0 p-0 border flex items-center justify-center w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl cursor-pointer transition-all duration-200 ease-in-out ${
                         item.currentUserVote === "maybe"
-                          ? "bg-amber-500/20 text-amber-500 border-amber-500/40 hover:bg-rose-500/20 hover:text-rose-500 hover:border-rose-500/40"
-                          : "bg-muted/40 text-muted-foreground/60 border-border/40 hover:bg-amber-500/15 hover:text-amber-500 hover:border-amber-500/30"
+                          ? "bg-vote-maybe text-white border-vote-maybe-border/60 shadow-sm hover:bg-vote-maybe-hover scale-105"
+                          : "bg-vote-maybe-tint text-vote-maybe-text hover:bg-vote-maybe/30 border-vote-maybe-border/20 hover:border-vote-maybe-border/50 hover:scale-105"
                       }`}
                       onClick={() =>
                         onVoteSlot(
@@ -297,14 +345,26 @@ export const RankedSlotsSheet = ({
                       }
                       title={item.currentUserVote === "maybe" ? t("voting.unvoted") : t("voting.maybe")}
                     >
-                      {item.currentUserVote === "maybe" ? (
-                        <>
-                          <HelpCircle className="w-4 h-4 stroke-[2.5] group-hover/voteMaybe:hidden" />
-                          <Minus className="w-4 h-4 stroke-[3] hidden group-hover/voteMaybe:block" />
-                        </>
-                      ) : (
-                        <HelpCircle className="w-4 h-4 stroke-[2]" />
-                      )}
+                      <span className="font-extrabold text-[13px] leading-none select-none">?</span>
+                    </button>
+
+                    {/* Button 3: Nie (No) */}
+                    <button
+                      type="button"
+                      className={`shrink-0 p-0 border flex items-center justify-center w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl cursor-pointer transition-all duration-200 ease-in-out ${
+                        item.currentUserVote === "no"
+                          ? "bg-vote-no text-white border-vote-no-border/60 shadow-sm hover:bg-vote-no-hover scale-105"
+                          : "bg-vote-no-tint text-vote-no-text hover:bg-vote-no/30 border-vote-no-border/20 hover:border-vote-no-border/50 hover:scale-105"
+                      }`}
+                      onClick={() =>
+                        onVoteSlot(
+                          item.originalIndex,
+                          item.currentUserVote === "no" ? null : "no"
+                        )
+                      }
+                      title={item.currentUserVote === "no" ? t("voting.unvoted") : t("voting.no")}
+                    >
+                      <X className="w-4 h-4 stroke-[3]" />
                     </button>
                   </div>
                 )}
