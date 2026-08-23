@@ -54,11 +54,11 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
 
   const roundedClasses =
     isFirstInRow && isLastInRow
-      ? "rounded-md"
+      ? "rounded-[3px] md:rounded-md"
       : isFirstInRow
-        ? "rounded-l-md rounded-r-none"
+        ? "rounded-l-[3px] md:rounded-l-md rounded-r-none"
         : isLastInRow
-          ? "rounded-r-md rounded-l-none"
+          ? "rounded-r-[3px] md:rounded-r-md rounded-l-none"
           : "rounded-none";
 
   const marginClasses = continuesNextInRow
@@ -67,11 +67,11 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
 
   const paddingClasses = `${
     isFirstInRow && isLastInRow
-      ? "px-1.5"
+      ? "px-0.5 md:px-1.5"
       : isFirstInRow
-        ? "pl-1.5 pr-[9px]"
+        ? "pl-0.5 pr-1 md:pl-1.5 md:pr-[9px]"
         : isLastInRow
-          ? "pl-0.5 pr-1.5"
+          ? "pl-0 pr-0.5 md:pl-0.5 md:pr-1.5"
           : "px-0"
   }`;
 
@@ -134,22 +134,22 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
   const zIndex = isHovered ? "z-40" : isWinningSlot ? "z-20" : isTopVoted ? "z-10" : "z-0";
 
   if (isFirstInRow && isLastInRow) {
-    const border = isHighlighted ? `border-2 ${borderColor}` : "border-2 border-transparent";
+    const border = isHighlighted ? `border md:border-2 ${borderColor}` : "border md:border-2 border-transparent";
     glowClasses = `${border} ${zIndex}`;
   } else if (isFirstInRow) {
     const border = isHighlighted
-      ? `border-y-2 border-l-2 border-r-0 ${borderColor}`
-      : "border-y-2 border-l-2 border-r-0 border-transparent";
+      ? `border-y border-l border-r-0 md:border-y-2 md:border-l-2 md:border-r-0 ${borderColor}`
+      : "border-y border-l border-r-0 md:border-y-2 md:border-l-2 md:border-r-0 border-transparent";
     glowClasses = `${border} ${zIndex}`;
   } else if (isLastInRow) {
     const border = isHighlighted
-      ? `border-y-2 border-r-2 border-l-0 ${borderColor}`
-      : "border-y-2 border-r-2 border-l-0 border-transparent";
+      ? `border-y border-r border-l-0 md:border-y-2 md:border-r-2 md:border-l-0 ${borderColor}`
+      : "border-y border-r border-l-0 md:border-y-2 md:border-r-2 md:border-l-0 border-transparent";
     glowClasses = `${border} ${zIndex}`;
   } else {
     const border = isHighlighted
-      ? `border-y-2 border-x-0 ${borderColor}`
-      : "border-y-2 border-x-0 border-transparent";
+      ? `border-y border-x-0 md:border-y-2 md:border-x-0 ${borderColor}`
+      : "border-y border-x-0 md:border-y-2 md:border-x-0 border-transparent";
     glowClasses = `${border} ${zIndex}`;
   }
 
@@ -237,7 +237,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
         {(props.isFirstEventSlot || isFirstInRow) && !isFinalized && currentUserVote && (
           <button
             type="button"
-            className={`shrink-0 p-0 border flex items-center justify-center w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] rounded-full text-white font-bold cursor-pointer transition-all shadow-sm ${
+            className={`shrink-0 p-0 border flex items-center justify-center w-[12px] h-[12px] md:w-[20px] md:h-[20px] rounded-full text-white font-bold cursor-pointer transition-all shadow-sm ${
               currentUserVote === "yes"
                 ? "bg-vote-yes hover:bg-vote-yes-hover border-vote-yes-border/60"
                 : currentUserVote === "maybe"
@@ -252,60 +252,75 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
             }}
             title="Kliknij, aby usunąć swój głos"
           >
-            {currentUserVote === "yes" && <Check className="w-3 h-3 stroke-[3]" />}
-            {currentUserVote === "maybe" && <span className="font-extrabold text-[11px] leading-none select-none">?</span>}
-            {currentUserVote === "no" && <X className="w-3 h-3 stroke-[3]" />}
+            {currentUserVote === "yes" && <Check className="w-2.5 h-2.5 md:w-3 md:h-3 stroke-[3]" />}
+            {currentUserVote === "maybe" && (
+              <span className="font-extrabold text-[8px] md:text-[11px] leading-none select-none">?</span>
+            )}
+            {currentUserVote === "no" && <X className="w-2.5 h-2.5 md:w-3 md:h-3 stroke-[3]" />}
           </button>
         )}
 
         {/* Vote Counts Summary Badge */}
         {props.isFirstEventSlot && (
-          <div className="flex items-center shrink-0 ml-auto">
-            <div className="shrink-0 px-1.5 py-0.5 rounded bg-black/35 text-[10px] font-bold text-white/90 flex items-center gap-1.5 tabular-nums">
-              {isCompact ? (
-                yesVotes > 0 ? (
-                  <span className="text-emerald-300 inline-flex items-center gap-0.5">
-                    <span className="text-[10px]">✓</span>
-                    <span>{yesVotes}/{totalParticipantsCount}</span>
-                  </span>
-                ) : maybeVotes > 0 ? (
-                  <span className="text-amber-300 inline-flex items-center gap-0.5">
-                    <span className="text-[10px]">?</span>
-                    <span>{maybeVotes}/{totalParticipantsCount}</span>
-                  </span>
-                ) : noVotes > 0 ? (
-                  <span className="text-rose-300 inline-flex items-center gap-0.5">
-                    <span className="text-[10px]">✕</span>
-                    <span>{noVotes}/{totalParticipantsCount}</span>
-                  </span>
-                ) : (
-                  <span className="text-white/60">0/{totalParticipantsCount}</span>
-                )
-              ) : (
-                <>
-                  {yesVotes > 0 && (
+          <>
+            {/* Mobile: Only "Tak" votes count */}
+            <div className="flex md:hidden items-center shrink-0 ml-auto">
+              {yesVotes > 0 ? (
+                <div className="shrink-0 px-0.5 py-0.5 rounded bg-black/45 text-[9.5px] font-bold text-emerald-300 flex items-center gap-0.5 leading-none tabular-nums">
+                  <span className="text-[8.5px]">✓</span>
+                  <span>{yesVotes}</span>
+                </div>
+              ) : null}
+            </div>
+
+            {/* Desktop: Compact vs Full */}
+            <div className="hidden md:flex items-center shrink-0 ml-auto">
+              <div className="shrink-0 px-1.5 py-0.5 rounded bg-black/35 text-[10px] font-bold text-white/90 flex items-center gap-1.5 tabular-nums">
+                {isCompact ? (
+                  yesVotes > 0 ? (
                     <span className="text-emerald-300 inline-flex items-center gap-0.5">
                       <span className="text-[10px]">✓</span>
-                      <span>{yesVotes}</span>
+                      <span>{yesVotes}/{totalParticipantsCount}</span>
                     </span>
-                  )}
-                  {maybeVotes > 0 && (
+                  ) : maybeVotes > 0 ? (
                     <span className="text-amber-300 inline-flex items-center gap-0.5">
                       <span className="text-[10px]">?</span>
-                      <span>{maybeVotes}</span>
+                      <span>{maybeVotes}/{totalParticipantsCount}</span>
                     </span>
-                  )}
-                  {noVotes > 0 && (
+                  ) : noVotes > 0 ? (
                     <span className="text-rose-300 inline-flex items-center gap-0.5">
                       <span className="text-[10px]">✕</span>
-                      <span>{noVotes}</span>
+                      <span>{noVotes}/{totalParticipantsCount}</span>
                     </span>
-                  )}
-                  {totalVotesCast === 0 && <span className="text-white/60">0/{totalParticipantsCount}</span>}
-                </>
-              )}
+                  ) : (
+                    <span className="text-white/60">0/{totalParticipantsCount}</span>
+                  )
+                ) : (
+                  <>
+                    {yesVotes > 0 && (
+                      <span className="text-emerald-300 inline-flex items-center gap-0.5">
+                        <span className="text-[10px]">✓</span>
+                        <span>{yesVotes}</span>
+                      </span>
+                    )}
+                    {maybeVotes > 0 && (
+                      <span className="text-amber-300 inline-flex items-center gap-0.5">
+                        <span className="text-[10px]">?</span>
+                        <span>{maybeVotes}</span>
+                      </span>
+                    )}
+                    {noVotes > 0 && (
+                      <span className="text-rose-300 inline-flex items-center gap-0.5">
+                        <span className="text-[10px]">✕</span>
+                        <span>{noVotes}</span>
+                      </span>
+                    )}
+                    {totalVotesCast === 0 && <span className="text-white/60">0/{totalParticipantsCount}</span>}
+                  </>
+                )}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>

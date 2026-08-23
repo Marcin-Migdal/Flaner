@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, Button } from "@flaner/ui-components";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, useSidebar } from "@flaner/ui-components";
 import { format } from "date-fns";
 import { Check, X, Loader2 } from "lucide-react";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
@@ -25,6 +25,7 @@ export function SlotVotingModal({
 }: SlotVotingModalProps) {
   const { t } = usePlanningTranslations();
   const { mutateAsync: voteSlot, isPending: isVoting } = useVoteSlotMutation();
+  const { isMobile } = useSidebar();
 
   if (!event || slotIndex === null || slotIndex < 0 || !event.proposedDates[slotIndex]) {
     return null;
@@ -38,6 +39,10 @@ export function SlotVotingModal({
     const currentVote = votes[currentUserId];
     // Toggle off if clicked the same vote
     const newVote = currentVote === vote ? null : vote;
+
+    if (isMobile || (typeof window !== "undefined" && window.innerWidth < 768)) {
+      onOpenChange(false);
+    }
 
     await voteSlot({
       eventId: event.id,

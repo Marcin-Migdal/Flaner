@@ -2,6 +2,7 @@ import { BigCalendar, Button } from "@flaner/ui-components";
 import { parseISO } from "date-fns";
 import { ListSortDescending } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useIsMobile } from "../../../../../../shared/src/hooks/useIsMobile";
 import type { SchedulerEvent, VoteType } from "../../../../api/events/types";
 import type { ParticipantResult } from "../../../../api/participants";
 import { AvailabilityGridView } from "../../../../components/AvailabilityGridView";
@@ -35,23 +36,29 @@ export const SchedulerBigCalendar = ({
   onOpenRankedSheet,
 }: SchedulerBigCalendarProps) => {
   const { t } = usePlanningTranslations();
+  const isMobile = useIsMobile();
 
   const [maxEventsPerDay, setMaxEventsPerDay] = useState<number>(() => {
+    if (isMobile) return 2;
+
     if (typeof window !== "undefined") {
       return window.innerHeight <= MD_TABLET_HEIGHT ? 3 : 4;
     }
+
     return 3;
   });
 
   useEffect(() => {
     const handleResize = () => {
-      setMaxEventsPerDay(window.innerHeight <= MD_TABLET_HEIGHT ? 3 : 4);
+      const newMaxEventsPerDay = isMobile ? 2 : window.innerHeight <= MD_TABLET_HEIGHT ? 3 : 4;
+
+      setMaxEventsPerDay(newMaxEventsPerDay);
     };
 
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [isMobile]);
 
   return (
     <BigCalendar

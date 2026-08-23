@@ -1,7 +1,7 @@
 import { Popover, PopoverContent, PopoverTrigger, type CalendarEvent } from "@flaner/ui-components";
 import { format } from "date-fns";
 import { enUS, pl } from "date-fns/locale";
-import { Check, HelpCircle, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import type { SlotMetaData } from "../SlotEventComponent";
 
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
@@ -27,10 +27,11 @@ export function SlotMoreEventsPopover({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="text-[11px] text-muted-foreground hover:text-foreground cursor-pointer px-1 mx-1 font-medium hover:bg-muted/50 rounded-md py-0.5 mt-0.5 transition-colors block text-left bg-transparent border-0"
+          className="text-[10px] md:text-[11px] text-muted-foreground hover:text-foreground cursor-pointer px-0.5 md:px-1 mx-0.5 md:mx-1 font-medium hover:bg-muted/50 rounded-md py-0.5 mt-0.5 transition-colors block text-left bg-transparent border-0"
           onClick={(e) => e.stopPropagation()}
         >
-          +{events.length} {t("calendar.more")}
+          <span className="md:hidden">+{events.length}</span>
+          <span className="hidden md:inline">+{events.length} {t("calendar.more")}</span>
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -84,8 +85,8 @@ export function SlotMoreEventsPopover({
                       type="button"
                       className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${
                         currentUserVote === "yes"
-                          ? "bg-emerald-600 text-white border-emerald-500 shadow-md scale-105"
-                          : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/30 hover:border-emerald-500/50 hover:scale-105"
+                          ? "bg-vote-yes text-white border-vote-yes-border/60 shadow-md scale-105"
+                          : "bg-vote-yes-tint text-vote-yes-text border-vote-yes-border/20 hover:bg-vote-yes/30 hover:border-vote-yes-border/50 hover:scale-105"
                       }`}
                       title={t("voting.yes")}
                       aria-label={t("voting.yes")}
@@ -102,8 +103,8 @@ export function SlotMoreEventsPopover({
                       type="button"
                       className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${
                         currentUserVote === "maybe"
-                          ? "bg-amber-600 text-white border-amber-500 shadow-md scale-105"
-                          : "bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/30 hover:border-amber-500/50 hover:scale-105"
+                          ? "bg-vote-maybe text-white border-vote-maybe-border/60 shadow-md scale-105"
+                          : "bg-vote-maybe-tint text-vote-maybe-text border-vote-maybe-border/20 hover:bg-vote-maybe/30 hover:border-vote-maybe-border/50 hover:scale-105"
                       }`}
                       title={t("voting.maybe")}
                       aria-label={t("voting.maybe")}
@@ -112,7 +113,7 @@ export function SlotMoreEventsPopover({
                         meta.onQuickVote?.(currentUserVote === "maybe" ? null : "maybe");
                       }}
                     >
-                      <HelpCircle className="w-3.5 h-3.5 stroke-[3]" />
+                      <span className="font-extrabold text-[12px] leading-none select-none">?</span>
                     </button>
 
                     {/* No Button */}
@@ -120,8 +121,8 @@ export function SlotMoreEventsPopover({
                       type="button"
                       className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${
                         currentUserVote === "no"
-                          ? "bg-rose-600 text-white border-rose-500 shadow-md scale-105"
-                          : "bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/30 hover:border-rose-500/50 hover:scale-105"
+                          ? "bg-vote-no text-white border-vote-no-border/60 shadow-md scale-105"
+                          : "bg-vote-no-tint text-vote-no-text border-vote-no-border/20 hover:bg-vote-no/30 hover:border-vote-no-border/50 hover:scale-105"
                       }`}
                       title={t("voting.no")}
                       aria-label={t("voting.no")}
