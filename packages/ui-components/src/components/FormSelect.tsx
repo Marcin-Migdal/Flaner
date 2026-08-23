@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useController, type UseControllerProps, type FieldValues, type FieldPath, type PathValue } from "react-hook-form";
-import { CustomSelectProps, Select } from "./Select";
+import { CustomSelectProps, Select, type SelectOption } from "./Select";
 
 export type FormSelectProps<
   TFieldValues extends FieldValues = FieldValues,
@@ -32,11 +32,13 @@ export function FormSelect<
   const selectedOption = useMemo(() => {
     if (!props.options) return null;
     for (const item of props.options) {
-      if ("options" in item) {
-        const found = item.options.find((opt) => opt.value === field.value);
+      if ("options" in item && Array.isArray((item as { options: readonly SelectOption[] }).options)) {
+        const found = (item as { options: readonly SelectOption[] }).options.find(
+          (opt: SelectOption) => opt.value === field.value,
+        );
         if (found) return found;
-      } else if (item.value === field.value) {
-        return item;
+      } else if ("value" in item && (item as SelectOption).value === field.value) {
+        return item as SelectOption;
       }
     }
     return null;

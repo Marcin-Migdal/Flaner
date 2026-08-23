@@ -55,6 +55,7 @@ export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldPro
         const timer = setTimeout(() => internalInputRef.current?.focus(), 50);
         return () => clearTimeout(timer);
       }
+      return undefined;
     }, [isExpandedProp, alwaysOpen]);
 
     const setRefs = (node: HTMLInputElement) => {

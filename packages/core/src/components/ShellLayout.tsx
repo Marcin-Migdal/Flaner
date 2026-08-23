@@ -96,28 +96,18 @@ function ShellLayoutContent() {
     return location.pathname.startsWith(path);
   };
 
-  // Auto-expand the active section whenever the route changes
-  useEffect(() => {
-    const activeParent = navItems.find(
-      (item) => item.children && item.children.length > 0 && isLinkActive(item.path),
-    );
-    if (activeParent) {
-      setExpandedItems((prev) => ({
-        ...prev,
-        [activeParent.path]: true,
-      }));
-    }
-  }, [location.pathname, navItems]);
-
   const toggleExpanded = (path: string, event?: React.MouseEvent) => {
     if (event) {
       event.preventDefault();
       event.stopPropagation();
     }
-    setExpandedItems((prev) => ({
-      ...prev,
-      [path]: !prev[path],
-    }));
+    setExpandedItems((prev) => {
+      const current = prev[path] ?? isLinkActive(path);
+      return {
+        ...prev,
+        [path]: !current,
+      };
+    });
   };
 
   const handleNavClick = () => {
@@ -177,7 +167,7 @@ function ShellLayoutContent() {
           <SidebarMenu>
             {navItems.map((item) => {
               const hasChildren = item.children && item.children.length > 0;
-              const isExpanded = expandedItems[item.path] || false;
+              const isExpanded = expandedItems[item.path] ?? isLinkActive(item.path);
 
               return (
                 <SidebarMenuItem key={item.path}>
