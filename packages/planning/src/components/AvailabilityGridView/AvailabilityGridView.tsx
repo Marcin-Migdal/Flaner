@@ -85,7 +85,7 @@ export const AvailabilityGridView = ({
   const userColWidth = isMobile ? "150px" : "minmax(160px, 200px)";
   const gridTemplateColumns = `${userColWidth} repeat(${event.proposedDates.length}, minmax(105px, 1fr))`;
 
-  const handleVoteClick = async (slotIndex: number, clickedVote: "yes" | "maybe", currentVote?: VoteType) => {
+  const handleVoteClick = async (slotIndex: number, clickedVote: VoteType, currentVote?: VoteType) => {
     if (event.isFinalized || !onVoteSlot) return;
     const nextVote: VoteType | null = currentVote === clickedVote ? null : clickedVote;
     await onVoteSlot(slotIndex, nextVote);

@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@flaner/ui-components";
-import { Check, HelpCircle, Minus, Plus, X } from "lucide-react";
+import { Check, Minus, X } from "lucide-react";
 import type { ProposedDateSlot, VoteType } from "../../../api/events/types";
 import type { ParticipantResult } from "../../../api/participants";
 import { usePlanningTranslations } from "../../../hooks/usePlanningTranslations";
@@ -12,7 +12,7 @@ export type AvailabilityGridParticipantProps = {
   proposedDates: ProposedDateSlot[];
   isFinalized?: boolean;
   gridTemplateColumns: string;
-  onVoteClick: (slotIndex: number, clickedVote: "yes" | "maybe", currentVote?: VoteType) => void;
+  onVoteClick: (slotIndex: number, clickedVote: VoteType, currentVote?: VoteType) => void;
 };
 
 export const AvailabilityGridParticipant = ({
@@ -87,53 +87,50 @@ export const AvailabilityGridParticipant = ({
                 {/* Button 1: Tak (Yes) toggle */}
                 <button
                   type="button"
-                  className={`shrink-0 p-0 border flex items-center justify-center w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-xl cursor-pointer transition-all duration-200 ease-in-out group/voteYes ${
+                  className={`shrink-0 p-0 border flex items-center justify-center w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-xl cursor-pointer transition-all duration-200 ease-in-out ${
                     vote === "yes"
-                      ? "bg-emerald-500/20 text-emerald-500 border-emerald-500/40 hover:bg-rose-500/20 hover:text-rose-500 hover:border-rose-500/40"
-                      : "bg-muted/30 text-muted-foreground/50 border-border/40 hover:bg-emerald-500/15 hover:text-emerald-500 hover:border-emerald-500/30"
+                      ? "bg-vote-yes text-white border border-vote-yes-border/60 shadow-sm hover:bg-vote-yes-hover scale-105"
+                      : "bg-vote-yes-tint text-vote-yes-text hover:bg-vote-yes/30 border border-vote-yes-border/20 hover:border-vote-yes-border/50 hover:scale-105"
                   }`}
                   onClick={() => onVoteClick(slotIdx, "yes", vote)}
                   title={vote === "yes" ? t("voting.unvoted") : t("voting.yes")}
                 >
-                  {vote === "yes" ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3] group-hover/voteYes:hidden" />
-                      <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3] hidden group-hover/voteYes:block" />
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2] group-hover/voteYes:hidden" />
-                      <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3] hidden group-hover/voteYes:block" />
-                    </>
-                  )}
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
                 </button>
 
                 {/* Button 2: Może (Maybe) toggle */}
                 <button
                   type="button"
-                  className={`shrink-0 p-0 border flex items-center justify-center w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-xl cursor-pointer transition-all duration-200 ease-in-out group/voteMaybe ${
+                  className={`shrink-0 p-0 border flex items-center justify-center w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-xl cursor-pointer transition-all duration-200 ease-in-out ${
                     vote === "maybe"
-                      ? "bg-amber-500/20 text-amber-500 border-amber-500/40 hover:bg-rose-500/20 hover:text-rose-500 hover:border-rose-500/40"
-                      : "bg-muted/30 text-muted-foreground/50 border-border/40 hover:bg-amber-500/15 hover:text-amber-500 hover:border-amber-500/30"
+                      ? "bg-vote-maybe text-white border border-vote-maybe-border/60 shadow-sm hover:bg-vote-maybe-hover scale-105"
+                      : "bg-vote-maybe-tint text-vote-maybe-text hover:bg-vote-maybe/30 border border-vote-maybe-border/20 hover:border-vote-maybe-border/50 hover:scale-105"
                   }`}
                   onClick={() => onVoteClick(slotIdx, "maybe", vote)}
                   title={vote === "maybe" ? t("voting.unvoted") : t("voting.maybe")}
                 >
-                  {vote === "maybe" ? (
-                    <>
-                      <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5] group-hover/voteMaybe:hidden" />
-                      <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3] hidden group-hover/voteMaybe:block" />
-                    </>
-                  ) : (
-                    <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2]" />
-                  )}
+                  <span className="font-extrabold text-[12px] leading-none select-none">?</span>
+                </button>
+
+                {/* Button 3: Nie (No) toggle */}
+                <button
+                  type="button"
+                  className={`shrink-0 p-0 border flex items-center justify-center w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-xl cursor-pointer transition-all duration-200 ease-in-out ${
+                    vote === "no"
+                      ? "bg-vote-no text-white border border-vote-no-border/60 shadow-sm hover:bg-vote-no-hover scale-105"
+                      : "bg-vote-no-tint text-vote-no-text hover:bg-vote-no/30 border border-vote-no-border/20 hover:border-vote-no-border/50 hover:scale-105"
+                  }`}
+                  onClick={() => onVoteClick(slotIdx, "no", vote)}
+                  title={vote === "no" ? t("voting.unvoted") : t("voting.no")}
+                >
+                  <X className="w-3.5 h-3.5 stroke-[3]" />
                 </button>
               </div>
             ) : (
               <div className="flex items-center justify-center">
                 {vote === "yes" && (
                   <div
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-500/20 text-emerald-500 border border-emerald-500/40 flex items-center justify-center transition-all duration-300 ease-in-out"
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-vote-yes text-white border border-vote-yes-border/60 flex items-center justify-center transition-all duration-300 ease-in-out shadow-sm"
                     title={t("voting.yes")}
                   >
                     <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" />
@@ -142,19 +139,19 @@ export const AvailabilityGridParticipant = ({
 
                 {vote === "maybe" && (
                   <div
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-500/20 text-amber-500 border border-amber-500/40 flex items-center justify-center transition-all duration-300 ease-in-out"
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-vote-maybe text-white border border-vote-maybe-border/60 flex items-center justify-center transition-all duration-300 ease-in-out shadow-sm"
                     title={t("voting.maybe")}
                   >
-                    <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
+                    <span className="font-extrabold text-[12px] leading-none select-none">?</span>
                   </div>
                 )}
 
                 {vote === "no" && (
                   <div
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-rose-500/20 text-rose-500 border border-rose-500/40 flex items-center justify-center transition-all duration-300 ease-in-out"
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-vote-no text-white border border-vote-no-border/60 flex items-center justify-center transition-all duration-300 ease-in-out shadow-sm"
                     title={t("voting.no")}
                   >
-                    <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" />
+                    <X className="w-3.5 h-3.5 stroke-[3]" />
                   </div>
                 )}
 

@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, Button } from "@flaner/ui-components";
 import { format } from "date-fns";
-import { Check, HelpCircle, X, Loader2 } from "lucide-react";
+import { Check, X, Loader2 } from "lucide-react";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import type { ParticipantResult } from "../../api/participants";
 import type { SchedulerEvent, VoteType } from "../../api/events/types";
@@ -93,11 +93,11 @@ export function SlotVotingModal({
           <div className="grid grid-cols-3 gap-3">
             <Button
               type="button"
-              variant={currentUserVote === "yes" ? "primary" : "outline"}
-              className={`h-11 flex flex-col items-center justify-center gap-1 font-semibold rounded-xl border-2 transition-all ${
+              variant="outline"
+              className={`h-11 flex flex-col items-center justify-center gap-1 font-semibold rounded-xl border bg-clip-border transition-all ${
                 currentUserVote === "yes"
-                  ? "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-md scale-[1.02]"
-                  : "hover:border-emerald-500/50 hover:bg-emerald-500/10 text-emerald-500 border-border/60"
+                  ? "bg-vote-yes hover:bg-vote-yes-hover text-white border-vote-yes-border/60 shadow-md scale-[1.02]"
+                  : "hover:border-vote-yes-border/50 hover:bg-vote-yes-tint text-vote-yes-text border-border/60"
               }`}
               onClick={() => handleVote("yes")}
               disabled={isVoting}
@@ -114,11 +114,11 @@ export function SlotVotingModal({
 
             <Button
               type="button"
-              variant={currentUserVote === "maybe" ? "primary" : "outline"}
-              className={`h-11 flex flex-col items-center justify-center gap-1 font-semibold rounded-xl border-2 transition-all ${
+              variant="outline"
+              className={`h-11 flex flex-col items-center justify-center gap-1 font-semibold rounded-xl border bg-clip-border transition-all ${
                 currentUserVote === "maybe"
-                  ? "bg-amber-600 hover:bg-amber-700 text-white border-amber-600 shadow-md scale-[1.02]"
-                  : "hover:border-amber-500/50 hover:bg-amber-500/10 text-amber-500 border-border/60"
+                  ? "bg-vote-maybe hover:bg-vote-maybe-hover text-white border-vote-maybe-border/60 shadow-md scale-[1.02]"
+                  : "hover:border-vote-maybe-border/50 hover:bg-vote-maybe-tint text-vote-maybe-text border-border/60"
               }`}
               onClick={() => handleVote("maybe")}
               disabled={isVoting}
@@ -127,7 +127,7 @@ export function SlotVotingModal({
                 {isVoting && currentUserVote !== "maybe" ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <HelpCircle className="w-3.5 h-3.5 stroke-[3]" />
+                  <span className="font-extrabold text-[13px] leading-none select-none">?</span>
                 )}
                 {t("voting.maybe")}
               </div>
@@ -135,11 +135,11 @@ export function SlotVotingModal({
 
             <Button
               type="button"
-              variant={currentUserVote === "no" ? "primary" : "outline"}
-              className={`h-11 flex flex-col items-center justify-center gap-1 font-semibold rounded-xl border-2 transition-all ${
+              variant="outline"
+              className={`h-11 flex flex-col items-center justify-center gap-1 font-semibold rounded-xl border bg-clip-border transition-all ${
                 currentUserVote === "no"
-                  ? "bg-rose-600 hover:bg-rose-700 text-white border-rose-600 shadow-md scale-[1.02]"
-                  : "hover:border-rose-500/50 hover:bg-rose-500/10 text-rose-500 border-border/60"
+                  ? "bg-vote-no hover:bg-vote-no-hover text-white border-vote-no-border/60 shadow-md scale-[1.02]"
+                  : "hover:border-vote-no-border/50 hover:bg-vote-no-tint text-vote-no-text border-border/60"
               }`}
               onClick={() => handleVote("no")}
               disabled={isVoting}
@@ -161,7 +161,7 @@ export function SlotVotingModal({
           {/* Yes Section */}
           {yesParticipants.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-bold text-emerald-500 uppercase tracking-wider flex items-center gap-1">
+              <span className="text-[11px] font-bold text-vote-yes-text uppercase tracking-wider flex items-center gap-1">
                 <Check className="w-3 h-3 stroke-[3]" />
                 {t("voting.yes")} ({yesParticipants.length})
               </span>
@@ -169,13 +169,13 @@ export function SlotVotingModal({
                 {yesParticipants.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full text-xs font-medium text-emerald-400"
+                    className="flex items-center gap-2 bg-vote-yes-tint border border-vote-yes-border/30 px-2.5 py-1 rounded-full text-xs font-medium text-vote-yes-text"
                   >
-                    <div className="w-4 h-4 rounded-full bg-emerald-500/20 overflow-hidden shrink-0">
+                    <div className="w-4 h-4 rounded-full bg-vote-yes/20 overflow-hidden shrink-0">
                       {p.avatarUrl ? (
                         <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[9px] font-bold text-emerald-400">
+                        <div className="w-full h-full flex items-center justify-center text-[9px] font-bold text-vote-yes-text">
                           {p.name.charAt(0).toUpperCase()}
                         </div>
                       )}
@@ -190,21 +190,21 @@ export function SlotVotingModal({
           {/* Maybe Section */}
           {maybeParticipants.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1">
-                <HelpCircle className="w-3 h-3 stroke-[3]" />
+              <span className="text-[11px] font-bold text-vote-maybe-text uppercase tracking-wider flex items-center gap-1">
+                <span className="font-extrabold text-[12px] leading-none select-none">?</span>
                 {t("voting.maybe")} ({maybeParticipants.length})
               </span>
               <div className="flex flex-wrap gap-2">
                 {maybeParticipants.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full text-xs font-medium text-amber-400"
+                    className="flex items-center gap-2 bg-vote-maybe-tint border border-vote-maybe-border/30 px-2.5 py-1 rounded-full text-xs font-medium text-vote-maybe-text"
                   >
-                    <div className="w-4 h-4 rounded-full bg-amber-500/20 overflow-hidden shrink-0">
+                    <div className="w-4 h-4 rounded-full bg-vote-maybe/20 overflow-hidden shrink-0">
                       {p.avatarUrl ? (
                         <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[9px] font-bold text-amber-400">
+                        <div className="w-full h-full flex items-center justify-center text-[9px] font-bold text-vote-maybe-text">
                           {p.name.charAt(0).toUpperCase()}
                         </div>
                       )}
@@ -219,7 +219,7 @@ export function SlotVotingModal({
           {/* No Section */}
           {noParticipants.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-bold text-rose-500 uppercase tracking-wider flex items-center gap-1">
+              <span className="text-[11px] font-bold text-vote-no-text uppercase tracking-wider flex items-center gap-1">
                 <X className="w-3 h-3 stroke-[3]" />
                 {t("voting.no")} ({noParticipants.length})
               </span>
@@ -227,13 +227,13 @@ export function SlotVotingModal({
                 {noParticipants.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center gap-2 bg-rose-500/10 border border-rose-500/20 px-2.5 py-1 rounded-full text-xs font-medium text-rose-400"
+                    className="flex items-center gap-2 bg-vote-no-tint border border-vote-no-border/30 px-2.5 py-1 rounded-full text-xs font-medium text-vote-no-text"
                   >
-                    <div className="w-4 h-4 rounded-full bg-rose-500/20 overflow-hidden shrink-0">
+                    <div className="w-4 h-4 rounded-full bg-vote-no/20 overflow-hidden shrink-0">
                       {p.avatarUrl ? (
                         <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[9px] font-bold text-rose-400">
+                        <div className="w-full h-full flex items-center justify-center text-[9px] font-bold text-vote-no-text">
                           {p.name.charAt(0).toUpperCase()}
                         </div>
                       )}

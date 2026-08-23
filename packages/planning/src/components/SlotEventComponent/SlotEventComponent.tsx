@@ -183,8 +183,8 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
               type="button"
               className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
                 currentUserVote === "yes"
-                  ? "bg-[#3ea874] text-white border border-[#4eb583]/60 shadow-sm hover:bg-[#349466] scale-105"
-                  : "bg-[#3ea874]/15 text-[#3ea874] hover:bg-[#3ea874]/30 border border-[#3ea874]/20 hover:border-[#3ea874]/50 hover:scale-105"
+                  ? "bg-vote-yes text-white border border-vote-yes-border/60 shadow-sm hover:bg-vote-yes-hover scale-105"
+                  : "bg-vote-yes-tint text-vote-yes-text hover:bg-vote-yes/30 border border-vote-yes-border/20 hover:border-vote-yes-border/50 hover:scale-105"
               }`}
               title={currentUserVote === "yes" ? "Cofnij głos" : "Głosuj na Tak"}
               onClick={(e) => {
@@ -200,8 +200,8 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
               type="button"
               className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
                 currentUserVote === "maybe"
-                  ? "bg-[#d9832b] text-white border border-[#e5923c]/60 shadow-sm hover:bg-[#c47220] scale-105"
-                  : "bg-[#d9832b]/15 text-[#d9832b] hover:bg-[#d9832b]/30 border border-[#d9832b]/20 hover:border-[#d9832b]/50 hover:scale-105"
+                  ? "bg-vote-maybe text-white border border-vote-maybe-border/60 shadow-sm hover:bg-vote-maybe-hover scale-105"
+                  : "bg-vote-maybe-tint text-vote-maybe-text hover:bg-vote-maybe/30 border border-vote-maybe-border/20 hover:border-vote-maybe-border/50 hover:scale-105"
               }`}
               title={currentUserVote === "maybe" ? "Cofnij głos" : "Głosuj na Może"}
               onClick={(e) => {
@@ -217,8 +217,8 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
               type="button"
               className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
                 currentUserVote === "no"
-                  ? "bg-[#c24b5d] text-white border border-[#cf5e70]/60 shadow-sm hover:bg-[#af3e4f] scale-105"
-                  : "bg-[#c24b5d]/15 text-[#c24b5d] hover:bg-[#c24b5d]/30 border border-[#c24b5d]/20 hover:border-[#c24b5d]/50 hover:scale-105"
+                  ? "bg-vote-no text-white border border-vote-no-border/60 shadow-sm hover:bg-vote-no-hover scale-105"
+                  : "bg-vote-no-tint text-vote-no-text hover:bg-vote-no/30 border border-vote-no-border/20 hover:border-vote-no-border/50 hover:scale-105"
               }`}
               title={currentUserVote === "no" ? "Cofnij głos" : "Głosuj na Nie"}
               onClick={(e) => {
@@ -239,10 +239,10 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
             type="button"
             className={`shrink-0 p-0 border flex items-center justify-center w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] rounded-full text-white font-bold cursor-pointer transition-all shadow-sm ${
               currentUserVote === "yes"
-                ? "bg-[#3ea874] hover:bg-[#349466] border-[#4eb583]/60"
+                ? "bg-vote-yes hover:bg-vote-yes-hover border-vote-yes-border/60"
                 : currentUserVote === "maybe"
-                  ? "bg-[#d9832b] hover:bg-[#c47220] border-[#e5923c]/60"
-                  : "bg-[#c24b5d] hover:bg-[#af3e4f] border-[#cf5e70]/60"
+                  ? "bg-vote-maybe hover:bg-vote-maybe-hover border-vote-maybe-border/60"
+                  : "bg-vote-no hover:bg-vote-no-hover border-vote-no-border/60"
             }`}
             onClick={(e) => {
               e.stopPropagation();
