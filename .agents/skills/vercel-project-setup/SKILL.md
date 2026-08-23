@@ -1,52 +1,187 @@
 ---
 name: vercel-project-setup
-description: Script and instructions for properly deploying and configuring a new MFE in the Vercel dashboard for the Flaner project.
+description: Comprehensive guide and automation patterns for setting up, deploying, configuring, and connecting Micro-Frontends (MFEs) or Host apps to Vercel in the Flaner Nx Monorepo with Module Federation. Make sure to use this skill whenever the user mentions "deploy to vercel", "vercel setup", "new MFE on vercel", "vercel envs", "configure vercel.json", "Vercel freeze", "missing dist directory on vercel", or "module federation vercel deployment".
 ---
 
-# Instructions for Configuring a New Vercel Project (MFE)
+# Vercel Project Setup & Deployment Guide
 
-This skill contains the necessary steps to correctly deploy a new Micro-Frontend (MFE) project on Vercel and connect it to the working Flaner monorepo with Module Federation. Use it as a template to avoid previous configuration mistakes (e.g., incorrect Root Directory, Git issues, or forgotten configurations).
+This skill provides unified instructions and automation patterns for deploying and configuring Micro-Frontends (MFEs) and the main Host (`core`) application on Vercel within the Flaner Nx Monorepo.
 
-## 1. Understanding the Structure and Prerequisites
-Before configuring Vercel, ensure that the new MFE (as an AI, you should handle this):
-- Has a correct Vite configuration file (`vite.config.ts`) that flawlessly exposes the application via Module Federation.
-- Has its own unique dev port and a unique name set.
-- In the central project (`packages/core`), the environment variable has been correctly planned in the configuration (e.g., `VITE_MFE_NEWPROJECT_URL`), and the MFE module has been added to `vite.federation.ts` and the relevant routings.
+---
 
-## 2. What You Must Do Automatically (As AI)
-When asked to add or deploy an MFE, make sure you have completed these steps for the project BEFORE asking the user to take action:
-1. Update the environment files (e.g., `.env`, `.env.example`) in `core` with the new URL variable for this MFE (e.g., `VITE_MFE_COMMUNITY_URL`).
-2. Add routing for this MFE in `packages/core/src/App.tsx` and appropriate entries to the side navigation (e.g., `ShellLayout.tsx`, `PageTilesView.tsx`).
-3. Add type declarations for the remote module in `.d.ts` inside the `core` project.
-4. **Critical:** Ensure that the newly added code and MFE project are added and committed to the Git repository (`git add` / `git commit`). Otherwise, Vercel (and the linked Git itself) will not "see" it!
+## 1. Architecture & Module Federation Rules on Vercel
 
-## 3. Manual Instructions for the User
-**WARNING:** After generating the code, ALWAYS copy and print the following list of steps in your final message that the USER must perform manually in the Vercel dashboard. As an AI, you do not have direct access to the user's Vercel account.
+In our Vite + Module Federation architecture:
+- Each MFE (`settings`, `community`, `planning`, `shopping`) and the main Host container (`core`) are deployed as **independent, separate projects on Vercel**.
+- The Host (`core`) dynamically fetches each MFE's `remoteEntry.js` from its production URL at runtime.
+- **Deployment sequence:**
+  1. Deploy the **MFE Project** first to obtain its live URL (e.g. `https://flaner-planning.vercel.app`).
+  2. Configure the **Host (`core`) Project** by setting the corresponding environment variable (e.g. `VITE_MFE_PLANNING_URL`) to that URL (without a trailing slash) and trigger a Redeploy on Core.
 
-Pass **exactly the following text** to the user:
+---
+
+## 2. Standard `vercel.json` Configuration
+
+Every subproject in `packages/<package-name>` MUST have its own `vercel.json` with the following standard configuration:
+
+```json
+{
+  "buildCommand": "cd ../.. && npx nx run <PACKAGE_NAME>:build",
+  "outputDirectory": "dist",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-Requested-With, content-type, Authorization"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+### Key Rules for `vercel.json`:
+1. **Root Location**: Place `vercel.json` inside the root of the specific package (e.g. `packages/planning/vercel.json`), NOT at the root of the monorepo.
+2. **Build Command**: Use `cd ../.. && npx nx run <PACKAGE_NAME>:build`. This ensures Nx runs from the monorepo root.
+3. **CORS Headers**: `Access-Control-Allow-Origin: *` is strictly required for Module Federation remotes so the host can fetch `remoteEntry.js`.
+4. **SPA Rewrites**: Always use regular expression `"/(.*)"` mapping to `"/index.html"` to avoid 404s on deep route refreshes. Never enable `"cleanUrls": true`.
+
+---
+
+## 3. Automated CLI Tasks by AI (Preventing CLI Freezes)
+
+> ⚠️ **CRITICAL WARNING ON VERCEL CLI FREEZES:**  
+> Running multiple sequential or chained `npx vercel env add` commands in the background terminal will freeze indefinitely waiting for interactive prompts (due to `VITE_` prefix warnings or environment selections).
+> **NEVER** run chained interactive commands or spawn parallel CLI tasks for environment variables.
+
+### Safe Bulk Environment Variable Injection Pattern
+When setting up environment variables for a Vercel project via CLI, create a temporary `.cjs` script (`add_envs.cjs`) that uses `execSync` with `stdio: 'ignore'`, `--no-sensitive`, `--yes`, and `--non-interactive`.
+
+```javascript
+const { execSync } = require('child_process');
+const path = require('path');
+
+const targetDir = path.resolve(__dirname, 'packages/<PACKAGE_NAME>');
+const coreDir = path.resolve(__dirname, 'packages/core');
+
+const envs = [
+  { name: 'VITE_API_KEY', value: '...' },
+  { name: 'VITE_AUTH_DOMAIN', value: 'flaner-v2.firebaseapp.com' },
+  { name: 'VITE_PROJECT_ID', value: 'flaner-v2' },
+  { name: 'VITE_STORAGE_BUCKET', value: 'flaner-v2.firebasestorage.app' },
+  { name: 'VITE_MESSAGING_SENDER_ID', value: '477065237058' },
+  { name: 'VITE_APP_ID', value: '1:477065237058:web:416d3f0cb0ccdc9bb993db' },
+  { name: 'VITE_MEASUREMENT_ID', value: 'G-PY8FZ4R5N7' },
+  { name: 'VITE_CLOUDINARY_CLOUD_NAME', value: 'ddls9chw4' },
+  { name: 'VITE_APP_NAME', value: 'Flaner' }
+];
+
+function addEnv(projectDir, envName, envValue) {
+  const environments = ['production', 'preview', 'development'];
+  for (const env of environments) {
+    try {
+      execSync(`npx vercel env add ${envName} ${env} --value "${envValue}" --no-sensitive --yes --non-interactive`, {
+        cwd: projectDir,
+        stdio: 'ignore'
+      });
+      console.log(`  ✓ Added ${envName} to ${env}`);
+    } catch (e) {
+      console.error(`  ✗ Failed to add ${envName} to ${env}:`, e.message);
+    }
+  }
+}
+
+try {
+  // 1. Create/link project
+  execSync('npx vercel link --yes --project flaner-<PACKAGE_NAME>', { cwd: targetDir, stdio: 'inherit' });
+
+  // 2. Set variables
+  for (const item of envs) {
+    addEnv(targetDir, item.name, item.value);
+  }
+
+  // 3. Update Core Host with new MFE URL
+  execSync('npx vercel link --yes --project flaner', { cwd: coreDir, stdio: 'inherit' });
+  addEnv(coreDir, 'VITE_MFE_<PACKAGE_NAME_UPPER>_URL', 'https://flaner-<PACKAGE_NAME>.vercel.app');
+
+  console.log('Setup finished successfully!');
+} catch (err) {
+  console.error('Setup failed:', err);
+}
+```
+
+**Immediately delete `add_envs.cjs`** after execution (`del add_envs.cjs`) to prevent committing plaintext secrets to Git.
+
+---
+
+## 4. Manual Configuration Required by User in Vercel Dashboard
+
+> 🚨 **Vercel CLI Limitation**: Vercel CLI currently **cannot** configure the **Root Directory** for new subprojects in an Nx monorepo via terminal arguments. It defaults to repository root (`.`), which causes `No Output Directory named "dist" found` build errors.
+
+Always provide the user with these exact steps for the Vercel Dashboard:
 
 ```markdown
-### 🛠 What you need to do manually in Vercel:
+### 🛠️ Krok po kroku w Vercel Dashboard:
 
-1. **Create a new project in Vercel and connect it to Git**: 
-   - Click "Add New... -> Project" and select the same **Flaner** repository from GitHub.
-   - *VERY IMPORTANT*: You must ensure that the GitHub repository linked in Vercel actually contains the files for the new project. Pay attention to this!
+1. **Utwórz / Otwórz projekt w Vercelu**:
+   - Wejdź na [Vercel Dashboard](https://vercel.com/dashboard).
+   - Otwórz projekt `flaner-<PACKAGE_NAME>` (lub kliknij *Add New... -> Project* i wybierz repozytorium `Marcin-Migdal/Flaner`).
 
-2. **Correctly set the Root Directory**:
-   - In the **Root Directory** configuration section, click *Edit* and make sure to point it to the correct subdirectory where the project is located, which is: `packages/NAME_OF_YOUR_MFE`.
-   - *NOTE*: A common mistake is leaving it as the root directory of the repository - this will prevent Vercel from building the project correctly.
+2. **Połącz z Git (jeśli projekt dodano przez CLI)**:
+   - W zakładce **Settings ➔ Git**: Połącz repozytorium `Marcin-Migdal/Flaner`.
 
-3. **Set the Build Command**:
-   - Expand the *Build and Development Settings* section.
-   - Toggle the **Override** switch next to *Build Command* and paste the command: `cd ../.. && npx nx run NAME_OF_YOUR_MFE:build`
-   - Leave the *Output Directory* at its default value (`dist`).
+3. **Ustaw Root Directory (Kluczowe!)**:
+   - W zakładce **Settings ➔ General**:
+   - W sekcji **Root Directory** kliknij *Edit*, wpisz `packages/<PACKAGE_NAME>` i kliknij **Save**.
 
-4. **Environment Variables**:
-   - Copy any necessary variables (such as Firebase config: `VITE_API_KEY`, `VITE_PROJECT_ID`, etc.) and add them in the *Environment Variables* settings for this new project on Vercel (if the project requires them).
+4. **Ustaw Build Command**:
+   - W sekcji **Build and Development Settings**:
+   - Włącz przełącznik **Override** przy **Build Command** i wklej:
+     ```bash
+     cd ../.. && npx nx run <PACKAGE_NAME>:build
+     ```
+   - **Output Directory**: Zostaw domyślne `dist`.
 
-5. **Configuration in the Main Host (Core)**:
-   - After deploying the new MFE, copy its public domain URL (e.g., `https://flaner-mfe.vercel.app`).
-   - Go to the `core` project on Vercel (often named with the main name `flaner`).
-   - In the *Environment Variables* settings for `core`, add a new variable (e.g., `VITE_MFE_COMMUNITY_URL`) and paste the copied URL as its value (Remember: without a trailing slash `/` at the end!).
-   - Perform a **Redeploy** of the `core` project so it pulls the new environment variable and recognizes the newly added project in Module Federation.
+5. **Wdrożenie i Redeploy w Core**:
+   - W zakładce **Deployments** kliknij **Redeploy** na najnowszym commicie.
+   - W projekcie `flaner` (Core) upewnij się, że w zmiennych środowiskowych istnieje `VITE_MFE_<NAME>_URL` wskazująca na wygenerowaną domenę (np. `https://flaner-<PACKAGE_NAME>.vercel.app`), i wykonaj **Redeploy** w `flaner`.
 ```
+
+---
+
+## 5. Firebase Authentication Domain Authorization
+
+When deploying a new host domain or staging environment:
+1. Open the [Firebase Console](https://console.firebase.google.com/).
+2. Navigate to **Authentication ➔ Settings ➔ Authorized domains**.
+3. Add the newly deployed custom domain (e.g. `flaner.vercel.app`, without `https://`).
+4. Ensure Google OAuth redirect URI in Google Cloud Console contains:  
+   `https://flaner-v2.firebaseapp.com/__/auth/handler`
+
+---
+
+## 6. Troubleshooting & Common Issues
+
+| Problem | Cause | Solution |
+| :--- | :--- | :--- |
+| `No Output Directory named "dist" found` | Vercel built at repo root instead of `packages/<NAME>` or build command failed | Set **Root Directory** to `packages/<NAME>` in Vercel Project Settings & verify build command is `cd ../.. && npx nx run <NAME>:build`. |
+| Instant Build Failure (< 1s) | Monorepo Peer Dependency Mismatches (`ERESOLVE`) | Ensure `package.json` across workspaces have matching versions of `react`, `react-dom`, and `@tanstack/react-query`. |
+| CORS error loading `remoteEntry.js` | Missing CORS headers in MFE `vercel.json` | Add `Access-Control-Allow-Origin: *` headers in the remote's `vercel.json`. |
+| 404 on page refresh | Missing SPA fallback | Add `"rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]` and remove `"cleanUrls"`. |
+| Vercel CLI hanging / freeze | Interactive prompt lock on `vercel env add` | Use the `.cjs` script with `stdio: 'ignore'`, `--no-sensitive`, `--yes`, and `--non-interactive`. |
