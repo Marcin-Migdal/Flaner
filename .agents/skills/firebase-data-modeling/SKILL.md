@@ -28,11 +28,17 @@ Firebase Firestore requires a NoSQL-first mindset. Denormalization and reading e
 - Firestore cannot do `LIKE '%text%'` searches. 
 - For simple prefix searches, store a lowercase version of the string in a dedicated field (e.g., `nameLower`) and query using:
   `where("nameLower", ">=", queryText)` and `where("nameLower", "<=", queryText + "\uf8ff")`
-- If you use complex compound queries (e.g., sorting by Date AND filtering by Category), note that this will require a Composite Index in Firestore. Define the index in `firestore.indexes.json` at the root and deploy it using `npx firebase-tools deploy --only firestore:indexes --project flaner-v2`.
+- If you use complex compound queries (e.g., sorting by Date AND filtering by Category), note that this will require a Composite Index in Firestore. Define the index in `firestore.indexes.json` at the root and immediately deploy it using:
+  ```bash
+  npx firebase-tools deploy --only firestore:indexes --project flaner-v2
+  ```
 
-## 4. Security Rules
+## 4. Security Rules & Deployment
 - Always assume the client is compromised.
 - Write strict `firestore.rules` for any new collection you design. Verify that users can only read/write their own data or data they have explicit access to.
+- **MANDATORY DEPLOYMENT**: Whenever you update `firestore.rules` or `firestore.indexes.json`, deploy them immediately to Firebase:
+  - Rules: `npx firebase-tools deploy --only firestore:rules --project flaner-v2`
+  - Indexes: `npx firebase-tools deploy --only firestore:indexes --project flaner-v2`
 
 ## 5. Type-Safe Firestore API & References Pattern
 - **NEVER use manual type casting** (e.g. `doc.data() as Group` or `collection(...) as CollectionReference<Group>`).

@@ -35,7 +35,15 @@ Whenever you are triggered to update the `firestore.rules`:
    - Use `write_to_file` (with Overwrite: true) to completely replace the contents of `firestore.rules` at the root of the project.
    - Do NOT try to use `replace_file_content` to surgically edit the existing `firestore.rules`. The schema folder is the source of truth, and `firestore.rules` is just a build output.
 
+4. **Deploy Rules to Firebase**:
+   - Immediately after writing the compiled `firestore.rules`, deploy the security rules to Firebase:
+     ```bash
+     npx firebase-tools deploy --only firestore:rules --project flaner-v2
+     ```
+     Or use the Firebase MCP tool `firebase_deploy` with `{ only: "firestore:rules" }`.
+
 ## Best Practices for Rules Compilation
 - **Security First**: Ensure no `allow read, write: if true;` or similar insecure rules are generated unless explicitly documented in the schema.
 - **Syntax Check**: Ensure all brackets `{}` and parentheses `()` are closed properly.
 - **Collection Groups**: If a schema defines a rule for a collection group (e.g., `match /{path=**}/members/{memberDocId}`), place it clearly at the top or bottom of the collection match blocks, avoiding nesting it where it doesn't belong.
+

@@ -1,6 +1,9 @@
 import { useAuth } from "@flaner/shared/context";
 import { UserType } from "@flaner/shared/types";
 import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
   Button,
   Dialog,
   DialogContent,
@@ -324,13 +327,18 @@ export const EventModal = ({
                     }}
                     renderResult={(item) => (
                       <div className="flex items-center gap-3">
-                        {item.type === "group" ? (
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <User className="h-4 w-4 text-muted-foreground" />
-                        )}
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium">{item.name}</span>
+                        <Avatar className="size-8 shrink-0">
+                          <AvatarImage src={item.avatarUrl} />
+                          <AvatarFallback className="text-xs font-semibold">
+                            {item.type === "group" ? (
+                              <Users className="size-4 text-muted-foreground" />
+                            ) : (
+                              item.name?.[0]?.toUpperCase() || <User className="size-4 text-muted-foreground" />
+                            )}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-sm font-medium truncate">{item.name}</span>
                           <span className="text-xs text-muted-foreground">
                             {item.type === "group" ? t("create.resultGroup") : t("create.resultUser")}
                           </span>
@@ -344,19 +352,24 @@ export const EventModal = ({
                       {selectedParticipants.map((p) => (
                         <div
                           key={p.id}
-                          className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full text-sm border border-border/50 max-w-[250px]"
+                          className="flex items-center gap-2 bg-muted/50 pl-1.5 pr-3 py-1 rounded-full text-sm border border-border/50 max-w-[260px]"
                         >
-                          {p.type === "group" ? (
-                            <Users className="h-3.5 w-3.5 shrink-0" />
-                          ) : (
-                            <User className="h-3.5 w-3.5 shrink-0" />
-                          )}
+                          <Avatar className="size-6 shrink-0">
+                            <AvatarImage src={p.avatarUrl} />
+                            <AvatarFallback className="text-[10px] font-semibold">
+                              {p.type === "group" ? (
+                                <Users className="size-3 text-muted-foreground" />
+                              ) : (
+                                p.name?.[0]?.toUpperCase() || "?"
+                              )}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="truncate flex-1 min-w-0">
                             <span>{p.name}</span>
                             {p.id === (eventToEdit ? eventToEdit.creatorId : user?.uid) && (
                               <span className="text-muted-foreground ml-1">({t("roles.creator")})</span>
                             )}
-                            {p.type === "user" && p.groupName && (
+                            {p.type === "user" && p.groupName && p.id !== (eventToEdit ? eventToEdit.creatorId : user?.uid) && (
                               <span className="text-muted-foreground ml-1">({p.groupName})</span>
                             )}
                           </div>
