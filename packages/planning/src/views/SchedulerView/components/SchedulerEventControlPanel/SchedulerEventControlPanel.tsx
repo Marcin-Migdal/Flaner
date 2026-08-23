@@ -125,6 +125,11 @@ export const SchedulerEventControlPanel = ({
           setIsEventModalOpen(open);
           if (!open) setEventToEdit(null);
         }}
+        onSuccess={(event) => {
+          if (event?.id) {
+            navigate({ hash: event.id });
+          }
+        }}
       />
 
       {/* Finalize Event Modal for Creator */}

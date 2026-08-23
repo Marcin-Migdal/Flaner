@@ -49,6 +49,7 @@ export type EventModalProps = {
   eventToEdit?: SchedulerEvent | null;
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onSuccess?: (event?: SchedulerEvent) => void;
 };
 
 export const EventModal = ({
@@ -56,6 +57,7 @@ export const EventModal = ({
   eventToEdit,
   isOpen: externalIsOpen,
   onOpenChange: externalOnOpenChange,
+  onSuccess: externalOnSuccess,
 }: EventModalProps) => {
   const { t } = usePlanningTranslations();
   const { user } = useAuth();
@@ -176,7 +178,10 @@ export const EventModal = ({
           },
         },
         {
-          onSuccess: () => handleOpenChange(false),
+          onSuccess: () => {
+            handleOpenChange(false);
+            externalOnSuccess?.(eventToEdit);
+          },
         },
       );
     } else {
@@ -189,7 +194,10 @@ export const EventModal = ({
           proposedDates: formattedDates,
         },
         {
-          onSuccess: () => handleOpenChange(false),
+          onSuccess: (createdEvent) => {
+            handleOpenChange(false);
+            externalOnSuccess?.(createdEvent);
+          },
         },
       );
     }

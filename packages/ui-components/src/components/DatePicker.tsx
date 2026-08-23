@@ -1,6 +1,6 @@
 import React, { useId } from "react";
 import { format } from "date-fns";
-import { pl, enUS } from "date-fns/locale";
+import { pl, enGB } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@flaner/shared/utils";
 import { Button } from "./ui/button";
@@ -26,7 +26,7 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
     const inputId = customId || defaultId;
     const { t, i18n } = useUiTranslations();
 
-    const dfLocale = i18n.language?.startsWith("pl") ? pl : enUS;
+    const dfLocale = i18n.language?.startsWith("pl") ? pl : enGB;
 
     return (
       <Field data-invalid={!!error} className={className}>

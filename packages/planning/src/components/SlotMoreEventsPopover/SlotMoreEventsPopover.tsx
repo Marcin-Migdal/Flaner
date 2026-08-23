@@ -1,7 +1,7 @@
 import { Popover, PopoverContent, PopoverTrigger, type CalendarEvent } from "@flaner/ui-components";
 import { format } from "date-fns";
 import { enUS, pl } from "date-fns/locale";
-import { Check, HelpCircle, Minus } from "lucide-react";
+import { Check, HelpCircle, X } from "lucide-react";
 import type { SlotMetaData } from "../SlotEventComponent";
 
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
@@ -130,7 +130,7 @@ export function SlotMoreEventsPopover({
                         meta.onQuickVote?.(currentUserVote === "no" ? null : "no");
                       }}
                     >
-                      <Minus className="w-3.5 h-3.5 stroke-[3]" />
+                      <X className="w-3.5 h-3.5 stroke-[3]" />
                     </button>
                   </div>
                 )}

@@ -174,7 +174,7 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
           continuesNextInRow={continuesNextInRow}
           continuesPrevInRow={continuesPrevInRow}
           isHovered={isHovered}
-          className={`${slotHeight} mb-0.5`}
+          className={`${slotHeight} mb-0.5 relative hover:z-[50] ${isHovered ? "z-[50]" : ""}`}
           onMouseEnter={() => setHoveredEventId(event.id)}
           onMouseLeave={() => setHoveredEventId(null)}
           onClick={(e) => {
