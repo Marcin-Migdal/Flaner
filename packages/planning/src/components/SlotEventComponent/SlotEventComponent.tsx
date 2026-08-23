@@ -24,11 +24,11 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
     onMouseLeave,
     className,
     isHovered,
-    isFirstEventSlot: _isFirstEventSlot,
-    isLastEventSlot: _isLastEventSlot,
-    isFirstInRow = props.isFirstEventSlot,
-    isLastInRow = props.isLastEventSlot,
-    continuesNextInRow = !props.isLastEventSlot,
+    isFirstSegment,
+    isLastSegment: _isLastSegment,
+    isFirstInRow = props.isFirstSegment,
+    isLastInRow = props.isLastSegment,
+    continuesNextInRow = !props.isLastSegment,
   } = props;
   const meta = event.metaData;
 
@@ -234,7 +234,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
 
       <div className="flex items-center justify-between w-full min-w-0 max-w-full h-full gap-1 overflow-hidden">
         {/* Active Vote Badge in Slot: Shown on first slot or first in row if user has voted */}
-        {(props.isFirstEventSlot || isFirstInRow) && !isFinalized && currentUserVote && (
+        {(isFirstSegment || isFirstInRow) && !isFinalized && currentUserVote && (
           <button
             type="button"
             className={`shrink-0 p-0 border flex items-center justify-center w-[12px] h-[12px] md:w-[20px] md:h-[20px] rounded-full text-white font-bold cursor-pointer transition-all shadow-sm ${
@@ -261,7 +261,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
         )}
 
         {/* Vote Counts Summary Badge */}
-        {props.isFirstEventSlot && (
+        {isFirstSegment && (
           <>
             {/* Mobile: Only "Tak" votes count */}
             <div className="flex md:hidden items-center shrink-0 ml-auto">

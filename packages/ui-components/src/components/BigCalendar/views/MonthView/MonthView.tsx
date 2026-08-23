@@ -6,6 +6,7 @@ import {
   endOfWeek,
   format,
   isBefore,
+  isSameDay,
   isToday,
   startOfDay,
   startOfMonth,
@@ -150,14 +151,14 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
     }
 
     const { event } = entry;
-    const isFirstEventSlot = startOfDay(event.start).getTime() === startOfDay(day).getTime();
-    const isLastEventSlot = endOfDay(event.end).getTime() === endOfDay(day).getTime();
+    const isFirstSegment = startOfDay(event.start).getTime() === startOfDay(day).getTime();
+    const isLastSegment = endOfDay(event.end).getTime() === endOfDay(day).getTime();
     const isRowStart = day.getDay() === 1; // Monday (since weekStartsOn is 1)
     const isRowEnd = day.getDay() === 0; // Sunday
-    const isFirstInRow = isFirstEventSlot || isRowStart;
-    const isLastInRow = isLastEventSlot || isRowEnd;
-    const continuesNextInRow = !isLastEventSlot && !isRowEnd;
-    const continuesPrevInRow = !isFirstEventSlot && !isRowStart;
+    const isFirstInRow = isFirstSegment || isRowStart;
+    const isLastInRow = isLastSegment || isRowEnd;
+    const continuesNextInRow = !isLastSegment && !isRowEnd;
+    const continuesPrevInRow = !isFirstSegment && !isRowStart;
     const isHovered = hoveredEventId !== null && hoveredEventId === event.id;
 
     // Use custom event component if provided
@@ -167,8 +168,8 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
         <CustomComponent
           key={event.id}
           event={event}
-          isFirstEventSlot={isFirstEventSlot}
-          isLastEventSlot={isLastEventSlot}
+          isFirstSegment={isFirstSegment}
+          isLastSegment={isLastSegment}
           isFirstInRow={isFirstInRow}
           isLastInRow={isLastInRow}
           continuesNextInRow={continuesNextInRow}
@@ -187,11 +188,11 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
 
     const roundedClasses =
       isFirstInRow && isLastInRow
-        ? "rounded-md"
+        ? "rounded-[3px] md:rounded-md"
         : isFirstInRow
-          ? "rounded-l-md rounded-r-none"
+          ? "rounded-l-[3px] md:rounded-l-md rounded-r-none"
           : isLastInRow
-            ? "rounded-r-md rounded-l-none"
+            ? "rounded-r-[3px] md:rounded-r-md rounded-l-none"
             : "rounded-none";
 
     const marginClasses = continuesNextInRow
@@ -199,12 +200,12 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
       : "w-full";
     const paddingClasses = `${
       isFirstInRow && isLastInRow
-        ? "px-1 md:px-2"
+        ? "px-[1px] md:px-2"
         : isFirstInRow
-          ? "pl-1 md:pl-2 pr-0.5"
+          ? "pl-[1px] md:pl-2 pr-[1px]"
           : isLastInRow
-            ? "pl-0.5 pr-1 md:pr-2"
-            : "px-0.5"
+            ? "pl-[1px] pr-[1px] md:pr-2"
+            : "px-[1px]"
     }`;
 
     // Default event renderer
@@ -228,11 +229,20 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
                 props.onEventClick?.(event, e);
               }}
             >
-              <span className="truncate font-medium">{event.title}</span>
+              {isFirstSegment && (
+                <span className="font-semibold leading-none tabular-nums text-white/95 min-w-0 flex items-center h-full">
+                  <span className="hidden md:inline font-medium text-xs truncate leading-none">{event.title}</span>
+                  <span className="md:hidden text-[8px] tracking-tighter whitespace-nowrap pl-0.5 leading-none flex items-center h-full">
+                    {isSameDay(event.start, event.end)
+                      ? format(event.start, "dd.MM")
+                      : `${format(event.start, "dd.MM")} - ${format(event.end, "dd.MM")}`}
+                  </span>
+                </span>
+              )}
               {isLastInRow && (
                 <button
                   type="button"
-                  className="opacity-0 group-hover/event:opacity-100 hover:text-destructive hover:bg-background/20 p-0.5 rounded transition-all duration-150"
+                  className="opacity-0 group-hover/event:opacity-100 hover:text-destructive hover:bg-background/20 p-0.5 rounded transition-all duration-150 flex items-center justify-center shrink-0 ml-auto"
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();

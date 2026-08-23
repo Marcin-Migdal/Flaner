@@ -15,7 +15,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import type { SchedulerEvent, VoteType } from "./types";
+import type { ProposedDateSlot, SchedulerEvent, VoteType } from "./types";
 
 const refs = {
   events: () => collection(fb.firestore, "events").withConverter(firestoreConverter<SchedulerEvent>()),
@@ -142,6 +142,42 @@ export const voteSchedulerEventSlot = async (
       ...currentSlot,
       votes: updatedVotes,
     };
+
+    transaction.update(eventRef, {
+      proposedDates,
+      updatedAt: Date.now(),
+    });
+  });
+};
+
+export const batchVoteUnvotedSlots = async (
+  eventId: string,
+  userId: string,
+  fallbackVote: VoteType = "no",
+): Promise<void> => {
+  const eventRef = refs.event(eventId);
+
+  await runTransaction(fb.firestore, async (transaction) => {
+    const sfDoc = await transaction.get(eventRef);
+    if (!sfDoc.exists()) {
+      throw new Error("Event does not exist");
+    }
+
+    const eventData = sfDoc.data();
+    if (eventData.isFinalized) {
+      throw new Error("Event is already finalized");
+    }
+
+    const proposedDates = (eventData.proposedDates || []).map((slot: ProposedDateSlot) => {
+      const votes = { ...(slot.votes || {}) };
+      if (!votes[userId]) {
+        votes[userId] = fallbackVote;
+      }
+      return {
+        ...slot,
+        votes,
+      };
+    });
 
     transaction.update(eventRef, {
       proposedDates,

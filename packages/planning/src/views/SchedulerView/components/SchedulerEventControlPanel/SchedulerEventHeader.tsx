@@ -1,5 +1,5 @@
 import { Button, Select, type SelectOption } from "@flaner/ui-components";
-import { CheckCircle, Pencil, Plus, Trash2 } from "lucide-react";
+import { CheckCircle, Pencil, Plus, Trash2, X } from "lucide-react";
 import type { SchedulerEvent } from "../../../../api/events/types";
 import { FinalizedDateCard } from "../../../../components/FinalizedDateCard";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
@@ -10,6 +10,9 @@ export type SchedulerEventHeaderProps = {
   activeEvent: SchedulerEvent | null;
   currentUserId?: string;
   isOwner: boolean;
+  unvotedCount?: number;
+  onRejectUnvoted?: () => void;
+  isBatchVoting?: boolean;
   onSelectEvent: (eventId: string) => void;
   onEditEvent: (event: SchedulerEvent, e: React.MouseEvent) => void;
   onDeleteEvent: (event: { id: string; name: string }) => void;
@@ -24,6 +27,9 @@ export const SchedulerEventHeader = ({
   activeEvent,
   currentUserId,
   isOwner,
+  unvotedCount = 0,
+  onRejectUnvoted,
+  isBatchVoting = false,
   onSelectEvent,
   onEditEvent,
   onDeleteEvent,
@@ -133,7 +139,7 @@ export const SchedulerEventHeader = ({
         </Button>
       </div>
 
-      {/* Finalization Section: Finalized card OR Creator action button */}
+      {/* Action Buttons Section: Finalization & Batch Reject Unvoted */}
       {activeEvent && (
         <div className="mt-3">
           {activeEvent.isFinalized ? (
@@ -142,16 +148,53 @@ export const SchedulerEventHeader = ({
               isOwner={isOwner}
               onReopen={onReopenClick}
             />
-          ) : isOwner ? (
-            <Button
-              variant="outline"
-              className="w-full h-10 rounded-xl bg-brand/15 hover:bg-brand/25 border-brand/40 text-brand font-semibold text-xs tracking-wide uppercase gap-2 transition-all hover:scale-[1.01] shadow-sm"
-              onClick={onFinalizeClick}
+          ) : (
+            <div
+              className={
+                isOwner && unvotedCount > 0
+                  ? "grid grid-cols-5 gap-2"
+                  : "flex flex-col gap-2"
+              }
             >
-              <CheckCircle className="w-4 h-4 text-brand" />
-              <span>{t("actions.finalizeEvent")}</span>
-            </Button>
-          ) : null}
+              {isOwner && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={`${
+                    unvotedCount > 0 ? "col-span-2" : "w-full"
+                  } h-10 rounded-xl bg-brand/15 hover:bg-brand/25 border-brand/40 text-brand font-semibold text-xs tracking-wide uppercase gap-1.5 transition-all hover:scale-[1.01] shadow-sm px-2 truncate cursor-pointer`}
+                  onClick={onFinalizeClick}
+                  title={t("actions.finalizeEvent")}
+                >
+                  <CheckCircle className="w-4 h-4 text-brand shrink-0" />
+                  <span className="truncate">
+                    {unvotedCount > 0 ? t("actions.finalizeShort") : t("actions.finalizeEvent")}
+                  </span>
+                </Button>
+              )}
+
+              {unvotedCount > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isBatchVoting}
+                  isBusy={isBatchVoting}
+                  className={`${
+                    isOwner ? "col-span-3" : "w-full"
+                  } h-10 rounded-xl bg-vote-no-tint hover:bg-vote-no/20 border-vote-no-border/30 text-vote-no-text font-semibold text-xs tracking-wide uppercase gap-1.5 transition-all hover:scale-[1.01] shadow-sm px-2.5 truncate cursor-pointer`}
+                  onClick={onRejectUnvoted}
+                  title={t("actions.rejectUnvotedFull", { count: unvotedCount })}
+                >
+                  <X className="w-4 h-4 stroke-[2.5] text-vote-no-text shrink-0" />
+                  <span className="truncate">
+                    {isOwner
+                      ? t("actions.rejectUnvoted", { count: unvotedCount })
+                      : t("actions.rejectUnvotedFull", { count: unvotedCount })}
+                  </span>
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       )}
 

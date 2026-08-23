@@ -32,10 +32,10 @@ export type CalendarEventComponentProps<T = unknown> = {
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   event: CalendarEvent<T>;
-  /** Whether this is the first slot in the event */
-  isFirstEventSlot: boolean;
-  /** Whether this is the last slot in the event */
-  isLastEventSlot: boolean;
+  /** Whether this is the first day segment of the event */
+  isFirstSegment: boolean;
+  /** Whether this is the last day segment of the event */
+  isLastSegment: boolean;
   /** Whether this slot is the first in the current calendar week row */
   isFirstInRow?: boolean;
   /** Whether this slot is the last in the current calendar week row */

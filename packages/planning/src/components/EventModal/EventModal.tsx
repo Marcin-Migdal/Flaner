@@ -4,14 +4,14 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
+  BigCalendar,
   Button,
+  CalendarEvent,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  BigCalendar,
-  CalendarEvent,
   FormDatePicker,
   FormTextArea,
   FormTextField,
@@ -266,8 +266,8 @@ export const EventModal = ({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] max-md:h-[calc(100dvh-1rem)] max-md:max-h-[calc(100dvh-1rem)] sm:max-w-[1000px] md:max-w-[1200px] lg:max-w-[1640px] md:w-[95vw] p-0 gap-0 overflow-hidden bg-background">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+      <DialogContent className="w-[calc(100vw-0.5rem)] max-w-[calc(100vw-0.5rem)] max-md:h-[calc(100dvh-0.5rem)] max-md:max-h-[calc(100dvh-0.5rem)] sm:max-w-[1000px] md:max-w-[1200px] lg:max-w-[1640px] md:w-[95vw] p-0 gap-0 overflow-hidden bg-background">
+        <DialogHeader className="px-4 py-4 md:px-6 md:pt-6 md:pb-4 border-b">
           <DialogTitle>{eventToEdit ? t("edit.title") : t("create.title")}</DialogTitle>
         </DialogHeader>
 
@@ -277,7 +277,7 @@ export const EventModal = ({
             className="grid grid-cols-1 md:grid-cols-[360px_1fr] lg:grid-cols-[420px_1fr] md:h-[850px] lg:h-[950px] max-md:h-[calc(100dvh-5rem)] max-h-[95vh]"
           >
             <div
-              className={`p-4 md:p-6 border-r overflow-y-auto flex-col gap-6 ${showMobileCalendar ? "hidden md:flex" : "flex"}`}
+              className={`p-3 md:p-6 border-r overflow-y-auto flex-col gap-6 ${showMobileCalendar ? "hidden md:flex" : "flex"}`}
             >
               <div className="space-y-4">
                 <FormTextField name="name" label={t("fields.name")} placeholder={t("fields.name")} />
@@ -377,9 +377,11 @@ export const EventModal = ({
                             {p.id === (eventToEdit ? eventToEdit.creatorId : user?.uid) && (
                               <span className="text-muted-foreground ml-1">({t("roles.creator")})</span>
                             )}
-                            {p.type === "user" && p.groupName && p.id !== (eventToEdit ? eventToEdit.creatorId : user?.uid) && (
-                              <span className="text-muted-foreground ml-1">({p.groupName})</span>
-                            )}
+                            {p.type === "user" &&
+                              p.groupName &&
+                              p.id !== (eventToEdit ? eventToEdit.creatorId : user?.uid) && (
+                                <span className="text-muted-foreground ml-1">({p.groupName})</span>
+                              )}
                           </div>
                           {p.id !== (eventToEdit ? eventToEdit.creatorId : user?.uid) && (
                             <button
@@ -437,7 +439,7 @@ export const EventModal = ({
             </div>
 
             <div
-              className={`bg-muted/10 flex-col p-4 md:p-6 overflow-hidden w-full flex-1 min-h-0 ${showMobileCalendar ? "flex" : "hidden md:flex"}`}
+              className={`bg-muted/10 flex-col p-3.5 md:p-6 overflow-hidden w-full flex-1 min-h-0 ${showMobileCalendar ? "flex" : "hidden md:flex"}`}
             >
               <div className="md:hidden flex items-center mb-4">
                 <Button

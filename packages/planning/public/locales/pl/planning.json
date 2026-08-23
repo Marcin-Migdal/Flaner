@@ -72,11 +72,19 @@
     "cancel": "Anuluj",
     "delete": "Usuń",
     "finalizeEvent": "Zatwierdź ostateczny termin",
+    "finalizeShort": "Sfinalizuj",
+    "rejectUnvoted": "Odrzuć resztę ({{count}})",
+    "rejectUnvotedFull": "Oznacz pozostałe ({{count}}) na Nie",
     "reopenVoting": "Wznów głosowanie"
   },
   "reopenConfirm": {
     "title": "Wznowić głosowanie nad terminem?",
     "description": "Wybrany termin zostanie odblokowany, a wszyscy uczestnicy otrzymają powiadomienie. Terminy z przeszłości zostaną automatycznie usunięte."
+  },
+  "rejectConfirm": {
+    "title": "Oznaczyć pozostałe terminy na „Nie”?",
+    "description": "Dla wszystkich terminów bez Twojego głosu ({{count}}) zostanie automatycznie ustawiony status „Nie mogę”.",
+    "confirm": "Oznacz na Nie"
   },
   "roles": {
     "creator": "Twórca"

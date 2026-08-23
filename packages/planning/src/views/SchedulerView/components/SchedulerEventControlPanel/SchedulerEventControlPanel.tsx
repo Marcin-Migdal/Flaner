@@ -1,12 +1,16 @@
 import { useAuth } from "@flaner/shared/context";
 import { ConfirmationPopup } from "@flaner/ui-components";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import type { SchedulerEvent } from "../../../../api/events/types";
 import type { ParticipantResult } from "../../../../api/participants";
 import { EventModal } from "../../../../components/EventModal";
 import { FinalizeEventModal } from "../../../../components/FinalizeEventModal";
-import { useDeleteEventMutation, useUnfinalizeEventMutation } from "../../../../hooks/api/mutation";
+import {
+  useBatchVoteUnvotedSlotsMutation,
+  useDeleteEventMutation,
+  useUnfinalizeEventMutation,
+} from "../../../../hooks/api/mutation";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { SchedulerEventHeader } from "./SchedulerEventHeader";
 import { SchedulerParticipantsList } from "./SchedulerParticipantsList";
@@ -32,14 +36,39 @@ export const SchedulerEventControlPanel = ({
 
   const { mutateAsync: deleteEvent, isPending: isDeletingEvent } = useDeleteEventMutation();
   const { mutateAsync: unfinalizeEvent, isPending: isUnfinalizingEvent } = useUnfinalizeEventMutation();
+  const { mutateAsync: batchVoteUnvoted, isPending: isBatchVoting } = useBatchVoteUnvotedSlotsMutation();
 
   const [eventToEdit, setEventToEdit] = useState<SchedulerEvent | null>(null);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<{ id: string; name: string } | null>(null);
   const [isReopenConfirmOpen, setIsReopenConfirmOpen] = useState(false);
   const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
+  const [isRejectConfirmOpen, setIsRejectConfirmOpen] = useState(false);
 
   const isOwner = !activeEvent?.creatorId || activeEvent.creatorId === user?.uid;
+
+  const unvotedCount = useMemo(() => {
+    if (!activeEvent || !user?.uid || activeEvent.isFinalized) return 0;
+    return activeEvent.proposedDates.filter(
+      (slot) => !slot.votes || slot.votes[user.uid] === undefined,
+    ).length;
+  }, [activeEvent, user]);
+
+  const handleRejectUnvoted = async () => {
+    if (!activeEvent || !user?.uid) return;
+    await batchVoteUnvoted(
+      {
+        eventId: activeEvent.id,
+        userId: user.uid,
+        fallbackVote: "no",
+      },
+      {
+        onSuccess: () => {
+          setIsRejectConfirmOpen(false);
+        },
+      },
+    );
+  };
 
   const handleEditEvent = (event: SchedulerEvent, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -103,6 +132,9 @@ export const SchedulerEventControlPanel = ({
           activeEvent={activeEvent}
           currentUserId={user?.uid}
           isOwner={isOwner}
+          unvotedCount={unvotedCount}
+          onRejectUnvoted={() => setIsRejectConfirmOpen(true)}
+          isBatchVoting={isBatchVoting}
           onSelectEvent={handleSelectEvent}
           onEditEvent={handleEditEvent}
           onDeleteEvent={setEventToDelete}
@@ -167,6 +199,18 @@ export const SchedulerEventControlPanel = ({
         onConfirm={handleConfirmReopen}
         isConfirming={isUnfinalizingEvent}
         variant="primary"
+      />
+
+      <ConfirmationPopup
+        open={isRejectConfirmOpen}
+        onOpenChange={setIsRejectConfirmOpen}
+        title={t("rejectConfirm.title")}
+        description={t("rejectConfirm.description", { count: unvotedCount })}
+        confirmLabel={t("rejectConfirm.confirm")}
+        cancelLabel={t("actions.cancel")}
+        onConfirm={handleRejectUnvoted}
+        isConfirming={isBatchVoting}
+        variant="destructive"
       />
     </div>
   );

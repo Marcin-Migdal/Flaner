@@ -72,11 +72,19 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "finalizeEvent": "Finalize Event Date",
+    "finalizeShort": "Finalize",
+    "rejectUnvoted": "Reject rest ({{count}})",
+    "rejectUnvotedFull": "Mark remaining ({{count}}) as No",
     "reopenVoting": "Reopen Voting"
   },
   "reopenConfirm": {
     "title": "Reopen voting on this event?",
     "description": "The selected date will be unlocked, and all participants will receive a notification. Past proposed dates will be automatically removed."
+  },
+  "rejectConfirm": {
+    "title": "Mark remaining dates as 'No'?",
+    "description": "All slots without your vote ({{count}}) will be automatically marked as 'No'.",
+    "confirm": "Mark as No"
   },
   "roles": {
     "creator": "Creator"
