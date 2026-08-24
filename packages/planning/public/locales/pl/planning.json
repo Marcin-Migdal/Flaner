@@ -48,7 +48,8 @@
     "endDatePast": "Data nie może być z przeszłości",
     "endDateAfterProposed": "Czas na wybór musi przypadać przed pierwszą proponowaną datą wydarzenia",
     "descriptionMax": "Opis może mieć maksymalnie 300 znaków",
-    "proposedDatePast": "Proponowana data nie może być z przeszłości"
+    "proposedDatePast": "Proponowana data nie może być z przeszłości",
+    "duplicateSlot": "Ten termin został już dodany"
   },
   "toasts": {
     "events": {

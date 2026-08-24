@@ -27,8 +27,8 @@ match /events/{eventId} {
   allow read: if isAuthenticated() && (request.auth.uid in resource.data.participants || request.auth.uid == resource.data.creatorId);
   allow create: if isAuthenticated() && request.resource.data.creatorId == request.auth.uid && request.auth.uid in request.resource.data.participants;
   allow update: if isAuthenticated() && (
-    (!resource.data.isFinalized && (resource.data.creatorId == request.auth.uid || request.auth.uid in resource.data.participants)) ||
-    (resource.data.isFinalized == true && resource.data.creatorId == request.auth.uid)
+    resource.data.creatorId == request.auth.uid ||
+    (resource.data.get('isFinalized', false) == false && request.auth.uid in resource.data.participants)
   );
   allow delete: if isAuthenticated() && resource.data.creatorId == request.auth.uid;
 }

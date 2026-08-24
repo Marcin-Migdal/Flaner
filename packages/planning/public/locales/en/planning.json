@@ -48,7 +48,8 @@
     "endDatePast": "Date cannot be in the past",
     "endDateAfterProposed": "Deadline must be before the first proposed event date",
     "descriptionMax": "Description can be at most 300 characters",
-    "proposedDatePast": "Proposed date cannot be in the past"
+    "proposedDatePast": "Proposed date cannot be in the past",
+    "duplicateSlot": "This date slot has already been added"
   },
   "toasts": {
     "events": {
