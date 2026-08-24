@@ -158,7 +158,15 @@ Always provide the user with these exact steps for the Vercel Dashboard:
      ```
    - **Output Directory**: Zostaw domyślne `dist`.
 
-5. **Wdrożenie i Redeploy w Core**:
+5. **Ustaw Ignored Build Step (Tylko zmienione MFE będą budowane!)**:
+   - W zakładce **Settings ➔ Git**:
+   - W sekcji **Ignored Build Step** zaznacz **Override** / wpisz komendę:
+     ```bash
+     npx nx-ignore <PACKAGE_NAME>
+     ```
+   - *Dzięki temu Vercel w 2 sekundy sprawdzi graf Nx i automatycznie anuluje (skipnie) deployment, jeśli ten MFE ani jego pakiety współdzielone nie uległy zmianie w danym commicie.*
+
+6. **Wdrożenie i Redeploy w Core**:
    - W zakładce **Deployments** kliknij **Redeploy** na najnowszym commicie.
    - W projekcie `flaner` (Core) upewnij się, że w zmiennych środowiskowych istnieje `VITE_MFE_<NAME>_URL` wskazująca na wygenerowaną domenę (np. `https://flaner-<PACKAGE_NAME>.vercel.app`), i wykonaj **Redeploy** w `flaner`.
 ```
