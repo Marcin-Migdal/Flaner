@@ -13,15 +13,14 @@ export default defineConfig({
   server: {
     port: PORT,
     strictPort: true,
-    origin: `http://127.0.0.1:${PORT}`,
-    host: '127.0.0.1',
+    host: '0.0.0.0',
     // Allow cross-origin fetches of mf-manifest.json + chunks from a consumer
     // running on a different port. Vite 8 narrows the default CORS allowlist
     // to specific localhost patterns; setting `cors: true` emits a wildcard
     // `Access-Control-Allow-Origin: *` for dev which is what federation needs.
     cors: true,
   },
-  preview: { port: PORT, strictPort: true, cors: true },
+  preview: { port: PORT, strictPort: true, host: '0.0.0.0', cors: true },
   build: { target: 'chrome89' },
   optimizeDeps: {
     exclude: ['@flaner/ui-components'],

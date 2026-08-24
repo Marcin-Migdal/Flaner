@@ -1,0 +1,129 @@
+{
+  "hub": {
+    "event": "Event",
+    "selectEvent": "Select event",
+    "noEvents": "No events found",
+    "participants": "Participants",
+    "status": {
+      "creator": "Creator",
+      "going": "Going",
+      "invited": "Invited",
+      "unvoted": "Not voted"
+    },
+    "noParticipants": "No participants to show.",
+    "emptyStateTitle": "Select an event to see the calendar",
+    "emptyStateDesc": "You are not part of any events yet. Click the + button to create one."
+  },
+  "views": {
+    "month": "Calendar",
+    "grid": "Availability"
+  },
+  "calendar": {
+    "more": "more"
+  },
+  "create": {
+    "title": "Create new event",
+    "participants": "Invite participants",
+    "searchFriends": "Search friends and groups...",
+    "proposeDates": "Propose dates",
+    "resultGroup": "Group",
+    "resultUser": "Friend"
+  },
+  "edit": {
+    "title": "Edit event"
+  },
+  "deleteModal": {
+    "title": "Delete event",
+    "description": "Are you sure you want to delete event \"{{name}}\"? This action cannot be undone."
+  },
+  "fields": {
+    "name": "Event name",
+    "description": "Description (optional)",
+    "endDate": "Deadline for dates selection"
+  },
+  "validation": {
+    "nameRequired": "Event name is required",
+    "datesRequired": "Select at least one date",
+    "endDateRequired": "Deadline for dates selection is required",
+    "endDatePast": "Date cannot be in the past",
+    "endDateAfterProposed": "Deadline must be before the first proposed event date",
+    "descriptionMax": "Description can be at most 300 characters",
+    "proposedDatePast": "Proposed date cannot be in the past"
+  },
+  "toasts": {
+    "events": {
+      "addSuccess": "Event created successfully",
+      "addError": "Failed to create event",
+      "deleteSuccess": "Event deleted successfully",
+      "deleteError": "Failed to delete event",
+      "updateSuccess": "Event updated successfully",
+      "updateError": "Failed to update event",
+      "finalizeSuccess": "Event date has been finalized",
+      "finalizeError": "Failed to finalize event date",
+      "unfinalizeSuccess": "Voting has been reopened",
+      "unfinalizeError": "Failed to reopen voting",
+      "voteError": "Failed to record vote"
+    }
+  },
+  "actions": {
+    "add": "Add",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "finalizeEvent": "Finalize Event Date",
+    "finalizeShort": "Finalize",
+    "rejectUnvoted": "Reject rest ({{count}})",
+    "rejectUnvotedFull": "Mark remaining ({{count}}) as No",
+    "reopenVoting": "Reopen Voting"
+  },
+  "reopenConfirm": {
+    "title": "Reopen voting on this event?",
+    "description": "The selected date will be unlocked, and all participants will receive a notification. Past proposed dates will be automatically removed."
+  },
+  "rejectConfirm": {
+    "title": "Mark remaining dates as 'No'?",
+    "description": "All slots without your vote ({{count}}) will be automatically marked as 'No'.",
+    "confirm": "Mark as No"
+  },
+  "roles": {
+    "creator": "Creator"
+  },
+  "voting": {
+    "popoverTitle": "Vote on slot",
+    "yes": "Available",
+    "maybe": "Maybe",
+    "no": "Unavailable",
+    "unvoted": "Not voted",
+    "yourVote": "Your vote",
+    "summary": "Votes: {{yes}} yes · {{maybe}} maybe",
+    "voteYes": "Vote Yes",
+    "voteMaybe": "Vote Maybe",
+    "voteNo": "Vote No",
+    "retractVote": "Withdraw vote",
+    "removeVote": "Click to remove your vote"
+  },
+  "finalizeModal": {
+    "eyebrow": "Finalize Date",
+    "title": "Confirm Final Event Date",
+    "description": "Choose one of the proposed dates below. Confirming will close voting and lock the chosen date.",
+    "topPick": "Top Pick",
+    "confirmButton": "Confirm this date"
+  },
+  "finalizedCard": {
+    "status": "Date Confirmed",
+    "lockedNotice": "Voting has been closed by the event organizer."
+  },
+  "rankedSheet": {
+    "eyebrow": "Ranked Slots",
+    "description": "Proposed date slots sorted by participant availability."
+  },
+  "grid": {
+    "participants": "Participants",
+    "matchRate": "Match Rate",
+    "available": "available",
+    "winner": "Chosen",
+    "status": "Status",
+    "you": "YOU"
+  }
+}

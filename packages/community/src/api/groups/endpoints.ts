@@ -302,7 +302,7 @@ export const inviteUserToGroup = async (
       id: notifRef.id,
       type: "group_invitation",
       senderUid: invitedByUserId,
-      senderUsername: invitorData?.username || "Ktoś",
+      senderUsername: invitorData?.username || "",
       senderAvatarUrl: invitorData?.avatarUrl || "",
       createdAt: Date.now(),
       read: false,

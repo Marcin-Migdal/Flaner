@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "nx run-many -t serve",
     "build": "nx run-many -t build",
+    "typecheck": "nx run-many -t typecheck",
     "lint": "nx run-many -t lint",
     "lint:fix": "nx run-many -t lint -- --fix"
   },
@@ -63,6 +64,7 @@
     "i18next-http-backend": "^4.0.0",
     "lucide-react": "^1.22.0",
     "react": "^19.0.0",
+    "react-day-picker": "^10.0.1",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.80.0",
     "react-i18next": "^17.0.8",

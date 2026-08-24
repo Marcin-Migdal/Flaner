@@ -33,9 +33,9 @@ export function HomeView() {
           to="/shopping"
         />
         <LinkCard
-          title={t('nav.scheduling')}
-          description={t('home.cards.scheduling')}
-          to="/scheduling"
+          title={t('nav.planning')}
+          description={t('home.cards.planning')}
+          to="/planning"
         />
         <LinkCard
           title={t('nav.community')}

@@ -4,10 +4,25 @@
   "files": [],
   "references": [
     {
-      "path": "./packages/ui-components"
+      "path": "./packages/core"
+    },
+    {
+      "path": "./packages/community"
+    },
+    {
+      "path": "./packages/planning"
+    },
+    {
+      "path": "./packages/settings"
+    },
+    {
+      "path": "./packages/shopping"
     },
     {
       "path": "./packages/shared"
+    },
+    {
+      "path": "./packages/ui-components"
     }
   ]
 }

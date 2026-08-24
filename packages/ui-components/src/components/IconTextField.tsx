@@ -18,6 +18,7 @@ export interface IconTextFieldProps extends Omit<React.ComponentPropsWithoutRef<
   alwaysOpen?: boolean;
   onOpen?: () => void;
   onClose?: () => void;
+  isExpanded?: boolean;
 }
 
 export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldProps>(
@@ -36,6 +37,7 @@ export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldPro
       alwaysOpen = false,
       onOpen,
       onClose,
+      isExpanded: isExpandedProp,
       ...props
     },
     ref,
@@ -43,10 +45,18 @@ export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldPro
     const defaultId = useId();
     const inputId = customId || defaultId;
     const [isExpandedState, setIsExpandedState] = useState(false);
-    
-    const isExpanded = alwaysOpen || isExpandedState;
+
+    const isExpanded = alwaysOpen || (isExpandedProp !== undefined ? isExpandedProp : isExpandedState);
 
     const internalInputRef = useRef<HTMLInputElement>(null);
+
+    React.useEffect(() => {
+      if (isExpandedProp && !alwaysOpen) {
+        const timer = setTimeout(() => internalInputRef.current?.focus(), 50);
+        return () => clearTimeout(timer);
+      }
+      return undefined;
+    }, [isExpandedProp, alwaysOpen]);
 
     const setRefs = (node: HTMLInputElement) => {
       internalInputRef.current = node;
@@ -64,11 +74,15 @@ export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldPro
         internalInputRef.current?.focus();
         return;
       }
-      if (isExpandedState) {
-        setIsExpandedState(false);
+      if (isExpanded) {
+        if (isExpandedProp === undefined) {
+          setIsExpandedState(false);
+        }
         onClose?.();
       } else {
-        setIsExpandedState(true);
+        if (isExpandedProp === undefined) {
+          setIsExpandedState(true);
+        }
         onOpen?.();
         setTimeout(() => internalInputRef.current?.focus(), 50);
       }
@@ -106,8 +120,8 @@ export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldPro
       <Field
         data-invalid={!!error}
         className={cn(
-          "transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
-          isExpanded ? (alwaysOpen ? "w-full" : "w-64") : closedWidth,
+          "transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] shrink-0",
+          isExpanded ? (alwaysOpen ? "w-full" : "w-56 sm:w-64") : closedWidth,
           className,
         )}
       >

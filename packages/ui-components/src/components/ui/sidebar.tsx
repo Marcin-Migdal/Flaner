@@ -3,6 +3,7 @@ import { Slot, Tooltip as TooltipPrimitive } from "radix-ui"
 import { PanelLeft } from "lucide-react"
 
 import { cn } from "@flaner/shared/utils";
+import { useIsMobile } from "@flaner/shared/hooks";
 import { Sheet, SheetContent } from "./sheet"
 import { Button } from "./button"
 
@@ -49,7 +50,7 @@ const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderProps>(
     },
     ref
   ) => {
-    const [isMobile, setIsMobile] = React.useState(false)
+    const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
 
     // Internal open state if not controlled
@@ -69,16 +70,6 @@ const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderProps>(
       },
       [open, setOpenProp]
     )
-
-    // Detect mobile size
-    React.useEffect(() => {
-      const checkMobile = () => {
-        setIsMobile(window.innerWidth < 768) // md breakpoint
-      }
-      checkMobile()
-      window.addEventListener("resize", checkMobile)
-      return () => window.removeEventListener("resize", checkMobile)
-    }, [])
 
     const toggleSidebar = React.useCallback(() => {
       return isMobile ? setOpenMobile((prev) => !prev) : setOpen((prev) => !prev)
@@ -373,7 +364,7 @@ const SidebarMenu = React.forwardRef<
     <ul
       ref={ref}
       data-sidebar="menu"
-      className={cn("flex flex-col gap-1 list-none p-0 m-0", className)}
+      className={cn("flex flex-col gap-1.5 md:gap-1 list-none p-0 m-0", className)}
       {...props}
     />
   )
@@ -412,10 +403,10 @@ const SidebarMenuButton = React.forwardRef<
       data-sidebar="menu-button"
       data-active={isActive}
       className={cn(
-        "flex w-full items-center gap-2.5 rounded-md px-2.5 py-1 text-sm font-medium text-sidebar-foreground transition-all duration-150 cursor-pointer outline-none border border-transparent select-none overflow-hidden",
+        "flex w-full items-center gap-3 md:gap-2.5 rounded-lg md:rounded-md px-3 py-2.5 md:px-2.5 md:py-1 min-h-[44px] md:min-h-0 text-base md:text-sm font-medium text-sidebar-foreground transition-all duration-150 cursor-pointer outline-none border border-transparent select-none overflow-hidden",
         "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
         "data-[active=true]:bg-brand data-[active=true]:text-zinc-950 data-[active=true]:font-bold data-[active=true]:shadow-md data-[active=true]:shadow-brand/5",
-        "[&_svg]:size-[18px] [&_svg]:shrink-0 [&_svg]:transition-transform [&_svg]:duration-200",
+        "[&_svg]:size-5 md:[&_svg]:size-[18px] [&_svg]:shrink-0 [&_svg]:transition-transform [&_svg]:duration-200",
         className
       )}
       {...props}
@@ -461,7 +452,7 @@ const SidebarMenuAction = React.forwardRef<
       ref={ref}
       data-sidebar="menu-action"
       className={cn(
-        "absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md p-0 text-sidebar-foreground/70 hover:text-sidebar-foreground transition-all outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring cursor-pointer hover:bg-sidebar-accent/50",
+        "absolute right-2 top-1/2 flex h-9 w-9 md:h-7 md:w-7 -translate-y-1/2 items-center justify-center rounded-md p-0 text-sidebar-foreground/70 hover:text-sidebar-foreground transition-all outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring cursor-pointer hover:bg-sidebar-accent/50 [&_svg]:size-5 md:[&_svg]:size-4",
         "transition-all duration-200 opacity-100 group-data-[state=collapsed]:opacity-0 group-data-[state=collapsed]:pointer-events-none",
         className
       )}
@@ -480,7 +471,7 @@ const SidebarMenuSub = React.forwardRef<
       ref={ref}
       data-sidebar="menu-sub"
       className={cn(
-        "my-0.5 flex flex-col gap-0.5 border-l border-sidebar-border/50 pl-3 list-none m-0",
+        "my-1 md:my-0.5 flex flex-col gap-1 md:gap-0.5 border-l border-sidebar-border/50 pl-3.5 md:pl-3 list-none m-0",
         "group-data-[state=collapsed]:hidden",
         className
       )}
@@ -521,7 +512,7 @@ const SidebarMenuSubButton = React.forwardRef<
       data-sidebar="menu-sub-button"
       data-active={isActive}
       className={cn(
-        "flex w-full items-center gap-2 rounded-md px-2 py-1 text-[13px] font-medium text-sidebar-foreground/75 hover:text-sidebar-foreground transition-all cursor-pointer outline-none border border-transparent select-none",
+        "flex w-full items-center gap-2.5 md:gap-2 rounded-lg md:rounded-md px-3 py-2 md:px-2 md:py-1 min-h-[38px] md:min-h-0 text-sm md:text-[13px] font-medium text-sidebar-foreground/75 hover:text-sidebar-foreground transition-all cursor-pointer outline-none border border-transparent select-none",
         "hover:bg-sidebar-accent/80",
         "data-[active=true]:text-brand data-[active=true]:font-semibold",
         className

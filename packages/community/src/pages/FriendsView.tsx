@@ -11,7 +11,7 @@ export function FriendsView() {
   const { data: friends = [] } = useGetFriendsListRealtimeQuery();
 
   return (
-    <div className="max-w-4xl mx-auto py-4 space-y-6">
+    <div className="max-w-4xl mx-auto py-4 space-y-6 px-4 md:px-0">
       {/* Header bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -19,7 +19,9 @@ export function FriendsView() {
             <Users className="size-6" />
           </div>
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-foreground font-heading">{t("title")}</h1>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground font-heading">
+              {t("friends")}
+            </h1>
           </div>
         </div>
 

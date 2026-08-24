@@ -48,13 +48,15 @@ export function InvitationsSheet() {
       <SheetTrigger asChild>
         <Button
           variant="outline"
-          className="relative h-10 px-4 gap-2 font-medium border-border hover:bg-accent/50 rounded-xl transition-all"
+          className="relative size-10 sm:h-10 sm:w-auto px-0 sm:px-4 gap-2 font-medium border-border hover:bg-accent/50 rounded-xl transition-all flex items-center justify-center shrink-0"
+          title={t("invitations.button")}
+          aria-label={t("invitations.button")}
         >
-          <Inbox className="size-4" />
-          <span>{t("invitations.button")}</span>
+          <Inbox className="size-4 shrink-0" />
+          <span className="hidden sm:inline">{t("invitations.button")}</span>
           {pendingCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground animate-pulse">
-              {pendingCount}
+            <span className="absolute -top-1 -right-1 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground ring-2 ring-background animate-pulse">
+              {pendingCount > 99 ? "99+" : pendingCount}
             </span>
           )}
         </Button>
