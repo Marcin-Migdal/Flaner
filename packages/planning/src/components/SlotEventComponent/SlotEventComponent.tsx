@@ -1,8 +1,7 @@
 import { Check, X } from "lucide-react";
-import { useEffect, useState } from "react";
 import type { ParticipantResult } from "../../api/participants";
 import type { VoteType } from "../../api/events/types";
-import { useSidebar, type CalendarEventComponentProps } from "@flaner/ui-components";
+import type { CalendarEventComponentProps } from "@flaner/ui-components";
 
 export type SlotMetaData = {
   slotIndex: number;
@@ -32,26 +31,6 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
   } = props;
   const meta = event.metaData;
 
-  const { state: sidebarState, isMobile } = useSidebar();
-  const isSidebarExpanded = sidebarState === "expanded";
-
-  const [isCompact, setIsCompact] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    const threshold = isSidebarExpanded ? 1500 : 1304;
-    return isMobile || window.innerWidth < threshold;
-  });
-
-  useEffect(() => {
-    const checkCompact = () => {
-      const threshold = isSidebarExpanded ? 1500 : 1304;
-      setIsCompact(isMobile || window.innerWidth < threshold);
-    };
-
-    checkCompact();
-    window.addEventListener("resize", checkCompact);
-    return () => window.removeEventListener("resize", checkCompact);
-  }, [isSidebarExpanded, isMobile]);
-
   const roundedClasses =
     isFirstInRow && isLastInRow
       ? "rounded-[3px] md:rounded-md"
@@ -78,7 +57,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
   if (!meta) {
     return (
       <div
-        className={`box-border ${className} ${roundedClasses} ${marginClasses} ${paddingClasses} flex items-center select-none truncate cursor-pointer overflow-hidden transition-all duration-150`}
+        className={`@container box-border ${className} ${roundedClasses} ${marginClasses} ${paddingClasses} flex items-center select-none truncate cursor-pointer overflow-hidden transition-all duration-150`}
         style={{
           backgroundColor: isHovered
             ? `color-mix(in srgb, ${event.color || "var(--primary)"} 85%, #fff)`
@@ -155,7 +134,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
 
   return (
     <div
-      className={`box-border group/slotSegment flex items-center shrink-0 select-none overflow-visible ${roundedClasses} ${marginClasses} ${paddingClasses} ${className} ${glowClasses} relative hover:z-[50] group-hover/slotSegment:z-[50] ${
+      className={`@container box-border group/slotSegment flex items-center shrink-0 select-none overflow-visible ${roundedClasses} ${marginClasses} ${paddingClasses} ${className} ${glowClasses} relative hover:z-[50] group-hover/slotSegment:z-[50] ${
         isHovered ? "z-[50]" : ""
       } transition-all duration-150`}
       style={{
@@ -263,21 +242,22 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
         {/* Vote Counts Summary Badge */}
         {isFirstSegment && (
           <>
-            {/* Mobile: Only "Tak" votes count */}
-            <div className="flex md:hidden items-center shrink-0 ml-auto">
+            {/* Below 1284px: Simple badge (Only "Tak" votes count) */}
+            <div className="flex min-[1284px]:hidden items-center shrink-0 ml-auto">
               {yesVotes > 0 ? (
-                <div className="shrink-0 px-0.5 py-0.5 rounded bg-black/45 text-[9.5px] font-bold text-emerald-300 flex items-center gap-0.5 leading-none tabular-nums">
-                  <span className="text-[8.5px]">✓</span>
+                <div className="shrink-0 px-0.5 py-0.5 md:px-1.5 md:py-0.5 rounded bg-black/45 md:bg-black/35 text-[9.5px] md:text-[10px] font-bold text-emerald-300 flex items-center gap-0.5 md:gap-1 leading-none tabular-nums">
+                  <span className="text-[8.5px] md:text-[10px]">✓</span>
                   <span>{yesVotes}</span>
                 </div>
               ) : null}
             </div>
 
-            {/* Desktop: Compact vs Full */}
-            <div className="hidden md:flex items-center shrink-0 ml-auto">
+            {/* From 1284px upwards: Compact vs Full via pure CSS Container Queries */}
+            <div className="hidden min-[1284px]:flex items-center shrink-0 ml-auto">
               <div className="shrink-0 px-1.5 py-0.5 rounded bg-black/35 text-[10px] font-bold text-white/90 flex items-center gap-1.5 tabular-nums">
-                {isCompact ? (
-                  yesVotes > 0 ? (
+                {/* Compact badge (active when slot width < 120px) */}
+                <div className="flex @[120px]:hidden items-center">
+                  {yesVotes > 0 ? (
                     <span className="text-emerald-300 inline-flex items-center gap-0.5">
                       <span className="text-[10px]">✓</span>
                       <span>{yesVotes}/{totalParticipantsCount}</span>
@@ -294,30 +274,31 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
                     </span>
                   ) : (
                     <span className="text-white/60">0/{totalParticipantsCount}</span>
-                  )
-                ) : (
-                  <>
-                    {yesVotes > 0 && (
-                      <span className="text-emerald-300 inline-flex items-center gap-0.5">
-                        <span className="text-[10px]">✓</span>
-                        <span>{yesVotes}</span>
-                      </span>
-                    )}
-                    {maybeVotes > 0 && (
-                      <span className="text-amber-300 inline-flex items-center gap-0.5">
-                        <span className="text-[10px]">?</span>
-                        <span>{maybeVotes}</span>
-                      </span>
-                    )}
-                    {noVotes > 0 && (
-                      <span className="text-rose-300 inline-flex items-center gap-0.5">
-                        <span className="text-[10px]">✕</span>
-                        <span>{noVotes}</span>
-                      </span>
-                    )}
-                    {totalVotesCast === 0 && <span className="text-white/60">0/{totalParticipantsCount}</span>}
-                  </>
-                )}
+                  )}
+                </div>
+
+                {/* Full badge (active when slot width >= 120px) */}
+                <div className="hidden @[120px]:flex items-center gap-1.5">
+                  {yesVotes > 0 && (
+                    <span className="text-emerald-300 inline-flex items-center gap-0.5">
+                      <span className="text-[10px]">✓</span>
+                      <span>{yesVotes}</span>
+                    </span>
+                  )}
+                  {maybeVotes > 0 && (
+                    <span className="text-amber-300 inline-flex items-center gap-0.5">
+                      <span className="text-[10px]">?</span>
+                      <span>{maybeVotes}</span>
+                    </span>
+                  )}
+                  {noVotes > 0 && (
+                    <span className="text-rose-300 inline-flex items-center gap-0.5">
+                      <span className="text-[10px]">✕</span>
+                      <span>{noVotes}</span>
+                    </span>
+                  )}
+                  {totalVotesCast === 0 && <span className="text-white/60">0/{totalParticipantsCount}</span>}
+                </div>
               </div>
             </div>
           </>
