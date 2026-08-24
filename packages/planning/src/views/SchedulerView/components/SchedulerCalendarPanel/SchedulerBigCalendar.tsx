@@ -2,7 +2,7 @@ import { BigCalendar, Button } from "@flaner/ui-components";
 import { parseISO } from "date-fns";
 import { ListSortDescending } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useIsMobile } from "../../../../../../shared/src/hooks/useIsMobile";
+import { useIsMobile } from "@flaner/shared/hooks";
 import type { SchedulerEvent, VoteType } from "../../../../api/events/types";
 import type { ParticipantResult } from "../../../../api/participants";
 import { AvailabilityGridView } from "../../../../components/AvailabilityGridView";
@@ -38,27 +38,19 @@ export const SchedulerBigCalendar = ({
   const { t } = usePlanningTranslations();
   const isMobile = useIsMobile();
 
-  const [maxEventsPerDay, setMaxEventsPerDay] = useState<number>(() => {
-    if (isMobile) return 2;
-
-    if (typeof window !== "undefined") {
-      return window.innerHeight <= MD_TABLET_HEIGHT ? 3 : 4;
-    }
-
-    return 3;
+  const [isTabletHeight, setIsTabletHeight] = useState<boolean>(() => {
+    return typeof window !== "undefined" ? window.innerHeight <= MD_TABLET_HEIGHT : true;
   });
 
   useEffect(() => {
-    const handleResize = () => {
-      const newMaxEventsPerDay = isMobile ? 2 : window.innerHeight <= MD_TABLET_HEIGHT ? 3 : 4;
+    const mql = window.matchMedia(`(max-height: ${MD_TABLET_HEIGHT}px)`);
+    const onChange = () => setIsTabletHeight(window.innerHeight <= MD_TABLET_HEIGHT);
 
-      setMaxEventsPerDay(newMaxEventsPerDay);
-    };
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [isMobile]);
+  const maxEventsPerDay = isMobile ? 2 : isTabletHeight ? 3 : 4;
 
   return (
     <BigCalendar

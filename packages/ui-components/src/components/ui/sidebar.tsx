@@ -3,6 +3,7 @@ import { Slot, Tooltip as TooltipPrimitive } from "radix-ui"
 import { PanelLeft } from "lucide-react"
 
 import { cn } from "@flaner/shared/utils";
+import { useIsMobile } from "@flaner/shared/hooks";
 import { Sheet, SheetContent } from "./sheet"
 import { Button } from "./button"
 
@@ -49,7 +50,7 @@ const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderProps>(
     },
     ref
   ) => {
-    const [isMobile, setIsMobile] = React.useState(false)
+    const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
 
     // Internal open state if not controlled
@@ -69,16 +70,6 @@ const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderProps>(
       },
       [open, setOpenProp]
     )
-
-    // Detect mobile size
-    React.useEffect(() => {
-      const checkMobile = () => {
-        setIsMobile(window.innerWidth < 768) // md breakpoint
-      }
-      checkMobile()
-      window.addEventListener("resize", checkMobile)
-      return () => window.removeEventListener("resize", checkMobile)
-    }, [])
 
     const toggleSidebar = React.useCallback(() => {
       return isMobile ? setOpenMobile((prev) => !prev) : setOpen((prev) => !prev)

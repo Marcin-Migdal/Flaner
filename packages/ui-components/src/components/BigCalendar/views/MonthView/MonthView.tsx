@@ -74,24 +74,31 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
   const days = useMemo(() => eachDayOfInterval({ start: gridStart, end: gridEnd }), [gridStart, gridEnd]);
 
   useEffect(() => {
-    if (!gridRef.current) {
+    const el = gridRef.current;
+    if (!el) {
       return;
     }
-    const updateMaxEvents = () => {
-      if (gridRef.current) {
-        const height = gridRef.current.clientHeight;
-        const weeksCount = days.length / 7;
-        const availableHeight = height / weeksCount;
 
-        // Header is ~32px, "More" button is ~24px. Total reserved = 56px.
-        const slotPx = getSlotHeightPixels(props.slotSize) + 2;
-        const max = Math.max(1, Math.floor((availableHeight - 56) / slotPx));
-        setMaxEventsPerDay(max);
-      }
+    const weeksCount = days.length / 7;
+    const slotPx = getSlotHeightPixels(props.slotSize) + 2;
+
+    const updateMaxEvents = (height: number) => {
+      const availableHeight = height / weeksCount;
+      // Header is ~32px, "More" button is ~24px. Total reserved = 56px.
+      const max = Math.max(1, Math.floor((availableHeight - 56) / slotPx));
+      setMaxEventsPerDay((prev) => (prev !== max ? max : prev));
     };
-    updateMaxEvents();
-    window.addEventListener("resize", updateMaxEvents);
-    return () => window.removeEventListener("resize", updateMaxEvents);
+
+    updateMaxEvents(el.clientHeight);
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        updateMaxEvents(entry.contentRect.height);
+      }
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [days.length, props.slotSize]);
 
   // ── Slot grid ─────────────────────────────────────────────────────
