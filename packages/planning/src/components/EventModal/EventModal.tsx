@@ -1,4 +1,5 @@
 import { useAuth } from "@flaner/shared/context";
+import { toast } from "@flaner/shared/utils";
 import {
   BigCalendar,
   Button,
@@ -13,7 +14,7 @@ import {
   FormTextField,
 } from "@flaner/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, parseISO, startOfToday } from "date-fns";
+import { format, isSameDay, parseISO, startOfToday } from "date-fns";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
@@ -93,11 +94,19 @@ export const EventModal = ({
   const onSubmit = async (data: CreateSchedulerFormData) => {
     if (!user) return;
 
-    const formattedDates = data.proposedDates.map((d) => ({
-      start: format(d.start, "yyyy-MM-dd"),
-      end: format(d.end, "yyyy-MM-dd"),
-      color: d.color,
-    }));
+    const formattedDates = data.proposedDates.map((d) => {
+      const startStr = format(d.start, "yyyy-MM-dd");
+      const endStr = format(d.end, "yyyy-MM-dd");
+      const existingSlot = eventToEdit?.proposedDates.find(
+        (orig) => orig.start === startStr && orig.end === endStr,
+      );
+      return {
+        start: startStr,
+        end: endStr,
+        color: d.color,
+        ...(existingSlot?.votes ? { votes: existingSlot.votes } : {}),
+      };
+    });
 
     if (eventToEdit) {
       await updateEvent(
@@ -155,9 +164,20 @@ export const EventModal = ({
     setSelectedRange(range);
 
     if (range && range[0] && range[1]) {
+      const [start, end] = range;
       const currentDates = methods.getValues("proposedDates") || [];
-      const color = getRandomSlotColor(range[0], range[1], currentDates);
-      const newRange = { start: range[0], end: range[1], color };
+      const isDuplicate = currentDates.some(
+        (existing) => isSameDay(existing.start, start) && isSameDay(existing.end, end),
+      );
+
+      if (isDuplicate) {
+        toast.attention(t("validation.duplicateSlot"));
+        setSelectedRange(null);
+        return;
+      }
+
+      const color = getRandomSlotColor(start, end, currentDates);
+      const newRange = { start, end, color };
 
       methods.setValue("proposedDates", [...currentDates, newRange], { shouldValidate: true });
       setSelectedRange(null);
@@ -169,7 +189,7 @@ export const EventModal = ({
     const currentDates = methods.getValues("proposedDates") || [];
     const indexToRemove = typeof event.id === "string" ? parseInt(event.id, 10) : event.id;
     const newDates = currentDates.filter((_, idx) => idx !== indexToRemove);
-    methods.setValue("proposedDates", newDates, { shouldValidate: false });
+    methods.setValue("proposedDates", newDates, { shouldValidate: true });
   };
 
   const rawProposedDates = useWatch({ control: methods.control, name: "proposedDates" });

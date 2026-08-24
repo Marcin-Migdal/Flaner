@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { startOfDay } from "date-fns";
+import { isSameDay, startOfDay } from "date-fns";
 
 export const getCreateSchedulerSchema = (t: (key: string, options?: Record<string, unknown>) => string) =>
   z.object({
@@ -29,6 +29,19 @@ export const getCreateSchedulerSchema = (t: (key: string, options?: Record<strin
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: t("validation.proposedDatePast"),
+          path: ["proposedDates"]
+        });
+      }
+
+      const hasDuplicate = data.proposedDates.some((slot, index) =>
+        data.proposedDates.slice(index + 1).some(
+          (other) => isSameDay(slot.start, other.start) && isSameDay(slot.end, other.end)
+        )
+      );
+      if (hasDuplicate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: t("validation.duplicateSlot"),
           path: ["proposedDates"]
         });
       }
