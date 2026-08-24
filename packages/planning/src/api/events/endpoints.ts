@@ -31,6 +31,7 @@ export const createSchedulerEvent = async (
   const newEvent: SchedulerEvent = {
     ...data,
     id: eventRef.id,
+    isFinalized: false,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -98,8 +99,12 @@ export const updateSchedulerEvent = async (
   eventId: string,
   data: Partial<Omit<SchedulerEvent, "id" | "createdAt" | "updatedAt">>,
 ): Promise<void> => {
+  const cleanData = Object.fromEntries(
+    Object.entries(data).filter(([_, v]) => v !== undefined),
+  );
+
   await updateDoc(refs.event(eventId), {
-    ...data,
+    ...cleanData,
     updatedAt: Date.now(),
   });
 };
