@@ -4,10 +4,12 @@ import { firestoreConverter } from "@flaner/shared/utils";
 import type { ParticipantResult, UserParticipant, GroupParticipant } from "./types";
 
 const refs = {
-  // Dla wyszukiwania nakładamy light-weight typy by nie duplikować ogromnych modeli z innych MFE
+  // Lightweight types for search to avoid importing full domain models from other MFEs
   users: () => collection(fb.firestore, "users").withConverter(firestoreConverter<UserParticipant>()),
   groups: () => collection(fb.firestore, "groups").withConverter(firestoreConverter<GroupParticipant>()),
 };
+
+const FIRESTORE_IN_LIMIT = 30;
 
 export const searchParticipants = async (searchStr: string, currentUserId?: string): Promise<ParticipantResult[]> => {
   if (!searchStr.trim()) return [];
@@ -58,40 +60,42 @@ export const searchParticipants = async (searchStr: string, currentUserId?: stri
     let userPrivateGroups: ParticipantResult[] = [];
     if (currentUserId) {
       try {
-        const membersQ = query(
-          collectionGroup(fb.firestore, "members"),
-          where("userId", "==", currentUserId)
+        const userGroupsSnap = await getDocs(
+          query(collectionGroup(fb.firestore, "members"), where("userId", "==", currentUserId))
         );
-        const membersSnap = await getDocs(membersQ);
-        const groupIds = membersSnap.docs.map(d => d.ref.parent.parent?.id).filter(Boolean) as string[];
+        const groupIds = userGroupsSnap.docs.map(d => d.ref.parent.parent?.id).filter(Boolean) as string[];
         
         if (groupIds.length > 0) {
           const groupSnaps = await Promise.all(
-            groupIds.map(id => getDoc(doc(refs.groups(), id)))
+            groupIds.slice(0, 10).map(gid => getDoc(doc(fb.firestore, "groups", gid)))
           );
+          
           userPrivateGroups = groupSnaps
             .filter(snap => snap.exists())
             .map(snap => {
               const data = snap.data();
-              const groupName = data?.name || (data as unknown as { name?: string })?.name || snap.id;
+              const groupName = data && "name" in data && typeof data.name === "string" ? data.name : snap.id;
               return {
                 type: "group" as const,
                 id: snap.id,
                 name: groupName,
-                avatarUrl: data?.avatarUrl,
+                avatarUrl: data?.avatarUrl
               };
             })
-            .filter(g => g.name.toLowerCase().startsWith(qLower) || g.name.toLowerCase().includes(qLower));
+            .filter(g => g.name.toLowerCase().includes(qLower));
         }
-      } catch (e) {
-        console.warn("Failed to fetch user joined groups for search:", e);
+      } catch (err) {
+        console.error("Failed to fetch private groups:", err);
       }
     }
 
-    const groupsMap = new Map<string, ParticipantResult>();
-    publicGroups.forEach(g => groupsMap.set(g.id, g));
-    userPrivateGroups.forEach(g => groupsMap.set(g.id, g));
-    const allGroups = Array.from(groupsMap.values());
+    const uniqueGroupsMap = new Map<string, ParticipantResult>();
+    [...publicGroups, ...userPrivateGroups].forEach(g => {
+      if (!uniqueGroupsMap.has(g.id)) {
+        uniqueGroupsMap.set(g.id, g);
+      }
+    });
+    const allGroups = Array.from(uniqueGroupsMap.values());
 
     const all = [...users, ...allGroups];
     return currentUserId ? all.filter(p => p.id !== currentUserId) : all;
@@ -108,15 +112,17 @@ export const getGroupMembersAsParticipants = async (groupId: string, groupName: 
     
     if (userIds.length === 0) return [];
     
-    const chunks = [];
-    for (let i = 0; i < userIds.length; i += 10) {
-      chunks.push(userIds.slice(i, i + 10));
+    const chunks: string[][] = [];
+    for (let i = 0; i < userIds.length; i += FIRESTORE_IN_LIMIT) {
+      chunks.push(userIds.slice(i, i + FIRESTORE_IN_LIMIT));
     }
     
+    const snaps = await Promise.all(
+      chunks.map(chunk => getDocs(query(collection(fb.firestore, "users"), where(documentId(), "in", chunk))))
+    );
+
     const results: ParticipantResult[] = [];
-    for (const chunk of chunks) {
-      const q = query(collection(fb.firestore, "users"), where(documentId(), "in", chunk));
-      const snap = await getDocs(q);
+    snaps.forEach(snap => {
       snap.docs.forEach(d => {
         const data = d.data() as { username?: string; name?: string; usernameLower?: string; avatarUrl?: string };
         const username = data?.username || data?.name || d.id;
@@ -130,7 +136,7 @@ export const getGroupMembersAsParticipants = async (groupId: string, groupName: 
           groupName: groupName,
         });
       });
-    }
+    });
     
     return results;
   } catch (err) {
@@ -142,27 +148,29 @@ export const getGroupMembersAsParticipants = async (groupId: string, groupName: 
 export const getEventParticipantsProfiles = async (userIds: string[]): Promise<ParticipantResult[]> => {
   if (!userIds || userIds.length === 0) return [];
   
-  const chunks = [];
-  for (let i = 0; i < userIds.length; i += 10) {
-    chunks.push(userIds.slice(i, i + 10));
+  const chunks: string[][] = [];
+  for (let i = 0; i < userIds.length; i += FIRESTORE_IN_LIMIT) {
+    chunks.push(userIds.slice(i, i + FIRESTORE_IN_LIMIT));
   }
   
+  const snaps = await Promise.all(
+    chunks.map(chunk => getDocs(query(collection(fb.firestore, "users"), where(documentId(), "in", chunk))))
+  );
+
   const results: ParticipantResult[] = [];
-  for (const chunk of chunks) {
-    const q = query(collection(fb.firestore, "users"), where(documentId(), "in", chunk));
-    const snap = await getDocs(q);
+  snaps.forEach(snap => {
     snap.docs.forEach(d => {
-       const data = d.data();
-       results.push({
-          type: "user",
-          id: d.id,
-          name: data.username,
-          username: data.username,
-          usernameLower: data.usernameLower,
-          avatarUrl: data.avatarUrl,
-       });
+      const data = d.data();
+      results.push({
+        type: "user",
+        id: d.id,
+        name: data.username,
+        username: data.username,
+        usernameLower: data.usernameLower,
+        avatarUrl: data.avatarUrl,
+      });
     });
-  }
+  });
   
   return results;
 };
