@@ -1,9 +1,5 @@
 import { useAuth } from "@flaner/shared/context";
-import { UserType } from "@flaner/shared/types";
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
   BigCalendar,
   Button,
   CalendarEvent,
@@ -15,34 +11,18 @@ import {
   FormDatePicker,
   FormTextArea,
   FormTextField,
-  SearchBar,
 } from "@flaner/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, parseISO, startOfToday } from "date-fns";
-import { ArrowLeft, Plus, Search, User, Users, X } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import type { SchedulerEvent } from "../../api/events/types";
-import { getGroupMembersAsParticipants, type ParticipantResult } from "../../api/participants";
 import { useCreateEventMutation, useUpdateEventMutation } from "../../hooks/api/mutation";
-import { useGetEventParticipantsProfilesQuery, useSearchParticipantsQuery } from "../../hooks/api/query";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { CreateSchedulerFormData, getCreateSchedulerSchema } from "../../utils/schemas/create-scheduler-schema";
+import { ParticipantSelect } from "./components";
 import { getRandomSlotColor } from "./utils";
-
-const getDefaultParticipant = (user: UserType | null): ParticipantResult[] => {
-  if (!user) return [];
-  return [
-    {
-      type: "user",
-      id: user.uid,
-      name: user.username,
-      username: user.username,
-      usernameLower: user.usernameLower,
-      avatarUrl: user.avatarUrl,
-    },
-  ];
-};
 
 export type EventModalProps = {
   trigger?: React.ReactNode;
@@ -67,26 +47,7 @@ export const EventModal = ({
   const isOpen = isControlled ? externalIsOpen : internalIsOpen;
 
   const [showMobileCalendar, setShowMobileCalendar] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedRange, setSelectedRange] = useState<[Date, Date?] | null>(null);
-  const { data: searchResults = [], isLoading: isSearchLoading } = useSearchParticipantsQuery(searchQuery, user?.uid);
-
-  const { data: fetchedProfilesMap = new Map<string, ParticipantResult>() } = useGetEventParticipantsProfilesQuery(
-    eventToEdit?.participants || [],
-    {
-      select: (profiles) => {
-        const map = new Map<string, ParticipantResult>();
-
-        profiles.forEach(({ id, name, avatarUrl }) => {
-          map.set(id, { type: "user", id, name, username: name, usernameLower: name.toLowerCase(), avatarUrl });
-        });
-
-        return map;
-      },
-    },
-  );
-
-  const [addedProfilesMap, setAddedProfilesMap] = useState<Map<string, ParticipantResult>>(new Map());
 
   const methods = useForm<CreateSchedulerFormData>({
     resolver: zodResolver(getCreateSchedulerSchema(t)),
@@ -101,34 +62,7 @@ export const EventModal = ({
 
   const { mutateAsync: createEvent, isPending: isCreating } = useCreateEventMutation();
   const { mutateAsync: updateEvent, isPending: isUpdating } = useUpdateEventMutation();
-
   const isSaving = isCreating || isUpdating;
-
-  const rawParticipantIds = useWatch({ control: methods.control, name: "participants" });
-
-  const selectedProfilesMap = useMemo(() => {
-    const defaultPart = getDefaultParticipant(user);
-    const defaultMap = new Map(defaultPart.map((p) => [p.id, p]));
-
-    const merged = new Map<string, ParticipantResult>();
-
-    defaultMap.forEach((val, key) => merged.set(key, val));
-
-    fetchedProfilesMap.forEach((val, key) => {
-      if (!merged.has(key)) merged.set(key, val);
-    });
-
-    addedProfilesMap.forEach((val, key) => {
-      merged.set(key, val);
-    });
-
-    return merged;
-  }, [user, fetchedProfilesMap, addedProfilesMap]);
-
-  const selectedParticipants: ParticipantResult[] = useMemo(() => {
-    const participantIds = rawParticipantIds || [];
-    return participantIds.map((id) => selectedProfilesMap.get(id)).filter((p): p is ParticipantResult => !!p);
-  }, [rawParticipantIds, selectedProfilesMap]);
 
   useEffect(() => {
     if (isOpen) {
@@ -213,8 +147,6 @@ export const EventModal = ({
     if (!open) {
       methods.reset();
       setSelectedRange(null);
-      setAddedProfilesMap(new Map());
-      setSearchQuery("");
       setShowMobileCalendar(false);
     }
   };
@@ -225,7 +157,6 @@ export const EventModal = ({
     if (range && range[0] && range[1]) {
       const currentDates = methods.getValues("proposedDates") || [];
       const color = getRandomSlotColor(range[0], range[1], currentDates);
-
       const newRange = { start: range[0], end: range[1], color };
 
       methods.setValue("proposedDates", [...currentDates, newRange], { shouldValidate: true });
@@ -235,10 +166,8 @@ export const EventModal = ({
 
   const handleEventClick = (event: CalendarEvent, e: React.MouseEvent) => {
     e.stopPropagation();
-
     const currentDates = methods.getValues("proposedDates") || [];
     const indexToRemove = typeof event.id === "string" ? parseInt(event.id, 10) : event.id;
-
     const newDates = currentDates.filter((_, idx) => idx !== indexToRemove);
     methods.setValue("proposedDates", newDates, { shouldValidate: false });
   };
@@ -290,126 +219,10 @@ export const EventModal = ({
                 <FormDatePicker name="endDate" label={t("fields.endDate")} />
               </div>
 
-              <div className="space-y-4 flex flex-col flex-1">
-                <h3 className="font-semibold text-sm">{t("create.participants")}</h3>
-                <div className="flex flex-col gap-3">
-                  <SearchBar<ParticipantResult>
-                    alwaysOpen
-                    icon={<Search className="h-4 w-4" />}
-                    placeholder={t("create.searchFriends")}
-                    value={searchQuery}
-                    onChange={setSearchQuery}
-                    results={searchResults}
-                    isLoading={isSearchLoading}
-                    onSelect={async (item) => {
-                      if (item.type === "group") {
-                        const members = await getGroupMembersAsParticipants(item.id, item.name);
-                        const current = methods.getValues("participants") || [];
-
-                        setAddedProfilesMap((prev) => {
-                          const next = new Map(prev);
-                          members.forEach((m) => {
-                            if (!current.includes(m.id) && m.id !== user?.uid) {
-                              next.set(m.id, m);
-                            }
-                          });
-                          return next;
-                        });
-
-                        const newIds = members.map((m) => m.id).filter((id) => !current.includes(id));
-                        methods.setValue("participants", [...current, ...newIds]);
-                      } else {
-                        const current = methods.getValues("participants") || [];
-                        setAddedProfilesMap((prev) => {
-                          if (current.includes(item.id)) return prev;
-                          const next = new Map(prev);
-                          next.set(item.id, item);
-                          return next;
-                        });
-
-                        if (!current.includes(item.id)) {
-                          methods.setValue("participants", [...current, item.id]);
-                        }
-                      }
-                      setSearchQuery("");
-                    }}
-                    renderResult={(item) => (
-                      <div className="flex items-center gap-3">
-                        <Avatar className="size-8 shrink-0">
-                          <AvatarImage src={item.avatarUrl} />
-                          <AvatarFallback className="text-xs font-semibold">
-                            {item.type === "group" ? (
-                              <Users className="size-4 text-muted-foreground" />
-                            ) : (
-                              item.name?.[0]?.toUpperCase() || <User className="size-4 text-muted-foreground" />
-                            )}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-sm font-medium truncate">{item.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {item.type === "group" ? t("create.resultGroup") : t("create.resultUser")}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  />
-
-                  {selectedParticipants.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {selectedParticipants.map((p) => (
-                        <div
-                          key={p.id}
-                          className="flex items-center gap-2 bg-muted/50 pl-1.5 pr-3 py-1 rounded-full text-sm border border-border/50 max-w-[260px]"
-                        >
-                          <Avatar className="size-6 shrink-0">
-                            <AvatarImage src={p.avatarUrl} />
-                            <AvatarFallback className="text-[10px] font-semibold">
-                              {p.type === "group" ? (
-                                <Users className="size-3 text-muted-foreground" />
-                              ) : (
-                                p.name?.[0]?.toUpperCase() || "?"
-                              )}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="truncate flex-1 min-w-0">
-                            <span>{p.name}</span>
-                            {p.id === (eventToEdit ? eventToEdit.creatorId : user?.uid) && (
-                              <span className="text-muted-foreground ml-1">({t("roles.creator")})</span>
-                            )}
-                            {p.type === "user" &&
-                              p.groupName &&
-                              p.id !== (eventToEdit ? eventToEdit.creatorId : user?.uid) && (
-                                <span className="text-muted-foreground ml-1">({p.groupName})</span>
-                              )}
-                          </div>
-                          {p.id !== (eventToEdit ? eventToEdit.creatorId : user?.uid) && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setAddedProfilesMap((prev) => {
-                                  if (!prev.has(p.id)) return prev;
-                                  const next = new Map(prev);
-                                  next.delete(p.id);
-                                  return next;
-                                });
-                                const current = methods.getValues("participants") || [];
-                                methods.setValue(
-                                  "participants",
-                                  current.filter((id) => id !== p.id),
-                                );
-                              }}
-                              className="hover:bg-accent shrink-0 rounded-full p-0.5 text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <ParticipantSelect
+                creatorId={eventToEdit ? eventToEdit.creatorId : user?.uid}
+                initialParticipantIds={eventToEdit?.participants}
+              />
 
               <div className="mt-auto pt-6 flex flex-col gap-4">
                 {!showMobileCalendar && (
