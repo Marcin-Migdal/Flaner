@@ -1,3 +1,5 @@
 import { BigCalendarView } from "../types";
 
-export const VIEWS: BigCalendarView[] = ["day", "week", "month"] as const;
+// Default active views that are fully implemented and ready for production
+export const VIEWS: BigCalendarView[] = ["month"] as const;
+
