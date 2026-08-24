@@ -46,3 +46,5 @@ export const SchedulerView = () => {
     </div>
   );
 };
+
+export default SchedulerView;

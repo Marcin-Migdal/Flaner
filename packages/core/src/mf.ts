@@ -69,7 +69,7 @@ export async function loadMfeNavigation(alias: string) {
   try {
     const { loadRemote } = await import("@module-federation/runtime");
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`Timeout loading navigation from ${alias}`)), 2500),
+      setTimeout(() => reject(new Error(`Timeout loading navigation from ${alias}`)), 8000),
     );
     const loadPromise = loadRemote<{ navigation: NavigationItem[] }>(`${alias}/navigation`);
     const mod = await Promise.race([loadPromise, timeoutPromise]);

@@ -1,6 +1,8 @@
+import React from "react";
 import { Outlet } from "react-router";
 import type { AppRouteObject } from "@flaner/shared/types";
-import { SchedulerView } from "./views/SchedulerView";
+
+const SchedulerView = React.lazy(() => import("./views/SchedulerView"));
 
 export const routes: AppRouteObject[] = [
   {

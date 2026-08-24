@@ -49,4 +49,5 @@ export const AppRoutes = () => (
 
 ## Rules
 - Always use `React.lazy()` and `<Suspense>` when importing remote React components.
+- **CRITICAL: Always use `React.lazy()` for all View/Page components in MFE `routes.tsx`**: Never statically import views inside `routes.tsx`. Because `navigation.ts` generates navigation items from `routes.tsx` and is exposed to the Host (`core`), static imports will bundle the entire MFE (all views, calendars, modals, heavy libs) into the navigation chunk, causing network timeouts and broken navigation on production.
 - Make sure that dependencies used across MFEs (like `react`, `react-router`, `zod`, `@tanstack/react-query`) are properly listed in the `shared` array in both host and remote federation configs.

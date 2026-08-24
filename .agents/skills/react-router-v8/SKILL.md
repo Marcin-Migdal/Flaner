@@ -8,24 +8,37 @@ description: Guidelines for setting up routing, navigating, and configuring layo
 We use React Router v8 for both the host application (`core`) and the micro-frontends (MFEs).
 
 ## 1. Defining Routes in MFEs
-Each MFE defines its own routes in `routes.tsx`. These are typically exported as an array of Route objects and then consumed by the Host app.
+Each MFE defines its own routes in `routes.tsx`. These are exported as an array of `AppRouteObject` items and consumed by the Host app and by `navigation.ts`.
+
+> ⚠️ **CRITICAL RULE**: Views inside `routes.tsx` **MUST ALWAYS** be loaded with `React.lazy()`. Never import view components statically in `routes.tsx`, as this forces the Host app to download the entire MFE bundle just to render the sidebar navigation links.
 
 **Example `packages/community/src/routes.tsx`:**
 ```typescript
-import { RouteObject } from 'react-router';
-import { CommunityLayout } from './components/CommunityLayout';
-import { CommunityDashboard } from './pages/CommunityDashboard';
-import { FriendsView } from './pages/FriendsView';
+import React from 'react';
+import { Outlet } from 'react-router';
+import type { AppRouteObject } from '@flaner/shared/types';
 
-export const communityRoutes: RouteObject[] = [
+const FriendsView = React.lazy(() => import('./pages/FriendsView'));
+const GroupsListView = React.lazy(() => import('./pages/groups/GroupsListView'));
+
+export const routes: AppRouteObject[] = [
   {
-    path: 'community',
-    element: <CommunityLayout />,
+    path: '',
+    element: <Outlet />,
+    handle: { label: 'nav.community', icon: 'users' },
     children: [
-      { index: true, element: <CommunityDashboard /> },
-      { path: 'friends', element: <FriendsView /> }
-    ]
-  }
+      {
+        path: 'friends',
+        element: <FriendsView />,
+        handle: { label: 'nav.friends', icon: 'users' },
+      },
+      {
+        path: 'groups',
+        element: <GroupsListView />,
+        handle: { label: 'nav.groups', icon: 'users' },
+      },
+    ],
+  },
 ];
 ```
 
