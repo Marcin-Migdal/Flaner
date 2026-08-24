@@ -96,7 +96,12 @@
     "no": "Unavailable",
     "unvoted": "Not voted",
     "yourVote": "Your vote",
-    "summary": "Votes: {{yes}} yes · {{maybe}} maybe"
+    "summary": "Votes: {{yes}} yes · {{maybe}} maybe",
+    "voteYes": "Vote Yes",
+    "voteMaybe": "Vote Maybe",
+    "voteNo": "Vote No",
+    "retractVote": "Withdraw vote",
+    "removeVote": "Click to remove your vote"
   },
   "finalizeModal": {
     "eyebrow": "Finalize Date",

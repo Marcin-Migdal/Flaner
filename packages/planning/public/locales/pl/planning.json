@@ -96,7 +96,12 @@
     "no": "Nie mogę",
     "unvoted": "Brak głosu",
     "yourVote": "Twój głos",
-    "summary": "Głosy: {{yes}} tak · {{maybe}} może"
+    "summary": "Głosy: {{yes}} tak · {{maybe}} może",
+    "voteYes": "Głosuj na Tak",
+    "voteMaybe": "Głosuj na Może",
+    "voteNo": "Głosuj na Nie",
+    "retractVote": "Cofnij głos",
+    "removeVote": "Kliknij, aby usunąć swój głos"
   },
   "finalizeModal": {
     "eyebrow": "Zatwierdzenie terminu",

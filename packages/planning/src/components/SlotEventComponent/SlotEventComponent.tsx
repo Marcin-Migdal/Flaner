@@ -2,6 +2,7 @@ import { Check, X } from "lucide-react";
 import type { ParticipantResult } from "../../api/participants";
 import type { VoteType } from "../../api/events/types";
 import type { CalendarEventComponentProps } from "@flaner/ui-components";
+import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 
 export type SlotMetaData = {
   slotIndex: number;
@@ -30,6 +31,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
     continuesNextInRow = !props.isLastSegment,
   } = props;
   const meta = event.metaData;
+  const { t } = usePlanningTranslations();
 
   const roundedClasses =
     isFirstInRow && isLastInRow
@@ -165,7 +167,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
                   ? "bg-vote-yes text-white border border-vote-yes-border/60 shadow-sm hover:bg-vote-yes-hover scale-105"
                   : "bg-vote-yes-tint text-vote-yes-text hover:bg-vote-yes/30 border border-vote-yes-border/20 hover:border-vote-yes-border/50 hover:scale-105"
               }`}
-              title={currentUserVote === "yes" ? "Cofnij głos" : "Głosuj na Tak"}
+              title={currentUserVote === "yes" ? t("voting.retractVote") : t("voting.voteYes")}
               onClick={(e) => {
                 e.stopPropagation();
                 meta.onQuickVote?.(currentUserVote === "yes" ? null : "yes");
@@ -182,7 +184,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
                   ? "bg-vote-maybe text-white border border-vote-maybe-border/60 shadow-sm hover:bg-vote-maybe-hover scale-105"
                   : "bg-vote-maybe-tint text-vote-maybe-text hover:bg-vote-maybe/30 border border-vote-maybe-border/20 hover:border-vote-maybe-border/50 hover:scale-105"
               }`}
-              title={currentUserVote === "maybe" ? "Cofnij głos" : "Głosuj na Może"}
+              title={currentUserVote === "maybe" ? t("voting.retractVote") : t("voting.voteMaybe")}
               onClick={(e) => {
                 e.stopPropagation();
                 meta.onQuickVote?.(currentUserVote === "maybe" ? null : "maybe");
@@ -199,7 +201,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
                   ? "bg-vote-no text-white border border-vote-no-border/60 shadow-sm hover:bg-vote-no-hover scale-105"
                   : "bg-vote-no-tint text-vote-no-text hover:bg-vote-no/30 border border-vote-no-border/20 hover:border-vote-no-border/50 hover:scale-105"
               }`}
-              title={currentUserVote === "no" ? "Cofnij głos" : "Głosuj na Nie"}
+              title={currentUserVote === "no" ? t("voting.retractVote") : t("voting.voteNo")}
               onClick={(e) => {
                 e.stopPropagation();
                 meta.onQuickVote?.(currentUserVote === "no" ? null : "no");
@@ -229,7 +231,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
                 meta.onQuickVote(null);
               }
             }}
-            title="Kliknij, aby usunąć swój głos"
+            title={t("voting.removeVote")}
           >
             {currentUserVote === "yes" && <Check className="w-2.5 h-2.5 md:w-3 md:h-3 stroke-[3]" />}
             {currentUserVote === "maybe" && (

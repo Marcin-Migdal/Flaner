@@ -13,7 +13,7 @@ export const useSearchParticipantsQuery = (
     meta: reactQueryMeta.fetch,
     queryKey: getSearchParticipantsQueryKeys(searchQuery, currentUserId),
     queryFn: () => {
-      // Błędy nie są łapane (try/catch), lecz przelatują wyżej do React Query, aby wywołać onError meta toast
+      // Errors are not caught here; they bubble up to React Query to trigger onError meta toasts
       return searchParticipants(searchQuery, currentUserId);
     },
     enabled: searchQuery.length > 0,
