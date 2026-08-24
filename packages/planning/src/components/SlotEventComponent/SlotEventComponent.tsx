@@ -48,11 +48,11 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
 
   const paddingClasses = `${
     isFirstInRow && isLastInRow
-      ? "px-0.5 md:px-1.5"
+      ? "px-1"
       : isFirstInRow
-        ? "pl-0.5 pr-1 md:pl-1.5 md:pr-[9px]"
+        ? "pl-1 pr-0.5"
         : isLastInRow
-          ? "pl-0 pr-0.5 md:pl-0.5 md:pr-1.5"
+          ? "pl-0 pr-1"
           : "px-0"
   }`;
 
@@ -245,9 +245,13 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
         {isFirstSegment && (
           <>
             {/* Below 1284px: Simple badge (Only "Tak" votes count) */}
-            <div className="flex min-[1284px]:hidden items-center shrink-0 ml-auto">
+            <div
+              className={`flex min-[1284px]:hidden items-center shrink-0 ${
+                continuesNextInRow ? "ml-auto mr-1.5" : "ml-auto"
+              }`}
+            >
               {yesVotes > 0 ? (
-                <div className="shrink-0 px-0.5 py-0.5 md:px-1.5 md:py-0.5 rounded bg-black/45 md:bg-black/35 text-[9.5px] md:text-[10px] font-bold text-emerald-300 flex items-center gap-0.5 md:gap-1 leading-none tabular-nums">
+                <div className="shrink-0 px-1 py-0.5 rounded bg-black/45 md:bg-black/35 text-[9.5px] md:text-[10px] font-bold text-emerald-300 flex items-center gap-0.5 md:gap-1 leading-none tabular-nums">
                   <span className="text-[8.5px] md:text-[10px]">✓</span>
                   <span>{yesVotes}</span>
                 </div>
@@ -255,8 +259,12 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
             </div>
 
             {/* From 1284px upwards: Compact vs Full via pure CSS Container Queries */}
-            <div className="hidden min-[1284px]:flex items-center shrink-0 ml-auto">
-              <div className="shrink-0 px-1.5 py-0.5 rounded bg-black/35 text-[10px] font-bold text-white/90 flex items-center gap-1.5 tabular-nums">
+            <div
+              className={`hidden min-[1284px]:flex items-center shrink-0 ${
+                continuesNextInRow ? "ml-auto mr-1.5" : "ml-auto"
+              }`}
+            >
+              <div className="shrink-0 px-1 py-0.5 rounded bg-black/35 text-[10px] font-bold text-white/90 flex items-center gap-1 tabular-nums">
                 {/* Compact badge (active when slot width < 120px) */}
                 <div className="flex @[120px]:hidden items-center">
                   {yesVotes > 0 ? (
