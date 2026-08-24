@@ -1,9 +1,9 @@
-import { cn } from "@flaner/shared/utils";
-import { fb } from "@flaner/shared/firebase";
 import { MFE_NAMES } from "@flaner/shared/constants";
 import { useAuth } from "@flaner/shared/context";
+import { fb } from "@flaner/shared/firebase";
 import { useTheme } from "@flaner/shared/hooks";
 import { type NavigationItem } from "@flaner/shared/types";
+import { cn } from "@flaner/shared/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -173,10 +173,7 @@ function ShellLayoutContent() {
                 <SidebarMenuItem key={item.path}>
                   <div className="relative w-full flex items-center">
                     <SidebarMenuButton asChild isActive={isLinkActive(item.path)} tooltip={t(item.labelKey)}>
-                      <NavLink
-                        to={item.path}
-                        onClick={handleNavClick}
-                      >
+                      <NavLink to={item.path} onClick={handleNavClick}>
                         <DynamicIcon name={item.icon} />
                         <span>{t(item.labelKey)}</span>
                       </NavLink>
@@ -196,10 +193,7 @@ function ShellLayoutContent() {
                       {item.children?.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.path}>
                           <SidebarMenuSubButton asChild isActive={location.pathname === subItem.path}>
-                            <NavLink
-                              to={subItem.path}
-                              onClick={() => isMobile && setOpenMobile(false)}
-                            >
+                            <NavLink to={subItem.path} onClick={() => isMobile && setOpenMobile(false)}>
                               <span>{t(subItem.labelKey)}</span>
                             </NavLink>
                           </SidebarMenuSubButton>
@@ -232,7 +226,7 @@ function ShellLayoutContent() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
-                    className="w-full data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground pl-[3px] pr-2.5"
+                    className="w-full data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground md:pl-[3px] md:!px-1"
                     tooltip={t("nav.profile")}
                   >
                     <Profile
