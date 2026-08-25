@@ -1,5 +1,5 @@
 import { useAuth } from "@flaner/shared/context";
-import { toast } from "@flaner/shared/utils";
+import { cn, toast } from "@flaner/shared/utils";
 import {
   BigCalendar,
   Button,
@@ -226,7 +226,10 @@ export const EventModal = ({
             className="grid grid-cols-1 md:grid-cols-[360px_1fr] lg:grid-cols-[420px_1fr] md:h-[850px] lg:h-[950px] max-md:h-[calc(100dvh-5rem)] max-h-[95vh]"
           >
             <div
-              className={`p-3 md:p-6 border-r overflow-y-auto flex-col gap-6 ${showMobileCalendar ? "hidden md:flex" : "flex"}`}
+              className={cn(
+                "p-3 md:p-6 border-r overflow-y-auto flex-col gap-6",
+                showMobileCalendar ? "hidden md:flex" : "flex",
+              )}
             >
               <div className="space-y-4">
                 <FormTextField name="name" label={t("fields.name")} placeholder={t("fields.name")} />
@@ -272,7 +275,10 @@ export const EventModal = ({
             </div>
 
             <div
-              className={`bg-muted/10 flex-col p-3.5 md:p-6 overflow-hidden w-full flex-1 min-h-0 ${showMobileCalendar ? "flex" : "hidden md:flex"}`}
+              className={cn(
+                "bg-muted/10 flex-col p-3.5 md:p-6 overflow-hidden w-full flex-1 min-h-0",
+                showMobileCalendar ? "flex" : "hidden md:flex",
+              )}
             >
               <div className="md:hidden flex items-center mb-4">
                 <Button

@@ -6,6 +6,7 @@ import { useGetUserSchedulerEventsRealtimeQuery } from "../../hooks/api/query/us
 
 import { SchedulerCalendarPanel } from "./components/SchedulerCalendarPanel/SchedulerCalendarPanel";
 import { SchedulerEventControlPanel } from "./components/SchedulerEventControlPanel/SchedulerEventControlPanel";
+import { schedulerViewStyles } from "./SchedulerView.styles";
 
 export const SchedulerView = () => {
   const location = useLocation();
@@ -30,7 +31,7 @@ export const SchedulerView = () => {
   );
 
   return (
-    <div className="flex flex-col min-[1200px]:flex-row h-auto min-[1200px]:h-[calc(100vh-6rem)] max-w-[1920px] mx-auto w-full bg-background overflow-y-auto min-[1200px]:overflow-hidden text-foreground p-0 sm:p-4 md:p-6 gap-3 sm:gap-4 min-[1200px]:gap-6">
+    <div className={schedulerViewStyles.root}>
       <SchedulerEventControlPanel
         events={events}
         isEventsLoading={isEventsLoading}

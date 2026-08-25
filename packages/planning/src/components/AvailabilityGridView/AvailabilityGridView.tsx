@@ -8,6 +8,7 @@ import {
   AvailabilityGridParticipant,
   AvailabilityGridWinnerHeader,
 } from "./components";
+import { gridFrameVariants } from "./AvailabilityGridView.styles";
 import type { SlotStat } from "./types";
 
 export type AvailabilityGridViewProps = {
@@ -94,11 +95,7 @@ export const AvailabilityGridView = ({
   return (
     <div className="w-full h-full overflow-auto p-3 sm:p-5 bg-background/50 flex flex-col gap-4">
       {/* Frame Container with Dynamic Corner Radius */}
-      <div
-        className={`w-full overflow-hidden border border-border/70 bg-card/60 backdrop-blur-xl shadow-xl transition-all duration-200 ${
-          hasHorizontalScroll ? "rounded-t-2xl rounded-b-md" : "rounded-2xl"
-        }`}
-      >
+      <div className={gridFrameVariants({ hasHorizontalScroll })}>
         <div ref={scrollContainerRef} className="w-full overflow-x-auto">
           <div className="min-w-full w-max">
             {/* Dedicated Status / Finalized Winner Row in Header */}

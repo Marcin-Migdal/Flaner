@@ -7,6 +7,7 @@ import { useUiTranslations } from "../../../hooks/useUiTranslations";
 import { Button } from "../../ui/button";
 import { BigCalendarView, CustomViewsMap } from "../types";
 import { VIEWS } from "../utils/consts";
+import { viewSwitcherButtonVariants } from "./BigCalendarHeader.styles";
 
 type BigCalendarHeaderProps = {
   currentDate: Date;
@@ -103,11 +104,7 @@ export const BigCalendarHeader = ({
                 <button
                   type="button"
                   key={item.id}
-                  className={`px-1.5 sm:px-3 py-0.5 sm:py-1 text-[11px] sm:text-sm font-medium rounded-md transition-colors ${
-                    view === item.id
-                      ? "bg-background shadow-sm text-foreground font-semibold"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
+                  className={viewSwitcherButtonVariants({ isActive: view === item.id })}
                   onClick={() => handleViewChange(item.id)}
                 >
                   <span className="sm:hidden">{item.label.substring(0, 1).toUpperCase()}</span>

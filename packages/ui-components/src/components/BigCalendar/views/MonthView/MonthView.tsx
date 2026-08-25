@@ -24,6 +24,13 @@ import { CalendarEvent } from "../../types";
 import { isDateDisabled } from "../../utils/disabledDates";
 import { getCellClass } from "./helpers";
 import { MonthViewProps } from "./types";
+import {
+  monthViewEventSegmentVariants,
+  monthViewDayNumberVariants,
+  monthViewStyles,
+  type MonthViewPosition,
+} from "./MonthView.styles";
+import { cn } from "@flaner/shared/utils";
 
 const WEEKDAYS = [
   { key: "mon" },
@@ -36,9 +43,9 @@ const WEEKDAYS = [
 ] as const;
 
 const SLOT_HEIGHT_CLASSES: Record<NonNullable<MonthViewProps["slotSize"]>, string> = {
-  sm: "h-[12px] md:h-[20px] min-h-[12px] md:min-h-[20px] shrink-0 text-[8px] md:text-xs",
-  md: "h-[14px] md:h-[24px] min-h-[14px] md:min-h-[24px] shrink-0 text-[9px] md:text-xs",
-  lg: "h-[16px] md:h-[28px] min-h-[16px] md:min-h-[28px] shrink-0 text-[10px] md:text-sm",
+  sm: "h-[12px] md:h-[20px] min-h-[12px] md:min-h-[20px] max-h-[12px] md:max-h-[20px] shrink-0 text-[8px] md:text-xs",
+  md: "h-[14px] md:h-[24px] min-h-[14px] md:min-h-[24px] max-h-[14px] md:max-h-[24px] shrink-0 text-[9px] md:text-xs",
+  lg: "h-[16px] md:h-[28px] min-h-[16px] md:min-h-[28px] max-h-[16px] md:max-h-[28px] shrink-0 text-[10px] md:text-sm",
 };
 
 const getSlotHeightPixels = (size?: "sm" | "md" | "lg") => {
@@ -154,7 +161,7 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
 
     // Empty placeholder keeps rows aligned across the week
     if (!entry) {
-      return <div key={`empty-${slotIdx}`} className={`${slotHeight} mb-0.5`} />;
+      return <div key={`empty-${slotIdx}`} className={cn(slotHeight, monthViewStyles.emptySlot)} />;
     }
 
     const { event } = entry;
@@ -182,7 +189,11 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
           continuesNextInRow={continuesNextInRow}
           continuesPrevInRow={continuesPrevInRow}
           isHovered={isHovered}
-          className={`${slotHeight} mb-0.5 relative hover:z-[50] ${isHovered ? "z-[50]" : ""}`}
+          className={cn(
+            slotHeight,
+            "mb-[1px] md:mb-0.5 relative hover:z-[50]",
+            isHovered && "z-[50]",
+          )}
           onMouseEnter={() => setHoveredEventId(event.id)}
           onMouseLeave={() => setHoveredEventId(null)}
           onClick={(e) => {
@@ -193,27 +204,14 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
       );
     }
 
-    const roundedClasses =
+    const position: MonthViewPosition =
       isFirstInRow && isLastInRow
-        ? "rounded-[3px] md:rounded-md"
+        ? "single"
         : isFirstInRow
-          ? "rounded-l-[3px] md:rounded-l-md rounded-r-none"
+          ? "start"
           : isLastInRow
-            ? "rounded-r-[3px] md:rounded-r-md rounded-l-none"
-            : "rounded-none";
-
-    const marginClasses = continuesNextInRow
-      ? "w-[calc(100%+1px)] -mr-[1px] relative z-[1]"
-      : "w-full";
-    const paddingClasses = `${
-      isFirstInRow && isLastInRow
-        ? "px-[1px] md:px-2"
-        : isFirstInRow
-          ? "pl-[1px] md:pl-2 pr-[1px]"
-          : isLastInRow
-            ? "pl-[1px] pr-[1px] md:pr-2"
-            : "px-[1px]"
-    }`;
+            ? "end"
+            : "middle";
 
     // Default event renderer
     return (
@@ -221,13 +219,15 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
         <Tooltip>
           <TooltipTrigger asChild>
             <div
-              className={`
-                group/event flex items-center justify-between truncate cursor-pointer select-none
-                ${slotHeight} mb-[1px] md:mb-0.5 ${roundedClasses} ${marginClasses} ${paddingClasses}
-                transition-all duration-150 ease-in-out
-                ${event.color ? "text-white" : "bg-brand/10 text-brand-foreground hover:bg-brand/20"}
-                ${isHovered ? "z-10 shadow-md ring-1 ring-white/40 brightness-105" : ""}
-              `}
+              className={cn(
+                slotHeight,
+                monthViewEventSegmentVariants({
+                  position,
+                  continuesNextInRow,
+                  hasColor: Boolean(event.color),
+                  isHovered,
+                }),
+              )}
               style={event.color ? ({ backgroundColor: event.color } as CSSProperties) : undefined}
               onMouseEnter={() => setHoveredEventId(event.id)}
               onMouseLeave={() => setHoveredEventId(null)}
@@ -249,7 +249,7 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
               {isLastInRow && (
                 <button
                   type="button"
-                  className="opacity-0 group-hover/event:opacity-100 hover:text-destructive hover:bg-background/20 p-0.5 rounded transition-all duration-150 flex items-center justify-center shrink-0 ml-auto"
+                  className={monthViewStyles.removeEventButton}
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -278,9 +278,9 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
   // ── Render ────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col flex-1 min-h-full">
+    <div className={monthViewStyles.root}>
       {/* Weekday headers */}
-      <div className="grid grid-cols-7 border-b text-center text-xs font-semibold text-muted-foreground py-2 bg-muted/30 shrink-0 sticky top-0 z-20 backdrop-blur-md">
+      <div className={monthViewStyles.weekdayHeaders}>
         {WEEKDAYS.map((day) => (
           <div key={day.key} className="py-1">
             <span className="md:hidden">{t(`calendar.days.${day.key}`)}</span>
@@ -292,7 +292,7 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
       {/* Days grid */}
       <div
         ref={gridRef}
-        className="grid grid-cols-7 flex-1 divide-x divide-y border-b"
+        className={monthViewStyles.grid}
         style={{
           gridTemplateRows: `repeat(${days.length / 7}, minmax(0, 1fr))`,
         }}
@@ -329,13 +329,8 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
               })}`}
             >
               {/* Day header: number + selection clear */}
-              <div className="flex items-center justify-between px-2 pt-1 pb-0.5 shrink-0">
-                <span
-                  className={`
-                    text-xs font-semibold rounded-full w-6 h-6 flex items-center justify-center
-                    ${isToday(day) ? "bg-brand text-brand-foreground font-bold shadow-sm" : "text-foreground/80"}
-                  `}
-                >
+              <div className={monthViewStyles.dayHeader}>
+                <span className={monthViewDayNumberVariants({ isToday: isToday(day) })}>
                   {format(day, "d")}
                 </span>
 

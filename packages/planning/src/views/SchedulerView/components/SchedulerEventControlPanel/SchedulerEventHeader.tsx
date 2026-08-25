@@ -3,6 +3,10 @@ import { CheckCircle, Pencil, Plus, Trash2, X } from "lucide-react";
 import type { SchedulerEvent } from "../../../../api/events/types";
 import { FinalizedDateCard } from "../../../../components/FinalizedDateCard";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
+import {
+  finalizeEventButtonVariants,
+  rejectUnvotedButtonVariants,
+} from "./SchedulerEventHeader.styles";
 
 export type SchedulerEventHeaderProps = {
   events?: SchedulerEvent[];
@@ -160,9 +164,7 @@ export const SchedulerEventHeader = ({
                 <Button
                   type="button"
                   variant="outline"
-                  className={`${
-                    unvotedCount > 0 ? "col-span-2" : "w-full"
-                  } h-10 rounded-xl bg-brand/15 hover:bg-brand/25 border-brand/40 text-brand font-semibold text-xs tracking-wide uppercase gap-1.5 transition-all hover:scale-[1.01] shadow-sm px-2 truncate cursor-pointer`}
+                  className={finalizeEventButtonVariants({ hasUnvoted: unvotedCount > 0 })}
                   onClick={onFinalizeClick}
                   title={t("actions.finalizeEvent")}
                 >
@@ -179,9 +181,7 @@ export const SchedulerEventHeader = ({
                   variant="outline"
                   disabled={isBatchVoting}
                   isBusy={isBatchVoting}
-                  className={`${
-                    isOwner ? "col-span-3" : "w-full"
-                  } h-10 rounded-xl bg-vote-no-tint hover:bg-vote-no/20 border-vote-no-border/30 text-vote-no-text font-semibold text-xs tracking-wide uppercase gap-1.5 transition-all hover:scale-[1.01] shadow-sm px-2.5 truncate cursor-pointer`}
+                  className={rejectUnvotedButtonVariants({ isOwner })}
                   onClick={onRejectUnvoted}
                   title={t("actions.rejectUnvotedFull", { count: unvotedCount })}
                 >

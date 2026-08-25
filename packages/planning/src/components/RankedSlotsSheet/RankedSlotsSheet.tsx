@@ -14,6 +14,11 @@ import {
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import type { SchedulerEvent, VoteType } from "../../api/events/types";
 import type { ParticipantResult } from "../../api/participants";
+import {
+  rankedSlotCardVariants,
+  rankedSlotProgressVariants,
+  rankedVoteButtonVariants,
+} from "./RankedSlotsSheet.styles";
 
 export type RankedSlotsSheetProps = {
   open: boolean;
@@ -185,16 +190,12 @@ export const RankedSlotsSheet = ({
               );
             }
 
+            const cardStatus = isWinning ? "winning" : isRankOne ? "top" : "normal";
+
             return (
               <div
                 key={item.originalIndex}
-                className={`relative flex flex-col gap-3 p-3.5 sm:p-4 rounded-xl border transition-all ${
-                  isWinning
-                    ? "bg-emerald-500/10 border-emerald-500 ring-2 ring-emerald-500/30"
-                    : isRankOne
-                    ? "bg-card border-yellow-500/40 shadow-sm"
-                    : "bg-card/70 border-border/60"
-                }`}
+                className={rankedSlotCardVariants({ status: cardStatus })}
               >
                 {/* Header: Rank + Date + Score */}
                 <div className="flex items-center justify-between gap-2">
@@ -211,9 +212,7 @@ export const RankedSlotsSheet = ({
                 {/* Progress bar */}
                 <div className="w-full bg-muted/40 rounded-full h-2 overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-300 ${
-                      isRankOne ? "bg-amber-500" : "bg-emerald-500"
-                    }`}
+                    className={rankedSlotProgressVariants({ status: isRankOne ? "top" : "normal" })}
                     style={{ width: `${item.matchPercentage}%` }}
                   />
                 </div>
@@ -313,14 +312,13 @@ export const RankedSlotsSheet = ({
                     {/* Button 1: Tak (Yes) */}
                     <button
                       type="button"
-                      className={`shrink-0 p-0 border flex items-center justify-center w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl cursor-pointer transition-all duration-200 ease-in-out ${
-                        item.currentUserVote === "yes"
-                          ? "bg-vote-yes text-white border-vote-yes-border/60 shadow-sm hover:bg-vote-yes-hover scale-105"
-                          : "bg-vote-yes-tint text-vote-yes-text hover:bg-vote-yes/30 border-vote-yes-border/20 hover:border-vote-yes-border/50 hover:scale-105"
-                      }`}
+                      className={rankedVoteButtonVariants({
+                        vote: "yes",
+                        active: item.currentUserVote === "yes",
+                      })}
                       onClick={() =>
                         onVoteSlot(
-                          item.originalIndex,
+                           item.originalIndex,
                           item.currentUserVote === "yes" ? null : "yes"
                         )
                       }
@@ -332,11 +330,10 @@ export const RankedSlotsSheet = ({
                     {/* Button 2: Może (Maybe) */}
                     <button
                       type="button"
-                      className={`shrink-0 p-0 border flex items-center justify-center w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl cursor-pointer transition-all duration-200 ease-in-out ${
-                        item.currentUserVote === "maybe"
-                          ? "bg-vote-maybe text-white border-vote-maybe-border/60 shadow-sm hover:bg-vote-maybe-hover scale-105"
-                          : "bg-vote-maybe-tint text-vote-maybe-text hover:bg-vote-maybe/30 border-vote-maybe-border/20 hover:border-vote-maybe-border/50 hover:scale-105"
-                      }`}
+                      className={rankedVoteButtonVariants({
+                        vote: "maybe",
+                        active: item.currentUserVote === "maybe",
+                      })}
                       onClick={() =>
                         onVoteSlot(
                           item.originalIndex,
@@ -351,11 +348,10 @@ export const RankedSlotsSheet = ({
                     {/* Button 3: Nie (No) */}
                     <button
                       type="button"
-                      className={`shrink-0 p-0 border flex items-center justify-center w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl cursor-pointer transition-all duration-200 ease-in-out ${
-                        item.currentUserVote === "no"
-                          ? "bg-vote-no text-white border-vote-no-border/60 shadow-sm hover:bg-vote-no-hover scale-105"
-                          : "bg-vote-no-tint text-vote-no-text hover:bg-vote-no/30 border-vote-no-border/20 hover:border-vote-no-border/50 hover:scale-105"
-                      }`}
+                      className={rankedVoteButtonVariants({
+                        vote: "no",
+                        active: item.currentUserVote === "no",
+                      })}
                       onClick={() =>
                         onVoteSlot(
                           item.originalIndex,
@@ -376,3 +372,4 @@ export const RankedSlotsSheet = ({
     </Sheet>
   );
 };
+

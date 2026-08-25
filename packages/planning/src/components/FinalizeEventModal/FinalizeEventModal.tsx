@@ -10,6 +10,10 @@ import {
   DialogDescription,
   Button,
 } from "@flaner/ui-components";
+import {
+  finalizeSlotItemVariants,
+  finalizeCheckRadioVariants,
+} from "./FinalizeEventModal.styles";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import type { SchedulerEvent } from "../../api/events/types";
 import type { ParticipantResult } from "../../api/participants";
@@ -126,15 +130,11 @@ export const FinalizeEventModal = ({
                 type="button"
                 key={item.originalIndex}
                 onClick={() => setSelectedSlotIndex(item.originalIndex)}
-                className={`w-full text-left relative group flex items-center gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
-                  isSelected
-                    ? "bg-primary/10 border-primary ring-2 ring-primary/40 shadow-sm"
-                    : "bg-background/60 hover:bg-accent/40 border-border/60"
-                }`}
+                className={finalizeSlotItemVariants({ isSelected })}
               >
                 {/* Left: Trophy icon on the far left across the row height */}
                 {isTop && (
-                  <div className="shrink-0 self-stretch flex items-center justify-center pr-0.5 text-amber-500">
+                   <div className="shrink-0 self-stretch flex items-center justify-center pr-0.5 text-amber-500">
                     <Trophy className="w-5 h-5 text-amber-500" />
                   </div>
                 )}
@@ -143,13 +143,7 @@ export const FinalizeEventModal = ({
                 <div className="flex-1 min-w-0 flex flex-col gap-2">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div
-                        className={`w-5 h-5 shrink-0 rounded-full flex items-center justify-center border transition-colors ${
-                          isSelected
-                            ? "bg-primary border-primary text-primary-foreground"
-                            : "border-muted-foreground/40 group-hover:border-muted-foreground"
-                        }`}
-                      >
+                      <div className={finalizeCheckRadioVariants({ isSelected })}>
                         {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                       </div>
 
