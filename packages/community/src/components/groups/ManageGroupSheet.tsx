@@ -41,6 +41,7 @@ import {
 } from "../../hooks";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
 import { updateGroupSchema, type UpdateGroupSchema } from "../../utils/schemas/groups";
+import { manageGroupSheetStyles } from "./ManageGroupSheet.styles";
 
 interface ManageGroupSheetProps {
   groupId: string;
@@ -238,18 +239,18 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
             <span>{t("groupDetails.manageBtn")}</span>
           </Button>
         </SheetTrigger>
-        <SheetContent className="w-full max-w-full data-[side=right]:w-full data-[side=right]:sm:max-w-[500px] data-[side=right]:sm:w-[500px] p-0 gap-0 bg-card/95 backdrop-blur-md border-l border-border flex flex-col h-full shadow-2xl">
-          <SheetHeader className="px-6 pt-6 pb-4 border-b border-border shrink-0">
+        <SheetContent className={manageGroupSheetStyles.sheetContent}>
+          <SheetHeader className={manageGroupSheetStyles.sheetHeader}>
             <SheetTitle className="text-xl font-bold font-heading">{t("manageGroupSheet.title")}</SheetTitle>
             <SheetDescription className="text-xs text-muted-foreground mt-1">
               {t("manageGroupSheet.desc")}
             </SheetDescription>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto space-y-5 px-6 pt-4 pb-6 flex flex-col min-h-0">
+          <div className={manageGroupSheetStyles.bodyContainer}>
             {/* Edit Group Section - Owner only */}
             {currentUserRole === "owner" && (
-              <div className="space-y-3 shrink-0">
+              <div className={manageGroupSheetStyles.editSection}>
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 px-0.5">
                   {t("manageGroupSheet.editGroupSection")}
                 </div>
@@ -295,7 +296,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                     />
 
                     {groupType === "public" && (
-                      <div className="p-3 bg-card rounded-xl border border-border/60">
+                      <div className="pt-1">
                         <FormSwitch
                           control={control}
                           name="requiresApproval"
@@ -309,8 +310,8 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                     <Button
                       type="submit"
                       variant="brand"
-                      className="w-full rounded-xl h-10 font-semibold shadow-sm hover:brightness-105 transition-all mt-1"
                       isBusy={isUpdatingGroup}
+                      className="w-full rounded-xl h-10 font-semibold"
                     >
                       {t("manageGroupSheet.saveChanges")}
                     </Button>
@@ -325,12 +326,12 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                 <div className="text-center text-muted-foreground">{t("groupDetails.loading")}</div>
               </div>
             ) : (
-              <div className="space-y-2.5 pt-1 flex-1 min-h-[140px] flex flex-col">
-                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 px-0.5 flex items-center justify-between shrink-0">
+              <div className={manageGroupSheetStyles.membersSection}>
+                <div className={manageGroupSheetStyles.membersHeader}>
                   <span>{t("manageGroupSheet.membersSection")}</span>
                   <span className="text-[11px] font-normal lowercase">({members.length})</span>
                 </div>
-                <div className="space-y-2 overflow-y-auto pr-1 flex-1 min-h-[100px]">
+                <div className={manageGroupSheetStyles.membersList}>
                   {members.map((member: GroupMember) => {
                     const profile = membersProfiles?.find((p) => p.uid === member.userId);
                     const displayName = profile?.username || member.userId;
@@ -341,7 +342,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                     return (
                       <div
                         key={member.userId}
-                        className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/60 hover:border-border shadow-2xs transition-all"
+                        className={manageGroupSheetStyles.memberItem}
                       >
                         <div className="flex items-center gap-3">
                           <Avatar className="size-10 border border-border">
@@ -420,14 +421,14 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
             )}
 
             {currentUserRole === "owner" && (
-              <div className="pt-4 border-t border-border/60 mt-auto shrink-0">
+              <div className={manageGroupSheetStyles.dangerZone}>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-destructive mb-2 px-0.5">
                   {t("manageGroupSheet.dangerZoneTitle")}
                 </h4>
                 <Button
                   variant="outline"
                   isBusy={deleteGroupMutation.isPending}
-                  className="w-full text-destructive border-destructive/30 hover:bg-destructive hover:text-white rounded-xl h-10 font-medium flex items-center justify-center gap-2 transition-colors"
+                  className={manageGroupSheetStyles.deleteButton}
                   onClick={() => setIsDeleteConfirmOpen(true)}
                 >
                   <Trash2 className="size-4" />

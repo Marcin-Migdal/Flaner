@@ -1,6 +1,7 @@
 import { CheckCircle } from "lucide-react";
 import type { ProposedDateSlot } from "../../../api/events/types";
 import { usePlanningTranslations } from "../../../hooks/usePlanningTranslations";
+import { gridSlotCellVariants } from "./AvailabilityGridCell.styles";
 
 export type AvailabilityGridWinnerHeaderProps = {
   proposedDates: ProposedDateSlot[];
@@ -29,9 +30,7 @@ export const AvailabilityGridWinnerHeader = ({
         return (
           <div
             key={slotIdx}
-            className={`p-1.5 flex items-center justify-center border-r border-border/50 last:border-r-0 transition-colors duration-300 ease-in-out ${
-              isWinning ? "bg-emerald-500/20" : ""
-            }`}
+            className={gridSlotCellVariants({ highlight: isWinning ? "winning" : "none" })}
           >
             {isWinning ? (
               <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500 text-emerald-950 uppercase tracking-wide leading-none shadow-sm">
@@ -44,3 +43,4 @@ export const AvailabilityGridWinnerHeader = ({
     </div>
   );
 };
+

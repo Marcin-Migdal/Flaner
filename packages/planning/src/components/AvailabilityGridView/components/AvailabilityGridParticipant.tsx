@@ -3,6 +3,12 @@ import { Check, Minus, X } from "lucide-react";
 import type { ProposedDateSlot, VoteType } from "../../../api/events/types";
 import type { ParticipantResult } from "../../../api/participants";
 import { usePlanningTranslations } from "../../../hooks/usePlanningTranslations";
+import {
+  gridParticipantRowVariants,
+  gridParticipantAvatarVariants,
+  gridStaticVoteBadgeVariants,
+  gridVoteButtonVariants,
+} from "./AvailabilityGridParticipant.styles";
 
 export type AvailabilityGridParticipantProps = {
   uid: string;
@@ -33,15 +39,13 @@ export const AvailabilityGridParticipant = ({
 
   return (
     <div
-      className={`grid items-center transition-colors hover:bg-muted/30 ${
-        isCurrentUser ? "bg-primary/5" : ""
-      }`}
+      className={gridParticipantRowVariants({ isCurrentUser })}
       style={{ gridTemplateColumns }}
     >
       {/* Participant Info Cell */}
       <div className="p-2 sm:p-2.5 flex items-center gap-2 border-r border-border/50 overflow-hidden">
         <div className="relative shrink-0">
-          <Avatar className={`w-7 h-7 sm:w-8 sm:h-8 ${hasNoVotes ? "ring-2 ring-rose-500/60" : ""}`}>
+          <Avatar className={gridParticipantAvatarVariants({ hasNoVotes })}>
             <AvatarImage src={profile?.avatarUrl} />
             <AvatarFallback className="text-xs font-bold">
               {profile?.name?.[0]?.toUpperCase() || "?"}
@@ -87,11 +91,10 @@ export const AvailabilityGridParticipant = ({
                 {/* Button 1: Tak (Yes) toggle */}
                 <button
                   type="button"
-                  className={`shrink-0 p-0 border flex items-center justify-center w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-xl cursor-pointer transition-all duration-200 ease-in-out ${
-                    vote === "yes"
-                      ? "bg-vote-yes text-white border border-vote-yes-border/60 shadow-sm hover:bg-vote-yes-hover scale-105"
-                      : "bg-vote-yes-tint text-vote-yes-text hover:bg-vote-yes/30 border border-vote-yes-border/20 hover:border-vote-yes-border/50 hover:scale-105"
-                  }`}
+                  className={gridVoteButtonVariants({
+                    vote: "yes",
+                    active: vote === "yes",
+                  })}
                   onClick={() => onVoteClick(slotIdx, "yes", vote)}
                   title={vote === "yes" ? t("voting.unvoted") : t("voting.yes")}
                 >
@@ -101,11 +104,10 @@ export const AvailabilityGridParticipant = ({
                 {/* Button 2: Może (Maybe) toggle */}
                 <button
                   type="button"
-                  className={`shrink-0 p-0 border flex items-center justify-center w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-xl cursor-pointer transition-all duration-200 ease-in-out ${
-                    vote === "maybe"
-                      ? "bg-vote-maybe text-white border border-vote-maybe-border/60 shadow-sm hover:bg-vote-maybe-hover scale-105"
-                      : "bg-vote-maybe-tint text-vote-maybe-text hover:bg-vote-maybe/30 border border-vote-maybe-border/20 hover:border-vote-maybe-border/50 hover:scale-105"
-                  }`}
+                  className={gridVoteButtonVariants({
+                    vote: "maybe",
+                    active: vote === "maybe",
+                  })}
                   onClick={() => onVoteClick(slotIdx, "maybe", vote)}
                   title={vote === "maybe" ? t("voting.unvoted") : t("voting.maybe")}
                 >
@@ -115,11 +117,10 @@ export const AvailabilityGridParticipant = ({
                 {/* Button 3: Nie (No) toggle */}
                 <button
                   type="button"
-                  className={`shrink-0 p-0 border flex items-center justify-center w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-xl cursor-pointer transition-all duration-200 ease-in-out ${
-                    vote === "no"
-                      ? "bg-vote-no text-white border border-vote-no-border/60 shadow-sm hover:bg-vote-no-hover scale-105"
-                      : "bg-vote-no-tint text-vote-no-text hover:bg-vote-no/30 border border-vote-no-border/20 hover:border-vote-no-border/50 hover:scale-105"
-                  }`}
+                  className={gridVoteButtonVariants({
+                    vote: "no",
+                    active: vote === "no",
+                  })}
                   onClick={() => onVoteClick(slotIdx, "no", vote)}
                   title={vote === "no" ? t("voting.unvoted") : t("voting.no")}
                 >
@@ -130,7 +131,7 @@ export const AvailabilityGridParticipant = ({
               <div className="flex items-center justify-center">
                 {vote === "yes" && (
                   <div
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-vote-yes text-white border border-vote-yes-border/60 flex items-center justify-center transition-all duration-300 ease-in-out shadow-sm"
+                    className={gridStaticVoteBadgeVariants({ vote: "yes" })}
                     title={t("voting.yes")}
                   >
                     <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" />
@@ -139,7 +140,7 @@ export const AvailabilityGridParticipant = ({
 
                 {vote === "maybe" && (
                   <div
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-vote-maybe text-white border border-vote-maybe-border/60 flex items-center justify-center transition-all duration-300 ease-in-out shadow-sm"
+                    className={gridStaticVoteBadgeVariants({ vote: "maybe" })}
                     title={t("voting.maybe")}
                   >
                     <span className="font-extrabold text-[12px] leading-none select-none">?</span>
@@ -148,7 +149,7 @@ export const AvailabilityGridParticipant = ({
 
                 {vote === "no" && (
                   <div
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-vote-no text-white border border-vote-no-border/60 flex items-center justify-center transition-all duration-300 ease-in-out shadow-sm"
+                    className={gridStaticVoteBadgeVariants({ vote: "no" })}
                     title={t("voting.no")}
                   >
                     <X className="w-3.5 h-3.5 stroke-[3]" />
@@ -157,7 +158,7 @@ export const AvailabilityGridParticipant = ({
 
                 {!vote && (
                   <div
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-muted/30 text-muted-foreground/40 border border-border/30 flex items-center justify-center transition-all duration-300 ease-in-out"
+                    className={gridStaticVoteBadgeVariants({ vote: "unvoted" })}
                     title={t("voting.unvoted")}
                   >
                     <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[2]" />
@@ -171,3 +172,4 @@ export const AvailabilityGridParticipant = ({
     </div>
   );
 };
+

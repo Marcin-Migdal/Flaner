@@ -2,7 +2,18 @@ import { Check, X } from "lucide-react";
 import type { ParticipantResult } from "../../api/participants";
 import type { VoteType } from "../../api/events/types";
 import type { CalendarEventComponentProps } from "@flaner/ui-components";
+import { cn } from "@flaner/shared/utils";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
+import {
+  slotSegmentRootVariants,
+  slotQuickVoteToolbarStyles,
+  slotVoteBadgeContainerVariants,
+  slotQuickVoteButtonVariants,
+  slotActiveVoteBadgeVariants,
+  slotStyles,
+  type SlotPosition,
+  type SlotHighlight,
+} from "./SlotEventComponent.styles";
 
 export type SlotMetaData = {
   slotIndex: number;
@@ -25,7 +36,6 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
     className,
     isHovered,
     isFirstSegment,
-    isLastSegment: _isLastSegment,
     isFirstInRow = props.isFirstSegment,
     isLastInRow = props.isLastSegment,
     continuesNextInRow = !props.isLastSegment,
@@ -33,33 +43,23 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
   const meta = event.metaData;
   const { t } = usePlanningTranslations();
 
-  const roundedClasses =
+  const position: SlotPosition =
     isFirstInRow && isLastInRow
-      ? "rounded-[3px] md:rounded-md"
+      ? "single"
       : isFirstInRow
-        ? "rounded-l-[3px] md:rounded-l-md rounded-r-none"
+        ? "start"
         : isLastInRow
-          ? "rounded-r-[3px] md:rounded-r-md rounded-l-none"
-          : "rounded-none";
-
-  const marginClasses = continuesNextInRow
-    ? "w-[calc(100%+1px)] -mr-[1px] relative z-[1]"
-    : "w-full";
-
-  const paddingClasses = `${
-    isFirstInRow && isLastInRow
-      ? "px-1"
-      : isFirstInRow
-        ? "pl-1 pr-0.5"
-        : isLastInRow
-          ? "pl-0 pr-1"
-          : "px-0"
-  }`;
+          ? "end"
+          : "middle";
 
   if (!meta) {
     return (
       <div
-        className={`@container box-border ${className} ${roundedClasses} ${marginClasses} ${paddingClasses} flex items-center select-none truncate cursor-pointer overflow-hidden transition-all duration-150`}
+        className={cn(
+          slotStyles.emptySlot,
+          slotSegmentRootVariants({ position, continuesNextInRow }),
+          className,
+        )}
         style={{
           backgroundColor: isHovered
             ? `color-mix(in srgb, ${event.color || "var(--primary)"} 85%, #fff)`
@@ -106,39 +106,23 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
 
   const currentUserVote = currentUserId ? votes[currentUserId] : undefined;
 
-  let glowClasses = "";
-  const isHighlighted = isWinningSlot || isTopVoted;
-  const borderColor = isWinningSlot
-    ? "border-emerald-400"
-    : "border-amber-400 dark:border-amber-300";
-
-  const zIndex = isHovered ? "z-40" : isWinningSlot ? "z-20" : isTopVoted ? "z-10" : "z-0";
-
-  if (isFirstInRow && isLastInRow) {
-    const border = isHighlighted ? `border md:border-2 ${borderColor}` : "border md:border-2 border-transparent";
-    glowClasses = `${border} ${zIndex}`;
-  } else if (isFirstInRow) {
-    const border = isHighlighted
-      ? `border-y border-l border-r-0 md:border-y-2 md:border-l-2 md:border-r-0 ${borderColor}`
-      : "border-y border-l border-r-0 md:border-y-2 md:border-l-2 md:border-r-0 border-transparent";
-    glowClasses = `${border} ${zIndex}`;
-  } else if (isLastInRow) {
-    const border = isHighlighted
-      ? `border-y border-r border-l-0 md:border-y-2 md:border-r-2 md:border-l-0 ${borderColor}`
-      : "border-y border-r border-l-0 md:border-y-2 md:border-r-2 md:border-l-0 border-transparent";
-    glowClasses = `${border} ${zIndex}`;
-  } else {
-    const border = isHighlighted
-      ? `border-y border-x-0 md:border-y-2 md:border-x-0 ${borderColor}`
-      : "border-y border-x-0 md:border-y-2 md:border-x-0 border-transparent";
-    glowClasses = `${border} ${zIndex}`;
-  }
+  const highlight: SlotHighlight = isWinningSlot
+    ? "winning"
+    : isTopVoted
+      ? "top"
+      : "none";
 
   return (
     <div
-      className={`@container box-border group/slotSegment flex items-center shrink-0 select-none overflow-visible ${roundedClasses} ${marginClasses} ${paddingClasses} ${className} ${glowClasses} relative hover:z-[50] group-hover/slotSegment:z-[50] ${
-        isHovered ? "z-[50]" : ""
-      } transition-all duration-150`}
+      className={cn(
+        slotSegmentRootVariants({
+          position,
+          continuesNextInRow,
+          highlight,
+          isHovered,
+        }),
+        className,
+      )}
       style={{
         backgroundColor,
         color: "#fff",
@@ -157,16 +141,15 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
     >
       {/* Floating 3-Button Quick-Vote Toolbar on Hover (visible on every segment below slot) */}
       {!isFinalized && meta.onQuickVote && (
-        <div className="absolute left-1/2 -translate-x-1/2 top-full pt-1 z-[100] hidden group-hover/slotSegment:flex items-center pointer-events-auto">
-          <div className="flex items-center gap-1 p-1 rounded-full bg-popover/95 backdrop-blur-xl border border-border/80 shadow-2xl animate-in fade-in zoom-in-95 duration-100">
+        <div className={slotQuickVoteToolbarStyles.container}>
+          <div className={slotQuickVoteToolbarStyles.card}>
             {/* Tak / Yes Button */}
             <button
               type="button"
-              className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-                currentUserVote === "yes"
-                  ? "bg-vote-yes text-white border border-vote-yes-border/60 shadow-sm hover:bg-vote-yes-hover scale-105"
-                  : "bg-vote-yes-tint text-vote-yes-text hover:bg-vote-yes/30 border border-vote-yes-border/20 hover:border-vote-yes-border/50 hover:scale-105"
-              }`}
+              className={slotQuickVoteButtonVariants({
+                vote: "yes",
+                active: currentUserVote === "yes",
+              })}
               title={currentUserVote === "yes" ? t("voting.retractVote") : t("voting.voteYes")}
               onClick={(e) => {
                 e.stopPropagation();
@@ -179,11 +162,10 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
             {/* Może / Maybe Button */}
             <button
               type="button"
-              className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-                currentUserVote === "maybe"
-                  ? "bg-vote-maybe text-white border border-vote-maybe-border/60 shadow-sm hover:bg-vote-maybe-hover scale-105"
-                  : "bg-vote-maybe-tint text-vote-maybe-text hover:bg-vote-maybe/30 border border-vote-maybe-border/20 hover:border-vote-maybe-border/50 hover:scale-105"
-              }`}
+              className={slotQuickVoteButtonVariants({
+                vote: "maybe",
+                active: currentUserVote === "maybe",
+              })}
               title={currentUserVote === "maybe" ? t("voting.retractVote") : t("voting.voteMaybe")}
               onClick={(e) => {
                 e.stopPropagation();
@@ -196,11 +178,10 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
             {/* Nie / No Button */}
             <button
               type="button"
-              className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-                currentUserVote === "no"
-                  ? "bg-vote-no text-white border border-vote-no-border/60 shadow-sm hover:bg-vote-no-hover scale-105"
-                  : "bg-vote-no-tint text-vote-no-text hover:bg-vote-no/30 border border-vote-no-border/20 hover:border-vote-no-border/50 hover:scale-105"
-              }`}
+              className={slotQuickVoteButtonVariants({
+                vote: "no",
+                active: currentUserVote === "no",
+              })}
               title={currentUserVote === "no" ? t("voting.retractVote") : t("voting.voteNo")}
               onClick={(e) => {
                 e.stopPropagation();
@@ -213,18 +194,14 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
         </div>
       )}
 
-      <div className="flex items-center justify-between w-full min-w-0 max-w-full h-full gap-1 overflow-hidden">
+      <div className={slotStyles.contentRow}>
         {/* Active Vote Badge in Slot: Shown on first slot or first in row if user has voted */}
         {(isFirstSegment || isFirstInRow) && !isFinalized && currentUserVote && (
           <button
             type="button"
-            className={`shrink-0 p-0 border flex items-center justify-center w-[12px] h-[12px] md:w-[20px] md:h-[20px] rounded-full text-white font-bold cursor-pointer transition-all shadow-sm ${
-              currentUserVote === "yes"
-                ? "bg-vote-yes hover:bg-vote-yes-hover border-vote-yes-border/60"
-                : currentUserVote === "maybe"
-                  ? "bg-vote-maybe hover:bg-vote-maybe-hover border-vote-maybe-border/60"
-                  : "bg-vote-no hover:bg-vote-no-hover border-vote-no-border/60"
-            }`}
+            className={slotActiveVoteBadgeVariants({
+              vote: currentUserVote,
+            })}
             onClick={(e) => {
               e.stopPropagation();
               if (meta.onQuickVote && !isFinalized) {
@@ -245,13 +222,9 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
         {isFirstSegment && (
           <>
             {/* Below 1284px: Simple badge (Only "Tak" votes count) */}
-            <div
-              className={`flex min-[1284px]:hidden items-center shrink-0 ${
-                continuesNextInRow ? "ml-auto mr-1.5" : "ml-auto"
-              }`}
-            >
+            <div className={slotVoteBadgeContainerVariants({ breakpoint: "mobile", continuesNextInRow })}>
               {yesVotes > 0 ? (
-                <div className="shrink-0 px-1 py-0.5 rounded bg-black/45 md:bg-black/35 text-[9.5px] md:text-[10px] font-bold text-emerald-300 flex items-center gap-0.5 md:gap-1 leading-none tabular-nums">
+                <div className={slotStyles.simpleBadgeMobile}>
                   <span className="text-[8.5px] md:text-[10px]">✓</span>
                   <span>{yesVotes}</span>
                 </div>
@@ -259,14 +232,10 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
             </div>
 
             {/* From 1284px upwards: Compact vs Full via pure CSS Container Queries */}
-            <div
-              className={`hidden min-[1284px]:flex items-center shrink-0 ${
-                continuesNextInRow ? "ml-auto mr-1.5" : "ml-auto"
-              }`}
-            >
-              <div className="shrink-0 px-1 py-0.5 rounded bg-black/35 text-[10px] font-bold text-white/90 flex items-center gap-1 tabular-nums">
+            <div className={slotVoteBadgeContainerVariants({ breakpoint: "desktop", continuesNextInRow })}>
+              <div className={slotStyles.desktopBadgeCard}>
                 {/* Compact badge (active when slot width < 120px) */}
-                <div className="flex @[120px]:hidden items-center">
+                <div className={slotStyles.desktopCompact}>
                   {yesVotes > 0 ? (
                     <span className="text-emerald-300 inline-flex items-center gap-0.5">
                       <span className="text-[10px]">✓</span>
@@ -288,7 +257,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
                 </div>
 
                 {/* Full badge (active when slot width >= 120px) */}
-                <div className="hidden @[120px]:flex items-center gap-1.5">
+                <div className={slotStyles.desktopFull}>
                   {yesVotes > 0 && (
                     <span className="text-emerald-300 inline-flex items-center gap-0.5">
                       <span className="text-[10px]">✓</span>
@@ -317,3 +286,4 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
     </div>
   );
 }
+

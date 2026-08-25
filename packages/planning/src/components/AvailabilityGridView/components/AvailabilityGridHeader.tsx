@@ -3,6 +3,7 @@ import { Trophy, Users } from "lucide-react";
 import type { ProposedDateSlot } from "../../../api/events/types";
 import { usePlanningTranslations } from "../../../hooks/usePlanningTranslations";
 import type { SlotStat } from "../types";
+import { gridSlotCellVariants } from "./AvailabilityGridCell.styles";
 
 export type AvailabilityGridHeaderProps = {
   proposedDates: ProposedDateSlot[];
@@ -46,6 +47,7 @@ export const AvailabilityGridHeader = ({
         const stat = slotStats[slotIdx];
         const isTop = stat && stat.score > 0 && stat.score === maxScore;
         const isWinning = isFinalized && finalizedSlotIndex === slotIdx;
+        const highlight = isWinning ? "winning" : isTop ? "top" : "none";
 
         const dateDisplay = isSameDay
           ? format(startDate, "dd.MM")
@@ -54,9 +56,7 @@ export const AvailabilityGridHeader = ({
         return (
           <div
             key={slotIdx}
-            className={`px-1.5 py-2 flex flex-col items-center justify-center text-center gap-1 border-r border-border/50 last:border-r-0 transition-colors duration-300 ease-in-out ${
-              isWinning ? "bg-emerald-500/15" : isTop ? "bg-amber-500/10" : ""
-            }`}
+            className={gridSlotCellVariants({ highlight })}
           >
             <span className="text-xs font-bold text-foreground truncate max-w-full">{dateDisplay}</span>
 
@@ -72,3 +72,4 @@ export const AvailabilityGridHeader = ({
     </div>
   );
 };
+

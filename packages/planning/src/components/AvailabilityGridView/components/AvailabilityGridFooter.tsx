@@ -2,6 +2,7 @@ import { Trophy } from "lucide-react";
 import type { ProposedDateSlot } from "../../../api/events/types";
 import { usePlanningTranslations } from "../../../hooks/usePlanningTranslations";
 import type { SlotStat } from "../types";
+import { gridSlotCellVariants } from "./AvailabilityGridCell.styles";
 
 export type AvailabilityGridFooterProps = {
   proposedDates: ProposedDateSlot[];
@@ -37,9 +38,7 @@ export const AvailabilityGridFooter = ({
         return (
           <div
             key={slotIdx}
-            className={`px-1.5 py-2 flex flex-col items-center justify-center text-center gap-0.5 border-r border-border/50 last:border-r-0 transition-colors duration-300 ease-in-out ${
-              isTop ? "bg-amber-500/15" : ""
-            }`}
+            className={gridSlotCellVariants({ highlight: isTop ? "top" : "none" })}
           >
             <span
               className={`text-sm font-bold transition-colors duration-300 ease-in-out ${isTop ? "text-amber-500" : "text-foreground"}`}
@@ -55,3 +54,4 @@ export const AvailabilityGridFooter = ({
     </div>
   );
 };
+

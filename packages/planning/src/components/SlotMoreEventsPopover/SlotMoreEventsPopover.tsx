@@ -3,7 +3,10 @@ import { format } from "date-fns";
 import { enUS, pl } from "date-fns/locale";
 import { Check, X } from "lucide-react";
 import type { SlotMetaData } from "../SlotEventComponent";
-
+import {
+  slotMoreEventsVoteButtonVariants,
+  slotMoreEventsPopoverStyles,
+} from "./SlotMoreEventsPopover.styles";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 
 export type SlotMoreEventsPopoverProps = {
@@ -27,7 +30,7 @@ export function SlotMoreEventsPopover({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="text-[10px] md:text-[11px] text-muted-foreground hover:text-foreground cursor-pointer px-0.5 md:px-1 mx-0.5 md:mx-1 font-medium hover:bg-muted/50 rounded-md py-0.5 mt-0.5 transition-colors block text-left bg-transparent border-0"
+          className={slotMoreEventsPopoverStyles.triggerButton}
           onClick={(e) => e.stopPropagation()}
         >
           <span className="md:hidden">+{events.length}</span>
@@ -35,15 +38,15 @@ export function SlotMoreEventsPopover({
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-72 sm:w-80 p-2 z-[70] shadow-xl border-border/60 bg-popover/95 backdrop-blur-md rounded-2xl"
+        className={slotMoreEventsPopoverStyles.content}
         align="start"
         side="bottom"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="text-xs font-bold px-1 text-muted-foreground/80 uppercase tracking-wider">
+        <div className={slotMoreEventsPopoverStyles.header}>
           {format(day, "d MMMM yyyy", { locale: dateLocale })}
         </div>
-        <div className="flex flex-col gap-1.5 max-h-[280px] overflow-y-auto pr-0.5">
+        <div className={slotMoreEventsPopoverStyles.list}>
           {events.map((ev, idx) => {
             const meta = ev.metaData;
             const votes = meta?.votes || {};
@@ -57,7 +60,7 @@ export function SlotMoreEventsPopover({
             return (
               <div
                 key={`${ev.id}-${idx}`}
-                className="flex items-center justify-between p-2 rounded-xl bg-background/60 border border-border/40 hover:border-border transition-all group/item"
+                className={slotMoreEventsPopoverStyles.item}
               >
                 {/* Event color & Date Range clickable area */}
                 <button
@@ -83,11 +86,10 @@ export function SlotMoreEventsPopover({
                     {/* Yes Button */}
                     <button
                       type="button"
-                      className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${
-                        currentUserVote === "yes"
-                          ? "bg-vote-yes text-white border-vote-yes-border/60 shadow-md scale-105"
-                          : "bg-vote-yes-tint text-vote-yes-text border-vote-yes-border/20 hover:bg-vote-yes/30 hover:border-vote-yes-border/50 hover:scale-105"
-                      }`}
+                      className={slotMoreEventsVoteButtonVariants({
+                        vote: "yes",
+                        active: currentUserVote === "yes",
+                      })}
                       title={t("voting.yes")}
                       aria-label={t("voting.yes")}
                       onClick={(e) => {
@@ -101,11 +103,10 @@ export function SlotMoreEventsPopover({
                     {/* Maybe Button */}
                     <button
                       type="button"
-                      className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${
-                        currentUserVote === "maybe"
-                          ? "bg-vote-maybe text-white border-vote-maybe-border/60 shadow-md scale-105"
-                          : "bg-vote-maybe-tint text-vote-maybe-text border-vote-maybe-border/20 hover:bg-vote-maybe/30 hover:border-vote-maybe-border/50 hover:scale-105"
-                      }`}
+                      className={slotMoreEventsVoteButtonVariants({
+                        vote: "maybe",
+                        active: currentUserVote === "maybe",
+                      })}
                       title={t("voting.maybe")}
                       aria-label={t("voting.maybe")}
                       onClick={(e) => {
@@ -119,11 +120,10 @@ export function SlotMoreEventsPopover({
                     {/* No Button */}
                     <button
                       type="button"
-                      className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${
-                        currentUserVote === "no"
-                          ? "bg-vote-no text-white border-vote-no-border/60 shadow-md scale-105"
-                          : "bg-vote-no-tint text-vote-no-text border-vote-no-border/20 hover:bg-vote-no/30 hover:border-vote-no-border/50 hover:scale-105"
-                      }`}
+                      className={slotMoreEventsVoteButtonVariants({
+                        vote: "no",
+                        active: currentUserVote === "no",
+                      })}
                       title={t("voting.no")}
                       aria-label={t("voting.no")}
                       onClick={(e) => {
@@ -143,3 +143,4 @@ export function SlotMoreEventsPopover({
     </Popover>
   );
 }
+

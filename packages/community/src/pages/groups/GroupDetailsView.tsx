@@ -18,6 +18,7 @@ import {
   useRequestJoinGroupMutation,
 } from "../../hooks";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
+import { groupDetailsViewStyles } from "./GroupDetailsView.styles";
 
 export function GroupDetailsView() {
   const { t } = useCommunityTranslations();
@@ -57,8 +58,8 @@ export function GroupDetailsView() {
   // State 2.3: Edge case - navigating to a private group without being a member
   if (!isMember && group.type === "private") {
     return (
-      <div className="max-w-4xl mx-auto py-6 space-y-8 px-4 md:px-0">
-        <div className="flex items-center gap-4 mb-2">
+      <div className={groupDetailsViewStyles.root}>
+        <div className={groupDetailsViewStyles.backButtonContainer}>
           <Button variant="ghost" size="icon" onClick={() => navigate("/community/groups")} className="rounded-full">
             <ArrowLeft className="size-5" />
           </Button>
@@ -115,7 +116,7 @@ export function GroupDetailsView() {
     if (group.requiresApproval) {
       if (hasRequested) {
         return (
-          <Button variant="outline" disabled className="rounded-xl flex-1 md:flex-none bg-muted/50">
+          <Button variant="outline" disabled className="rounded-xl flex-1 lg:flex-none bg-muted/50">
             {t("groupDetails.requestPending")}
           </Button>
         );
@@ -123,7 +124,7 @@ export function GroupDetailsView() {
       return (
         <Button
           variant="brand"
-          className="rounded-xl flex-1 md:flex-none"
+          className="rounded-xl flex-1 lg:flex-none"
           onClick={handleRequestJoin}
           disabled={isRequesting}
         >
@@ -135,7 +136,7 @@ export function GroupDetailsView() {
 
     // Public group, no approval required
     return (
-      <Button variant="brand" className="rounded-xl flex-1 md:flex-none" onClick={handleJoin} disabled={isJoining}>
+      <Button variant="brand" className="rounded-xl flex-1 lg:flex-none" onClick={handleJoin} disabled={isJoining}>
         {isJoining ? <Loader2 className="size-4 animate-spin" /> : null}
         {t("groupDetails.joinGroup")}
       </Button>
@@ -143,79 +144,56 @@ export function GroupDetailsView() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-6 space-y-8 px-4 md:px-0">
-      <div className="flex items-center gap-4 mb-2">
+    <div className={groupDetailsViewStyles.root}>
+      <div className={groupDetailsViewStyles.backButtonContainer}>
         <Button variant="ghost" size="icon" onClick={() => navigate("/community/groups")} className="rounded-full">
           <ArrowLeft className="size-5" />
         </Button>
         <span className="text-sm font-medium text-muted-foreground">{t("groupDetails.backToList")}</span>
       </div>
 
-      <div className="relative bg-card border border-border/50 rounded-3xl p-5 md:p-6 shadow-sm overflow-hidden flex flex-col md:flex-row gap-4 md:gap-6 md:items-center justify-between">
-        <div className="flex flex-col sm:flex-row gap-4 md:gap-6 items-start sm:items-center flex-1 min-w-0">
-          <div className="flex gap-4 items-center sm:block w-full sm:w-auto">
-            <div className="flex-shrink-0 size-28 sm:size-24 md:size-24 rounded-2xl bg-gradient-to-br from-brand/20 to-brand/5 flex items-center justify-center text-brand font-bold text-3xl shadow-inner border border-brand/10 overflow-hidden">
-              {group.avatarUrl ? (
-                <img src={group.avatarUrl} alt={group.name} className="size-full object-cover" />
-              ) : (
-                group.name.substring(0, 2).toUpperCase()
-              )}
-            </div>
-            <div className="sm:hidden flex-1 min-w-0">
-              <h1 className="text-xl font-extrabold text-foreground tracking-tight break-words">
-                {group.name}
-              </h1>
-              <div className="flex flex-wrap items-center gap-1.5 mt-2 text-xs font-semibold text-muted-foreground">
-                <span className="flex items-center gap-1 px-2 py-0.5 bg-muted/60 rounded-full border border-border/40 text-[11px]">
-                  <Users className="size-3" />
-                  {t("groupDetails.membersCount", { count: members.length })}
-                </span>
-                <span className="flex items-center gap-1 px-2 py-0.5 bg-muted/60 rounded-full border border-border/40 text-[11px]">
-                  <Shield className="size-3" />
-                  {group.type === "private" ? t("groupDetails.private") : t("groupDetails.public")}
-                </span>
-              </div>
-            </div>
+      <div className={groupDetailsViewStyles.headerCard}>
+        <div className={groupDetailsViewStyles.groupInfoWrapper}>
+          <div className={groupDetailsViewStyles.avatar}>
+            {group.avatarUrl ? (
+              <img src={group.avatarUrl} alt={group.name} className="size-full object-cover" />
+            ) : (
+              group.name.substring(0, 2).toUpperCase()
+            )}
           </div>
 
-          <div className="hidden sm:block flex-1 min-w-0">
-            <h1 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight break-words">
-              {group.name}
-            </h1>
+          <div className={groupDetailsViewStyles.infoContent}>
+            <h1 className={groupDetailsViewStyles.title}>{group.name}</h1>
             {group.description && (
-              <p className="text-muted-foreground text-sm mt-1 max-w-2xl leading-relaxed">
-                {group.description}
-              </p>
+              <p className={groupDetailsViewStyles.description}>{group.description}</p>
             )}
 
-            <div className="flex flex-wrap items-center gap-3 mt-3.5 text-xs font-semibold text-muted-foreground">
-              <span className="flex items-center gap-1.5 px-3 py-1 bg-muted/60 rounded-full border border-border/40">
-                <Users className="size-3.5" />
+            <div className={groupDetailsViewStyles.badgeList}>
+              <span className={groupDetailsViewStyles.badge}>
+                <Users className="size-3 sm:size-3.5" />
                 {t("groupDetails.membersCount", { count: members.length })}
               </span>
-              <span className="flex items-center gap-1.5 px-3 py-1 bg-muted/60 rounded-full border border-border/40">
-                <Shield className="size-3.5" />
+              <span className={groupDetailsViewStyles.badge}>
+                <Shield className="size-3 sm:size-3.5" />
                 {group.type === "private" ? t("groupDetails.private") : t("groupDetails.public")}
               </span>
+              {isMember && currentUserRole && (
+                <span className="flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 bg-brand/10 text-brand rounded-full border border-brand/20 text-[11px] sm:text-xs font-semibold">
+                  {t(`manageGroupSheet.role_${currentUserRole}`) || currentUserRole}
+                </span>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Mobile Description (clean text without line divider) */}
-        {group.description && (
-          <p className="sm:hidden text-muted-foreground text-xs leading-relaxed -mt-1">
-            {group.description}
-          </p>
-        )}
-
         {/* Action Buttons */}
-        <div className="flex flex-wrap md:flex-nowrap items-center gap-2 w-full md:w-auto shrink-0 mt-1 md:mt-0">
+        <div className={groupDetailsViewStyles.actionButtonsWrapper}>
           <Button
             variant="outline"
-            className="rounded-xl h-9 md:h-10 px-3 md:px-4 text-xs md:text-sm font-medium flex-1 md:flex-none flex items-center justify-center gap-1.5"
+            className={groupDetailsViewStyles.actionButton}
             onClick={handleCopyLink}
           >
-            <Copy className="size-3.5 md:size-4 shrink-0" />
+            <Copy className="size-3.5 sm:size-4 shrink-0" />
             <span>{t("groupDetails.copyLinkBtn")}</span>
           </Button>
 
@@ -226,10 +204,10 @@ export function GroupDetailsView() {
               {canInvite && (
                 <Button
                   variant="brand"
-                  className="rounded-xl h-9 md:h-10 px-3 md:px-4 text-xs md:text-sm font-semibold flex-1 md:flex-none flex items-center justify-center gap-1.5"
+                  className={groupDetailsViewStyles.actionButton}
                   onClick={() => setIsInviteModalOpen(true)}
                 >
-                  <UserPlus className="size-3.5 md:size-4 shrink-0" />
+                  <UserPlus className="size-3.5 sm:size-4 shrink-0" />
                   <span>{t("manageGroupSheet.inviteFriends")}</span>
                 </Button>
               )}
@@ -241,11 +219,11 @@ export function GroupDetailsView() {
                 <>
                   <Button
                     variant="outline"
-                    className="rounded-xl h-9 md:h-10 px-3 md:px-4 text-xs md:text-sm text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30 flex-1 md:flex-none flex items-center justify-center gap-1.5"
+                    className="rounded-xl h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30 flex-1 lg:flex-none flex items-center justify-center gap-1.5 cursor-pointer"
                     onClick={() => setIsLeaveConfirmOpen(true)}
                     disabled={isLeaving}
                   >
-                    {isLeaving ? <Loader2 className="size-3.5 md:size-4 animate-spin shrink-0" /> : <LogOut className="size-3.5 md:size-4 shrink-0" />}
+                    {isLeaving ? <Loader2 className="size-3.5 sm:size-4 animate-spin shrink-0" /> : <LogOut className="size-3.5 sm:size-4 shrink-0" />}
                     <span>{t("groupDetails.leaveGroup")}</span>
                   </Button>
 
@@ -269,9 +247,9 @@ export function GroupDetailsView() {
 
       {/* Members Section - Only visible to members */}
       {isMember && (
-        <div className="space-y-4">
+        <div className={groupDetailsViewStyles.membersSection}>
           <h2 className="text-xl font-bold font-heading">{t("groupDetails.membersTitle")}</h2>
-          <div className="bg-card border border-border/50 rounded-2xl overflow-hidden">
+          <div className={groupDetailsViewStyles.membersCard}>
             {membersLoading || profilesLoading ? (
               <div className="p-8 text-center text-muted-foreground">{t("groupDetails.loadingMembers")}</div>
             ) : (
@@ -284,7 +262,7 @@ export function GroupDetailsView() {
                   return (
                     <div
                       key={member.userId}
-                      className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                      className={groupDetailsViewStyles.memberRow}
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="size-10 border border-border">
@@ -296,7 +274,7 @@ export function GroupDetailsView() {
                         <span className="font-medium">{displayName}</span>
                       </div>
                       <div>
-                        <span className="text-xs font-medium px-2 py-1 bg-brand/10 text-brand rounded-md uppercase tracking-wider">
+                        <span className={groupDetailsViewStyles.memberRoleBadge}>
                           {t(`manageGroupSheet.role_${member.role}`) || member.role}
                         </span>
                       </div>

@@ -5,6 +5,11 @@ import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import type { ParticipantResult } from "../../api/participants";
 import type { SchedulerEvent, VoteType } from "../../api/events/types";
 import { useVoteSlotMutation } from "../../hooks/api/mutation/useVoteSlotMutation";
+import {
+  slotVotingOptionButtonVariants,
+  slotVotingParticipantPillVariants,
+  slotVotingSectionHeaderVariants,
+} from "./SlotVotingModal.styles";
 
 export type SlotVotingModalProps = {
   isOpen: boolean;
@@ -99,11 +104,10 @@ export function SlotVotingModal({
             <Button
               type="button"
               variant="outline"
-              className={`h-11 flex flex-col items-center justify-center gap-1 font-semibold rounded-xl border bg-clip-border transition-all ${
-                currentUserVote === "yes"
-                  ? "bg-vote-yes hover:bg-vote-yes-hover text-white border-vote-yes-border/60 shadow-md scale-[1.02]"
-                  : "hover:border-vote-yes-border/50 hover:bg-vote-yes-tint text-vote-yes-text border-border/60"
-              }`}
+              className={slotVotingOptionButtonVariants({
+                vote: "yes",
+                active: currentUserVote === "yes",
+              })}
               onClick={() => handleVote("yes")}
               disabled={isVoting}
             >
@@ -120,11 +124,10 @@ export function SlotVotingModal({
             <Button
               type="button"
               variant="outline"
-              className={`h-11 flex flex-col items-center justify-center gap-1 font-semibold rounded-xl border bg-clip-border transition-all ${
-                currentUserVote === "maybe"
-                  ? "bg-vote-maybe hover:bg-vote-maybe-hover text-white border-vote-maybe-border/60 shadow-md scale-[1.02]"
-                  : "hover:border-vote-maybe-border/50 hover:bg-vote-maybe-tint text-vote-maybe-text border-border/60"
-              }`}
+              className={slotVotingOptionButtonVariants({
+                vote: "maybe",
+                active: currentUserVote === "maybe",
+              })}
               onClick={() => handleVote("maybe")}
               disabled={isVoting}
             >
@@ -141,11 +144,10 @@ export function SlotVotingModal({
             <Button
               type="button"
               variant="outline"
-              className={`h-11 flex flex-col items-center justify-center gap-1 font-semibold rounded-xl border bg-clip-border transition-all ${
-                currentUserVote === "no"
-                  ? "bg-vote-no hover:bg-vote-no-hover text-white border-vote-no-border/60 shadow-md scale-[1.02]"
-                  : "hover:border-vote-no-border/50 hover:bg-vote-no-tint text-vote-no-text border-border/60"
-              }`}
+              className={slotVotingOptionButtonVariants({
+                vote: "no",
+                active: currentUserVote === "no",
+              })}
               onClick={() => handleVote("no")}
               disabled={isVoting}
             >
@@ -166,7 +168,7 @@ export function SlotVotingModal({
           {/* Yes Section */}
           {yesParticipants.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-bold text-vote-yes-text uppercase tracking-wider flex items-center gap-1">
+              <span className={slotVotingSectionHeaderVariants({ vote: "yes" })}>
                 <Check className="w-3 h-3 stroke-[3]" />
                 {t("voting.yes")} ({yesParticipants.length})
               </span>
@@ -174,7 +176,7 @@ export function SlotVotingModal({
                 {yesParticipants.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center gap-2 bg-vote-yes-tint border border-vote-yes-border/30 px-2.5 py-1 rounded-full text-xs font-medium text-vote-yes-text"
+                    className={slotVotingParticipantPillVariants({ vote: "yes" })}
                   >
                     <div className="w-4 h-4 rounded-full bg-vote-yes/20 overflow-hidden shrink-0">
                       {p.avatarUrl ? (
@@ -195,7 +197,7 @@ export function SlotVotingModal({
           {/* Maybe Section */}
           {maybeParticipants.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-bold text-vote-maybe-text uppercase tracking-wider flex items-center gap-1">
+              <span className={slotVotingSectionHeaderVariants({ vote: "maybe" })}>
                 <span className="font-extrabold text-[12px] leading-none select-none">?</span>
                 {t("voting.maybe")} ({maybeParticipants.length})
               </span>
@@ -203,7 +205,7 @@ export function SlotVotingModal({
                 {maybeParticipants.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center gap-2 bg-vote-maybe-tint border border-vote-maybe-border/30 px-2.5 py-1 rounded-full text-xs font-medium text-vote-maybe-text"
+                    className={slotVotingParticipantPillVariants({ vote: "maybe" })}
                   >
                     <div className="w-4 h-4 rounded-full bg-vote-maybe/20 overflow-hidden shrink-0">
                       {p.avatarUrl ? (
@@ -224,7 +226,7 @@ export function SlotVotingModal({
           {/* No Section */}
           {noParticipants.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-bold text-vote-no-text uppercase tracking-wider flex items-center gap-1">
+              <span className={slotVotingSectionHeaderVariants({ vote: "no" })}>
                 <X className="w-3 h-3 stroke-[3]" />
                 {t("voting.no")} ({noParticipants.length})
               </span>
@@ -232,7 +234,7 @@ export function SlotVotingModal({
                 {noParticipants.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center gap-2 bg-vote-no-tint border border-vote-no-border/30 px-2.5 py-1 rounded-full text-xs font-medium text-vote-no-text"
+                    className={slotVotingParticipantPillVariants({ vote: "no" })}
                   >
                     <div className="w-4 h-4 rounded-full bg-vote-no/20 overflow-hidden shrink-0">
                       {p.avatarUrl ? (
@@ -253,14 +255,14 @@ export function SlotVotingModal({
           {/* Unvoted Section */}
           {unvotedParticipants.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+              <span className={slotVotingSectionHeaderVariants({ vote: "unvoted" })}>
                 {t("voting.unvoted")} ({unvotedParticipants.length})
               </span>
               <div className="flex flex-wrap gap-2">
                 {unvotedParticipants.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center gap-2 bg-muted/40 border border-border/50 px-2.5 py-1 rounded-full text-xs font-medium text-muted-foreground"
+                    className={slotVotingParticipantPillVariants({ vote: "unvoted" })}
                   >
                     <div className="w-4 h-4 rounded-full bg-muted-foreground/20 overflow-hidden shrink-0">
                       {p.avatarUrl ? (
@@ -282,3 +284,4 @@ export function SlotVotingModal({
     </Dialog>
   );
 }
+
