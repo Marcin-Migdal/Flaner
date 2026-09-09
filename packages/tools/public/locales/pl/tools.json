@@ -79,6 +79,8 @@
       "editSpool": "Edytuj szczegóły szpuli",
       "deleteSpool": "Usuń szpulę",
       "spoolName": "Nazwa / Etykieta szpuli",
+      "spoolNamePlaceholder": "np. Bambu PLA Matte Charcoal",
+      "loadingHistory": "Ładowanie historii...",
       "selectTemplate": "Wybierz szablon",
       "remainingWeight": "Pozostało",
       "initialWeight": "Waga początkowa (g)",

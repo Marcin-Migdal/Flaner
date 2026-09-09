@@ -16,11 +16,6 @@ import {
 } from "@flaner/ui-components";
 import type { FilamentTemplate, TemplateInput } from "../../../api/templates";
 import { fetchAssociatedSpools } from "../../../api/templates";
-import {
-  addLookupColor,
-  addLookupMaterial,
-  addLookupType,
-} from "../../../api/lookups";
 import { getTemplateSchema, type TemplateFormData } from "../../../utils/schemas";
 import { mergeFilamentOptions } from "../../../utils/mergeFilamentOptions";
 import { bambuFilaments } from "../../../utils/bambuFilaments";
@@ -43,6 +38,7 @@ import { useAuth } from "@flaner/shared/context";
 import { HEX_COLOR_REGEX } from "./TemplateFormModal.constants";
 import type { DeleteLookupTarget, TemplateFormModalProps } from "./TemplateFormModal.types";
 import { useTemplateCustomColors } from "./hooks/useTemplateCustomColors";
+import { useSyncLookups } from "./hooks/useSyncLookups";
 import {
   ColorOptionLabel,
   MaterialOptionLabel,
@@ -79,52 +75,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   const deleteLookupColorMutation = useDeleteLookupColorMutation();
 
   // One-time sync: migrate any custom filaments from existing templates to lookup collections
-  const syncLookupsRef = useRef(false);
-  useEffect(() => {
-    if (syncLookupsRef.current || !user || userTemplates.length === 0) return;
-    syncLookupsRef.current = true;
-
-    for (const tpl of userTemplates) {
-      if (!tpl.material || !tpl.type || !tpl.colorName) continue;
-
-      const isOfficialMat = bambuFilaments.some(
-        (bm) => bm.name.toLowerCase() === tpl.material.toLowerCase(),
-      );
-      if (!isOfficialMat) {
-        addLookupMaterial(user.uid, { name: tpl.material }).catch(() => { });
-      }
-
-      const isOfficialType = bambuFilaments.some(
-        (bm) =>
-          bm.name.toLowerCase() === tpl.material.toLowerCase() &&
-          bm.types.some((bt) => bt.name.toLowerCase() === tpl.type.toLowerCase()),
-      );
-      if (!isOfficialType) {
-        addLookupType(user.uid, {
-          materialName: tpl.material,
-          name: tpl.type,
-        }).catch(() => { });
-      }
-
-      const isOfficialColor = bambuFilaments.some(
-        (bm) =>
-          bm.name.toLowerCase() === tpl.material.toLowerCase() &&
-          bm.types.some(
-            (bt) =>
-              bt.name.toLowerCase() === tpl.type.toLowerCase() &&
-              bt.colors.some((bc) => bc.name.toLowerCase() === tpl.colorName.toLowerCase()),
-          ),
-      );
-      if (!isOfficialColor) {
-        addLookupColor(user.uid, {
-          materialName: tpl.material,
-          typeName: tpl.type,
-          name: tpl.colorName,
-          hex: tpl.colorHex || "#ffffff",
-        }).catch(() => { });
-      }
-    }
-  }, [user, userTemplates]);
+  useSyncLookups(user, userTemplates);
 
   const defaultValues: TemplateFormData = useMemo(
     () => ({
@@ -275,27 +226,9 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
     return mergeFilamentOptions(lookupMaterials, lookupTypes, lookupColors);
   }, [lookupMaterials, lookupTypes, lookupColors]);
 
-  const getTranslatedMaterial = useCallback(
-    (name: string): string => {
-      const key = `spooler.filaments.materials.${name}`;
-      const translated = t(key);
-      return translated !== key ? translated : name;
-    },
-    [t],
-  );
-
-  const getTranslatedType = useCallback(
-    (name: string): string => {
-      const key = `spooler.filaments.types.${name}`;
-      const translated = t(key);
-      return translated !== key ? translated : name;
-    },
-    [t],
-  );
-
-  const getTranslatedColor = useCallback(
-    (name: string): string => {
-      const key = `spooler.filaments.colors.${name}`;
+  const getTranslatedOption = useCallback(
+    (prefix: "materials" | "types" | "colors", name: string): string => {
+      const key = `spooler.filaments.${prefix}.${name}`;
       const translated = t(key);
       return translated !== key ? translated : name;
     },
@@ -305,11 +238,11 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   const materialOptions = useMemo(() => {
     return mergedFilaments.map((m) => ({
       value: m.name,
-      label: getTranslatedMaterial(m.name),
+      label: getTranslatedOption("materials", m.name),
       id: m.id,
       isCustom: m.isCustom,
     }));
-  }, [mergedFilaments, getTranslatedMaterial]);
+  }, [mergedFilaments, getTranslatedOption]);
 
   const availableTypes = useMemo(() => {
     const selected = mergedFilaments.find(
@@ -321,12 +254,12 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   const typeOptions = useMemo(() => {
     return availableTypes.map((typ) => ({
       value: typ.name,
-      label: getTranslatedType(typ.name),
+      label: getTranslatedOption("types", typ.name),
       id: typ.id,
       isCustom: typ.isCustom,
       materialName: watchMaterial,
     }));
-  }, [availableTypes, getTranslatedType, watchMaterial]);
+  }, [availableTypes, getTranslatedOption, watchMaterial]);
 
   // Custom types only offer colors specifically assigned to that material and type
   const availableColors = useMemo(() => {
@@ -340,14 +273,14 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   const colorOptions = useMemo(() => {
     return availableColors.map((c) => ({
       value: c.name,
-      label: getTranslatedColor(c.name),
+      label: getTranslatedOption("colors", c.name),
       hex: c.hex,
       id: c.id,
       isCustom: c.isCustom,
       materialName: watchMaterial,
       typeName: watchType,
     }));
-  }, [availableColors, getTranslatedColor, watchMaterial, watchType]);
+  }, [availableColors, getTranslatedOption, watchMaterial, watchType]);
 
   // Determine if the currently selected or entered color is a custom color
   const isCustomColor = useMemo(() => {

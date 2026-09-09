@@ -103,7 +103,7 @@ export const SpoolHistoryModal: React.FC<SpoolHistoryModalProps> = ({
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-10 gap-2">
                   <Loader2 className="size-6 text-brand animate-spin" />
-                  <p className="text-xs text-muted-foreground">Ładowanie historii...</p>
+                  <p className="text-xs text-muted-foreground">{t("spooler.spools.loadingHistory")}</p>
                 </div>
               ) : prints.length === 0 ? (
                 <div className="bg-card/40 border border-dashed border-border rounded-xl py-10 px-4 text-center">

@@ -77,6 +77,8 @@
       "editSpool": "Edit Spool Details",
       "deleteSpool": "Delete Spool",
       "spoolName": "Spool Name / Label",
+      "spoolNamePlaceholder": "e.g. Bambu PLA Matte Charcoal",
+      "loadingHistory": "Loading history...",
       "selectTemplate": "Select Template",
       "remainingWeight": "Remaining",
       "initialWeight": "Initial Weight (g)",

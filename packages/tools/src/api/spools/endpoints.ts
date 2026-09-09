@@ -1,7 +1,6 @@
 import {
   collection,
   getDocs,
-  getDoc,
   query,
   where,
   setDoc,
@@ -11,6 +10,7 @@ import {
   serverTimestamp,
   orderBy,
   limit,
+  runTransaction,
 } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
 import { firestoreConverter } from "@flaner/shared/utils";
@@ -87,30 +87,38 @@ export const recordSpoolUsage = async (
   spool: FilamentSpool,
   usage: number,
 ): Promise<{ isFinished: boolean; wentBelowZero: boolean; spoolId: string; newWeight: number }> => {
-  const spoolRef = doc(fb.firestore, "spools", spool.id);
-  const newWeight = Math.max(0, spool.currentWeight - usage);
-  const isFinished = newWeight <= 0;
+  return runTransaction(fb.firestore, async (transaction) => {
+    const spoolRef = spoolRefs.spool(spool.id);
+    const snap = await transaction.get(spoolRef);
+    if (!snap.exists()) {
+      throw new Error("Spool not found");
+    }
 
-  await updateDoc(spoolRef, {
-    currentWeight: parseFloat(newWeight.toFixed(2)),
-    isFinished,
-    finishedAt: isFinished ? serverTimestamp() : null,
+    const currentSpool = snap.data();
+    const newWeight = Math.max(0, parseFloat((currentSpool.currentWeight - usage).toFixed(2)));
+    const isFinished = newWeight <= 0;
+
+    transaction.update(spoolRef, {
+      currentWeight: newWeight,
+      isFinished,
+      finishedAt: isFinished ? serverTimestamp() : null,
+    });
+
+    const printsColRef = collection(fb.firestore, `spools/${spool.id}/prints`);
+    const newPrintRef = doc(printsColRef);
+    transaction.set(newPrintRef, {
+      id: newPrintRef.id,
+      usedWeight: parseFloat(usage.toFixed(2)),
+      createdAt: serverTimestamp(),
+    });
+
+    return {
+      isFinished,
+      wentBelowZero: currentSpool.currentWeight - usage < 0,
+      spoolId: spool.id,
+      newWeight,
+    };
   });
-
-  const printsColRef = collection(fb.firestore, `spools/${spool.id}/prints`);
-  const newPrintRef = doc(printsColRef);
-  await setDoc(newPrintRef, {
-    id: newPrintRef.id,
-    usedWeight: parseFloat(usage.toFixed(2)),
-    createdAt: serverTimestamp(),
-  });
-
-  return {
-    isFinished,
-    wentBelowZero: spool.currentWeight - usage < 0,
-    spoolId: spool.id,
-    newWeight,
-  };
 };
 
 export const fetchSpoolPrints = async (spoolId: string): Promise<SpoolPrint[]> => {
@@ -144,18 +152,23 @@ export const undoLastPrint = async (
   }
 
   if (targetPrintId && targetWeight !== undefined) {
-    await deleteDoc(doc(fb.firestore, `spools/${spoolId}/prints`, targetPrintId));
-    const spoolRef = doc(fb.firestore, "spools", spoolId);
-    const snap = await getDoc(spoolRef);
-    if (snap.exists()) {
-      const current = snap.data() as FilamentSpool;
-      const updatedWeight = parseFloat((current.currentWeight + targetWeight).toFixed(2));
-      await updateDoc(spoolRef, {
-        currentWeight: updatedWeight,
-        isFinished: updatedWeight <= 0,
-        finishedAt: updatedWeight <= 0 ? current.finishedAt : null,
-      });
-    }
+    const finalPrintId = targetPrintId;
+    const finalWeight = targetWeight;
+
+    await runTransaction(fb.firestore, async (transaction) => {
+      const spoolRef = spoolRefs.spool(spoolId);
+      const snap = await transaction.get(spoolRef);
+      if (snap.exists()) {
+        const current = snap.data();
+        const updatedWeight = parseFloat((current.currentWeight + finalWeight).toFixed(2));
+        transaction.update(spoolRef, {
+          currentWeight: updatedWeight,
+          isFinished: updatedWeight <= 0,
+          finishedAt: updatedWeight <= 0 ? current.finishedAt : null,
+        });
+      }
+      transaction.delete(doc(fb.firestore, `spools/${spoolId}/prints`, finalPrintId));
+    });
   }
 };
 

@@ -17,6 +17,8 @@ export type ColorPickerFieldProps = Omit<
   presetColors?: string[];
   containerClassName?: string;
   labelClassName?: string;
+  pickColorLabel?: string;
+  colorPresetLabel?: (hex: string) => string;
 };
 
 const DEFAULT_PRESETS = [
@@ -25,12 +27,12 @@ const DEFAULT_PRESETS = [
   "#ef4444",
   "#f97316",
   "#eab308",
-  "#10b981",
+  "#22c55e",
   "#06b6d4",
   "#3b82f6",
-  "#8b5cf6",
+  "#a855f7",
   "#ec4899",
-  "#6b7280",
+  "#71717a",
 ];
 
 const HEX_COLOR_REGEX = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
@@ -49,6 +51,8 @@ export const ColorPickerField = React.forwardRef<HTMLInputElement, ColorPickerFi
       presetColors = DEFAULT_PRESETS,
       containerClassName,
       labelClassName,
+      pickColorLabel = "Pick color",
+      colorPresetLabel = (hex: string) => `Color ${hex}`,
       className,
       disabled,
       ...props
@@ -89,10 +93,10 @@ export const ColorPickerField = React.forwardRef<HTMLInputElement, ColorPickerFi
                   disabled && "opacity-50 cursor-not-allowed",
                 )}
                 style={{ backgroundColor: swatchColor }}
-                title={disabled ? undefined : "Wybierz kolor"}
-                aria-label="Wybierz kolor"
+                title={disabled ? undefined : pickColorLabel}
+                aria-label={pickColorLabel}
               >
-                <span className="sr-only">Wybierz kolor</span>
+                <span className="sr-only">{pickColorLabel}</span>
               </button>
 
               <input
@@ -153,7 +157,7 @@ export const ColorPickerField = React.forwardRef<HTMLInputElement, ColorPickerFi
                     )}
                     style={{ backgroundColor: preset }}
                     title={disabled ? undefined : preset}
-                    aria-label={`Kolor ${preset}`}
+                    aria-label={colorPresetLabel(preset)}
                   />
                 );
               })}

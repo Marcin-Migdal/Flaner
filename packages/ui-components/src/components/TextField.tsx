@@ -9,10 +9,12 @@ export type TextFieldProps = Omit<React.ComponentPropsWithoutRef<"input">, "id">
   label?: string;
   description?: string;
   error?: string;
+  incrementLabel?: string;
+  decrementLabel?: string;
 };
 
 export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
-  ({ label, description, error, id: customId, className, type, ...props }, ref) => {
+  ({ label, description, error, id: customId, className, type, incrementLabel, decrementLabel, ...props }, ref) => {
     const defaultId = useId();
     const inputId = customId || defaultId;
     const innerRef = useRef<HTMLInputElement | null>(null);
@@ -46,6 +48,9 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
       nextVal = Math.min(maxVal, Math.max(minVal, nextVal));
       nextVal = Number(nextVal.toFixed(Math.max(stepDecimals, 2)));
 
+      // React tracks value setters internally on controlled inputs and ignores programmatic .value changes.
+      // We call the native HTMLInputElement prototype setter to update the DOM node directly,
+      // then dispatch synthetic 'input' and 'change' events so React forms (like react-hook-form) pick up the change.
       const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
         window.HTMLInputElement.prototype,
         "value",
@@ -77,8 +82,8 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
                 disabled={props.disabled}
                 onClick={() => handleStep(1)}
                 className="h-1/2 w-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded-xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Zwiększ"
-                aria-label="Zwiększ wartość"
+                title={incrementLabel ?? "Increment"}
+                aria-label={incrementLabel ?? "Increment"}
               >
                 <ChevronUp className="size-3" />
               </button>
@@ -88,8 +93,8 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
                 disabled={props.disabled}
                 onClick={() => handleStep(-1)}
                 className="h-1/2 w-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded-xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Zmniejsz"
-                aria-label="Zmniejsz wartość"
+                title={decrementLabel ?? "Decrement"}
+                aria-label={decrementLabel ?? "Decrement"}
               >
                 <ChevronDown className="size-3" />
               </button>

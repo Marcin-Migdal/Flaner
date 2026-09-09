@@ -211,7 +211,7 @@ export const SpoolFormModal: React.FC<SpoolFormModalProps> = ({
             <FormTextField
               name="name"
               label={t("spooler.spools.spoolName")}
-              placeholder="np. Bambu PLA Matte Charcoal"
+              placeholder={t("spooler.spools.spoolNamePlaceholder")}
             />
 
             <div className="grid grid-cols-2 gap-3">
