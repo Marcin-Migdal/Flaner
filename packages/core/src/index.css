@@ -4,6 +4,7 @@
 @source "../../community/src";
 @source "../../planning/src";
 @source "../../shopping/src";
+@source "../../tools/src";
 @source "../../shared/src";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";

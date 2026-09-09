@@ -13,3 +13,12 @@ This file tracks the interactions and dependencies between different collections
 
 ## 3. Global Helpers
 - Functions in `_global.md` heavily depend on the schema of `groups/{groupId}/members/{userId}`. Specifically, they expect a `role` field (with values like 'owner', 'admin', 'moderator'). Changing these role names requires updating `getRolePriority` and `isAdminOrOwner` in `_global.md`.
+
+## 4. Lookup Collections Cascade (`lookup_materials` -> `lookup_types` -> `lookup_colors`)
+- **Dependency**: Collections prefixed with `lookup_` store dynamically created options (materials, types, colors) from select inputs.
+- **Cascading Deletions**:
+  - Deleting a `lookup_materials` entry cascades to delete all `lookup_types` where `materialName == material.name` AND all `lookup_colors` where `materialName == material.name`.
+  - Deleting a `lookup_types` entry cascades to delete all `lookup_colors` where `materialName == type.materialName` AND `typeName == type.name`.
+  - Deletions are executed atomically via client-side `writeBatch`.
+  - Existing `/templates` and `/spools` documents preserve their textual values intact when lookups are deleted.
+

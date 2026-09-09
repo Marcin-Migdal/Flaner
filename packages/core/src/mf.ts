@@ -34,6 +34,11 @@ const PROVIDERS: Array<{ alias: string; name: string; entry: string }> = [
     name: MFE_NAMES.PLANNING,
     entry: `${import.meta.env.VITE_MFE_PLANNING_URL || `http://${devHost}:4204`}/remoteEntry.js`,
   },
+  {
+    alias: MFE_NAMES.TOOLS,
+    name: MFE_NAMES.TOOLS,
+    entry: `${import.meta.env.VITE_MFE_TOOLS_URL || `http://${devHost}:4205`}/remoteEntry.js`,
+  },
 ];
 
 registerRemotes(PROVIDERS.map((remote) => ({ ...remote, type: "module" })));

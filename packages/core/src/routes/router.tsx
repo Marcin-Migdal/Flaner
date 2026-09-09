@@ -14,6 +14,7 @@ import { ProtectedRoute, PublicRoute } from "./guards";
 const SettingsMFE = lazyProvider(MFE_NAMES.SETTINGS, "App");
 const ShoppingMFE = lazyProvider(MFE_NAMES.SHOPPING, "App");
 const PlanningMFE = lazyProvider(MFE_NAMES.PLANNING, "App");
+const ToolsMFE = lazyProvider(MFE_NAMES.TOOLS, "App");
 
 // Helper to wrap component in Suspense container to show loader immediately during transition
 const withSuspense = (Component: React.ComponentType) => {
@@ -81,6 +82,14 @@ export const router = createBrowserRouter([
               {
                 path: `/${MFE_NAMES.SETTINGS}/*`,
                 element: withSuspense(SettingsMFE),
+              },
+              {
+                path: `/${MFE_NAMES.TOOLS}`,
+                element: <PageTilesView mfe={MFE_NAMES.TOOLS} />,
+              },
+              {
+                path: `/${MFE_NAMES.TOOLS}/*`,
+                element: withSuspense(ToolsMFE),
               },
             ],
           },

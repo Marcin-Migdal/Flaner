@@ -17,6 +17,7 @@ const MFE_URLS: Record<string, string> = {
   community: import.meta.env.VITE_MFE_COMMUNITY_URL || `http://${devHost}:4202`,
   shopping: import.meta.env.VITE_MFE_SHOPPING_URL || `http://${devHost}:4203`,
   planning: import.meta.env.VITE_MFE_PLANNING_URL || `http://${devHost}:4204`,
+  tools: import.meta.env.VITE_MFE_TOOLS_URL || `http://${devHost}:4205`,
 };
 
 i18n
