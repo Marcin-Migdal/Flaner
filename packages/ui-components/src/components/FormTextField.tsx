@@ -32,6 +32,14 @@ export function FormTextField<
     <TextField
       {...props}
       {...field}
+      onChange={(e) => {
+        if (props.type === "number") {
+          const val = e.target.value;
+          field.onChange(val === "" ? "" : Number(val));
+        } else {
+          field.onChange(e);
+        }
+      }}
       error={fieldState.error?.message}
     />
   );

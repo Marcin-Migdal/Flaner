@@ -48,28 +48,40 @@ export function ConfirmationPopup({
 
   return (
     <Dialog open={open} onOpenChange={isConfirming ? undefined : onOpenChange}>
-      <DialogContent showCloseButton={!isConfirming}>
+      <DialogContent showCloseButton={!isConfirming} onCloseAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
+
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         <DialogFooter>
           <Button
+            type="button"
             variant="outline"
-            onClick={handleCancel}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleCancel();
+            }}
             disabled={isConfirming}
           >
             {cancelLabel}
           </Button>
           <Button
+            type="button"
             variant={variant}
-            onClick={handleConfirm}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleConfirm();
+            }}
             disabled={isConfirming}
           >
             {isConfirming && <Loader2 className="h-4 w-4 animate-spin" />}
             {confirmLabel}
           </Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );

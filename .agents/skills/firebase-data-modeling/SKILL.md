@@ -86,3 +86,10 @@ export const addGroupMember = async (groupId: string, userId: string): Promise<v
 };
 ```
 
+## 6. Lookup Collections Pattern (`lookup_*`)
+- **Convention**: Collections that persist user-created options dynamically from Creatable Selects MUST be prefixed with `lookup_` (e.g., `lookup_materials`, `lookup_types`, `lookup_colors`).
+- **Normalized Hierarchy**: When options represent hierarchical or parent-child structures (e.g. Material -> Type -> Color), store them in separate normalized root collections linked by parent entity names/identifiers. This allows custom subtypes/colors to attach directly to either built-in catalog items or user-defined custom parents without conflict.
+- **Cascading Deletions**: Deleting a parent lookup item MUST trigger atomic client-side `writeBatch` deletions down the chain (e.g., deleting a material deletes all its child types and colors).
+- **Preserve Domain Documents**: By default, deleting lookups removes suggestions from dropdowns for future records, while existing operational documents (e.g., templates, spools, posts) retain their historical textual values intact unless explicit domain propagation is requested.
+
+

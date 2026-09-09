@@ -1,3 +1,5 @@
+export * from "./components/ColorPickerField";
+export * from "./components/FormColorPickerField";
 export * from "./components/FormIconTextField";
 export * from "./components/FormImagePicker";
 export * from "./components/FormSelect";

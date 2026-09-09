@@ -11,6 +11,8 @@
     "planning": "Planowanie",
     "scheduling": "Terminarz",
     "settings": "Ustawienia",
+    "tools": "Narzędzia",
+    "spooler": "Spooler",
     "signOut": "Wyloguj się",
     "theme": "Motyw",
     "themeDark": "Ciemny",
@@ -43,7 +45,8 @@
       "shopping": "Zarządzaj listami zakupów i kategoriami produktów bez opóźnień.",
       "planning": "Planuj wyjazdy i koordynuj wydarzenia ze swoimi znajomymi.",
       "community": "Znajdź znajomych i twórz grupy.",
-      "settings": "Dostosuj motyw, zmień nazwę wyświetlaną i awatar."
+      "settings": "Dostosuj motyw, zmień nazwę wyświetlaną i awatar.",
+      "tools": "Kalkulatory, asystent filamentów 3D (Spooler) i narzędzia użytkowe."
     }
   },
   "errorBoundary": {

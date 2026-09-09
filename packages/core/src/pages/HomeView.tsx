@@ -47,6 +47,11 @@ export function HomeView() {
           description={t('home.cards.settings')}
           to="/settings"
         />
+        <LinkCard
+          title={t('nav.tools')}
+          description={t('home.cards.tools')}
+          to="/tools"
+        />
       </div>
     </div>
   );

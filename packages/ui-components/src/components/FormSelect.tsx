@@ -30,26 +30,30 @@ export function FormSelect<
   });
 
   const selectedOption = useMemo(() => {
-    if (!props.options) return null;
-    for (const item of props.options) {
-      if ("options" in item && Array.isArray((item as { options: readonly SelectOption[] }).options)) {
-        const found = (item as { options: readonly SelectOption[] }).options.find(
-          (opt: SelectOption) => opt.value === field.value,
-        );
-        if (found) return found;
-      } else if ("value" in item && (item as SelectOption).value === field.value) {
-        return item as SelectOption;
+    if (props.options) {
+      for (const item of props.options) {
+        if ("options" in item && Array.isArray((item as { options: readonly SelectOption[] }).options)) {
+          const found = (item as { options: readonly SelectOption[] }).options.find(
+            (opt: SelectOption) => opt.value === field.value,
+          );
+          if (found) return found;
+        } else if ("value" in item && (item as SelectOption).value === field.value) {
+          return item as SelectOption;
+        }
       }
     }
+    if (props.creatable && field.value) {
+      return { label: String(field.value), value: String(field.value) };
+    }
     return null;
-  }, [props.options, field.value]);
+  }, [props.options, props.creatable, field.value]);
 
   return (
     <Select
       {...props}
       {...field}
       value={selectedOption}
-      onChange={(option) => field.onChange(option?.value as PathValue<TFieldValues, TName>)}
+      onChange={(option) => field.onChange((option ? option.value : "") as PathValue<TFieldValues, TName>)}
       error={fieldState.error?.message}
     />
   );
