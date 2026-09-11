@@ -20,7 +20,7 @@ export const SchedulerParticipantsList = ({
   const { t } = usePlanningTranslations();
 
   return (
-    <div className="flex-1 max-h-[210px] sm:max-h-[250px] min-[1200px]:max-h-none overflow-y-auto px-4 py-3 flex flex-col">
+    <div className="flex-1 max-h-[210px] min-[1200px]:max-h-none min-[1200px]:max-h-none! min-[1200px]:min-h-0 overflow-y-auto px-4 py-3 flex flex-col">
       <h3 className="text-[11px] font-bold text-muted-foreground/50 uppercase tracking-widest mb-4 px-1 flex items-center gap-1.5">
         <span>{t("hub.participants")}</span>
         <span className="text-[10px] font-semibold text-muted-foreground/70 px-1.5 py-0.5 rounded-full bg-white/5 border border-white/5 tracking-normal tabular-nums leading-none">

@@ -263,6 +263,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                       label={t("manageGroupSheet.avatarLabel")}
                       disabled={isUpdatingGroup}
                       maxSize={ONE_MB}
+                      cropShape="round"
                       containerClassName="[&_[role=button]]:h-24! [&_[role=button]]:min-h-[6rem]! [&_[role=button]]:p-2! [&_[role=button]]:gap-0.5 [&_[role=button]_svg]:size-5! [&_[role=button]_svg]:mb-0.5! [&_[data-slot=attachment]]:h-24! [&_[data-slot=attachment]]:min-h-[6rem]! [&_[data-slot=attachment]]:p-2! [&_[data-slot=attachment-media]]:h-14! [&_[data-slot=attachment-media]]:w-14!"
                     />
 

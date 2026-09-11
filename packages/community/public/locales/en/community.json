@@ -186,7 +186,12 @@
     "leaveConfirmTitle": "Leave group?",
     "leaveConfirmDesc": "Are you sure you want to leave this group? You will lose access to all its content.",
     "cancelBtn": "Cancel",
-    "confirmLeaveBtn": "Yes, leave"
+    "confirmLeaveBtn": "Yes, leave",
+    "moreOptions": "More options",
+    "isFriend": "Friend",
+    "addFriend": "Add",
+    "cancelRequest": "Cancel",
+    "acceptRequest": "Accept"
   },
   "requestsSheet": {
     "btnTitle": "Requests",

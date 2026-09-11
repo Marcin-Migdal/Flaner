@@ -98,6 +98,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
               label={t("groupsView.createModal.avatarLabel")}
               disabled={isPending}
               maxSize={ONE_MB}
+              cropShape="round"
             />
 
             <FormTextField

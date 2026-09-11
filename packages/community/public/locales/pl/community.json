@@ -175,7 +175,12 @@
     "leaveConfirmTitle": "Opuścić grupę?",
     "leaveConfirmDesc": "Czy na pewno chcesz opuścić tę grupę? Stracisz dostęp do wszystkich materiałów.",
     "cancelBtn": "Anuluj",
-    "confirmLeaveBtn": "Tak, opuść"
+    "confirmLeaveBtn": "Tak, opuść",
+    "moreOptions": "Więcej opcji",
+    "isFriend": "Znajomy",
+    "addFriend": "Dodaj",
+    "cancelRequest": "Anuluj",
+    "acceptRequest": "Akceptuj"
   },
   "requestsSheet": {
     "btnTitle": "Prośby",

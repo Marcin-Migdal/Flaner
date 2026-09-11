@@ -21,8 +21,15 @@
     }
   },
   "actions": {
+    "back": "Back",
     "save": "Save Changes",
     "saving": "Saving..."
+  },
+  "unsavedChanges": {
+    "title": "Unsaved Changes",
+    "description": "You have unsaved changes in your settings. If you leave this page, your modifications will be lost.",
+    "discard": "Discard Changes",
+    "stay": "Stay on Page"
   },
   "notifications": {
     "avatarError": "Failed to upload profile picture."

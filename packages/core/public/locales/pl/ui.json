@@ -15,7 +15,19 @@
     "dropzoneActiveText": "Upuść plik tutaj...",
     "dropzoneIdleText": "Kliknij, aby wybrać lub przeciągnij plik",
     "acceptedFormatsDesc": "JPG, PNG, GIF lub WEBP",
+    "editCropTooltip": "Dostosuj kadr obrazu",
+    "externalAvatarCropDisabledTooltip": "Zewnętrzne zdjęcia profilowe nie pozwalają na kadrowanie. Wgraj plik z urządzenia, aby móc go edytować.",
     "compressing": "Kompresowanie obrazu..."
+  },
+  "imageCropper": {
+    "title": "Dostosuj zdjęcie",
+    "description": "Przesuń i przybliż obraz, aby dopasować kadr.",
+    "zoom": "Powiększenie",
+    "rotate": "Obróć o 90°",
+    "cancel": "Anuluj",
+    "apply": "Zastosuj",
+    "processing": "Przetwarzanie...",
+    "cropError": "Nie udało się wykadrować obrazu. Spróbuj wgrać plik bezpośrednio z dysku."
   },
   "calendar": {
     "today": "Dziś",

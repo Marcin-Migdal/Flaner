@@ -1,5 +1,5 @@
 import React, { useId, useRef, useState, useEffect } from "react";
-import { Image as ImageIcon, UploadCloud, Trash2, Loader2 } from "lucide-react";
+import { Image as ImageIcon, UploadCloud, Trash2, Loader2, Crop } from "lucide-react";
 import { cn, ONE_KB, ONE_MB } from "@flaner/shared/utils";
 import { 
   Field, 
@@ -17,6 +17,13 @@ import {
   AttachmentAction,
 } from "./ui/attachment";
 import { useUiTranslations } from "../hooks/useUiTranslations";
+import { ImageCropperModal, type ImageCropperLabels } from "./ImageCropperModal";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 export type ImagePickerLabels = {
   invalidFileType?: string;
@@ -34,6 +41,8 @@ export type ImagePickerLabels = {
   dropzoneIdleText?: string;
   acceptedFormatsDesc?: string;
   compressingText?: string;
+  editCropTooltip?: string;
+  externalAvatarCropDisabledTooltip?: string;
 }
 
 export type ImagePickerProps = {
@@ -50,11 +59,25 @@ export type ImagePickerProps = {
   containerClassName?: string;
   labelClassName?: string;
   labels?: Partial<ImagePickerLabels>;
+  enableCrop?: boolean;
+  cropShape?: "round" | "rect";
+  cropAspect?: number;
+  cropOutputSize?: { width: number; height: number };
+  cropLabels?: Partial<ImageCropperLabels>;
 }
 
 const formatSize = (bytes: number): string => {
   if (bytes >= ONE_MB) return `${(bytes / ONE_MB).toFixed(1)} MB`;
   return `${(bytes / ONE_KB).toFixed(1)} KB`;
+};
+
+const isInternalEditableImage = (url: string | null): boolean => {
+  if (!url) return false;
+  // Local object URLs or base64 data URIs
+  if (url.startsWith("blob:") || url.startsWith("data:")) return true;
+  // Images hosted in our Cloudinary account have guaranteed CORS support
+  if (url.includes("cloudinary.com")) return true;
+  return false;
 };
 
 const compressImageToSize = (file: File, maxSize: number): Promise<File> => {
@@ -162,6 +185,11 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
       containerClassName,
       labelClassName,
       labels,
+      enableCrop,
+      cropShape,
+      cropAspect,
+      cropOutputSize,
+      cropLabels,
     },
     ref
   ) => {
@@ -174,7 +202,20 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isCompressing, setIsCompressing] = useState(false);
 
+    const shouldCrop = enableCrop ?? (cropShape !== undefined);
+    const [isCropperOpen, setIsCropperOpen] = useState(false);
+    const [cropSourceUrl, setCropSourceUrl] = useState<string | null>(null);
+
     const { t } = useUiTranslations();
+
+    // Revoke object URL for cropper source when changed or unmounted
+    useEffect(() => {
+      return () => {
+        if (cropSourceUrl && cropSourceUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(cropSourceUrl);
+        }
+      };
+    }, [cropSourceUrl]);
 
     // Sync file preview object URLs
     useEffect(() => {
@@ -276,10 +317,42 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
       }
     };
 
+    const handleSelectedFile = (file: File) => {
+      setLocalError(null);
+
+      // 1. File Type check
+      if (!file.type.startsWith("image/")) {
+        setLocalError(labels?.invalidFileType || t("imagePicker.invalidFileType"));
+        return;
+      }
+
+      if (shouldCrop) {
+        if (cropSourceUrl && cropSourceUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(cropSourceUrl);
+        }
+        const url = URL.createObjectURL(file);
+        setCropSourceUrl(url);
+        setIsCropperOpen(true);
+      } else {
+        validateAndProcessFile(file);
+      }
+    };
+
+    const handleCropComplete = (croppedFile: File) => {
+      validateAndProcessFile(croppedFile);
+    };
+
+    const handleOpenCropper = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!previewUrl || !isInternalEditableImage(previewUrl)) return;
+      setCropSourceUrl(previewUrl);
+      setIsCropperOpen(true);
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        validateAndProcessFile(file);
+        handleSelectedFile(file);
       }
     };
 
@@ -299,7 +372,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
       setIsDragging(false);
       const file = e.dataTransfer.files?.[0];
       if (file) {
-        validateAndProcessFile(file);
+        handleSelectedFile(file);
       }
     };
 
@@ -360,21 +433,53 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
                 <AttachmentMedia variant="image" className="relative group h-16! w-16! sm:h-20! sm:w-20! shrink-0">
                   <img src={previewUrl} alt="Thumbnail Preview" className="h-full w-full object-cover rounded-lg" />
                 </AttachmentMedia>
-                <AttachmentContent className="ml-1 select-none min-w-0">
-                  <AttachmentTitle className="text-foreground max-w-[200px] truncate">{meta.title}</AttachmentTitle>
-                  <AttachmentDescription className="text-muted-foreground">{meta.desc}</AttachmentDescription>
+                <AttachmentContent className="ml-2 select-none min-w-0 flex-1">
+                  <AttachmentTitle className="text-foreground max-w-full truncate">{meta.title}</AttachmentTitle>
+                  <AttachmentDescription className="text-muted-foreground truncate">{meta.desc}</AttachmentDescription>
                 </AttachmentContent>
 
-                <AttachmentActions>
+                <AttachmentActions className="flex flex-col gap-1 shrink-0 self-center justify-center ml-2">
+                  {shouldCrop && previewUrl && (() => {
+                    const isEditable = isInternalEditableImage(previewUrl);
+                    return (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <AttachmentAction 
+                              variant="ghost" 
+                              size="icon" 
+                              type="button"
+                              onClick={isEditable ? handleOpenCropper : undefined}
+                              aria-disabled={!isEditable}
+                              disabled={isCompressing}
+                              className={cn(
+                                "size-7 rounded-lg transition-colors",
+                                isEditable
+                                  ? "hover:bg-accent/60 text-muted-foreground hover:text-foreground cursor-pointer"
+                                  : "opacity-40 cursor-not-allowed text-muted-foreground hover:bg-transparent"
+                              )}
+                            >
+                              <Crop className="size-3.5" />
+                            </AttachmentAction>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-[240px] text-center text-xs">
+                            {isEditable
+                              ? (labels?.editCropTooltip || t("imagePicker.editCropTooltip"))
+                              : (labels?.externalAvatarCropDisabledTooltip || t("imagePicker.externalAvatarCropDisabledTooltip"))}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  })()}
                   <AttachmentAction 
                     variant="ghost" 
                     size="icon" 
                     type="button"
                     onClick={handleRemove}
                     disabled={isCompressing}
-                    className="hover:bg-destructive/10 hover:text-destructive text-muted-foreground cursor-pointer rounded-lg size-8 transition-colors"
+                    className="hover:bg-destructive/10 hover:text-destructive text-muted-foreground cursor-pointer rounded-lg size-7 transition-colors"
                   >
-                    <Trash2 className="size-4" />
+                    <Trash2 className="size-3.5" />
                   </AttachmentAction>
                 </AttachmentActions>
               </Attachment>
@@ -446,6 +551,24 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
 
         {description && <FieldDescription>{description}</FieldDescription>}
         {activeError && <FieldError>{activeError}</FieldError>}
+
+        {shouldCrop && (
+          <ImageCropperModal
+            open={isCropperOpen}
+            onOpenChange={setIsCropperOpen}
+            imageSrc={cropSourceUrl}
+            cropShape={cropShape ?? "round"}
+            aspect={cropAspect ?? 1}
+            outputSize={cropOutputSize}
+            labels={cropLabels}
+            onCropComplete={handleCropComplete}
+            onCancel={() => {
+              if (!value && fileInputRef.current) {
+                fileInputRef.current.value = "";
+              }
+            }}
+          />
+        )}
       </Field>
     );
   }

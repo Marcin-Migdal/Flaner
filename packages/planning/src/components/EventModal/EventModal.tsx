@@ -73,11 +73,17 @@ export const EventModal = ({
           description: eventToEdit.description || "",
           endDate: eventToEdit.endDate ? parseISO(eventToEdit.endDate) : undefined,
           participants: eventToEdit.participants,
-          proposedDates: eventToEdit.proposedDates.map((d) => ({
-            start: parseISO(d.start),
-            end: parseISO(d.end),
-            color: d.color,
-          })),
+          proposedDates: eventToEdit.proposedDates
+            .map((d) => ({
+              start: parseISO(d.start),
+              end: parseISO(d.end),
+              color: d.color,
+            }))
+            .sort((a, b) => {
+              const diffStart = a.start.getTime() - b.start.getTime();
+              if (diffStart !== 0) return diffStart;
+              return a.end.getTime() - b.end.getTime();
+            }),
         });
       } else {
         methods.reset({
@@ -94,7 +100,13 @@ export const EventModal = ({
   const onSubmit = async (data: CreateSchedulerFormData) => {
     if (!user) return;
 
-    const formattedDates = data.proposedDates.map((d) => {
+    const sortedProposedDates = [...data.proposedDates].sort((a, b) => {
+      const diffStart = a.start.getTime() - b.start.getTime();
+      if (diffStart !== 0) return diffStart;
+      return a.end.getTime() - b.end.getTime();
+    });
+
+    const formattedDates = sortedProposedDates.map((d) => {
       const startStr = format(d.start, "yyyy-MM-dd");
       const endStr = format(d.end, "yyyy-MM-dd");
       const existingSlot = eventToEdit?.proposedDates.find(
@@ -109,6 +121,19 @@ export const EventModal = ({
     });
 
     if (eventToEdit) {
+      let newFinalizedSlotIndex = eventToEdit.finalizedSlotIndex;
+      if (eventToEdit.isFinalized && typeof eventToEdit.finalizedSlotIndex === "number") {
+        const winningSlot = eventToEdit.proposedDates[eventToEdit.finalizedSlotIndex];
+        if (winningSlot) {
+          const foundIndex = formattedDates.findIndex(
+            (d) => d.start === winningSlot.start && d.end === winningSlot.end,
+          );
+          if (foundIndex !== -1) {
+            newFinalizedSlotIndex = foundIndex;
+          }
+        }
+      }
+
       await updateEvent(
         {
           eventId: eventToEdit.id,
@@ -118,6 +143,9 @@ export const EventModal = ({
             endDate: data.endDate ? format(data.endDate, "yyyy-MM-dd") : undefined,
             participants: data.participants,
             proposedDates: formattedDates,
+            ...(typeof newFinalizedSlotIndex === "number"
+              ? { finalizedSlotIndex: newFinalizedSlotIndex }
+              : {}),
           },
         },
         {
@@ -179,7 +207,13 @@ export const EventModal = ({
       const color = getRandomSlotColor(start, end, currentDates);
       const newRange = { start, end, color };
 
-      methods.setValue("proposedDates", [...currentDates, newRange], { shouldValidate: true });
+      const updatedDates = [...currentDates, newRange].sort((a, b) => {
+        const diffStart = a.start.getTime() - b.start.getTime();
+        if (diffStart !== 0) return diffStart;
+        return a.end.getTime() - b.end.getTime();
+      });
+
+      methods.setValue("proposedDates", updatedDates, { shouldValidate: true });
       setSelectedRange(null);
     }
   };

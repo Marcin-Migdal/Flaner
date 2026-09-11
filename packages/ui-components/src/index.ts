@@ -9,6 +9,8 @@ export * from "./components/FormTextField";
 export * from "./components/GoogleIcon";
 export * from "./components/IconTextField";
 export * from "./components/ImagePicker";
+export * from "./components/ImageCropperModal";
+export * from "./utils/cropImage";
 export * from "./components/LoadingFallback";
 export * from "./components/Profile";
 export * from "./components/SearchBar";
