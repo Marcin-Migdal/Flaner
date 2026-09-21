@@ -10,6 +10,7 @@ import {
   limit,
   onSnapshot,
   query,
+  serverTimestamp,
   setDoc,
   startAfter,
   updateDoc,
@@ -17,7 +18,7 @@ import {
   writeBatch,
   type QueryDocumentSnapshot,
 } from "firebase/firestore";
-import type { Group, GroupInvitation, GroupMember, GroupRequest, GroupRole } from "./types";
+import type { Group, GroupInvitation, GroupMember, GroupRequest, GroupRole, RolePermissionsMap } from "./types";
 
 const refs = {
   groups: () => collection(fb.firestore, "groups").withConverter(firestoreConverter<Group>()),
@@ -80,11 +81,22 @@ export const updateGroup = async (
   groupId: string,
   updates: Partial<Omit<Group, "id" | "createdAt" | "ownerId">>,
 ): Promise<void> => {
-  const dataToUpdate: Partial<Group> = { ...updates, updatedAt: Date.now() };
+  const dataToUpdate: Partial<Group> = { ...updates, updatedAt: serverTimestamp() };
   if (updates.name) {
     dataToUpdate.nameLower = updates.name.toLowerCase();
   }
   await updateDoc(refs.group(groupId), dataToUpdate);
+};
+
+// Update Group Role Permissions
+export const updateGroupRolePermissions = async (
+  groupId: string,
+  rolePermissions: RolePermissionsMap,
+): Promise<void> => {
+  await updateDoc(refs.group(groupId), {
+    rolePermissions,
+    updatedAt: serverTimestamp(),
+  });
 };
 
 // Delete Group (Cascading delete of subcollections)
@@ -207,7 +219,7 @@ export const transferGroupOwnership = async (
 ): Promise<void> => {
   const batch = writeBatch(fb.firestore);
 
-  batch.update(refs.group(groupId), { ownerId: newOwnerId, updatedAt: Date.now() });
+  batch.update(refs.group(groupId), { ownerId: newOwnerId, updatedAt: serverTimestamp() });
   batch.update(refs.member(groupId, currentOwnerId), { role: "admin" });
   batch.update(refs.member(groupId, newOwnerId), { role: "owner" });
 

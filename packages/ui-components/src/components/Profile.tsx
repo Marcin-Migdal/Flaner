@@ -1,6 +1,7 @@
 import { cn } from "@flaner/shared/utils";
 import React from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Avatar } from "./Avatar";
+import { AvatarFallback, AvatarImage } from "./ui/avatar";
 
 const sizeClasses = {
   sm: {
@@ -41,7 +42,7 @@ export const Profile = React.forwardRef<HTMLDivElement, ProfileProps>(
     return (
       <div ref={ref} className={cn("flex items-center select-none", currentSizes.container, className)} {...props}>
         {/* Avatar Component */}
-        <Avatar className={currentSizes.avatar}>
+        <Avatar className={currentSizes.avatar} tooltip={!showName ? username : undefined}>
           {avatarUrl && <AvatarImage src={avatarUrl} alt={`${username}'s avatar`} referrerPolicy="no-referrer" />}
           <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-black tracking-wider w-full h-full flex items-center justify-center">
             {getInitials(username)}

@@ -15,7 +15,19 @@
     "dropzoneActiveText": "Drop file here...",
     "dropzoneIdleText": "Click to select or drag and drop a file",
     "acceptedFormatsDesc": "JPG, PNG, GIF or WEBP",
+    "editCropTooltip": "Adjust image crop",
+    "externalAvatarCropDisabledTooltip": "External profile photos cannot be cropped directly. Upload an image from your device to edit it.",
     "compressing": "Compressing image..."
+  },
+  "imageCropper": {
+    "title": "Adjust photo",
+    "description": "Drag and zoom the image to fit the frame.",
+    "zoom": "Zoom",
+    "rotate": "Rotate 90°",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "processing": "Processing...",
+    "cropError": "Failed to crop image. Please upload a file directly from your device."
   },
   "calendar": {
     "today": "Today",

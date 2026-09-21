@@ -26,6 +26,7 @@
     "participants": "Zaproś uczestników",
     "searchFriends": "Szukaj znajomych i grup...",
     "proposeDates": "Zaproponuj daty",
+    "autoVoteProposedDates": "Zaznacz proponowane daty jako wybrane",
     "resultGroup": "Grupa",
     "resultUser": "Znajomy"
   },
@@ -126,5 +127,78 @@
     "winner": "Wybrany",
     "status": "Status",
     "you": "TY"
+  },
+  "customSlots": {
+    "triggerButton": "Seria dat",
+    "triggerTooltip": "Automatyczne generowanie serii dat",
+    "presets": {
+      "daily": "Codziennie",
+      "weekly": "Co tydzień",
+      "weeklyWithDay": "Co tydzień ({{day}})",
+      "monthly": "Co miesiąc",
+      "monthlyWithDay": "Co miesiąc ({{day}})",
+      "weekdays": "Dni robocze (Pn - Pt)",
+      "weekends": "Weekendy (Sb - Nd)",
+      "custom": "Własne..."
+    },
+    "custom": {
+      "title": "Własne powtarzanie",
+      "back": "Wstecz",
+      "dateRange": "Zakres generowania",
+      "from": "Od",
+      "to": "Do",
+      "every": "Co",
+      "units": {
+        "day": "Dzień",
+        "days": "Dni",
+        "week": "Tydzień",
+        "weeks": "Tygodnie",
+        "month": "Miesiąc",
+        "months": "Miesiące"
+      },
+      "daysOfWeek": {
+        "mon": "P",
+        "tue": "W",
+        "wed": "Ś",
+        "thu": "C",
+        "fri": "P",
+        "sat": "S",
+        "sun": "N"
+      },
+      "daysOfWeekFull": {
+        "mon": "Poniedziałek",
+        "tue": "Wtorek",
+        "wed": "Środa",
+        "thu": "Czwartek",
+        "fri": "Piątek",
+        "sat": "Sobota",
+        "sun": "Niedziela"
+      },
+      "skipWeekends": "Pomiń weekendy",
+      "monthModes": {
+        "each": "Każdego",
+        "onThe": "W wybranym",
+        "workday": "Dzień roboczy"
+      },
+      "lastDay": "Ostatni dzień",
+      "ordinals": {
+        "first": "pierwszy",
+        "second": "drugi",
+        "third": "trzeci",
+        "fourth": "czwarty",
+        "fifth": "piąty",
+        "last": "ostatni"
+      },
+      "workdays": {
+        "first": "Pierwszy dzień roboczy",
+        "last": "Ostatni dzień roboczy"
+      },
+      "createAsRange": "Twórz jako ciągłe zakresy dat",
+      "createAsRangeDesc": "Łącz kolejne pasujące dni w jeden wspólny slot (np. cały weekend)",
+      "apply": "Zastosuj",
+      "cancel": "Anuluj"
+    },
+    "appliedSuccess": "Dodano nowe terminy ({{count}})",
+    "allDuplicates": "Wszystkie wygenerowane terminy zostały już wcześniej dodane"
   }
 }

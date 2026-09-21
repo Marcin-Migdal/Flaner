@@ -1,21 +1,43 @@
 import { useAuth } from "@flaner/shared/context";
-import { Avatar, AvatarFallback, AvatarImage, Button, ConfirmationPopup } from "@flaner/ui-components";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Button,
+  ConfirmationPopup,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@flaner/ui-components";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Copy, Loader2, LogOut, Shield, UserPlus, Users } from "lucide-react";
+import { ArrowLeft, Copy, Loader2, LogOut, MoreHorizontal, Shield, UserCheck, UserPlus, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
+import { hasGroupPermission } from "../../api/groups";
 import { InviteToGroupModal } from "../../components/groups/InviteToGroupModal";
 import { ManageGroupSheet } from "../../components/groups/ManageGroupSheet";
 import { RequestsSheet } from "../../components/groups/RequestsSheet";
 import {
+  useAcceptFriendRequestMutation,
   useAddGroupMemberMutation,
+  useCancelFriendRequestMutation,
+  useGetFriendsListRealtimeQuery,
   useGetGroupMembersQuery,
   useGetGroupQuery,
+  useGetReceivedFriendRequestRealtimeQuery,
+  useGetSentFriendRequestRealtimeQuery,
   useGetUserGroupRequestQuery,
+  useGetUserGroupsQuery,
   useGetUsersQuery,
   useRemoveGroupMemberMutation,
   useRequestJoinGroupMutation,
+  useSendFriendRequestMutation,
 } from "../../hooks";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
 import { groupDetailsViewStyles } from "./GroupDetailsView.styles";
@@ -29,14 +51,32 @@ export function GroupDetailsView() {
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
+  const { data: userGroups = [] } = useGetUserGroupsQuery();
+  const isMember = userGroups.some((g) => g.id === groupId);
+
   const { data: group, isLoading: groupLoading } = useGetGroupQuery(groupId || "");
-  const { data: members = [], isLoading: membersLoading } = useGetGroupMembersQuery(groupId || "");
+  const { data: members = [], isLoading: membersLoading } = useGetGroupMembersQuery(groupId || "", {
+    enabled: isMember,
+  });
 
   const memberUserIds = members.map((m) => m.userId);
   const { data: membersProfiles, isLoading: profilesLoading } = useGetUsersQuery(memberUserIds);
 
   // We check if the current user has a pending request for this group
   const { data: userRequest } = useGetUserGroupRequestQuery(groupId || "");
+
+  // Friends data for member actions - only enabled for members
+  const { data: friends = [] } = useGetFriendsListRealtimeQuery({ enabled: isMember });
+  const { data: sentFriendRequests = [] } = useGetSentFriendRequestRealtimeQuery({ enabled: isMember });
+  const { data: receivedFriendRequests = [] } = useGetReceivedFriendRequestRealtimeQuery({ enabled: isMember });
+
+  const sendFriendRequest = useSendFriendRequestMutation();
+  const cancelFriendRequest = useCancelFriendRequestMutation();
+  const acceptFriendRequest = useAcceptFriendRequestMutation();
+
+  const isFriend = (uid: string) => friends.some((f) => f.uid === uid);
+  const hasSentFriendRequest = (uid: string) => sentFriendRequests.some((r) => r.receiverUid === uid);
+  const hasReceivedFriendRequest = (uid: string) => receivedFriendRequests.some((r) => r.senderUid === uid);
 
   const { mutateAsync: joinGroup, isPending: isJoining } = useAddGroupMemberMutation();
   const { mutateAsync: requestJoin, isPending: isRequesting } = useRequestJoinGroupMutation();
@@ -47,13 +87,12 @@ export function GroupDetailsView() {
     },
   });
 
-  if (groupLoading || membersLoading) return <div className="p-8 text-center">{t("groupDetails.loading")}</div>;
+  if (groupLoading || (isMember && membersLoading)) return <div className="p-8 text-center">{t("groupDetails.loading")}</div>;
   if (!group) return <div className="p-8 text-center text-destructive">{t("groupDetails.notFound")}</div>;
 
-  const isMember = members.some((m) => m.userId === user?.uid);
   const currentUserRole = members.find((m) => m.userId === user?.uid)?.role;
   const hasRequested = !!userRequest;
-  const canInvite = isMember && (group.type !== "private" || (currentUserRole && currentUserRole !== "member"));
+  const canInvite = isMember && hasGroupPermission(group, currentUserRole, "inviteMembers");
 
   // State 2.3: Edge case - navigating to a private group without being a member
   if (!isMember && group.type === "private") {
@@ -188,14 +227,24 @@ export function GroupDetailsView() {
 
         {/* Action Buttons */}
         <div className={groupDetailsViewStyles.actionButtonsWrapper}>
-          <Button
-            variant="outline"
-            className={groupDetailsViewStyles.actionButton}
-            onClick={handleCopyLink}
-          >
-            <Copy className="size-3.5 sm:size-4 shrink-0" />
-            <span>{t("groupDetails.copyLinkBtn")}</span>
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={groupDetailsViewStyles.copyButton}
+                  onClick={handleCopyLink}
+                  aria-label={t("groupDetails.copyLinkBtn")}
+                >
+                  <Copy className="size-3.5 sm:size-4 shrink-0" />
+                  <span className="lg:hidden">{t("groupDetails.copyLinkBtn")}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="hidden lg:block">
+                <p>{t("groupDetails.copyLinkBtn")}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
           {!isMember ? (
             renderRestrictedActions()
@@ -211,21 +260,38 @@ export function GroupDetailsView() {
                   <span>{t("manageGroupSheet.inviteFriends")}</span>
                 </Button>
               )}
-              {(currentUserRole === "owner" || currentUserRole === "admin") && <RequestsSheet groupId={group.id} />}
-              {(currentUserRole === "owner" || currentUserRole === "admin" || currentUserRole === "moderator") && (
+              {(currentUserRole === "owner" || hasGroupPermission(group, currentUserRole, "manageRequests")) && (
+                <RequestsSheet groupId={group.id} />
+              )}
+              {(currentUserRole === "owner" ||
+                hasGroupPermission(group, currentUserRole, "editGroup") ||
+                hasGroupPermission(group, currentUserRole, "manageMembers")) && (
                 <ManageGroupSheet groupId={group.id} />
               )}
               {currentUserRole !== "owner" && (
                 <>
-                  <Button
-                    variant="outline"
-                    className="rounded-xl h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30 flex-1 lg:flex-none flex items-center justify-center gap-1.5 cursor-pointer"
-                    onClick={() => setIsLeaveConfirmOpen(true)}
-                    disabled={isLeaving}
-                  >
-                    {isLeaving ? <Loader2 className="size-3.5 sm:size-4 animate-spin shrink-0" /> : <LogOut className="size-3.5 sm:size-4 shrink-0" />}
-                    <span>{t("groupDetails.leaveGroup")}</span>
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className={groupDetailsViewStyles.iconButton}
+                        aria-label={t("groupDetails.moreOptions")}
+                      >
+                        <MoreHorizontal className="size-4 shrink-0" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem
+                        onClick={() => setIsLeaveConfirmOpen(true)}
+                        disabled={isLeaving}
+                        className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                      >
+                        <LogOut className="size-4 mr-2 shrink-0 text-destructive" />
+                        <span>{t("groupDetails.leaveGroup")}</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
                   <ConfirmationPopup
                     open={isLeaveConfirmOpen}
@@ -258,25 +324,113 @@ export function GroupDetailsView() {
                   const profile = membersProfiles?.find((p) => p.uid === member.userId);
                   const displayName = profile?.username || member.userId;
                   const initials = displayName.substring(0, 2).toUpperCase();
+                  const isCurrentUser = user?.uid === member.userId;
+                  const friendStatus = isFriend(member.userId);
+                  const sentStatus = hasSentFriendRequest(member.userId);
+                  const receivedStatus = hasReceivedFriendRequest(member.userId);
+
+                  const isSending = sendFriendRequest.isPending && sendFriendRequest.variables?.uid === member.userId;
+                  const isCanceling = cancelFriendRequest.isPending && cancelFriendRequest.variables === member.userId;
+                  const isAccepting = acceptFriendRequest.isPending && acceptFriendRequest.variables?.uid === member.userId;
 
                   return (
                     <div
                       key={member.userId}
                       className={groupDetailsViewStyles.memberRow}
                     >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="size-10 border border-border">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Avatar className="size-10 border border-border shrink-0">
                           {profile?.avatarUrl && <AvatarImage src={profile.avatarUrl} alt={displayName} />}
                           <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-bold text-sm">
                             {initials}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="font-medium">{displayName}</span>
+                        <div className="min-w-0">
+                          <span className="font-medium text-sm text-foreground block truncate">{displayName}</span>
+                          {isCurrentUser && (
+                            <span className="text-[11px] text-muted-foreground block">{t("manageGroupSheet.you")}</span>
+                          )}
+                        </div>
                       </div>
-                      <div>
+
+                      <div className="flex items-center gap-2 shrink-0">
                         <span className={groupDetailsViewStyles.memberRoleBadge}>
                           {t(`manageGroupSheet.role_${member.role}`) || member.role}
                         </span>
+
+                        {!isCurrentUser && (
+                          <>
+                            {friendStatus ? (
+                              <div className={groupDetailsViewStyles.memberFriendBadge}>
+                                <UserCheck className="size-3.5" />
+                                <span className="hidden sm:inline">{t("groupDetails.isFriend")}</span>
+                              </div>
+                            ) : sentStatus ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={isCanceling}
+                                onClick={() => cancelFriendRequest.mutate(member.userId)}
+                                className={`${groupDetailsViewStyles.memberActionBtn} border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20`}
+                              >
+                                {isCanceling ? (
+                                  <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                  <>
+                                    <X className="size-3.5" />
+                                    <span className="hidden sm:inline">{t("groupDetails.cancelRequest")}</span>
+                                  </>
+                                )}
+                              </Button>
+                            ) : receivedStatus ? (
+                              <Button
+                                size="sm"
+                                variant="brand"
+                                disabled={isAccepting}
+                                onClick={() =>
+                                  acceptFriendRequest.mutate({
+                                    uid: member.userId,
+                                    username: displayName,
+                                    avatarUrl: profile?.avatarUrl,
+                                  })
+                                }
+                                className={groupDetailsViewStyles.memberActionBtn}
+                              >
+                                {isAccepting ? (
+                                  <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                  <>
+                                    <UserCheck className="size-3.5" />
+                                    <span>{t("groupDetails.acceptRequest")}</span>
+                                  </>
+                                )}
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={isSending}
+                                onClick={() =>
+                                  sendFriendRequest.mutate({
+                                    uid: member.userId,
+                                    username: displayName,
+                                    avatarUrl: profile?.avatarUrl,
+                                  })
+                                }
+                                className={`${groupDetailsViewStyles.memberActionBtn} border-border hover:bg-brand/10 hover:border-brand/30 hover:text-brand`}
+                              >
+                                {isSending ? (
+                                  <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                  <>
+                                    <UserPlus className="size-3.5" />
+                                    <span>{t("groupDetails.addFriend")}</span>
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
                   );
@@ -287,13 +441,15 @@ export function GroupDetailsView() {
         </div>
       )}
 
-      <InviteToGroupModal
-        groupId={group.id}
-        groupName={group.name}
-        groupAvatarUrl={group.avatarUrl}
-        open={isInviteModalOpen}
-        onOpenChange={setIsInviteModalOpen}
-      />
+      {canInvite && (
+        <InviteToGroupModal
+          groupId={group.id}
+          groupName={group.name}
+          groupAvatarUrl={group.avatarUrl}
+          open={isInviteModalOpen}
+          onOpenChange={setIsInviteModalOpen}
+        />
+      )}
     </div>
   );
 }

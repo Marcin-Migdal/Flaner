@@ -12,15 +12,21 @@ export const groupDetailsViewStyles = {
   infoContent: "flex-1 min-w-0 flex flex-col gap-1.5",
   title: "text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight break-normal [overflow-wrap:anywhere]",
   description: "text-muted-foreground text-xs sm:text-sm leading-relaxed max-w-2xl",
-  badgeList: "flex flex-wrap items-center gap-2 mt-1",
+  badgeList: "flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1",
   badge:
     "flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 bg-muted/60 rounded-full border border-border/40 text-[11px] sm:text-xs font-semibold text-muted-foreground",
   actionButtonsWrapper:
-    "flex flex-wrap sm:flex-nowrap items-center gap-2 w-full lg:w-auto shrink-0 pt-2 lg:pt-0 border-t border-border/30 lg:border-t-0",
+    "flex items-center gap-2 w-full lg:w-auto shrink-0 pt-2 lg:pt-0 border-t border-border/30 lg:border-t-0 justify-end flex-wrap sm:flex-nowrap",
   actionButton:
-    "rounded-xl h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm font-semibold flex-1 lg:flex-none flex items-center justify-center gap-1.5 cursor-pointer transition-all",
+    "rounded-xl h-9 sm:h-10 px-2.5 sm:px-4 text-xs sm:text-sm font-semibold flex-1 lg:flex-none flex items-center justify-center gap-1.5 cursor-pointer transition-all",
+  copyButton:
+    "rounded-xl h-9 sm:h-10 px-2.5 sm:px-4 lg:px-0 lg:w-10 text-xs sm:text-sm font-semibold flex-1 lg:flex-none shrink-0 flex items-center justify-center gap-1.5 cursor-pointer transition-all",
+  iconButton:
+    "rounded-xl size-9 sm:size-10 shrink-0 flex items-center justify-center cursor-pointer transition-all",
   membersSection: "space-y-4",
   membersCard: "bg-card border border-border/50 rounded-2xl overflow-hidden",
-  memberRow: "flex items-center justify-between p-4 hover:bg-muted/30 transition-colors",
-  memberRoleBadge: "text-xs font-medium px-2 py-1 bg-brand/10 text-brand rounded-md uppercase tracking-wider",
+  memberRow: "flex items-center justify-between p-3.5 sm:p-4 hover:bg-muted/30 transition-colors gap-3",
+  memberRoleBadge: "text-xs font-medium px-2 py-1 bg-brand/10 text-brand rounded-md uppercase tracking-wider shrink-0",
+  memberFriendBadge: "flex items-center gap-1 text-emerald-500 font-semibold text-xs px-2 sm:px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg shrink-0",
+  memberActionBtn: "h-8 px-2 sm:px-2.5 rounded-lg text-xs gap-1.5 cursor-pointer shrink-0 transition-all",
 };

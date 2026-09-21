@@ -21,8 +21,15 @@
     }
   },
   "actions": {
+    "back": "Wróć",
     "save": "Zapisz zmiany",
     "saving": "Zapisywanie..."
+  },
+  "unsavedChanges": {
+    "title": "Niezapisane zmiany",
+    "description": "Masz niezapisane zmiany w ustawieniach. Jeśli opuścisz tę stronę, wprowadzone modyfikacje zostaną utracone.",
+    "discard": "Odrzuć zmiany",
+    "stay": "Zostań na stronie"
   },
   "notifications": {
     "avatarError": "Nie udało się przesłać zdjęcia profilowego."

@@ -52,7 +52,7 @@ export function NotificationsPopover() {
           </SidebarMenuButton>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[calc(100vw-2.5rem)] max-w-[340px] sm:w-96 p-0 rounded-xl border-border/50 shadow-lg overflow-hidden flex flex-col"
+          className="w-[calc(100vw-2rem)] sm:w-[440px] max-w-[440px] p-0 rounded-xl border-border/50 shadow-lg overflow-hidden flex flex-col"
           side={isMobile ? "top" : "right"}
           align={isMobile ? "center" : "end"}
           sideOffset={isMobile ? 10 : 8}

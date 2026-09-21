@@ -20,50 +20,89 @@ export const useSyncLookups = (
 
   useEffect(() => {
     if (syncLookupsRef.current || !user || userTemplates.length === 0) return;
-    syncLookupsRef.current = true;
 
-    for (const tpl of userTemplates) {
-      if (!tpl.material || !tpl.type || !tpl.colorName) continue;
+    const syncLookups = async () => {
+      // Deduplicate lookups across templates to avoid redundant writes
+      const customMaterials = new Set<string>();
+      const customTypes = new Map<string, { materialName: string; name: string }>();
+      const customColors = new Map<
+        string,
+        { materialName: string; typeName: string; name: string; hex: string }
+      >();
 
-      const isOfficialMat = bambuFilaments.some(
-        (bm) => bm.name.toLowerCase() === tpl.material.toLowerCase(),
-      );
-      if (!isOfficialMat) {
-        addLookupMaterial(user.uid, { name: tpl.material }).catch(() => {});
+      for (const tpl of userTemplates) {
+        if (!tpl.material || !tpl.type || !tpl.colorName) continue;
+
+        const isOfficialMat = bambuFilaments.some(
+          (bm) => bm.name.toLowerCase() === tpl.material.toLowerCase(),
+        );
+        if (!isOfficialMat) {
+          customMaterials.add(tpl.material);
+        }
+
+        const isOfficialType = bambuFilaments.some(
+          (bm) =>
+            bm.name.toLowerCase() === tpl.material.toLowerCase() &&
+            bm.types.some((bt) => bt.name.toLowerCase() === tpl.type.toLowerCase()),
+        );
+        if (!isOfficialType) {
+          const key = `${tpl.material.toLowerCase()}::${tpl.type.toLowerCase()}`;
+          customTypes.set(key, { materialName: tpl.material, name: tpl.type });
+        }
+
+        const isOfficialColor = bambuFilaments.some(
+          (bm) =>
+            bm.name.toLowerCase() === tpl.material.toLowerCase() &&
+            bm.types.some(
+              (bt) =>
+                bt.name.toLowerCase() === tpl.type.toLowerCase() &&
+                bt.colors.some(
+                  (bc) => bc.name.toLowerCase() === tpl.colorName.toLowerCase(),
+                ),
+            ),
+        );
+        if (!isOfficialColor) {
+          const key = `${tpl.material.toLowerCase()}::${tpl.type.toLowerCase()}::${tpl.colorName.toLowerCase()}`;
+          customColors.set(key, {
+            materialName: tpl.material,
+            typeName: tpl.type,
+            name: tpl.colorName,
+            hex: tpl.colorHex || "#ffffff",
+          });
+        }
       }
 
-      const isOfficialType = bambuFilaments.some(
-        (bm) =>
-          bm.name.toLowerCase() === tpl.material.toLowerCase() &&
-          bm.types.some((bt) => bt.name.toLowerCase() === tpl.type.toLowerCase()),
-      );
-      if (!isOfficialType) {
-        addLookupType(user.uid, {
-          materialName: tpl.material,
-          name: tpl.type,
-        }).catch(() => {});
+      const promises: Promise<unknown>[] = [];
+
+      for (const mat of customMaterials) {
+        promises.push(addLookupMaterial(user.uid, { name: mat }));
+      }
+      for (const typ of customTypes.values()) {
+        promises.push(addLookupType(user.uid, typ));
+      }
+      for (const col of customColors.values()) {
+        promises.push(addLookupColor(user.uid, col));
       }
 
-      const isOfficialColor = bambuFilaments.some(
-        (bm) =>
-          bm.name.toLowerCase() === tpl.material.toLowerCase() &&
-          bm.types.some(
-            (bt) =>
-              bt.name.toLowerCase() === tpl.type.toLowerCase() &&
-              bt.colors.some(
-                (bc) => bc.name.toLowerCase() === tpl.colorName.toLowerCase(),
-              ),
-          ),
-      );
-      if (!isOfficialColor) {
-        addLookupColor(user.uid, {
-          materialName: tpl.material,
-          typeName: tpl.type,
-          name: tpl.colorName,
-          hex: tpl.colorHex || "#ffffff",
-        }).catch(() => {});
+      if (promises.length === 0) {
+        syncLookupsRef.current = true;
+        return;
       }
-    }
+
+      try {
+        const results = await Promise.allSettled(promises);
+        const failed = results.filter((r) => r.status === "rejected");
+        if (failed.length > 0) {
+          console.error("Lookup sync had errors:", failed);
+        } else {
+          syncLookupsRef.current = true;
+        }
+      } catch (err) {
+        console.error("Lookup sync failed:", err);
+      }
+    };
+
+    void syncLookups();
   }, [user, userTemplates]);
 };
 

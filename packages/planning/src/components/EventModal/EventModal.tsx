@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  FormCheckbox,
   FormDatePicker,
   FormTextArea,
   FormTextField,
@@ -24,6 +25,8 @@ import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { CreateSchedulerFormData, getCreateSchedulerSchema } from "../../utils/schemas/create-scheduler-schema";
 import { ParticipantSelect } from "./components";
 import { getRandomSlotColor } from "./utils";
+import { CustomDateSlotsPopover, type CustomSlotsConfig } from "../CustomDateSlotsPopover/CustomDateSlotsPopover";
+import { generateCustomDateSlots } from "../../utils/generateCustomDateSlots";
 
 export type EventModalProps = {
   trigger?: React.ReactNode;
@@ -58,6 +61,7 @@ export const EventModal = ({
       endDate: new Date(),
       participants: user ? [user.uid] : [],
       proposedDates: [],
+      autoVoteProposedDates: true,
     },
   });
 
@@ -73,11 +77,17 @@ export const EventModal = ({
           description: eventToEdit.description || "",
           endDate: eventToEdit.endDate ? parseISO(eventToEdit.endDate) : undefined,
           participants: eventToEdit.participants,
-          proposedDates: eventToEdit.proposedDates.map((d) => ({
-            start: parseISO(d.start),
-            end: parseISO(d.end),
-            color: d.color,
-          })),
+          proposedDates: eventToEdit.proposedDates
+            .map((d) => ({
+              start: parseISO(d.start),
+              end: parseISO(d.end),
+              color: d.color,
+            }))
+            .sort((a, b) => {
+              const diffStart = a.start.getTime() - b.start.getTime();
+              if (diffStart !== 0) return diffStart;
+              return a.end.getTime() - b.end.getTime();
+            }),
         });
       } else {
         methods.reset({
@@ -86,6 +96,7 @@ export const EventModal = ({
           endDate: new Date(),
           participants: user ? [user.uid] : [],
           proposedDates: [],
+          autoVoteProposedDates: true,
         });
       }
     }
@@ -94,7 +105,13 @@ export const EventModal = ({
   const onSubmit = async (data: CreateSchedulerFormData) => {
     if (!user) return;
 
-    const formattedDates = data.proposedDates.map((d) => {
+    const sortedProposedDates = [...data.proposedDates].sort((a, b) => {
+      const diffStart = a.start.getTime() - b.start.getTime();
+      if (diffStart !== 0) return diffStart;
+      return a.end.getTime() - b.end.getTime();
+    });
+
+    const formattedDates = sortedProposedDates.map((d) => {
       const startStr = format(d.start, "yyyy-MM-dd");
       const endStr = format(d.end, "yyyy-MM-dd");
       const existingSlot = eventToEdit?.proposedDates.find(
@@ -109,6 +126,19 @@ export const EventModal = ({
     });
 
     if (eventToEdit) {
+      let newFinalizedSlotIndex = eventToEdit.finalizedSlotIndex;
+      if (eventToEdit.isFinalized && typeof eventToEdit.finalizedSlotIndex === "number") {
+        const winningSlot = eventToEdit.proposedDates[eventToEdit.finalizedSlotIndex];
+        if (winningSlot) {
+          const foundIndex = formattedDates.findIndex(
+            (d) => d.start === winningSlot.start && d.end === winningSlot.end,
+          );
+          if (foundIndex !== -1) {
+            newFinalizedSlotIndex = foundIndex;
+          }
+        }
+      }
+
       await updateEvent(
         {
           eventId: eventToEdit.id,
@@ -118,6 +148,9 @@ export const EventModal = ({
             endDate: data.endDate ? format(data.endDate, "yyyy-MM-dd") : undefined,
             participants: data.participants,
             proposedDates: formattedDates,
+            ...(typeof newFinalizedSlotIndex === "number"
+              ? { finalizedSlotIndex: newFinalizedSlotIndex }
+              : {}),
           },
         },
         {
@@ -135,6 +168,7 @@ export const EventModal = ({
           endDate: data.endDate ? format(data.endDate, "yyyy-MM-dd") : undefined,
           participants: data.participants,
           proposedDates: formattedDates,
+          autoVoteProposedDates: data.autoVoteProposedDates,
         },
         {
           onSuccess: (createdEvent) => {
@@ -179,7 +213,13 @@ export const EventModal = ({
       const color = getRandomSlotColor(start, end, currentDates);
       const newRange = { start, end, color };
 
-      methods.setValue("proposedDates", [...currentDates, newRange], { shouldValidate: true });
+      const updatedDates = [...currentDates, newRange].sort((a, b) => {
+        const diffStart = a.start.getTime() - b.start.getTime();
+        if (diffStart !== 0) return diffStart;
+        return a.end.getTime() - b.end.getTime();
+      });
+
+      methods.setValue("proposedDates", updatedDates, { shouldValidate: true });
       setSelectedRange(null);
     }
   };
@@ -190,6 +230,45 @@ export const EventModal = ({
     const indexToRemove = typeof event.id === "string" ? parseInt(event.id, 10) : event.id;
     const newDates = currentDates.filter((_, idx) => idx !== indexToRemove);
     methods.setValue("proposedDates", newDates, { shouldValidate: true });
+  };
+
+  const handleApplyCustomSlots = (config: CustomSlotsConfig) => {
+    const generatedSlots = generateCustomDateSlots(config);
+    if (generatedSlots.length === 0) {
+      return;
+    }
+
+    const currentDates = methods.getValues("proposedDates") || [];
+    const newUniqueSlots: { start: Date; end: Date; color: string }[] = [];
+
+    for (const slot of generatedSlots) {
+      const isDuplicate = currentDates.some(
+        (existing) => isSameDay(existing.start, slot.start) && isSameDay(existing.end, slot.end),
+      );
+      if (!isDuplicate) {
+        const isDuplicateInBatch = newUniqueSlots.some(
+          (existing) => isSameDay(existing.start, slot.start) && isSameDay(existing.end, slot.end),
+        );
+        if (!isDuplicateInBatch) {
+          const color = getRandomSlotColor(slot.start, slot.end, [...currentDates, ...newUniqueSlots]);
+          newUniqueSlots.push({ start: slot.start, end: slot.end, color });
+        }
+      }
+    }
+
+    if (newUniqueSlots.length === 0) {
+      toast.attention(t("customSlots.allDuplicates"));
+      return;
+    }
+
+    const updatedDates = [...currentDates, ...newUniqueSlots].sort((a, b) => {
+      const diffStart = a.start.getTime() - b.start.getTime();
+      if (diffStart !== 0) return diffStart;
+      return a.end.getTime() - b.end.getTime();
+    });
+
+    methods.setValue("proposedDates", updatedDates, { shouldValidate: true });
+    toast.success(t("customSlots.appliedSuccess", { count: newUniqueSlots.length }));
   };
 
   const rawProposedDates = useWatch({ control: methods.control, name: "proposedDates" });
@@ -240,6 +319,12 @@ export const EventModal = ({
                   style={{ resize: "none" }}
                 />
                 <FormDatePicker name="endDate" label={t("fields.endDate")} />
+                {!eventToEdit && (
+                  <FormCheckbox
+                    name="autoVoteProposedDates"
+                    label={t("create.autoVoteProposedDates")}
+                  />
+                )}
               </div>
 
               <ParticipantSelect
@@ -305,6 +390,7 @@ export const EventModal = ({
                   disabledDates={{ before: startOfToday() }}
                   onDateChange={handleDateChange}
                   onEventClick={handleEventClick}
+                  headerButtonContent={<CustomDateSlotsPopover onApply={handleApplyCustomSlots} />}
                 />
               </div>
 

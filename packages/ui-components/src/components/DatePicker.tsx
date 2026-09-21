@@ -18,13 +18,51 @@ export interface DatePickerProps {
   onChange?: (date?: Date) => void;
   className?: string;
   disabled?: boolean;
+  dateFormat?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  autoCloseOnSelect?: boolean;
 }
 
 export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
-  ({ label, description, error, id: customId, className, value, onChange, disabled }, ref) => {
+  (
+    {
+      label,
+      description,
+      error,
+      id: customId,
+      className,
+      value,
+      onChange,
+      disabled,
+      dateFormat = "PPP",
+      open: controlledOpen,
+      onOpenChange: controlledOnOpenChange,
+      autoCloseOnSelect = true,
+    },
+    ref,
+  ) => {
     const defaultId = useId();
     const inputId = customId || defaultId;
     const { t, i18n } = useUiTranslations();
+    const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
+
+    const isControlled = controlledOpen !== undefined;
+    const isOpen = isControlled ? controlledOpen : uncontrolledOpen;
+
+    const handleOpenChange = (nextOpen: boolean) => {
+      if (!isControlled) {
+        setUncontrolledOpen(nextOpen);
+      }
+      controlledOnOpenChange?.(nextOpen);
+    };
+
+    const handleSelect = (date?: Date) => {
+      onChange?.(date);
+      if (autoCloseOnSelect && date) {
+        handleOpenChange(false);
+      }
+    };
 
     const dfLocale = i18n.language?.startsWith("pl") ? pl : enGB;
 
@@ -32,7 +70,7 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
       <Field data-invalid={!!error} className={className}>
         {label && <FieldLabel htmlFor={inputId}>{label}</FieldLabel>}
         
-        <Popover>
+        <Popover open={isOpen} onOpenChange={handleOpenChange}>
           <PopoverTrigger asChild>
             <Button
               id={inputId}
@@ -45,14 +83,14 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
               disabled={disabled}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {value ? format(value, "PPP", { locale: dfLocale }) : <span>{t("datePicker.selectDate")}</span>}
+              {value ? format(value, dateFormat, { locale: dfLocale }) : <span>{t("datePicker.selectDate")}</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
               mode="single"
               selected={value}
-              onSelect={onChange}
+              onSelect={handleSelect}
               locale={dfLocale}
             />
           </PopoverContent>

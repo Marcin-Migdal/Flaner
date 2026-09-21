@@ -16,3 +16,4 @@ export * from './useSendFriendRequestMutation';
 export * from './useTransferGroupOwnershipMutation';
 export * from './useUpdateGroupMemberRoleMutation';
 export * from './useUpdateGroupMutation';
+export * from './useUpdateGroupRolePermissionsMutation';

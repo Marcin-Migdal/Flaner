@@ -16,14 +16,14 @@ export const useGetFriendsListRealtimeQuery = (
   const queryKey = getFriendsListRealtimeQueryKeys(user?.uid ?? "");
 
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid || options?.enabled === false) return;
 
     const unsubscribe = subscribeToFriendsList(user.uid, (friends: Friendship[]) => {
       queryClient.setQueryData(getFriendsListRealtimeQueryKeys(user.uid), friends);
     });
 
     return () => unsubscribe();
-  }, [user?.uid, queryClient]);
+  }, [user?.uid, options?.enabled, queryClient]);
 
 
 

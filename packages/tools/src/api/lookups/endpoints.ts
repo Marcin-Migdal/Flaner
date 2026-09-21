@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDocs,
+  limit,
   query,
   where,
   setDoc,
@@ -59,10 +60,15 @@ export const addLookupMaterial = async (
   input: AddLookupMaterialInput,
 ): Promise<string> => {
   const trimmedName = input.name.trim();
-  const existingList = await fetchLookupMaterials(userId);
-  const found = existingList.find((m) => m.name.toLowerCase() === trimmedName.toLowerCase());
-  if (found) {
-    return found.id;
+  const q = query(
+    lookupRefs.materials(),
+    where("userId", "==", userId),
+    where("name", "==", trimmedName),
+    limit(1),
+  );
+  const snap = await getDocs(q);
+  if (!snap.empty) {
+    return snap.docs[0].id;
   }
 
   const newDocRef = doc(collection(fb.firestore, "lookup_materials"));
@@ -82,14 +88,16 @@ export const addLookupType = async (
   const trimmedMaterial = input.materialName.trim();
   const trimmedName = input.name.trim();
 
-  const existingList = await fetchLookupTypes(userId);
-  const found = existingList.find(
-    (t) =>
-      t.materialName.toLowerCase() === trimmedMaterial.toLowerCase() &&
-      t.name.toLowerCase() === trimmedName.toLowerCase(),
+  const q = query(
+    lookupRefs.types(),
+    where("userId", "==", userId),
+    where("materialName", "==", trimmedMaterial),
+    where("name", "==", trimmedName),
+    limit(1),
   );
-  if (found) {
-    return found.id;
+  const snap = await getDocs(q);
+  if (!snap.empty) {
+    return snap.docs[0].id;
   }
 
   const newDocRef = doc(collection(fb.firestore, "lookup_types"));
@@ -112,18 +120,22 @@ export const addLookupColor = async (
   const trimmedName = input.name.trim();
   const hex = input.hex.trim();
 
-  const existingList = await fetchLookupColors(userId);
-  const found = existingList.find(
-    (c) =>
-      c.materialName.toLowerCase() === trimmedMaterial.toLowerCase() &&
-      c.typeName.toLowerCase() === trimmedType.toLowerCase() &&
-      c.name.toLowerCase() === trimmedName.toLowerCase(),
+  const q = query(
+    lookupRefs.colors(),
+    where("userId", "==", userId),
+    where("materialName", "==", trimmedMaterial),
+    where("typeName", "==", trimmedType),
+    where("name", "==", trimmedName),
+    limit(1),
   );
-  if (found) {
-    if (found.hex !== hex) {
-      await updateDoc(doc(fb.firestore, "lookup_colors", found.id), { hex });
+  const snap = await getDocs(q);
+  if (!snap.empty) {
+    const existingDoc = snap.docs[0];
+    const data = existingDoc.data();
+    if (data.hex !== hex) {
+      await updateDoc(doc(fb.firestore, "lookup_colors", existingDoc.id), { hex });
     }
-    return found.id;
+    return existingDoc.id;
   }
 
   const newDocRef = doc(collection(fb.firestore, "lookup_colors"));
