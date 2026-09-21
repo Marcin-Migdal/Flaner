@@ -54,25 +54,22 @@ export const useTemplateCustomColors = ({
     getStoredCustomColorHexes(),
   );
 
-  // Derive full customHexMap by merging local state with userTemplates and lookupColors
+  // Derive full customHexMap by using Firestore lookupColors as primary source of truth,
+  // overlaid onto userTemplates, with local storage as a fallback cache
   const customHexMap = useMemo(() => {
     const map = { ...localCustomHexMap };
 
     for (const tpl of userTemplates) {
       if (tpl.colorName && tpl.colorHex) {
         const key = tpl.colorName.trim().toLowerCase();
-        if (!map[key]) {
-          map[key] = tpl.colorHex;
-        }
+        map[key] = tpl.colorHex;
       }
     }
 
     for (const lc of lookupColors) {
       if (lc.name && lc.hex) {
         const key = lc.name.trim().toLowerCase();
-        if (!map[key]) {
-          map[key] = lc.hex;
-        }
+        map[key] = lc.hex;
       }
     }
 

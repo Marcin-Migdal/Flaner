@@ -29,6 +29,8 @@ export const DEFAULT_ROLE_PERMISSIONS: RolePermissionsMap = {
   },
 };
 
+import type { Timestamp, FieldValue } from "firebase/firestore";
+
 export type Group = {
   id: string;
   name: string;
@@ -40,7 +42,7 @@ export type Group = {
   avatarUrl?: string | null;
   rolePermissions?: Partial<Record<ConfigurableGroupRole, Partial<Record<GroupPermission, boolean>>>>;
   createdAt: number;
-  updatedAt: number;
+  updatedAt: number | Timestamp | FieldValue;
 };
 
 export type GroupMember = {

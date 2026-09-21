@@ -356,7 +356,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                   </AccordionTrigger>
                   <AccordionContent className={manageGroupSheetStyles.accordionContent}>
                     <ManageGroupRolesSection
-                      key={`${groupId}-${group?.updatedAt || 0}`}
+                      key={`${groupId}-${group?.updatedAt ? (typeof group.updatedAt === "object" && "toMillis" in group.updatedAt ? group.updatedAt.toMillis() : group.updatedAt) : 0}`}
                       groupId={groupId}
                       group={group}
                     />

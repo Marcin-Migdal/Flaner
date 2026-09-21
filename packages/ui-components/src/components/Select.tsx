@@ -43,30 +43,18 @@ export const Select = <Option extends SelectOption = SelectOption>({
   const selectId = customId || defaultId;
 
   const customClassNames = {
-    container: () => cn(disabled && "cursor-not-allowed"),
     control: ({ isFocused, isDisabled }: { isFocused: boolean; isDisabled: boolean }) => {
       const isControlDisabled = isDisabled || disabled;
       const state = isControlDisabled ? "disabled" : error ? "error" : isFocused ? "focused" : "idle";
       return selectControlVariants({ variant, state });
     },
     valueContainer: () =>
-      cn(
-        variant === "glass"
-          ? "px-2.5 py-1 md:px-3 md:py-1.5 flex items-center gap-1"
-          : "px-3 py-1.5 flex items-center gap-1",
-        disabled && "cursor-not-allowed",
-      ),
-    singleValue: () =>
-      cn(
-        variant === "glass" ? "text-foreground font-medium" : "text-foreground",
-        disabled && "opacity-60 cursor-not-allowed",
-      ),
-    placeholder: () =>
-      cn(
-        variant === "glass" ? "text-muted-foreground/70" : "text-muted-foreground",
-        disabled && "text-muted-foreground/40 cursor-not-allowed",
-      ),
-    input: () => cn("text-foreground m-0 p-0", disabled && "cursor-not-allowed"),
+      variant === "glass"
+        ? "px-2.5 py-1 md:px-3 md:py-1.5 flex items-center gap-1"
+        : "px-3 py-1.5 flex items-center gap-1",
+    singleValue: () => (variant === "glass" ? "text-foreground font-medium" : "text-foreground"),
+    placeholder: () => (variant === "glass" ? "text-muted-foreground/70" : "text-muted-foreground"),
+    input: () => "text-foreground m-0 p-0",
     menu: () =>
       variant === "glass"
         ? "rounded-2xl border border-white/10 bg-[#151515]/90 backdrop-blur-xl shadow-2xl mt-2 overflow-hidden z-50 p-1.5 flex flex-col"
@@ -80,25 +68,22 @@ export const Select = <Option extends SelectOption = SelectOption>({
       return selectOptionVariants({ variant, state });
     },
     indicatorsContainer: () => "px-2 gap-1",
-    dropdownIndicator: () =>
-      disabled
-        ? "text-muted-foreground/30 cursor-not-allowed"
-        : "text-muted-foreground hover:text-foreground cursor-pointer",
-    clearIndicator: () =>
-      disabled
-        ? "text-muted-foreground/30 cursor-not-allowed"
-        : "text-muted-foreground hover:text-foreground cursor-pointer",
+    dropdownIndicator: () => "text-muted-foreground hover:text-foreground cursor-pointer",
+    clearIndicator: () => "text-muted-foreground hover:text-foreground cursor-pointer",
     noOptionsMessage: () => "text-muted-foreground py-3 text-center text-sm",
   };
 
   return (
-    <Field data-invalid={!!error} data-disabled={disabled} className={cn(containerClassName, disabled && "opacity-60 cursor-not-allowed")}>
-      {label && (
-        <FieldLabel htmlFor={selectId} className={cn(labelClassName, disabled && "opacity-60 cursor-not-allowed")}>
-          {label}
-        </FieldLabel>
+    <Field
+      data-invalid={!!error}
+      data-disabled={disabled}
+      className={cn(
+        containerClassName,
+        "data-[disabled=true]:opacity-60 data-[disabled=true]:cursor-not-allowed",
       )}
-      <div className={cn("relative w-full", disabled && "cursor-not-allowed")}>
+    >
+      {label && <FieldLabel htmlFor={selectId} className={labelClassName}>{label}</FieldLabel>}
+      <div className="relative w-full">
         {creatable ? (
           <CreatableSelect
             id={selectId}

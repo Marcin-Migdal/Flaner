@@ -35,10 +35,13 @@ export function FormTextField<
       onChange={(e) => {
         if (props.type === "number") {
           const val = e.target.value;
-          field.onChange(val === "" ? "" : Number(val));
+          field.onChange(val === "" ? undefined : Number(val));
         } else {
           field.onChange(e);
         }
+      }}
+      onStep={(_, nextVal) => {
+        field.onChange(nextVal);
       }}
       error={fieldState.error?.message}
     />

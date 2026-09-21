@@ -33,6 +33,7 @@ import {
   useGetReceivedFriendRequestRealtimeQuery,
   useGetSentFriendRequestRealtimeQuery,
   useGetUserGroupRequestQuery,
+  useGetUserGroupsQuery,
   useGetUsersQuery,
   useRemoveGroupMemberMutation,
   useRequestJoinGroupMutation,
@@ -50,8 +51,13 @@ export function GroupDetailsView() {
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
+  const { data: userGroups = [] } = useGetUserGroupsQuery();
+  const isMember = userGroups.some((g) => g.id === groupId);
+
   const { data: group, isLoading: groupLoading } = useGetGroupQuery(groupId || "");
-  const { data: members = [], isLoading: membersLoading } = useGetGroupMembersQuery(groupId || "");
+  const { data: members = [], isLoading: membersLoading } = useGetGroupMembersQuery(groupId || "", {
+    enabled: isMember,
+  });
 
   const memberUserIds = members.map((m) => m.userId);
   const { data: membersProfiles, isLoading: profilesLoading } = useGetUsersQuery(memberUserIds);
@@ -59,10 +65,10 @@ export function GroupDetailsView() {
   // We check if the current user has a pending request for this group
   const { data: userRequest } = useGetUserGroupRequestQuery(groupId || "");
 
-  // Friends data for member actions
-  const { data: friends = [] } = useGetFriendsListRealtimeQuery();
-  const { data: sentFriendRequests = [] } = useGetSentFriendRequestRealtimeQuery();
-  const { data: receivedFriendRequests = [] } = useGetReceivedFriendRequestRealtimeQuery();
+  // Friends data for member actions - only enabled for members
+  const { data: friends = [] } = useGetFriendsListRealtimeQuery({ enabled: isMember });
+  const { data: sentFriendRequests = [] } = useGetSentFriendRequestRealtimeQuery({ enabled: isMember });
+  const { data: receivedFriendRequests = [] } = useGetReceivedFriendRequestRealtimeQuery({ enabled: isMember });
 
   const sendFriendRequest = useSendFriendRequestMutation();
   const cancelFriendRequest = useCancelFriendRequestMutation();
@@ -81,10 +87,9 @@ export function GroupDetailsView() {
     },
   });
 
-  if (groupLoading || membersLoading) return <div className="p-8 text-center">{t("groupDetails.loading")}</div>;
+  if (groupLoading || (isMember && membersLoading)) return <div className="p-8 text-center">{t("groupDetails.loading")}</div>;
   if (!group) return <div className="p-8 text-center text-destructive">{t("groupDetails.notFound")}</div>;
 
-  const isMember = members.some((m) => m.userId === user?.uid);
   const currentUserRole = members.find((m) => m.userId === user?.uid)?.role;
   const hasRequested = !!userRequest;
   const canInvite = isMember && hasGroupPermission(group, currentUserRole, "inviteMembers");
@@ -436,13 +441,15 @@ export function GroupDetailsView() {
         </div>
       )}
 
-      <InviteToGroupModal
-        groupId={group.id}
-        groupName={group.name}
-        groupAvatarUrl={group.avatarUrl}
-        open={isInviteModalOpen}
-        onOpenChange={setIsInviteModalOpen}
-      />
+      {canInvite && (
+        <InviteToGroupModal
+          groupId={group.id}
+          groupName={group.name}
+          groupAvatarUrl={group.avatarUrl}
+          open={isInviteModalOpen}
+          onOpenChange={setIsInviteModalOpen}
+        />
+      )}
     </div>
   );
 }

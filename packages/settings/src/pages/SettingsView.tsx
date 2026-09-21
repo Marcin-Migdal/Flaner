@@ -1,5 +1,5 @@
 import { useAuth } from "@flaner/shared/context";
-import { compressImage, ONE_MB, toast, uploadToCloudinary } from "@flaner/shared/utils";
+import { cn, compressImage, ONE_MB, toast, uploadToCloudinary } from "@flaner/shared/utils";
 import {
   Button,
   ConfirmationPopup,
@@ -105,33 +105,17 @@ export function SettingsView() {
   return (
     <div className={settingsViewStyles.root}>
       {/* Back button header (Path 1) */}
-      <div
+      <button
+        type="button"
         className={settingsViewStyles.backButtonContainer}
         onClick={handleBack}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            handleBack();
-          }
-        }}
+        aria-label={t("actions.back")}
       >
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className={settingsViewStyles.backButton}
-          aria-label={t("actions.back")}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleBack();
-          }}
-        >
+        <span className={cn("size-9 flex items-center justify-center", settingsViewStyles.backButton)}>
           <ArrowLeft className="size-5" />
-        </Button>
+        </span>
         <span className={settingsViewStyles.backText}>{t("actions.back")}</span>
-      </div>
+      </button>
 
       <h1 className={settingsViewStyles.title}>{t("title")}</h1>
 

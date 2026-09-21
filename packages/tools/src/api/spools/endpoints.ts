@@ -5,12 +5,12 @@ import {
   where,
   setDoc,
   updateDoc,
-  deleteDoc,
   doc,
   serverTimestamp,
   orderBy,
   limit,
   runTransaction,
+  writeBatch,
 } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
 import { firestoreConverter } from "@flaner/shared/utils";
@@ -173,7 +173,11 @@ export const undoLastPrint = async (
 };
 
 export const deleteSpool = async (spoolId: string): Promise<void> => {
-  await deleteDoc(doc(fb.firestore, "spools", spoolId));
+  const printsSnap = await getDocs(spoolRefs.prints(spoolId));
+  const batch = writeBatch(fb.firestore);
+  printsSnap.docs.forEach((d) => batch.delete(d.ref));
+  batch.delete(spoolRefs.spool(spoolId));
+  await batch.commit();
 };
 
 export const markSpoolAsFinished = async (spoolId: string): Promise<void> => {

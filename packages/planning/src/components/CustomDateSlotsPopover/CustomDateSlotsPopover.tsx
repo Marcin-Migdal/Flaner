@@ -1,11 +1,9 @@
 import React, { useState, useMemo, useRef } from "react";
 import { format, addMonths, differenceInCalendarDays, addDays } from "date-fns";
 import { pl, enGB } from "date-fns/locale";
-import { ArrowLeft, Layers, Check, ChevronRight } from "lucide-react";
+import { Layers, Check } from "lucide-react";
 import {
   Button,
-  Calendar,
-  DatePicker,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -13,21 +11,14 @@ import {
   DialogContent,
   DialogTrigger,
   DialogTitle,
-  Switch,
-  TextField,
-  Select,
-  Checkbox,
 } from "@flaner/ui-components";
 import { cn } from "@flaner/shared/utils";
 import { useIsMobile } from "@flaner/shared/hooks";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
-import {
-  customSlotsStyles,
-  presetItemVariants,
-  weekdayCircleVariants,
-  monthDayCellVariants,
-  monthTabButtonVariants,
-} from "./CustomDateSlotsPopover.styles";
+import { customSlotsStyles } from "./CustomDateSlotsPopover.styles";
+import { CalendarPreview } from "./CalendarPreview";
+import { PresetSelector } from "./PresetSelector";
+import { RecurrenceControls } from "./RecurrenceControls";
 
 export type RepeatUnit = "day" | "week" | "month";
 export type MonthSubMode = "each" | "onThe" | "workday";
@@ -36,22 +27,22 @@ export type MonthWeekday = "Sunday" | "Monday" | "Tuesday" | "Wednesday" | "Thur
 export type MonthWorkdayType = "first" | "last";
 export type PresetType = "daily" | "weekly" | "monthly" | "weekdays" | "weekends" | "custom";
 
-type UnitOption = {
+export type UnitOption = {
   label: string;
   value: RepeatUnit;
 };
 
-type MonthOrdinalOption = {
+export type MonthOrdinalOption = {
   label: string;
   value: MonthOrdinal;
 };
 
-type MonthWeekdayOption = {
+export type MonthWeekdayOption = {
   label: string;
   value: MonthWeekday;
 };
 
-type MonthWorkdayOption = {
+export type MonthWorkdayOption = {
   label: string;
   value: MonthWorkdayType;
 };
@@ -173,12 +164,6 @@ const generatePresetSlots = (
   return generateCustomDateSlots(config);
 };
 
-const getOrdinalSuffix = (n: number) => {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return `${n}${s[(v - 20) % 10] || s[v] || s[0]}`;
-};
-
 export const CustomDateSlotsPopover = ({
   onApply,
   trigger,
@@ -190,7 +175,11 @@ export const CustomDateSlotsPopover = ({
   const isMobile = useIsMobile();
 
   // Today's defaults
-  const today = new Date();
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
   const currentDayOfWeek = today.getDay(); // 0 = Sun, 1 = Mon, ...
   const currentDayOfMonth = today.getDate();
 
@@ -340,57 +329,6 @@ export const CustomDateSlotsPopover = ({
     setIsOpen(false);
   };
 
-  const weekDayDefs = [
-    { label: t("customSlots.custom.daysOfWeek.mon"), index: 1 },
-    { label: t("customSlots.custom.daysOfWeek.tue"), index: 2 },
-    { label: t("customSlots.custom.daysOfWeek.wed"), index: 3 },
-    { label: t("customSlots.custom.daysOfWeek.thu"), index: 4 },
-    { label: t("customSlots.custom.daysOfWeek.fri"), index: 5 },
-    { label: t("customSlots.custom.daysOfWeek.sat"), index: 6 },
-    { label: t("customSlots.custom.daysOfWeek.sun"), index: 0 },
-  ];
-
-  const monthDayNumbers = Array.from({ length: 31 }, (_, i) => i + 1);
-
-  const unitOptions: UnitOption[] = [
-    {
-      label: frequency > 1 ? t("customSlots.custom.units.days") : t("customSlots.custom.units.day"),
-      value: "day",
-    },
-    {
-      label: frequency > 1 ? t("customSlots.custom.units.weeks") : t("customSlots.custom.units.week"),
-      value: "week",
-    },
-    {
-      label: frequency > 1 ? t("customSlots.custom.units.months") : t("customSlots.custom.units.month"),
-      value: "month",
-    },
-  ];
-
-  const monthOrdinalOptions: MonthOrdinalOption[] = [
-    { label: t("customSlots.custom.ordinals.first"), value: "first" },
-    { label: t("customSlots.custom.ordinals.second"), value: "second" },
-    { label: t("customSlots.custom.ordinals.third"), value: "third" },
-    { label: t("customSlots.custom.ordinals.fourth"), value: "fourth" },
-    { label: t("customSlots.custom.ordinals.fifth"), value: "fifth" },
-    { label: t("customSlots.custom.ordinals.last"), value: "last" },
-  ];
-
-  const monthWeekdayOptions: MonthWeekdayOption[] = [
-    { label: t("customSlots.custom.daysOfWeekFull.mon"), value: "Monday" },
-    { label: t("customSlots.custom.daysOfWeekFull.tue"), value: "Tuesday" },
-    { label: t("customSlots.custom.daysOfWeekFull.wed"), value: "Wednesday" },
-    { label: t("customSlots.custom.daysOfWeekFull.thu"), value: "Thursday" },
-    { label: t("customSlots.custom.daysOfWeekFull.fri"), value: "Friday" },
-    { label: t("customSlots.custom.daysOfWeekFull.sat"), value: "Saturday" },
-    { label: t("customSlots.custom.daysOfWeekFull.sun"), value: "Sunday" },
-  ];
-
-  const monthWorkdayOptions: MonthWorkdayOption[] = [
-    { label: t("customSlots.custom.workdays.first"), value: "first" },
-    { label: t("customSlots.custom.workdays.last"), value: "last" },
-  ];
-
   const weekDayDefsFull = [
     { label: t("customSlots.custom.daysOfWeekFull.sun"), index: 0 },
     { label: t("customSlots.custom.daysOfWeekFull.mon"), index: 1 },
@@ -415,357 +353,107 @@ export const CustomDateSlotsPopover = ({
     </Button>
   );
 
-  const content = viewMode === "presets" ? (
-          /* ── PRESETS VIEW (TWO COLUMNS) ───────────────────────── */
-          <div className="flex flex-col gap-3">
-            <div className={customSlotsStyles.twoColumnContainer}>
-              {/* Left Column: Mini Calendar Preview */}
-              <div className={customSlotsStyles.calendarColumn}>
-                <Calendar
-                  mode="multiple"
-                  selected={rangeClassification.allSelectedDates}
-                  onSelect={() => {}}
-                  modifiers={{
-                    range_start: rangeClassification.rangeStartDates,
-                    range_middle: rangeClassification.rangeMiddleDates,
-                    range_end: rangeClassification.rangeEndDates,
-                  }}
-                  classNames={{
-                    range_start: "rounded-l-(--cell-radius) bg-primary after:absolute after:inset-y-0 after:right-0 after:w-4 after:bg-primary",
-                    range_middle: "rounded-none bg-primary",
-                    range_end: "rounded-r-(--cell-radius) bg-primary after:absolute after:inset-y-0 after:left-0 after:w-4 after:bg-primary",
-                  }}
-                  modifiersClassNames={{
-                    range_start: "[&_button]:!rounded-l-(--cell-radius) [&_button]:!rounded-r-none [&_button]:!bg-primary [&_button]:!text-primary-foreground",
-                    range_middle: "[&_button]:!rounded-none [&_button]:!bg-primary [&_button]:!text-primary-foreground",
-                    range_end: "[&_button]:!rounded-r-(--cell-radius) [&_button]:!rounded-l-none [&_button]:!bg-primary [&_button]:!text-primary-foreground",
-                  }}
-                  month={calendarMonth}
-                  onMonthChange={setCalendarMonth}
-                  locale={dfLocale}
-                  weekStartsOn={1}
-                  className="p-0 [&_button[data-day]]:pointer-events-none [&_button[data-day]]:cursor-default"
-                />
-              </div>
+  const content =
+    viewMode === "presets" ? (
+      /* ── PRESETS VIEW (TWO COLUMNS) ───────────────────────── */
+      <div className="flex flex-col gap-3">
+        <div className={customSlotsStyles.twoColumnContainer}>
+          <CalendarPreview
+            selectedDates={rangeClassification.allSelectedDates}
+            rangeClassification={rangeClassification}
+            calendarMonth={calendarMonth}
+            onMonthChange={setCalendarMonth}
+            locale={dfLocale}
+          />
+          <PresetSelector
+            selectedPreset={selectedPreset}
+            onSelectPreset={handleSelectPreset}
+            onOpenCustom={() => {
+              setSelectedPreset("custom");
+              setViewMode("custom");
+            }}
+            fullDayName={fullDayName}
+            currentDayOfMonth={currentDayOfMonth}
+            startDate={startDate}
+            endDate={endDate}
+            startDateOpen={startDateOpen}
+            endDateOpen={endDateOpen}
+            onStartDateChange={handleStartDateChange}
+            onEndDateChange={handleEndDateChange}
+            setStartDateOpen={setStartDateOpen}
+            setEndDateOpen={setEndDateOpen}
+            endDateRef={endDateRef}
+          />
+        </div>
 
-              {/* Right Column: Presets & Date Range */}
-              <div className={customSlotsStyles.optionsColumn}>
-                <div className={customSlotsStyles.presetList}>
-                  <button
-                    type="button"
-                    className={presetItemVariants({ isCustom: false, active: selectedPreset === "daily" })}
-                    onClick={() => handleSelectPreset("daily")}
-                  >
-                    <span>{t("customSlots.presets.daily")}</span>
-                    {selectedPreset === "daily" && <Check className="h-3.5 w-3.5 text-brand" />}
-                  </button>
+        {/* Footer buttons: Cancel & OK */}
+        <div className={customSlotsStyles.footer}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handleCancel}
+            className={customSlotsStyles.cancelButton}
+          >
+            {t("customSlots.custom.cancel")}
+          </Button>
+          <Button
+            type="button"
+            onClick={handleApply}
+            className={customSlotsStyles.okButton}
+          >
+            <Check className="w-3.5 h-3.5 mr-1 stroke-[2.5]" />
+            {t("customSlots.custom.apply")}
+          </Button>
+        </div>
+      </div>
+    ) : (
+      /* ── CUSTOM REPEAT VIEW ───────────────────────────────── */
+      <div className="flex flex-col gap-3">
+        <RecurrenceControls
+          onBack={() => setViewMode("presets")}
+          frequency={frequency}
+          setFrequency={setFrequency}
+          unit={unit}
+          setUnit={setUnit}
+          selectedWeekDays={selectedWeekDays}
+          toggleWeekDay={toggleWeekDay}
+          monthSubMode={monthSubMode}
+          setMonthSubMode={setMonthSubMode}
+          selectedMonthDay={selectedMonthDay}
+          setSelectedMonthDay={setSelectedMonthDay}
+          monthOrdinal={monthOrdinal}
+          setMonthOrdinal={setMonthOrdinal}
+          monthWeekday={monthWeekday}
+          setMonthWeekday={setMonthWeekday}
+          monthWorkdayType={monthWorkdayType}
+          setMonthWorkdayType={setMonthWorkdayType}
+          skipWeekends={skipWeekends}
+          setSkipWeekends={setSkipWeekends}
+          createAsRange={createAsRange}
+          setCreateAsRange={setCreateAsRange}
+        />
 
-                  <button
-                    type="button"
-                    className={presetItemVariants({ isCustom: false, active: selectedPreset === "weekly" })}
-                    onClick={() => handleSelectPreset("weekly")}
-                  >
-                    <span>
-                      {t("customSlots.presets.weeklyWithDay", { day: fullDayName })}
-                    </span>
-                    {selectedPreset === "weekly" && <Check className="h-3.5 w-3.5 text-brand" />}
-                  </button>
-
-                  <button
-                    type="button"
-                    className={presetItemVariants({ isCustom: false, active: selectedPreset === "monthly" })}
-                    onClick={() => handleSelectPreset("monthly")}
-                  >
-                    <span>
-                      {t("customSlots.presets.monthlyWithDay", {
-                        day: getOrdinalSuffix(currentDayOfMonth),
-                      })}
-                    </span>
-                    {selectedPreset === "monthly" && <Check className="h-3.5 w-3.5 text-brand" />}
-                  </button>
-
-                  <div className={customSlotsStyles.divider} />
-
-                  <button
-                    type="button"
-                    className={presetItemVariants({ isCustom: false, active: selectedPreset === "weekdays" })}
-                    onClick={() => handleSelectPreset("weekdays")}
-                  >
-                    <span>{t("customSlots.presets.weekdays")}</span>
-                    {selectedPreset === "weekdays" && <Check className="h-3.5 w-3.5 text-brand" />}
-                  </button>
-
-                  <button
-                    type="button"
-                    className={presetItemVariants({ isCustom: false, active: selectedPreset === "weekends" })}
-                    onClick={() => handleSelectPreset("weekends")}
-                  >
-                    <span>{t("customSlots.presets.weekends")}</span>
-                    {selectedPreset === "weekends" && <Check className="h-3.5 w-3.5 text-brand" />}
-                  </button>
-
-                  <div className={customSlotsStyles.divider} />
-
-                  <button
-                    type="button"
-                    className={presetItemVariants({ isCustom: true, active: selectedPreset === "custom" })}
-                    onClick={() => {
-                      setSelectedPreset("custom");
-                      setViewMode("custom");
-                    }}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span>{t("customSlots.presets.custom")}</span>
-                      {selectedPreset === "custom" && <Check className="h-3.5 w-3.5 text-brand" />}
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-brand/80" />
-                  </button>
-
-                  <div className={customSlotsStyles.divider} />
-
-                  {/* Date Range Section: Od - Do */}
-                  <div className={customSlotsStyles.section}>
-                    <span className={customSlotsStyles.sectionLabel}>
-                      {t("customSlots.custom.dateRange")}
-                    </span>
-                    <div className={customSlotsStyles.dateRangeRow}>
-                      <DatePicker
-                        value={startDate}
-                        onChange={handleStartDateChange}
-                        open={startDateOpen}
-                        onOpenChange={setStartDateOpen}
-                        dateFormat="dd.MM.yyyy"
-                        className="w-full [&_button]:px-2 [&_button]:h-8 [&_button]:text-xs [&_button]:font-medium [&_svg]:size-3.5 [&_svg]:mr-1.5"
-                      />
-                      <DatePicker
-                        ref={endDateRef}
-                        value={endDate}
-                        onChange={handleEndDateChange}
-                        open={endDateOpen}
-                        onOpenChange={setEndDateOpen}
-                        dateFormat="dd.MM.yyyy"
-                        className="w-full [&_button]:px-2 [&_button]:h-8 [&_button]:text-xs [&_button]:font-medium [&_svg]:size-3.5 [&_svg]:mr-1.5"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer buttons: Cancel & OK */}
-            <div className={customSlotsStyles.footer}>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleCancel}
-                className={customSlotsStyles.cancelButton}
-              >
-                {t("customSlots.custom.cancel")}
-              </Button>
-              <Button
-                type="button"
-                onClick={handleApply}
-                className={customSlotsStyles.okButton}
-              >
-                <Check className="w-3.5 h-3.5 mr-1 stroke-[2.5]" />
-                {t("customSlots.custom.apply")}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          /* ── CUSTOM REPEAT VIEW ───────────────────────────────── */
-          <div className="flex flex-col gap-3">
-            {/* Header with Back button */}
-            <div className={customSlotsStyles.header}>
-              <button
-                type="button"
-                className={customSlotsStyles.backButton}
-                onClick={() => setViewMode("presets")}
-                title={t("customSlots.custom.back")}
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </button>
-              <span className={customSlotsStyles.title}>
-                {t("customSlots.custom.title")}
-              </span>
-            </div>
-
-            {/* Every [ X ] [ Unit ] Row */}
-            <div className={customSlotsStyles.everyRow}>
-              <span className={customSlotsStyles.everyLabel}>
-                {t("customSlots.custom.every")}
-              </span>
-              <TextField
-                type="number"
-                min={1}
-                max={99}
-                value={frequency}
-                onChange={(e) => setFrequency(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                className="w-20 shrink-0"
-              />
-              <Select<UnitOption>
-                options={unitOptions}
-                value={unitOptions.find((opt) => opt.value === unit)}
-                onChange={(selected) => {
-                  if (selected) setUnit(selected.value);
-                }}
-                isSearchable={false}
-                containerClassName="flex-1 min-w-0"
-              />
-            </div>
-
-            {/* ── Sub-panel for Week ────────────────────────────── */}
-            {unit === "week" && (
-              <div className={customSlotsStyles.weekDaysRow}>
-                {weekDayDefs.map((day) => {
-                  const isActive = selectedWeekDays.includes(day.index);
-                  return (
-                    <button
-                      key={day.index}
-                      type="button"
-                      className={weekdayCircleVariants({ active: isActive })}
-                      onClick={() => toggleWeekDay(day.index)}
-                    >
-                      {day.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* ── Sub-panel for Month ───────────────────────────── */}
-            {unit === "month" && (
-              <div className="flex flex-col gap-2.5">
-                {/* Segmented Control Tabs */}
-                <div className={customSlotsStyles.monthTabsContainer}>
-                  <button
-                    type="button"
-                    className={monthTabButtonVariants({ active: monthSubMode === "each" })}
-                    onClick={() => setMonthSubMode("each")}
-                  >
-                    {t("customSlots.custom.monthModes.each")}
-                  </button>
-                  <button
-                    type="button"
-                    className={monthTabButtonVariants({ active: monthSubMode === "onThe" })}
-                    onClick={() => setMonthSubMode("onThe")}
-                  >
-                    {t("customSlots.custom.monthModes.onThe")}
-                  </button>
-                  <button
-                    type="button"
-                    className={monthTabButtonVariants({ active: monthSubMode === "workday" })}
-                    onClick={() => setMonthSubMode("workday")}
-                  >
-                    {t("customSlots.custom.monthModes.workday")}
-                  </button>
-                </div>
-
-                {/* Sub-mode: Each (1..31 + Last Day grid) */}
-                {monthSubMode === "each" && (
-                  <div className={customSlotsStyles.monthDaysGrid}>
-                    {monthDayNumbers.map((num) => (
-                      <button
-                        key={num}
-                        type="button"
-                        className={monthDayCellVariants({
-                          active: selectedMonthDay === num,
-                          isLastDay: false,
-                        })}
-                        onClick={() => setSelectedMonthDay(num)}
-                      >
-                        {num}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      className={monthDayCellVariants({
-                        active: selectedMonthDay === "last",
-                        isLastDay: true,
-                      })}
-                      onClick={() => setSelectedMonthDay("last")}
-                    >
-                      {t("customSlots.custom.lastDay")}
-                    </button>
-                  </div>
-                )}
-
-                {/* Sub-mode: On the (ordinal + weekday selects) */}
-                {monthSubMode === "onThe" && (
-                  <div className={customSlotsStyles.monthSelectsRow}>
-                    <Select<MonthOrdinalOption>
-                      options={monthOrdinalOptions}
-                      value={monthOrdinalOptions.find((opt) => opt.value === monthOrdinal)}
-                      onChange={(selected) => {
-                        if (selected) setMonthOrdinal(selected.value);
-                      }}
-                      isSearchable={false}
-                    />
-                    <Select<MonthWeekdayOption>
-                      options={monthWeekdayOptions}
-                      value={monthWeekdayOptions.find((opt) => opt.value === monthWeekday)}
-                      onChange={(selected) => {
-                        if (selected) setMonthWeekday(selected.value);
-                      }}
-                      isSearchable={false}
-                    />
-                  </div>
-                )}
-
-                {/* Sub-mode: Workday (first / last workday) */}
-                {monthSubMode === "workday" && (
-                  <div>
-                    <Select<MonthWorkdayOption>
-                      options={monthWorkdayOptions}
-                      value={monthWorkdayOptions.find((opt) => opt.value === monthWorkdayType)}
-                      onChange={(selected) => {
-                        if (selected) setMonthWorkdayType(selected.value);
-                      }}
-                      isSearchable={false}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Options Section: Checkboxes & Switches */}
-            <div className={customSlotsStyles.optionsSection}>
-              {(unit === "day" || (unit === "month" && monthSubMode === "each")) && (
-                <Checkbox
-                  checked={skipWeekends}
-                  onCheckedChange={(checked) => setSkipWeekends(checked === true)}
-                  label={t("customSlots.custom.skipWeekends")}
-                />
-              )}
-              <Switch
-                checked={createAsRange}
-                onChange={(e) => setCreateAsRange(e.target.checked)}
-                label={t("customSlots.custom.createAsRange")}
-                description={t("customSlots.custom.createAsRangeDesc")}
-              />
-            </div>
-
-            {/* Footer buttons: Cancel & OK */}
-            <div className={customSlotsStyles.footer}>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleCancel}
-                className={customSlotsStyles.cancelButton}
-              >
-                {t("customSlots.custom.cancel")}
-              </Button>
-              <Button
-                type="button"
-                onClick={handleApply}
-                className={customSlotsStyles.okButton}
-              >
-                <Check className="w-3.5 h-3.5 mr-1 stroke-[2.5]" />
-                {t("customSlots.custom.apply")}
-              </Button>
-            </div>
-          </div>
-        );
+        {/* Footer buttons: Cancel & OK */}
+        <div className={customSlotsStyles.footer}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handleCancel}
+            className={customSlotsStyles.cancelButton}
+          >
+            {t("customSlots.custom.cancel")}
+          </Button>
+          <Button
+            type="button"
+            onClick={handleApply}
+            className={customSlotsStyles.okButton}
+          >
+            <Check className="w-3.5 h-3.5 mr-1 stroke-[2.5]" />
+            {t("customSlots.custom.apply")}
+          </Button>
+        </div>
+      </div>
+    );
 
   if (isMobile) {
     return (

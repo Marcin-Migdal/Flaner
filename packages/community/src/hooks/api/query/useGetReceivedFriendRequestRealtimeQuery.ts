@@ -16,14 +16,14 @@ export const useGetReceivedFriendRequestRealtimeQuery = (
   const queryKey = getReceivedFriendRequestsRealtimeQueryKeys(user?.uid ?? "");
 
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid || options?.enabled === false) return;
 
     const unsubscribe = subscribeToReceivedFriendRequests(user.uid, (requests: FriendRequest[]) => {
       queryClient.setQueryData(getReceivedFriendRequestsRealtimeQueryKeys(user.uid), requests);
     });
 
     return () => unsubscribe();
-  }, [user?.uid, queryClient]);
+  }, [user?.uid, options?.enabled, queryClient]);
 
 
 

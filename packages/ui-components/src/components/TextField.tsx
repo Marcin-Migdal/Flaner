@@ -11,10 +11,11 @@ export type TextFieldProps = Omit<React.ComponentPropsWithoutRef<"input">, "id">
   error?: string;
   incrementLabel?: string;
   decrementLabel?: string;
+  onStep?: (direction: 1 | -1, nextValue: number) => void;
 };
 
 export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
-  ({ label, description, error, id: customId, className, type, incrementLabel, decrementLabel, ...props }, ref) => {
+  ({ label, description, error, id: customId, className, type, incrementLabel, decrementLabel, onStep, ...props }, ref) => {
     const defaultId = useId();
     const inputId = customId || defaultId;
     const innerRef = useRef<HTMLInputElement | null>(null);
@@ -47,6 +48,11 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
       let nextVal = currentVal + direction * stepVal;
       nextVal = Math.min(maxVal, Math.max(minVal, nextVal));
       nextVal = Number(nextVal.toFixed(Math.max(stepDecimals, 2)));
+
+      if (onStep) {
+        onStep(direction, nextVal);
+        return;
+      }
 
       // React tracks value setters internally on controlled inputs and ignores programmatic .value changes.
       // We call the native HTMLInputElement prototype setter to update the DOM node directly,
