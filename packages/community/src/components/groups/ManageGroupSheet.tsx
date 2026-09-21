@@ -2,6 +2,10 @@ import { useAuth } from "@flaner/shared/context";
 import { useSheet } from "@flaner/shared/hooks";
 import { compressImage, ONE_MB, uploadToCloudinary } from "@flaner/shared/utils";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
   Avatar,
   AvatarFallback,
   AvatarImage,
@@ -28,7 +32,7 @@ import { Crown, MoreVertical, Settings, Shield, ShieldAlert, ShieldCheck, Trash2
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router";
-import type { GroupMember, GroupRole } from "../../api/groups";
+import { hasGroupPermission, type GroupMember, type GroupRole } from "../../api/groups";
 import {
   useDeleteGroupMutation,
   useGetGroupMembersQuery,
@@ -41,6 +45,7 @@ import {
 } from "../../hooks";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
 import { updateGroupSchema, type UpdateGroupSchema } from "../../utils/schemas/groups";
+import { ManageGroupRolesSection } from "./ManageGroupRolesSection";
 import { manageGroupSheetStyles } from "./ManageGroupSheet.styles";
 
 interface ManageGroupSheetProps {
@@ -71,6 +76,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
 
   const isUpdatingGroup = updateGroupMutation.isPending || isUploading;
   const currentUserRole = members.find((m) => m.userId === user?.uid)?.role;
+  const canEditGroup = currentUserRole === "owner" || hasGroupPermission(group, currentUserRole, "editGroup");
 
   const methods = useForm<UpdateGroupSchema>({
     resolver: zodResolver(updateGroupSchema),
@@ -83,7 +89,12 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
     },
   });
 
-  const { handleSubmit, reset, control } = methods;
+  const {
+    handleSubmit,
+    reset,
+    control,
+    formState: { isDirty },
+  } = methods;
   const groupType = useWatch({ control, name: "type" });
 
   useEffect(() => {
@@ -122,6 +133,14 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
         groupId,
         data: payload,
       });
+
+      reset({
+        name: payload.name,
+        description: payload.description,
+        type: payload.type,
+        requiresApproval: payload.requiresApproval || false,
+        avatarUrl: payload.avatarUrl || "",
+      });
     } catch (error) {
       console.error("Failed to update group", error);
     } finally {
@@ -141,7 +160,8 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
 
   const canManageMember = (targetRole: GroupRole) => {
     if (!currentUserRole) return false;
-    return currentPriority > ROLE_PRIORITY[targetRole];
+    const hasPermission = currentUserRole === "owner" || hasGroupPermission(group, currentUserRole, "manageMembers");
+    return hasPermission && currentPriority > ROLE_PRIORITY[targetRole];
   };
 
   const getRoleOption = (targetMember: GroupMember, roleToAssign: GroupRole) => {
@@ -248,196 +268,225 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
           </SheetHeader>
 
           <div className={manageGroupSheetStyles.bodyContainer}>
-            {/* Edit Group Section - Owner only */}
-            {currentUserRole === "owner" && (
-              <div className={manageGroupSheetStyles.editSection}>
-                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 px-0.5">
-                  {t("manageGroupSheet.editGroupSection")}
-                </div>
-
-                <FormProvider {...methods}>
-                  <form onSubmit={handleSubmit(onSaveGroup)} className="space-y-3">
-                    <FormImagePicker
-                      control={control}
-                      name="avatarUrl"
-                      label={t("manageGroupSheet.avatarLabel")}
-                      disabled={isUpdatingGroup}
-                      maxSize={ONE_MB}
-                      cropShape="round"
-                      containerClassName="[&_[role=button]]:h-24! [&_[role=button]]:min-h-[6rem]! [&_[role=button]]:p-2! [&_[role=button]]:gap-0.5 [&_[role=button]_svg]:size-5! [&_[role=button]_svg]:mb-0.5! [&_[data-slot=attachment]]:h-24! [&_[data-slot=attachment]]:min-h-[6rem]! [&_[data-slot=attachment]]:p-2! [&_[data-slot=attachment-media]]:h-14! [&_[data-slot=attachment-media]]:w-14!"
-                    />
-
-                    <FormTextField
-                      control={control}
-                      name="name"
-                      label={t("manageGroupSheet.nameLabel")}
-                      placeholder={t("manageGroupSheet.namePlaceholder")}
-                      disabled={isUpdatingGroup}
-                    />
-
-                    <FormTextArea
-                      control={control}
-                      name="description"
-                      label={t("manageGroupSheet.descLabel")}
-                      placeholder={t("manageGroupSheet.descPlaceholder")}
-                      disabled={isUpdatingGroup}
-                      rows={2}
-                    />
-
-                    <FormSelect
-                      control={control}
-                      name="type"
-                      label={t("manageGroupSheet.typeLabel")}
-                      options={[
-                        { label: t("manageGroupSheet.typePrivate"), value: "private" },
-                        { label: t("manageGroupSheet.typePublic"), value: "public" },
-                      ]}
-                      isSearchable={false}
-                      disabled={isUpdatingGroup}
-                    />
-
-                    {groupType === "public" && (
-                      <div className="pt-1">
-                        <FormSwitch
+            <Accordion
+              type="multiple"
+              defaultValue={canEditGroup ? ["group-info"] : ["members"]}
+              className={manageGroupSheetStyles.accordion}
+            >
+              {/* Edit Group Section - Owner or role with editGroup permission */}
+              {canEditGroup && (
+                <AccordionItem value="group-info" className={manageGroupSheetStyles.accordionItem}>
+                  <AccordionTrigger className={manageGroupSheetStyles.accordionTrigger}>
+                    <span>{t("manageGroupSheet.editGroupSection")}</span>
+                  </AccordionTrigger>
+                  <AccordionContent className={manageGroupSheetStyles.accordionContent}>
+                    <FormProvider {...methods}>
+                      <form onSubmit={handleSubmit(onSaveGroup)} className={manageGroupSheetStyles.editForm}>
+                        <FormImagePicker
                           control={control}
-                          name="requiresApproval"
-                          label={t("manageGroupSheet.requiresApprovalLabel")}
-                          description={t("manageGroupSheet.requiresApprovalDesc")}
+                          name="avatarUrl"
+                          label={t("manageGroupSheet.avatarLabel")}
+                          disabled={isUpdatingGroup}
+                          maxSize={ONE_MB}
+                          cropShape="round"
+                          containerClassName="[&_[role=button]]:h-24! [&_[role=button]]:min-h-[6rem]! [&_[role=button]]:p-2! [&_[role=button]]:gap-0.5 [&_[role=button]_svg]:size-5! [&_[role=button]_svg]:mb-0.5! [&_[data-slot=attachment]]:h-24! [&_[data-slot=attachment]]:min-h-[6rem]! [&_[data-slot=attachment]]:p-2! [&_[data-slot=attachment-media]]:h-14! [&_[data-slot=attachment-media]]:w-14!"
+                        />
+
+                        <FormTextField
+                          control={control}
+                          name="name"
+                          label={t("manageGroupSheet.nameLabel")}
+                          placeholder={t("manageGroupSheet.namePlaceholder")}
                           disabled={isUpdatingGroup}
                         />
-                      </div>
-                    )}
 
-                    <Button
-                      type="submit"
-                      variant="brand"
-                      isBusy={isUpdatingGroup}
-                      className="w-full rounded-xl h-10 font-semibold"
-                    >
-                      {t("manageGroupSheet.saveChanges")}
-                    </Button>
-                  </form>
-                </FormProvider>
-              </div>
-            )}
+                        <FormTextArea
+                          control={control}
+                          name="description"
+                          label={t("manageGroupSheet.descLabel")}
+                          placeholder={t("manageGroupSheet.descPlaceholder")}
+                          disabled={isUpdatingGroup}
+                          rows={2}
+                        />
 
-            {/* Members Section */}
-            {membersLoading || profilesLoading ? (
-              <div className="flex justify-center py-4 shrink-0">
-                <div className="text-center text-muted-foreground">{t("groupDetails.loading")}</div>
-              </div>
-            ) : (
-              <div className={manageGroupSheetStyles.membersSection}>
-                <div className={manageGroupSheetStyles.membersHeader}>
-                  <span>{t("manageGroupSheet.membersSection")}</span>
-                  <span className="text-[11px] font-normal lowercase">({members.length})</span>
-                </div>
-                <div className={manageGroupSheetStyles.membersList}>
-                  {members.map((member: GroupMember) => {
-                    const profile = membersProfiles?.find((p) => p.uid === member.userId);
-                    const displayName = profile?.username || member.userId;
-                    const initials = displayName.substring(0, 2).toUpperCase();
+                        <FormSelect
+                          control={control}
+                          name="type"
+                          label={t("manageGroupSheet.typeLabel")}
+                          options={[
+                            { label: t("manageGroupSheet.typePrivate"), value: "private" },
+                            { label: t("manageGroupSheet.typePublic"), value: "public" },
+                          ]}
+                          isSearchable={false}
+                          disabled={isUpdatingGroup}
+                        />
 
-                    const canManage = canManageMember(member.role) && member.userId !== user?.uid;
-
-                    return (
-                      <div
-                        key={member.userId}
-                        className={manageGroupSheetStyles.memberItem}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Avatar className="size-10 border border-border">
-                            {profile?.avatarUrl && <AvatarImage src={profile.avatarUrl} alt={displayName} />}
-                            <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-bold text-sm">
-                              {initials}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium text-sm flex items-center gap-1.5">
-                              {displayName}
-                              {member.userId === user?.uid && (
-                                <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm ml-1">
-                                  {t("manageGroupSheet.you")}
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                              {getRoleIcon(member.role)}
-                              {getRoleTranslation(member.role)}
-                            </div>
+                        {groupType === "public" && (
+                          <div className="pt-1">
+                            <FormSwitch
+                              control={control}
+                              name="requiresApproval"
+                              label={t("manageGroupSheet.requiresApprovalLabel")}
+                              description={t("manageGroupSheet.requiresApprovalDesc")}
+                              disabled={isUpdatingGroup}
+                            />
                           </div>
-                        </div>
-
-                        {canManage && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="size-8 rounded-full">
-                                <MoreVertical className="size-4 text-muted-foreground" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              {(["admin", "moderator", "member"] as GroupRole[]).map((roleToAssign) => {
-                                if (currentPriority <= ROLE_PRIORITY[roleToAssign] || roleToAssign === member.role) {
-                                  return null;
-                                }
-                                const option = getRoleOption(member, roleToAssign);
-                                if (!option) return null;
-
-                                return (
-                                  <DropdownMenuItem
-                                    key={roleToAssign}
-                                    onClick={() => handleUpdateRole(member.userId, roleToAssign)}
-                                  >
-                                    {option.icon}
-                                    {option.label}
-                                  </DropdownMenuItem>
-                                );
-                              })}
-
-                              {currentUserRole === "owner" && (
-                                <DropdownMenuItem
-                                  className="text-yellow-600 focus:text-yellow-700"
-                                  onClick={() => setConfirmTransferUserId(member.userId)}
-                                >
-                                  <Crown className="size-4 mr-2" />
-                                  {t("manageGroupSheet.transferOwnership")}
-                                </DropdownMenuItem>
-                              )}
-
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() => setConfirmRemoveUserId(member.userId)}
-                              >
-                                <UserMinus className="size-4 mr-2" />
-                                {t("manageGroupSheet.removeMember")}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
                         )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
-            {currentUserRole === "owner" && (
-              <div className={manageGroupSheetStyles.dangerZone}>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-destructive mb-2 px-0.5">
-                  {t("manageGroupSheet.dangerZoneTitle")}
-                </h4>
-                <Button
-                  variant="outline"
-                  isBusy={deleteGroupMutation.isPending}
-                  className={manageGroupSheetStyles.deleteButton}
-                  onClick={() => setIsDeleteConfirmOpen(true)}
-                >
-                  <Trash2 className="size-4" />
-                  {t("manageGroupSheet.deleteGroupBtn")}
-                </Button>
-              </div>
-            )}
+                        <Button
+                          type="submit"
+                          variant="brand"
+                          isBusy={isUpdatingGroup}
+                          disabled={!isDirty || isUpdatingGroup}
+                          className="w-full rounded-xl h-10 font-semibold"
+                        >
+                          {t("manageGroupSheet.saveChanges")}
+                        </Button>
+                      </form>
+                    </FormProvider>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+
+              {/* Roles Section - Owner only */}
+              {currentUserRole === "owner" && (
+                <AccordionItem value="roles" className={manageGroupSheetStyles.accordionItem}>
+                  <AccordionTrigger className={manageGroupSheetStyles.accordionTrigger}>
+                    <span>{t("manageGroupSheet.rolesSection")}</span>
+                  </AccordionTrigger>
+                  <AccordionContent className={manageGroupSheetStyles.accordionContent}>
+                    <ManageGroupRolesSection
+                      key={`${groupId}-${group?.updatedAt || 0}`}
+                      groupId={groupId}
+                      group={group}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+
+              {/* Members Section */}
+              <AccordionItem value="members" className={manageGroupSheetStyles.accordionItem}>
+                <AccordionTrigger className={manageGroupSheetStyles.accordionTrigger}>
+                  <div className="flex items-center gap-1.5">
+                    <span>{t("manageGroupSheet.membersSection")}</span>
+                    <span className="text-[11px] font-normal lowercase">({members.length})</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className={manageGroupSheetStyles.accordionContent}>
+                  {membersLoading || profilesLoading ? (
+                    <div className="flex justify-center py-4 shrink-0">
+                      <div className="text-center text-muted-foreground">{t("groupDetails.loading")}</div>
+                    </div>
+                  ) : (
+                    <div className={manageGroupSheetStyles.membersList}>
+                      {members.map((member: GroupMember) => {
+                        const profile = membersProfiles?.find((p) => p.uid === member.userId);
+                        const displayName = profile?.username || member.userId;
+                        const initials = displayName.substring(0, 2).toUpperCase();
+
+                        const canManage = canManageMember(member.role) && member.userId !== user?.uid;
+
+                        return (
+                          <div
+                            key={member.userId}
+                            className={manageGroupSheetStyles.memberItem}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Avatar className="size-10 border border-border">
+                                {profile?.avatarUrl && <AvatarImage src={profile.avatarUrl} alt={displayName} />}
+                                <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-bold text-sm">
+                                  {initials}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium text-sm flex items-center gap-1.5">
+                                  {displayName}
+                                  {member.userId === user?.uid && (
+                                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm ml-1">
+                                      {t("manageGroupSheet.you")}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                  {getRoleIcon(member.role)}
+                                  {getRoleTranslation(member.role)}
+                                </div>
+                              </div>
+                            </div>
+
+                            {canManage && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="size-8 rounded-full">
+                                    <MoreVertical className="size-4 text-muted-foreground" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  {(["admin", "moderator", "member"] as GroupRole[]).map((roleToAssign) => {
+                                    if (currentPriority <= ROLE_PRIORITY[roleToAssign] || roleToAssign === member.role) {
+                                      return null;
+                                    }
+                                    const option = getRoleOption(member, roleToAssign);
+                                    if (!option) return null;
+
+                                    return (
+                                      <DropdownMenuItem
+                                        key={roleToAssign}
+                                        onClick={() => handleUpdateRole(member.userId, roleToAssign)}
+                                      >
+                                        {option.icon}
+                                        {option.label}
+                                      </DropdownMenuItem>
+                                    );
+                                  })}
+
+                                  {currentUserRole === "owner" && (
+                                    <DropdownMenuItem
+                                      className="text-yellow-600 focus:text-yellow-700"
+                                      onClick={() => setConfirmTransferUserId(member.userId)}
+                                    >
+                                      <Crown className="size-4 mr-2" />
+                                      {t("manageGroupSheet.transferOwnership")}
+                                    </DropdownMenuItem>
+                                  )}
+
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onClick={() => setConfirmRemoveUserId(member.userId)}
+                                  >
+                                    <UserMinus className="size-4 mr-2" />
+                                    {t("manageGroupSheet.removeMember")}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
+
+          {/* Footer - Danger Zone (always visible) */}
+          {currentUserRole === "owner" && (
+            <div className={manageGroupSheetStyles.dangerZone}>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-destructive mb-2 px-0.5">
+                {t("manageGroupSheet.dangerZoneTitle")}
+              </h4>
+              <Button
+                variant="outline"
+                isBusy={deleteGroupMutation.isPending}
+                className={manageGroupSheetStyles.deleteButton}
+                onClick={() => setIsDeleteConfirmOpen(true)}
+              >
+                <Trash2 className="size-4" />
+                {t("manageGroupSheet.deleteGroupBtn")}
+              </Button>
+            </div>
+          )}
         </SheetContent>
       </Sheet>
 

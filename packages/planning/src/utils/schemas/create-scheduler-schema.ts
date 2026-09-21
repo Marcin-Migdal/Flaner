@@ -12,6 +12,7 @@ export const getCreateSchedulerSchema = (t: (key: string, options?: Record<strin
     proposedDates: z
       .array(z.object({ start: z.date(), end: z.date(), color: z.string() }))
       .min(1, t("validation.datesRequired")),
+    autoVoteProposedDates: z.boolean().optional(),
   }).superRefine((data, ctx) => {
     const today = startOfDay(new Date());
 

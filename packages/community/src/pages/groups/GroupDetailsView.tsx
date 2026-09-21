@@ -19,6 +19,7 @@ import { ArrowLeft, Copy, Loader2, LogOut, MoreHorizontal, Shield, UserCheck, Us
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
+import { hasGroupPermission } from "../../api/groups";
 import { InviteToGroupModal } from "../../components/groups/InviteToGroupModal";
 import { ManageGroupSheet } from "../../components/groups/ManageGroupSheet";
 import { RequestsSheet } from "../../components/groups/RequestsSheet";
@@ -86,7 +87,7 @@ export function GroupDetailsView() {
   const isMember = members.some((m) => m.userId === user?.uid);
   const currentUserRole = members.find((m) => m.userId === user?.uid)?.role;
   const hasRequested = !!userRequest;
-  const canInvite = isMember && (group.type !== "private" || (currentUserRole && currentUserRole !== "member"));
+  const canInvite = isMember && hasGroupPermission(group, currentUserRole, "inviteMembers");
 
   // State 2.3: Edge case - navigating to a private group without being a member
   if (!isMember && group.type === "private") {
@@ -254,8 +255,12 @@ export function GroupDetailsView() {
                   <span>{t("manageGroupSheet.inviteFriends")}</span>
                 </Button>
               )}
-              {(currentUserRole === "owner" || currentUserRole === "admin") && <RequestsSheet groupId={group.id} />}
-              {(currentUserRole === "owner" || currentUserRole === "admin" || currentUserRole === "moderator") && (
+              {(currentUserRole === "owner" || hasGroupPermission(group, currentUserRole, "manageRequests")) && (
+                <RequestsSheet groupId={group.id} />
+              )}
+              {(currentUserRole === "owner" ||
+                hasGroupPermission(group, currentUserRole, "editGroup") ||
+                hasGroupPermission(group, currentUserRole, "manageMembers")) && (
                 <ManageGroupSheet groupId={group.id} />
               )}
               {currentUserRole !== "owner" && (

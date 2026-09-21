@@ -34,6 +34,21 @@ function hasHigherPriority(groupId, targetUserId, newRole) {
   
   return callerPriority > targetPriority && callerPriority > assignPriority;
 }
+
+function hasRolePermission(groupId, permission) {
+  let role = getRole(groupId);
+  let groupData = get(/databases/$(database)/documents/groups/$(groupId)).data;
+  let customPerm = groupData.get(['rolePermissions', role, permission], null);
+  return role == 'owner' || (
+    customPerm != null ? customPerm == true : (
+      permission == 'editGroup' ? false : (
+        role == 'admin' ? true : (
+          role == 'moderator' ? (permission == 'inviteMembers') : false
+        )
+      )
+    )
+  );
+}
 ```
 
 ## Collection Group Rules

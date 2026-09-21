@@ -108,7 +108,9 @@
       "removeSuccess": "Użytkownik został usunięty z grupy.",
       "removeError": "Błąd podczas usuwania użytkownika.",
       "deleteSuccess": "Grupa została pomyślnie usunięta.",
-      "deleteError": "Błąd podczas usuwania grupy."
+      "deleteError": "Błąd podczas usuwania grupy.",
+      "permissionsUpdateSuccess": "Pomyślnie zaktualizowano uprawnienia ról.",
+      "permissionsUpdateError": "Błąd podczas aktualizacji uprawnień."
     },
     "requestsSheet": {
       "acceptSuccess": "Zaakceptowano prośbę.",
@@ -255,6 +257,27 @@
     "removeConfirmBtn": "Tak, usuń",
     "deleteConfirmTitle": "Usuwanie grupy",
     "deleteConfirmDesc": "Czy na pewno chcesz bezpowrotnie usunąć tę grupę? Wszyscy członkowie stracą dostęp, a dane grupy zostaną skasowane.",
-    "deleteConfirmBtn": "Tak, usuń grupę"
+    "deleteConfirmBtn": "Tak, usuń grupę",
+    "rolesSection": "Zarządzanie rolami",
+    "rolesDesc": "Dostosuj uprawnienia dla poszczególnych ról w grupie.",
+    "savePermissions": "Zapisz uprawnienia",
+    "permissions": {
+      "editGroup": {
+        "title": "Edycja danych grupy",
+        "desc": "Pozwala na zmianę nazwy, opisu, typu oraz awatara grupy."
+      },
+      "manageMembers": {
+        "title": "Zarządzanie członkami",
+        "desc": "Pozwala na zmianę ról i usuwanie członków o niższej randze."
+      },
+      "manageRequests": {
+        "title": "Zarządzanie prośbami",
+        "desc": "Pozwala na akceptowanie i odrzucanie próśb o dołączenie."
+      },
+      "inviteMembers": {
+        "title": "Zapraszanie członków",
+        "desc": "Pozwala na wysyłanie zaproszeń do znajomych."
+      }
+    }
   }
 }

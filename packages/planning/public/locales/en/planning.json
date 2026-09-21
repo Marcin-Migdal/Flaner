@@ -26,6 +26,7 @@
     "participants": "Invite participants",
     "searchFriends": "Search friends and groups...",
     "proposeDates": "Propose dates",
+    "autoVoteProposedDates": "Mark proposed dates as selected",
     "resultGroup": "Group",
     "resultUser": "Friend"
   },
@@ -126,5 +127,78 @@
     "winner": "Chosen",
     "status": "Status",
     "you": "YOU"
+  },
+  "customSlots": {
+    "triggerButton": "Date Series",
+    "triggerTooltip": "Generate recurring date slots automatically",
+    "presets": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "weeklyWithDay": "Weekly ({{day}})",
+      "monthly": "Monthly",
+      "monthlyWithDay": "Monthly ({{day}})",
+      "weekdays": "Every Weekday (Mon - Fri)",
+      "weekends": "Weekends (Sat - Sun)",
+      "custom": "Custom"
+    },
+    "custom": {
+      "title": "Custom repeat",
+      "back": "Back",
+      "dateRange": "Generation range",
+      "from": "From",
+      "to": "To",
+      "every": "Every",
+      "units": {
+        "day": "Day",
+        "days": "Days",
+        "week": "Week",
+        "weeks": "Weeks",
+        "month": "Month",
+        "months": "Months"
+      },
+      "daysOfWeek": {
+        "mon": "M",
+        "tue": "T",
+        "wed": "W",
+        "thu": "T",
+        "fri": "F",
+        "sat": "S",
+        "sun": "S"
+      },
+      "daysOfWeekFull": {
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday",
+        "sun": "Sunday"
+      },
+      "skipWeekends": "Skip Weekends",
+      "monthModes": {
+        "each": "Each",
+        "onThe": "On the",
+        "workday": "Workday"
+      },
+      "lastDay": "Last Day",
+      "ordinals": {
+        "first": "first",
+        "second": "second",
+        "third": "third",
+        "fourth": "fourth",
+        "fifth": "fifth",
+        "last": "last"
+      },
+      "workdays": {
+        "first": "First workday",
+        "last": "Last workday"
+      },
+      "createAsRange": "Create as date ranges",
+      "createAsRangeDesc": "Merge consecutive matching days into single slots (e.g. whole weekend)",
+      "apply": "OK",
+      "cancel": "Cancel"
+    },
+    "appliedSuccess": "Added new date slots ({{count}})",
+    "allDuplicates": "All generated date slots were already added"
   }
 }

@@ -2,6 +2,33 @@ export type GroupType = 'public' | 'private';
 
 export type GroupRole = 'owner' | 'admin' | 'moderator' | 'member';
 
+export type GroupPermission = 'editGroup' | 'manageMembers' | 'manageRequests' | 'inviteMembers';
+
+export type ConfigurableGroupRole = 'admin' | 'moderator' | 'member';
+
+export type RolePermissionsMap = Record<ConfigurableGroupRole, Record<GroupPermission, boolean>>;
+
+export const DEFAULT_ROLE_PERMISSIONS: RolePermissionsMap = {
+  admin: {
+    editGroup: false,
+    manageMembers: true,
+    manageRequests: true,
+    inviteMembers: true,
+  },
+  moderator: {
+    editGroup: false,
+    manageMembers: false,
+    manageRequests: false,
+    inviteMembers: true,
+  },
+  member: {
+    editGroup: false,
+    manageMembers: false,
+    manageRequests: false,
+    inviteMembers: false,
+  },
+};
+
 export type Group = {
   id: string;
   name: string;
@@ -11,6 +38,7 @@ export type Group = {
   requiresApproval: boolean;
   ownerId: string;
   avatarUrl?: string | null;
+  rolePermissions?: Partial<Record<ConfigurableGroupRole, Partial<Record<GroupPermission, boolean>>>>;
   createdAt: number;
   updatedAt: number;
 };

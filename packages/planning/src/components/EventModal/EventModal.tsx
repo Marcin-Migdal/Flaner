@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  FormCheckbox,
   FormDatePicker,
   FormTextArea,
   FormTextField,
@@ -24,6 +25,8 @@ import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { CreateSchedulerFormData, getCreateSchedulerSchema } from "../../utils/schemas/create-scheduler-schema";
 import { ParticipantSelect } from "./components";
 import { getRandomSlotColor } from "./utils";
+import { CustomDateSlotsPopover, type CustomSlotsConfig } from "../CustomDateSlotsPopover/CustomDateSlotsPopover";
+import { generateCustomDateSlots } from "../../utils/generateCustomDateSlots";
 
 export type EventModalProps = {
   trigger?: React.ReactNode;
@@ -58,6 +61,7 @@ export const EventModal = ({
       endDate: new Date(),
       participants: user ? [user.uid] : [],
       proposedDates: [],
+      autoVoteProposedDates: true,
     },
   });
 
@@ -92,6 +96,7 @@ export const EventModal = ({
           endDate: new Date(),
           participants: user ? [user.uid] : [],
           proposedDates: [],
+          autoVoteProposedDates: true,
         });
       }
     }
@@ -163,6 +168,7 @@ export const EventModal = ({
           endDate: data.endDate ? format(data.endDate, "yyyy-MM-dd") : undefined,
           participants: data.participants,
           proposedDates: formattedDates,
+          autoVoteProposedDates: data.autoVoteProposedDates,
         },
         {
           onSuccess: (createdEvent) => {
@@ -226,6 +232,45 @@ export const EventModal = ({
     methods.setValue("proposedDates", newDates, { shouldValidate: true });
   };
 
+  const handleApplyCustomSlots = (config: CustomSlotsConfig) => {
+    const generatedSlots = generateCustomDateSlots(config);
+    if (generatedSlots.length === 0) {
+      return;
+    }
+
+    const currentDates = methods.getValues("proposedDates") || [];
+    const newUniqueSlots: { start: Date; end: Date; color: string }[] = [];
+
+    for (const slot of generatedSlots) {
+      const isDuplicate = currentDates.some(
+        (existing) => isSameDay(existing.start, slot.start) && isSameDay(existing.end, slot.end),
+      );
+      if (!isDuplicate) {
+        const isDuplicateInBatch = newUniqueSlots.some(
+          (existing) => isSameDay(existing.start, slot.start) && isSameDay(existing.end, slot.end),
+        );
+        if (!isDuplicateInBatch) {
+          const color = getRandomSlotColor(slot.start, slot.end, [...currentDates, ...newUniqueSlots]);
+          newUniqueSlots.push({ start: slot.start, end: slot.end, color });
+        }
+      }
+    }
+
+    if (newUniqueSlots.length === 0) {
+      toast.attention(t("customSlots.allDuplicates"));
+      return;
+    }
+
+    const updatedDates = [...currentDates, ...newUniqueSlots].sort((a, b) => {
+      const diffStart = a.start.getTime() - b.start.getTime();
+      if (diffStart !== 0) return diffStart;
+      return a.end.getTime() - b.end.getTime();
+    });
+
+    methods.setValue("proposedDates", updatedDates, { shouldValidate: true });
+    toast.success(t("customSlots.appliedSuccess", { count: newUniqueSlots.length }));
+  };
+
   const rawProposedDates = useWatch({ control: methods.control, name: "proposedDates" });
 
   const calendarEvents: CalendarEvent[] = useMemo(() => {
@@ -274,6 +319,12 @@ export const EventModal = ({
                   style={{ resize: "none" }}
                 />
                 <FormDatePicker name="endDate" label={t("fields.endDate")} />
+                {!eventToEdit && (
+                  <FormCheckbox
+                    name="autoVoteProposedDates"
+                    label={t("create.autoVoteProposedDates")}
+                  />
+                )}
               </div>
 
               <ParticipantSelect
@@ -339,6 +390,7 @@ export const EventModal = ({
                   disabledDates={{ before: startOfToday() }}
                   onDateChange={handleDateChange}
                   onEventClick={handleEventClick}
+                  headerButtonContent={<CustomDateSlotsPopover onApply={handleApplyCustomSlots} />}
                 />
               </div>
 

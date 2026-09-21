@@ -17,7 +17,7 @@ import {
   writeBatch,
   type QueryDocumentSnapshot,
 } from "firebase/firestore";
-import type { Group, GroupInvitation, GroupMember, GroupRequest, GroupRole } from "./types";
+import type { Group, GroupInvitation, GroupMember, GroupRequest, GroupRole, RolePermissionsMap } from "./types";
 
 const refs = {
   groups: () => collection(fb.firestore, "groups").withConverter(firestoreConverter<Group>()),
@@ -85,6 +85,17 @@ export const updateGroup = async (
     dataToUpdate.nameLower = updates.name.toLowerCase();
   }
   await updateDoc(refs.group(groupId), dataToUpdate);
+};
+
+// Update Group Role Permissions
+export const updateGroupRolePermissions = async (
+  groupId: string,
+  rolePermissions: RolePermissionsMap,
+): Promise<void> => {
+  await updateDoc(refs.group(groupId), {
+    rolePermissions,
+    updatedAt: Date.now(),
+  });
 };
 
 // Delete Group (Cascading delete of subcollections)

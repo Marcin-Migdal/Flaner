@@ -31,6 +31,21 @@ service cloud.firestore {
       return callerPriority > targetPriority && callerPriority > assignPriority;
     }
 
+    function hasRolePermission(groupId, permission) {
+      let role = getRole(groupId);
+      let groupData = get(/databases/$(database)/documents/groups/$(groupId)).data;
+      let customPerm = groupData.get(['rolePermissions', role, permission], null);
+      return role == 'owner' || (
+        customPerm != null ? customPerm == true : (
+          permission == 'editGroup' ? false : (
+            role == 'admin' ? true : (
+              role == 'moderator' ? (permission == 'inviteMembers') : false
+            )
+          )
+        )
+      );
+    }
+
     // ==========================================
     // COLLECTION GROUP: ZAPYTANIA O CZŁONKOSTWA I ZAPROSZENIA
     // ==========================================
@@ -96,7 +111,8 @@ service cloud.firestore {
       // Subkolekcja zaproszeń do grup (groupInvitations)
       match /groupInvitations/{groupId} {
         allow create, update: if isAuthenticated() && 
-          exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+          exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)) &&
+          hasRolePermission(groupId, 'inviteMembers');
         allow read, delete: if isAuthenticated() && request.auth.uid == userId;
       }
     }
@@ -114,8 +130,11 @@ service cloud.firestore {
       allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
       
       allow update: if isAuthenticated() && (
-        getRole(groupId) == 'owner' || 
-        (isAdminOrOwner(groupId) && request.resource.data.ownerId == resource.data.ownerId)
+        getRole(groupId) == 'owner' || (
+          hasRolePermission(groupId, 'editGroup') &&
+          request.resource.data.ownerId == resource.data.ownerId &&
+          request.resource.data.get('rolePermissions', null) == resource.data.get('rolePermissions', null)
+        )
       );
       allow delete: if isAuthenticated() && getRole(groupId) == 'owner';
 
@@ -127,20 +146,22 @@ service cloud.firestore {
         
         allow create: if isAuthenticated() && (
           (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
+          hasRolePermission(groupId, 'manageRequests') ||
+          hasRolePermission(groupId, 'manageMembers') ||
           isAdminOrOwner(groupId) ||
           (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.type == 'public' && get(/databases/$(database)/documents/groups/$(groupId)).data.requiresApproval == false) ||
           (userId == request.auth.uid && exists(/databases/$(database)/documents/groups/$(groupId)/invitations/$(request.auth.uid)))
         );
 
         allow update: if isAuthenticated() && (
-          hasHigherPriority(groupId, userId, request.resource.data.role) ||
+          (hasRolePermission(groupId, 'manageMembers') && hasHigherPriority(groupId, userId, request.resource.data.role)) ||
           (getRole(groupId) == 'owner' && request.resource.data.role == 'owner') ||
           (userId == request.auth.uid && getRole(groupId) == 'owner' && request.resource.data.role == 'admin')
         );
 
         allow delete: if isAuthenticated() && (
           userId == request.auth.uid || 
-          hasHigherPriority(groupId, userId, null)
+          (hasRolePermission(groupId, 'manageMembers') && hasHigherPriority(groupId, userId, null))
         );
       }
 
@@ -153,15 +174,11 @@ service cloud.firestore {
           exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid))
         );
         allow create, update: if isAuthenticated() && 
-          exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)) && (
-            get(/databases/$(database)/documents/groups/$(groupId)).data.type != 'private' ||
-            isAdminOrOwner(groupId) ||
-            getRole(groupId) == 'moderator'
-          );
+          exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)) &&
+          hasRolePermission(groupId, 'inviteMembers');
         allow delete: if isAuthenticated() && (
           userId == request.auth.uid || 
-          isAdminOrOwner(groupId) || 
-          getRole(groupId) == 'moderator'
+          hasRolePermission(groupId, 'inviteMembers')
         );
       }
 
@@ -169,9 +186,9 @@ service cloud.firestore {
       // PODKOLEKCJA: PROŚBY O DOŁĄCZENIE (REQUESTS)
       // ------------------------------------------
       match /requests/{userId} {
-        allow read: if isAuthenticated() && (userId == request.auth.uid || isAdminOrOwner(groupId));
+        allow read: if isAuthenticated() && (userId == request.auth.uid || hasRolePermission(groupId, 'manageRequests'));
         allow create: if isAuthenticated() && userId == request.auth.uid;
-        allow delete: if isAuthenticated() && (userId == request.auth.uid || isAdminOrOwner(groupId));
+        allow delete: if isAuthenticated() && (userId == request.auth.uid || hasRolePermission(groupId, 'manageRequests'));
       }
     }
 

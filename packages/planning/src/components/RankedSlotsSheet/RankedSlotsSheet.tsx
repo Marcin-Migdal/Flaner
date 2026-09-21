@@ -233,7 +233,7 @@ export const RankedSlotsSheet = ({
                           <Avatar
                             key={uid}
                             className="w-5 h-5 ring-2 ring-card border-0"
-                            title={profile?.name || uid}
+                            tooltip={profile?.name}
                           >
                             <AvatarImage src={profile?.avatarUrl} />
                             <AvatarFallback className="text-[9px]">
@@ -260,7 +260,7 @@ export const RankedSlotsSheet = ({
                             <Avatar
                               key={uid}
                               className="w-5 h-5 ring-2 ring-card border-0"
-                              title={profile?.name || uid}
+                              tooltip={profile?.name}
                             >
                               <AvatarImage src={profile?.avatarUrl} />
                               <AvatarFallback className="text-[9px]">
@@ -288,7 +288,7 @@ export const RankedSlotsSheet = ({
                             <Avatar
                               key={uid}
                               className="w-5 h-5 ring-2 ring-card border-0"
-                              title={profile?.name || uid}
+                              tooltip={profile?.name}
                             >
                               <AvatarImage src={profile?.avatarUrl} />
                               <AvatarFallback className="text-[9px]">
