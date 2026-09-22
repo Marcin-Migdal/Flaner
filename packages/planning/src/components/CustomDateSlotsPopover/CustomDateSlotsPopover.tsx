@@ -208,16 +208,9 @@ export const CustomDateSlotsPopover = ({
 
   const handleCalendarDayClick = (day: Date) => {
     if (selectedPreset === "weekly") {
-      const clickedWeekday = day.getDay();
-      setSelectedWeekDays([clickedWeekday]);
-      setUnit("week");
-      setFrequency(1);
+      setSelectedWeekDays([day.getDay()]);
     } else if (selectedPreset === "monthly") {
-      const clickedDayOfMonth = day.getDate();
-      setSelectedMonthDay(clickedDayOfMonth);
-      setUnit("month");
-      setFrequency(1);
-      setMonthSubMode("each");
+      setSelectedMonthDay(day.getDate());
     }
   };
 

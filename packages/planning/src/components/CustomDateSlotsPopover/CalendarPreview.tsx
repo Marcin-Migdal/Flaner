@@ -28,6 +28,7 @@ export const CalendarPreview = ({
       <Calendar
         mode="multiple"
         selected={selectedDates}
+        // Required by Calendar mode="multiple", but selection is handled via onDayClick
         onSelect={() => {}}
         onDayClick={isInteractive ? (day) => onDayClick?.(day) : undefined}
         modifiers={{

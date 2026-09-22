@@ -5,8 +5,9 @@ import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { customSlotsStyles, presetItemVariants } from "./CustomDateSlotsPopover.styles";
 import type { PresetType } from "./CustomDateSlotsPopover";
 
-const getOrdinalSuffix = (n: number, isPl = false) => {
-  if (isPl) return `${n}.`;
+const getOrdinalSuffix = (n: number, lang = "en") => {
+  if (lang.startsWith("pl")) return `${n}.`;
+  if (lang.startsWith("fr")) return n === 1 ? `${n}er` : `${n}e`;
   const s = ["th", "st", "nd", "rd"];
   const v = n % 100;
   return `${n}${s[(v - 20) % 10] || s[v] || s[0]}`;
@@ -46,7 +47,6 @@ export const PresetSelector = ({
   endDateRef,
 }: PresetSelectorProps) => {
   const { t, i18n } = usePlanningTranslations();
-  const isPl = i18n.language?.startsWith("pl");
 
   return (
     <div className={customSlotsStyles.optionsColumn}>
@@ -76,7 +76,7 @@ export const PresetSelector = ({
         >
           <span>
             {t("customSlots.presets.monthlyWithDay", {
-              day: getOrdinalSuffix(monthlyDayNumber, isPl),
+              day: getOrdinalSuffix(monthlyDayNumber, i18n.language),
             })}
           </span>
           {selectedPreset === "monthly" && <Check className="h-3.5 w-3.5 text-brand" />}
