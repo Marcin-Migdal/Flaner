@@ -1,6 +1,7 @@
 import type { Locale } from "date-fns";
 import { Calendar } from "@flaner/ui-components";
-import type { RangeClassification } from "../../utils/generateCustomDateSlots";
+import { cn } from "@flaner/shared/utils";
+import type { RangeClassification } from "./CustomDateSlotsPopover";
 import { customSlotsStyles } from "./CustomDateSlotsPopover.styles";
 
 export type CalendarPreviewProps = {
@@ -9,6 +10,8 @@ export type CalendarPreviewProps = {
   calendarMonth: Date;
   onMonthChange: (date: Date) => void;
   locale: Locale;
+  isInteractive?: boolean;
+  onDayClick?: (date: Date) => void;
 };
 
 export const CalendarPreview = ({
@@ -17,6 +20,8 @@ export const CalendarPreview = ({
   calendarMonth,
   onMonthChange,
   locale,
+  isInteractive = false,
+  onDayClick,
 }: CalendarPreviewProps) => {
   return (
     <div className={customSlotsStyles.calendarColumn}>
@@ -24,6 +29,7 @@ export const CalendarPreview = ({
         mode="multiple"
         selected={selectedDates}
         onSelect={() => {}}
+        onDayClick={isInteractive ? (day) => onDayClick?.(day) : undefined}
         modifiers={{
           range_start: rangeClassification.rangeStartDates,
           range_middle: rangeClassification.rangeMiddleDates,
@@ -48,7 +54,12 @@ export const CalendarPreview = ({
         onMonthChange={onMonthChange}
         locale={locale}
         weekStartsOn={1}
-        className="p-0 [&_button[data-day]]:pointer-events-none [&_button[data-day]]:cursor-default"
+        className={cn(
+          "p-0",
+          isInteractive
+            ? "[&_button[data-day]]:cursor-pointer"
+            : "[&_button[data-day]]:pointer-events-none [&_button[data-day]]:cursor-default",
+        )}
       />
     </div>
   );

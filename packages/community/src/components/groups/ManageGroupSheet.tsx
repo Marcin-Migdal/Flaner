@@ -254,8 +254,8 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
     <>
       <Sheet open={isOpen} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button variant="outline" className="rounded-xl h-9 md:h-10 px-3 md:px-4 text-xs md:text-sm flex-1 md:flex-none flex items-center justify-center gap-1.5">
-            <Settings className="size-3.5 md:size-4 shrink-0" />
+          <Button variant="outline" className="rounded-xl h-9 sm:h-10 px-2.5 sm:px-4 text-xs sm:text-sm font-semibold flex-1 lg:flex-none flex items-center justify-center gap-1.5 cursor-pointer transition-all">
+            <Settings className="size-3.5 sm:size-4 shrink-0" />
             <span>{t("groupDetails.manageBtn")}</span>
           </Button>
         </SheetTrigger>

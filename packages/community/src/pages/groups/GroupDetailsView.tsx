@@ -232,15 +232,15 @@ export function GroupDetailsView() {
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
+                  size="icon"
                   className={groupDetailsViewStyles.copyButton}
                   onClick={handleCopyLink}
                   aria-label={t("groupDetails.copyLinkBtn")}
                 >
                   <Copy className="size-3.5 sm:size-4 shrink-0" />
-                  <span className="lg:hidden">{t("groupDetails.copyLinkBtn")}</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent className="hidden lg:block">
+              <TooltipContent>
                 <p>{t("groupDetails.copyLinkBtn")}</p>
               </TooltipContent>
             </Tooltip>

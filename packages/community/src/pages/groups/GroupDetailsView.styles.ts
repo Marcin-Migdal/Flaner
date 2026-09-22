@@ -16,11 +16,11 @@ export const groupDetailsViewStyles = {
   badge:
     "flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 bg-muted/60 rounded-full border border-border/40 text-[11px] sm:text-xs font-semibold text-muted-foreground",
   actionButtonsWrapper:
-    "flex items-center gap-2 w-full lg:w-auto shrink-0 pt-2 lg:pt-0 border-t border-border/30 lg:border-t-0 justify-end flex-wrap sm:flex-nowrap",
+    "flex items-center gap-2 w-full lg:w-auto shrink-0 pt-2 lg:pt-0 border-t border-border/30 lg:border-t-0 justify-end flex-nowrap",
   actionButton:
     "rounded-xl h-9 sm:h-10 px-2.5 sm:px-4 text-xs sm:text-sm font-semibold flex-1 lg:flex-none flex items-center justify-center gap-1.5 cursor-pointer transition-all",
   copyButton:
-    "rounded-xl h-9 sm:h-10 px-2.5 sm:px-4 lg:px-0 lg:w-10 text-xs sm:text-sm font-semibold flex-1 lg:flex-none shrink-0 flex items-center justify-center gap-1.5 cursor-pointer transition-all",
+    "rounded-xl size-9 sm:size-10 shrink-0 flex items-center justify-center cursor-pointer transition-all",
   iconButton:
     "rounded-xl size-9 sm:size-10 shrink-0 flex items-center justify-center cursor-pointer transition-all",
   membersSection: "space-y-4",

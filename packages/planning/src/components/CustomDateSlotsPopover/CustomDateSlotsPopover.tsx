@@ -69,7 +69,7 @@ export type CustomDateSlotsPopoverProps = {
 
 import { generateCustomDateSlots, type GeneratedDateSlot } from "../../utils/generateCustomDateSlots";
 
-type RangeClassification = {
+export type RangeClassification = {
   allSelectedDates: Date[];
   rangeStartDates: Date[];
   rangeMiddleDates: Date[];
@@ -117,18 +117,18 @@ const getPresetConfig = (
   preset: PresetType,
   start: Date,
   end: Date,
-  dayOfWeek: number,
-  dayOfMonth: number,
+  selectedWeekDays: number[],
+  selectedMonthDay: number | "last",
 ): CustomSlotsConfig => {
   const baseConfig: CustomSlotsConfig = {
     startDate: format(start, "yyyy-MM-dd"),
     endDate: format(end, "yyyy-MM-dd"),
     frequency: 1,
     unit: "week",
-    selectedWeekDays: [dayOfWeek],
+    selectedWeekDays,
     skipWeekends: false,
     monthSubMode: "each",
-    selectedMonthDay: dayOfMonth,
+    selectedMonthDay,
     monthOrdinal: "first",
     monthWeekday: "Sunday",
     monthWorkdayType: "first",
@@ -139,10 +139,10 @@ const getPresetConfig = (
     return { ...baseConfig, unit: "day", frequency: 1, skipWeekends: false };
   }
   if (preset === "weekly") {
-    return { ...baseConfig, unit: "week", frequency: 1, selectedWeekDays: [dayOfWeek] };
+    return { ...baseConfig, unit: "week", frequency: 1, selectedWeekDays };
   }
   if (preset === "monthly") {
-    return { ...baseConfig, unit: "month", frequency: 1, monthSubMode: "each", selectedMonthDay: dayOfMonth };
+    return { ...baseConfig, unit: "month", frequency: 1, monthSubMode: "each", selectedMonthDay };
   }
   if (preset === "weekdays") {
     return { ...baseConfig, unit: "week", frequency: 1, selectedWeekDays: [1, 2, 3, 4, 5] };
@@ -157,10 +157,10 @@ const generatePresetSlots = (
   preset: PresetType,
   start: Date,
   end: Date,
-  dayOfWeek: number,
-  dayOfMonth: number,
+  selectedWeekDays: number[],
+  selectedMonthDay: number | "last",
 ): GeneratedDateSlot[] => {
-  const config = getPresetConfig(preset, start, end, dayOfWeek, dayOfMonth);
+  const config = getPresetConfig(preset, start, end, selectedWeekDays, selectedMonthDay);
   return generateCustomDateSlots(config);
 };
 
@@ -204,6 +204,23 @@ export const CustomDateSlotsPopover = ({
   const [endDateOpen, setEndDateOpen] = useState(false);
   const endDateRef = useRef<HTMLButtonElement>(null);
 
+  const isInteractiveCalendar = selectedPreset === "weekly" || selectedPreset === "monthly";
+
+  const handleCalendarDayClick = (day: Date) => {
+    if (selectedPreset === "weekly") {
+      const clickedWeekday = day.getDay();
+      setSelectedWeekDays([clickedWeekday]);
+      setUnit("week");
+      setFrequency(1);
+    } else if (selectedPreset === "monthly") {
+      const clickedDayOfMonth = day.getDate();
+      setSelectedMonthDay(clickedDayOfMonth);
+      setUnit("month");
+      setFrequency(1);
+      setMonthSubMode("each");
+    }
+  };
+
   const rangeClassification = useMemo<RangeClassification>(() => {
     if (!selectedPreset) {
       return {
@@ -232,7 +249,7 @@ export const CustomDateSlotsPopover = ({
       };
       slots = generateCustomDateSlots(config);
     } else {
-      slots = generatePresetSlots(selectedPreset, startDate, endDate, currentDayOfWeek, currentDayOfMonth);
+      slots = generatePresetSlots(selectedPreset, startDate, endDate, selectedWeekDays, selectedMonthDay);
     }
 
     return classifyDateSlots(slots);
@@ -250,8 +267,6 @@ export const CustomDateSlotsPopover = ({
     monthWeekday,
     monthWorkdayType,
     createAsRange,
-    currentDayOfWeek,
-    currentDayOfMonth,
   ]);
 
   const handleSelectPreset = (preset: PresetType) => {
@@ -264,12 +279,16 @@ export const CustomDateSlotsPopover = ({
     } else if (preset === "weekly") {
       setUnit("week");
       setFrequency(1);
-      setSelectedWeekDays([currentDayOfWeek]);
+      if (selectedWeekDays.length !== 1) {
+        setSelectedWeekDays([currentDayOfWeek]);
+      }
     } else if (preset === "monthly") {
       setUnit("month");
       setFrequency(1);
       setMonthSubMode("each");
-      setSelectedMonthDay(currentDayOfMonth);
+      if (typeof selectedMonthDay !== "number") {
+        setSelectedMonthDay(currentDayOfMonth);
+      }
     } else if (preset === "weekdays") {
       setUnit("week");
       setFrequency(1);
@@ -338,7 +357,9 @@ export const CustomDateSlotsPopover = ({
     { label: t("customSlots.custom.daysOfWeekFull.fri"), index: 5 },
     { label: t("customSlots.custom.daysOfWeekFull.sat"), index: 6 },
   ];
-  const fullDayName = weekDayDefsFull.find((d) => d.index === currentDayOfWeek)?.label || "";
+  const weeklyDayIndex = selectedWeekDays[0] ?? currentDayOfWeek;
+  const weeklyDayName = weekDayDefsFull.find((d) => d.index === weeklyDayIndex)?.label || "";
+  const monthlyDayNumber = typeof selectedMonthDay === "number" ? selectedMonthDay : currentDayOfMonth;
 
   const triggerButton = trigger || (
     <Button
@@ -364,6 +385,8 @@ export const CustomDateSlotsPopover = ({
             calendarMonth={calendarMonth}
             onMonthChange={setCalendarMonth}
             locale={dfLocale}
+            isInteractive={isInteractiveCalendar}
+            onDayClick={handleCalendarDayClick}
           />
           <PresetSelector
             selectedPreset={selectedPreset}
@@ -372,8 +395,8 @@ export const CustomDateSlotsPopover = ({
               setSelectedPreset("custom");
               setViewMode("custom");
             }}
-            fullDayName={fullDayName}
-            currentDayOfMonth={currentDayOfMonth}
+            weeklyDayName={weeklyDayName}
+            monthlyDayNumber={monthlyDayNumber}
             startDate={startDate}
             endDate={endDate}
             startDateOpen={startDateOpen}

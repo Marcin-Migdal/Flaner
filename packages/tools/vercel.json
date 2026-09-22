@@ -1,5 +1,6 @@
 {
   "buildCommand": "cd ../.. && npx nx run tools:build",
+  "ignoreCommand": "cd ../.. && npx nx-ignore tools",
   "outputDirectory": "dist",
   "headers": [
     {

@@ -5,7 +5,8 @@ import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { customSlotsStyles, presetItemVariants } from "./CustomDateSlotsPopover.styles";
 import type { PresetType } from "./CustomDateSlotsPopover";
 
-const getOrdinalSuffix = (n: number) => {
+const getOrdinalSuffix = (n: number, isPl = false) => {
+  if (isPl) return `${n}.`;
   const s = ["th", "st", "nd", "rd"];
   const v = n % 100;
   return `${n}${s[(v - 20) % 10] || s[v] || s[0]}`;
@@ -15,8 +16,8 @@ export type PresetSelectorProps = {
   selectedPreset: PresetType | null;
   onSelectPreset: (preset: PresetType) => void;
   onOpenCustom: () => void;
-  fullDayName: string;
-  currentDayOfMonth: number;
+  weeklyDayName: string;
+  monthlyDayNumber: number;
   startDate: Date;
   endDate: Date;
   startDateOpen: boolean;
@@ -32,8 +33,8 @@ export const PresetSelector = ({
   selectedPreset,
   onSelectPreset,
   onOpenCustom,
-  fullDayName,
-  currentDayOfMonth,
+  weeklyDayName,
+  monthlyDayNumber,
   startDate,
   endDate,
   startDateOpen,
@@ -44,7 +45,8 @@ export const PresetSelector = ({
   setEndDateOpen,
   endDateRef,
 }: PresetSelectorProps) => {
-  const { t } = usePlanningTranslations();
+  const { t, i18n } = usePlanningTranslations();
+  const isPl = i18n.language?.startsWith("pl");
 
   return (
     <div className={customSlotsStyles.optionsColumn}>
@@ -63,7 +65,7 @@ export const PresetSelector = ({
           className={presetItemVariants({ isCustom: false, active: selectedPreset === "weekly" })}
           onClick={() => onSelectPreset("weekly")}
         >
-          <span>{t("customSlots.presets.weeklyWithDay", { day: fullDayName })}</span>
+          <span>{t("customSlots.presets.weeklyWithDay", { day: weeklyDayName })}</span>
           {selectedPreset === "weekly" && <Check className="h-3.5 w-3.5 text-brand" />}
         </button>
 
@@ -74,7 +76,7 @@ export const PresetSelector = ({
         >
           <span>
             {t("customSlots.presets.monthlyWithDay", {
-              day: getOrdinalSuffix(currentDayOfMonth),
+              day: getOrdinalSuffix(monthlyDayNumber, isPl),
             })}
           </span>
           {selectedPreset === "monthly" && <Check className="h-3.5 w-3.5 text-brand" />}
