@@ -11,7 +11,6 @@ export const sharedFederationConfig = {
   '@flaner/shared/firebase': { singleton: true },
   '@flaner/shared/hooks': { singleton: true },
   '@flaner/shared/utils': { singleton: true },
-  '@flaner/ui-components': { singleton: true },
   'firebase/app': { singleton: true },
   'firebase/auth': { singleton: true },
   'firebase/firestore': { singleton: true },
