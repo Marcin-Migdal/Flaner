@@ -38,8 +38,8 @@ export function RequestsSheet({ groupId }: RequestsSheetProps) {
   return (
     <Sheet open={isOpen} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" className="rounded-xl h-9 md:h-10 px-3 md:px-4 text-xs md:text-sm relative flex-1 md:flex-none flex items-center justify-center gap-1.5">
-          <UserPlus className="size-3.5 md:size-4 shrink-0" />
+        <Button variant="outline" className="rounded-xl h-9 sm:h-10 px-2.5 sm:px-4 text-xs sm:text-sm font-semibold relative flex-1 lg:flex-none flex items-center justify-center gap-1.5 cursor-pointer transition-all">
+          <UserPlus className="size-3.5 sm:size-4 shrink-0" />
           <span>{t("requestsSheet.btnTitle")}</span>
           {requests.length > 0 && (
             <span className="absolute -top-1.5 -right-1.5 size-4.5 bg-brand text-white text-[10px] font-bold flex items-center justify-center rounded-full">

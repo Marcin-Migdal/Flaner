@@ -6,6 +6,11 @@
     "applyChanges": true
   },
   "analytics": false,
+  "pluginsConfig": {
+    "@nx/js": {
+      "projectsAffectedByDependencyUpdates": "auto"
+    }
+  },
   "plugins": [
     {
       "plugin": "@nx/vitest",
