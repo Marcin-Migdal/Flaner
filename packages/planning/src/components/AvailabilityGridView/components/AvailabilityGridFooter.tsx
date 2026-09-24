@@ -2,7 +2,10 @@ import { Trophy } from "lucide-react";
 import type { ProposedDateSlot } from "../../../api/events/types";
 import { usePlanningTranslations } from "../../../hooks/usePlanningTranslations";
 import type { SlotStat } from "../types";
-import { gridSlotCellVariants } from "./AvailabilityGridCell.styles";
+import {
+  gridFooterCellVariants,
+  gridFooterFirstColStyles,
+} from "./AvailabilityGridFooter.styles";
 
 export type AvailabilityGridFooterProps = {
   proposedDates: ProposedDateSlot[];
@@ -26,9 +29,13 @@ export const AvailabilityGridFooter = ({
       className="grid border-t-2 border-border/80 bg-muted/60 font-semibold text-xs"
       style={{ gridTemplateColumns }}
     >
-      <div className="p-2.5 sm:p-3 flex items-center gap-1.5 text-foreground border-r border-border/50 font-bold">
-        <Trophy className="w-4 h-4 text-amber-500" />
-        <span>{t("grid.matchRate")}</span>
+      {/* Bottom-Left Corner Cell (Sticky) */}
+      <div className={gridFooterFirstColStyles}>
+        <div className="absolute inset-0 bg-muted/60 pointer-events-none" />
+        <div className="relative z-10 flex items-center gap-1.5">
+          <Trophy className="w-4 h-4 text-amber-500" />
+          <span>{t("grid.matchRate")}</span>
+        </div>
       </div>
 
       {proposedDates.map((_, slotIdx) => {
@@ -38,7 +45,7 @@ export const AvailabilityGridFooter = ({
         return (
           <div
             key={slotIdx}
-            className={gridSlotCellVariants({ highlight: isTop ? "top" : "none" })}
+            className={gridFooterCellVariants({ highlight: isTop ? "top" : "none" })}
           >
             <span
               className={`text-sm font-bold transition-colors duration-300 ease-in-out ${isTop ? "text-amber-500" : "text-foreground"}`}
