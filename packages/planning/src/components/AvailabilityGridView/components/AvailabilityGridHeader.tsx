@@ -3,7 +3,10 @@ import { Trophy, Users } from "lucide-react";
 import type { ProposedDateSlot } from "../../../api/events/types";
 import { usePlanningTranslations } from "../../../hooks/usePlanningTranslations";
 import type { SlotStat } from "../types";
-import { gridSlotCellVariants } from "./AvailabilityGridCell.styles";
+import {
+  gridHeaderCellVariants,
+  gridHeaderFirstColStyles,
+} from "./AvailabilityGridHeader.styles";
 
 export type AvailabilityGridHeaderProps = {
   proposedDates: ProposedDateSlot[];
@@ -31,12 +34,15 @@ export const AvailabilityGridHeader = ({
       className="grid border-b border-border/60 bg-muted/40"
       style={{ gridTemplateColumns }}
     >
-      {/* Top-Left Corner Cell */}
-      <div className="p-2.5 sm:p-3 flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground border-r border-border/50">
-        <Users className="w-4 h-4 text-primary" />
-        <span>
-          {t("grid.participants")} ({participantsCount})
-        </span>
+      {/* Top-Left Corner Cell (Sticky) */}
+      <div className={gridHeaderFirstColStyles}>
+        <div className="absolute inset-0 bg-muted/40 pointer-events-none" />
+        <div className="relative z-10 flex items-center gap-2">
+          <Users className="w-4 h-4 text-primary" />
+          <span>
+            {t("grid.participants")} ({participantsCount})
+          </span>
+        </div>
       </div>
 
       {/* Slot Column Headers */}
@@ -56,7 +62,7 @@ export const AvailabilityGridHeader = ({
         return (
           <div
             key={slotIdx}
-            className={gridSlotCellVariants({ highlight })}
+            className={gridHeaderCellVariants({ highlight })}
           >
             <span className="text-xs font-bold text-foreground truncate max-w-full">{dateDisplay}</span>
 

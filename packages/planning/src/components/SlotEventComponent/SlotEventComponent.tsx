@@ -206,25 +206,18 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
       <div className={slotStyles.contentRow}>
         {/* Active Vote Badge in Slot: Shown on first slot or first in row if user has voted */}
         {(isFirstSegment || isFirstInRow) && !isFinalized && currentUserVote && (
-          <button
-            type="button"
+          <div
             className={slotActiveVoteBadgeVariants({
               vote: currentUserVote,
             })}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (meta.onQuickVote && !isFinalized) {
-                meta.onQuickVote(null);
-              }
-            }}
-            title={t("voting.removeVote")}
+            title={t(`voting.${currentUserVote}`)}
           >
             {currentUserVote === "yes" && <Check className="w-2.5 h-2.5 md:w-3 md:h-3 stroke-[3]" />}
             {currentUserVote === "maybe" && (
               <span className="font-extrabold text-[8px] md:text-[11px] leading-none select-none">?</span>
             )}
             {currentUserVote === "no" && <X className="w-2.5 h-2.5 md:w-3 md:h-3 stroke-[3]" />}
-          </button>
+          </div>
         )}
 
         {/* Vote Counts Summary Badge */}

@@ -9,6 +9,7 @@ import {
 } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Loader2 } from "lucide-react";
+import { cn } from "@flaner/shared/utils";
 
 export interface ConfirmationPopupProps {
   open: boolean;
@@ -20,7 +21,8 @@ export interface ConfirmationPopupProps {
   onConfirm: () => void;
   onCancel?: () => void;
   isConfirming?: boolean;
-  variant?: "primary" | "destructive" | "brand";
+  variant?: "primary" | "destructive" | "brand" | "warning";
+  confirmClassName?: string;
 }
 
 export function ConfirmationPopup({
@@ -34,6 +36,7 @@ export function ConfirmationPopup({
   onCancel,
   isConfirming = false,
   variant = "primary",
+  confirmClassName,
 }: ConfirmationPopupProps) {
   const handleCancel = () => {
     if (onCancel) onCancel();
@@ -46,13 +49,19 @@ export function ConfirmationPopup({
     // The parent can close it upon success.
   };
 
+  const isWarning = variant === "warning";
+  const buttonVariant = isWarning ? "primary" : variant;
+
   return (
     <Dialog open={open} onOpenChange={isConfirming ? undefined : onOpenChange}>
       <DialogContent showCloseButton={!isConfirming} onCloseAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
-
           <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
+          {description && (
+            <DialogDescription asChild={typeof description !== "string"}>
+              {typeof description === "string" ? description : <div>{description}</div>}
+            </DialogDescription>
+          )}
         </DialogHeader>
         <DialogFooter>
           <Button
@@ -69,7 +78,11 @@ export function ConfirmationPopup({
           </Button>
           <Button
             type="button"
-            variant={variant}
+            variant={buttonVariant}
+            className={cn(
+              isWarning && "bg-amber-600 hover:bg-amber-500 text-white font-semibold shadow-md shadow-amber-600/20 border-transparent",
+              confirmClassName,
+            )}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -81,7 +94,6 @@ export function ConfirmationPopup({
             {confirmLabel}
           </Button>
         </DialogFooter>
-
       </DialogContent>
     </Dialog>
   );

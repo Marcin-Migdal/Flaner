@@ -1,0 +1,22 @@
+export const participantSelectStyles = {
+  root: "space-y-4 flex flex-col flex-1",
+  title: "font-semibold text-sm",
+  body: "flex flex-col gap-3",
+  resultRow: "flex items-center gap-3",
+  resultAvatar: "size-8 shrink-0",
+  resultAvatarFallback: "text-xs font-semibold",
+  resultIcon: "size-4 text-muted-foreground",
+  resultText: "flex flex-col min-w-0",
+  resultName: "text-sm font-medium truncate",
+  resultType: "text-xs text-muted-foreground",
+  chips: "flex flex-wrap gap-2 mt-2",
+  chip: "flex items-center gap-2 bg-muted/50 pl-1.5 pr-3 py-1 rounded-full text-sm border border-border/50 max-w-[260px]",
+  chipAvatar: "size-6 shrink-0",
+  chipAvatarFallback: "text-[10px] font-semibold",
+  chipIcon: "size-3 text-muted-foreground",
+  chipLabel: "truncate flex-1 min-w-0",
+  chipMeta: "text-muted-foreground ml-1",
+  chipRemove:
+    "hover:bg-accent shrink-0 rounded-full p-0.5 text-muted-foreground hover:text-foreground transition-colors",
+  chipRemoveIcon: "h-3.5 w-3.5",
+};

@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { IconTextField, IconTextFieldProps } from "../IconTextField";
+import { Popover, PopoverAnchor, PopoverContent } from "../ui/popover";
 
 export interface SearchBarProps<T> extends Omit<IconTextFieldProps, "onChange" | "results" | "onSelect" | "value"> {
   results?: T[];
@@ -44,16 +45,6 @@ export function SearchBar<T>({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const [prevIsExpanded, setPrevIsExpanded] = useState(props.isExpanded);
   const [prevValue, setPrevValue] = useState(value);
@@ -134,24 +125,41 @@ export function SearchBar<T>({
   const showDropdown = isOpen && hasContent;
 
   return (
-    <div ref={containerRef} className={cn("relative z-50", alwaysOpen ? "w-full" : "w-fit", className)}>
-      <IconTextField
-        value={value}
-        onChange={handleChange}
-        onFocus={handleFocus}
-        onKeyDown={handleKeyDown}
-        alwaysOpen={alwaysOpen}
-        {...props}
-        onClose={handleClose}
-      />
+    <Popover
+      open={showDropdown}
+      onOpenChange={(open) => {
+        if (!open) setIsOpen(false);
+      }}
+    >
+      <PopoverAnchor asChild>
+        <div ref={containerRef} className={cn("relative", alwaysOpen ? "w-full" : "w-fit", className)}>
+          <IconTextField
+            value={value}
+            onChange={handleChange}
+            onFocus={handleFocus}
+            onKeyDown={handleKeyDown}
+            alwaysOpen={alwaysOpen}
+            {...props}
+            onClose={handleClose}
+          />
+        </div>
+      </PopoverAnchor>
 
-      <div
-        className={cn(
-          "absolute left-0 top-[calc(100%+0.5rem)] min-w-[20rem] md:min-w-[24rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-border bg-popover shadow-lg transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-          showDropdown
-            ? "translate-y-0 opacity-100 pointer-events-auto"
-            : "-translate-y-2 opacity-0 pointer-events-none",
-        )}
+      <PopoverContent
+        align="start"
+        sideOffset={8}
+        collisionPadding={8}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+        onInteractOutside={(e) => {
+          if (e.target instanceof Node && containerRef.current?.contains(e.target)) {
+            e.preventDefault();
+          }
+        }}
+        // Portaled outside of a parent Dialog, whose scroll lock would otherwise swallow wheel/touch scrolling here.
+        onWheel={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        className="w-(--radix-popover-trigger-width) min-w-[20rem] md:min-w-[24rem] max-w-[calc(100vw-2rem)] gap-0 p-0 overflow-hidden rounded-xl border border-border bg-popover shadow-lg ring-0"
       >
         {isLoading && results.length === 0 ? (
           <div className="flex items-center justify-center py-6 text-muted-foreground">
@@ -204,10 +212,10 @@ export function SearchBar<T>({
               </li>
             )}
           </ul>
-        ) : hasContent ? (
+        ) : (
           <div className="py-6 text-center text-sm text-muted-foreground">{t(emptyStateText)}</div>
-        ) : null}
-      </div>
-    </div>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }

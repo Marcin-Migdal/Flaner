@@ -133,10 +133,10 @@ export const SchedulerEventHeader = ({
 
         <Button
           type="button"
-          variant="ghost"
+          variant="brand"
           size="icon"
           onClick={onCreateEventClick}
-          className="shrink-0 size-9 md:size-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all text-muted-foreground hover:text-foreground hover:scale-105 active:scale-95 flex items-center justify-center"
+          className="shrink-0 size-9 md:size-10 rounded-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center"
           title={t("hub.addEvent")}
         >
           <Plus className="size-4 md:size-5" />

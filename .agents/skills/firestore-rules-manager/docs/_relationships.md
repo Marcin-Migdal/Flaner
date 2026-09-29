@@ -22,3 +22,7 @@ This file tracks the interactions and dependencies between different collections
   - Deletions are executed atomically via client-side `writeBatch`.
   - Existing `/templates` and `/spools` documents preserve their textual values intact when lookups are deleted.
 
+## 5. Split Groups <-> Users
+- **Dependency**: `split_groups.participants` stores `users/{userId}` IDs. Adding a participant writes an `split_group_invitation` document to `users/{userId}/notifications` in the same batch/transaction (allowed by the `notifications` create rule).
+- **Dependency**: Subcollection rules (`expenses`, `settlements`) rely on `get()`/`getAfter()` of the parent group document (`participants`, `expensesCount`, `settlementsCount`). Renaming these fields requires updating the rules in `split_groups.md`.
+

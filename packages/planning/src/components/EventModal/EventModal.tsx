@@ -23,7 +23,7 @@ import type { SchedulerEvent } from "../../api/events/types";
 import { useCreateEventMutation, useUpdateEventMutation } from "../../hooks/api/mutation";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { CreateSchedulerFormData, getCreateSchedulerSchema } from "../../utils/schemas/create-scheduler-schema";
-import { ParticipantSelect } from "./components";
+import { ParticipantSelect } from "../ParticipantSelect";
 import { getRandomSlotColor } from "./utils";
 import { CustomDateSlotsPopover, type CustomSlotsConfig } from "../CustomDateSlotsPopover/CustomDateSlotsPopover";
 import { generateCustomDateSlots } from "../../utils/generateCustomDateSlots";

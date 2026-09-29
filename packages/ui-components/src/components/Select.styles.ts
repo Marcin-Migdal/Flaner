@@ -3,7 +3,7 @@ import { cva } from "class-variance-authority";
 export const selectControlVariants = cva("border transition-all", {
   variants: {
     variant: {
-      default: "rounded-lg bg-background min-h-[40px] text-sm duration-200 border-input hover:border-accent",
+      default: "rounded-lg bg-transparent dark:bg-input/30 min-h-[40px] text-sm duration-200 border-input hover:border-accent",
       glass:
         "rounded-xl backdrop-blur-md shadow-sm min-h-[36px] md:min-h-[44px] text-xs md:text-sm duration-300 border-white/5 bg-white/[0.04] hover:bg-white/[0.06] hover:border-white/10",
     },
@@ -32,7 +32,7 @@ export const selectControlVariants = cva("border transition-all", {
   },
 });
 
-export const selectOptionVariants = cva("group px-3 text-sm cursor-pointer transition-colors", {
+export const selectOptionVariants = cva("group px-3 text-sm cursor-pointer transition-colors whitespace-nowrap", {
   variants: {
     variant: {
       default: "py-2 duration-150 text-foreground/80 hover:text-foreground",

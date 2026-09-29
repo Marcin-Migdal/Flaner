@@ -83,7 +83,7 @@ export const AvailabilityGridView = ({
     return Math.max(0, ...slotStats.map((s) => s.score));
   }, [slotStats]);
 
-  const userColWidth = isMobile ? "150px" : "minmax(160px, 200px)";
+  const userColWidth = isMobile ? "150px" : "200px";
   const gridTemplateColumns = `${userColWidth} repeat(${event.proposedDates.length}, minmax(105px, 1fr))`;
 
   const handleVoteClick = async (slotIndex: number, clickedVote: VoteType, currentVote?: VoteType) => {

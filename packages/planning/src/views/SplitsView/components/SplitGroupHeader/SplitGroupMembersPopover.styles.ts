@@ -1,0 +1,17 @@
+export const splitGroupMembersPopoverStyles = {
+  content: "w-84 sm:w-96 p-4 flex flex-col gap-3 rounded-2xl shadow-xl",
+  header: "flex items-center justify-between px-1",
+  title: "text-xs font-semibold text-muted-foreground uppercase tracking-wider",
+  list: "flex flex-col gap-2 max-h-[340px] overflow-y-auto pb-1 -mr-1 pr-1",
+  memberRow: "flex items-center justify-between gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors",
+  memberInfo: "flex items-center gap-3 min-w-0 flex-1",
+  avatar: "size-9 shrink-0 ring-1 ring-border",
+  avatarFallback: "text-xs font-semibold",
+  nameBlock: "flex flex-col min-w-0 flex-1",
+  nameRow: "flex items-center gap-1.5 min-w-0",
+  name: "text-sm font-medium truncate",
+  youBadge: "text-[11px] text-muted-foreground shrink-0",
+  creatorBadge: "text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-brand/15 text-brand shrink-0",
+  actionButton: "shrink-0 size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors rounded-lg",
+  disabledActionWrapper: "shrink-0 cursor-not-allowed",
+};

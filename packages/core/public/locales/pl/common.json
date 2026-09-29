@@ -10,6 +10,7 @@
     "shopping": "Zakupy",
     "planning": "Planowanie",
     "scheduling": "Terminarz",
+    "splits": "Rozliczenia",
     "settings": "Ustawienia",
     "tools": "Narzędzia",
     "spooler": "Spooler",
@@ -79,6 +80,8 @@
     "groupInvitation": "Zaprosił(a) Cię do grupy.",
     "eventInvitation": "Zaprosił(a) Cię do wydarzenia.",
     "eventReopened": "Wznowił(a) głosowanie w wydarzeniu.",
+    "splitGroupInvitation": "Dodał(a) Cię do rozliczenia.",
+    "splitSettlementPending": "Zgłosił(a) spłatę w rozliczeniu.",
     "systemAlert": "Ważne powiadomienie systemowe.",
     "system": "Masz nowe powiadomienie."
   },

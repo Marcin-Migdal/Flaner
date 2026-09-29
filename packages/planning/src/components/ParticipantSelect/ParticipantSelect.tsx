@@ -4,10 +4,14 @@ import { Search, User, Users, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, SearchBar } from "@flaner/ui-components";
 import { useAuth } from "@flaner/shared/context";
 import type { UserType } from "@flaner/shared/types";
-import { getGroupMembersAsParticipants, type ParticipantResult } from "../../../api/participants";
-import { useGetEventParticipantsProfilesQuery, useSearchParticipantsQuery } from "../../../hooks/api/query";
-import { usePlanningTranslations } from "../../../hooks/usePlanningTranslations";
-import type { CreateSchedulerFormData } from "../../../utils/schemas/create-scheduler-schema";
+import { getGroupMembersAsParticipants, type ParticipantResult } from "../../api/participants";
+import { useGetEventParticipantsProfilesQuery, useSearchParticipantsQuery } from "../../hooks/api/query";
+import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
+import { participantSelectStyles as styles } from "./ParticipantSelect.styles";
+
+type ParticipantsFormValues = {
+  participants: string[];
+};
 
 const getDefaultParticipant = (user: UserType | null): ParticipantResult[] => {
   if (!user) return [];
@@ -26,15 +30,23 @@ const getDefaultParticipant = (user: UserType | null): ParticipantResult[] => {
 export type ParticipantSelectProps = {
   creatorId?: string;
   initialParticipantIds?: string[];
+  label?: string;
+  searchPlaceholder?: string;
 };
 
+/**
+ * Participant picker bound to the `participants: string[]` field of the surrounding form.
+ * Selecting a community group adds all of its members.
+ */
 export const ParticipantSelect = ({
   creatorId,
   initialParticipantIds = [],
+  label,
+  searchPlaceholder,
 }: ParticipantSelectProps) => {
   const { t } = usePlanningTranslations();
   const { user } = useAuth();
-  const { control, getValues, setValue } = useFormContext<CreateSchedulerFormData>();
+  const { control, getValues, setValue } = useFormContext<ParticipantsFormValues>();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [addedProfilesMap, setAddedProfilesMap] = useState<Map<string, ParticipantResult>>(new Map());
@@ -98,7 +110,7 @@ export const ParticipantSelect = ({
       });
 
       const newIds = members.map((m) => m.id).filter((id) => !current.includes(id));
-      setValue("participants", [...current, ...newIds]);
+      setValue("participants", [...current, ...newIds], { shouldValidate: true });
     } else {
       setAddedProfilesMap((prev) => {
         if (current.includes(item.id)) return prev;
@@ -108,7 +120,7 @@ export const ParticipantSelect = ({
       });
 
       if (!current.includes(item.id)) {
-        setValue("participants", [...current, item.id]);
+        setValue("participants", [...current, item.id], { shouldValidate: true });
       }
     }
     setSearchQuery("");
@@ -125,37 +137,38 @@ export const ParticipantSelect = ({
     setValue(
       "participants",
       current.filter((pId) => pId !== id),
+      { shouldValidate: true },
     );
   };
 
   return (
-    <div className="space-y-4 flex flex-col flex-1">
-      <h3 className="font-semibold text-sm">{t("create.participants")}</h3>
-      <div className="flex flex-col gap-3">
+    <div className={styles.root}>
+      <h3 className={styles.title}>{label ?? t("create.participants")}</h3>
+      <div className={styles.body}>
         <SearchBar<ParticipantResult>
           alwaysOpen
           icon={<Search className="h-4 w-4" />}
-          placeholder={t("create.searchFriends")}
+          placeholder={searchPlaceholder ?? t("create.searchFriends")}
           value={searchQuery}
           onChange={setSearchQuery}
           results={searchResults}
           isLoading={isSearchLoading}
           onSelect={handleSelect}
           renderResult={(item) => (
-            <div className="flex items-center gap-3">
-              <Avatar className="size-8 shrink-0">
+            <div className={styles.resultRow}>
+              <Avatar className={styles.resultAvatar}>
                 <AvatarImage src={item.avatarUrl} />
-                <AvatarFallback className="text-xs font-semibold">
+                <AvatarFallback className={styles.resultAvatarFallback}>
                   {item.type === "group" ? (
-                    <Users className="size-4 text-muted-foreground" />
+                    <Users className={styles.resultIcon} />
                   ) : (
-                    item.name?.[0]?.toUpperCase() || <User className="size-4 text-muted-foreground" />
+                    item.name?.[0]?.toUpperCase() || <User className={styles.resultIcon} />
                   )}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col min-w-0">
-                <span className="text-sm font-medium truncate">{item.name}</span>
-                <span className="text-xs text-muted-foreground">
+              <div className={styles.resultText}>
+                <span className={styles.resultName}>{item.name}</span>
+                <span className={styles.resultType}>
                   {item.type === "group" ? t("create.resultGroup") : t("create.resultUser")}
                 </span>
               </div>
@@ -164,39 +177,28 @@ export const ParticipantSelect = ({
         />
 
         {selectedParticipants.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
+          <div className={styles.chips}>
             {selectedParticipants.map((p) => {
               const isCreator = p.id === effectiveCreatorId;
 
               return (
-                <div
-                  key={p.id}
-                  className="flex items-center gap-2 bg-muted/50 pl-1.5 pr-3 py-1 rounded-full text-sm border border-border/50 max-w-[260px]"
-                >
-                  <Avatar className="size-6 shrink-0">
+                <div key={p.id} className={styles.chip}>
+                  <Avatar className={styles.chipAvatar}>
                     <AvatarImage src={p.avatarUrl} />
-                    <AvatarFallback className="text-[10px] font-semibold">
-                      {p.type === "group" ? (
-                        <Users className="size-3 text-muted-foreground" />
-                      ) : (
-                        p.name?.[0]?.toUpperCase() || "?"
-                      )}
+                    <AvatarFallback className={styles.chipAvatarFallback}>
+                      {p.type === "group" ? <Users className={styles.chipIcon} /> : p.name?.[0]?.toUpperCase() || "?"}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="truncate flex-1 min-w-0">
+                  <div className={styles.chipLabel}>
                     <span>{p.name}</span>
-                    {isCreator && <span className="text-muted-foreground ml-1">({t("roles.creator")})</span>}
+                    {isCreator && <span className={styles.chipMeta}>({t("roles.creator")})</span>}
                     {p.type === "user" && p.groupName && !isCreator && (
-                      <span className="text-muted-foreground ml-1">({p.groupName})</span>
+                      <span className={styles.chipMeta}>({p.groupName})</span>
                     )}
                   </div>
                   {!isCreator && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveParticipant(p.id)}
-                      className="hover:bg-accent shrink-0 rounded-full p-0.5 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <X className="h-3.5 w-3.5" />
+                    <button type="button" onClick={() => handleRemoveParticipant(p.id)} className={styles.chipRemove}>
+                      <X className={styles.chipRemoveIcon} />
                     </button>
                   )}
                 </div>

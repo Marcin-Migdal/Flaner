@@ -58,6 +58,11 @@
   background: #3f3f46; /* zinc-700 */
 }
 
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #27272a transparent;
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: 'Geist Variable', sans-serif;

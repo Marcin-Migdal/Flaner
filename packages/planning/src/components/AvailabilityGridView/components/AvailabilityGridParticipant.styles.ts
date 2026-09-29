@@ -1,15 +1,33 @@
 import { cva } from "@flaner/shared/utils";
 
 /**
- * Wiersz uczestnika w siatce
+ * Wiersz uczestnika w siatce (wspiera grupowe stany hover)
  */
 export const gridParticipantRowVariants = cva(
-  "grid items-center transition-colors hover:bg-muted/30",
+  "group grid items-center transition-colors hover:bg-muted/30",
   {
     variants: {
       isCurrentUser: {
         true: "bg-primary/5",
         false: "",
+      },
+    },
+    defaultVariants: {
+      isCurrentUser: false,
+    },
+  },
+);
+
+/**
+ * Pierwsza, zamrożona (sticky) kolumna z profilem uczestnika
+ */
+export const gridParticipantFirstColVariants = cva(
+  "relative sticky left-0 z-10 bg-card p-2 sm:p-2.5 flex items-center gap-2 border-r border-border/50 overflow-hidden transition-colors shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] shrink-0",
+  {
+    variants: {
+      isCurrentUser: {
+        true: "before:absolute before:inset-0 before:bg-primary/5 before:pointer-events-none group-hover:before:bg-muted/40",
+        false: "before:absolute before:inset-0 before:bg-transparent before:pointer-events-none group-hover:before:bg-muted/30",
       },
     },
     defaultVariants: {

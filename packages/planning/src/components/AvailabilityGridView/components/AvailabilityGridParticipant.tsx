@@ -4,8 +4,9 @@ import type { ProposedDateSlot, VoteType } from "../../../api/events/types";
 import type { ParticipantResult } from "../../../api/participants";
 import { usePlanningTranslations } from "../../../hooks/usePlanningTranslations";
 import {
-  gridParticipantRowVariants,
   gridParticipantAvatarVariants,
+  gridParticipantFirstColVariants,
+  gridParticipantRowVariants,
   gridStaticVoteBadgeVariants,
   gridVoteButtonVariants,
 } from "./AvailabilityGridParticipant.styles";
@@ -42,9 +43,9 @@ export const AvailabilityGridParticipant = ({
       className={gridParticipantRowVariants({ isCurrentUser })}
       style={{ gridTemplateColumns }}
     >
-      {/* Participant Info Cell */}
-      <div className="p-2 sm:p-2.5 flex items-center gap-2 border-r border-border/50 overflow-hidden">
-        <div className="relative shrink-0">
+      {/* Participant Info Cell (Sticky) */}
+      <div className={gridParticipantFirstColVariants({ isCurrentUser })}>
+        <div className="relative z-10 shrink-0">
           <Avatar className={gridParticipantAvatarVariants({ hasNoVotes })}>
             <AvatarImage src={profile?.avatarUrl} />
             <AvatarFallback className="text-xs font-bold">
@@ -59,7 +60,7 @@ export const AvailabilityGridParticipant = ({
           )}
         </div>
 
-        <div className="flex flex-col min-w-0">
+        <div className="relative z-10 flex flex-col min-w-0">
           <div className="flex items-center gap-1">
             <span className="text-xs sm:text-sm font-semibold text-foreground truncate">
               {profile?.name || uid}
