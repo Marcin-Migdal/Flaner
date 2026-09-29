@@ -7,7 +7,12 @@
     "build": "nx run-many -t build",
     "typecheck": "nx run-many -t typecheck",
     "lint": "nx run-many -t lint",
-    "lint:fix": "nx run-many -t lint -- --fix"
+    "lint:fix": "nx run-many -t lint -- --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "e2e": "playwright test --config=e2e/playwright.config.ts",
+    "e2e:ui": "playwright test --config=e2e/playwright.config.ts --ui"
   },
   "private": true,
   "devDependencies": {
@@ -19,9 +24,12 @@
     "@nx/react": "^23.0.1",
     "@nx/rspack": "^23.0.1",
     "@nx/vitest": "23.0.1",
+    "@playwright/test": "^1.63.0",
     "@swc/helpers": "~0.5.18",
     "@testing-library/dom": "10.4.0",
+    "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "16.3.0",
+    "@testing-library/user-event": "^14.6.7",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

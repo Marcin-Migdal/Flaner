@@ -1,14 +1,19 @@
 
-import { useController, UseControllerProps } from "react-hook-form";
-import { IconTextField, IconTextFieldProps } from "./IconTextField";
+import { useController, type UseControllerProps, type FieldValues, type FieldPath } from "react-hook-form";
+import { IconTextField, type IconTextFieldProps } from "./IconTextField";
 
-export interface FormIconTextFieldProps
-  extends Omit<IconTextFieldProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur">,
-    UseControllerProps {
-  onClear?: () => void;
-}
+export type FormIconTextFieldProps<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+> = Omit<IconTextFieldProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur"> &
+  UseControllerProps<TFieldValues, TName> & {
+    onClear?: () => void;
+  };
 
-export function FormIconTextField({
+export function FormIconTextField<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+>({
   name,
   rules,
   shouldUnregister,
@@ -17,7 +22,7 @@ export function FormIconTextField({
   disabled,
   onClear,
   ...props
-}: FormIconTextFieldProps) {
+}: FormIconTextFieldProps<TFieldValues, TName>) {
   const { field, fieldState } = useController({
     name,
     rules,
