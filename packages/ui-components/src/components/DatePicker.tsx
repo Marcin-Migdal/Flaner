@@ -1,5 +1,5 @@
 import React, { useId } from "react";
-import { format } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { pl, enGB } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@flaner/shared/utils";
@@ -17,11 +17,13 @@ export interface DatePickerProps {
   value?: Date;
   onChange?: (date?: Date) => void;
   className?: string;
+  buttonClassName?: string;
   disabled?: boolean;
   dateFormat?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   autoCloseOnSelect?: boolean;
+  placeholder?: string;
 }
 
 export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
@@ -32,6 +34,7 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
       error,
       id: customId,
       className,
+      buttonClassName,
       value,
       onChange,
       disabled,
@@ -39,6 +42,7 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
       open: controlledOpen,
       onOpenChange: controlledOnOpenChange,
       autoCloseOnSelect = true,
+      placeholder,
     },
     ref,
   ) => {
@@ -57,7 +61,14 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
       controlledOnOpenChange?.(nextOpen);
     };
 
-    const handleSelect = (date?: Date) => {
+    const handleSelect = (date?: Date, triggerDate?: Date) => {
+      const clickedDate = date ?? triggerDate;
+      if (value && clickedDate && isSameDay(value, clickedDate)) {
+        if (autoCloseOnSelect) {
+          handleOpenChange(false);
+        }
+        return;
+      }
       onChange?.(date);
       if (autoCloseOnSelect && date) {
         handleOpenChange(false);
@@ -75,20 +86,26 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
             <Button
               id={inputId}
               ref={ref}
-              variant={"outline"}
+              type="button"
+              variant="outline"
+              size="xl"
+              data-invalid={!!error}
+              aria-invalid={!!error}
               className={cn(
-                "w-full justify-start text-left font-normal",
-                !value && "text-muted-foreground"
+                "h-10 w-full justify-start rounded-lg border-input bg-transparent px-3 py-2 text-sm font-normal text-foreground shadow-none transition-colors hover:border-accent hover:bg-accent/10 dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50",
+                !value && "text-muted-foreground",
+                buttonClassName
               )}
               disabled={disabled}
             >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {value ? format(value, dateFormat, { locale: dfLocale }) : <span>{t("datePicker.selectDate")}</span>}
+              <CalendarIcon className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+              {value ? format(value, dateFormat, { locale: dfLocale }) : <span>{placeholder ?? t("datePicker.selectDate")}</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
               mode="single"
+              required
               selected={value}
               onSelect={handleSelect}
               locale={dfLocale}

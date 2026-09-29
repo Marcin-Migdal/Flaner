@@ -10,6 +10,7 @@
     "shopping": "Shopping",
     "planning": "Planning",
     "scheduling": "Scheduler",
+    "splits": "Splits",
     "settings": "Settings",
     "tools": "Tools",
     "spooler": "Spooler",
@@ -80,6 +81,8 @@
     "groupInvitation": "Invited you to a group.",
     "eventInvitation": "Invited you to an event.",
     "eventReopened": "Reopened voting in an event.",
+    "splitGroupInvitation": "Added you to an split group.",
+    "splitSettlementPending": "Submitted a settlement in an expense group.",
     "systemAlert": "Important system alert.",
     "system": "You have a new notification."
   },

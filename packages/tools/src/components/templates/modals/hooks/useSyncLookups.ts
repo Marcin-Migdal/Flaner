@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { User } from "firebase/auth";
+import type { UserType } from "@flaner/shared/types";
 import type { FilamentTemplate } from "../../../../api/templates";
 import {
   addLookupColor,
@@ -13,7 +13,7 @@ import { bambuFilaments } from "../../../../utils/bambuFilaments";
  * materials, types, or colors exist in the respective lookup subcollections.
  */
 export const useSyncLookups = (
-  user: User | null,
+  user: UserType | null,
   userTemplates: FilamentTemplate[],
 ) => {
   const syncLookupsRef = useRef(false);

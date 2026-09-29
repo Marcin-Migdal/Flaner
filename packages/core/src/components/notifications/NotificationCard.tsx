@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@flaner/ui-components";
 import { formatDistanceToNow } from "date-fns";
 import { pl, enUS } from "date-fns/locale";
 import { TFunction } from "i18next";
-import { AlertCircle, Bell, Calendar, CheckCircle, UserPlus, Users, XCircle } from "lucide-react";
+import { AlertCircle, Bell, Calendar, CheckCircle, HandCoins, UserPlus, Users, Wallet, XCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { AppNotification, NotificationType } from "../../api/notifications";
@@ -20,6 +20,10 @@ const getIcon = (notificationType: NotificationType) => {
     case "event_invitation":
     case "event_reopened":
       return <Calendar className="size-4 text-brand" />;
+    case "split_group_invitation":
+      return <Wallet className="size-4 text-brand" />;
+    case "split_settlement_pending":
+      return <HandCoins className="size-4 text-amber-500" />;
     case "system_alert":
       return <AlertCircle className="size-4 text-amber-500" />;
     default:
@@ -41,6 +45,10 @@ const getText = (notificationType: NotificationType, t: TFunction) => {
       return t("notifications.eventInvitation", { defaultValue: "Zaprosił(a) Cię do wydarzenia." });
     case "event_reopened":
       return t("notifications.eventReopened", { defaultValue: "Wznowił(a) głosowanie w wydarzeniu." });
+    case "split_group_invitation":
+      return t("notifications.splitGroupInvitation");
+    case "split_settlement_pending":
+      return t("notifications.splitSettlementPending");
     case "system_alert":
       return t("notifications.systemAlert", { defaultValue: "Ważne powiadomienie systemowe." });
     default:
@@ -73,6 +81,8 @@ export function NotificationCard({ notification, onRead, onClosePopover }: Notif
       navigate("/community/groups#group-invitations");
     } else if (notification.type === "event_invitation" || notification.type === "event_reopened") {
       navigate("/planning");
+    } else if (notification.type === "split_group_invitation" || notification.type === "split_settlement_pending") {
+      navigate({ pathname: "/planning/splits", hash: notification.splitGroupId ?? "" });
     }
 
     // 3. Close the popover

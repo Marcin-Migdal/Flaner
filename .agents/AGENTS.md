@@ -4,6 +4,10 @@
 - ALWAYS before starting implementation (modifying or creating files), you MUST present an Action Plan to the user and **STRICTLY PAUSE** to wait for their approval.
 - You are forbidden from using tools like `write_to_file`, `replace_file_content`, etc., until the user explicitly approves your plan.
 
+**CRITICAL BEHAVIORAL RULE: NO AUTOMATIC GIT STAGING OR COMMITS**
+- NEVER perform git staging (`git add`), commits (`git commit`), stashes, or pushes on your own initiative or upon completing a task.
+- Git commands that modify repository state or history are STRICTLY FORBIDDEN unless the user explicitly requests them in their prompt or it was explicitly agreed upon in the conversation.
+
 **PRE-FLIGHT PROTOCOL & SKILLS USAGE**
 At the beginning of every task, before writing any code, execute the "Pre-Flight Protocol" and include it in your response:
 1. **Task Type:** [Classify the task, e.g., New Feature, Refactor, Bugfix, UI Component, Configuration]

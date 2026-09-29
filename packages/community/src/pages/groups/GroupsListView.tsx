@@ -121,6 +121,7 @@ export function GroupsListView() {
           />
           <GroupInvitationsSheet />
           <Button
+            variant="brand"
             size="lg"
             onClick={() => setIsCreateModalOpen(true)}
             className="shrink-0 px-3 sm:px-4 flex items-center gap-1.5"
