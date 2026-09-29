@@ -2,7 +2,7 @@ import { useAuth } from "@flaner/shared/context";
 import { Button } from "@flaner/ui-components";
 import { Pencil, Trash2, Wallet } from "lucide-react";
 import type { SplitGroup } from "../../../../api/splits";
-import { useMoneyFormatter } from "../../../../hooks/useMoneyFormatter";
+import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import {
   getPairwiseDebts,

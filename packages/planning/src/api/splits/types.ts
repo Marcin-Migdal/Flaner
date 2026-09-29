@@ -6,8 +6,8 @@ export const SPLIT_TYPES = ["equally", "exact"] as const;
 
 export type SplitType = (typeof SPLIT_TYPES)[number];
 
-/** Amounts keyed by ISO 4217 currency code. */
-export type AmountsByCurrency = Record<string, number>;
+import type { AmountsByCurrency } from "@flaner/shared/types";
+export type { AmountsByCurrency };
 
 export type SplitGroupStatus = "active" | "deleting";
 

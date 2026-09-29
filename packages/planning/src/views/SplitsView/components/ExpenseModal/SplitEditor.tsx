@@ -2,9 +2,10 @@ import { Avatar, AvatarFallback, AvatarImage, FormCheckbox, FormTextField } from
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { SPLIT_TYPES } from "../../../../api/splits";
 import type { SplitGroupMember } from "../../../../hooks/useSplitGroupMembers";
-import { useMoneyFormatter } from "../../../../hooks/useMoneyFormatter";
+import { useMoneyFormatter } from "@flaner/shared/hooks";
+import { DEFAULT_CURRENCY } from "@flaner/shared/constants";
+import { splitEqually, toMinorUnits } from "@flaner/shared/utils";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
-import { DEFAULT_CURRENCY, splitEqually, toMinorUnits } from "../../../../utils/money";
 import type { CreateExpenseFormData } from "../../../../utils/schemas";
 import { splitEditorStyles as styles, splitSummaryVariants, splitTypeButtonVariants } from "./SplitEditor.styles";
 

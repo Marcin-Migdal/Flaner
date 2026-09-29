@@ -1,6 +1,6 @@
 import * as z from "zod";
 import { EXPENSE_CATEGORIES, SPLIT_TYPES } from "../../api/splits/types";
-import { hasAtMostTwoDecimals, toMinorUnits } from "../money";
+import { hasAtMostTwoDecimals, toMinorUnits } from "@flaner/shared/utils";
 
 export const getCreateExpenseSchema = (t: (key: string, options?: Record<string, unknown>) => string) =>
   z

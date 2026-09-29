@@ -17,9 +17,9 @@ import { FormProvider, useForm } from "react-hook-form";
 import type { SplitGroup } from "../../../../api/splits";
 import { ParticipantSelect } from "../../../../components/ParticipantSelect";
 import { useCreateSplitGroupMutation, useUpdateSplitGroupMutation } from "../../../../hooks/api/mutation";
-import { useCurrencyOptions } from "../../../../hooks/useCurrencyOptions";
+import { useCurrencyOptions } from "@flaner/shared/hooks";
+import { DEFAULT_CURRENCY } from "@flaner/shared/constants";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
-import { DEFAULT_CURRENCY } from "../../../../utils/money";
 import { getSplitGroupSchema, type SplitGroupFormData } from "../../../../utils/schemas";
 import { splitGroupModalStyles as styles } from "./SplitGroupModal.styles";
 

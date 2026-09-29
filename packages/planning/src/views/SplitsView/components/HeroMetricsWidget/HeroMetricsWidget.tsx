@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@flaner/shared/utils";
 import type { AmountsByCurrency } from "../../../../api/splits";
-import { useMoneyFormatter } from "../../../../hooks/useMoneyFormatter";
+import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import type { UserDebtSummary } from "../../../../utils/splitBalances";
 import {

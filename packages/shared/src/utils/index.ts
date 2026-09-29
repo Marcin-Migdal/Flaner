@@ -4,3 +4,4 @@ export * from './cloudinary';
 export * from './consts';
 export * from './generateNavigation';
 export * from './firestoreConverter';
+export * from './money';

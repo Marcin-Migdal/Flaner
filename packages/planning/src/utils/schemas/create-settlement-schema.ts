@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { hasAtMostTwoDecimals } from "../money";
+import { hasAtMostTwoDecimals } from "@flaner/shared/utils";
 
 export const getCreateSettlementSchema = (t: (key: string, options?: Record<string, unknown>) => string) =>
   z

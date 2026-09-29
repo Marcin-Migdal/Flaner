@@ -1,11 +1,11 @@
 import { useCallback } from "react";
-import type { AmountsByCurrency } from "../api/splits";
+import { useTranslation } from "react-i18next";
+import type { AmountsByCurrency } from "../types/money";
 import { formatMoney, formatMoneyList } from "../utils/money";
-import { usePlanningTranslations } from "./usePlanningTranslations";
 
 export const useMoneyFormatter = () => {
-  const { i18n } = usePlanningTranslations();
-  const locale = i18n.language;
+  const { i18n } = useTranslation();
+  const locale = i18n?.language || "pl";
 
   const format = useCallback(
     (amountInMinorUnits: number, currency: string) => formatMoney(amountInMinorUnits, currency, locale),
@@ -19,3 +19,5 @@ export const useMoneyFormatter = () => {
 
   return { format, formatList };
 };
+
+export default useMoneyFormatter;

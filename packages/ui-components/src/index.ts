@@ -23,6 +23,8 @@ export * from "./components/Checkbox";
 export * from "./components/FormCheckbox";
 export * from "./components/DatePicker";
 export * from "./components/FormDatePicker";
+export * from "./components/MoneyInput";
+export * from "./components/FormMoneyInput";
 export * from "./components/ui/attachment";
 export { Checkbox as ShadcnCheckbox } from "./components/ui/checkbox";
 export * from "./components/Avatar";

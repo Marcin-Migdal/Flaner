@@ -18,7 +18,7 @@ import { CheckCircle2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Settlement, SplitGroup } from "../../../../api/splits";
 import { useConfirmSettlementMutation, useUpdateSplitGroupMutation } from "../../../../hooks/api/mutation";
-import { useMoneyFormatter } from "../../../../hooks/useMoneyFormatter";
+import { useMoneyFormatter } from "@flaner/shared/hooks";
 import type { SplitGroupMember } from "../../../../hooks/useSplitGroupMembers";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import type { Debt } from "../../../../utils/debtSimplification";

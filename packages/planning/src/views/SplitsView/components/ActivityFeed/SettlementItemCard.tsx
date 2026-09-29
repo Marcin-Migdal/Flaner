@@ -3,7 +3,7 @@ import { format, parseISO } from "date-fns";
 import { enUS, pl } from "date-fns/locale";
 import { Check, HandCoins, Trash2 } from "lucide-react";
 import type { Settlement } from "../../../../api/splits";
-import { useMoneyFormatter } from "../../../../hooks/useMoneyFormatter";
+import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { settlementItemCardStyles as styles } from "./SettlementItemCard.styles";
 

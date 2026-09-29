@@ -3,7 +3,7 @@ import { format, parseISO } from "date-fns";
 import { enUS, pl } from "date-fns/locale";
 import { Pencil, Trash2 } from "lucide-react";
 import type { Expense } from "../../../../api/splits";
-import { useMoneyFormatter } from "../../../../hooks/useMoneyFormatter";
+import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { EXPENSE_CATEGORY_ICONS } from "../../../../utils/expenseCategoryIcons";
 import { expenseItemCardStyles as styles, expenseShareVariants } from "./ExpenseItemCard.styles";

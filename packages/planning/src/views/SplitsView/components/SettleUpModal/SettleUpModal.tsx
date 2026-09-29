@@ -6,9 +6,9 @@ import {
   DialogHeader,
   DialogTitle,
   FormDatePicker,
+  FormMoneyInput,
   FormSelect,
   FormTextField,
-  type SelectOption,
 } from "@flaner/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -19,10 +19,11 @@ import { useAuth } from "@flaner/shared/context";
 import { toast } from "@flaner/shared/utils";
 import type { SettlementStatus, SplitGroup } from "../../../../api/splits";
 import { useCreateSettlementMutation } from "../../../../hooks/api/mutation";
-import { useCurrencyOptions } from "../../../../hooks/useCurrencyOptions";
+import { useCurrencyOptions } from "@flaner/shared/hooks";
+import { DEFAULT_CURRENCY } from "@flaner/shared/constants";
+import { fromMinorUnits, toMinorUnits } from "@flaner/shared/utils";
 import type { SplitGroupMember } from "../../../../hooks/useSplitGroupMembers";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
-import { DEFAULT_CURRENCY, fromMinorUnits, toMinorUnits } from "../../../../utils/money";
 import { getCreateSettlementSchema, type CreateSettlementFormData } from "../../../../utils/schemas";
 import { getOutstandingDebtAmount } from "../../../../utils/splitBalances";
 import { settleUpModalStyles as styles } from "./SettleUpModal.styles";
@@ -196,25 +197,13 @@ export const SettleUpModal = ({ draft, onClose, group, members }: SettleUpModalP
                   isSearchable={memberOptions.length > 8}
                 />
               </div>
-              <div className={styles.amountRow}>
-                <FormTextField
-                  name="amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  inputMode="decimal"
-                  label={t("splits.fields.amount")}
-                  placeholder="0.00"
-                />
-                <FormSelect
-                  name="currency"
-                  label={t("splits.fields.currency")}
-                  options={currencyOptions}
-                  formatOptionLabel={(option: SelectOption, { context }) =>
-                    context === "value" ? option.value : option.label
-                  }
-                />
-              </div>
+              <FormMoneyInput
+                amountName="amount"
+                currencyName="currency"
+                label={t("splits.fields.amount")}
+                currencyLabel={t("splits.fields.currency")}
+                currencyOptions={currencyOptions}
+              />
               <FormDatePicker name="date" label={t("splits.fields.date")} />
               <FormTextField name="note" label={t("splits.fields.note")} placeholder={t("splits.fields.note")} />
             </div>

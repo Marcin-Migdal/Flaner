@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   FormDatePicker,
+  FormMoneyInput,
   FormSelect,
   FormTextField,
   type SelectOption,
@@ -23,11 +24,12 @@ import {
   type SplitGroup,
 } from "../../../../api/splits";
 import { useCreateExpenseMutation, useUpdateExpenseMutation } from "../../../../hooks/api/mutation";
-import { useCurrencyOptions } from "../../../../hooks/useCurrencyOptions";
+import { useCurrencyOptions } from "@flaner/shared/hooks";
+import { DEFAULT_CURRENCY } from "@flaner/shared/constants";
+import { fromMinorUnits, splitEqually, toMinorUnits } from "@flaner/shared/utils";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import type { SplitGroupMember } from "../../../../hooks/useSplitGroupMembers";
 import { EXPENSE_CATEGORY_ICONS } from "../../../../utils/expenseCategoryIcons";
-import { DEFAULT_CURRENCY, fromMinorUnits, splitEqually, toMinorUnits } from "../../../../utils/money";
 import { getCreateExpenseSchema, type CreateExpenseFormData } from "../../../../utils/schemas";
 import { expenseModalStyles as styles } from "./ExpenseModal.styles";
 import { SplitEditor } from "./SplitEditor";
@@ -208,25 +210,13 @@ export const ExpenseModal = ({ open, onOpenChange, group, members, expenseToEdit
                 placeholder={t("splits.fields.title")}
               />
 
-              <div className={styles.amountRow}>
-                <FormTextField
-                  name="amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  inputMode="decimal"
-                  label={t("splits.fields.amount")}
-                  placeholder="0.00"
-                />
-                <FormSelect
-                  name="currency"
-                  label={t("splits.fields.currency")}
-                  options={currencyOptions}
-                  formatOptionLabel={(option: SelectOption, { context }) =>
-                    context === "value" ? option.value : option.label
-                  }
-                />
-              </div>
+              <FormMoneyInput
+                amountName="amount"
+                currencyName="currency"
+                label={t("splits.fields.amount")}
+                currencyLabel={t("splits.fields.currency")}
+                currencyOptions={currencyOptions}
+              />
 
               <div className={styles.grid}>
                 <FormSelect
