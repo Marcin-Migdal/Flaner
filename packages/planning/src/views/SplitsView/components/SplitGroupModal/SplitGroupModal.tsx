@@ -60,33 +60,37 @@ export const SplitGroupModal = ({ open, onOpenChange, groupToEdit = null, onSucc
   }, [open, groupToEdit, user?.uid, methods]);
 
   const onSubmit = async (data: SplitGroupFormData) => {
-    if (groupToEdit) {
-      await updateGroup(
-        {
-          groupId: groupToEdit.id,
-          data: {
-            name: data.name,
-            description: data.description,
-            defaultCurrency: data.defaultCurrency,
-            simplifyDebts: data.simplifyDebts ?? false,
+    try {
+      if (groupToEdit) {
+        await updateGroup(
+          {
+            groupId: groupToEdit.id,
+            data: {
+              name: data.name,
+              description: data.description,
+              defaultCurrency: data.defaultCurrency,
+              simplifyDebts: data.simplifyDebts ?? false,
+            },
           },
-        },
-        {
-          onSuccess: () => {
-            onOpenChange(false);
-            onSuccess?.(groupToEdit.id);
+          {
+            onSuccess: () => {
+              onOpenChange(false);
+              onSuccess?.(groupToEdit.id);
+            },
           },
-        },
-      );
-      return;
-    }
+        );
+        return;
+      }
 
-    await createGroup(data, {
-      onSuccess: (group) => {
-        onOpenChange(false);
-        onSuccess?.(group.id);
-      },
-    });
+      await createGroup(data, {
+        onSuccess: (group) => {
+          onOpenChange(false);
+          onSuccess?.(group.id);
+        },
+      });
+    } catch {
+      // Handled by mutation's global onError toast
+    }
   };
 
   return (

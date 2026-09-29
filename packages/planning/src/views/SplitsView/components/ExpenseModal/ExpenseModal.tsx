@@ -1,4 +1,5 @@
 import { useAuth } from "@flaner/shared/context";
+import { toast } from "@flaner/shared/utils";
 import {
   Button,
   Dialog,
@@ -154,30 +155,41 @@ export const ExpenseModal = ({ open, onOpenChange, group, members, expenseToEdit
 
     if (expenseToEdit) {
       const isCreator = (expenseToEdit.createdBy || expenseToEdit.paidBy) === currentUserId;
-      if (!isCreator) return;
+      if (!isCreator) {
+        toast.failure(t("errors.notAuthorizedToEditExpense"));
+        return;
+      }
 
-      await updateExpense(
+      try {
+        await updateExpense(
+          {
+            groupId: group.id,
+            expenseId: expenseToEdit.id,
+            data: expenseInput,
+          },
+          {
+            onSuccess: () => onOpenChange(false),
+          },
+        );
+      } catch {
+        // Handled by mutation's global onError toast
+      }
+      return;
+    }
+
+    try {
+      await createExpense(
         {
           groupId: group.id,
-          expenseId: expenseToEdit.id,
           data: expenseInput,
         },
         {
           onSuccess: () => onOpenChange(false),
         },
       );
-      return;
+    } catch {
+      // Handled by mutation's global onError toast
     }
-
-    await createExpense(
-      {
-        groupId: group.id,
-        data: expenseInput,
-      },
-      {
-        onSuccess: () => onOpenChange(false),
-      },
-    );
   };
 
   return (

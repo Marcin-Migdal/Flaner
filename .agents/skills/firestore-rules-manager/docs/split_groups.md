@@ -91,7 +91,7 @@ match /split_groups/{groupId} {
   }
 
   function splitGroupTouchedInSameWrite() {
-    return getAfter(splitGroupPath()).data.updatedAt != get(splitGroupPath()).data.updatedAt;
+    return getAfter(splitGroupPath()).data.get('updatedAt', 0) != get(splitGroupPath()).data.get('updatedAt', 0);
   }
 
   function splitGroupParticipantsChangeAllowed() {

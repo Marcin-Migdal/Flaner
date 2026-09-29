@@ -666,6 +666,11 @@ const convertSettlement = (
   };
 };
 
+const CONCURRENCY_LIMIT = 5;
+
+const chunkArray = <T>(arr: T[], size: number): T[][] =>
+  Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
+
 const fetchRates = async (sources: ConvertibleSource[], targetCurrency: string) => {
   const uniqueKeys = Array.from(
     new Map(
@@ -675,12 +680,17 @@ const fetchRates = async (sources: ConvertibleSource[], targetCurrency: string) 
     ).values(),
   );
 
-  const entries = await Promise.all(
-    uniqueKeys.map(async (source): Promise<[string, ExchangeRate]> => [
-      getRateKey(source.currency, source.date),
-      await getExchangeRate(source.currency, targetCurrency, source.date),
-    ]),
-  );
+  const entries: [string, ExchangeRate][] = [];
+  for (const chunk of chunkArray(uniqueKeys, CONCURRENCY_LIMIT)) {
+    const results = await Promise.all(
+      chunk.map(async (source): Promise<[string, ExchangeRate]> => [
+        getRateKey(source.currency, source.date),
+        await getExchangeRate(source.currency, targetCurrency, source.date),
+      ]),
+    );
+    entries.push(...results);
+  }
+
   return new Map(entries);
 };
 

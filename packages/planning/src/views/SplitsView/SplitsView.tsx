@@ -42,12 +42,16 @@ export const SplitsView = () => {
   const handleConfirmDelete = async () => {
     if (!groupToDelete) return;
     const deletedId = groupToDelete.id;
-    await deleteGroup(deletedId, {
-      onSuccess: () => {
-        setGroupToDelete(null);
-        if (hashId === deletedId) navigate({ hash: "" }, { replace: true });
-      },
-    });
+    try {
+      await deleteGroup(deletedId, {
+        onSuccess: () => {
+          setGroupToDelete(null);
+          if (hashId === deletedId) navigate({ hash: "" }, { replace: true });
+        },
+      });
+    } catch {
+      // Handled by mutation's global onError toast
+    }
   };
 
   return (

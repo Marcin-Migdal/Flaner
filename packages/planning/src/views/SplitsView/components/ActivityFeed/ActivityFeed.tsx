@@ -93,7 +93,7 @@ export const ActivityFeed = ({
   const [pendingDeletion, setPendingDeletion] = useState<PendingDeletion | null>(null);
   const { mutateAsync: deleteExpense, isPending: isDeletingExpense } = useDeleteExpenseMutation();
   const { mutateAsync: deleteSettlement, isPending: isDeletingSettlement } = useDeleteSettlementMutation();
-  const { mutateAsync: confirmSettlement } = useConfirmSettlementMutation();
+  const { mutate: confirmSettlement } = useConfirmSettlementMutation();
 
   const activeFiltersCount = countActiveFilters(filters);
   const hasActiveFilters = activeFiltersCount > 0;
@@ -159,10 +159,14 @@ export const ActivityFeed = ({
     if (!pendingDeletion) return;
     const options = { onSuccess: () => setPendingDeletion(null) };
 
-    if (pendingDeletion.kind === "expense") {
-      await deleteExpense({ groupId: group.id, expenseId: pendingDeletion.id }, options);
-    } else {
-      await deleteSettlement({ groupId: group.id, settlementId: pendingDeletion.id }, options);
+    try {
+      if (pendingDeletion.kind === "expense") {
+        await deleteExpense({ groupId: group.id, expenseId: pendingDeletion.id }, options);
+      } else {
+        await deleteSettlement({ groupId: group.id, settlementId: pendingDeletion.id }, options);
+      }
+    } catch {
+      // Handled by mutation's global onError toast
     }
   };
 

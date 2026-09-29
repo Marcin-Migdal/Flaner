@@ -58,18 +58,22 @@ export const SplitGroupMembersPopover = ({
     if (!confirmState) return;
     const isLeavingSelf = confirmState.member.id === currentUserId;
 
-    await removeParticipant(
-      { groupId: group.id, participantId: confirmState.member.id },
-      {
-        onSuccess: () => {
-          setConfirmState(null);
-          if (isLeavingSelf) {
-            setIsOpen(false);
-            navigate({ hash: "" }, { replace: true });
-          }
+    try {
+      await removeParticipant(
+        { groupId: group.id, participantId: confirmState.member.id },
+        {
+          onSuccess: () => {
+            setConfirmState(null);
+            if (isLeavingSelf) {
+              setIsOpen(false);
+              navigate({ hash: "" }, { replace: true });
+            }
+          },
         },
-      },
-    );
+      );
+    } catch {
+      // Handled by mutation's global onError toast
+    }
   };
 
   return (
