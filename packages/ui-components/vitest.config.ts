@@ -25,6 +25,7 @@ export default mergeConfig(
           "packages/ui-components/src/components/ui/**",
           "packages/ui-components/src/env.d.ts",
         ],
+        reportsDirectory: path.resolve(__dirname, "../../coverage/packages/ui-components"),
         reporter: ["text", "json", "html"],
       },
     },

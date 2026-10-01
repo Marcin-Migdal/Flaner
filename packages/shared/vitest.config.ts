@@ -26,6 +26,7 @@ export default mergeConfig(
           "packages/shared/src/env.d.ts",
           "packages/shared/src/utils/consts.ts",
         ],
+        reportsDirectory: path.resolve(__dirname, "../../coverage/packages/shared"),
         reporter: ["text", "json", "html"],
       },
     },

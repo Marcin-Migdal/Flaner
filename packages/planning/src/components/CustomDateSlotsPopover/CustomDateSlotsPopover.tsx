@@ -16,9 +16,9 @@ import { cn } from "@flaner/shared/utils";
 import { useIsMobile } from "@flaner/shared/hooks";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { customSlotsStyles } from "./CustomDateSlotsPopover.styles";
-import { CalendarPreview } from "./CalendarPreview";
-import { PresetSelector } from "./PresetSelector";
-import { RecurrenceControls } from "./RecurrenceControls";
+import { CalendarPreview } from "./components/CalendarPreview";
+import { PresetSelector } from "./components/PresetSelector";
+import { RecurrenceControls } from "./components/RecurrenceControls";
 
 export type RepeatUnit = "day" | "week" | "month";
 export type MonthSubMode = "each" | "onThe" | "workday";

@@ -18,9 +18,15 @@ This skill defines the official standards, patterns, and conventions for unit an
 
 ---
 
-## 2. File Organization & Colocation
+## 2. File Organization & Colocation (Folder-per-Unit Standard)
 
-- Place test files **directly next to the file they are testing** (colocation).
+- **Mandatory Folder-per-Unit Rule:** Every unit (component, page, hook, schema, util) that has a test file (`*.spec.ts` / `*.spec.tsx`) **MUST have its own dedicated folder** named after the unit.
+- Never keep loose pairs of `MyUnit.tsx` and `MyUnit.spec.tsx` flat in a parent directory.
+- The unit folder aggregates:
+  1. Main implementation: `MyUnit.tsx` / `MyUnit.ts`
+  2. Test specification: `MyUnit.spec.tsx` / `MyUnit.spec.ts`
+  3. Styles (if applicable): `MyUnit.styles.ts`
+  4. Barrel export: `index.ts` (re-exporting `MyUnit` to maintain seamless imports)
 - Naming convention:
   - Pure TypeScript/functions/utils: `*.spec.ts` (e.g., `formatDate.spec.ts`)
   - React components / hooks: `*.spec.tsx` (e.g., `Button.spec.tsx`, `useGroupQuery.spec.tsx`)
@@ -29,7 +35,8 @@ This skill defines the official standards, patterns, and conventions for unit an
   packages/ui-components/src/components/Button/
   ├── Button.tsx
   ├── Button.styles.ts
-  └── Button.spec.tsx
+  ├── Button.spec.tsx
+  └── index.ts
   ```
 
 ---
@@ -177,4 +184,27 @@ When working across multiple packages and MFEs in the monorepo, follow these Typ
 
 3. **No `references` to non-composite configs:**
    Never add `"references": [{ "path": "./tsconfig.lib.json" }]` to `tsconfig.spec.json` unless the target config has `"composite": true`. Vitest and Vite do direct source resolution, making project references unnecessary and prone to `TS6306` errors.
+
+---
+
+## 10. Performance, Vitest Pool & Troubleshooting (`JavaScript heap out of memory`)
+
+### A. Pool Configuration (`pool: 'threads'` & `node` environment)
+- **Fast Execution on Windows:** In `vitest.base.ts`, Vitest is configured with `pool: 'threads'` to utilize Node worker threads instead of process forking (`forks`). This eliminates process creation and NTFS file-locking overhead on Windows, reducing test duration by ~40%.
+- **Lightweight Environments:** All schemas (`**/schemas/**`) and pure utility modules (`packages/*/src/utils/**` except `cropImage` which needs canvas) run under `environment: 'node'` via `environmentMatchGlobs` in `vitest.base.ts`. Pure logic does not instantiate JSDOM, booting in 0-2 ms instead of 150-200 ms.
+
+### B. Troubleshooting: `JavaScript heap out of memory` (OOM)
+If test suites grow into thousands of tests and Node throws an Out-Of-Memory error:
+`FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory`
+
+Follow these immediate remediation steps:
+1. **Fallback to Process Isolation (`pool: 'forks'`):**
+   In `vitest.base.ts`, switch `pool: 'threads'` to `pool: 'forks'`. In `forks` mode, each test worker runs in an independent operating system process whose memory is 100% reclaimed by the OS immediately upon completion.
+2. **Increase V8 Heap Size:**
+   Run tests with expanded heap allocation:
+   `NODE_OPTIONS="--max-old-space-size=4096" npm test`
+3. **Limit Max Concurrency:**
+   Limit simultaneous worker threads in `vitest.base.ts` by setting `maxWorkers: 8` or via CLI:
+   `npm test -- --maxWorkers=8`
+
 

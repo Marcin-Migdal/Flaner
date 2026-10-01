@@ -28,6 +28,7 @@ export default mergeConfig(
           "packages/community/src/App.tsx",
           "packages/community/src/env.d.ts",
         ],
+        reportsDirectory: path.resolve(__dirname, "../../coverage/packages/community"),
         reporter: ["text", "json", "html"],
       },
     },

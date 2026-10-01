@@ -32,3 +32,13 @@ This file defines the absolute technological foundations for the Flaner v2 proje
 - 🚨 **NO `any` OR `unknown`:** Do not use `any` or `unknown` as a lazy placeholder for undefined structures. Always provide exact types.
 - **Library Types:** When working with external libraries (e.g., Firebase, React Query, react-select), always look for and import their officially exported types (e.g., `DocumentReference`, `UseMutationOptions`) rather than re-creating them or using `unknown`/`any`.
 - **Type vs Interface:** Prefer using `type` aliases for defining structures on a daily basis. Only use `interface` if it is 100% necessary (e.g., when you specifically need declaration merging).
+
+## Testing & Vitest Performance
+- **Folder-per-Unit:** Every tested unit (component, hook, util, schema) MUST have its dedicated directory aggregating the implementation, `*.spec.ts(x)`, styles, and `index.ts`.
+- **Vitest Execution (`pool: 'threads'`):** In `vitest.base.ts`, Vitest uses worker threads (`pool: 'threads'`) and `node` environment for schemas/utils to ensure fast execution on Windows.
+- **Troubleshooting `JavaScript heap out of memory` (OOM):**
+  If test suites grow very large and Node runs out of memory (`JavaScript heap out of memory`), apply these remedies:
+  1. Switch `pool: 'threads'` back to `pool: 'forks'` in `vitest.base.ts` (OS reclaims 100% memory after each file).
+  2. Increase Node heap: `NODE_OPTIONS="--max-old-space-size=4096" npm test`.
+  3. Limit concurrent workers: `npm test -- --maxWorkers=8`.
+

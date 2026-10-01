@@ -1,3 +1,3 @@
 export * from "./SchedulerEventControlPanel";
-export * from "./SchedulerEventHeader";
-export * from "./SchedulerParticipantsList";
+export * from "./components/SchedulerEventHeader";
+export * from "./components/SchedulerParticipantsList";

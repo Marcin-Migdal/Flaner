@@ -108,3 +108,29 @@ export default mergeConfig(
 );
 ```
 
+## 4. Mandatory "Folder-per-Unit" File Organization
+
+Across all packages (`ui-components`, `shared`, and functional MFEs), loose pairs of implementation and test files directly in parent folders are **strictly forbidden**.
+
+Every unit that has a test file (`*.spec.ts` / `*.spec.tsx`) **must have its own dedicated directory**:
+```
+📁 UnitName/
+├── UnitName.tsx (or UnitName.ts)
+├── UnitName.spec.tsx (or UnitName.spec.ts)
+├── UnitName.styles.ts (if applicable)
+└── index.ts (re-exporting UnitName for clean consumer imports)
+```
+
+**Examples:**
+- `packages/community/src/components/groups/CreateGroupModal/`
+  - `CreateGroupModal.tsx`
+  - `CreateGroupModal.spec.tsx`
+  - `index.ts`
+- `packages/ui-components/src/components/Avatar/`
+  - `Avatar.tsx`
+  - `Avatar.spec.tsx`
+  - `index.ts`
+- `packages/shared/src/utils/money/`
+  - `money.ts`
+  - `money.spec.ts`
+  - `index.ts`
