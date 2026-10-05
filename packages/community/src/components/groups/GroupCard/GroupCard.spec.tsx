@@ -62,4 +62,26 @@ describe("GroupCard component", () => {
     expect(mockNavigate).toHaveBeenCalledWith("group-target-999");
     expect(mockNavigate).toHaveBeenCalledTimes(1);
   });
+
+  it("renders private badge and Lock icon when group type is private", () => {
+    const group = createMockGroup({
+      name: "Secret Society",
+      type: "private",
+    });
+
+    renderWithProviders(<GroupCard group={group} />);
+
+    expect(screen.getByText("groupsView.card.private")).toBeInTheDocument();
+  });
+
+  it("renders noDescription fallback when description is missing", () => {
+    const group = createMockGroup({
+      name: "No Desc Group",
+      description: "",
+    });
+
+    renderWithProviders(<GroupCard group={group} />);
+
+    expect(screen.getByText("groupsView.card.noDescription")).toBeInTheDocument();
+  });
 });

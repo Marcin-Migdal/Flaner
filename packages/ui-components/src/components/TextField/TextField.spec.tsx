@@ -118,4 +118,10 @@ describe("TextField component", () => {
     expect(incrementBtn).toBeDisabled();
     expect(decrementBtn).toBeDisabled();
   });
+
+  it("forwards object ref correctly", () => {
+    const ref = { current: null as HTMLInputElement | null };
+    render(<TextField ref={ref} label="Ref Field" />);
+    expect(ref.current).toBeInstanceOf(HTMLInputElement);
+  });
 });

@@ -62,4 +62,34 @@ describe("ManageGroupRolesSection component", () => {
       })
     );
   });
+
+  it("handles missing rolePermissions gracefully and shows saving state", () => {
+    vi.mocked(mutations.useUpdateGroupRolePermissionsMutation).mockReturnValue({
+      mutateAsync: mutateAsyncMock,
+      isPending: true,
+    } as unknown as ReturnType<typeof mutations.useUpdateGroupRolePermissionsMutation>);
+
+    const mockGroup = createMockGroup({ id: "grp-no-perms", rolePermissions: undefined });
+
+    renderWithProviders(<ManageGroupRolesSection groupId="grp-no-perms" group={mockGroup} />);
+
+    const saveBtn = screen.getByRole("button", { name: "manageGroupSheet.savePermissions" });
+    expect(saveBtn).toHaveAttribute("data-busy", "true");
+    expect(saveBtn).toBeDisabled();
+  });
+
+  it("falls back to false when role permission key is undefined in state", () => {
+    const mockGroup = createMockGroup({
+      id: "grp-partial",
+      rolePermissions: {
+        admin: {} as never,
+        moderator: {} as never,
+        member: {} as never,
+      },
+    });
+
+    renderWithProviders(<ManageGroupRolesSection groupId="grp-partial" group={mockGroup} />);
+    const switches = screen.getAllByRole("checkbox");
+    expect(switches[0]).not.toBeChecked();
+  });
 });

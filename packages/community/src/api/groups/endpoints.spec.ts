@@ -122,6 +122,17 @@ describe("community groups endpoints", () => {
       );
     });
 
+    it("updates group without nameLower when name is not modified", async () => {
+      await updateGroup("group-1", { description: "New Description" });
+
+      expect(mockUpdateDoc).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          description: "New Description",
+        }),
+      );
+    });
+
     it("updates group role permissions", async () => {
       await updateGroupRolePermissions("group-1", DEFAULT_ROLE_PERMISSIONS);
 
@@ -138,12 +149,17 @@ describe("community groups endpoints", () => {
         .mockResolvedValueOnce({ docs: [{ ref: { id: "m-1" } }] }) // members
         .mockResolvedValueOnce({ docs: [{ ref: { id: "r-1" } }] }) // requests
         .mockResolvedValueOnce({
-          docs: [{ ref: { id: "i-1" }, data: () => ({ userId: "u-invited" }) }],
+          docs: [
+            { id: "i-1", ref: { id: "i-1" }, data: () => ({ userId: "u-invited" }) },
+            { id: "u-fallback", ref: { id: "i-2" }, data: () => ({ userId: undefined }) },
+            { id: "", ref: { id: "i-3" }, data: () => ({ userId: "" }) },
+          ],
         }); // invitations
 
       await deleteGroup("group-1");
 
-      expect(mockBatchDelete).toHaveBeenCalledTimes(5); // member + request + group-invitation + user-invitation + group-doc
+      // 1 member + 1 request + 3 group-invitations + 2 user-invitations + 1 group-doc = 8
+      expect(mockBatchDelete).toHaveBeenCalledTimes(8);
       expect(mockBatchCommit).toHaveBeenCalled();
     });
   });
@@ -182,6 +198,20 @@ describe("community groups endpoints", () => {
       const res = await searchGlobalGroups("hiking");
       expect(res.groups).toHaveLength(1);
       expect(res.groups[0].name).toBe("Hiking Enthusiasts");
+      expect(res.nextCursor).toBeUndefined();
+    });
+
+    it("searchGlobalGroups returns nextCursor when results match pageSize", async () => {
+      const tenDocs = Array.from({ length: 10 }, (_, i) => ({
+        data: () => ({ ...mockGroup, id: `g-${i}` }),
+      }));
+      mockGetDocs.mockResolvedValueOnce({
+        docs: tenDocs,
+      });
+
+      const res = await searchGlobalGroups("hiking", undefined, 10);
+      expect(res.groups).toHaveLength(10);
+      expect(res.nextCursor).toBe(tenDocs[9]);
     });
 
     it("getUserGroups queries members collectionGroup and fetches group details", async () => {
@@ -201,6 +231,39 @@ describe("community groups endpoints", () => {
         exists: () => true,
         data: () => mockGroup,
       });
+
+      const res = await getUserGroups("user-1");
+      expect(res).toEqual([mockGroup]);
+    });
+
+    it("getUserGroups skips deleted groups that return null", async () => {
+      mockGetDocs.mockResolvedValueOnce({
+        docs: [
+          {
+            ref: {
+              parent: {
+                parent: { id: "group-1" },
+              },
+            },
+          },
+          {
+            ref: {
+              parent: {
+                parent: { id: "group-deleted" },
+              },
+            },
+          },
+        ],
+      });
+
+      mockGetDoc
+        .mockResolvedValueOnce({
+          exists: () => true,
+          data: () => mockGroup,
+        })
+        .mockResolvedValueOnce({
+          exists: () => false,
+        });
 
       const res = await getUserGroups("user-1");
       expect(res).toEqual([mockGroup]);
@@ -280,6 +343,18 @@ describe("community groups endpoints", () => {
       const res = await getUserGroupRequest("group-1", "user-2");
       expect(res).toEqual({ userId: "user-2" });
     });
+
+    it("getUserGroupRequest returns null if not found or on error", async () => {
+      mockGetDoc.mockResolvedValueOnce({
+        exists: () => false,
+      });
+      const res1 = await getUserGroupRequest("group-1", "user-2");
+      expect(res1).toBeNull();
+
+      mockGetDoc.mockRejectedValueOnce(new Error("Network fail"));
+      const res2 = await getUserGroupRequest("group-1", "user-2");
+      expect(res2).toBeNull();
+    });
   });
 
   describe("Group invitations operations", () => {
@@ -304,6 +379,24 @@ describe("community groups endpoints", () => {
       expect(mockSetDoc).toHaveBeenCalledTimes(3);
     });
 
+    it("inviteUserToGroup handles missing invitor username and avatarUrl gracefully", async () => {
+      mockGetDoc
+        .mockResolvedValueOnce({ exists: () => true })
+        .mockResolvedValueOnce({
+          data: () => ({ username: undefined, avatarUrl: undefined }),
+        });
+
+      await inviteUserToGroup("group-1", "Hiking", "user-2", "user-1");
+
+      expect(mockSetDoc).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          senderUsername: "",
+          senderAvatarUrl: "",
+        }),
+      );
+    });
+
     it("acceptGroupInvitation adds member and deletes invitations", async () => {
       await acceptGroupInvitation("group-1", "user-2");
       expect(mockSetDoc).toHaveBeenCalled();
@@ -313,6 +406,11 @@ describe("community groups endpoints", () => {
     it("rejectGroupInvitation deletes invitations", async () => {
       await rejectGroupInvitation("group-1", "user-2");
       expect(mockDeleteDoc).toHaveBeenCalledTimes(2);
+    });
+
+    it("getUserGroupInvitations returns empty array when userId is empty", async () => {
+      const res = await getUserGroupInvitations("");
+      expect(res).toEqual([]);
     });
 
     it("getUserGroupInvitations returns invitations from user subcollection", async () => {
@@ -330,6 +428,29 @@ describe("community groups endpoints", () => {
 
       const res = await getUserGroupInvitations("user-2");
       expect(res).toEqual([inv]);
+    });
+
+    it("getUserGroupInvitations falls back to collectionGroup when user subcollection is empty", async () => {
+      const inv = {
+        groupId: "group-cg",
+        groupName: "Climbing",
+        userId: "user-2",
+      };
+      mockGetDocs
+        .mockResolvedValueOnce({ empty: true, docs: [] })
+        .mockResolvedValueOnce({ empty: false, docs: [{ data: () => inv }] });
+
+      const res = await getUserGroupInvitations("user-2");
+      expect(res).toEqual([inv]);
+    });
+
+    it("getUserGroupInvitations handles errors in user subcollection and collectionGroup query", async () => {
+      mockGetDocs
+        .mockRejectedValueOnce(new Error("Subcollection query failed"))
+        .mockRejectedValueOnce(new Error("CollectionGroup query failed"));
+
+      const res = await getUserGroupInvitations("user-2");
+      expect(res).toEqual([]);
     });
 
     it("subscribeToUserGroupInvitations invokes callback", () => {

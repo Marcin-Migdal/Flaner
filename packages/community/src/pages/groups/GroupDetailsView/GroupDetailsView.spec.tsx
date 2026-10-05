@@ -10,11 +10,13 @@ import { useAuth } from "@flaner/shared/context";
 
 const mockNavigate = vi.fn();
 
+let mockGroupId: string | undefined = "grp-1";
+
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router");
   return {
     ...actual,
-    useParams: () => ({ groupId: "grp-1" }),
+    useParams: () => ({ groupId: mockGroupId }),
     useNavigate: () => mockNavigate,
   };
 });
@@ -65,6 +67,7 @@ vi.mock("../../../hooks/useCommunityTranslations", () => ({
 describe("GroupDetailsView page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGroupId = "grp-1";
     vi.mocked(hooks.useGetUserGroupRequestQuery).mockReturnValue({
       data: null,
     } as unknown as ReturnType<typeof hooks.useGetUserGroupRequestQuery>);
@@ -461,6 +464,110 @@ describe("GroupDetailsView page", () => {
     expect(leaveMutationMock).not.toHaveBeenCalled();
 
     vi.mocked(useAuth).mockReturnValue({ user: { uid: "user-123", username: "currentuser" } } as never);
+  });
+
+  it("handles missing groupId parameter gracefully", () => {
+    mockGroupId = undefined;
+    vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: undefined, isLoading: true } as never);
+    vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: [] } as never);
+
+    renderWithProviders(<GroupDetailsView />);
+
+    expect(screen.getByText("groupDetails.loading")).toBeInTheDocument();
+    mockGroupId = "grp-1";
+  });
+
+  it("renders pending loaders when friend request mutations are pending", () => {
+    const mockGroup: Group = createMockGroup({ id: "grp-1" });
+    vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: [mockGroup] } as never);
+    vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false } as never);
+    vi.mocked(hooks.useGetGroupMembersQuery).mockReturnValue({
+      data: [
+        { userId: "user-123", role: "owner", joinedAt: 100 },
+        { userId: "user-sent", role: "member", joinedAt: 200 },
+        { userId: "user-recv", role: "member", joinedAt: 200 },
+        { userId: "user-add", role: "member", joinedAt: 200 },
+      ],
+      isLoading: false,
+    } as never);
+
+    vi.mocked(hooks.useGetUsersQuery).mockReturnValue({
+      data: [
+        { uid: "user-sent", username: "SentUser" } as never,
+        { uid: "user-recv", username: "RecvUser" } as never,
+        { uid: "user-add", username: "AddUser" } as never,
+      ],
+      isLoading: false,
+    } as never);
+
+    vi.mocked(hooks.useGetSentFriendRequestRealtimeQuery).mockReturnValue({
+      data: [{ receiverUid: "user-sent" } as never],
+    } as never);
+    vi.mocked(hooks.useGetReceivedFriendRequestRealtimeQuery).mockReturnValue({
+      data: [{ senderUid: "user-recv" } as never],
+    } as never);
+
+    vi.mocked(hooks.useCancelFriendRequestMutation).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: true,
+      variables: "user-sent",
+    } as never);
+
+    vi.mocked(hooks.useAcceptFriendRequestMutation).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: true,
+      variables: { uid: "user-recv" },
+    } as never);
+
+    vi.mocked(hooks.useSendFriendRequestMutation).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: true,
+      variables: { uid: "user-add" },
+    } as never);
+
+    renderWithProviders(<GroupDetailsView />);
+
+    const loaders = document.querySelectorAll(".animate-spin");
+    expect(loaders.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("renders loadingMembers when members are loading, and handles member avatar and unknown role", () => {
+    const mockGroup = createMockGroup({ id: "grp-1", name: "Hikers" }) as unknown as Group;
+    vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({
+      data: [mockGroup],
+      isLoading: false,
+    } as never);
+    vi.mocked(hooks.useGetGroupQuery).mockReturnValue({
+      data: mockGroup,
+      isLoading: false,
+    } as never);
+
+    // 1. Profiles loading (with members loaded)
+    vi.mocked(hooks.useGetGroupMembersQuery).mockReturnValue({
+      data: [{ userId: "user-123", role: "owner", joinedAt: 100 }],
+      isLoading: false,
+    } as never);
+    vi.mocked(hooks.useGetUsersQuery).mockReturnValue({
+      data: undefined,
+      isLoading: true,
+    } as never);
+
+    const { unmount } = renderWithProviders(<GroupDetailsView />);
+    expect(screen.getByText("groupDetails.loadingMembers")).toBeInTheDocument();
+    unmount();
+
+    // 2. Member with avatarUrl and custom role
+    vi.mocked(hooks.useGetGroupMembersQuery).mockReturnValue({
+      data: [{ userId: "user-custom", role: "elder" as never, joinedAt: 100 }],
+      isLoading: false,
+    } as never);
+    vi.mocked(hooks.useGetUsersQuery).mockReturnValue({
+      data: [{ uid: "user-custom", username: "ElderSage", avatarUrl: "https://example.com/sage.png" } as never],
+      isLoading: false,
+    } as never);
+
+    renderWithProviders(<GroupDetailsView />);
+    expect(screen.getByText("ElderSage")).toBeInTheDocument();
   });
 });
 

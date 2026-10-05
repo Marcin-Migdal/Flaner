@@ -94,4 +94,41 @@ describe("FormTextField component", () => {
       expect.anything()
     );
   });
+
+  it("handles stepper buttons and empty number input", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    render(<TestForm defaultValues={{ username: "Alice", age: 10 }} onSubmit={onSubmit} />);
+
+    const incrementBtn = screen.getByRole("button", { name: /increment/i });
+    await user.click(incrementBtn);
+
+    const ageInput = screen.getByLabelText("Age");
+    fireEvent.change(ageInput, { target: { value: "" } });
+
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        username: "Alice",
+        age: undefined,
+      }),
+      expect.anything()
+    );
+  });
+
+  it("defaults undefined field values to empty string", () => {
+    const UndefinedForm = () => {
+      const form = useForm<FormValues>();
+      return (
+        <FormProvider {...form}>
+          <FormTextField control={form.control} name="username" label="Username" />
+        </FormProvider>
+      );
+    };
+
+    render(<UndefinedForm />);
+    expect(screen.getByLabelText("Username")).toHaveValue("");
+  });
 });

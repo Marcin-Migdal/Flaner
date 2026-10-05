@@ -155,5 +155,117 @@ describe("GroupInvitationsSheet component", () => {
     await user.click(rejectBtn);
     expect(rejectMutateAsync).not.toHaveBeenCalled();
   });
+
+  it("handles multiple invitations, unknown invitor fallback, and group avatar image", async () => {
+    const user = userEvent.setup();
+    const mockInvs = [
+      {
+        groupId: "g-1",
+        groupName: "Hikers Club",
+        groupAvatarUrl: "https://example.com/avatar.png",
+        userId: "user-123",
+        invitedByUserId: "unknown-invitor",
+        invitedAt: 1000,
+      },
+      {
+        groupId: "g-2",
+        groupName: "Climbing Club",
+        userId: "user-123",
+        invitedByUserId: "invitor-1",
+        invitedAt: 2000,
+      },
+    ];
+
+    vi.mocked(hooks.useGetUserGroupInvitationsQuery).mockReturnValue({
+      data: mockInvs,
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetUserGroupInvitationsQuery>);
+
+    acceptMutateAsync.mockResolvedValueOnce(undefined);
+
+    renderWithProviders(<GroupInvitationsSheet />);
+
+    expect(screen.getByText("Ktoś")).toBeInTheDocument();
+    expect(screen.getByText("HI")).toBeInTheDocument();
+
+    const acceptButtons = screen.getAllByRole("button", { name: "groupInvitations.accept" });
+    await user.click(acceptButtons[0]);
+    expect(acceptMutateAsync).toHaveBeenCalledWith({ groupId: "g-1", userId: "user-123" });
+  });
+
+  it("shows 99+ badge when invitations exceed 99", () => {
+    const manyInvs = Array.from({ length: 102 }, (_, i) => ({
+      groupId: `g-${i}`,
+      groupName: `Group ${i}`,
+      userId: "user-123",
+      invitedByUserId: "invitor-1",
+      invitedAt: 1000,
+    }));
+
+    vi.mocked(hooks.useGetUserGroupInvitationsQuery).mockReturnValue({
+      data: manyInvs,
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetUserGroupInvitationsQuery>);
+
+    renderWithProviders(<GroupInvitationsSheet />);
+
+    expect(screen.getByText("99+")).toBeInTheDocument();
+  });
+
+  it("handles mutation failure gracefully", async () => {
+    const user = userEvent.setup();
+    const mockInvs = [
+      {
+        groupId: "g-1",
+        groupName: "Hikers Club",
+        userId: "user-123",
+        invitedByUserId: "invitor-1",
+        invitedAt: 1000,
+      },
+    ];
+
+    vi.mocked(hooks.useGetUserGroupInvitationsQuery).mockReturnValue({
+      data: mockInvs,
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetUserGroupInvitationsQuery>);
+
+    acceptMutateAsync.mockRejectedValueOnce(new Error("Accept failed"));
+
+    renderWithProviders(<GroupInvitationsSheet />);
+
+    const acceptBtn = screen.getByRole("button", { name: "groupInvitations.accept" });
+    await user.click(acceptBtn);
+
+    expect(acceptMutateAsync).toHaveBeenCalled();
+  });
+
+  it("renders loader when invitations are loading", () => {
+    vi.mocked(hooks.useGetUserGroupInvitationsQuery).mockReturnValue({
+      data: [{ groupId: "g-1", groupName: "Club", userId: "u-1", invitedByUserId: "inv-1", invitedAt: 10 }],
+      isLoading: true,
+    } as unknown as ReturnType<typeof hooks.useGetUserGroupInvitationsQuery>);
+
+    renderWithProviders(<GroupInvitationsSheet />);
+    expect(screen.getByText("Ładowanie...")).toBeInTheDocument();
+  });
+
+  it("handles reject when multiple invitations exist without closing", async () => {
+    const user = userEvent.setup();
+    const mockInvs = [
+      { groupId: "g-1", groupName: "Hikers", userId: "user-123", invitedByUserId: "inv-1", invitedAt: 100 },
+      { groupId: "g-2", groupName: "Bikers", userId: "user-123", invitedByUserId: "inv-1", invitedAt: 200 },
+    ];
+    vi.mocked(hooks.useGetUserGroupInvitationsQuery).mockReturnValue({
+      data: mockInvs,
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetUserGroupInvitationsQuery>);
+    rejectMutateAsync.mockResolvedValueOnce(undefined);
+
+    renderWithProviders(<GroupInvitationsSheet />);
+    const rejectButtons = screen.getAllByRole("button", { name: "groupInvitations.reject" });
+    await user.click(rejectButtons[0]);
+
+    expect(rejectMutateAsync).toHaveBeenCalledWith({ groupId: "g-1", userId: "user-123" });
+  });
 });
 

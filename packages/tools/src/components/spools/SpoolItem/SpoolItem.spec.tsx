@@ -92,4 +92,42 @@ describe("SpoolItem", () => {
     const colorCircle = container.querySelector('div[style*="background-color: rgb(18, 52, 86)"]');
     expect(colorCircle).not.toBeNull();
   });
+
+  it("falls back to white for unknown material with white hex or missing hex", () => {
+    const unknownSpool: FilamentSpool = {
+      ...mockSpool,
+      material: "CustomMat",
+      type: "CustomType",
+      colorName: "CustomColor",
+      colorHex: "#ffffff",
+    };
+
+    const { container, rerender } = render(
+      <SpoolItem
+        spool={unknownSpool}
+        onRecordPrint={vi.fn()}
+        onEdit={vi.fn()}
+        onMarkFinished={vi.fn()}
+        onDelete={vi.fn()}
+        onViewHistory={vi.fn()}
+        onUndoLastPrint={vi.fn()}
+      />
+    );
+
+    const whiteCircle = container.querySelector('div[style*="background-color: rgb(255, 255, 255)"]');
+    expect(whiteCircle).not.toBeNull();
+
+    rerender(
+      <SpoolItem
+        spool={{ ...unknownSpool, colorHex: "" }}
+        onRecordPrint={vi.fn()}
+        onEdit={vi.fn()}
+        onMarkFinished={vi.fn()}
+        onDelete={vi.fn()}
+        onViewHistory={vi.fn()}
+        onUndoLastPrint={vi.fn()}
+      />
+    );
+    expect(container.querySelector('div[style*="background-color: rgb(255, 255, 255)"]')).not.toBeNull();
+  });
 });

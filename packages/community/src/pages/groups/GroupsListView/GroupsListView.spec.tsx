@@ -237,6 +237,20 @@ describe("GroupsListView page", () => {
 
     mockUseIsMobile.mockReturnValue(false);
   });
+
+  it("handles undefined searchData and active fetching next page state", () => {
+    vi.mocked(hooks.useSearchGlobalGroupsQuery).mockReturnValue({
+      data: undefined,
+      isFetching: true,
+      hasNextPage: false,
+      isFetchingNextPage: true,
+      fetchNextPage: vi.fn(),
+    } as unknown as ReturnType<typeof hooks.useSearchGlobalGroupsQuery>);
+
+    renderWithProviders(<GroupsListView />);
+
+    expect(screen.getByPlaceholderText("groupsView.searchPlaceholder")).toBeInTheDocument();
+  });
 });
 
 

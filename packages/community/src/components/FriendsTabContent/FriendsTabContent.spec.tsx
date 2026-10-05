@@ -247,5 +247,62 @@ describe("FriendsTabContent component", () => {
 
     expect(mutateAsyncMock).toHaveBeenCalledWith("f-1");
   });
+
+  it("renders loader when friends list is loading", () => {
+    vi.mocked(hooks.useGetFriendsListRealtimeQuery).mockReturnValue({
+      data: undefined,
+      isLoading: true,
+    } as unknown as ReturnType<typeof hooks.useGetFriendsListRealtimeQuery>);
+
+    renderComponent();
+    expect(screen.queryByText("friendsList.empty")).not.toBeInTheDocument();
+  });
+
+  it("shows search empty state when filterQuery yields no matches", async () => {
+    const user = userEvent.setup();
+    const mockFriends = [
+      {
+        uid: "f-1",
+        username: "Alice",
+        createdAt: 1000,
+        userRef: {} as never,
+        usernameLower: "alice",
+      },
+    ];
+    vi.mocked(hooks.useGetFriendsListRealtimeQuery).mockReturnValue({
+      data: mockFriends,
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetFriendsListRealtimeQuery>);
+
+    renderComponent();
+    const input = screen.getByPlaceholderText("friendsList.placeholder");
+    await user.type(input, "NonExistentUser");
+
+    expect(screen.getByText("searchTab.empty")).toBeInTheDocument();
+  });
+
+  it("shows loader icon on remove button when delete is pending for that friend", () => {
+    const mockFriends = [
+      {
+        uid: "f-1",
+        username: "Alice",
+        createdAt: 1000,
+        userRef: {} as never,
+        usernameLower: "alice",
+      },
+    ];
+    vi.mocked(hooks.useGetFriendsListRealtimeQuery).mockReturnValue({
+      data: mockFriends,
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetFriendsListRealtimeQuery>);
+    vi.mocked(hooks.useRemoveFriendMutation).mockReturnValue({
+      mutateAsync: mutateAsyncMock,
+      isPending: true,
+      variables: "f-1",
+    } as unknown as ReturnType<typeof hooks.useRemoveFriendMutation>);
+
+    renderComponent();
+    expect(screen.queryByText("friendsList.remove")).not.toBeInTheDocument();
+  });
 });
 

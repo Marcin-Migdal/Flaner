@@ -63,4 +63,19 @@ describe("useDeleteSettlementMutation", () => {
     expect(result.current.error?.message).toBe("planning:errors.userNotAuthenticated");
     mockUser = { uid: "user-123", username: "Alice", email: "alice@flaner.app" };
   });
+
+  it("executes successfully without options", async () => {
+    vi.mocked(splitsApi.deleteSettlement).mockResolvedValueOnce(undefined);
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useDeleteSettlementMutation(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.mutate({
+        groupId: "grp-1",
+        settlementId: "set-1",
+      });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
 });

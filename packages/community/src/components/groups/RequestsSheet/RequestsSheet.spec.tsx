@@ -78,4 +78,63 @@ describe("RequestsSheet component", () => {
     await user.click(rejectBtn);
     expect(rejectMutateMock).toHaveBeenCalledWith({ groupId: "grp-1", userId: "req-user-1" });
   });
+
+  it("falls back to userId when user profile is not found in usersData", () => {
+    vi.mocked(hooks.useGetGroupRequestsQuery).mockReturnValue({
+      data: [{ userId: "unknown-user-id", requestedAt: 100 }],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetGroupRequestsQuery>);
+
+    vi.mocked(hooks.useGetUsersQuery).mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetUsersQuery>);
+
+    renderWithProviders(<RequestsSheet groupId="grp-1" />);
+
+    expect(screen.getByText("unknown-user-id")).toBeInTheDocument();
+  });
+
+  it("handles pending accept and reject states correctly", () => {
+    vi.mocked(hooks.useGetGroupRequestsQuery).mockReturnValue({
+      data: [{ userId: "req-user-1", requestedAt: 100 }],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetGroupRequestsQuery>);
+
+    vi.mocked(hooks.useAcceptJoinRequestMutation).mockReturnValue({
+      mutate: acceptMutateMock,
+      isPending: true,
+      variables: { groupId: "grp-1", userId: "req-user-1" },
+    } as unknown as ReturnType<typeof hooks.useAcceptJoinRequestMutation>);
+
+    renderWithProviders(<RequestsSheet groupId="grp-1" />);
+
+    expect(screen.getByText("ClimberDan")).toBeInTheDocument();
+  });
+
+  it("renders loading state when users or requests are loading", () => {
+    vi.mocked(hooks.useGetGroupRequestsQuery).mockReturnValue({
+      data: [{ userId: "req-user-1", requestedAt: 100 }],
+      isLoading: true,
+    } as unknown as ReturnType<typeof hooks.useGetGroupRequestsQuery>);
+
+    renderWithProviders(<RequestsSheet groupId="grp-1" />);
+    expect(screen.getByText("groupDetails.loading")).toBeInTheDocument();
+  });
+
+  it("handles isRejecting state when reject mutation is pending for user", () => {
+    vi.mocked(hooks.useGetGroupRequestsQuery).mockReturnValue({
+      data: [{ userId: "req-user-1", requestedAt: 100 }],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetGroupRequestsQuery>);
+
+    vi.mocked(hooks.useRejectJoinRequestMutation).mockReturnValue({
+      mutate: rejectMutateMock,
+      isPending: true,
+      variables: { groupId: "grp-1", userId: "req-user-1" },
+    } as unknown as ReturnType<typeof hooks.useRejectJoinRequestMutation>);
+
+    renderWithProviders(<RequestsSheet groupId="grp-1" />);
+    expect(screen.getByText("ClimberDan")).toBeInTheDocument();
+  });
 });

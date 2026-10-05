@@ -349,6 +349,27 @@ describe("tools spools endpoints", () => {
       expect(prints[0].id).toBe("print-2");
       expect(prints[1].id).toBe("print-1");
     });
+
+    it("handles prints without createdAt when sorting", async () => {
+      mockGetDocs.mockResolvedValueOnce({
+        docs: [
+          {
+            id: "print-nodate",
+            data: () => ({ usedWeight: 25, createdAt: null }),
+          },
+          {
+            id: "print-date",
+            data: () => ({ usedWeight: 50, createdAt: { seconds: 100 } }),
+          },
+        ],
+      });
+
+      const prints = await fetchSpoolPrints("spool-1");
+
+      expect(prints).toHaveLength(2);
+      expect(prints[0].id).toBe("print-date");
+      expect(prints[1].id).toBe("print-nodate");
+    });
   });
 
   describe("undoLastPrint", () => {
@@ -410,6 +431,36 @@ describe("tools spools endpoints", () => {
       await undoLastPrint("spool-1");
 
       expect(mockRunTransaction).not.toHaveBeenCalled();
+    });
+
+    it("handles non-existing spool snapshot during undoLastPrint transaction", async () => {
+      mockTransactionGet.mockResolvedValueOnce({
+        exists: () => false,
+      });
+
+      await undoLastPrint("spool-1", "print-1", 50);
+
+      expect(mockTransactionUpdate).not.toHaveBeenCalled();
+      expect(mockTransactionDelete).toHaveBeenCalled();
+    });
+
+    it("keeps spool marked as finished when restored weight remains <= 0", async () => {
+      mockTransactionGet.mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ currentWeight: -50, finishedAt: 99999 }),
+      });
+
+      await undoLastPrint("spool-1", "print-1", 20);
+
+      expect(mockTransactionUpdate).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          currentWeight: -30,
+          isFinished: true,
+          finishedAt: 99999,
+        }),
+      );
+      expect(mockTransactionDelete).toHaveBeenCalled();
     });
   });
 

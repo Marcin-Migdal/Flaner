@@ -1,7 +1,7 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { renderWithProviders } from "@flaner/test-utils";
+import { renderWithProviders, createTestI18n } from "@flaner/test-utils";
 import { AppNotification } from "../../../api/notifications";
 import { NotificationCard } from "./NotificationCard";
 
@@ -160,5 +160,50 @@ describe("NotificationCard", () => {
       );
       unmount();
     });
+  });
+
+  it("navigates correctly for split_settlement_pending without splitGroupId and renders ? fallback", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <NotificationCard
+        notification={{
+          ...baseNotification,
+          type: "split_settlement_pending",
+          splitGroupId: undefined,
+          senderUsername: "",
+        }}
+        onRead={vi.fn()}
+        onClosePopover={vi.fn()}
+      />
+    );
+    expect(screen.getByText("?")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button"));
+    expect(mockNavigate).toHaveBeenCalledWith({
+      pathname: "/planning/splits",
+      hash: "",
+    });
+  });
+
+  it("uses enUS locale when language is not Polish", () => {
+    const i18nEn = createTestI18n({ en: { common: {} } });
+    i18nEn.language = "en";
+
+    renderWithProviders(
+      <NotificationCard
+        notification={{
+          id: "notif-en",
+          senderUid: "u-en",
+          senderUsername: "EnUser",
+          type: "system",
+          read: true,
+          createdAt: Date.now() - 100000,
+        }}
+        onRead={vi.fn()}
+        onClosePopover={vi.fn()}
+      />,
+      { i18nInstance: i18nEn }
+    );
+    expect(screen.getByText("EnUser")).toBeInTheDocument();
   });
 });

@@ -203,5 +203,33 @@ describe("splitBalances", () => {
     const groupSimplified = { ...group, simplifyDebts: true };
     const amountSimplified = getOutstandingDebtAmount(groupSimplified, "userB", "userA", "PLN");
     expect(amountSimplified).toBe(100);
+
+    // Test with no debt between users
+    const amountZero = getOutstandingDebtAmount(groupSimplified, "userC", "userD", "PLN");
+    expect(amountZero).toBe(0);
+  });
+
+  it("handles negative pair balance, invalid keys, and unrelated debts in summarizeUserDebts", () => {
+    // Negative pair balance (userA owes userB) and invalid key without separator
+    const pairDebts = getPairwiseDebts({
+      PLN: {
+        "userA__userB": -50,
+        "invalidKeyNoSeparator": 100,
+        "__empty": 20,
+      },
+    });
+    expect(pairDebts).toEqual([
+      { from: "userA", to: "userB", amount: 50, currency: "PLN" },
+    ]);
+
+    // summarizeUserDebts with an unrelated debt (from userB to userC)
+    const summary = summarizeUserDebts(
+      [
+        { from: "userB", to: "userC", amount: 75, currency: "PLN" },
+      ],
+      "userA",
+    );
+    expect(summary.youOwe).toEqual({});
+    expect(summary.owedToYou).toEqual({});
   });
 });

@@ -88,4 +88,57 @@ describe("MoneyInput component", () => {
 
     expect(screen.getByLabelText("Disabled")).toBeDisabled();
   });
+
+  it("handles custom currencyLabel, custom formatCurrencyOptionLabel, and >5 searchable options", async () => {
+    const user = userEvent.setup();
+    const customFormat = vi.fn((opt) => `Formatted: ${opt.label}`);
+    const sixOptions = [
+      { label: "PLN", value: "PLN" },
+      { label: "EUR", value: "EUR" },
+      { label: "USD", value: "USD" },
+      { label: "GBP", value: "GBP" },
+      { label: "CHF", value: "CHF" },
+      { label: "JPY", value: "JPY" },
+    ];
+
+    render(
+      <MoneyInput
+        currencyLabel="Select Currency"
+        currency="EUR"
+        currencyOptions={sixOptions}
+        formatCurrencyOptionLabel={customFormat}
+      />
+    );
+
+    expect(screen.getByText("Formatted: EUR")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Select Currency" })).toBeInTheDocument();
+
+    // Select without onCurrencyChange callback
+    const select = screen.getByText("Formatted: EUR");
+    await user.click(select);
+    const jpy = await screen.findByText("Formatted: JPY");
+    await user.click(jpy);
+  });
+
+  it("handles unmatched currency fallback and empty activeCode without label", () => {
+    // Unmatched currency in options
+    render(
+      <MoneyInput
+        currency="BTC"
+        currencyOptions={[{ label: "EUR", value: "EUR" }]}
+      />
+    );
+    expect(screen.getByText("BTC")).toBeInTheDocument();
+
+    // Empty currency and empty defaultCurrency without label
+    const { unmount } = render(
+      <MoneyInput
+        currency=""
+        defaultCurrency=""
+        currencyPlaceholder="No currency"
+      />
+    );
+    expect(screen.getByText("No currency")).toBeInTheDocument();
+    unmount();
+  });
 });

@@ -26,13 +26,19 @@ let queryState = {
   isLoading: false,
 };
 
+let mockLanguage = "en";
+
 vi.mock("../../../../hooks", () => ({
   useToolsTranslations: () => ({
     t: (key: string, opt?: Record<string, unknown>) => {
       if (opt?.weight) return `${key}:${opt.weight}`;
       return key;
     },
-    i18n: { language: "en" },
+    i18n: {
+      get language() {
+        return mockLanguage;
+      },
+    },
   }),
   useGetSpoolPrintsQuery: () => queryState,
   useUndoLastPrintMutation: (opts?: { onSuccess?: () => void }) => ({
@@ -191,5 +197,54 @@ describe("SpoolHistoryModal", () => {
 
     await user.keyboard("{Escape}");
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("formats dates using pl-PL locale when language is pl", () => {
+    mockLanguage = "pl";
+    render(
+      <SpoolHistoryModal
+        isOpen={true}
+        onClose={vi.fn()}
+        spool={mockSpool}
+      />
+    );
+
+    expect(screen.getByText("Spool 1")).toBeInTheDocument();
+    mockLanguage = "en";
+  });
+
+  it("handles modal when isOpen is false", () => {
+    render(
+      <SpoolHistoryModal
+        isOpen={false}
+        onClose={vi.fn()}
+        spool={mockSpool}
+      />
+    );
+    expect(screen.queryByText("Spool 1")).not.toBeInTheDocument();
+  });
+
+  it("handles prints with non-number seconds gracefully", () => {
+    queryState = {
+      data: [
+        {
+          id: "print-invalid",
+          usedWeight: 15,
+          createdAt: { seconds: undefined } as unknown as Timestamp,
+        },
+      ],
+      isLoading: false,
+    };
+
+    render(
+      <SpoolHistoryModal
+        isOpen={true}
+        onClose={vi.fn()}
+        spool={mockSpool}
+      />
+    );
+
+    expect(screen.getByText("-15g")).toBeInTheDocument();
+    expect(screen.getByText("-")).toBeInTheDocument();
   });
 });

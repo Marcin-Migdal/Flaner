@@ -78,4 +78,19 @@ describe("useConfirmSettlementMutation", () => {
     expect(result.current.error?.message).toBe("planning:errors.userNotAuthenticated");
     mockUser = { uid: "user-123", username: "Alice", email: "alice@flaner.app" };
   });
+
+  it("executes successfully without options", async () => {
+    vi.mocked(splitsApi.confirmSettlement).mockResolvedValueOnce({ id: "set-2" } as unknown as Settlement);
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useConfirmSettlementMutation(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.mutate({
+        groupId: "grp-1",
+        settlementId: "set-2",
+      });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
 });

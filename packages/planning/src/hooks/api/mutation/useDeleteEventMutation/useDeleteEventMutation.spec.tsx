@@ -53,4 +53,16 @@ describe("useDeleteEventMutation", () => {
     expect(result.current.error?.message).toBe("planning:errors.userNotAuthenticated");
     mockUser = { uid: "user-123" };
   });
+
+  it("executes successfully without options", async () => {
+    vi.mocked(eventsApi.deleteSchedulerEvent).mockResolvedValueOnce(undefined);
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useDeleteEventMutation(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.mutate("evt-1");
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
 });

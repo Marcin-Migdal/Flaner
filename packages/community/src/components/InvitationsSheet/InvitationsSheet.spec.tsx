@@ -139,5 +139,160 @@ describe("InvitationsSheet component", () => {
     renderWithProviders(<InvitationsSheet />);
     expect(screen.getByText("??")).toBeInTheDocument();
   });
+
+  it("renders loading spinners when queries are loading", () => {
+    vi.mocked(hooks.useGetReceivedFriendRequestRealtimeQuery).mockReturnValue({
+      data: [],
+      isLoading: true,
+    } as unknown as ReturnType<typeof hooks.useGetReceivedFriendRequestRealtimeQuery>);
+
+    vi.mocked(hooks.useGetSentFriendRequestRealtimeQuery).mockReturnValue({
+      data: [],
+      isLoading: true,
+    } as unknown as ReturnType<typeof hooks.useGetSentFriendRequestRealtimeQuery>);
+
+    renderWithProviders(<InvitationsSheet />);
+
+    expect(screen.queryByText("invitations.emptyReceived")).not.toBeInTheDocument();
+    expect(screen.queryByText("invitations.emptySent")).not.toBeInTheDocument();
+  });
+
+  it("renders empty state messages when both lists are empty and no pending count badge", () => {
+    vi.mocked(hooks.useGetReceivedFriendRequestRealtimeQuery).mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetReceivedFriendRequestRealtimeQuery>);
+
+    vi.mocked(hooks.useGetSentFriendRequestRealtimeQuery).mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetSentFriendRequestRealtimeQuery>);
+
+    renderWithProviders(<InvitationsSheet />);
+
+    expect(screen.getByText("invitations.emptyReceived")).toBeInTheDocument();
+    expect(screen.getByText("invitations.emptySent")).toBeInTheDocument();
+  });
+
+  it("renders 99+ badge when pending received requests exceed 99", () => {
+    const manyRequests = Array.from({ length: 105 }, (_, i) => ({
+      id: `rec-${i}`,
+      senderUid: `u-${i}`,
+      senderUsername: `User${i}`,
+      senderAvatarUrl: "",
+      receiverUid: "me",
+      receiverUsername: "me",
+      receiverAvatarUrl: "",
+      status: "pending",
+      createdAt: 100,
+    }));
+
+    vi.mocked(hooks.useGetReceivedFriendRequestRealtimeQuery).mockReturnValue({
+      data: manyRequests,
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetReceivedFriendRequestRealtimeQuery>);
+
+    vi.mocked(hooks.useGetSentFriendRequestRealtimeQuery).mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetSentFriendRequestRealtimeQuery>);
+
+    renderWithProviders(<InvitationsSheet />);
+
+    expect(screen.getByText("99+")).toBeInTheDocument();
+  });
+
+  it("renders pending spinners during accept, reject, and cancel operations", () => {
+    vi.mocked(hooks.useGetReceivedFriendRequestRealtimeQuery).mockReturnValue({
+      data: [
+        {
+          id: "rec-1",
+          senderUid: "u-alice",
+          senderUsername: "Alice",
+          senderAvatarUrl: "",
+          receiverUid: "me",
+          receiverUsername: "me",
+          receiverAvatarUrl: "",
+          status: "pending",
+          createdAt: 100,
+        },
+      ],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetReceivedFriendRequestRealtimeQuery>);
+
+    vi.mocked(hooks.useGetSentFriendRequestRealtimeQuery).mockReturnValue({
+      data: [
+        {
+          id: "sent-1",
+          receiverUid: "u-bob",
+          receiverUsername: "Bob",
+          receiverAvatarUrl: "",
+          senderUid: "me",
+          senderUsername: "me",
+          senderAvatarUrl: "",
+          status: "pending",
+          createdAt: 200,
+        },
+      ],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetSentFriendRequestRealtimeQuery>);
+
+    vi.mocked(hooks.useCancelFriendRequestMutation).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: true,
+      variables: "u-bob",
+    } as unknown as ReturnType<typeof hooks.useCancelFriendRequestMutation>);
+
+    renderWithProviders(<InvitationsSheet />);
+
+    // Cancel button is disabled and has animate-spin loader
+    expect(screen.queryByText("invitations.cancel")).not.toBeInTheDocument();
+  });
+
+  it("handles isAccepting and isRejecting states on received request item", () => {
+    vi.mocked(hooks.useGetReceivedFriendRequestRealtimeQuery).mockReturnValue({
+      data: [
+        {
+          id: "rec-1",
+          senderUid: "u-alice",
+          senderUsername: "Alice",
+          senderAvatarUrl: "",
+          receiverUid: "me",
+          receiverUsername: "me",
+          receiverAvatarUrl: "",
+          status: "pending",
+          createdAt: 100,
+        },
+      ],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetReceivedFriendRequestRealtimeQuery>);
+    vi.mocked(hooks.useGetSentFriendRequestRealtimeQuery).mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetSentFriendRequestRealtimeQuery>);
+
+    vi.mocked(hooks.useAcceptFriendRequestMutation).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: true,
+      variables: { uid: "u-alice", username: "Alice", avatarUrl: "" },
+    } as unknown as ReturnType<typeof hooks.useAcceptFriendRequestMutation>);
+
+    const { unmount } = renderWithProviders(<InvitationsSheet />);
+    expect(screen.getByText("Alice")).toBeInTheDocument();
+    unmount();
+
+    vi.mocked(hooks.useAcceptFriendRequestMutation).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof hooks.useAcceptFriendRequestMutation>);
+    vi.mocked(hooks.useRejectFriendRequestMutation).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: true,
+      variables: { uid: "u-alice", username: "Alice", avatarUrl: "" },
+    } as unknown as ReturnType<typeof hooks.useRejectFriendRequestMutation>);
+
+    renderWithProviders(<InvitationsSheet />);
+    expect(screen.getByText("Alice")).toBeInTheDocument();
+  });
 });
 

@@ -77,4 +77,17 @@ describe("useReadNotifications", () => {
     const refetchResult = await result.current.refetch();
     expect(refetchResult.error?.message).toBe("errors.userNotAuthenticated");
   });
+
+  it("invalidates read notifications with empty string key when user is null", () => {
+    mockUser = null;
+    const { Wrapper, queryClient } = createWrapper();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(() => useInvalidateReadNotificationsQuery(), { wrapper: Wrapper });
+    result.current();
+
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: getReadNotificationsQueryKeys(""),
+    });
+  });
 });

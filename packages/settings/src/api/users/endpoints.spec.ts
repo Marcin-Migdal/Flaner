@@ -87,4 +87,30 @@ describe("settings users endpoints - updateUserProfile", () => {
     ).rejects.toThrow(FirebaseError);
     consoleSpy.mockRestore();
   });
+
+  it("handles username without oldUsernameLower provided", async () => {
+    await updateUserProfile("user-1", { username: "BrandNew" });
+
+    expect(mockBatchSet).toHaveBeenCalledWith(
+      expect.objectContaining({ collectionName: "users", id: "user-1" }),
+      { username: "BrandNew", usernameLower: "brandnew" },
+      { merge: true },
+    );
+    expect(mockBatchDelete).not.toHaveBeenCalled();
+  });
+
+  it("handles missing old reservation doc when changing username", async () => {
+    mockGetDoc
+      .mockResolvedValueOnce({
+        exists: () => false,
+      })
+      .mockResolvedValueOnce({
+        exists: () => false,
+      });
+
+    await updateUserProfile("user-1", { username: "BrandNewName" }, "old_name");
+
+    expect(mockBatchDelete).not.toHaveBeenCalled();
+    expect(mockBatchCommit).toHaveBeenCalled();
+  });
 });

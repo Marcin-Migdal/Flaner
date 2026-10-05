@@ -30,6 +30,18 @@ describe("EventModal utils - getRandomSlotColor", () => {
     expect(color).toMatch(/^#[0-9a-f]{6}$/i);
   });
 
+  it("filters out colors of slots within 7 days of newSlotEnd when newSlotStart is far away", () => {
+    const longRangeStart = new Date("2026-06-01T10:00:00Z");
+    const longRangeEnd = new Date("2026-06-25T10:00:00Z");
+    const nearEndSlotStart = new Date("2026-06-23T10:00:00Z");
+    const nearEndSlotEnd = new Date("2026-06-24T10:00:00Z");
+
+    const color = getRandomSlotColor(longRangeStart, longRangeEnd, [
+      { start: nearEndSlotStart, end: nearEndSlotEnd, color: "#3b82f6" },
+    ]);
+    expect(color).not.toBe("#3b82f6");
+  });
+
   it("falls back to the full palette if all colors are occupied by close slots", () => {
     const allColors = [
       "#3b82f6",

@@ -204,5 +204,42 @@ describe("CreateGroupModal component", () => {
       );
     });
   });
+
+  it("shows requiresApproval switch when group type is set to public", async () => {
+    const user = userEvent.setup();
+    mockMutateAsync.mockResolvedValueOnce("public-group-id");
+
+    renderWithProviders(<CreateGroupModal open={true} onOpenChange={vi.fn()} />);
+
+    // Click select control to open options
+    const selectControl = document.body.querySelector(".react-select__control");
+    expect(selectControl).not.toBeNull();
+    if (selectControl) {
+      await user.click(selectControl);
+      const publicOption = await screen.findByText("groupsView.createModal.typePublic");
+      await user.click(publicOption);
+    }
+
+    // Now requiresApproval switch should appear
+    expect(await screen.findByText("groupsView.createModal.requiresApprovalLabel")).toBeInTheDocument();
+
+    const nameInput = screen.getByPlaceholderText(/groupsview\.createmodal\.nameplaceholder/i);
+    await user.type(nameInput, "Public Bikers Club");
+
+    const switchInput = screen.getByRole("checkbox");
+    await user.click(switchInput);
+
+    await user.click(getSubmitButton());
+
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Public Bikers Club",
+          type: "public",
+          requiresApproval: true,
+        })
+      );
+    });
+  });
 });
 

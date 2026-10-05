@@ -35,6 +35,7 @@ const mockTemplates: FilamentTemplate[] = [
 ];
 
 let currentTemplates: FilamentTemplate[] = mockTemplates;
+let currentSpools: FilamentSpool[] = mockSpools;
 
 vi.mock("../../hooks", () => ({
   useToolsTranslations: () => ({
@@ -44,7 +45,7 @@ vi.mock("../../hooks", () => ({
     },
     i18n: { language: "en" },
   }),
-  useGetSpoolsQuery: () => ({ data: mockSpools, isLoading: false }),
+  useGetSpoolsQuery: () => ({ data: currentSpools, isLoading: false }),
   useGetTemplatesQuery: () => ({ data: currentTemplates, isLoading: false }),
   useGetStartupWasteQuery: () => ({ data: 1.5, isLoading: false }),
   useUpdateStartupWasteMutation: () => ({ mutate: vi.fn(), isPending: false }),
@@ -118,5 +119,15 @@ describe("SpoolerView", () => {
     await user.click(createFirstBtn);
 
     expect(screen.getByText("spooler.templates.title (0)")).toBeInTheDocument();
+  });
+
+  it("formats total weight in kg when >= 1000g and handles 0 weight", () => {
+    currentSpools = [
+      { ...mockSpools[0], id: "spool-1", currentWeight: 1500 },
+      { ...mockSpools[0], id: "spool-2", currentWeight: 0 as unknown as number },
+    ];
+    render(<SpoolerView />);
+    expect(screen.getByText("1.50 kg")).toBeInTheDocument();
+    currentSpools = mockSpools;
   });
 });

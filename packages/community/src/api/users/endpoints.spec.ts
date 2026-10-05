@@ -113,6 +113,20 @@ describe("community users endpoints", () => {
       );
     });
 
+    it("creates friend request with empty avatarUrl when sender has no avatarUrl", async () => {
+      const sender = { uid: "u-1", username: "Alice" };
+      const receiver = { uid: "u-2", username: "Bob" };
+
+      await sendFriendRequest(sender, receiver);
+
+      expect(mockSetDoc).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          senderAvatarUrl: "",
+        }),
+      );
+    });
+
     it("deletes friend request doc on cancel", async () => {
       await cancelFriendRequest("u-1", "u-2");
       expect(mockDeleteDoc).toHaveBeenCalledWith(

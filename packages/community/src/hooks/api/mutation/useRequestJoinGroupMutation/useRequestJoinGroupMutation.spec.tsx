@@ -80,4 +80,30 @@ describe("useRequestJoinGroupMutation", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(onSuccessMock).toHaveBeenCalled();
   });
+
+  it("handles null user during onSuccess without invalidating user query", async () => {
+    vi.mocked(useAuth).mockReturnValueOnce({
+      user: null,
+      claims: null,
+      loading: false,
+      loginWithGoogle: vi.fn(),
+      logout: vi.fn(),
+    });
+
+    const { Wrapper, queryClient } = createWrapper();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(
+      () => useRequestJoinGroupMutation({ mutationFn: async () => {} }),
+      { wrapper: Wrapper }
+    );
+
+    result.current.mutate("grp-1");
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["groupRequests", "grp-1"] });
+    expect(invalidateSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: expect.arrayContaining(["userGroupRequest"]) })
+    );
+  });
 });

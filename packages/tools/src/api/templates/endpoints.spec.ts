@@ -86,6 +86,26 @@ describe("tools templates endpoints", () => {
       expect(templates[1].id).toBe("tpl-1");
       expect(templates[2].id).toBe("tpl-3");
     });
+
+    it("handles templates when both or first has null createdAt", async () => {
+      mockGetDocs.mockResolvedValueOnce({
+        docs: [
+          {
+            id: "tpl-nodate-1",
+            data: () => ({ material: "PLA", createdAt: null }),
+          },
+          {
+            id: "tpl-date",
+            data: () => ({ material: "PETG", createdAt: { seconds: 50 } }),
+          },
+        ],
+      });
+
+      const templates = await fetchTemplates("user-1");
+
+      expect(templates[0].id).toBe("tpl-date");
+      expect(templates[1].id).toBe("tpl-nodate-1");
+    });
   });
 
   describe("addTemplate", () => {
@@ -218,6 +238,19 @@ describe("tools templates endpoints", () => {
       await deleteTemplate("tpl-1");
 
       expect(mockGetDocs).not.toHaveBeenCalled();
+      expect(mockBatchCommit).not.toHaveBeenCalled();
+      expect(mockDeleteDoc).toHaveBeenCalled();
+    });
+
+    it("deletes template when userId is provided but spools query is empty", async () => {
+      mockGetDocs.mockResolvedValueOnce({
+        empty: true,
+        docs: [],
+      });
+
+      await deleteTemplate("tpl-1", false, "user-1");
+
+      expect(mockGetDocs).toHaveBeenCalled();
       expect(mockBatchCommit).not.toHaveBeenCalled();
       expect(mockDeleteDoc).toHaveBeenCalled();
     });

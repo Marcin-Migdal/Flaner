@@ -183,4 +183,43 @@ describe("generateCustomDateSlots", () => {
     });
     expect(slots).toEqual([]);
   });
+
+  it("filters out targetDay when it falls before startDate or after endDate", () => {
+    // First Monday is June 1st, but startDate is June 15th
+    const slotsOnThe = generateCustomDateSlots({
+      ...baseConfig,
+      startDate: "2026-06-15",
+      endDate: "2026-06-30",
+      unit: "month",
+      frequency: 1,
+      monthSubMode: "onThe",
+      monthOrdinal: "first",
+      monthWeekday: "Monday",
+    });
+    expect(slotsOnThe).toEqual([]);
+
+    // First workday is June 1st, but startDate is June 15th
+    const slotsWorkday = generateCustomDateSlots({
+      ...baseConfig,
+      startDate: "2026-06-15",
+      endDate: "2026-06-30",
+      unit: "month",
+      frequency: 1,
+      monthSubMode: "workday",
+      monthWorkdayType: "first",
+    });
+    expect(slotsWorkday).toEqual([]);
+
+    // Last workday is June 30th, but endDate is June 20th
+    const slotsWorkdayEnd = generateCustomDateSlots({
+      ...baseConfig,
+      startDate: "2026-06-01",
+      endDate: "2026-06-20",
+      unit: "month",
+      frequency: 1,
+      monthSubMode: "workday",
+      monthWorkdayType: "last",
+    });
+    expect(slotsWorkdayEnd).toEqual([]);
+  });
 });

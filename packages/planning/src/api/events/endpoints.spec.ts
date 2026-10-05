@@ -325,7 +325,6 @@ describe("events endpoints", () => {
             {
               start: "2026-06-02T10:00:00Z",
               end: "2026-06-02T12:00:00Z",
-              votes: {},
             },
           ],
         }),
@@ -426,6 +425,82 @@ describe("events endpoints", () => {
         expect.objectContaining({
           isFinalized: false,
           proposedDates: event.proposedDates,
+        }),
+      );
+    });
+
+    it("falls back to empty votes when currentSlot.votes is undefined", async () => {
+      transactionMock.get.mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({
+          isFinalized: false,
+          proposedDates: [
+            {
+              start: "2026-06-01T10:00:00Z",
+              end: "2026-06-01T12:00:00Z",
+            },
+          ],
+        }),
+      });
+
+      await voteSchedulerEventSlot("ev-1", 0, "user-1", "yes");
+
+      expect(transactionMock.update).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          proposedDates: [
+            expect.objectContaining({
+              votes: { "user-1": "yes" },
+            }),
+          ],
+        }),
+      );
+    });
+
+    it("falls back to empty array when proposedDates is undefined in batchVoteUnvotedSlots", async () => {
+      transactionMock.get.mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({
+          isFinalized: false,
+        }),
+      });
+
+      await batchVoteUnvotedSlots("ev-1", "user-1", "no");
+
+      expect(transactionMock.update).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          proposedDates: [],
+        }),
+      );
+    });
+
+    it("falls back to empty avatarUrl when user.avatarUrl is missing in unfinalizeSchedulerEvent", async () => {
+      const event: SchedulerEvent = {
+        id: "ev-1",
+        name: "Old Event",
+        description: "Desc",
+        creatorId: "user-1",
+        participants: ["user-1", "user-2"],
+        isFinalized: true,
+        proposedDates: [
+          {
+            start: "2099-01-01T10:00:00Z",
+            end: "2099-01-01T12:00:00Z",
+          },
+        ],
+        createdAt: 1700000000000,
+        updatedAt: 1700000000000,
+      };
+
+      const userWithoutAvatar = { ...mockUser, avatarUrl: undefined };
+      await unfinalizeSchedulerEvent(event, userWithoutAvatar);
+
+      expect(mockBatchSet).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          type: "event_reopened",
+          senderAvatarUrl: "",
         }),
       );
     });

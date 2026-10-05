@@ -1,19 +1,37 @@
 import { test, expect } from "@playwright/test";
+import { LoginPage } from "../support/pages/LoginPage.page";
 
 test.describe("Core Host Application Smoke", () => {
-  test("renders host application cleanly without uncaught errors", async ({ page }) => {
-    const consoleErrors: string[] = [];
-    page.on("console", (msg) => {
-      if (msg.type() === "error") {
-        consoleErrors.push(msg.text());
-      }
-    });
+  test("renders host application cleanly and supports auth mode switching", async ({ page }) => {
+    const pageErrors: string[] = [];
+    page.on("pageerror", (err) => pageErrors.push(err.message));
 
-    await page.goto("/");
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
+
     await expect(page).toHaveTitle(/Flaner/i);
-    
-    // Ensure document body is present and interactive
-    const body = page.locator("body");
-    await expect(body).toBeVisible();
+
+    // Root container & branding
+    const root = page.locator("#root");
+    await expect(root).toBeAttached();
+    await expect(loginPage.heading).toBeVisible();
+
+    // Default: Sign In form inputs & Google button
+    await expect(loginPage.googleButton).toBeVisible();
+    await expect(loginPage.emailInput).toBeVisible();
+    await expect(loginPage.passwordInput).toBeVisible();
+
+    // Toggle to Sign Up mode
+    await loginPage.toggleAuthMode();
+
+    // In Sign Up mode, username input should appear
+    await expect(loginPage.usernameInput).toBeVisible();
+
+    // Toggle back to Sign In mode
+    await loginPage.toggleAuthMode();
+    await expect(loginPage.usernameInput).not.toBeVisible();
+
+    // No uncaught runtime page errors
+    expect(pageErrors).toEqual([]);
   });
 });

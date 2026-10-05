@@ -155,4 +155,27 @@ describe("PageTilesView", () => {
       expect(screen.getByText("Brak podstron")).toBeInTheDocument();
     });
   });
+
+  it("handles tile without icon", async () => {
+    const user = userEvent.setup();
+    vi.mocked(loadRemote).mockResolvedValueOnce({
+      routes: [
+        {
+          path: "feed",
+          handle: { label: "nav.community" },
+        },
+      ],
+    });
+
+    renderWithProviders(<PageTilesView mfe="community" />, { i18nInstance: i18n });
+
+    await waitFor(() => {
+      expect(screen.getByText("Społeczność")).toBeInTheDocument();
+    });
+
+    const tileBtn = screen.getByRole("button", { name: /społeczność/i });
+    await user.click(tileBtn);
+
+    expect(mockNavigate).toHaveBeenCalledWith("/community/feed");
+  });
 });

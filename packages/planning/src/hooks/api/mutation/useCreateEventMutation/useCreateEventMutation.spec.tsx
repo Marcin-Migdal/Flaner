@@ -55,7 +55,10 @@ describe("useCreateEventMutation", () => {
         name: "New Event",
         description: "Desc",
         participants: ["user-123"],
-        proposedDates: [{ id: "slot-1", start: 100, end: 200, votes: {} }],
+        proposedDates: [
+          { id: "slot-1", start: 100, end: 200, votes: { "other-user": "yes" } },
+          { id: "slot-2", start: 200, end: 300 },
+        ],
         autoVoteProposedDates: true,
       });
     });
@@ -91,5 +94,29 @@ describe("useCreateEventMutation", () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error?.message).toBe("planning:errors.userNotAuthenticated");
     mockUser = { uid: "user-123", username: "Alice", email: "alice@flaner.app" };
+  });
+
+  it("executes successfully without autoVote and without options", async () => {
+    vi.mocked(eventsApi.createSchedulerEvent).mockResolvedValueOnce({ id: "evt-2" } as unknown as SchedulerEvent);
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useCreateEventMutation(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.mutate({
+        name: "Manual Vote Event",
+        description: "Desc",
+        participants: ["user-123"],
+        proposedDates: [{ id: "slot-1", start: 100, end: 200 }],
+        autoVoteProposedDates: false,
+      });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(eventsApi.createSchedulerEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        proposedDates: [{ id: "slot-1", start: 100, end: 200 }],
+      }),
+      mockUser,
+    );
   });
 });

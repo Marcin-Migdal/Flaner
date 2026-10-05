@@ -52,6 +52,14 @@ describe("participants endpoints", () => {
           id: "u-2",
           data: () => ({ username: "Bob", usernameLower: "bob" }),
         },
+        {
+          id: "u-3",
+          data: () => ({ name: "Charlie Name" }),
+        },
+        {
+          id: "u-4",
+          data: () => ({}),
+        },
       ];
 
       const mockGroupDocs = [
@@ -68,7 +76,7 @@ describe("participants endpoints", () => {
 
       const results = await searchParticipants("al", "u-2");
 
-      expect(results).toHaveLength(2);
+      expect(results).toHaveLength(4);
       expect(results[0]).toEqual({
         type: "user",
         id: "u-1",
@@ -77,7 +85,7 @@ describe("participants endpoints", () => {
         usernameLower: "alice",
         avatarUrl: "alice.png",
       });
-      expect(results[1]).toEqual({
+      expect(results[3]).toEqual({
         type: "group",
         id: "g-1",
         name: "Boardgamers",
@@ -202,6 +210,93 @@ describe("participants endpoints", () => {
 
       const results = await getGroupMembersAsParticipants("empty-group", "Empty");
       expect(results).toEqual([]);
+    });
+
+    it("handles searchParticipants when currentUserId is undefined", async () => {
+      const mockGroupDocs = [
+        {
+          id: "g-shared",
+          data: () => ({ name: "Shared Group", nameLower: "shared group", avatarUrl: "group.png" }),
+        },
+      ];
+
+      mockGetDocs
+        .mockResolvedValueOnce({ docs: [] }) // users
+        .mockResolvedValueOnce({ docs: mockGroupDocs }); // public groups
+
+      const resultsWithoutUser = await searchParticipants("shared");
+      expect(resultsWithoutUser).toHaveLength(1);
+    });
+
+    it("deduplicates groups present in both public and private results", async () => {
+      const mockGroupDocs = [
+        {
+          id: "g-shared",
+          data: () => ({ name: "Shared Group", nameLower: "shared group", avatarUrl: "group.png" }),
+        },
+      ];
+
+      const mockMemberDocs = [
+        {
+          ref: { parent: { parent: { id: "g-shared" } } },
+        },
+      ];
+
+      mockGetDocs
+        .mockResolvedValueOnce({ docs: [] }) // users
+        .mockResolvedValueOnce({ docs: mockGroupDocs }) // public groups
+        .mockResolvedValueOnce({ docs: mockMemberDocs }); // private group members
+
+      mockGetDoc.mockResolvedValueOnce({
+        exists: () => true,
+        id: "g-shared",
+        data: () => ({ name: "Shared Group", avatarUrl: "group.png" }),
+      });
+
+      const results = await searchParticipants("shared", "u-diff");
+      expect(results).toHaveLength(1);
+    });
+
+    it("handles member document with explicit userId and fallbacks for name and usernameLower", async () => {
+      const mockMembersDocs = [
+        {
+          id: "member-doc-1",
+          data: () => ({ userId: "u-explicit" }),
+        },
+        {
+          id: "member-doc-2",
+          data: () => ({}),
+        },
+      ];
+
+      const mockUserDocs = [
+        {
+          id: "u-explicit",
+          data: () => ({
+            name: "Name Only",
+            // username undefined
+            // usernameLower undefined
+          }),
+        },
+        {
+          id: "member-doc-2",
+          data: () => ({
+            // both username and name undefined
+          }),
+        },
+      ];
+
+      mockGetDocs
+        .mockResolvedValueOnce({ docs: mockMembersDocs })
+        .mockResolvedValueOnce({ docs: mockUserDocs });
+
+      const results = await getGroupMembersAsParticipants("group-fallback", "Fallback Club");
+
+      expect(results).toHaveLength(2);
+      expect(results[0].name).toBe("Name Only");
+      expect(results[0].usernameLower).toBe("name only");
+      expect(results[1].name).toBe("member-doc-2");
+      expect(results[1].usernameLower).toBe("member-doc-2");
     });
 
     it("handles error gracefully when members query fails", async () => {

@@ -524,6 +524,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
                 else if (ref) ref.current = node;
               }}
               onChange={handleFileChange}
+              onClick={(e) => e.stopPropagation()}
               accept="image/*"
               className="hidden"
               id={inputId}

@@ -37,6 +37,18 @@ describe("SchedulerParticipantsList", () => {
     expect(screen.getByText(/hub.status.unvoted/)).toBeInTheDocument();
   });
 
+  it("renders loading skeletons when isParticipantsLoading is true", () => {
+    const { container } = renderWithProviders(
+      <SchedulerParticipantsList
+        participants={[]}
+        isParticipantsLoading={true}
+        activeEvent={mockEvent}
+      />,
+    );
+
+    expect(container.querySelectorAll(".animate-pulse").length).toBe(3);
+  });
+
   it("renders empty state when there are no participants", () => {
     renderWithProviders(
       <SchedulerParticipantsList
@@ -47,5 +59,20 @@ describe("SchedulerParticipantsList", () => {
     );
 
     expect(screen.getByText("hub.noParticipants")).toBeInTheDocument();
+  });
+
+  it("renders participant with avatar image", () => {
+    renderWithProviders(
+      <SchedulerParticipantsList
+        participants={[
+          { id: "user-1", name: "Alice", username: "Alice", usernameLower: "alice", type: "user", avatarUrl: "https://example.com/alice.jpg" },
+        ]}
+        isParticipantsLoading={false}
+        activeEvent={mockEvent}
+      />,
+    );
+
+    const img = screen.getByRole("img", { name: "Alice" });
+    expect(img).toHaveAttribute("src", "https://example.com/alice.jpg");
   });
 });

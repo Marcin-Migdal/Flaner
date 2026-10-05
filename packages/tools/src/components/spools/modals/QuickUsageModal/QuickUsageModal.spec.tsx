@@ -10,6 +10,8 @@ const mutateMock = vi.fn();
 
 let mockIsFinished = false;
 
+let mockRecordIsPending = false;
+
 vi.mock("../../../../hooks", () => ({
   useToolsTranslations: () => ({
     t: (key: string, opt?: Record<string, unknown>) => {
@@ -26,7 +28,7 @@ vi.mock("../../../../hooks", () => ({
       mutateMock(vars);
       opts?.onSuccess?.({ isFinished: mockIsFinished }, vars);
     },
-    isPending: false,
+    isPending: mockRecordIsPending,
   }),
 }));
 
@@ -130,5 +132,40 @@ describe("QuickUsageModal", () => {
 
     await user.keyboard("{Escape}");
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("displays validation error message when submitting invalid weight", async () => {
+    const user = userEvent.setup();
+    render(
+      <TooltipProvider>
+        <QuickUsageModal
+          isOpen={true}
+          onClose={vi.fn()}
+          spool={mockSpool}
+        />
+      </TooltipProvider>
+    );
+
+    const submitBtn = screen.getByRole("button", { name: "spooler.spools.recordPrint" });
+    await user.click(submitBtn);
+
+    expect(await screen.findByText("spooler.spools.validation.usagePositive")).toBeInTheDocument();
+    expect(mutateMock).not.toHaveBeenCalled();
+  });
+
+  it("shows saving text when recordUsageMutation is pending", () => {
+    mockRecordIsPending = true;
+    render(
+      <TooltipProvider>
+        <QuickUsageModal
+          isOpen={true}
+          onClose={vi.fn()}
+          spool={mockSpool}
+        />
+      </TooltipProvider>
+    );
+
+    expect(screen.getByRole("button", { name: "spooler.common.saving" })).toBeInTheDocument();
+    mockRecordIsPending = false;
   });
 });

@@ -19,7 +19,11 @@ const confirmSettlementMock = vi.fn().mockResolvedValue(undefined);
 vi.mock("../../../../hooks/api/mutation", () => ({
   useDeleteExpenseMutation: () => ({ mutateAsync: deleteExpenseMock, isPending: false }),
   useDeleteSettlementMutation: () => ({ mutateAsync: deleteSettlementMock, isPending: false }),
-  useConfirmSettlementMutation: () => ({ mutateAsync: confirmSettlementMock, isPending: false }),
+  useConfirmSettlementMutation: () => ({
+    mutate: confirmSettlementMock,
+    mutateAsync: confirmSettlementMock,
+    isPending: false,
+  }),
 }));
 
 const mockGroup: SplitGroup = {
@@ -35,7 +39,7 @@ const mockGroup: SplitGroup = {
   totalSpent: { EUR: 6000 },
   balances: {},
   pairBalances: {},
-  expensesCount: 1,
+  expensesCount: 2,
   settlementsCount: 1,
   status: "active",
   createdAt: 1700000000000,
@@ -63,6 +67,24 @@ const mockExpenses: Expense[] = [
     ],
     date: "2026-08-12",
     createdBy: "user-1",
+    createdAt: 1700000000000,
+    updatedAt: 1700000000000,
+  },
+  {
+    id: "exp-2",
+    groupId: "grp-1",
+    title: "Taxi ride",
+    amount: 2000,
+    currency: "EUR",
+    category: "transport",
+    paidBy: "user-2",
+    splitType: "equally",
+    splits: [
+      { userId: "user-1", amount: 1000 },
+      { userId: "user-2", amount: 1000 },
+    ],
+    date: "2026-08-15",
+    createdBy: "user-2",
     createdAt: 1700000000000,
     updatedAt: 1700000000000,
   },
@@ -269,10 +291,301 @@ describe("ActivityFeed", () => {
         onEditExpense={onEditMock}
       />
     );
-
-    const editBtn = screen.getByRole("button", { name: "splits.actions.edit" });
+    const editBtn = screen.getAllByRole("button", { name: "splits.actions.edit" })[0];
     await user.click(editBtn);
 
     expect(onEditMock).toHaveBeenCalledWith(mockExpenses[0]);
+  });
+
+  it("confirms a pending settlement when mark as paid is clicked", async () => {
+    const user = userEvent.setup();
+    const pendingSettlement: Settlement = {
+      id: "stl-pending",
+      groupId: "grp-1",
+      payerId: "user-2",
+      receiverId: "user-1",
+      amount: 500,
+      currency: "EUR",
+      date: "2026-08-12",
+      note: "",
+      status: "pending",
+      createdBy: "user-2",
+      createdAt: 1700000000000,
+    };
+
+    renderWithProviders(
+      <ActivityFeed
+        group={mockGroup}
+        members={mockMembers}
+        expenses={[]}
+        settlements={[pendingSettlement]}
+        isLoading={false}
+        getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
+        onEditExpense={vi.fn()}
+      />
+    );
+
+    const settlementsTrigger = screen.getByRole("button", { name: /splits\.feed\.settlements/ });
+    await user.click(settlementsTrigger);
+
+    const markPaidBtn = screen.getByRole("button", { name: "splits.actions.markAsPaid" });
+    await user.click(markPaidBtn);
+
+    expect(confirmSettlementMock).toHaveBeenCalledWith({
+      groupId: "grp-1",
+      settlementId: "stl-pending",
+      expectedVersion: undefined,
+    });
+  });
+
+  it("filters expenses by category, payer, and scope", async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <ActivityFeed
+        group={mockGroup}
+        members={mockMembers}
+        expenses={mockExpenses}
+        settlements={[]}
+        isLoading={false}
+        getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
+        onEditExpense={vi.fn()}
+      />
+    );
+
+    // Open filter popover
+    const filterBtn = screen.getByRole("button", { name: "splits.filters.title" });
+    await user.click(filterBtn);
+
+    // Filter by category: food
+    const categorySelect = screen.getByLabelText("splits.filters.category");
+    await user.selectOptions(categorySelect, "food");
+
+    // Filter by payer: user-1
+    const payerSelect = screen.getByLabelText("splits.filters.payer");
+    await user.selectOptions(payerSelect, "user-1");
+
+    // Filter by scope: paid_by_me
+    const paidByMeBtn = screen.getByRole("button", { name: "splits.filters.scopePaidByMe" });
+    await user.click(paidByMeBtn);
+
+    const applyBtn = screen.getByRole("button", { name: "splits.filters.apply" });
+    await user.click(applyBtn);
+
+    expect(screen.getByText("Gelato in Florence")).toBeInTheDocument();
+    expect(screen.queryByText("Taxi ride")).not.toBeInTheDocument();
+
+    // Reopen and test scope: my_share
+    await user.click(filterBtn);
+    const myShareBtn = screen.getByRole("button", { name: "splits.filters.scopeMyShare" });
+    await user.click(myShareBtn);
+    const payerSelect2 = screen.getByLabelText("splits.filters.payer");
+    const categorySelect2 = screen.getByLabelText("splits.filters.category");
+    await user.selectOptions(payerSelect2, "user-2");
+    await user.selectOptions(categorySelect2, "transport");
+    const applyBtn2 = screen.getByRole("button", { name: "splits.filters.apply" });
+    await user.click(applyBtn2);
+
+    expect(screen.queryByText("Gelato in Florence")).not.toBeInTheDocument();
+    expect(screen.getByText("Taxi ride")).toBeInTheDocument();
+  });
+
+  it("filters expenses by dateFrom and excludes non-matching dates", async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <ActivityFeed
+        group={mockGroup}
+        members={mockMembers}
+        expenses={mockExpenses}
+        settlements={[]}
+        isLoading={false}
+        getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
+        onEditExpense={vi.fn()}
+      />
+    );
+
+    const filterBtn = screen.getByRole("button", { name: "splits.filters.title" });
+    await user.click(filterBtn);
+
+    const datePickers = screen.getAllByRole("button", { name: /datePicker\.selectDate/ });
+    if (datePickers[0]) {
+      await user.click(datePickers[0]);
+      const dayButtons = screen.getAllByRole("button");
+      const day28 = dayButtons.find((btn) => btn.textContent?.trim() === "28");
+      if (day28) {
+        await user.click(day28);
+      }
+    }
+
+    const applyBtn = screen.getByRole("button", { name: "splits.filters.apply" });
+    await user.click(applyBtn);
+
+    expect(screen.getByText("splits.filters.noFilteredResults")).toBeInTheDocument();
+  });
+
+  it("filters expenses by dateTo and excludes non-matching dates", async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <ActivityFeed
+        group={mockGroup}
+        members={mockMembers}
+        expenses={[{ ...mockExpenses[0], date: "2099-01-01" }]}
+        settlements={[]}
+        isLoading={false}
+        getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
+        onEditExpense={vi.fn()}
+      />
+    );
+
+    const filterBtn = screen.getByRole("button", { name: "splits.filters.title" });
+    await user.click(filterBtn);
+
+    const datePickers = screen.getAllByRole("button", { name: /datePicker\.selectDate/ });
+    if (datePickers[1]) {
+      await user.click(datePickers[1]);
+      const dayButtons = screen.getAllByRole("button");
+      const day1 = dayButtons.find((btn) => btn.textContent?.trim() === "1");
+      if (day1) {
+        await user.click(day1);
+      }
+    }
+
+    const applyBtn = screen.getByRole("button", { name: "splits.filters.apply" });
+    await user.click(applyBtn);
+
+    expect(screen.getByText("splits.filters.noFilteredResults")).toBeInTheDocument();
+  });
+
+  it("filters expenses by payer only and excludes other payers", async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <ActivityFeed
+        group={mockGroup}
+        members={mockMembers}
+        expenses={mockExpenses}
+        settlements={[]}
+        isLoading={false}
+        getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
+        onEditExpense={vi.fn()}
+      />
+    );
+
+    const filterBtn = screen.getByRole("button", { name: "splits.filters.title" });
+    await user.click(filterBtn);
+
+    const payerSelect = screen.getByLabelText("splits.filters.payer");
+    await user.selectOptions(payerSelect, "user-2");
+
+    const applyBtn = screen.getByRole("button", { name: "splits.filters.apply" });
+    await user.click(applyBtn);
+
+    expect(screen.getByText("Taxi ride")).toBeInTheDocument();
+    expect(screen.queryByText("Gelato in Florence")).not.toBeInTheDocument();
+  });
+
+  it("handles deleting a settlement via confirmation popup", async () => {
+    const user = userEvent.setup();
+    deleteSettlementMock.mockImplementationOnce(async (_params, options) => {
+      options?.onSuccess?.();
+      return undefined;
+    });
+
+    const userSettlements: Settlement[] = [
+      {
+        id: "stl-mine",
+        groupId: "grp-1",
+        payerId: "user-1",
+        receiverId: "user-2",
+        amount: 250,
+        currency: "EUR",
+        note: "Settlement note",
+        status: "confirmed",
+        date: "2026-08-13",
+        createdBy: "user-1", // created by user-1 so canDelete is true
+        createdAt: 1700000000000,
+      },
+    ];
+
+    renderWithProviders(
+      <ActivityFeed
+        group={mockGroup}
+        members={mockMembers}
+        expenses={[]}
+        settlements={userSettlements}
+        isLoading={false}
+        getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
+        onEditExpense={vi.fn()}
+      />
+    );
+
+    // Expand settlements accordion
+    const settlementsAccordion = screen.getByRole("button", { name: /splits\.feed\.settlements/i });
+    await user.click(settlementsAccordion);
+
+    const deleteBtn = screen.getByRole("button", { name: "splits.actions.delete" });
+    await user.click(deleteBtn);
+
+    expect(screen.getByText("splits.feed.deleteSettlementTitle")).toBeInTheDocument();
+    expect(screen.getByText("splits.feed.deleteSettlementDesc")).toBeInTheDocument();
+
+    const dialog = screen.getByRole("dialog");
+    const confirmBtn = within(dialog).getByRole("button", { name: "splits.actions.delete" });
+    fireEvent.click(confirmBtn);
+
+    expect(deleteSettlementMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        groupId: "grp-1",
+        settlementId: "stl-mine",
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it("handles confirming a pending settlement", async () => {
+    const user = userEvent.setup();
+
+    const pendingSettlement: Settlement[] = [
+      {
+        id: "stl-pending",
+        groupId: "grp-1",
+        payerId: "user-2",
+        receiverId: "user-1", // receiver is user-1 so canConfirm is true
+        amount: 500,
+        currency: "EUR",
+        note: "",
+        status: "pending",
+        date: "2026-08-14",
+        createdBy: "user-2",
+        createdAt: 1700000000000,
+      },
+    ];
+
+    renderWithProviders(
+      <ActivityFeed
+        group={mockGroup}
+        members={mockMembers}
+        expenses={[]}
+        settlements={pendingSettlement}
+        isLoading={false}
+        getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
+        onEditExpense={vi.fn()}
+      />
+    );
+
+    // Expand settlements accordion
+    const settlementsAccordion = screen.getByRole("button", { name: /splits\.feed\.settlements/i });
+    await user.click(settlementsAccordion);
+
+    const markAsPaidBtn = screen.getByRole("button", { name: "splits.actions.markAsPaid" });
+    await user.click(markAsPaidBtn);
+
+    expect(confirmSettlementMock).toHaveBeenCalledWith({
+      groupId: "grp-1",
+      settlementId: "stl-pending",
+      expectedVersion: mockGroup.version,
+    });
   });
 });

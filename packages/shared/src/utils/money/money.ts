@@ -25,7 +25,7 @@ export const formatMoneyList = (amounts: AmountsByCurrency, primaryCurrency: str
 };
 
 export const getCurrencyLabel = (currency: string, locale: string): string => {
-  const name = new Intl.DisplayNames([locale], { type: "currency" }).of(currency);
+  const name = new Intl.DisplayNames([locale], { type: "currency", fallback: "none" }).of(currency);
   return name ? `${currency} · ${name}` : currency;
 };
 

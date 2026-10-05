@@ -22,6 +22,8 @@ vi.mock("../../../../api/templates", () => ({
   fetchAssociatedSpools: (...args: unknown[]) => fetchAssociatedSpoolsMock(...args),
 }));
 
+let mockDeleteIsPending = false;
+
 vi.mock("../../../../hooks", () => ({
   useToolsTranslations: () => ({
     t: (key: string) => key,
@@ -31,7 +33,7 @@ vi.mock("../../../../hooks", () => ({
       deleteMutationMock(vars);
       opts?.onSuccess?.();
     },
-    isPending: false,
+    isPending: mockDeleteIsPending,
   }),
 }));
 
@@ -185,5 +187,22 @@ describe("DeleteTemplateModal", () => {
     await screen.findByRole("button", { name: "spooler.templates.deleteWithSpools" });
     await user.keyboard("{Escape}");
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("shows spinner in deleteWithSpools button when deleteMutation is pending", async () => {
+    fetchAssociatedSpoolsMock.mockResolvedValue([{ id: "spool-1" }]);
+    mockDeleteIsPending = true;
+
+    render(
+      <DeleteTemplateModal
+        isOpen={true}
+        onClose={vi.fn()}
+        template={mockTemplate}
+      />
+    );
+
+    const btn = await screen.findByRole("button", { name: "spooler.templates.deleteWithSpools" });
+    expect(btn.querySelector(".animate-spin")).toBeInTheDocument();
+    mockDeleteIsPending = false;
   });
 });

@@ -46,4 +46,34 @@ describe("TemplateItem", () => {
     const swatch = container.querySelector('div[style*="background-color: rgb(0, 174, 66)"]');
     expect(swatch).not.toBeNull();
   });
+
+  it("falls back to white for unknown material with white hex or missing hex", () => {
+    const unknownTemplate: FilamentTemplate = {
+      ...mockTemplate,
+      material: "CustomMat",
+      type: "CustomType",
+      colorName: "CustomColor",
+      colorHex: "#ffffff",
+    };
+
+    const { container, rerender } = render(
+      <TemplateItem
+        template={unknownTemplate}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+
+    const whiteSwatch = container.querySelector('div[style*="background-color: rgb(255, 255, 255)"]');
+    expect(whiteSwatch).not.toBeNull();
+
+    rerender(
+      <TemplateItem
+        template={{ ...unknownTemplate, colorHex: "" }}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+    expect(container.querySelector('div[style*="background-color: rgb(255, 255, 255)"]')).not.toBeNull();
+  });
 });

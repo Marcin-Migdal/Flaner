@@ -27,7 +27,7 @@ try {
     typeof error === "object" &&
     error !== null &&
     "message" in error &&
-    /already exists/u.test(String(error?.message || ""));
+    /already exists/u.test(String(error.message));
 
   if (isAlreadyExists) {
     app = getApp();

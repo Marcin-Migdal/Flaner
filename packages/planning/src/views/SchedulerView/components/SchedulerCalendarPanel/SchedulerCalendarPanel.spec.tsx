@@ -20,7 +20,29 @@ vi.mock("../../../../hooks/api/mutation", () => ({
   }),
 }));
 
+vi.mock("./components/SchedulerBigCalendar", () => ({
+  SchedulerBigCalendar: ({
+    onVoteSlot,
+    onSlotClick,
+    onOpenRankedSheet,
+  }: {
+    onVoteSlot: (slotIndex: number, vote: "yes" | "no" | "maybe" | null) => Promise<void>;
+    onSlotClick: (slotIndex: number) => void;
+    onOpenRankedSheet: () => void;
+  }) => (
+    <div data-testid="mock-big-calendar">
+      <button type="button" onClick={() => onVoteSlot(0, "yes")}>Trigger Vote</button>
+      <button type="button" onClick={() => onSlotClick(0)}>Trigger Slot Click</button>
+      <button type="button" onClick={onOpenRankedSheet}>Trigger Ranked Sheet</button>
+    </div>
+  ),
+}));
+
 describe("SchedulerCalendarPanel", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   const mockEvent: SchedulerEvent = {
     id: "evt-cal",
     name: "Sprint Demo",
@@ -55,18 +77,52 @@ describe("SchedulerCalendarPanel", () => {
     expect(screen.getByText("hub.noEvents")).toBeInTheDocument();
   });
 
-  it("renders calendar and ranked sheet trigger button when activeEvent is present", async () => {
+  it("handles voting, slot modal open/close, and ranked sheet open", async () => {
     const user = userEvent.setup();
 
     renderWithProviders(
       <SchedulerCalendarPanel activeEvent={mockEvent} participants={mockParticipants} />,
     );
 
-    // Look for ranked slots action button
-    const rankedSheetTrigger = screen.getByRole("button", { name: /ranking\.title/i });
-    expect(rankedSheetTrigger).toBeInTheDocument();
+    // Trigger Vote
+    const voteBtn = screen.getByText("Trigger Vote");
+    await user.click(voteBtn);
+    expect(mockVoteSlot).toHaveBeenCalledWith({
+      eventId: "evt-cal",
+      slotIndex: 0,
+      userId: "u1",
+      vote: "yes",
+    });
 
-    await user.click(rankedSheetTrigger);
+    // Trigger Slot Click -> opens SlotVotingModal
+    const slotClickBtn = screen.getByText("Trigger Slot Click");
+    await user.click(slotClickBtn);
+    expect(screen.getByText("voting.yourVote")).toBeInTheDocument();
+
+    // Close SlotVotingModal via Escape
+    await user.keyboard("{Escape}");
+    expect(screen.queryByText("voting.yourVote")).not.toBeInTheDocument();
+
+    // Trigger Ranked Sheet
+    const rankedBtn = screen.getByText("Trigger Ranked Sheet");
+    await user.click(rankedBtn);
     expect(screen.getByText("rankedSheet.eyebrow")).toBeInTheDocument();
+  });
+
+  it("does not call voteSlot when activeEvent is finalized", async () => {
+    const user = userEvent.setup();
+    const finalizedEvent: SchedulerEvent = {
+      ...mockEvent,
+      isFinalized: true,
+      finalizedSlotIndex: 0,
+    };
+
+    renderWithProviders(
+      <SchedulerCalendarPanel activeEvent={finalizedEvent} participants={mockParticipants} />,
+    );
+
+    const voteBtn = screen.getByText("Trigger Vote");
+    await user.click(voteBtn);
+    expect(mockVoteSlot).not.toHaveBeenCalled();
   });
 });

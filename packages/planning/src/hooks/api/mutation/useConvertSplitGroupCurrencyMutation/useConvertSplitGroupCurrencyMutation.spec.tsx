@@ -68,4 +68,19 @@ describe("useConvertSplitGroupCurrencyMutation", () => {
     expect(result.current.error?.message).toBe("planning:errors.userNotAuthenticated");
     mockUser = { uid: "user-123", username: "Alice", email: "alice@flaner.app" };
   });
+
+  it("executes successfully without options", async () => {
+    vi.mocked(splitsApi.convertSplitGroupCurrency).mockResolvedValueOnce(3);
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useConvertSplitGroupCurrencyMutation(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.mutate({
+        groupId: "grp-1",
+        targetCurrency: "PLN",
+      });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
 });

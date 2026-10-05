@@ -163,5 +163,41 @@ describe("InviteToGroupModal component", () => {
     await user.click(inviteBtn);
     expect(mutateAsyncMock).not.toHaveBeenCalled();
   });
+
+  it("renders loading indicator when friends are loading", () => {
+    vi.mocked(hooks.useGetFriendsListQuery).mockReturnValue({
+      data: [],
+      isLoading: true,
+    } as unknown as ReturnType<typeof hooks.useGetFriendsListQuery>);
+
+    renderWithProviders(
+      <InviteToGroupModal
+        groupId="grp-1"
+        groupName="Test Group"
+        open={true}
+        onOpenChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("inviteToGroup.loading")).toBeInTheDocument();
+  });
+
+  it("handles user without username and displays ?? initials", () => {
+    vi.mocked(hooks.useGetFriendsListQuery).mockReturnValue({
+      data: [{ uid: "u-anon", username: "", createdAt: 1, userRef: {} as never, usernameLower: "" }],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetFriendsListQuery>);
+
+    renderWithProviders(
+      <InviteToGroupModal
+        groupId="grp-1"
+        groupName="Test Group"
+        open={true}
+        onOpenChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("??")).toBeInTheDocument();
+  });
 });
 

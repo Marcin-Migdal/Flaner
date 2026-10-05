@@ -8,9 +8,10 @@ import type { Debt } from "../../../../utils/debtSimplification";
 import { BalancesTab } from "./BalancesTab";
 
 const mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
+let currentMockUser: typeof mockUser | null = mockUser;
 
 vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
+  useAuth: () => ({ user: currentMockUser }),
 }));
 
 const updateGroupMock = vi.fn();
@@ -209,5 +210,95 @@ describe("BalancesTab", () => {
       groupId: "grp-1",
       data: { simplifyDebts: true },
     });
+  });
+
+  it("sorts participant balances by primary currency and alphabetically", async () => {
+    const multiCurrencyGroup: SplitGroup = {
+      ...mockGroup,
+      defaultCurrency: "EUR",
+      balances: {
+        EUR: { "user-1": 1000, "user-2": -1000 },
+        USD: { "user-1": -500, "user-2": 500 },
+        GBP: { "user-1": 200, "user-2": -200 },
+      },
+    };
+
+    const user = userEvent.setup();
+    renderWithProviders(
+      <BalancesTab
+        group={multiCurrencyGroup}
+        members={mockMembers}
+        pairwiseDebts={[]}
+        simplifiedDebts={[]}
+        getMember={(id) => (id === "user-1" ? mockMembers[0] : mockMembers[1])}
+        getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
+        onSettleDebt={vi.fn()}
+      />
+    );
+
+    const participantsTrigger = screen.getByRole("button", { name: "splits.balances.participants" });
+    await user.click(participantsTrigger);
+
+    expect(screen.getByText("Alice")).toBeInTheDocument();
+  });
+
+  it("renders simplified debts when simplifyDebts is enabled on group", () => {
+    const simplifiedGroup: SplitGroup = {
+      ...mockGroup,
+      simplifyDebts: true,
+    };
+
+    renderWithProviders(
+      <BalancesTab
+        group={simplifiedGroup}
+        members={mockMembers}
+        pairwiseDebts={[]}
+        simplifiedDebts={mockDebts}
+        getMember={(id) => (id === "user-1" ? mockMembers[0] : mockMembers[1])}
+        getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
+        onSettleDebt={vi.fn()}
+      />
+    );
+
+    expect(screen.getAllByText("splits.balances.transfers")[0]).toBeInTheDocument();
+  });
+
+  it("handles settled balances, null user, and multi-debt sorting with different currencies", async () => {
+    currentMockUser = null;
+    const user = userEvent.setup();
+
+    try {
+      const settledGroup: SplitGroup = {
+        ...mockGroup,
+        balances: {
+          EUR: {},
+        },
+      };
+
+      const mixedDebts: Debt[] = [
+        { from: "user-2", to: "user-1", amount: 1000, currency: "USD" },
+        { from: "user-2", to: "user-1", amount: 2000, currency: "USD" },
+        { from: "user-2", to: "user-1", amount: 500, currency: "GBP" },
+      ];
+
+      renderWithProviders(
+        <BalancesTab
+          group={settledGroup}
+          members={mockMembers}
+          pairwiseDebts={mixedDebts}
+          simplifiedDebts={mixedDebts}
+          getMember={(id) => (id === "user-1" ? mockMembers[0] : mockMembers[1])}
+          getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
+          onSettleDebt={vi.fn()}
+        />
+      );
+
+      const participantsTrigger = screen.getByRole("button", { name: "splits.balances.participants" });
+      await user.click(participantsTrigger);
+
+      expect(screen.getAllByText("splits.balances.settled")[0]).toBeInTheDocument();
+    } finally {
+      currentMockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
+    }
   });
 });

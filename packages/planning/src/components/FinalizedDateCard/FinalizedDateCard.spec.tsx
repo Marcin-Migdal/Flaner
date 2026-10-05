@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createTestI18n, renderWithProviders } from "@flaner/test-utils";
 import type { SchedulerEvent } from "../../api/events/types";
 import { FinalizedDateCard } from "./FinalizedDateCard";
 
@@ -60,8 +60,37 @@ describe("FinalizedDateCard", () => {
     expect(handleReopen).toHaveBeenCalledTimes(1);
   });
 
-  it("does not render reopen button for non-owner", () => {
-    renderWithProviders(<FinalizedDateCard event={baseEvent} isOwner={false} />);
+  it("does not render reopen button for non-owner or when onReopen is undefined", () => {
+    const { rerender } = renderWithProviders(<FinalizedDateCard event={baseEvent} isOwner={false} />);
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
+
+    rerender(<FinalizedDateCard event={baseEvent} isOwner={true} />);
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("handles same-day event, Polish locale, undefined finalizedSlotIndex, and missing votes", () => {
+    const plI18n = createTestI18n();
+    plI18n.changeLanguage("pl");
+
+    const singleDayEvent: SchedulerEvent = {
+      ...baseEvent,
+      finalizedSlotIndex: undefined,
+      proposedDates: [
+        {
+          start: "2026-07-10",
+          end: "2026-07-10",
+          color: "#10b981",
+          // @ts-expect-error testing undefined votes
+          votes: undefined,
+        },
+      ],
+    };
+
+    renderWithProviders(<FinalizedDateCard event={singleDayEvent} />, {
+      i18nInstance: plI18n,
+    });
+
+    expect(screen.getByText("0/2")).toBeInTheDocument();
+    expect(screen.getByText(/10 lipca 2026/i)).toBeInTheDocument();
   });
 });

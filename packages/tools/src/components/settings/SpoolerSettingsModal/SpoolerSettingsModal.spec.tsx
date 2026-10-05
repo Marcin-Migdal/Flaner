@@ -5,13 +5,15 @@ import userEvent from "@testing-library/user-event";
 import { SpoolerSettingsModal } from "./SpoolerSettingsModal";
 
 const updateMutationMock = vi.fn();
+let mockStartupWaste: number | undefined = 1.5;
+let mockIsPending = false;
 
 vi.mock("../../../hooks", () => ({
   useToolsTranslations: () => ({
     t: (key: string) => key,
   }),
   useGetStartupWasteQuery: () => ({
-    data: 1.5,
+    data: mockStartupWaste,
     isLoading: false,
   }),
   useUpdateStartupWasteMutation: (opts?: { onSuccess?: () => void }) => ({
@@ -19,11 +21,17 @@ vi.mock("../../../hooks", () => ({
       updateMutationMock(val);
       opts?.onSuccess?.();
     },
-    isPending: false,
+    isPending: mockIsPending,
   }),
 }));
 
 describe("SpoolerSettingsModal", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockStartupWaste = 1.5;
+    mockIsPending = false;
+  });
+
   it("renders settings modal with current startup waste", () => {
     render(
       <SpoolerSettingsModal
@@ -88,5 +96,28 @@ describe("SpoolerSettingsModal", () => {
 
     await user.keyboard("{Escape}");
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("handles undefined startup waste without breaking form reset", () => {
+    mockStartupWaste = undefined;
+    render(
+      <SpoolerSettingsModal
+        isOpen={true}
+        onClose={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("heading", { name: "spooler.settings.title" })).toBeInTheDocument();
+  });
+
+  it("shows saving text when mutation is pending", () => {
+    mockIsPending = true;
+    render(
+      <SpoolerSettingsModal
+        isOpen={true}
+        onClose={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("button", { name: "spooler.common.saving" })).toBeInTheDocument();
+    mockIsPending = false;
   });
 });

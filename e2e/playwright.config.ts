@@ -36,6 +36,21 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
     {
+      name: "planning",
+      testMatch: /planning\/.*\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "shopping",
+      testMatch: /shopping\/.*\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "tools",
+      testMatch: /tools\/.*\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
       name: "mobile",
       testMatch: /mobile\/.*\.spec\.ts/,
       use: { ...devices["Pixel 7"] },

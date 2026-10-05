@@ -61,4 +61,36 @@ describe("FormIconTextField component", () => {
       expect.anything()
     );
   });
+
+  it("handles non-clearable mode and displays error message", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    const onClearMock = vi.fn();
+
+    const FormWithoutClear = () => {
+      const form = useForm<FormValues>({ defaultValues: { searchQuery: "" } });
+      return (
+        <FormProvider {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <FormIconTextField
+              control={form.control}
+              name="searchQuery"
+              alwaysOpen
+              icon={<Search data-testid="search-icon" />}
+              placeholder="Search..."
+              rules={{ required: "Search is required" }}
+              onClear={onClearMock}
+            />
+            <button type="submit">Submit</button>
+          </form>
+        </FormProvider>
+      );
+    };
+
+    render(<FormWithoutClear />);
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    expect(await screen.findByText("Search is required")).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });

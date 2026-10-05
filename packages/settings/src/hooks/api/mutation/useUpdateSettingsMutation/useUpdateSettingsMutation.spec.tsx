@@ -95,4 +95,19 @@ describe("useUpdateSettingsMutation", () => {
     expect(updateUserProfile).not.toHaveBeenCalled();
     expect(mockUpdateUser).not.toHaveBeenCalled();
   });
+
+  it("succeeds without options.onSuccess provided", async () => {
+    vi.mocked(updateUserProfile).mockResolvedValueOnce(undefined);
+
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useUpdateSettingsMutation(), {
+      wrapper: Wrapper,
+    });
+
+    result.current.mutate({ language: "en" });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(updateUserProfile).toHaveBeenCalledWith("user-456", { language: "en" }, "john_doe");
+    expect(mockUpdateUser).toHaveBeenCalledWith({ language: "en" });
+  });
 });

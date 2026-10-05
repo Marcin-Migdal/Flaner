@@ -57,4 +57,16 @@ describe("useDeleteExpenseMutation", () => {
     expect(result.current.error?.message).toBe("planning:errors.userNotAuthenticated");
     mockUser = { uid: "user-123" };
   });
+
+  it("executes successfully without options", async () => {
+    vi.mocked(splitsApi.deleteExpense).mockResolvedValueOnce(undefined);
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useDeleteExpenseMutation(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.mutate({ groupId: "grp-1", expenseId: "exp-1" });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
 });

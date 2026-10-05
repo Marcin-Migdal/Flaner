@@ -32,8 +32,16 @@ let mockReadNotifications: Array<{
 }> = [];
 
 let mockHasNextPage = false;
-const mockIsFetchingNextPage = false;
+let mockIsFetchingNextPage = false;
 let mockReadLoading = false;
+let mockIsMobile = false;
+let mockReadData: { pages: { notifications: typeof mockReadNotifications }[] } | undefined = {
+  pages: [{ notifications: [] }],
+};
+
+vi.mock("@flaner/shared/hooks", () => ({
+  useIsMobile: () => mockIsMobile,
+}));
 
 vi.mock("../../../hooks/useNotifications", () => ({
   useNotifications: () => ({
@@ -46,9 +54,7 @@ vi.mock("../../../hooks/useNotifications", () => ({
 
 vi.mock("../../../hooks", () => ({
   useReadNotifications: () => ({
-    data: {
-      pages: [{ notifications: mockReadNotifications }],
-    },
+    data: mockReadData,
     fetchNextPage: mockFetchNextPage,
     hasNextPage: mockHasNextPage,
     isFetchingNextPage: mockIsFetchingNextPage,
@@ -145,7 +151,9 @@ describe("NotificationsPopover", () => {
         createdAt: Date.now(),
       },
     ];
+    mockReadData = { pages: [{ notifications: mockReadNotifications }] };
     mockHasNextPage = true;
+    mockIsFetchingNextPage = false;
     const user = userEvent.setup();
 
     renderPopover();
@@ -172,6 +180,7 @@ describe("NotificationsPopover", () => {
   it("shows read loading state", async () => {
     mockUnreadNotifications = [];
     mockReadNotifications = [];
+    mockReadData = { pages: [{ notifications: [] }] };
     mockReadLoading = true;
     mockHasNextPage = false;
     const user = userEvent.setup();
@@ -185,5 +194,60 @@ describe("NotificationsPopover", () => {
 
     // Loader is present (no empty state text)
     expect(screen.queryByText("Brak historii")).not.toBeInTheDocument();
+  });
+
+  it("shows 99+ badge when unread notifications exceed 99", () => {
+    mockUnreadNotifications = Array.from({ length: 105 }, (_, i) => ({
+      id: `notif-${i}`,
+      recipientId: "u1",
+      senderId: "u2",
+      senderUsername: "User",
+      type: "system" as const,
+      read: false,
+      createdAt: Date.now(),
+    }));
+
+    renderPopover();
+    expect(screen.getByText("99+")).toBeInTheDocument();
+  });
+
+  it("shows loader in load more button when isFetchingNextPage is true and handles mobile popover", async () => {
+    mockUnreadNotifications = [];
+    mockReadNotifications = [
+      {
+        id: "notif-read-1",
+        recipientId: "u1",
+        senderId: "u3",
+        senderUsername: "Bob",
+        type: "system",
+        read: true,
+        createdAt: Date.now(),
+      },
+    ];
+    mockReadData = { pages: [{ notifications: mockReadNotifications }] };
+    mockHasNextPage = true;
+    mockIsFetchingNextPage = true;
+    mockIsMobile = true;
+    const user = userEvent.setup();
+
+    renderPopover();
+    await user.click(screen.getByRole("button", { name: /powiadomienia/i }));
+
+    const readTab = screen.getByRole("tab", { name: /przeczytane/i });
+    await user.click(readTab);
+
+    // Loader is in the load more button
+    expect(document.querySelector(".animate-spin")).toBeInTheDocument();
+  });
+
+  it("handles undefined readData gracefully by falling back to empty list", () => {
+    mockUnreadNotifications = [];
+    mockReadData = undefined;
+    mockReadLoading = false;
+    mockIsMobile = false;
+    mockIsFetchingNextPage = false;
+
+    renderPopover();
+    expect(screen.getByRole("button", { name: /powiadomienia/i })).toBeInTheDocument();
   });
 });

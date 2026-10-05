@@ -74,4 +74,60 @@ describe("cropImage util", () => {
     expect(file.name).toBe("custom.jpg");
     expect(file.type).toBe("image/jpeg");
   });
+
+  it("rejects if image loading fails", async () => {
+    vi.stubGlobal(
+      "Image",
+      class {
+        addEventListener(event: string, cb: (e?: unknown) => void) {
+          if (event === "error") {
+            setTimeout(() => cb(new Error("Image error")), 0);
+          }
+        }
+        setAttribute() {}
+      }
+    );
+
+    await expect(
+      getCroppedImg("invalid-url", { x: 0, y: 0, width: 10, height: 10 })
+    ).rejects.toThrow("Image error");
+  });
+
+  it("throws error if canvas getContext('2d') returns null", async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+
+    await expect(
+      getCroppedImg("data:image/png;base64,123", { x: 0, y: 0, width: 10, height: 10 })
+    ).rejects.toThrow("Unable to create canvas context");
+  });
+
+  it("throws error if croppedCanvas getContext('2d') returns null", async () => {
+    let callCount = 0;
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return {
+          translate: vi.fn(),
+          rotate: vi.fn(),
+          scale: vi.fn(),
+          drawImage: vi.fn(),
+        } as unknown as CanvasRenderingContext2D;
+      }
+      return null;
+    });
+
+    await expect(
+      getCroppedImg("data:image/png;base64,123", { x: 0, y: 0, width: 10, height: 10 })
+    ).rejects.toThrow("Unable to create cropped canvas context");
+  });
+
+  it("rejects if toBlob produces null blob", async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation((cb: BlobCallback) => {
+      cb(null);
+    });
+
+    await expect(
+      getCroppedImg("data:image/png;base64,123", { x: 0, y: 0, width: 10, height: 10 })
+    ).rejects.toThrow("Canvas export produced an empty blob");
+  });
 });

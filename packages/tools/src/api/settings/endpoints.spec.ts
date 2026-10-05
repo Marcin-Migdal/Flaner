@@ -44,6 +44,16 @@ describe("tools settings endpoints", () => {
       expect(res).toBe(1.5);
     });
 
+    it("returns 1.5 default when document exists but startupWaste is not a number", async () => {
+      mockGetDoc.mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ startupWaste: "not-a-number" }),
+      });
+
+      const res = await getStartupWaste("user-1");
+      expect(res).toBe(1.5);
+    });
+
     it("returns 1.5 default on firestore error", async () => {
       mockGetDoc.mockRejectedValueOnce(new Error("Connection error"));
 

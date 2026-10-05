@@ -364,4 +364,58 @@ describe("AuthContext", () => {
     resolvePopup(new Error("Done"));
     await signInPromise;
   });
+
+  it("handles null user when updateUser is called", () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    act(() => {
+      authStateCallback?.(null);
+    });
+
+    act(() => {
+      result.current.updateUser({ darkMode: false });
+    });
+
+    expect(result.current.user).toBeNull();
+  });
+
+  it("creates user profile with fallback values when authUser fields are null in onAuthStateChanged and Google signin", async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    vi.mocked(firestore.getDoc).mockResolvedValue({
+      exists: () => false,
+    } as never);
+    vi.mocked(firestore.setDoc).mockResolvedValue(undefined);
+
+    // 1. onAuthStateChanged with null fields
+    await act(async () => {
+      await authStateCallback?.({
+        uid: "fallback-uid",
+        displayName: null,
+        email: null,
+        photoURL: null,
+      });
+    });
+
+    expect(result.current.user?.username).toBe("User");
+    expect(result.current.user?.email).toBe("");
+    expect(result.current.user?.avatarUrl).toBe("");
+
+    // 2. Google signin with null fields
+    vi.mocked(firebaseAuth.signInWithPopup).mockResolvedValueOnce({
+      user: {
+        uid: "google-fallback-uid",
+        displayName: null,
+        email: null,
+        photoURL: null,
+      },
+    } as never);
+
+    await act(async () => {
+      await result.current.signInWithGoogleUser("pl");
+    });
+
+    expect(result.current.user?.username).toBe("User");
+    expect(result.current.user?.email).toBe("");
+    expect(result.current.user?.avatarUrl).toBe("");
+  });
 });

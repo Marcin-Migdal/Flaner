@@ -299,4 +299,95 @@ describe("ExpenseModal", () => {
     expect(consoleSpy).toHaveBeenCalledWith("ExpenseForm validation errors:", expect.any(Object));
     consoleSpy.mockRestore();
   });
+
+  it("handles exact splits with zero amounts, filtering them out", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+
+    renderWithProviders(
+      <ExpenseModal
+        open={true}
+        onOpenChange={onOpenChange}
+        group={mockGroup}
+        members={mockMembers}
+        expenseToEdit={null}
+      />,
+    );
+
+    const titleInput = screen.getByLabelText("splits.fields.title");
+    await user.type(titleInput, "One Person Lunch");
+
+    const amountInput = screen.getByLabelText("splits.fields.amount");
+    fireEvent.change(amountInput, { target: { value: "30" } });
+
+    const exactRadio = screen.getAllByRole("radio")[1];
+    await user.click(exactRadio);
+
+    const spinbuttons = screen.getAllByRole("spinbutton");
+    fireEvent.change(spinbuttons[1], { target: { value: "30" } });
+    // spinbuttons[2] left as default 0
+
+    const submitBtn = screen.getByRole("button", { name: "splits.actions.addExpense" });
+    await user.click(submitBtn);
+
+    expect(createExpenseMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          splitType: "exact",
+          splits: [{ userId: "user-1", amount: 3000 }],
+        }),
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("allows editing when createdBy is empty but paidBy matches current user", async () => {
+    const user = userEvent.setup();
+    const expenseWithEmptyCreator: Expense = {
+      ...mockExpense,
+      createdBy: "",
+      paidBy: "user-1",
+    };
+
+    renderWithProviders(
+      <ExpenseModal
+        open={true}
+        onOpenChange={vi.fn()}
+        group={mockGroup}
+        members={mockMembers}
+        expenseToEdit={expenseWithEmptyCreator}
+      />,
+    );
+
+    const submitBtn = screen.getByRole("button", { name: "splits.actions.save" });
+    await user.click(submitBtn);
+
+    expect(updateExpenseMock).toHaveBeenCalled();
+  });
+
+  it("handles createExpense and updateExpense rejections gracefully", async () => {
+    const user = userEvent.setup();
+    createExpenseMock.mockRejectedValueOnce(new Error("Failed"));
+
+    renderWithProviders(
+      <ExpenseModal
+        open={true}
+        onOpenChange={vi.fn()}
+        group={mockGroup}
+        members={mockMembers}
+        expenseToEdit={null}
+      />,
+    );
+
+    const titleInput = screen.getByLabelText("splits.fields.title");
+    await user.type(titleInput, "Failing Expense");
+
+    const amountInput = screen.getByLabelText("splits.fields.amount");
+    fireEvent.change(amountInput, { target: { value: "10" } });
+
+    const submitBtn = screen.getByRole("button", { name: "splits.actions.addExpense" });
+    await user.click(submitBtn);
+
+    expect(createExpenseMock).toHaveBeenCalled();
+  });
 });

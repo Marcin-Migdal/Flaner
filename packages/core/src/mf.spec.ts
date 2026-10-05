@@ -118,5 +118,22 @@ describe("module federation utilities (mf.ts)", () => {
       consoleSpy.mockRestore();
       vi.useRealTimers();
     });
+
+    it("returns empty array when remote resolves to null or has no navigation", async () => {
+      vi.mocked(loadRemote).mockResolvedValueOnce(null as never);
+      const nav1 = await loadMfeNavigation("tools");
+      expect(nav1).toEqual([]);
+
+      vi.mocked(loadRemote).mockResolvedValueOnce({ navigation: undefined } as never);
+      const nav2 = await loadMfeNavigation("tools");
+      expect(nav2).toEqual([]);
+    });
+
+    it("lazyMfeRoutes falls back to empty routes array when remote returns null", async () => {
+      vi.mocked(loadRemote).mockResolvedValueOnce(null as never);
+      const routeLoader = lazyMfeRoutes("tools");
+      const result = await routeLoader();
+      expect(result).toHaveProperty("element");
+    });
   });
 });

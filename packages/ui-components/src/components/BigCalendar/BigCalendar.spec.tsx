@@ -53,4 +53,30 @@ describe("BigCalendar component", () => {
 
     expect(screen.getByText("calendar.daysFull.mon")).toBeInTheDocument();
   });
+
+  it("handles prev and next navigation in week and day views", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<BigCalendar view="week" />);
+
+    const buttons = screen.getAllByRole("button");
+    const prevBtn = buttons[0];
+    const nextBtn = buttons[2];
+
+    await user.click(nextBtn);
+    await user.click(prevBtn);
+    expect(screen.getByText("Week View (TBD)")).toBeInTheDocument();
+
+    rerender(<BigCalendar view="day" />);
+    await user.click(nextBtn);
+    await user.click(prevBtn);
+    expect(screen.getByText("Day View (TBD)")).toBeInTheDocument();
+  });
+
+  it("falls back to MonthView on unknown view and applies fitContainer class", () => {
+    // @ts-expect-error testing unknown view fallback
+    const { container } = render(<BigCalendar view="unsupported_view" fitContainer={true} />);
+
+    expect(container.firstChild).toHaveClass("max-h-full", "min-h-0");
+    expect(screen.getByText("calendar.daysFull.mon")).toBeInTheDocument();
+  });
 });

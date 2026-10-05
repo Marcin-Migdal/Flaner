@@ -111,4 +111,44 @@ describe("SplitEditor", () => {
     );
     expect(screen.getByText("splits.expenseModal.exceeded")).toBeInTheDocument();
   });
+
+  it("renders balanced indicator in exact mode when difference is zero and handles empty currency", () => {
+    renderWithProviders(
+      <TestHarness
+        defaultValues={{
+          splitType: "exact",
+          amount: 100,
+          currency: "",
+          splits: [
+            { userId: "user-1", included: true, amount: 50 },
+            { userId: "user-2", included: true, amount: 50 },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByText("splits.expenseModal.balanced")).toBeInTheDocument();
+  });
+
+  it("returns null summary when total amount is zero in equal mode", () => {
+    renderWithProviders(
+      <TestHarness
+        defaultValues={{
+          splitType: "equally",
+          amount: 0,
+        }}
+      />,
+    );
+    expect(screen.queryByText(/splits\.expenseModal\.perPerson/)).not.toBeInTheDocument();
+  });
+
+  it("handles unknown member and root splits validation error", () => {
+    const emptyMembers = new Map<string, SplitGroupMember>();
+    renderWithProviders(
+      <TestHarness
+        membersMap={emptyMembers}
+        triggerError={false}
+      />,
+    );
+    expect(screen.getAllByText("splits.unknownUser")).toHaveLength(2);
+  });
 });

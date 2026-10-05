@@ -69,4 +69,43 @@ describe("BigCalendarHeader component", () => {
 
     expect(onViewChangeMock).toHaveBeenCalledWith("week");
   });
+
+  it("handles week view, day view, customViews, and extra header content", () => {
+    // Week view with custom right content and custom views
+    const { unmount } = render(
+      <BigCalendarHeader
+        currentDate={currentDate}
+        view="week"
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onToday={vi.fn()}
+        headerButtonContent={<span>Extra Header Btn</span>}
+        headerRightContent={<span>Extra Right Content</span>}
+        customViews={{
+          timeline: { label: "Timeline", component: () => null },
+        }}
+      />
+    );
+
+    expect(screen.getByText("Extra Header Btn")).toBeInTheDocument();
+    expect(screen.getByText("Extra Right Content")).toBeInTheDocument();
+    expect(screen.getByText("Timeline")).toBeInTheDocument();
+    unmount();
+
+    // Day view with hideViewSwitcher and default resolvedViews when onViewChange is provided
+    render(
+      <BigCalendarHeader
+        currentDate={currentDate}
+        view="day"
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onToday={vi.fn()}
+        onViewChange={vi.fn()}
+        hideViewSwitcher
+      />
+    );
+
+    // Title should format as full day
+    expect(screen.getByText(/May 2026/i)).toBeInTheDocument();
+  });
 });

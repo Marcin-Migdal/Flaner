@@ -60,4 +60,20 @@ describe("useBatchVoteUnvotedSlotsMutation", () => {
     expect(result.current.error?.message).toBe("planning:errors.userNotAuthenticated");
     mockUser = { uid: "user-123" };
   });
+
+  it("executes successfully without options and with default fallbackVote", async () => {
+    vi.mocked(eventsApi.batchVoteUnvotedSlots).mockResolvedValueOnce(undefined);
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useBatchVoteUnvotedSlotsMutation(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.mutate({
+        eventId: "evt-1",
+        userId: "user-123",
+      });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(eventsApi.batchVoteUnvotedSlots).toHaveBeenCalledWith("evt-1", "user-123", "no");
+  });
 });

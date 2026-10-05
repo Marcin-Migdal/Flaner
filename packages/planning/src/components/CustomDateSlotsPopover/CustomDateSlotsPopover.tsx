@@ -91,7 +91,7 @@ const classifyDateSlots = (slots: GeneratedDateSlot[]): RangeClassification => {
       rangeStartDates.push(slot.start);
       rangeEndDates.push(slot.end);
       allSelectedDates.push(slot.start, slot.end);
-    } else if (dayDiff > 1) {
+    } else {
       rangeStartDates.push(slot.start);
       rangeEndDates.push(slot.end);
       allSelectedDates.push(slot.start, slot.end);
@@ -135,22 +135,19 @@ const getPresetConfig = (
     createAsRange: false,
   };
 
-  if (preset === "daily") {
-    return { ...baseConfig, unit: "day", frequency: 1, skipWeekends: false };
+  switch (preset) {
+    case "daily":
+      return { ...baseConfig, unit: "day", frequency: 1, skipWeekends: false };
+    case "monthly":
+      return { ...baseConfig, unit: "month", frequency: 1, monthSubMode: "each", selectedMonthDay };
+    case "weekdays":
+      return { ...baseConfig, unit: "week", frequency: 1, selectedWeekDays: [1, 2, 3, 4, 5] };
+    case "weekends":
+      return { ...baseConfig, unit: "week", frequency: 1, selectedWeekDays: [0, 6] };
+    case "weekly":
+    default:
+      return { ...baseConfig, unit: "week", frequency: 1, selectedWeekDays };
   }
-  if (preset === "weekly") {
-    return { ...baseConfig, unit: "week", frequency: 1, selectedWeekDays };
-  }
-  if (preset === "monthly") {
-    return { ...baseConfig, unit: "month", frequency: 1, monthSubMode: "each", selectedMonthDay };
-  }
-  if (preset === "weekdays") {
-    return { ...baseConfig, unit: "week", frequency: 1, selectedWeekDays: [1, 2, 3, 4, 5] };
-  }
-  if (preset === "weekends") {
-    return { ...baseConfig, unit: "week", frequency: 1, selectedWeekDays: [0, 6] };
-  }
-  return baseConfig;
 };
 
 const generatePresetSlots = (
@@ -198,7 +195,7 @@ export const CustomDateSlotsPopover = ({
   const [createAsRange, setCreateAsRange] = useState<boolean>(false);
 
   // Preset selection & preview state
-  const [selectedPreset, setSelectedPreset] = useState<PresetType | null>("weekly");
+  const [selectedPreset, setSelectedPreset] = useState<PresetType>("weekly");
   const [calendarMonth, setCalendarMonth] = useState<Date>(today);
   const [startDateOpen, setStartDateOpen] = useState(false);
   const [endDateOpen, setEndDateOpen] = useState(false);
@@ -215,15 +212,6 @@ export const CustomDateSlotsPopover = ({
   };
 
   const rangeClassification = useMemo<RangeClassification>(() => {
-    if (!selectedPreset) {
-      return {
-        allSelectedDates: [],
-        rangeStartDates: [],
-        rangeMiddleDates: [],
-        rangeEndDates: [],
-      };
-    }
-
     let slots: GeneratedDateSlot[] = [];
     if (selectedPreset === "custom") {
       const config: CustomSlotsConfig = {
@@ -351,7 +339,7 @@ export const CustomDateSlotsPopover = ({
     { label: t("customSlots.custom.daysOfWeekFull.sat"), index: 6 },
   ];
   const weeklyDayIndex = selectedWeekDays[0] ?? currentDayOfWeek;
-  const weeklyDayName = weekDayDefsFull.find((d) => d.index === weeklyDayIndex)?.label || "";
+  const weeklyDayName = weekDayDefsFull[weeklyDayIndex]?.label ?? "";
   const monthlyDayNumber = typeof selectedMonthDay === "number" ? selectedMonthDay : currentDayOfMonth;
 
   const triggerButton = trigger || (

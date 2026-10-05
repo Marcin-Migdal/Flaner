@@ -19,9 +19,11 @@ const saveCustomColorHexMock = vi.fn();
 let mockUserTemplates: FilamentTemplate[] = [];
 let mockIsPending = false;
 
+let mockAuthUser: { uid: string } | null = { uid: "user-123" };
+
 vi.mock("@flaner/shared/context", () => ({
   useAuth: () => ({
-    user: { uid: "user-123" },
+    user: mockAuthUser,
   }),
 }));
 
@@ -812,5 +814,79 @@ describe("TemplateFormModal", () => {
         colorHex: "#ff00ff",
       })
     );
+  });
+
+  it("prevents main modal close while a subdialog is open or closing", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(<TemplateFormModal isOpen={true} onClose={onClose} />);
+
+    // Open material dropdown to find custom material delete button
+    const controls = document.body.querySelectorAll(".react-select__control");
+    await user.click(controls[0]);
+
+    const deleteBtn = await screen.findByTitle("spooler.templates.deleteMaterialTooltip");
+    await user.click(deleteBtn);
+
+    // Confirmation dialog is open -> isSubDialogOpen is true
+    const dialogContent = document.querySelector("[data-slot='dialog-content']");
+    if (dialogContent) {
+      fireEvent.pointerDown(dialogContent);
+      fireEvent.keyDown(dialogContent, { key: "Escape" });
+    }
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("submits editMutation directly when template has no associated spools", async () => {
+    fetchAssociatedSpoolsMock.mockResolvedValueOnce([]);
+    const user = userEvent.setup();
+
+    render(
+      <TemplateFormModal
+        isOpen={true}
+        onClose={vi.fn()}
+        initialData={mockTemplate}
+      />
+    );
+
+    const submitBtn = screen.getByRole("button", { name: "spooler.templates.editTemplate" });
+    await user.click(submitBtn);
+
+    expect(editMutationMock).toHaveBeenCalledWith({
+      templateId: mockTemplate.id,
+      newData: expect.objectContaining({
+        material: "PLA",
+        type: "Basic",
+      }),
+      propagate: false,
+    });
+  });
+
+  it("submits editMutation directly when auth user is null", async () => {
+    mockAuthUser = null;
+    const user = userEvent.setup();
+
+    render(
+      <TemplateFormModal
+        isOpen={true}
+        onClose={vi.fn()}
+        initialData={mockTemplate}
+      />
+    );
+
+    const submitBtn = screen.getByRole("button", { name: "spooler.templates.editTemplate" });
+    await user.click(submitBtn);
+
+    expect(editMutationMock).toHaveBeenCalledWith({
+      templateId: mockTemplate.id,
+      newData: expect.objectContaining({
+        material: "PLA",
+        type: "Basic",
+      }),
+      propagate: false,
+    });
+
+    mockAuthUser = { uid: "user-123" };
   });
 });

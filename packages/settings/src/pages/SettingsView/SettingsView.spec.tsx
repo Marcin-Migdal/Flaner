@@ -370,4 +370,163 @@ describe("SettingsView", () => {
     await user.click(discardButton);
     expect(mockProceed).toHaveBeenCalledTimes(1);
   });
+
+  it("handles avatar image error by falling back to dicebear URL", () => {
+    renderWithProviders(<SettingsView />);
+    const avatarImg = screen.getByAltText("Avatar Preview");
+    fireEvent.error(avatarImg);
+    expect((avatarImg as HTMLImageElement).src).toContain("api.dicebear.com");
+  });
+
+  it("renders FL initials placeholder when user has no avatar and no username", () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: createMockUser({ uid: "u-anon", username: "", avatarUrl: "" }),
+      isLoading: false,
+      signOutUser: vi.fn(),
+      signInWithGoogleUser: vi.fn(),
+      signInWithEmailUser: vi.fn(),
+      signUpWithEmailUser: vi.fn(),
+      updateUser: vi.fn(),
+    });
+
+    renderWithProviders(<SettingsView />);
+    expect(screen.getByText("FL")).toBeInTheDocument();
+  });
+
+  it("handles navigation back to / when history state is absent", async () => {
+    const user = userEvent.setup();
+    const originalHistory = window.history.state;
+    // Set window.history.state to null
+    Object.defineProperty(window, "history", {
+      value: { ...window.history, state: null },
+      writable: true,
+    });
+
+    renderWithProviders(<SettingsView />);
+    const backBtn = screen.getByRole("button", { name: "actions.back" });
+    await user.click(backBtn);
+    expect(mockNavigate).toHaveBeenCalledWith("/");
+
+    // Restore
+    Object.defineProperty(window, "history", {
+      value: { ...window.history, state: originalHistory },
+      writable: true,
+    });
+  });
+
+  it("handles mutation onError callback and avatar upload error fallback message", async () => {
+    const user = userEvent.setup();
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    // Avatar error with empty message fallback
+    vi.mocked(compressImage).mockRejectedValueOnce(new Error(""));
+
+    renderWithProviders(<SettingsView />);
+
+    const fileInput = screen.getByLabelText("profile.avatar");
+    await user.upload(fileInput, new File(["bytes"], "pic.png", { type: "image/png" }));
+
+    const saveButton = screen.getByRole("button", { name: "actions.save" });
+    await waitFor(() => expect(saveButton).toBeEnabled());
+    await user.click(saveButton);
+
+    await waitFor(() => {
+      expect(toast.failure).toHaveBeenCalledWith("notifications.avatarError");
+    });
+
+    // Test mutation onError callback invocation
+    mockMutate.mockImplementationOnce((_payload, options) => {
+      options?.onError?.(new Error("Mutation fail"));
+    });
+
+    // Make dirty by typing
+    const usernameInput = screen.getByPlaceholderText("profile.usernamePlaceholder");
+    await user.type(usernameInput, "newname");
+    await user.click(saveButton);
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("handles user without language/darkMode and submits with existing string avatar", async () => {
+    const user = userEvent.setup();
+    vi.mocked(useAuth).mockReturnValue({
+      user: createMockUser({
+        uid: "u-partial",
+        username: "partial",
+        language: undefined as never,
+        darkMode: undefined as never,
+        avatarUrl: "https://flaner.app/existing.png",
+      }),
+      isLoading: false,
+      signOutUser: vi.fn(),
+      signInWithGoogleUser: vi.fn(),
+      signInWithEmailUser: vi.fn(),
+      signUpWithEmailUser: vi.fn(),
+      updateUser: vi.fn(),
+    });
+
+    renderWithProviders(<SettingsView />);
+
+    const input = screen.getByPlaceholderText("profile.usernamePlaceholder");
+    await user.type(input, "123");
+
+    const saveButton = screen.getByRole("button", { name: "actions.save" });
+    await user.click(saveButton);
+
+    await waitFor(() => {
+      expect(mockMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          avatarUrl: "https://flaner.app/existing.png",
+          language: "pl",
+          darkMode: true,
+        }),
+        expect.any(Object)
+      );
+    });
+  });
+
+  it("handles dicebear fallback when user has no username and handles popup cancel", () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: createMockUser({ uid: "u-none", username: "", avatarUrl: "https://bad.url/img.png" }),
+      isLoading: false,
+      signOutUser: vi.fn(),
+      signInWithGoogleUser: vi.fn(),
+      signInWithEmailUser: vi.fn(),
+      signUpWithEmailUser: vi.fn(),
+      updateUser: vi.fn(),
+    });
+
+    vi.mocked(useUnsavedChangesWarning).mockReturnValue({
+      state: "blocked",
+      proceed: mockProceed,
+      reset: mockReset,
+      location: { pathname: "/test", search: "", hash: "", state: null, key: "k" },
+    });
+
+    renderWithProviders(<SettingsView />);
+    const avatarImg = screen.getByAltText("Avatar Preview");
+    fireEvent.error(avatarImg);
+    expect((avatarImg as HTMLImageElement).src).toContain("seed=User");
+
+    // Cancel on confirmation popup
+    const stayBtn = screen.getByRole("button", { name: "unsavedChanges.stay" });
+    fireEvent.click(stayBtn);
+    expect(mockReset).toHaveBeenCalled();
+  });
+
+  it("renders with null user gracefully", () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: null,
+      isLoading: false,
+      signOutUser: vi.fn(),
+      signInWithGoogleUser: vi.fn(),
+      signInWithEmailUser: vi.fn(),
+      signUpWithEmailUser: vi.fn(),
+      updateUser: vi.fn(),
+    });
+
+    renderWithProviders(<SettingsView />);
+    expect(screen.getByText("FL")).toBeInTheDocument();
+  });
 });

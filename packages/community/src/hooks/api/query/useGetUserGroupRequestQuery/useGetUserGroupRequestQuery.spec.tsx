@@ -64,6 +64,29 @@ describe("useGetUserGroupRequestQuery", () => {
     });
   });
 
+  it("invalidates user group request query with fallback empty string when user is null", () => {
+    vi.mocked(useAuth).mockReturnValueOnce({
+      user: null,
+      claims: null,
+      loading: false,
+      loginWithGoogle: vi.fn(),
+      logout: vi.fn(),
+      getIdToken: vi.fn(),
+    });
+
+    const { Wrapper, queryClient } = createWrapper();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(() => useInvalidateUserGroupRequestQuery(), {
+      wrapper: Wrapper,
+    });
+    result.current("grp-1");
+
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: ["userGroupRequest", "grp-1", ""],
+    });
+  });
+
   it("handles unauthenticated user", async () => {
     vi.mocked(useAuth).mockReturnValueOnce({
       user: null,

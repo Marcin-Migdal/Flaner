@@ -161,4 +161,53 @@ describe("SplitGroupMembersPopover", () => {
 
     expect(removeParticipantMock).toHaveBeenCalled();
   });
+
+  it("disables remove/leave button when member has outstanding balance", () => {
+    const groupWithBalance: SplitGroup = {
+      ...mockGroup,
+      balances: { EUR: { "user-2": 500, "user-1": -500 } },
+      pairBalances: { EUR: { "user-1__user-2": -500 } },
+    };
+
+    renderWithProviders(
+      <SplitGroupMembersPopover
+        group={groupWithBalance}
+        members={mockMembers}
+        open={true}
+        onOpenChange={vi.fn()}
+      >
+        <button type="button">Trigger</button>
+      </SplitGroupMembersPopover>
+    );
+
+    const removeBtn = screen.getByRole("button", { name: "splits.members.remove" });
+    expect(removeBtn).toBeDisabled();
+    expect(screen.getByTitle("splits.members.blockedBalance")).toBeInTheDocument();
+  });
+
+  it("disables leave button for non-owner when user has balance", () => {
+    const groupWithBalance: SplitGroup = {
+      ...mockGroup,
+      createdBy: "user-2",
+      balances: { EUR: { "user-1": -500 } },
+      pairBalances: { EUR: { "user-1__user-2": -500 } },
+    };
+
+    renderWithProviders(
+      <SplitGroupMembersPopover
+        group={groupWithBalance}
+        members={mockMembers}
+        open={true}
+        onOpenChange={vi.fn()}
+      />
+    );
+
+    const leaveBtn = screen.getByRole("button", { name: "splits.members.leave" });
+    expect(leaveBtn).toBeDisabled();
+  });
+
+  it("handles uncontrolled mode and unauthenticated user", () => {
+    renderWithProviders(<SplitGroupMembersPopover group={mockGroup} members={mockMembers} />);
+    expect(screen.queryByText("Alice")).not.toBeInTheDocument();
+  });
 });

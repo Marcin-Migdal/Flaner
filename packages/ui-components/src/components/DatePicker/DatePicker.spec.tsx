@@ -47,4 +47,113 @@ describe("DatePicker component", () => {
     const triggerBtn = screen.getByRole("button", { name: "Disabled date" });
     expect(triggerBtn).toBeDisabled();
   });
+
+  it("selects a date and invokes onChange with autoCloseOnSelect", async () => {
+    const user = userEvent.setup();
+    const onChangeMock = vi.fn();
+
+    render(
+      <DatePicker
+        label="Schedule"
+        onChange={onChangeMock}
+        autoCloseOnSelect={true}
+      />
+    );
+
+    const triggerBtn = screen.getByRole("button", { name: "Schedule" });
+    await user.click(triggerBtn);
+
+    const dayButtons = screen.getAllByRole("button");
+    const day15 = dayButtons.find((btn) => btn.textContent?.trim() === "15");
+    if (day15) {
+      await user.click(day15);
+    }
+
+    expect(onChangeMock).toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("selects a different date and calls onOpenChange in controlled open mode", async () => {
+    const user = userEvent.setup();
+    const today = new Date();
+    const onChangeMock = vi.fn();
+    const onOpenChangeMock = vi.fn();
+
+    render(
+      <DatePicker
+        label="Schedule"
+        value={today}
+        onChange={onChangeMock}
+        autoCloseOnSelect={true}
+        open={true}
+        onOpenChange={onOpenChangeMock}
+      />
+    );
+
+    const selectedBtn = document.querySelector<HTMLButtonElement>('[data-selected-single="true"]');
+    const otherDayBtn = Array.from(document.querySelectorAll<HTMLButtonElement>("table button")).find(
+      (b) => b !== selectedBtn && !b.disabled
+    );
+
+    expect(otherDayBtn).toBeDefined();
+    if (otherDayBtn) {
+      await user.click(otherDayBtn);
+      expect(onChangeMock).toHaveBeenCalled();
+      expect(onOpenChangeMock).toHaveBeenCalledWith(false);
+    }
+  });
+
+  it("closes popover when clicking the already selected date with autoCloseOnSelect={true}", async () => {
+    const user = userEvent.setup();
+    const today = new Date();
+    const onChangeMock = vi.fn();
+    const onOpenChangeMock = vi.fn();
+
+    render(
+      <DatePicker
+        label="Schedule"
+        value={today}
+        onChange={onChangeMock}
+        autoCloseOnSelect={true}
+        open={true}
+        onOpenChange={onOpenChangeMock}
+      />
+    );
+
+    const selectedBtn = document.querySelector<HTMLButtonElement>('[data-selected-single="true"]');
+    expect(selectedBtn).not.toBeNull();
+    if (selectedBtn) {
+      await user.click(selectedBtn);
+      expect(onChangeMock).not.toHaveBeenCalled();
+      expect(onOpenChangeMock).toHaveBeenCalledWith(false);
+    }
+  });
+
+  it("does not close popover when clicking the already selected date with autoCloseOnSelect={false}", async () => {
+    const user = userEvent.setup();
+    const today = new Date();
+    const onChangeMock = vi.fn();
+    const onOpenChangeMock = vi.fn();
+
+    render(
+      <DatePicker
+        label="Schedule"
+        value={today}
+        onChange={onChangeMock}
+        autoCloseOnSelect={false}
+        open={true}
+        onOpenChange={onOpenChangeMock}
+      />
+    );
+
+    const selectedBtn = document.querySelector<HTMLButtonElement>('[data-selected-single="true"]');
+    expect(selectedBtn).not.toBeNull();
+    if (selectedBtn) {
+      await user.click(selectedBtn);
+      expect(onChangeMock).not.toHaveBeenCalled();
+      expect(onOpenChangeMock).not.toHaveBeenCalled();
+    }
+  });
 });
+
+

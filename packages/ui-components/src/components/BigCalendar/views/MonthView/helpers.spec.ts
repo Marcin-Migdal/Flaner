@@ -84,5 +84,70 @@ describe("MonthView helpers", () => {
       });
       expect(midClasses).toContain("bg-brand/15");
     });
+
+    it("applies range hovering classes when only rangeStart is selected", () => {
+      const start = new Date(2026, 4, 10);
+      const mid = new Date(2026, 4, 12);
+      const hover = new Date(2026, 4, 14);
+
+      // Hover date itself
+      const hoverClasses = getCellClass({
+        day: hover,
+        index: 2,
+        currentDate: baseDate,
+        days: [start, mid, hover],
+        selectionMode: "range",
+        selectedDate: [start, undefined],
+        hasEvents: false,
+        hoverDate: hover,
+      });
+      expect(hoverClasses).toContain("bg-brand/70 text-brand-foreground");
+
+      // Mid date between start and hover
+      const midClasses = getCellClass({
+        day: mid,
+        index: 1,
+        currentDate: baseDate,
+        days: [start, mid, hover],
+        selectionMode: "range",
+        selectedDate: [start, undefined],
+        hasEvents: false,
+        hoverDate: hover,
+      });
+      expect(midClasses).toContain("bg-brand/15");
+    });
+
+    it("handles no selectionMode", () => {
+      const classes = getCellClass({
+        day: baseDate,
+        index: 0,
+        currentDate: baseDate,
+        days: [baseDate],
+        selectionMode: undefined,
+        hasEvents: false,
+        hoverDate: null,
+      });
+
+      expect(classes).not.toContain("cursor-pointer");
+    });
+
+    it("applies today and single unselected classes", () => {
+      const today = new Date();
+      const otherDay = new Date(2026, 4, 20);
+
+      const classesToday = getCellClass({
+        day: today,
+        index: 0,
+        currentDate: today,
+        days: [today],
+        selectionMode: "single",
+        selectedDate: otherDay,
+        hasEvents: false,
+        hoverDate: null,
+      });
+
+      expect(classesToday).toContain("bg-brand/5 ring-1");
+      expect(classesToday).toContain("hover:bg-accent/50");
+    });
   });
 });

@@ -95,4 +95,27 @@ describe("ConfirmationPopup component", () => {
 
     expect(screen.queryByText("Hidden Dialog")).not.toBeInTheDocument();
   });
+
+  it("handles warning variant, ReactNode description, and undefined onCancel handler", async () => {
+    const user = userEvent.setup();
+    const handleOpenChange = vi.fn();
+
+    render(
+      <ConfirmationPopup
+        open={true}
+        onOpenChange={handleOpenChange}
+        title="Warning Dialog"
+        variant="warning"
+        description={<span>Complex description node</span>}
+        onConfirm={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Complex description node")).toBeInTheDocument();
+
+    const cancelBtn = screen.getByRole("button", { name: "Cancel" });
+    await user.click(cancelBtn);
+
+    expect(handleOpenChange).toHaveBeenCalledWith(false);
+  });
 });

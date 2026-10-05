@@ -36,25 +36,48 @@ describe("AvailabilityGridParticipant", () => {
 
     const noButton = screen.getByTitle("voting.no");
     await user.click(noButton);
-
     expect(onVoteClick).toHaveBeenCalledWith(0, "no", "yes");
+
+    const yesButton = screen.getByTitle("voting.unvoted");
+    await user.click(yesButton);
+    expect(onVoteClick).toHaveBeenCalledWith(0, "yes", "yes");
+
+    const maybeButton = screen.getByTitle("voting.maybe");
+    await user.click(maybeButton);
+    expect(onVoteClick).toHaveBeenCalledWith(0, "maybe", "yes");
   });
 
-  it("renders static vote badge for other users without interactive buttons", () => {
+  it("renders static vote badge for other users without interactive buttons and handles avatar / unvoted state", () => {
+    const datesWithMultipleVotes: ProposedDateSlot[] = [
+      {
+        start: "2026-06-01T10:00:00Z",
+        end: "2026-06-01T12:00:00Z",
+        color: "#3b82f6",
+        votes: { "user-2": "maybe" },
+      },
+      {
+        start: "2026-06-02T10:00:00Z",
+        end: "2026-06-02T12:00:00Z",
+        color: "#3b82f6",
+        votes: {}, // unvoted dash
+      },
+    ];
+
     renderWithProviders(
       <AvailabilityGridParticipant
         uid="user-2"
-        profile={{ id: "user-2", name: "Bob", username: "Bob", usernameLower: "bob", type: "user" }}
+        profile={{ id: "user-2", name: "Bob", avatarUrl: "https://example.com/bob.png", username: "Bob", usernameLower: "bob", type: "user" }}
         isCurrentUser={false}
         isCreator={false}
-        proposedDates={proposedDates}
-        gridTemplateColumns="150px 100px"
+        proposedDates={datesWithMultipleVotes}
+        gridTemplateColumns="150px 100px 100px"
         onVoteClick={vi.fn()}
       />,
     );
 
     expect(screen.getByText("Bob")).toBeInTheDocument();
-    expect(screen.queryByTitle("voting.yes")).not.toBeInTheDocument();
-    expect(screen.getByTitle("voting.no")).toBeInTheDocument();
+    expect(screen.getByText("B")).toBeInTheDocument();
+    expect(screen.getByTitle("voting.maybe")).toBeInTheDocument();
+    expect(screen.getByTitle("voting.unvoted")).toBeInTheDocument();
   });
 });

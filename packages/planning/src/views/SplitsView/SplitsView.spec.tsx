@@ -95,6 +95,16 @@ const deleteGroupMock = vi.fn().mockImplementation(async (_id, options) => {
   return undefined;
 });
 
+const createGroupMock = vi.fn().mockImplementation(async (_data, options) => {
+  options?.onSuccess?.("grp-new");
+  return { id: "grp-new" };
+});
+
+const updateGroupMock = vi.fn().mockImplementation(async (_params, options) => {
+  options?.onSuccess?.();
+  return undefined;
+});
+
 vi.mock("../../hooks/api/mutation", () => ({
   useCreateExpenseMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useUpdateExpenseMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -104,10 +114,10 @@ vi.mock("../../hooks/api/mutation", () => ({
   useConfirmSettlementMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useAddParticipantToGroupMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useRemoveParticipantFromGroupMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
-  useUpdateSplitGroupMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }),
+  useUpdateSplitGroupMutation: () => ({ mutate: vi.fn(), mutateAsync: updateGroupMock, isPending: false }),
   useDeleteSplitGroupMutation: () => ({ mutateAsync: deleteGroupMock, isPending: false }),
   useConvertSplitGroupCurrencyMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
-  useCreateSplitGroupMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useCreateSplitGroupMutation: () => ({ mutateAsync: createGroupMock, isPending: false }),
 }));
 
 describe("SplitsView", () => {
@@ -224,6 +234,9 @@ describe("SplitsView", () => {
     await user.click(editBtn);
 
     expect(screen.getByText("splits.groupModal.editTitle")).toBeInTheDocument();
+    const saveBtn = screen.getByRole("button", { name: "splits.actions.save" });
+    await user.click(saveBtn);
+    expect(updateGroupMock).toHaveBeenCalled();
   });
 
   it("handles deletion rejection error gracefully", async () => {
@@ -241,5 +254,23 @@ describe("SplitsView", () => {
     fireEvent.click(confirmBtn);
 
     expect(deleteGroupMock).toHaveBeenCalled();
+  });
+
+  it("deletes a non-active group when hashId does not match deletedId", async () => {
+    const user = userEvent.setup();
+    queryGroupsData = mockGroups;
+
+    renderWithProviders(<SplitsView />, {
+      initialEntries: ["/#grp-2"],
+    });
+
+    const deleteButtons = screen.getAllByRole("button", { name: "splits.actions.delete" });
+    await user.click(deleteButtons[0]); // grp-1
+
+    const dialog = screen.getByRole("dialog");
+    const confirmBtn = within(dialog).getByRole("button", { name: "splits.actions.delete" });
+    fireEvent.click(confirmBtn);
+
+    expect(deleteGroupMock).toHaveBeenCalledWith("grp-1", expect.any(Object));
   });
 });

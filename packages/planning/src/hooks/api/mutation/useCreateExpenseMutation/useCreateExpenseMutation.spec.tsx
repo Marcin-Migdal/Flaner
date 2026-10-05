@@ -100,4 +100,28 @@ describe("useCreateExpenseMutation", () => {
     expect(result.current.error?.message).toBe("planning:errors.userNotAuthenticated");
     mockUser = { uid: "user-123" };
   });
+
+  it("executes successfully without options", async () => {
+    vi.mocked(splitsApi.createExpense).mockResolvedValueOnce({ id: "exp-2" } as unknown as Expense);
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useCreateExpenseMutation(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.mutate({
+        groupId: "grp-1",
+        data: {
+          title: "Groceries",
+          amount: 45,
+          currency: "PLN",
+          category: "food",
+          date: "2026-06-01",
+          paidBy: "user-123",
+          splitType: "equally",
+          splits: [],
+        },
+      });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
 });

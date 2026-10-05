@@ -5,7 +5,7 @@ import { renderWithProviders } from "@flaner/test-utils";
 import type { SplitGroup } from "../../../../api/splits";
 import { SplitGroupDashboard } from "./SplitGroupDashboard";
 
-const mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
+let mockUser: { uid: string; username: string; email: string } | null = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
 
 vi.mock("@flaner/shared/context", () => ({
   useAuth: () => ({ user: mockUser }),
@@ -75,8 +75,8 @@ const mockGroup: SplitGroup = {
   formerParticipants: [],
   simplifyDebts: false,
   totalSpent: { EUR: 350 },
-  balances: { EUR: { "user-1": 100, "user-2": -100 } },
-  pairBalances: { EUR: { "user-2__user-1": 100 } },
+  balances: { EUR: { "user-1": -100, "user-2": 100 } },
+  pairBalances: { EUR: { "user-1__user-2": -100 } },
   expensesCount: 1,
   settlementsCount: 0,
   status: "active",
@@ -103,8 +103,8 @@ describe("SplitGroupDashboard", () => {
 
     expect(balancesTab).toHaveAttribute("data-state", "active");
 
-    // Settle button in debt card opens SettleUpModal
-    const settleDebtBtn = screen.getByRole("button", { name: "splits.actions.settleUp" });
+    // Settle button in debt card opens SettleUpModal with debt draft
+    const settleDebtBtn = screen.getByRole("button", { name: "splits.actions.pay" });
     await user.click(settleDebtBtn);
     expect(screen.getByText("splits.settleModal.title")).toBeInTheDocument();
 
@@ -149,5 +149,32 @@ describe("SplitGroupDashboard", () => {
     await user.click(backButton);
 
     expect(onBackMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens SettleUpModal with fallback to defaultCurrency when lastUsedCurrency is empty and group has simplifiedDebts", async () => {
+    const user = userEvent.setup();
+    const groupWithDefaults: SplitGroup = {
+      ...mockGroup,
+      simplifyDebts: true,
+      lastUsedCurrency: "",
+    };
+
+    renderWithProviders(<SplitGroupDashboard group={groupWithDefaults} onBack={vi.fn()} />);
+
+    const settleUpBtn = screen.getByRole("button", { name: "splits.actions.settleUp" });
+    await user.click(settleUpBtn);
+
+    expect(screen.getByText("splits.settleModal.title")).toBeInTheDocument();
+  });
+
+  it("handles unauthenticated user and undefined simplifyDebts gracefully", () => {
+    mockUser = null;
+    const groupWithoutSimplify: SplitGroup = {
+      ...mockGroup,
+      simplifyDebts: undefined as unknown as boolean,
+    };
+    renderWithProviders(<SplitGroupDashboard group={groupWithoutSimplify} onBack={vi.fn()} />);
+    expect(screen.getByText("Hiking Trip")).toBeInTheDocument();
+    mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
   });
 });

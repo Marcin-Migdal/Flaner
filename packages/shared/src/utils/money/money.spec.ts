@@ -103,5 +103,10 @@ describe("money utilities", () => {
       expect(plnLabel).toContain("PLN");
       expect(plnLabel).toContain("złoty");
     });
+
+    it("falls back to currency code when currency name is not found", () => {
+      const label = getCurrencyLabel("XYZ", "en-US");
+      expect(label).toBe("XYZ");
+    });
   });
 });

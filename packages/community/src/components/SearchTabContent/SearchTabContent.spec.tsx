@@ -144,5 +144,72 @@ describe("SearchTabContent component", () => {
 
     expect(screen.getByText("??")).toBeInTheDocument();
   });
+
+  it("renders loading indicator when search is fetching", async () => {
+    const user = userEvent.setup();
+    vi.mocked(hooks.useSearchUsersQuery).mockReturnValue({
+      data: [],
+      isFetching: true,
+    } as unknown as ReturnType<typeof hooks.useSearchUsersQuery>);
+
+    renderComponent();
+    const input = screen.getByPlaceholderText("searchTab.placeholder");
+    await user.type(input, "loading-test");
+
+    expect(document.querySelector(".animate-spin")).toBeInTheDocument();
+  });
+
+  it("renders empty results message when search produces no matches", async () => {
+    const user = userEvent.setup();
+    vi.mocked(hooks.useSearchUsersQuery).mockReturnValue({
+      data: [],
+      isFetching: false,
+    } as unknown as ReturnType<typeof hooks.useSearchUsersQuery>);
+
+    renderComponent();
+    const input = screen.getByPlaceholderText("searchTab.placeholder");
+    await user.type(input, "nonexistent");
+
+    expect(screen.getByText("searchTab.empty")).toBeInTheDocument();
+  });
+
+  it("renders pending spinners on buttons during cancel, accept, and send", async () => {
+    const user = userEvent.setup();
+    const mockUsers = [
+      { uid: "sent-1", username: "Bob", email: "bob@test.com" },
+      { uid: "recv-1", username: "Charlie", email: "charlie@test.com" },
+      { uid: "stranger-1", username: "Dave", email: "dave@test.com" },
+    ];
+
+    vi.mocked(hooks.useSearchUsersQuery).mockReturnValue({
+      data: mockUsers,
+      isFetching: false,
+    } as unknown as ReturnType<typeof hooks.useSearchUsersQuery>);
+
+    vi.mocked(hooks.useCancelFriendRequestMutation).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: true,
+      variables: "sent-1",
+    } as unknown as ReturnType<typeof hooks.useCancelFriendRequestMutation>);
+
+    vi.mocked(hooks.useAcceptFriendRequestMutation).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: true,
+      variables: { uid: "recv-1" },
+    } as unknown as ReturnType<typeof hooks.useAcceptFriendRequestMutation>);
+
+    vi.mocked(hooks.useSendFriendRequestMutation).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: true,
+      variables: { uid: "stranger-1" },
+    } as unknown as ReturnType<typeof hooks.useSendFriendRequestMutation>);
+
+    renderComponent();
+    const input = screen.getByPlaceholderText("searchTab.placeholder");
+    await user.type(input, "test");
+
+    const loaders = document.querySelectorAll(".animate-spin");
+    expect(loaders.length).toBeGreaterThanOrEqual(3);
+  });
 });
 

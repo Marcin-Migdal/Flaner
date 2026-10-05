@@ -386,5 +386,63 @@ describe("ManageGroupSheet component", () => {
 
     expect(removeMemberMutateAsync).toHaveBeenCalled();
   });
+
+  it("renders loading indicator when members or profiles are loading", async () => {
+    const user = userEvent.setup();
+    vi.mocked(hooks.useGetUsersQuery).mockReturnValue({
+      data: undefined,
+      isLoading: true,
+    } as unknown as ReturnType<typeof hooks.useGetUsersQuery>);
+
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+
+    const membersTrigger = screen.getByRole("button", { name: /manageGroupSheet\.membersSection/i });
+    await user.click(membersTrigger);
+
+    expect(await screen.findByText("groupDetails.loading")).toBeInTheDocument();
+  });
+
+  it("handles group with Timestamp updatedAt and member with avatarUrl", async () => {
+    const user = userEvent.setup();
+    const mockGroupWithTimestamp = createMockGroup({
+      id: "grp-1",
+      ownerId: "user-owner",
+      updatedAt: { toMillis: () => 1700000000 } as never,
+    });
+
+    vi.mocked(hooks.useGetGroupQuery).mockReturnValue({
+      data: mockGroupWithTimestamp,
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetGroupQuery>);
+
+    vi.mocked(hooks.useGetUsersQuery).mockReturnValue({
+      data: [
+        { uid: "user-owner", username: "OwnerAlice", avatarUrl: "https://example.com/alice.jpg" },
+      ],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetUsersQuery>);
+
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+
+    const membersTrigger = screen.getByRole("button", { name: /manageGroupSheet\.membersSection/i });
+    await user.click(membersTrigger);
+
+    expect(await screen.findByText("OwnerAlice")).toBeInTheDocument();
+  });
+
+  it("handles member without user profile in membersProfiles gracefully", async () => {
+    const user = userEvent.setup();
+    vi.mocked(hooks.useGetUsersQuery).mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetUsersQuery>);
+
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+
+    const membersTrigger = screen.getByRole("button", { name: /manageGroupSheet\.membersSection/i });
+    await user.click(membersTrigger);
+
+    expect(await screen.findByText("user-owner")).toBeInTheDocument();
+  });
 });
 

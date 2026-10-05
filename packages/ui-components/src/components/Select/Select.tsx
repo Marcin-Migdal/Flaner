@@ -18,7 +18,7 @@ export type SelectOption = {
   [key: string]: unknown;
 };
 
-const CustomMenuList = <Option extends SelectOption = SelectOption>(
+export const CustomMenuList = <Option extends SelectOption = SelectOption>(
   props: MenuListProps<Option, false, GroupBase<Option>>,
 ) => {
   const { innerRef } = props;
@@ -64,7 +64,7 @@ const CustomMenuList = <Option extends SelectOption = SelectOption>(
   );
 };
 
-const CustomMenu = <Option extends SelectOption = SelectOption>(
+export const CustomMenu = <Option extends SelectOption = SelectOption>(
   props: MenuProps<Option, false, GroupBase<Option>>,
 ) => {
   const { innerRef } = props;

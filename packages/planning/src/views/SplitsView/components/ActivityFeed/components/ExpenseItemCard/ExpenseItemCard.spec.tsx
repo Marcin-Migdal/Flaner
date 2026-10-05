@@ -110,4 +110,34 @@ describe("ExpenseItemCard", () => {
 
     expect(screen.getByText("splits.feed.notInvolved")).toBeInTheDocument();
   });
+
+  it("renders conversion tooltip when conversion is present and displays actions when createdBy is empty", () => {
+    const expenseWithConversion: Expense = {
+      ...mockExpensePaidByMe,
+      createdBy: "",
+      paidBy: "user-1",
+      conversion: {
+        originalAmount: 1000,
+        originalCurrency: "USD",
+        targetCurrency: "EUR",
+        rate: 0.92,
+        rateDate: "2026-08-10",
+      },
+    };
+
+    renderWithProviders(
+      <TooltipProvider>
+        <ExpenseItemCard
+          expense={expenseWithConversion}
+          currentUserId="user-1"
+          getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
+          onEdit={vi.fn()}
+          onDelete={vi.fn()}
+        />
+      </TooltipProvider>,
+    );
+
+    expect(screen.getByText(/splits\.conversion\.original/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "splits.actions.edit" })).toBeInTheDocument();
+  });
 });

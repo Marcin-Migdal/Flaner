@@ -56,4 +56,16 @@ describe("useFinalizeEventMutation", () => {
     expect(result.current.error?.message).toBe("planning:errors.userNotAuthenticated");
     mockUser = { uid: "user-123" };
   });
+
+  it("executes successfully without options", async () => {
+    vi.mocked(eventsApi.updateSchedulerEvent).mockResolvedValueOnce(undefined);
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useFinalizeEventMutation(), { wrapper: Wrapper });
+
+    act(() => {
+      result.current.mutate({ eventId: "evt-1", finalizedSlotIndex: 1 });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
 });

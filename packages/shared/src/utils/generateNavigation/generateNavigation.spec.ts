@@ -109,4 +109,28 @@ describe("generateNavigation", () => {
     expect(result).toHaveLength(1);
     expect(result[0].path).toBe("/base/wrapper/child");
   });
+
+  it("handles routes with undefined path, all children hidden, and empty routes", () => {
+    const routes: AppRouteObject[] = [
+      {
+        // undefined path -> uses basePath
+        handle: { label: "root.title", icon: DummyIcon },
+        children: [
+          {
+            path: "hidden-child",
+            handle: { label: "hidden", icon: DummyIcon, hideInNav: true },
+          },
+        ],
+      },
+      {
+        // No handle and no children -> skipped
+        path: "noop",
+      },
+    ];
+
+    const result = generateNavigation(routes, "/base");
+    expect(result).toHaveLength(1);
+    expect(result[0].path).toBe("/base");
+    expect(result[0].children).toBeUndefined();
+  });
 });

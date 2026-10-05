@@ -138,6 +138,23 @@ describe("tools lookups endpoints", () => {
       );
     });
 
+    it("addLookupColor returns existing id without updating hex when hex is unchanged", async () => {
+      mockGetDocs.mockResolvedValueOnce({
+        empty: false,
+        docs: [{ id: "c-1", data: () => ({ hex: "#000000" }) }],
+      });
+
+      const res = await addLookupColor("user-1", {
+        materialName: "PLA",
+        typeName: "Basic",
+        name: "Black",
+        hex: "#000000",
+      });
+
+      expect(res).toBe("c-1");
+      expect(mockUpdateDoc).not.toHaveBeenCalled();
+    });
+
     it("addLookupColor creates new color if not present", async () => {
       mockGetDocs.mockResolvedValueOnce({ empty: true });
 
@@ -178,6 +195,22 @@ describe("tools lookups endpoints", () => {
       expect(mockBatchCommit).toHaveBeenCalled();
     });
 
+    it("deleteLookupMaterial skips non-matching child types and colors", async () => {
+      mockGetDocs
+        .mockResolvedValueOnce({
+          docs: [{ ref: { id: "t-other" }, data: () => ({ materialName: "abs" }) }],
+        })
+        .mockResolvedValueOnce({
+          docs: [{ ref: { id: "c-other" }, data: () => ({ materialName: "petg" }) }],
+        });
+
+      await deleteLookupMaterial("user-1", "m-1", "PLA");
+
+      // Only the material doc itself should be deleted
+      expect(mockBatchDelete).toHaveBeenCalledTimes(1);
+      expect(mockBatchCommit).toHaveBeenCalled();
+    });
+
     it("deleteLookupType cascade deletes matching colors", async () => {
       mockGetDocs.mockResolvedValueOnce({
         docs: [{ ref: { id: "c-1" }, data: () => ({ materialName: "pla", typeName: "basic" }) }],
@@ -187,6 +220,21 @@ describe("tools lookups endpoints", () => {
 
       // 1 type + 1 color = 2 deletes in batch
       expect(mockBatchDelete).toHaveBeenCalledTimes(2);
+      expect(mockBatchCommit).toHaveBeenCalled();
+    });
+
+    it("deleteLookupType skips colors with different material or different type", async () => {
+      mockGetDocs.mockResolvedValueOnce({
+        docs: [
+          { ref: { id: "c-diff-mat" }, data: () => ({ materialName: "abs", typeName: "basic" }) },
+          { ref: { id: "c-diff-type" }, data: () => ({ materialName: "pla", typeName: "matte" }) },
+        ],
+      });
+
+      await deleteLookupType("user-1", "t-1", "PLA", "Basic");
+
+      // Only the type doc itself should be deleted
+      expect(mockBatchDelete).toHaveBeenCalledTimes(1);
       expect(mockBatchCommit).toHaveBeenCalled();
     });
 

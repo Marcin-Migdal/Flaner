@@ -30,6 +30,7 @@ vi.mock("@flaner/shared/context", () => ({
 }));
 
 let mockIsMobile = false;
+let mockIsDark = false;
 const mockUpdateDoc = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@flaner/shared/hooks", async () => {
@@ -37,7 +38,7 @@ vi.mock("@flaner/shared/hooks", async () => {
   return {
     ...actual,
     useTheme: () => ({
-      isDark: false,
+      isDark: mockIsDark,
       setTheme: mockSetTheme,
     }),
     useIsMobile: () => mockIsMobile,
@@ -281,5 +282,35 @@ describe("ShellLayout", () => {
     await user.click(settingsLink);
 
     mockIsMobile = false;
+  });
+
+  it("handles dark mode active state in theme submenu", async () => {
+    const user = userEvent.setup();
+    mockIsDark = true;
+
+    renderWithProviders(<ShellLayout />, { i18nInstance: i18n });
+
+    const profileButton = screen.getByText("Marcin");
+    await user.click(profileButton);
+
+    // Open Theme submenu
+    const themeSubTrigger = await screen.findByText("Motyw");
+    await user.hover(themeSubTrigger);
+
+    // Click dark theme
+    const darkOption = await screen.findByText("Ciemny");
+    fireEvent.click(darkOption);
+
+    expect(mockSetTheme).toHaveBeenCalledWith("dark");
+    expect(mockUpdateDoc).toHaveBeenCalled();
+
+    mockIsDark = false;
+  });
+
+  it("renders with null user gracefully", () => {
+    currentUser = null;
+    renderWithProviders(<ShellLayout />);
+    expect(screen.getByText("nav.home")).toBeInTheDocument();
+    currentUser = stableUser;
   });
 });
