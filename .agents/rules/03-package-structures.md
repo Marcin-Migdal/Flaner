@@ -44,3 +44,93 @@ packages/<mfe-name>/src/
 
 **IRONCLAD RULE FOR FUNCTIONAL MFEs:**
 If, during your work, you find that you need to create a new directory inside a functional MFE (e.g., you need something that exists in `core`, but isn't in the standard layout), **ensure you maintain consistency**. If there is no explicit instruction or clear justification, model it after the 3 base packages (`core`, `shared`, `ui-components`). Any arbitrary deviations are strictly forbidden.
+
+## 3. Standard Configuration Files for MFEs
+
+Every new functional MFE package must include the standardized configuration setup:
+
+### A. `tsconfig.json` Standard Template
+Functional MFEs do NOT use complex project reference splits (`tsconfig.lib.json` / `tsconfig.spec.json`) because Vite/Vitest resolves modules directly and does not run `tsc -b`. A single clean `tsconfig.json` is required:
+
+```json
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "../../vitest.setup.ts"]
+}
+```
+
+**CRITICAL TSCONFIG RULES:**
+1. **Always include `"../../vitest.setup.ts"` in `"include"`:** This guarantees that IDE language servers (VS Code / Antigravity) load ambient types and custom matchers (e.g., `toBeInTheDocument()`) for all colocated `*.spec.tsx` files.
+2. **Never add `"references": [{ "path": "..." }]` without composite mode:** TypeScript project references require `"composite": true` on target projects. Do not add `references` in package tsconfigs.
+3. **TypeScript `types` Inheritance:** TypeScript does NOT merge `compilerOptions.types` arrays across `extends`. If a package ever defines `types`, it must explicitly include `"@testing-library/jest-dom/vitest"` and `"vitest/globals"`.
+
+### B. `vitest.config.ts` Standard Template
+```typescript
+import { mergeConfig, defineConfig } from "vitest/config";
+import baseConfig from "../../vitest.base";
+import path from "path";
+
+export default mergeConfig(
+  baseConfig,
+  defineConfig({
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
+    },
+    test: {
+      name: "<mfe-name>",
+      coverage: {
+        provider: "v8",
+        include: ["packages/<mfe-name>/src/**/*.{ts,tsx}"],
+        exclude: [
+          "packages/<mfe-name>/src/**/*.spec.{ts,tsx}",
+          "packages/<mfe-name>/src/**/index.ts",
+          "packages/<mfe-name>/src/**/types.ts",
+          "packages/<mfe-name>/src/**/*.styles.ts",
+          "packages/<mfe-name>/src/bootstrap.tsx",
+          "packages/<mfe-name>/src/routes.tsx",
+          "packages/<mfe-name>/src/navigation.ts",
+          "packages/<mfe-name>/src/App.tsx",
+          "packages/<mfe-name>/src/env.d.ts",
+        ],
+        reporter: ["text", "json", "html"],
+      },
+    },
+  })
+);
+```
+
+## 4. Mandatory "Folder-per-Unit" File Organization
+
+Across all packages (`ui-components`, `shared`, and functional MFEs), loose pairs of implementation and test files directly in parent folders are **strictly forbidden**.
+
+Every unit that has a test file (`*.spec.ts` / `*.spec.tsx`) **must have its own dedicated directory**:
+```
+📁 UnitName/
+├── UnitName.tsx (or UnitName.ts)
+├── UnitName.spec.tsx (or UnitName.spec.ts)
+├── UnitName.styles.ts (if applicable)
+└── index.ts (re-exporting UnitName for clean consumer imports)
+```
+
+**Examples:**
+- `packages/community/src/components/groups/CreateGroupModal/`
+  - `CreateGroupModal.tsx`
+  - `CreateGroupModal.spec.tsx`
+  - `index.ts`
+- `packages/ui-components/src/components/Avatar/`
+  - `Avatar.tsx`
+  - `Avatar.spec.tsx`
+  - `index.ts`
+- `packages/shared/src/utils/money/`
+  - `money.ts`
+  - `money.spec.ts`
+  - `index.ts`

@@ -12,8 +12,8 @@ import {
   useUnfinalizeEventMutation,
 } from "../../../../hooks/api/mutation";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
-import { SchedulerEventHeader } from "./SchedulerEventHeader";
-import { SchedulerParticipantsList } from "./SchedulerParticipantsList";
+import { SchedulerEventHeader } from "./components/SchedulerEventHeader";
+import { SchedulerParticipantsList } from "./components/SchedulerParticipantsList";
 
 export type SchedulerEventControlPanelProps = {
   events?: SchedulerEvent[];

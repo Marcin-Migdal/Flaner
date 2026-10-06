@@ -5,8 +5,8 @@ import type { SplitGroup } from "../../../../api/splits";
 import type { SplitGroupMember } from "../../../../hooks/useSplitGroupMembers";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { splitGroupHeaderStyles as styles } from "./SplitGroupHeader.styles";
-import { QuickAddParticipantPopover } from "./QuickAddParticipantPopover";
-import { SplitGroupMembersPopover } from "./SplitGroupMembersPopover";
+import { QuickAddParticipantPopover } from "./components/QuickAddParticipantPopover";
+import { SplitGroupMembersPopover } from "./components/SplitGroupMembersPopover";
 
 const MAX_VISIBLE_AVATARS = 6;
 

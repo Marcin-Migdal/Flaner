@@ -76,10 +76,11 @@ export function buildEventSlotGrid<T = unknown>(days: Date[], events: CalendarEv
     // Find the first slot index that is free on ALL covered days
     let slotIndex = 0;
      
+    const getSlots = (k: string): SlotEntry<T>[] => grid.get(k) as SlotEntry<T>[];
+
     while (true) {
       const isFree = coveredKeys.every((k) => {
-        const slots = grid.get(k);
-        if (!slots) return true;
+        const slots = getSlots(k);
         return slotIndex >= slots.length || slots[slotIndex] === null;
       });
       if (isFree) {break;}
@@ -88,13 +89,11 @@ export function buildEventSlotGrid<T = unknown>(days: Date[], events: CalendarEv
 
     // Reserve the slot on every covered day (fill gaps with null)
     for (const k of coveredKeys) {
-      const slots = grid.get(k);
-      if (slots) {
-        while (slots.length <= slotIndex) {
-          slots.push(null);
-        }
-        slots[slotIndex] = { event };
+      const slots = getSlots(k);
+      while (slots.length <= slotIndex) {
+        slots.push(null);
       }
+      slots[slotIndex] = { event };
     }
   }
 

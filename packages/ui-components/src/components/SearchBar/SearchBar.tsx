@@ -20,8 +20,10 @@ export interface SearchBarProps<T> extends Omit<IconTextFieldProps, "onChange" |
   showMoreText?: string;
 }
 
+const DEFAULT_RESULTS: unknown[] = [];
+
 export function SearchBar<T>({
-  results = [],
+  results = DEFAULT_RESULTS as T[],
   isLoading = false,
   onSelect,
   renderResult,
@@ -69,10 +71,12 @@ export function SearchBar<T>({
     }
 
     switch (e.key) {
-      case "ArrowDown":
+      case "ArrowDown": {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : prev));
+        const maxIndex = hasMore ? results.length : results.length - 1;
+        setSelectedIndex((prev) => (prev < maxIndex ? prev + 1 : prev));
         break;
+      }
       case "ArrowUp":
         e.preventDefault();
         setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
@@ -116,7 +120,7 @@ export function SearchBar<T>({
     if (selectedIndex >= 0 && listRef.current) {
       const selectedEl = listRef.current.children[selectedIndex] as HTMLElement;
       if (selectedEl) {
-        selectedEl.scrollIntoView({ block: "nearest" });
+        selectedEl.scrollIntoView?.({ block: "nearest" });
       }
     }
   }, [selectedIndex]);

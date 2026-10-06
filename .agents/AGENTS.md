@@ -31,3 +31,8 @@ During implementation, you must adhere to project standards. If you don't know t
 **WORKFLOWS & FEATURE DEVELOPMENT**
 - For larger tasks and new features, you must use the `create-functionality` skill and conduct a detailed interview with the user, offering 3 design paths.
 - Follow the 3-phase lifecycle (Planner - Executor - Reviewer) defined in `.agents/workflows/01-feature-workflow.md`.
+
+**DEFAULT ACTIVE SKILLS: PONYTAIL & CAVEMAN**
+- **ponytail**: Apply minimalist senior developer principles by default in every task. Enforce ruthless YAGNI, reach for the standard library or platform native features before adding dependencies/abstractions, aim for the shortest clean diff, and fix root cause over symptom.
+- **caveman**: Apply terse, high-density communication by default in every response. Answer first, eliminate conversational filler, greetings, and repetitive recaps. Keep all technical facts, code, commands, paths, and numbers 100% exact. (Note: Project safety protocols, Pre-Flight protocol, and mandatory pause for approval remain fully respected).
+

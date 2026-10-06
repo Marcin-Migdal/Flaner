@@ -79,7 +79,10 @@ export const getReadNotificationsPage = async (
   uid: string,
   pageSize: number = 15,
   pageParam?: QueryDocumentSnapshot<AppNotification, DocumentData>
-) => {
+): Promise<{
+  notifications: AppNotification[];
+  nextCursor?: QueryDocumentSnapshot<AppNotification, DocumentData>;
+}> => {
   let q = query(
     refs.notifications(uid),
     where("read", "==", true),
