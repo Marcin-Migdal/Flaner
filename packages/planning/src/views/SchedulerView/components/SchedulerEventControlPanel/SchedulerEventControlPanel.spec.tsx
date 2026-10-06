@@ -376,6 +376,7 @@ describe("SchedulerEventControlPanel", () => {
       <SchedulerEventControlPanel
         events={[mockEvent]}
         isEventsLoading={false}
+        isParticipantsLoading={false}
         activeEvent={mockEvent}
       />,
     );
@@ -397,6 +398,7 @@ describe("SchedulerEventControlPanel", () => {
       <SchedulerEventControlPanel
         events={[mockEvent, secondEvent]}
         isEventsLoading={false}
+        isParticipantsLoading={false}
         activeEvent={mockEvent}
         participants={mockParticipants}
       />,

@@ -119,9 +119,10 @@ describe("ExpenseItemCard", () => {
       conversion: {
         originalAmount: 1000,
         originalCurrency: "USD",
-        targetCurrency: "EUR",
         rate: 0.92,
         rateDate: "2026-08-10",
+        convertedAt: 1700000000000,
+        originalSplits: [],
       },
     };
 

@@ -376,7 +376,6 @@ describe("splits endpoints", () => {
         paidBy: "user-1",
         date: "2026-06-01",
         splitType: "equally",
-        splitMode: "equal",
         splits: [
           { userId: "user-1", amount: 20 },
           { userId: "user-2", amount: 20 },
@@ -536,6 +535,7 @@ describe("splits endpoints", () => {
         amount: 30,
         currency: "EUR",
         date: "2026-06-01",
+        note: "Settlement note",
         status: "pending",
         createdBy: "user-1",
         createdAt: 100,
@@ -564,6 +564,7 @@ describe("splits endpoints", () => {
         amount: 30,
         currency: "EUR",
         date: "2026-06-01",
+        note: "Settlement note",
         status: "confirmed",
         createdBy: "user-1",
         createdAt: 100,
@@ -831,7 +832,7 @@ describe("splits endpoints", () => {
       await expect(
         createSettlement(
           "g1",
-          { payerId: "user-1", receiverId: "user-2", amount: 10, currency: "EUR", date: "2026-06-01" },
+          { payerId: "user-1", receiverId: "user-2", amount: 10, currency: "EUR", date: "2026-06-01", note: "" },
           mockUser,
         ),
       ).rejects.toThrow("Split group does not exist");
@@ -844,7 +845,7 @@ describe("splits endpoints", () => {
       await expect(
         createSettlement(
           "g1",
-          { payerId: "user-1", receiverId: "user-2", amount: 10, currency: "EUR", date: "2026-06-01", expectedVersion: 1 },
+          { payerId: "user-1", receiverId: "user-2", amount: 10, currency: "EUR", date: "2026-06-01", note: "", expectedVersion: 1 },
           mockUser,
         ),
       ).rejects.toThrow("planning:errors.settlementVersionConflict");
@@ -857,7 +858,7 @@ describe("splits endpoints", () => {
       await expect(
         createSettlement(
           "g1",
-          { payerId: "user-1", receiverId: "user-outside", amount: 10, currency: "EUR", date: "2026-06-01" },
+          { payerId: "user-1", receiverId: "user-outside", amount: 10, currency: "EUR", date: "2026-06-01", note: "" },
           mockUser,
         ),
       ).rejects.toThrow("Settlement references users outside of the group");
@@ -870,7 +871,7 @@ describe("splits endpoints", () => {
       await expect(
         createSettlement(
           "g1",
-          { payerId: "user-1", receiverId: "user-1", amount: 10, currency: "EUR", date: "2026-06-01" },
+          { payerId: "user-1", receiverId: "user-1", amount: 10, currency: "EUR", date: "2026-06-01", note: "" },
           mockUser,
         ),
       ).rejects.toThrow("Invalid settlement");
@@ -883,7 +884,7 @@ describe("splits endpoints", () => {
       await expect(
         createSettlement(
           "g1",
-          { payerId: "user-1", receiverId: "user-2", amount: 10, currency: "EUR", date: "2026-06-01" },
+          { payerId: "user-1", receiverId: "user-2", amount: 10, currency: "EUR", date: "2026-06-01", note: "" },
           mockUser,
         ),
       ).rejects.toThrow("planning:errors.noOutstandingDebtToSettle");
@@ -899,7 +900,7 @@ describe("splits endpoints", () => {
       await expect(
         createSettlement(
           "g1",
-          { payerId: "user-1", receiverId: "user-2", amount: 50, currency: "EUR", date: "2026-06-01" },
+          { payerId: "user-1", receiverId: "user-2", amount: 50, currency: "EUR", date: "2026-06-01", note: "" },
           mockUser,
         ),
       ).rejects.toThrow("planning:errors.settlementAmountExceedsDebt");
@@ -917,7 +918,7 @@ describe("splits endpoints", () => {
       });
       const s1 = await createSettlement(
         "g1",
-        { payerId: "user-1", receiverId: "user-2", amount: 30, currency: "EUR", date: "2026-06-01", status: "pending" },
+        { payerId: "user-1", receiverId: "user-2", amount: 30, currency: "EUR", date: "2026-06-01", note: "", status: "pending" },
         "user-1",
       );
       expect(s1.status).toBe("pending");
@@ -929,7 +930,7 @@ describe("splits endpoints", () => {
       });
       const s2 = await createSettlement(
         "g1",
-        { payerId: "user-1", receiverId: "user-2", amount: 30, currency: "EUR", date: "2026-06-01", status: "pending" },
+        { payerId: "user-1", receiverId: "user-2", amount: 30, currency: "EUR", date: "2026-06-01", note: "", status: "pending" },
         mockUser,
       );
       expect(s2.status).toBe("pending");
@@ -951,6 +952,7 @@ describe("splits endpoints", () => {
         amount: 30,
         currency: "EUR",
         date: "2026-06-01",
+        note: "",
         status: "pending",
         createdBy: "user-1",
         createdAt: 100,
@@ -1048,6 +1050,7 @@ describe("splits endpoints", () => {
         amount: 50,
         currency: "USD",
         date: "2026-06-01",
+        note: "Settlement note",
         status: "confirmed",
         createdBy: "user-2",
         createdAt: 100,
@@ -1058,11 +1061,8 @@ describe("splits endpoints", () => {
         .mockResolvedValueOnce({ docs: [{ data: () => mockSettlement }] });
 
       vi.mocked(exchangeRatesApi.getExchangeRate).mockResolvedValue({
-        baseCurrency: "USD",
-        targetCurrency: "EUR",
         rate: 0.9,
         date: "2026-06-01",
-        timestamp: 100,
       });
 
       const group = createMockGroup({
@@ -1120,6 +1120,7 @@ describe("splits endpoints", () => {
         amount: 20,
         currency: "PLN",
         date: "2026-06-01",
+        note: "Settlement note",
         status: "confirmed",
         conversion: {
           originalCurrency: "EUR",
@@ -1137,11 +1138,8 @@ describe("splits endpoints", () => {
         .mockResolvedValueOnce({ docs: [{ data: () => previouslyConvertedSettlement }] });
 
       vi.mocked(exchangeRatesApi.getExchangeRate).mockResolvedValue({
-        baseCurrency: "EUR",
-        targetCurrency: "USD",
         rate: 1.1,
         date: "2026-06-01",
-        timestamp: 100,
       });
 
       const group = createMockGroup();
@@ -1233,6 +1231,7 @@ describe("splits endpoints", () => {
         amount: 200,
         currency: "PLN",
         date: "2026-06-01",
+        note: "Settlement note",
         status: "confirmed",
         conversion: {
           originalCurrency: "EUR",
@@ -1253,6 +1252,7 @@ describe("splits endpoints", () => {
         amount: 20,
         currency: "PLN",
         date: "2026-06-01",
+        note: "Settlement note",
         status: "confirmed",
         createdBy: "user-1",
         createdAt: 100,
@@ -1263,11 +1263,8 @@ describe("splits endpoints", () => {
         .mockResolvedValueOnce({ docs: [{ data: () => settlementRevertingToSource }, { data: () => settlementMissing }] });
 
       vi.mocked(exchangeRatesApi.getExchangeRate).mockResolvedValue({
-        baseCurrency: "PLN",
-        targetCurrency: "EUR",
         rate: 0.25,
         date: "2026-06-01",
-        timestamp: 100,
       });
 
       const group = createMockGroup();
@@ -1304,11 +1301,8 @@ describe("splits endpoints", () => {
         .mockResolvedValueOnce({ docs: [] });
 
       vi.mocked(exchangeRatesApi.getExchangeRate).mockResolvedValue({
-        baseCurrency: "USD",
-        targetCurrency: "EUR",
         rate: 0.9,
         date: "2026-06-01",
-        timestamp: 100,
       });
 
       // Expense date changed in transaction to 2026-06-02, which has no rate in Map
@@ -1331,6 +1325,7 @@ describe("splits endpoints", () => {
         amount: 50,
         currency: "USD",
         date: "2026-06-01",
+        note: "Settlement note",
         status: "confirmed",
         createdBy: "user-1",
         createdAt: 100,
@@ -1373,11 +1368,8 @@ describe("splits endpoints", () => {
         .mockResolvedValueOnce({ docs: [] });
 
       vi.mocked(exchangeRatesApi.getExchangeRate).mockResolvedValue({
-        baseCurrency: "USD",
-        targetCurrency: "EUR",
         rate: 0.9,
         date: "2026-06-01",
-        timestamp: 100,
       });
 
       transactionMock.get.mockResolvedValueOnce({ exists: () => false });

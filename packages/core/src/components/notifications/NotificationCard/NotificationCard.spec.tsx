@@ -195,7 +195,8 @@ describe("NotificationCard", () => {
           id: "notif-en",
           senderUid: "u-en",
           senderUsername: "EnUser",
-          type: "system",
+          senderAvatarUrl: "https://example.com/avatar-en.jpg",
+          type: "system_alert",
           read: true,
           createdAt: Date.now() - 100000,
         }}

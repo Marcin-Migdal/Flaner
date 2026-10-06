@@ -118,6 +118,8 @@ describe("BalancesTab", () => {
       receiverId: "user-1",
       amount: 2500,
       currency: "EUR",
+      date: "2026-06-01",
+      note: "Settlement note",
       status: "pending",
       createdBy: "user-2",
       createdAt: 1700000000000,

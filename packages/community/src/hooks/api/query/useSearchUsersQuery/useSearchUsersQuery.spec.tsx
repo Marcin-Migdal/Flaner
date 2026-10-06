@@ -64,12 +64,7 @@ describe("useSearchUsersQuery", () => {
   it("handles unauthenticated user", async () => {
     vi.mocked(useAuth).mockReturnValueOnce({
       user: null,
-      claims: null,
-      loading: false,
-      loginWithGoogle: vi.fn(),
-      logout: vi.fn(),
-      getIdToken: vi.fn(),
-    });
+    } as unknown as ReturnType<typeof useAuth>);
 
     const { Wrapper } = createWrapper();
     const { result } = renderHook(() => useSearchUsersQuery("alice"), { wrapper: Wrapper });

@@ -55,11 +55,7 @@ describe("useCreateGroupMutation", () => {
   it("throws error when user is not authenticated", async () => {
     vi.mocked(useAuth).mockReturnValueOnce({
       user: null,
-      claims: null,
-      loading: false,
-      loginWithGoogle: vi.fn(),
-      logout: vi.fn(),
-    });
+    } as unknown as ReturnType<typeof useAuth>);
 
     const { Wrapper } = createWrapper();
     const { result } = renderHook(() => useCreateGroupMutation(), { wrapper: Wrapper });

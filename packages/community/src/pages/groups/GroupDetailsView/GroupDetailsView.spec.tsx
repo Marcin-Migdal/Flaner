@@ -388,12 +388,7 @@ describe("GroupDetailsView page", () => {
     const user = userEvent.setup();
     vi.mocked(useAuth).mockReturnValueOnce({
       user: null,
-      claims: null,
-      loading: false,
-      loginWithGoogle: vi.fn(),
-      logout: vi.fn(),
-      getIdToken: vi.fn(),
-    });
+    } as unknown as ReturnType<typeof useAuth>);
 
     const joinMutationMock = vi.fn();
     vi.mocked(hooks.useAddGroupMemberMutation).mockReturnValue({
@@ -415,12 +410,7 @@ describe("GroupDetailsView page", () => {
     // Test unauthenticated request to join
     vi.mocked(useAuth).mockReturnValueOnce({
       user: null,
-      claims: null,
-      loading: false,
-      loginWithGoogle: vi.fn(),
-      logout: vi.fn(),
-      getIdToken: vi.fn(),
-    });
+    } as unknown as ReturnType<typeof useAuth>);
     const requestJoinMutationMock = vi.fn();
     vi.mocked(hooks.useRequestJoinGroupMutation).mockReturnValue({
       mutateAsync: requestJoinMutationMock,
@@ -437,12 +427,7 @@ describe("GroupDetailsView page", () => {
     // Test unauthenticated leave group
     vi.mocked(useAuth).mockReturnValue({
       user: null,
-      claims: null,
-      loading: false,
-      loginWithGoogle: vi.fn(),
-      logout: vi.fn(),
-      getIdToken: vi.fn(),
-    });
+    } as unknown as ReturnType<typeof useAuth>);
     const leaveMutationMock = vi.fn();
     vi.mocked(hooks.useRemoveGroupMemberMutation).mockReturnValue({
       mutateAsync: leaveMutationMock,

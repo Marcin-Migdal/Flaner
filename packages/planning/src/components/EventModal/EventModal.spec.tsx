@@ -520,6 +520,7 @@ describe("EventModal", () => {
         eventToEdit={{
           id: "evt-no-end",
           name: "No End Date",
+          description: "",
           creatorId: "user-1",
           participants: ["user-1"],
           proposedDates: [],
@@ -536,6 +537,7 @@ describe("EventModal", () => {
     const winningEvent: SchedulerEvent = {
       id: "evt-win",
       name: "Winning Event",
+      description: "Test description",
       creatorId: "user-1",
       participants: ["user-1"],
       endDate: "2026-10-10",

@@ -80,7 +80,6 @@ describe("FinalizedDateCard", () => {
           start: "2026-07-10",
           end: "2026-07-10",
           color: "#10b981",
-          // @ts-expect-error testing undefined votes
           votes: undefined,
         },
       ],

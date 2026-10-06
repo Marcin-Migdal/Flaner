@@ -26,8 +26,10 @@ export class LoginPage {
   }
 
   async goto(path = "/login") {
+    await this.page.addInitScript(() => {
+      localStorage.removeItem("flaner_e2e_user");
+    });
     await this.page.goto(path);
-    await this.page.waitForLoadState("networkidle");
   }
 
   get submitButton(): Locator {

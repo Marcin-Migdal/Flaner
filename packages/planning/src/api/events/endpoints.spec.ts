@@ -110,7 +110,7 @@ describe("events endpoints", () => {
         isFinalized: false,
       };
 
-      const userWithoutAvatar = { ...mockUser, avatarUrl: undefined };
+      const userWithoutAvatar: UserType = { ...mockUser, avatarUrl: "" };
       await createSchedulerEvent(input, userWithoutAvatar);
 
       expect(mockBatchSet).toHaveBeenCalledWith(
@@ -330,14 +330,14 @@ describe("events endpoints", () => {
         }),
       });
 
-      await batchVoteUnvotedSlots("ev-1", "user-1", "if_needed");
+      await batchVoteUnvotedSlots("ev-1", "user-1", "maybe");
 
       expect(transactionMock.update).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           proposedDates: [
             expect.objectContaining({ votes: { "user-1": "yes" } }),
-            expect.objectContaining({ votes: { "user-1": "if_needed" } }),
+            expect.objectContaining({ votes: { "user-1": "maybe" } }),
           ],
         }),
       );
@@ -358,13 +358,16 @@ describe("events endpoints", () => {
           {
             start: "2020-01-01T10:00:00Z",
             end: "2020-01-01T12:00:00Z", // Past date, will be filtered
+            color: "#3b82f6",
           },
           {
             start: "2099-01-01T10:00:00Z",
             end: "2099-01-01T12:00:00Z", // Future date, kept
+            color: "#3b82f6",
           },
           {
             start: "2099-01-01T10:00:00Z",
+            color: "#3b82f6",
             get end(): string {
               throw new Error("Date parsing error");
             },
@@ -412,6 +415,7 @@ describe("events endpoints", () => {
           {
             start: "2010-01-01T10:00:00Z",
             end: "2010-01-01T12:00:00Z",
+            color: "#3b82f6",
           },
         ],
         createdAt: 1700000000000,
@@ -438,6 +442,7 @@ describe("events endpoints", () => {
             {
               start: "2026-06-01T10:00:00Z",
               end: "2026-06-01T12:00:00Z",
+              color: "#3b82f6",
             },
           ],
         }),
@@ -487,13 +492,14 @@ describe("events endpoints", () => {
           {
             start: "2099-01-01T10:00:00Z",
             end: "2099-01-01T12:00:00Z",
+            color: "#3b82f6",
           },
         ],
         createdAt: 1700000000000,
         updatedAt: 1700000000000,
       };
 
-      const userWithoutAvatar = { ...mockUser, avatarUrl: undefined };
+      const userWithoutAvatar: UserType = { ...mockUser, avatarUrl: "" };
       await unfinalizeSchedulerEvent(event, userWithoutAvatar);
 
       expect(mockBatchSet).toHaveBeenCalledWith(

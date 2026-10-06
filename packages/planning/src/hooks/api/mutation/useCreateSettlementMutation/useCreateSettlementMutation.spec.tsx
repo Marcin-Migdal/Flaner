@@ -97,6 +97,7 @@ describe("useCreateSettlementMutation", () => {
           amount: 50,
           currency: "PLN",
           date: "2026-06-01",
+          note: "Test note",
         },
       });
     });
@@ -119,6 +120,7 @@ describe("useCreateSettlementMutation", () => {
           amount: 50,
           currency: "PLN",
           date: "2026-06-01",
+          note: "Test note",
         },
       });
     });

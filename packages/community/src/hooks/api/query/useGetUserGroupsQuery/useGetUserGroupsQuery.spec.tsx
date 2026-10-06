@@ -45,12 +45,7 @@ describe("useGetUserGroupsQuery", () => {
   it("handles unauthenticated user", async () => {
     vi.mocked(useAuth).mockReturnValueOnce({
       user: null,
-      claims: null,
-      loading: false,
-      loginWithGoogle: vi.fn(),
-      logout: vi.fn(),
-      getIdToken: vi.fn(),
-    });
+    } as unknown as ReturnType<typeof useAuth>);
 
     const { Wrapper } = createWrapper();
     const { result } = renderHook(() => useGetUserGroupsQuery(), { wrapper: Wrapper });
@@ -73,12 +68,7 @@ describe("useGetUserGroupsQuery", () => {
   it("invalidates user groups query with empty string when user is null", () => {
     vi.mocked(useAuth).mockReturnValueOnce({
       user: null,
-      claims: null,
-      loading: false,
-      loginWithGoogle: vi.fn(),
-      logout: vi.fn(),
-      getIdToken: vi.fn(),
-    });
+    } as unknown as ReturnType<typeof useAuth>);
 
     const { Wrapper, queryClient } = createWrapper();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");

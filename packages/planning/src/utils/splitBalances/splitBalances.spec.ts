@@ -158,6 +158,7 @@ describe("splitBalances", () => {
     expect(isGroupSettled(pairwiseState)).toBe(false);
 
     const pairwiseSettledState: GroupBalanceState = {
+      balances: { PLN: { userA: 0, userB: 0 } },
       pairBalances: {
         PLN: {
           [getPairKey("userA", "userB")]: 0,

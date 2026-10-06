@@ -209,7 +209,7 @@ describe("community groups endpoints", () => {
         docs: tenDocs,
       });
 
-      const res = await searchGlobalGroups("hiking", undefined, 10);
+      const res = await searchGlobalGroups("hiking", 10, undefined);
       expect(res.groups).toHaveLength(10);
       expect(res.nextCursor).toBe(tenDocs[9]);
     });

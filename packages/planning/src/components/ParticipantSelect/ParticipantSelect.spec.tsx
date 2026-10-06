@@ -32,8 +32,6 @@ const mockSearchResults: ParticipantResult[] = [
   {
     id: "group-hikers",
     name: "Hikers Club",
-    username: "hikers",
-    usernameLower: "hikers",
     type: "group",
     avatarUrl: "",
   },
@@ -223,7 +221,6 @@ describe("ParticipantSelect", () => {
     currentMockUser = null;
     try {
       const EmptyWrapper = ({ children }: { children: React.ReactNode }) => {
-        // @ts-expect-error testing undefined participants
         const methods = useForm({ defaultValues: {} });
         return <FormProvider {...methods}>{children}</FormProvider>;
       };

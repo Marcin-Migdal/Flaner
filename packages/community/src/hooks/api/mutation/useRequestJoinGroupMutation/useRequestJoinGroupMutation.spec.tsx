@@ -50,11 +50,7 @@ describe("useRequestJoinGroupMutation", () => {
   it("throws error when user is not authenticated", async () => {
     vi.mocked(useAuth).mockReturnValueOnce({
       user: null,
-      claims: null,
-      loading: false,
-      loginWithGoogle: vi.fn(),
-      logout: vi.fn(),
-    });
+    } as unknown as ReturnType<typeof useAuth>);
 
     const { Wrapper } = createWrapper();
     const { result } = renderHook(() => useRequestJoinGroupMutation(), { wrapper: Wrapper });
@@ -84,11 +80,7 @@ describe("useRequestJoinGroupMutation", () => {
   it("handles null user during onSuccess without invalidating user query", async () => {
     vi.mocked(useAuth).mockReturnValueOnce({
       user: null,
-      claims: null,
-      loading: false,
-      loginWithGoogle: vi.fn(),
-      logout: vi.fn(),
-    });
+    } as unknown as ReturnType<typeof useAuth>);
 
     const { Wrapper, queryClient } = createWrapper();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");

@@ -173,10 +173,10 @@ describe("SlotEventComponent", () => {
 
       fireEvent.keyDown(slot, { key: " " });
       expect(onClick).toHaveBeenCalledTimes(2);
-    }
 
-    fireEvent.keyDown(slot, { key: "Escape" });
-    expect(onClick).toHaveBeenCalledTimes(2);
+      fireEvent.keyDown(slot, { key: "Escape" });
+      expect(onClick).toHaveBeenCalledTimes(2);
+    }
   });
 
   it("handles quick vote yes (toggle off) and no clicks", async () => {

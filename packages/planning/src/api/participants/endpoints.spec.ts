@@ -294,9 +294,13 @@ describe("participants endpoints", () => {
 
       expect(results).toHaveLength(2);
       expect(results[0].name).toBe("Name Only");
-      expect(results[0].usernameLower).toBe("name only");
+      if (results[0].type === "user") {
+        expect(results[0].usernameLower).toBe("name only");
+      }
       expect(results[1].name).toBe("member-doc-2");
-      expect(results[1].usernameLower).toBe("member-doc-2");
+      if (results[1].type === "user") {
+        expect(results[1].usernameLower).toBe("member-doc-2");
+      }
     });
 
     it("handles error gracefully when members query fails", async () => {

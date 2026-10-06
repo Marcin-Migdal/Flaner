@@ -11,7 +11,7 @@ import { useFormContext } from "react-hook-form";
 import { useAuth } from "@flaner/shared/context";
 
 const mockCompressImage = vi.fn(async (file: File) => file);
-const mockUploadToCloudinary = vi.fn(async () => "https://cloudinary.com/uploaded.png");
+const mockUploadToCloudinary = vi.fn(async (_file?: unknown) => "https://cloudinary.com/uploaded.png");
 
 vi.mock("@flaner/shared/utils", async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();

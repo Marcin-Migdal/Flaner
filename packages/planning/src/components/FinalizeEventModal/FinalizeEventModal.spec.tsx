@@ -189,7 +189,6 @@ describe("FinalizeEventModal", () => {
           start: "2026-07-01",
           end: "2026-07-01",
           color: "#3b82f6",
-          // @ts-expect-error testing undefined votes
           votes: undefined,
         },
       ],

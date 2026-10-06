@@ -122,11 +122,12 @@ describe("GroupInvitationsSheet component", () => {
     const { useAuth } = await import("@flaner/shared/context");
     vi.mocked(useAuth).mockReturnValueOnce({
       user: null,
-      claims: null,
-      loading: false,
-      loginWithGoogle: vi.fn(),
-      logout: vi.fn(),
-      getIdToken: vi.fn(),
+      isLoading: false,
+      signOutUser: vi.fn(),
+      signInWithGoogleUser: vi.fn(),
+      signInWithEmailUser: vi.fn(),
+      signUpWithEmailUser: vi.fn(),
+      updateUser: vi.fn(),
     });
 
     const user = userEvent.setup();

@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { expectNoHorizontalScroll } from "../support/helpers/viewport";
+import { ensureUnauthenticated, loginAsMockUser } from "../support/helpers/auth";
 import { LoginPage } from "../support/pages/LoginPage.page";
 
 test.describe("Mobile Render Stability", () => {
@@ -29,14 +30,54 @@ test.describe("Mobile Render Stability", () => {
   });
 
   test("redirects from protected routes maintain responsive viewport stability", async ({ page }) => {
+    await ensureUnauthenticated(page);
     const routesToTest = ["/community", "/planning", "/settings", "/shopping", "/tools"];
 
     for (const route of routesToTest) {
       await page.goto(route);
-      await page.waitForLoadState("networkidle");
 
       await expect(page).toHaveURL(/\/login/);
       await expectNoHorizontalScroll(page);
     }
+  });
+
+  test.describe("Authenticated Mobile Journeys & Drawers", () => {
+    test.beforeEach(async ({ page }) => {
+      await loginAsMockUser(page, { username: "Mobile Tester" });
+    });
+
+    test("authenticated views maintain zero horizontal scroll on mobile viewport", async ({ page }) => {
+      const authenticatedRoutes = [
+        "/",
+        "/community/groups",
+        "/planning/splits",
+        "/planning/scheduling",
+        "/tools/spooler",
+        "/settings",
+      ];
+
+      for (const route of authenticatedRoutes) {
+        await page.goto(route);
+
+        await expectNoHorizontalScroll(page);
+      }
+    });
+
+    test("mobile header renders hamburger trigger and toggles mobile drawer cleanly", async ({ page }) => {
+      await page.goto("/");
+
+      const header = page.locator("header");
+      await expect(header).toBeVisible();
+
+      // Mobile trigger button
+      const trigger = header.locator("button").first();
+      await expect(trigger).toBeVisible();
+
+      // Open mobile drawer
+      await trigger.click();
+
+      // Verify no horizontal overflow when drawer is open
+      await expectNoHorizontalScroll(page);
+    });
   });
 });

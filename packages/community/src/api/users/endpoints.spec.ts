@@ -257,7 +257,12 @@ describe("community users endpoints", () => {
 
       // rejectFriendRequest throws
       mockDeleteDoc.mockRejectedValueOnce(new Error("Reject failed"));
-      await expect(rejectFriendRequest("u-1", "u-2")).rejects.toThrow("Reject failed");
+      await expect(
+        rejectFriendRequest(
+          { uid: "u-1", username: "Alice" },
+          { uid: "u-2", username: "Bob" }
+        )
+      ).rejects.toThrow("Reject failed");
 
       // removeFriend throws
       mockDeleteDoc.mockRejectedValueOnce(new Error("Remove failed"));

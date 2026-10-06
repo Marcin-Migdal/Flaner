@@ -7,6 +7,7 @@ export type MockGroup = {
   requiresApproval: boolean;
   ownerId: string;
   avatarUrl?: string | null;
+  rolePermissions?: Record<string, Record<string, boolean>>;
   createdAt: number;
   updatedAt: number;
 };

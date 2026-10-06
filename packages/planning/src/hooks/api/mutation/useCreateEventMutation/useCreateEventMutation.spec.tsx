@@ -40,7 +40,7 @@ describe("useCreateEventMutation", () => {
       description: "Desc",
       creatorId: "user-123",
       participants: ["user-123"],
-      proposedDates: [{ id: "slot-1", start: 100, end: 200, votes: { "user-123": "yes" } }],
+      proposedDates: [{ id: "slot-1", start: "100", end: "200", color: "#3b82f6", votes: { "user-123": "yes" } }],
       createdAt: 1700000000000,
       updatedAt: 1700000000000,
     };
@@ -56,8 +56,8 @@ describe("useCreateEventMutation", () => {
         description: "Desc",
         participants: ["user-123"],
         proposedDates: [
-          { id: "slot-1", start: 100, end: 200, votes: { "other-user": "yes" } },
-          { id: "slot-2", start: 200, end: 300 },
+          { id: "slot-1", start: "100", end: "200", color: "#3b82f6", votes: { "other-user": "yes" } },
+          { id: "slot-2", start: "200", end: "300", color: "#3b82f6" },
         ],
         autoVoteProposedDates: true,
       });
@@ -106,7 +106,7 @@ describe("useCreateEventMutation", () => {
         name: "Manual Vote Event",
         description: "Desc",
         participants: ["user-123"],
-        proposedDates: [{ id: "slot-1", start: 100, end: 200 }],
+        proposedDates: [{ id: "slot-1", start: "100", end: "200", color: "#3b82f6" }],
         autoVoteProposedDates: false,
       });
     });
@@ -114,7 +114,7 @@ describe("useCreateEventMutation", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(eventsApi.createSchedulerEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        proposedDates: [{ id: "slot-1", start: 100, end: 200 }],
+        proposedDates: [{ id: "slot-1", start: "100", end: "200", color: "#3b82f6" }],
       }),
       mockUser,
     );

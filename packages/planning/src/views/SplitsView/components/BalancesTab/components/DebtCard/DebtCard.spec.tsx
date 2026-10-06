@@ -86,6 +86,7 @@ describe("DebtCard", () => {
       amount: 2500,
       currency: "EUR",
       date: "2026-08-10",
+      note: "Settlement note",
       status: "pending" as const,
       createdBy: "user-1",
       createdAt: 100,
