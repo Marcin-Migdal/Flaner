@@ -12,9 +12,9 @@ This skill acts as an automated compiler. Its sole purpose is to read the declar
 Whenever you are triggered to update the `firestore.rules`:
 
 1. **Read the Schema Source of Truth**:
-   - Use `list_dir` on `.agents/skills/firestore-rules-manager/docs/` to find all current schema files.
-   - Use `view_file` to read `_global.md` (for helper functions) and `_relationships.md` (for context).
-   - Use `view_file` to read all individual collection files (e.g., `users.md`, `groups.md`, etc.).
+   - List `.agents/skills/firestore-rules-manager/docs/` to find all current schema files.
+   - Read `_global.md` (for helper functions) and `_relationships.md` (for context).
+   - Read all individual collection files (e.g., `users.md`, `groups.md`, etc.).
 
 2. **Assemble the Rules File**:
    - Start the file with the standard wrapper:
@@ -32,8 +32,8 @@ Whenever you are triggered to update the `firestore.rules`:
    - Translate the rules from each collection file into valid Firestore `match` blocks. Ensure nested subcollections are properly nested inside their parent `match` blocks, as defined in the schema documentation.
    
 3. **Write to `firestore.rules`**:
-   - Use `write_to_file` (with Overwrite: true) to completely replace the contents of `firestore.rules` at the root of the project.
-   - Do NOT try to use `replace_file_content` to surgically edit the existing `firestore.rules`. The schema folder is the source of truth, and `firestore.rules` is just a build output.
+   - Overwrite (full write, not a partial edit) to completely replace the contents of `firestore.rules` at the root of the project.
+   - Do NOT surgically edit the existing `firestore.rules`. The schema folder is the source of truth, and `firestore.rules` is just a build output.
 
 4. **Deploy Rules to Firebase (DUAL-ENVIRONMENT CLI DEPLOYMENT)**:
    - 🚨 **CRITICAL: DUAL-ENVIRONMENT ARCHITECTURE**: We maintain two environments: **PROD** (`flaner-v2`) and **DEV / E2E** (`flaner-v2-dev`). Any change to security rules MUST be deployed to **BOTH** environments sequentially to maintain complete parity:

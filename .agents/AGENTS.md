@@ -2,7 +2,7 @@
 
 **CRITICAL BEHAVIORAL RULE: PAUSE FOR APPROVAL**
 - ALWAYS before starting implementation (modifying or creating files), you MUST present an Action Plan to the user and **STRICTLY PAUSE** to wait for their approval.
-- You are forbidden from using tools like `write_to_file`, `replace_file_content`, etc., until the user explicitly approves your plan.
+- You are forbidden from using file-writing tools (`write_to_file`, `replace_file_content`, `Edit`, `Write`, etc.) until the user explicitly approves your plan.
 
 **CRITICAL BEHAVIORAL RULE: NO AUTOMATIC GIT STAGING OR COMMITS**
 - NEVER perform git staging (`git add`), commits (`git commit`), stashes, or pushes on your own initiative or upon completing a task.
@@ -11,7 +11,7 @@
 **PRE-FLIGHT PROTOCOL & SKILLS USAGE**
 At the beginning of every task, before writing any code, execute the "Pre-Flight Protocol" and include it in your response:
 1. **Task Type:** [Classify the task, e.g., New Feature, Refactor, Bugfix, UI Component, Configuration]
-2. **Required Skills:** [List the skills matching the task, and then use the `view_file` tool to read them!]
+2. **Required Skills:** [List the skills matching the task, and then read their `SKILL.md` files with your environment's file-reading tool!]
 3. **Action Plan:** [Break down the task into clear execution steps]
 
 **REQUIREMENT: MANDATORY FOOTER WITH RESOURCES USED**

@@ -53,3 +53,11 @@ vitest.config.*.timestamp*
 .env*
 playwright-report/
 test-results/
+
+# Build / lint artifacts
+*.tsbuildinfo
+eslint-report*
+eslint-errors.txt
+
+# Claude Code: skills junction -> .agents/skills (recreate locally, see CLAUDE.md)
+.claude/skills
