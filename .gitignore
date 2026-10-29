@@ -61,3 +61,6 @@ eslint-errors.txt
 
 # Claude Code: skills junction -> .agents/skills (recreate locally, see CLAUDE.md)
 .claude/skills
+
+# Firebase emulator logs
+*-debug.log

@@ -35,7 +35,11 @@ Whenever you are triggered to update the `firestore.rules`:
    - Overwrite (full write, not a partial edit) to completely replace the contents of `firestore.rules` at the root of the project.
    - Do NOT surgically edit the existing `firestore.rules`. The schema folder is the source of truth, and `firestore.rules` is just a build output.
 
-4. **Deploy Rules to Firebase (DUAL-ENVIRONMENT CLI DEPLOYMENT)**:
+4. **Test Rules on the Emulator (MANDATORY BEFORE DEPLOY)**:
+   - Run `npm run test:rules` (Firestore emulator + `@firebase/rules-unit-testing`, specs in `firestore-tests/`). Requires JDK 21 on `JAVA_HOME`.
+   - Every rules change must be covered by a spec (allowed AND denied cases). Never deploy with red rules tests.
+
+5. **Deploy Rules to Firebase (DUAL-ENVIRONMENT CLI DEPLOYMENT)**:
    - 🚨 **CRITICAL: DUAL-ENVIRONMENT ARCHITECTURE**: We maintain two environments: **PROD** (`flaner-v2`) and **DEV / E2E** (`flaner-v2-dev`). Any change to security rules MUST be deployed to **BOTH** environments sequentially to maintain complete parity:
      ```bash
      # 1. Deploy to Production
@@ -51,5 +55,6 @@ Whenever you are triggered to update the `firestore.rules`:
 ## Best Practices for Rules Compilation
 - **Security First**: Ensure no `allow read, write: if true;` or similar insecure rules are generated unless explicitly documented in the schema.
 - **Syntax Check**: Ensure all brackets `{}` and parentheses `()` are closed properly.
+- **No Evaluation Errors in `||` Chains**: A runtime error (e.g. `get(...).data` on a missing document → `Null value error`) denies the whole rule, even if a later `||` branch would allow it. Helpers that read optional docs must be null-safe (see `getRole` / `hasRolePermission` in `_global.md`).
 - **Collection Groups**: If a schema defines a rule for a collection group (e.g., `match /{path=**}/members/{memberDocId}`), place it clearly at the top or bottom of the collection match blocks, avoiding nesting it where it doesn't belong.
 
