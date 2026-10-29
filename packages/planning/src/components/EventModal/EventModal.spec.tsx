@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@flaner/test-utils";
@@ -198,6 +198,13 @@ vi.mock("@flaner/ui-components", async (importOriginal) => {
 describe("EventModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Fixtures use fixed October 2026 dates and the schema rejects past dates
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 1));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   const existingEvent: SchedulerEvent = {

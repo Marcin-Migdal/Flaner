@@ -67,14 +67,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user?.darkMode, setTheme]);
 
   useEffect(() => {
+    // E2E mock user is already applied by the lazy useState initializers; skip Firebase Auth
     if (typeof window !== "undefined" && import.meta.env.DEV && localStorage.getItem("flaner_e2e_user")) {
-      try {
-        const parsed = JSON.parse(localStorage.getItem("flaner_e2e_user")!) as UserType;
-        setUser(parsed);
-        setIsLoading(false);
-      } catch {
-        // ignore
-      }
       return;
     }
 
