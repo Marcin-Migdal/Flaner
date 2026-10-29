@@ -30,7 +30,7 @@ When operating within Google Antigravity / Gemini CLI:
 
 - **File Inspection:** Use `view_file` to read `SKILL.md` files and source code.
 - **Modifying Files:** Use `replace_file_content` for edits and `write_to_file` for new files (only after user approval).
-- **Skills Location:** Look for skills under `.agents/skills/` (or legacy fallback `.gemini/skills/`).
+- **Skills Location:** Look for skills under `.agents/skills/` (or legacy fallback `.gemini/skills/`; Claude Code: `.claude/skills/` junction).
 - **Terminal Execution:** Use Antigravity terminal execution commands for running linters or builds (`npx nx run <project>:lint`).
 
 ---
@@ -53,3 +53,15 @@ When operating within Cursor IDE (Agent / Composer mode):
   - All git actions require an explicit request from the user.
 - **Global Rules:**
   - `.agents/AGENTS.md` and `.agents/rules/*.md` serve as the primary operational context.
+
+---
+
+## 4. Environment: Claude Code
+
+When operating within Claude Code (CLI / desktop / IDE):
+
+- **Context Loading:** The root `CLAUDE.md` imports `.agents/AGENTS.md` and `.agents/rules/*.md`, so they are always loaded.
+- **Skills Discovery:** `.claude/skills` is a directory junction to `.agents/skills`, so every `SKILL.md` is exposed as a native Claude Code skill (invoked via the `Skill` tool or `/skill-name`). If the junction is missing (fresh clone), recreate it on Windows: `New-Item -ItemType Junction -Path .claude\skills -Target .agents\skills`.
+- **Tooling Mapping:** `view_file` → `Read`, `replace_file_content` → `Edit`, `write_to_file` → `Write`, search → `Grep` / `Glob`, terminal → `Bash` / `PowerShell`.
+- **Plans & Walkthroughs:** Present the Action Plan in chat (or plan mode) instead of `.gemini/brain/` artifacts.
+- **Git Restrictions:** Same as above — no `git add` / `commit` / `push` unless the user explicitly asks.

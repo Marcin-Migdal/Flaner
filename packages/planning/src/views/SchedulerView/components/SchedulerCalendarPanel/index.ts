@@ -1,3 +1,3 @@
-export * from "./SchedulerBigCalendar";
 export * from "./SchedulerCalendarPanel";
-export * from "./SchedulerEmptyState";
+export * from "./components/SchedulerBigCalendar";
+export * from "./components/SchedulerEmptyState";

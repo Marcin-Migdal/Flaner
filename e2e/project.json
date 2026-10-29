@@ -1,0 +1,57 @@
+{
+  "name": "e2e",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "e2e",
+  "targets": {
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "playwright test --config=e2e/playwright.config.ts"
+      }
+    },
+    "e2e:community": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "playwright test --config=e2e/playwright.config.ts --project=community"
+      }
+    },
+    "e2e:settings": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "playwright test --config=e2e/playwright.config.ts --project=settings"
+      }
+    },
+    "e2e:core": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "playwright test --config=e2e/playwright.config.ts --project=core"
+      }
+    },
+    "e2e:planning": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "playwright test --config=e2e/playwright.config.ts --project=planning"
+      }
+    },
+    "e2e:shopping": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "playwright test --config=e2e/playwright.config.ts --project=shopping"
+      }
+    },
+    "e2e:tools": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "playwright test --config=e2e/playwright.config.ts --project=tools"
+      }
+    },
+    "e2e:mobile": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "playwright test --config=e2e/playwright.config.ts --project=mobile"
+      }
+    }
+  },
+  "implicitDependencies": ["core", "community", "settings", "planning", "shopping", "tools"]
+}

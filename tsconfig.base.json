@@ -15,11 +15,14 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
+    "types": ["@testing-library/jest-dom/vitest", "vitest/globals"],
     "baseUrl": ".",
     "paths": {
       "@flaner/shared/*": ["packages/shared/src/*"],
       "@flaner/ui-components": ["packages/ui-components/src/index.ts"],
-      "@flaner/ui-components/*": ["packages/ui-components/src/*"]
+      "@flaner/ui-components/*": ["packages/ui-components/src/*"],
+      "@flaner/test-utils": ["packages/test-utils/src/index.ts"],
+      "@flaner/test-utils/*": ["packages/test-utils/src/*"]
     }
   }
 }

@@ -1,0 +1,95 @@
+import React from "react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { renderWithProviders, createMockGroup } from "@flaner/test-utils";
+import { ManageGroupRolesSection } from "./ManageGroupRolesSection";
+import * as mutations from "../../../hooks/api/mutation";
+import type { Group } from "../../../api/groups";
+
+vi.mock("../../../hooks/api/mutation", () => ({
+  useUpdateGroupRolePermissionsMutation: vi.fn(),
+}));
+
+vi.mock("../../../hooks/useCommunityTranslations", () => ({
+  useCommunityTranslations: () => ({
+    t: (key: string) => key,
+    i18n: { language: "en" },
+  }),
+}));
+
+describe("ManageGroupRolesSection component", () => {
+  const mutateAsyncMock = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(mutations.useUpdateGroupRolePermissionsMutation).mockReturnValue({
+      mutateAsync: mutateAsyncMock,
+      isPending: false,
+    } as unknown as ReturnType<typeof mutations.useUpdateGroupRolePermissionsMutation>);
+  });
+
+  it("renders role tabs and permissions switches, and saves modified permissions", async () => {
+    const user = userEvent.setup();
+    const mockGroup: Group = createMockGroup({ id: "grp-1" });
+    mutateAsyncMock.mockResolvedValueOnce(undefined);
+
+    renderWithProviders(<ManageGroupRolesSection groupId="grp-1" group={mockGroup} />);
+
+    expect(screen.getByText("manageGroupSheet.role_admin")).toBeInTheDocument();
+    const modTab = screen.getByText("manageGroupSheet.role_moderator");
+    expect(modTab).toBeInTheDocument();
+    expect(screen.getByText("manageGroupSheet.role_member")).toBeInTheDocument();
+
+    // Click moderator tab to switch role
+    await user.click(modTab);
+
+    const saveBtn = screen.getByRole("button", { name: "manageGroupSheet.savePermissions" });
+    expect(saveBtn).toBeDisabled();
+
+    // Toggle a checkbox to make dirty
+    const switches = screen.getAllByRole("checkbox");
+    await user.click(switches[0]);
+
+    expect(saveBtn).toBeEnabled();
+
+    await user.click(saveBtn);
+
+    expect(mutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        groupId: "grp-1",
+        rolePermissions: expect.any(Object),
+      })
+    );
+  });
+
+  it("handles missing rolePermissions gracefully and shows saving state", () => {
+    vi.mocked(mutations.useUpdateGroupRolePermissionsMutation).mockReturnValue({
+      mutateAsync: mutateAsyncMock,
+      isPending: true,
+    } as unknown as ReturnType<typeof mutations.useUpdateGroupRolePermissionsMutation>);
+
+    const mockGroup = createMockGroup({ id: "grp-no-perms", rolePermissions: undefined });
+
+    renderWithProviders(<ManageGroupRolesSection groupId="grp-no-perms" group={mockGroup} />);
+
+    const saveBtn = screen.getByRole("button", { name: "manageGroupSheet.savePermissions" });
+    expect(saveBtn).toHaveAttribute("data-busy", "true");
+    expect(saveBtn).toBeDisabled();
+  });
+
+  it("falls back to false when role permission key is undefined in state", () => {
+    const mockGroup = createMockGroup({
+      id: "grp-partial",
+      rolePermissions: {
+        admin: {} as never,
+        moderator: {} as never,
+        member: {} as never,
+      },
+    });
+
+    renderWithProviders(<ManageGroupRolesSection groupId="grp-partial" group={mockGroup} />);
+    const switches = screen.getAllByRole("checkbox");
+    expect(switches[0]).not.toBeChecked();
+  });
+});

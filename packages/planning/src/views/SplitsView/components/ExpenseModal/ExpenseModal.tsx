@@ -32,7 +32,7 @@ import type { SplitGroupMember } from "../../../../hooks/useSplitGroupMembers";
 import { EXPENSE_CATEGORY_ICONS } from "../../../../utils/expenseCategoryIcons";
 import { getCreateExpenseSchema, type CreateExpenseFormData } from "../../../../utils/schemas";
 import { expenseModalStyles as styles } from "./ExpenseModal.styles";
-import { SplitEditor } from "./SplitEditor";
+import { SplitEditor } from "./components/SplitEditor";
 
 export type ExpenseModalProps = {
   open: boolean;

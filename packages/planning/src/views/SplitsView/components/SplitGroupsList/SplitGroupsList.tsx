@@ -3,7 +3,7 @@ import { Plus, Search, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { SplitGroup } from "../../../../api/splits";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
-import { SplitGroupCard } from "./SplitGroupCard";
+import { SplitGroupCard } from "./components/SplitGroupCard";
 import { splitGroupsListStyles as styles } from "./SplitGroupsList.styles";
 
 const SKELETON_COUNT = 4;

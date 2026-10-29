@@ -7,6 +7,7 @@ const getDevHost = () => {
   if (typeof window !== 'undefined' && window.location.hostname) {
     return window.location.hostname;
   }
+  /* v8 ignore next */
   return '127.0.0.1';
 };
 

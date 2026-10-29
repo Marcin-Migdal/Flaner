@@ -24,7 +24,7 @@ import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslatio
 import type { Debt } from "../../../../utils/debtSimplification";
 import { getUserBalances } from "../../../../utils/splitBalances";
 import { balancesTabStyles as styles, memberBalanceVariants } from "./BalancesTab.styles";
-import { DebtCard, type DebtActionType } from "./DebtCard";
+import { DebtCard, type DebtActionType } from "./components/DebtCard";
 
 export type BalancesTabProps = {
   group: SplitGroup;

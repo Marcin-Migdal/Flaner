@@ -12,8 +12,11 @@ function isAuthenticated() {
   return request.auth != null;
 }
 
+// Returns null for non-members: a missing member doc must not raise an evaluation
+// error, otherwise it fails the whole `||` chain of the rule that calls it.
 function getRole(groupId) {
-  return get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role;
+  let member = get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+  return member != null ? member.data.role : null;
 }
 
 function isAdminOrOwner(groupId) {
@@ -37,6 +40,10 @@ function hasHigherPriority(groupId, targetUserId, newRole) {
 
 function hasRolePermission(groupId, permission) {
   let role = getRole(groupId);
+  return role != null && roleHasPermission(groupId, role, permission);
+}
+
+function roleHasPermission(groupId, role, permission) {
   let groupData = get(/databases/$(database)/documents/groups/$(groupId)).data;
   let customPerm = groupData.get(['rolePermissions', role, permission], null);
   return role == 'owner' || (

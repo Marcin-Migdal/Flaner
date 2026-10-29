@@ -5,8 +5,8 @@ import type { ParticipantResult } from "../../../../api/participants";
 import { RankedSlotsSheet } from "../../../../components/RankedSlotsSheet";
 import { SlotVotingModal } from "../../../../components/SlotVotingModal/SlotVotingModal";
 import { useVoteSlotMutation } from "../../../../hooks/api/mutation";
-import { SchedulerBigCalendar } from "./SchedulerBigCalendar";
-import { SchedulerEmptyState } from "./SchedulerEmptyState";
+import { SchedulerBigCalendar } from "./components/SchedulerBigCalendar";
+import { SchedulerEmptyState } from "./components/SchedulerEmptyState";
 
 export type SchedulerCalendarPanelProps = {
   activeEvent: SchedulerEvent | null;

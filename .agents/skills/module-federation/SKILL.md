@@ -51,3 +51,23 @@ export const AppRoutes = () => (
 - Always use `React.lazy()` and `<Suspense>` when importing remote React components.
 - **CRITICAL: Always use `React.lazy()` for all View/Page components in MFE `routes.tsx`**: Never statically import views inside `routes.tsx`. Because `navigation.ts` generates navigation items from `routes.tsx` and is exposed to the Host (`core`), static imports will bundle the entire MFE (all views, calendars, modals, heavy libs) into the navigation chunk, causing network timeouts and broken navigation on production.
 - Make sure that dependencies used across MFEs (like `react`, `react-router`, `zod`, `@tanstack/react-query`) are properly listed in the `shared` array in both host and remote federation configs.
+
+## 3. Creating a New MFE: TSConfig & Testing Checklist
+When generating or scaffolding a new MFE package:
+1. **Single `tsconfig.json` (No Project References Split):**
+   ```json
+   {
+     "extends": "../../tsconfig.base.json",
+     "compilerOptions": {
+       "noEmit": true,
+       "baseUrl": ".",
+       "paths": {
+         "@/*": ["./src/*"]
+       }
+     },
+     "include": ["src", "../../vitest.setup.ts"]
+   }
+   ```
+2. **Never include `"references": [{ "path": "..." }]`:** Nx templates sometimes generate `references` pointing to non-composite configs which triggers IDE errors `TS6306: Referenced project must have setting "composite": true`.
+3. **Mandatory `"../../vitest.setup.ts"`:** Always include the root setup file in `include` so `@testing-library/jest-dom` matchers (`toBeInTheDocument`, `toBeVisible`) are recognized by IDE language servers across all `*.spec.tsx` files.
+

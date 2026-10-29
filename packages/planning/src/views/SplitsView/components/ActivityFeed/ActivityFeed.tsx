@@ -22,14 +22,14 @@ import {
 } from "../../../../hooks/api/mutation";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { activityFeedStyles as styles } from "./ActivityFeed.styles";
-import { ExpenseFilterPopover } from "./components/ExpenseFilterPopover/ExpenseFilterPopover";
+import { ExpenseFilterPopover } from "./components/ExpenseFilterPopover";
 import {
   countActiveFilters,
   DEFAULT_EXPENSE_FILTERS,
   type ExpenseFilters,
-} from "./components/ExpenseFilterPopover/types";
-import { ExpenseItemCard } from "./ExpenseItemCard";
-import { SettlementItemCard } from "./SettlementItemCard";
+} from "./components/ExpenseFilterPopover";
+import { ExpenseItemCard } from "./components/ExpenseItemCard";
+import { SettlementItemCard } from "./components/SettlementItemCard";
 
 const SKELETON_COUNT = 3;
 
