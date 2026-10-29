@@ -26,6 +26,21 @@ e2e/
 
 ---
 
+## 1a. Backend: Firebase Emulators Only (MANDATORY)
+
+E2E never touches a real Firebase project. `e2e/playwright.config.ts` starts the Auth + Firestore emulators (`demo-flaner` project, rules loaded from `firestore.rules`) and `npm run dev` with `VITE_USE_EMULATORS=true`, which makes `packages/shared/src/firebase/firebase.ts` connect to `127.0.0.1:9099` / `127.0.0.1:8080`.
+
+- **Requires JDK 21** on `JAVA_HOME` (emulators run on Java).
+- Servers are **never reused**: stop any local `npm run dev` (it points at production) before `npm run e2e`.
+- **No auth mocks.** Users are real emulator accounts:
+  - `signInAsNewUser(page, overrides?)` (`e2e/support/helpers/auth.ts`) — creates a unique user and signs in through the real email/password form.
+  - `createUser()` + `signIn(page, user)` — when a test needs several users (open each in its own `browser.newContext()`).
+- **Seed, don't click, the preconditions.** `e2e/support/helpers/emulator.ts` writes docs with emulator admin access (bypasses rules): `seedGroup`, `seedGroupInvitation`, `seedDocument`. Drive through the UI only the flow under test.
+- **Isolation:** tests run in parallel against one emulator — always use unique users/groups (the helpers generate unique ids); never wipe the whole database mid-run.
+- Multi-user flows (invitations, join requests, roles) belong in E2E — they are what exercises UI + code + security rules together (see `e2e/community/group-membership.spec.ts`).
+
+---
+
 ## 2. Page Object Model (POM) Standard
 
 Every view or MFE module tested in E2E must have a corresponding Page Object Model in `e2e/support/pages/` or alongside the domain specs.

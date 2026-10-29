@@ -1,11 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { ensureUnauthenticated, loginAsMockUser } from "../support/helpers/auth";
+import { signInAsNewUser } from "../support/helpers/auth";
 import { CommunityPage } from "../support/pages/Community.page";
 import { LoginPage } from "../support/pages/LoginPage.page";
 
 test.describe("Community Module E2E", () => {
   test("redirects unauthenticated user from /community to /login", async ({ page }) => {
-    await ensureUnauthenticated(page);
     const loginPage = new LoginPage(page);
     await page.goto("/community");
 
@@ -17,7 +16,7 @@ test.describe("Community Module E2E", () => {
 
   test.describe("Authenticated Community Journeys", () => {
     test.beforeEach(async ({ page }) => {
-      await loginAsMockUser(page, { username: "Community Explorer" });
+      await signInAsNewUser(page, { username: "Community Explorer" });
     });
 
     test("renders groups list view with search, filters and controls", async ({ page }) => {

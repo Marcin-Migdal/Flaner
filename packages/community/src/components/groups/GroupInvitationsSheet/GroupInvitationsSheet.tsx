@@ -53,7 +53,12 @@ export function GroupInvitationsSheet() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="secondary" size="icon" className="relative size-12 shrink-0 rounded-2xl">
+        <Button
+          variant="secondary"
+          size="icon"
+          className="relative size-12 shrink-0 rounded-2xl"
+          aria-label={t("groupInvitations.title")}
+        >
           <Mail className="size-5" />
           {invitations.length > 0 && (
             <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold h-5 min-w-5 px-1 flex items-center justify-center rounded-full ring-2 ring-background animate-pulse">

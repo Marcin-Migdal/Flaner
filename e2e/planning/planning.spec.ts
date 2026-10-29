@@ -1,11 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { ensureUnauthenticated, loginAsMockUser } from "../support/helpers/auth";
+import { signInAsNewUser } from "../support/helpers/auth";
 import { PlanningPage } from "../support/pages/Planning.page";
 import { LoginPage } from "../support/pages/LoginPage.page";
 
 test.describe("Planning Module E2E", () => {
   test("redirects unauthenticated user from /planning to /login", async ({ page }) => {
-    await ensureUnauthenticated(page);
     const loginPage = new LoginPage(page);
     await page.goto("/planning");
 
@@ -16,7 +15,6 @@ test.describe("Planning Module E2E", () => {
   });
 
   test("redirects unauthenticated user from deep planning route to /login", async ({ page }) => {
-    await ensureUnauthenticated(page);
     const loginPage = new LoginPage(page);
     await page.goto("/planning/scheduling");
 
@@ -26,7 +24,7 @@ test.describe("Planning Module E2E", () => {
 
   test.describe("Authenticated Planning Journeys", () => {
     test.beforeEach(async ({ page }) => {
-      await loginAsMockUser(page, { username: "Planning Master" });
+      await signInAsNewUser(page, { username: "Planning Master" });
     });
 
     test("renders splits view with groups list or empty state", async ({ page }) => {

@@ -34,27 +34,8 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<UserType | null>(() => {
-    if (typeof window !== "undefined" && import.meta.env.DEV) {
-      try {
-        const stored = localStorage.getItem("flaner_e2e_user");
-        if (stored) return JSON.parse(stored) as UserType;
-      } catch {
-        // ignore
-      }
-    }
-    return null;
-  });
-  const [isLoading, setIsLoading] = useState<boolean>(() => {
-    if (typeof window !== "undefined" && import.meta.env.DEV) {
-      try {
-        if (localStorage.getItem("flaner_e2e_user")) return false;
-      } catch {
-        // ignore
-      }
-    }
-    return true;
-  });
+  const [user, setUser] = useState<UserType | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   // Prevents onAuthStateChanged from interfering while a manual sign-in is running
   const isManualAuth = useRef(false);
 
@@ -67,11 +48,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user?.darkMode, setTheme]);
 
   useEffect(() => {
-    // E2E mock user is already applied by the lazy useState initializers; skip Firebase Auth
-    if (typeof window !== "undefined" && import.meta.env.DEV && localStorage.getItem("flaner_e2e_user")) {
-      return;
-    }
-
     const unsubscribe = onAuthStateChanged(fb.auth.auth, async (firebaseUser: User | null) => {
       // Skip if a manual sign-in method is already handling state
       if (isManualAuth.current) return;
@@ -117,22 +93,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const updateUser = (updatedUser: Partial<UserType>) => {
-    setUser((prev) => {
-      if (!prev) return null;
-      const next = { ...prev, ...updatedUser };
-      if (typeof window !== "undefined" && import.meta.env.DEV && localStorage.getItem("flaner_e2e_user")) {
-        localStorage.setItem("flaner_e2e_user", JSON.stringify(next));
-      }
-      return next;
-    });
+    setUser((prev) => (prev ? { ...prev, ...updatedUser } : null));
   };
 
   const signOutUser = async () => {
     setIsLoading(true);
     try {
-      if (typeof window !== "undefined" && import.meta.env.DEV) {
-        localStorage.removeItem("flaner_e2e_user");
-      }
       await firebaseSignOut(fb.auth.auth);
       setUser(null);
     } catch (error) {

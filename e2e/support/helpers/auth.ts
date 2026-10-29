@@ -1,47 +1,20 @@
-import { type Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { type UserType } from "../../../packages/shared/src/types";
+import { LoginPage } from "../pages/LoginPage.page";
+import { createUser, type E2EUser } from "./emulator";
 
-export const DEFAULT_E2E_USER: UserType = {
-  uid: "e2e-test-user-uid",
-  username: "E2E Tester",
-  usernameLower: "e2e tester",
-  email: "e2e@flaner.test",
-  avatarUrl: "",
-  darkMode: true,
-  language: "en",
-};
-
-/**
- * Injects a mock authenticated user into localStorage prior to navigation,
- * effectively bypassing Firebase Auth in DEV mode for deterministic testing.
- */
-export async function loginAsMockUser(page: Page, user: Partial<UserType> = {}): Promise<UserType> {
-  const mergedUser: UserType = {
-    ...DEFAULT_E2E_USER,
-    ...user,
-  };
-
-  await page.addInitScript((mockUser) => {
-    localStorage.setItem("flaner_e2e_user", JSON.stringify(mockUser));
-  }, mergedUser);
-
-  return mergedUser;
+/** Signs an existing emulator user in through the real email/password login form. */
+export async function signIn(page: Page, user: E2EUser): Promise<void> {
+  const loginPage = new LoginPage(page);
+  await loginPage.goto();
+  await loginPage.fillCredentials(user.email, user.password);
+  await loginPage.submit();
+  await expect(page).not.toHaveURL(/\/login/);
 }
 
-/**
- * Clears the mock user from the browser context before scripts run.
- */
-export async function ensureUnauthenticated(page: Page): Promise<void> {
-  await page.addInitScript(() => {
-    localStorage.removeItem("flaner_e2e_user");
-  });
-}
-
-/**
- * Clears the mock user from the browser context.
- */
-export async function clearMockUser(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    localStorage.removeItem("flaner_e2e_user");
-  });
+/** Creates a fresh emulator user and signs them in. Every call gets a unique account. */
+export async function signInAsNewUser(page: Page, overrides: Partial<UserType> = {}): Promise<E2EUser> {
+  const user = await createUser(overrides);
+  await signIn(page, user);
+  return user;
 }

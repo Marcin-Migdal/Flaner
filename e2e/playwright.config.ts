@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { E2E_API_KEY, E2E_PROJECT_ID } from "./support/helpers/emulator";
 
 const PORT = 4200;
 const baseURL = process.env.E2E_BASE_URL || `http://localhost:${PORT}`;
@@ -59,10 +60,28 @@ export default defineConfig({
       use: { ...devices["Pixel 7"] },
     },
   ],
-  webServer: {
-    command: "npm run dev",
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  // E2E never touches a real Firebase project: the app runs against local emulators
+  // (`demo-` project ids cannot reach the cloud). Servers are never reused, so a
+  // locally running `npm run dev` (wired to production) can't leak into tests —
+  // stop it before running E2E.
+  webServer: [
+    {
+      command: `npx firebase emulators:start --only auth,firestore --project ${E2E_PROJECT_ID}`,
+      url: "http://127.0.0.1:9099",
+      reuseExistingServer: false,
+      timeout: 120 * 1000,
+    },
+    {
+      command: "npm run dev",
+      url: baseURL,
+      reuseExistingServer: false,
+      timeout: 120 * 1000,
+      env: {
+        VITE_USE_EMULATORS: "true",
+        VITE_PROJECT_ID: E2E_PROJECT_ID,
+        VITE_API_KEY: E2E_API_KEY,
+        VITE_AUTH_DOMAIN: `${E2E_PROJECT_ID}.firebaseapp.com`,
+      },
+    },
+  ],
 });
