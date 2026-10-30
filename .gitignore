@@ -64,3 +64,6 @@ eslint-errors.txt
 
 # Firebase emulator logs
 *-debug.log
+
+# Module Federation generated remote types
+@mf-types/

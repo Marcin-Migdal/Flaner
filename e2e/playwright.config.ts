@@ -25,38 +25,49 @@ export default defineConfig({
   },
   projects: [
     {
+      name: "setup",
+      testMatch: /support\/remotes\.setup\.ts/,
+    },
+    {
       name: "core",
       testMatch: /core\/.*\.spec\.ts/,
+      dependencies: ["setup"],
       use: { ...devices["Desktop Chrome"] },
     },
     {
       name: "community",
       testMatch: /community\/.*\.spec\.ts/,
+      dependencies: ["setup"],
       use: { ...devices["Desktop Chrome"] },
     },
     {
       name: "settings",
       testMatch: /settings\/.*\.spec\.ts/,
+      dependencies: ["setup"],
       use: { ...devices["Desktop Chrome"] },
     },
     {
       name: "planning",
       testMatch: /planning\/.*\.spec\.ts/,
+      dependencies: ["setup"],
       use: { ...devices["Desktop Chrome"] },
     },
     {
       name: "shopping",
       testMatch: /shopping\/.*\.spec\.ts/,
+      dependencies: ["setup"],
       use: { ...devices["Desktop Chrome"] },
     },
     {
       name: "tools",
       testMatch: /tools\/.*\.spec\.ts/,
+      dependencies: ["setup"],
       use: { ...devices["Desktop Chrome"] },
     },
     {
       name: "mobile",
       testMatch: /mobile\/.*\.spec\.ts/,
+      dependencies: ["setup"],
       use: { ...devices["Pixel 7"] },
     },
   ],
