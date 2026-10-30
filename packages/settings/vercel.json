@@ -1,6 +1,6 @@
 {
   "buildCommand": "cd ../.. && npx nx run settings:build",
-  "ignoreCommand": "cd ../.. && npx nx-ignore settings",
+  "ignoreCommand": "if [ \"$VERCEL_GIT_COMMIT_REF\" = \"develop\" ]; then exit 1; fi; cd ../.. && npx nx-ignore settings",
   "outputDirectory": "dist",
   "headers": [
     {

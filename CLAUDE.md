@@ -11,6 +11,11 @@ The single source of truth for AI rules and skills is `.agents/` (shared with Cu
 - `test-utils` — `renderWithProviders`, factories (`@flaner/test-utils`)
 - MFEs: `community`, `planning`, `settings`, `shopping`, `tools` (Spooler)
 
+## Environments
+- **PROD**: branch `master` → `flaner.vercel.app`, Firebase `flaner-v2` (`--project prod`).
+- **DEV**: branch `develop` → `flaner-dev.vercel.app` (remotes `flaner-<mfe>-dev.vercel.app`), Firebase `flaner-v2-dev` (`--project dev`). All Vercel Preview deployments and local `.env` use DEV.
+- Flow: `feature/*` → PR to `develop` → PR `develop` → `master`. Details: `vercel-project-setup` skill.
+
 ## Commands
 - `npm run dev` — all dev servers (host at `localhost:4200`)
 - `npx nx run <pkg>:lint --fix` — lint only the touched packages (mandatory after changes)

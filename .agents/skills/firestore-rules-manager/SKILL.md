@@ -49,6 +49,7 @@ Whenever you are triggered to update the `firestore.rules`:
      npx firebase-tools deploy --only firestore:rules --project flaner-v2-dev
      ```
      *(Note: On Windows PowerShell, use `npx.cmd firebase-tools deploy --only firestore:rules --project <project_id>`)*
+     *(`.firebaserc` aliases: `--project prod` = `flaner-v2`, `--project dev` = `flaner-v2-dev`.)*
    - 🚨 **NEVER USE MCP `firebase_deploy`**: Do NOT use the MCP tool `firebase_deploy`, as it returns false-positive success without actually releasing the rules to cloud Firestore.
    - **Verification**: Always inspect the command output for both deployments to ensure each ends with `+ firestore: released rules firestore.rules to cloud.firestore` and `+ Deploy complete!`.
 

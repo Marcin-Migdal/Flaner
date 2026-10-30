@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "flaner-v2"
+    "default": "flaner-v2",
+    "prod": "flaner-v2",
+    "dev": "flaner-v2-dev"
   }
 }
