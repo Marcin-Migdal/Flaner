@@ -23,6 +23,9 @@ This skill provides unified instructions and automation patterns for deploying a
 - Host Preview vars `VITE_MFE_*_URL` point to the `-dev` domains; Production vars to the prod domains.
 - Firebase Auth (Google sign-in) works only on authorized domains: `flaner-dev.vercel.app` is authorized in `flaner-v2-dev`, `flaner.vercel.app` in `flaner-v2`. Random PR preview URLs cannot sign in with Google.
 - Flow: `feature/*` → PR to `develop` (check on DEV) → PR `develop` → `master` (release).
+- **Deployment Protection is disabled on every project.** The host must fetch remotes cross-origin (a protected remote answers 302 to the Vercel login), and DEV is meant to be shared with testers. Data stays protected by Firebase Auth + security rules.
+- **Brand-new project:** deploy `master` to production first. A first deployment from another branch can grab the production `*.vercel.app` domain.
+- **Redeploying an unchanged app gets CANCELED** by `nx-ignore` (it sees no changes). Ship a commit that touches the app, or release via `develop` → `master`.
 - Env vars can be managed via `vercel api` (REST). In Git Bash set `MSYS_NO_PATHCONV=1`, otherwise `/v9/...` paths get rewritten to Windows paths.
 
 ## 1. Architecture & Module Federation Rules on Vercel
