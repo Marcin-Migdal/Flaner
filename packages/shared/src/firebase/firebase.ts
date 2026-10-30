@@ -1,12 +1,17 @@
 /// <reference types="vite/client" />
 import { getApp, initializeApp } from "firebase/app";
-import { GoogleAuthProvider, getAuth } from "firebase/auth";
+import { GoogleAuthProvider, connectAuthEmulator, getAuth } from "firebase/auth";
 import {
+  connectFirestoreEmulator,
   getFirestore,
   initializeFirestore,
+  memoryLocalCache,
   persistentLocalCache,
   persistentMultipleTabManager,
 } from "firebase/firestore";
+
+// Set only by the E2E runner (see e2e/playwright.config.ts) — never in .env or on Vercel
+const useEmulators = import.meta.env.VITE_USE_EMULATORS === "true";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
@@ -42,17 +47,25 @@ const provider = new GoogleAuthProvider();
 auth.useDeviceLanguage();
 provider.addScope("https://www.googleapis.com/auth/contacts.readonly");
 
-// Initialize Firestore with offline persistence (IndexedDB) and multi-tab support
+// Initialize Firestore with offline persistence (IndexedDB) and multi-tab support.
+// Emulator runs use an in-memory cache so no data leaks between E2E tests.
 let firestore;
 
 try {
   firestore = initializeFirestore(app, {
-    localCache: persistentLocalCache({
-      tabManager: persistentMultipleTabManager(),
-    }),
+    localCache: useEmulators
+      ? memoryLocalCache()
+      : persistentLocalCache({
+          tabManager: persistentMultipleTabManager(),
+        }),
   });
 } catch {
   firestore = getFirestore(app);
+}
+
+if (useEmulators) {
+  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  connectFirestoreEmulator(firestore, "127.0.0.1", 8080);
 }
 
 export const fb = {

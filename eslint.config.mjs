@@ -73,6 +73,6 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ["**/dist/**", "**/node_modules/**", "**/build/**", "**/.nx/**", "**/coverage/**", "run-eslint.cjs"],
+    ignores: ["**/dist/**", "**/node_modules/**", "**/build/**", "**/.nx/**", "**/coverage/**", "**/@mf-types/**", "run-eslint.cjs"],
   },
 );

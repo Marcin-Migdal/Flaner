@@ -17,7 +17,7 @@ The single source of truth for AI rules and skills is `.agents/` (shared with Cu
 - `npx nx run <pkg>:typecheck`, `npm run typecheck`
 - `npm test` / `npx vitest run --project <pkg>` — unit tests (Vitest)
 - `npm run test:rules` — Firestore security rules tests (`firestore-tests/`) on the emulator; needs JDK 21 (`JAVA_HOME`)
-- `npm run e2e` — Playwright (`e2e/`, starts `npm run dev` itself)
+- `npm run e2e` — Playwright (`e2e/`) against Firebase emulators; starts emulators + `npm run dev` itself, needs JDK 21 and free ports 4200–4205 / 8080 / 9099 (stop your own `npm run dev` first — it points at production)
 - Firestore rules/indexes: source in `.agents/skills/firestore-rules-manager/docs/`, deployed via CLI (see that skill)
 
 ## Rules (imported)

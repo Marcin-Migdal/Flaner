@@ -1,10 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { loginAsMockUser } from "../support/helpers/auth";
+import { signInAsNewUser } from "../support/helpers/auth";
 import { AppShellPage } from "../support/pages/AppShell.page";
 
 test.describe("Core Host Shell & Navigation E2E", () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsMockUser(page, { username: "Tester User", darkMode: true });
+    await signInAsNewUser(page, { username: "Tester User", darkMode: true });
   });
 
   test("renders shell layout with authenticated user and sidebar navigation", async ({ page }) => {

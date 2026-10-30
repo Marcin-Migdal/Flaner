@@ -1,11 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { ensureUnauthenticated, loginAsMockUser } from "../support/helpers/auth";
+import { signInAsNewUser } from "../support/helpers/auth";
 import { ToolsPage } from "../support/pages/Tools.page";
 import { LoginPage } from "../support/pages/LoginPage.page";
 
 test.describe("Tools Module E2E", () => {
   test("redirects unauthenticated user from /tools to /login", async ({ page }) => {
-    await ensureUnauthenticated(page);
     const loginPage = new LoginPage(page);
     await page.goto("/tools");
 
@@ -16,7 +15,6 @@ test.describe("Tools Module E2E", () => {
   });
 
   test("redirects unauthenticated user from deep tools route to /login", async ({ page }) => {
-    await ensureUnauthenticated(page);
     const loginPage = new LoginPage(page);
     await page.goto("/tools/spooler");
 
@@ -26,7 +24,7 @@ test.describe("Tools Module E2E", () => {
 
   test.describe("Authenticated Tools Journeys", () => {
     test.beforeEach(async ({ page }) => {
-      await loginAsMockUser(page, { username: "Maker Tools" });
+      await signInAsNewUser(page, { username: "Maker Tools" });
     });
 
     test("renders spooler view with tabs and header", async ({ page }) => {

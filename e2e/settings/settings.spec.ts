@@ -1,11 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { ensureUnauthenticated, loginAsMockUser } from "../support/helpers/auth";
+import { signInAsNewUser } from "../support/helpers/auth";
 import { SettingsPage } from "../support/pages/Settings.page";
 import { LoginPage } from "../support/pages/LoginPage.page";
 
 test.describe("Settings Module E2E", () => {
   test("redirects unauthenticated user from /settings to /login", async ({ page }) => {
-    await ensureUnauthenticated(page);
     const loginPage = new LoginPage(page);
     await page.goto("/settings");
 
@@ -17,7 +16,7 @@ test.describe("Settings Module E2E", () => {
 
   test.describe("Authenticated Settings Journeys", () => {
     test.beforeEach(async ({ page }) => {
-      await loginAsMockUser(page, { username: "SettingsTester" });
+      await signInAsNewUser(page, { username: "SettingsTester" });
     });
 
     test("renders profile settings with prefilled username and controls", async ({ page }) => {

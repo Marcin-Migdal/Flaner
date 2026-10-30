@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { expectNoHorizontalScroll } from "../support/helpers/viewport";
-import { ensureUnauthenticated, loginAsMockUser } from "../support/helpers/auth";
+import { signInAsNewUser } from "../support/helpers/auth";
 import { LoginPage } from "../support/pages/LoginPage.page";
 
 test.describe("Mobile Render Stability", () => {
@@ -30,7 +30,6 @@ test.describe("Mobile Render Stability", () => {
   });
 
   test("redirects from protected routes maintain responsive viewport stability", async ({ page }) => {
-    await ensureUnauthenticated(page);
     const routesToTest = ["/community", "/planning", "/settings", "/shopping", "/tools"];
 
     for (const route of routesToTest) {
@@ -43,7 +42,7 @@ test.describe("Mobile Render Stability", () => {
 
   test.describe("Authenticated Mobile Journeys & Drawers", () => {
     test.beforeEach(async ({ page }) => {
-      await loginAsMockUser(page, { username: "Mobile Tester" });
+      await signInAsNewUser(page, { username: "Mobile Tester" });
     });
 
     test("authenticated views maintain zero horizontal scroll on mobile viewport", async ({ page }) => {
