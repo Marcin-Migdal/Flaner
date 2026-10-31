@@ -127,6 +127,21 @@ describe("events/{eventId}", () => {
     await assertSucceeds(deleteDoc(doc(as(CREATOR), "events", EVENT_ID)));
   });
 
-  it.todo("G1: blocks participants from changing anything but their own votes (creatorId, participants, isFinalized)");
+  it("blocks participants from changing anything but the slots", async () => {
+    await seed({ [`events/${EVENT_ID}`]: schedulerEvent() });
+    const ref = doc(as(PARTICIPANT), "events", EVENT_ID);
+
+    await assertFails(updateDoc(ref, { creatorId: PARTICIPANT }));
+    await assertFails(updateDoc(ref, { participants: [PARTICIPANT, OUTSIDER] }));
+    await assertFails(updateDoc(ref, { isFinalized: true, finalizedSlotIndex: 0 }));
+    await assertFails(updateDoc(ref, { name: "Renamed", updatedAt: Date.now() }));
+  });
+
+  it("blocks the creator from handing the event over and new events created as finalized", async () => {
+    await seed({ [`events/${EVENT_ID}`]: schedulerEvent() });
+
+    await assertFails(updateDoc(doc(as(CREATOR), "events", EVENT_ID), { creatorId: PARTICIPANT }));
+    await assertFails(setDoc(doc(as(CREATOR), "events", "event-2"), schedulerEvent({ id: "event-2", isFinalized: true })));
+  });
   it.todo("G2: blocks participants from changing other participants' votes");
 });

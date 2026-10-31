@@ -158,7 +158,21 @@ describe("groups/{groupId}", () => {
     await assertFails(deleteDoc(doc(as(ADMIN), GROUP)));
   });
 
-  it.todo("G1: accepts deleteGroup when invitees still have users/{uid}/groupInvitations mirrors");
+  it("accepts the delete batch with pending invitations (invitee mirrors included)", async () => {
+    await seedGroup();
+    await seed({
+      [`${GROUP}/invitations/${INVITEE}`]: invitation(INVITEE, OWNER),
+      [`users/${INVITEE}/groupInvitations/${GROUP_ID}`]: invitation(INVITEE, OWNER),
+    });
+    const db = as(OWNER);
+    const batch = writeBatch(db);
+    [OWNER, ADMIN, MODERATOR, MEMBER].forEach((uid) => batch.delete(doc(db, `${GROUP}/members`, uid)));
+    batch.delete(doc(db, `${GROUP}/invitations`, INVITEE));
+    batch.delete(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID));
+    batch.delete(doc(db, GROUP));
+
+    await assertSucceeds(batch.commit());
+  });
 });
 
 describe("groups/{groupId}/members/{userId}", () => {
@@ -194,9 +208,37 @@ describe("groups/{groupId}/members/{userId}", () => {
     await assertFails(deleteDoc(doc(as(MODERATOR), `${GROUP}/members`, ADMIN)));
   });
 
-  it.todo("G2: blocks self-join (public group or invitation) with a role other than member");
-  it.todo("G3: blocks staff from creating members with the owner role");
-  it.todo("G4: blocks the owner from leaving the group");
+  it("blocks self-join with a role other than member (public group or invitation)", async () => {
+    await seedGroup({ type: "public", requiresApproval: false });
+    await seed({ [`${GROUP}/invitations/${INVITEE}`]: invitation(INVITEE, OWNER) });
+
+    await assertFails(setDoc(doc(as(STRANGER), `${GROUP}/members`, STRANGER), member(STRANGER, "owner")));
+    await assertFails(setDoc(doc(as(STRANGER), `${GROUP}/members`, STRANGER), member(STRANGER, "admin")));
+    await assertFails(setDoc(doc(as(INVITEE), `${GROUP}/members`, INVITEE), member(INVITEE, "owner")));
+  });
+
+  it("blocks staff from creating privileged members and member docs with extra fields", async () => {
+    await seedGroup();
+
+    await assertFails(setDoc(doc(as(ADMIN), `${GROUP}/members`, REQUESTER), member(REQUESTER, "owner")));
+    await assertFails(setDoc(doc(as(OWNER), `${GROUP}/members`, REQUESTER), member(REQUESTER, "admin")));
+    await assertFails(
+      setDoc(doc(as(ADMIN), `${GROUP}/members`, REQUESTER), { ...member(REQUESTER, "member"), muted: false }),
+    );
+    await assertFails(setDoc(doc(as(ADMIN), `${GROUP}/members`, REQUESTER), member(STRANGER, "member")));
+  });
+
+  it("blocks the owner from leaving the group (outside deleteGroup)", async () => {
+    await seedGroup();
+
+    await assertFails(deleteDoc(doc(as(OWNER), `${GROUP}/members`, OWNER)));
+  });
+
+  it("blocks role updates that touch other fields", async () => {
+    await seedGroup();
+
+    await assertFails(updateDoc(doc(as(ADMIN), `${GROUP}/members`, MEMBER), { role: "moderator", joinedAt: 2 }));
+  });
 });
 
 describe("groups/{groupId}/invitations/{userId}", () => {
@@ -250,7 +292,16 @@ describe("groups/{groupId}/invitations/{userId}", () => {
     await assertSucceeds(deleteDoc(doc(as(ADMIN), `${GROUP}/invitations`, INVITEE)));
   });
 
-  it.todo("users.md G4: lets staff delete the invitee's groupInvitations mirror when revoking or deleting the group");
+  it("lets staff revoke both invitation docs and blocks plain members", async () => {
+    await seedGroup();
+    await seed({
+      [`${GROUP}/invitations/${INVITEE}`]: invitation(INVITEE, OWNER),
+      [`users/${INVITEE}/groupInvitations/${GROUP_ID}`]: invitation(INVITEE, OWNER),
+    });
+
+    await assertFails(deleteDoc(doc(as(MEMBER), `users/${INVITEE}/groupInvitations`, GROUP_ID)));
+    await assertSucceeds(deleteDoc(doc(as(MODERATOR), `users/${INVITEE}/groupInvitations`, GROUP_ID)));
+  });
 });
 
 describe("groups/{groupId}/requests/{userId}", () => {

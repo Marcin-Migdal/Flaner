@@ -35,6 +35,6 @@ npx nx run-many -t lint --projects=core,shared --fix
 - `rules`: `npm run rules:check` (generated `firestore.rules` matches the spec), `tsc -p firestore-tests`, `npm run test:rules` (Firestore emulator, Temurin 21)
 - `e2e`: Playwright only for affected projects — `scripts/e2e-affected.mjs` (Nx affected vs the PR base; details in `e2e-testing` skill §6)
 
-`.github/workflows/deploy-firestore.yml` deploys Firestore rules and indexes on push to `develop` (DEV) / `master` (PROD) — see the `firestore-rules-manager` skill, section 6.
+`.github/workflows/deploy-firestore.yml` deploys Firestore rules and indexes on push to `develop` (DEV) / `master` (PROD), and on a manual run of a feature branch (DEV only) — see the `firestore-rules-manager` skill, sections 6–7.
 
 Before pushing, run the same commands locally for touched packages. `NX_DAEMON=false` in CI.

@@ -74,6 +74,8 @@ describe("users/{userId}", () => {
   it("allows fetching profiles by id (getEventParticipantsProfiles)", async () => {
     await assertSucceeds(getDocs(query(collection(as(ALICE), "users"), where(documentId(), "in", [BOB]))));
   });
+
+  it.todo("G1: hides private profile fields (email) from other users");
 });
 
 describe("usernames/{usernameLower}", () => {
@@ -113,5 +115,23 @@ describe("usernames/{usernameLower}", () => {
     await assertFails(deleteDoc(doc(as(ALICE), "usernames", "bob")));
   });
 
-  it.todo("G1: blocks overwriting an existing reservation with your own uid (username takeover)");
+  it("blocks taking over an existing reservation (setDoc on someone else's username)", async () => {
+    await seed({ "usernames/bob": { uid: BOB } });
+
+    await assertFails(setDoc(doc(as(ALICE), "usernames", "bob"), { uid: ALICE }));
+  });
+
+  it("blocks a second sign-up racing for the same username", async () => {
+    await seed({ "usernames/bob": { uid: BOB } });
+    const db = as(ALICE);
+    const batch = writeBatch(db);
+    batch.set(doc(db, "users", ALICE), profile(ALICE, "Bob"));
+    batch.set(doc(db, "usernames", "bob"), { uid: ALICE });
+
+    await assertFails(batch.commit());
+  });
+
+  it("blocks reservations with extra fields", async () => {
+    await assertFails(setDoc(doc(as(ALICE), "usernames", "alice"), { uid: ALICE, verified: true }));
+  });
 });

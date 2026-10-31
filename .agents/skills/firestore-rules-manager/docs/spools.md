@@ -38,24 +38,22 @@ Endpoints: `packages/tools/src/api/spools/endpoints.ts`, `templates/endpoints.ts
 | `userId == me` | `fetchSpools` | read: owner |
 | `userId == me && templateId == X` | `fetchAssociatedSpools`, `updateTemplate`, `deleteTemplate` | read: owner |
 
-## Known gaps
-- owned-G1 (see `_global.md`).
-
 ## Rules
 ```rules
 // ==========================================
 // SZPULE FILAMENTU (SPOOLS)
 // ==========================================
 match /spools/{spoolId} {
-  allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-  allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+  allow read, delete: if isOwner(resource.data);
+  allow create: if isOwner(request.resource.data);
+  allow update: if isOwner(resource.data) && isOwner(request.resource.data);
 
   {{subcollections}}
 }
 ```
 
 ## Tests
-- `firestore-tests/tools/tools.spec.ts` — CRUD and queries for the owner, other user denied; owned-G1 as `todo`.
+- `firestore-tests/tools/tools.spec.ts` — CRUD and queries for the owner, other user denied, hand-over denied.
 
 ---
 

@@ -29,6 +29,7 @@ Sections, in this order (subcollections repeat them under `## Subcollection: <na
 5. **Queries** — table: query shape, endpoint, the rule that allows it. List queries must be provable from their filters.
 6. **Access matrix** — actor × operation. `✅` / `❌` is the **intended** behaviour; `⚠️ Gn` marks a cell where the current rules differ.
 7. **Known gaps** — `Gn`: what the rules allow today that they should not (or the reverse). Empty when the rules match the matrix.
+   **Accepted risks** (optional) — `Rn`: limits the user consciously accepted (e.g. client-computed aggregates); no `todo` test.
 8. **Rules** — exactly one ` ```rules ` block (the compiler ignores every other fence).
 9. **Tests** — spec files and what they cover; every gap has an `it.todo("Gn: …")`.
 
@@ -56,15 +57,21 @@ Sections, in this order (subcollections repeat them under `## Subcollection: <na
 - **Collection groups**: keep `match /{path=**}/…` rules in `_global.md`.
 - **Mirror client constants**: role permissions defaults must match `DEFAULT_ROLE_PERMISSIONS` (community).
 
-## 6. Deployment
+## 6. Working on a feature branch
+1. **Day to day — emulators, no deploy**: `npm run dev:emulators` runs the rules compiler in watch mode, the Auth + Firestore emulators (project `demo-flaner`, they hot-reload `firestore.rules`) and all dev servers wired to them. Edit the spec `.md` → the rules rebuild → the emulator reloads. Data (accounts, documents) persists in `.emulator-data/` (gitignored) between runs; stop with Ctrl+C so the emulators can export it.
+2. **Final manual test against real data — DEV deploy from the branch**: GitHub → Actions → *Deploy Firestore* → *Run workflow* → pick the feature branch. A manual run from any branch other than `master` deploys to **DEV only**. Then test on the branch's Vercel Preview or with the plain `npm run dev` (local `.env` → DEV).
+   - DEV is shared: the branch's rules replace `develop`'s until the next deploy. If the branch is abandoned, run the workflow on `develop` to restore DEV.
+3. **Before the PR to `develop` is merged**, the agent must remind the user to do step 2 (see `AGENTS.md` → pre-merge manual test).
+
+## 7. Deployment
 Rules and indexes deploy through GitHub Actions (`.github/workflows/deploy-firestore.yml`), so each environment follows its branch:
 
-| Branch | Firebase project | GitHub environment |
+| Trigger | Firebase project | GitHub environment |
 | --- | --- | --- |
-| `develop` | `flaner-v2-dev` (`--project dev`) | `firebase-dev` |
-| `master` | `flaner-v2` (`--project prod`) | `firebase-prod` |
+| push to `develop`, or manual run on any branch except `master` | `flaner-v2-dev` (`--project dev`) | `firebase-dev` |
+| push to `master` (or manual run on `master`) | `flaner-v2` (`--project prod`) | `firebase-prod` |
 
-The workflow runs on pushes that change `firestore.rules` / `firestore.indexes.json`, re-runs `rules:check` + `test:rules`, then deploys. Each environment needs the `FIREBASE_SERVICE_ACCOUNT` secret (service-account JSON with *Firebase Rules Admin*, *Cloud Datastore Index Admin* and *Service Usage Consumer*); without it the deploy step is skipped with a warning.
+The workflow runs on pushes that change `firestore.rules` / `firestore.indexes.json` (and on manual runs), re-runs `rules:check` + `test:rules`, then deploys. Each environment needs the `FIREBASE_SERVICE_ACCOUNT` secret (service-account JSON with *Firebase Rules Admin*, *Cloud Datastore Index Admin* and *Service Usage Consumer*); without it the deploy step is skipped with a warning.
 
 - **Never deploy to prod from a feature branch or before the code that needs the rules is on `master`.**
 - Manual fallback (only when CI cannot run): `npx firebase-tools deploy --only firestore:rules,firestore:indexes --project dev` (or `prod`); check the output ends with `released rules firestore.rules` and `Deploy complete!`. On Windows PowerShell use `npx.cmd`.

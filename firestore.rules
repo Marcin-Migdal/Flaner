@@ -10,6 +10,16 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // User-owned documents (`userId` field), see "Pattern: user-owned documents"
+    function isOwner(data) {
+      return isAuthenticated() && data.userId == request.auth.uid;
+    }
+
+    // Update whitelist: only the listed fields may differ from the stored document
+    function onlyChanges(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
     // Returns null for non-members: a missing member doc must not raise an evaluation
     // error, otherwise it fails the whole `||` chain of the rule that calls it.
     function getRole(groupId) {
@@ -71,26 +81,32 @@ service cloud.firestore {
     // ==========================================
     match /events/{eventId} {
       allow read: if isAuthenticated() && (request.auth.uid in resource.data.participants || request.auth.uid == resource.data.creatorId);
-      allow create: if isAuthenticated() && request.resource.data.creatorId == request.auth.uid && request.auth.uid in request.resource.data.participants;
+      allow create: if isAuthenticated() &&
+        request.resource.data.creatorId == request.auth.uid &&
+        request.auth.uid in request.resource.data.participants &&
+        request.resource.data.isFinalized == false;
       allow update: if isAuthenticated() && (
-        resource.data.creatorId == request.auth.uid ||
-        (resource.data.get('isFinalized', false) == false && request.auth.uid in resource.data.participants)
+        (resource.data.creatorId == request.auth.uid &&
+          request.resource.data.creatorId == resource.data.creatorId) ||
+        // Participants vote: only the slots (with their votes) change, while the event is open
+        (resource.data.get('isFinalized', false) == false &&
+          request.auth.uid in resource.data.participants &&
+          onlyChanges(['proposedDates', 'updatedAt']))
       );
       allow delete: if isAuthenticated() && resource.data.creatorId == request.auth.uid;
     }
 
     // Reguły dla zaproszeń do znajomych
     match /friendRequests/{requestId} {
-      allow read, write: if request.auth != null && (
+      allow read, delete: if isAuthenticated() && (
         request.auth.uid == resource.data.senderUid ||
-        request.auth.uid == resource.data.receiverUid ||
-        request.auth.uid == request.resource.data.senderUid ||
-        request.auth.uid == request.resource.data.receiverUid
+        request.auth.uid == resource.data.receiverUid
       );
-      allow create: if request.auth != null && (
-        request.auth.uid == request.resource.data.senderUid ||
-        request.auth.uid == request.resource.data.receiverUid
-      );
+      allow create: if isAuthenticated() &&
+        request.resource.data.senderUid == request.auth.uid &&
+        request.resource.data.receiverUid != request.auth.uid &&
+        requestId == request.auth.uid + '_' + request.resource.data.receiverUid &&
+        request.resource.data.status == 'pending';
     }
 
     // ==========================================
@@ -120,23 +136,35 @@ service cloud.firestore {
       match /members/{userId} {
         allow read: if isAuthenticated() && exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
 
-        allow create: if isAuthenticated() && (
-          (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
-          hasRolePermission(groupId, 'manageRequests') ||
-          hasRolePermission(groupId, 'manageMembers') ||
-          isAdminOrOwner(groupId) ||
-          (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.type == 'public' && get(/databases/$(database)/documents/groups/$(groupId)).data.requiresApproval == false) ||
-          (userId == request.auth.uid && exists(/databases/$(database)/documents/groups/$(groupId)/invitations/$(request.auth.uid)))
-        );
+        allow create: if isAuthenticated() &&
+          request.resource.data.keys().hasOnly(['userId', 'role', 'joinedAt']) &&
+          request.resource.data.userId == userId && (
+            // Owner bootstrap in createGroup
+            (userId == request.auth.uid && request.resource.data.role == 'owner' &&
+              get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
+            // Every other way in joins as a plain member
+            (request.resource.data.role == 'member' && (
+              hasRolePermission(groupId, 'manageRequests') ||
+              hasRolePermission(groupId, 'manageMembers') ||
+              isAdminOrOwner(groupId) ||
+              (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.type == 'public' && get(/databases/$(database)/documents/groups/$(groupId)).data.requiresApproval == false) ||
+              (userId == request.auth.uid && exists(/databases/$(database)/documents/groups/$(groupId)/invitations/$(request.auth.uid)))
+            ))
+          );
 
-        allow update: if isAuthenticated() && (
-          (hasRolePermission(groupId, 'manageMembers') && hasHigherPriority(groupId, userId, request.resource.data.role)) ||
-          (getRole(groupId) == 'owner' && request.resource.data.role == 'owner') ||
-          (userId == request.auth.uid && getRole(groupId) == 'owner' && request.resource.data.role == 'admin')
-        );
+        allow update: if isAuthenticated() &&
+          onlyChanges(['role']) && (
+            (hasRolePermission(groupId, 'manageMembers') && hasHigherPriority(groupId, userId, request.resource.data.role)) ||
+            (getRole(groupId) == 'owner' && request.resource.data.role == 'owner') ||
+            (userId == request.auth.uid && getRole(groupId) == 'owner' && request.resource.data.role == 'admin')
+          );
 
         allow delete: if isAuthenticated() && (
-          userId == request.auth.uid ||
+          // The owner leaves only together with the group (deleteGroup batch)
+          (userId == request.auth.uid && (
+            getRole(groupId) != 'owner' ||
+            !existsAfter(/databases/$(database)/documents/groups/$(groupId))
+          )) ||
           (hasRolePermission(groupId, 'manageMembers') && hasHigherPriority(groupId, userId, null))
         );
       }
@@ -172,24 +200,27 @@ service cloud.firestore {
     // LOOKUP KOLORY (LOOKUP COLORS)
     // ==========================================
     match /lookup_colors/{colorId} {
-      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow read, delete: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data);
+      allow update: if isOwner(resource.data) && isOwner(request.resource.data);
     }
 
     // ==========================================
     // LOOKUP MATERIAŁY (LOOKUP MATERIALS)
     // ==========================================
     match /lookup_materials/{materialId} {
-      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow read, delete: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data);
+      allow update: if isOwner(resource.data) && isOwner(request.resource.data);
     }
 
     // ==========================================
     // LOOKUP TYPY (LOOKUP TYPES)
     // ==========================================
     match /lookup_types/{typeId} {
-      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow read, delete: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data);
+      allow update: if isOwner(resource.data) && isOwner(request.resource.data);
     }
 
     // ==========================================
@@ -230,6 +261,14 @@ service cloud.firestore {
           (request.auth.uid != resource.data.createdBy && after.hasAll(withoutSelf) && withoutSelf.hasAll(after));
       }
 
+      function splitGroupSettledBeforeDeleting() {
+        return request.resource.data.get('status', 'active') != 'deleting' ||
+          resource.data.get('status', 'active') == 'deleting' ||
+          (request.resource.data.get('simplifyDebts', false)
+            ? request.resource.data.balances.size() == 0
+            : request.resource.data.pairBalances.size() == 0);
+      }
+
       function splitGroupOwnerFieldsUnchanged() {
         return request.resource.data.name == resource.data.name &&
           request.resource.data.description == resource.data.description &&
@@ -251,6 +290,7 @@ service cloud.firestore {
         request.resource.data.createdBy == resource.data.createdBy &&
         request.resource.data.get('version', 0) >= resource.data.get('version', 0) &&
         splitGroupParticipantsChangeAllowed() &&
+        splitGroupSettledBeforeDeleting() &&
         (resource.data.createdBy == request.auth.uid || splitGroupOwnerFieldsUnchanged());
       allow delete: if isAuthenticated() &&
         resource.data.createdBy == request.auth.uid &&
@@ -268,10 +308,14 @@ service cloud.firestore {
         allow update: if isAuthenticated() && isSplitGroupParticipant() &&
           request.resource.data.createdBy == resource.data.createdBy &&
           request.resource.data.groupId == resource.data.groupId &&
+          // The author edits; anyone converts the group currency (money fields only)
+          (resource.data.createdBy == request.auth.uid || onlyChanges(['currency', 'amount', 'splits', 'conversion'])) &&
           splitGroupCounterChangedBy('expensesCount', 0) &&
           splitGroupTouchedInSameWrite();
-        allow delete: if isAuthenticated() && isSplitGroupParticipant() &&
-          (splitGroupCounterChangedBy('expensesCount', -1) || (isSplitGroupDeleting() && isSplitGroupOwner()));
+        allow delete: if isAuthenticated() && isSplitGroupParticipant() && (
+          (resource.data.createdBy == request.auth.uid && splitGroupCounterChangedBy('expensesCount', -1)) ||
+          (isSplitGroupDeleting() && isSplitGroupOwner())
+        );
       }
 
       // ------------------------------------------
@@ -285,11 +329,22 @@ service cloud.firestore {
           splitGroupCounterChangedBy('settlementsCount', 1);
         allow update: if isAuthenticated() && isSplitGroupParticipant() &&
           request.resource.data.createdBy == resource.data.createdBy &&
-          request.resource.data.groupId == resource.data.groupId &&
+          request.resource.data.groupId == resource.data.groupId && (
+            // The receiver confirms a pending settlement
+            (resource.data.receiverId == request.auth.uid &&
+              resource.data.get('status', 'confirmed') == 'pending' &&
+              request.resource.data.status == 'confirmed' &&
+              onlyChanges(['status'])) ||
+            // Anyone converts the group currency (money fields only)
+            onlyChanges(['currency', 'amount', 'conversion'])
+          ) &&
           splitGroupCounterChangedBy('settlementsCount', 0) &&
           splitGroupTouchedInSameWrite();
-        allow delete: if isAuthenticated() && isSplitGroupParticipant() &&
-          (splitGroupCounterChangedBy('settlementsCount', -1) || (isSplitGroupDeleting() && isSplitGroupOwner()));
+        allow delete: if isAuthenticated() && isSplitGroupParticipant() && (
+          ((resource.data.payerId == request.auth.uid || resource.data.receiverId == request.auth.uid) &&
+            splitGroupCounterChangedBy('settlementsCount', -1)) ||
+          (isSplitGroupDeleting() && isSplitGroupOwner())
+        );
       }
     }
 
@@ -297,8 +352,9 @@ service cloud.firestore {
     // SZPULE FILAMENTU (SPOOLS)
     // ==========================================
     match /spools/{spoolId} {
-      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow read, delete: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data);
+      allow update: if isOwner(resource.data) && isOwner(request.resource.data);
 
       // Podkolekcja historii wydruków
       match /prints/{printId} {
@@ -311,15 +367,23 @@ service cloud.firestore {
     // SZABLONY FILAMENTU (TEMPLATES)
     // ==========================================
     match /templates/{templateId} {
-      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow read, delete: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data);
+      allow update: if isOwner(resource.data) && isOwner(request.resource.data);
     }
 
     // Kolekcja nazw użytkowników (do weryfikacji unikalności)
     match /usernames/{username} {
       allow read: if true;
-      allow create, update: if request.auth != null && request.resource.data.uid == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasOnly(['uid']) &&
+        request.resource.data.uid == request.auth.uid;
+      // Re-saving your own reservation is a no-op; taking over someone else's is an update and is denied
+      allow update: if isAuthenticated() &&
+        resource.data.uid == request.auth.uid &&
+        request.resource.data.keys().hasOnly(['uid']) &&
+        request.resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
     }
 
     // Reguły dla kolekcji użytkowników
@@ -329,14 +393,37 @@ service cloud.firestore {
 
       // Subkolekcja znajomości (friendships)
       match /friendships/{friendId} {
-        allow write: if request.auth != null && (request.auth.uid == userId || request.auth.uid == friendId);
-        allow read: if request.auth != null && request.auth.uid == userId;
+        // `exists()` sees the state before the batch, so the request deleted by acceptFriendRequest still counts
+        function hasPendingRequestFrom(otherUid) {
+          return exists(/databases/$(database)/documents/friendRequests/$(otherUid + '_' + request.auth.uid));
+        }
+
+        allow read: if isAuthenticated() && request.auth.uid == userId;
+        allow create: if isAuthenticated() &&
+          request.resource.data.keys().hasOnly(['userRef', 'username', 'usernameLower', 'avatarUrl', 'createdAt']) && (
+            (request.auth.uid == userId && hasPendingRequestFrom(friendId)) ||
+            (request.auth.uid == friendId && hasPendingRequestFrom(userId))
+          );
+        allow delete: if isAuthenticated() && (request.auth.uid == userId || request.auth.uid == friendId);
       }
 
       // Subkolekcja powiadomień (notifications)
       match /notifications/{notifId} {
-        allow create: if request.auth != null;
-        allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+        allow read, delete: if isAuthenticated() && request.auth.uid == userId;
+        allow update: if isAuthenticated() && request.auth.uid == userId &&
+          onlyChanges(['read']);
+        allow create: if isAuthenticated() &&
+          request.resource.data.keys().hasOnly([
+            'id', 'type', 'senderUid', 'senderUsername', 'senderAvatarUrl', 'createdAt', 'read',
+            'eventId', 'eventName', 'splitGroupId', 'splitGroupName'
+          ]) &&
+          request.resource.data.id == notifId &&
+          request.resource.data.senderUid == request.auth.uid &&
+          request.resource.data.read == false &&
+          request.resource.data.type in [
+            'friend_request', 'friend_request_accepted', 'friend_request_rejected', 'group_invitation',
+            'event_invitation', 'event_reopened', 'split_group_invitation', 'split_settlement_pending'
+          ];
       }
 
       // Subkolekcja zaproszeń do grup (groupInvitations)
@@ -344,7 +431,11 @@ service cloud.firestore {
         allow create, update: if isAuthenticated() &&
           exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)) &&
           hasRolePermission(groupId, 'inviteMembers');
-        allow read, delete: if isAuthenticated() && request.auth.uid == userId;
+        allow read: if isAuthenticated() && request.auth.uid == userId;
+        allow delete: if isAuthenticated() && (
+          request.auth.uid == userId ||
+          hasRolePermission(groupId, 'inviteMembers')
+        );
       }
     }
   }

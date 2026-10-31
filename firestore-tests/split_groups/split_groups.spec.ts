@@ -242,9 +242,31 @@ describe("split_groups/{groupId}", () => {
     await assertFails(deleteDoc(doc(as(PARTICIPANT), GROUP)));
   });
 
-  it.todo("G1: blocks balance / totals changes that do not match the written entries");
-  it.todo("G3: blocks status 'deleting' while balances are not settled");
-  it.todo("G4: decide whether simplifyDebts is owner-only");
+  it("blocks status 'deleting' while the group is not settled", async () => {
+    await seed({ [GROUP]: splitGroup({ pairBalances: { PLN: { [`${OWNER}__${PARTICIPANT}`]: 500 } } }) });
+    await assertFails(updateGroupAs(OWNER, { status: "deleting", updatedAt: Date.now() }));
+
+    // Simplified debts: settled when net balances are empty, even if pairwise entries remain
+    await seed({
+      [GROUP]: splitGroup({
+        simplifyDebts: true,
+        balances: { PLN: { [OWNER]: 500, [PARTICIPANT]: -500 } },
+        pairBalances: { PLN: { [`${OWNER}__${PARTICIPANT}`]: 500 } },
+      }),
+    });
+    await assertFails(updateGroupAs(OWNER, { status: "deleting", updatedAt: Date.now() }));
+
+    await seed({
+      [GROUP]: splitGroup({ simplifyDebts: true, pairBalances: { PLN: { [`${OWNER}__${PARTICIPANT}`]: 500 } } }),
+    });
+    await assertSucceeds(updateGroupAs(OWNER, { status: "deleting", updatedAt: Date.now() }));
+  });
+
+  it("lets any participant toggle simplifyDebts (Balances tab)", async () => {
+    await seed({ [GROUP]: splitGroup() });
+
+    await assertSucceeds(updateGroupAs(PARTICIPANT, { simplifyDebts: true, updatedAt: Date.now() }));
+  });
 });
 
 describe("split_groups/{groupId}/expenses/{expenseId}", () => {
@@ -309,7 +331,50 @@ describe("split_groups/{groupId}/expenses/{expenseId}", () => {
     );
   });
 
-  it.todo("G2: blocks editing or deleting someone else's expense");
+  it("lets another participant convert the currency but not edit or delete the expense", async () => {
+    await seed({ [GROUP]: splitGroup({ expensesCount: 1 }), [`${GROUP}/expenses/e1`]: expense("e1", PARTICIPANT) });
+    const db = as(THIRD);
+    const ref = doc(db, `${GROUP}/expenses`, "e1");
+
+    await assertSucceeds(
+      writeWithGroup(
+        db,
+        (transaction) =>
+          transaction.set(ref, {
+            ...expense("e1", PARTICIPANT),
+            currency: "EUR",
+            amount: 234,
+            splits: [
+              { userId: OWNER, amount: 117 },
+              { userId: PARTICIPANT, amount: 117 },
+            ],
+            conversion: {
+              originalCurrency: "PLN",
+              originalAmount: 1000,
+              originalSplits: expense("e1", PARTICIPANT).splits,
+              rate: 0.234,
+              rateDate: "2026-10-01",
+              convertedAt: Date.now(),
+            },
+          }),
+        () => ({ totalSpent: { EUR: 234 } }),
+      ),
+    );
+    await assertFails(
+      writeWithGroup(
+        db,
+        (transaction) => transaction.set(ref, { ...expense("e1", PARTICIPANT), title: "Mine now", updatedAt: Date.now() }),
+        () => ({}),
+      ),
+    );
+    await assertFails(
+      writeWithGroup(
+        db,
+        (transaction) => transaction.delete(ref),
+        (group) => ({ expensesCount: group.expensesCount - 1 }),
+      ),
+    );
+  });
 });
 
 describe("split_groups/{groupId}/settlements/{settlementId}", () => {
@@ -387,5 +452,52 @@ describe("split_groups/{groupId}/settlements/{settlementId}", () => {
     );
   });
 
-  it.todo("G2: lets only the receiver confirm and only the payer / receiver delete a settlement");
+  it("blocks confirmation by anyone but the receiver", async () => {
+    await seed({
+      [GROUP]: splitGroup({ settlementsCount: 1 }),
+      [`${GROUP}/settlements/s1`]: settlement("s1", PARTICIPANT, "pending"),
+    });
+
+    for (const uid of [PARTICIPANT, THIRD]) {
+      const db = as(uid);
+      await assertFails(
+        writeWithGroup(
+          db,
+          (transaction) =>
+            transaction.set(doc(db, `${GROUP}/settlements`, "s1"), settlement("s1", PARTICIPANT, "confirmed")),
+          () => ({}),
+        ),
+      );
+    }
+  });
+
+  it("blocks deletion by a third participant and allows converting the currency", async () => {
+    await seed({
+      [GROUP]: splitGroup({ settlementsCount: 1 }),
+      [`${GROUP}/settlements/s1`]: settlement("s1", PARTICIPANT, "confirmed"),
+    });
+    const db = as(THIRD);
+    const ref = doc(db, `${GROUP}/settlements`, "s1");
+
+    await assertFails(
+      writeWithGroup(
+        db,
+        (transaction) => transaction.delete(ref),
+        (group) => ({ settlementsCount: group.settlementsCount - 1 }),
+      ),
+    );
+    await assertSucceeds(
+      writeWithGroup(
+        db,
+        (transaction) =>
+          transaction.set(ref, {
+            ...settlement("s1", PARTICIPANT, "confirmed"),
+            currency: "EUR",
+            amount: 117,
+            conversion: { originalCurrency: "PLN", originalAmount: 500, rate: 0.234, rateDate: "2026-10-02", convertedAt: 1 },
+          }),
+        () => ({}),
+      ),
+    );
+  });
 });

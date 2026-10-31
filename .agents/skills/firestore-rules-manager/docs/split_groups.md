@@ -9,9 +9,11 @@ Expense-splitting groups (MFE `planning`, Splits). All amounts are integers in m
 - **I4** Participants: any participant adds people; the owner removes exactly one other participant; a non-owner removes only themselves; the owner never leaves.
 - **I5** Only the owner changes `name`, `description`, `defaultCurrency` and `status`.
 - **I6** Every financial change (expense / settlement create, edit, delete, currency conversion) writes the entry **and** the group doc (balances, totals, counters, `version`, `updatedAt`) in one atomic write. Enforced through `get()` vs `getAfter()` on the counters / `updatedAt`.
-- **I7** `balances`, `pairBalances` and `totalSpent` always equal the sum of the entries. ⚠️ G1
-- **I8** Only the author edits / deletes an expense; only the payer or receiver deletes a settlement; only the receiver confirms a pending settlement. ⚠️ G2
-- **I9** A group is deleted only by the owner and only when all balances are zero: `status → 'deleting'`, entries deleted in batches, then the group doc. ⚠️ G3
+- **I7** `balances`, `pairBalances` and `totalSpent` always equal the sum of the entries — computed by the client (see Accepted risks).
+- **I8** Only the author edits / deletes an expense; only the payer or receiver deletes a settlement; only the receiver confirms a pending settlement.
+- **I9** Any participant may convert the whole group to `defaultCurrency` (`convertSplitGroupCurrency`): it rewrites only the money fields (`currency`, `amount`, `splits`, `conversion`) of every entry, so all participants keep the same state.
+- **I10** Any participant may toggle `simplifyDebts` (Balances tab).
+- **I11** A group is deleted only by the owner and only when it is settled — `pairBalances` empty (with `simplifyDebts`: `balances` empty; zero entries are always removed): `status → 'deleting'`, entries deleted in batches, then the group doc.
 
 ## Schema
 | Field | Type | Required | Notes |
@@ -53,13 +55,12 @@ All endpoints: `packages/planning/src/api/splits/endpoints.ts`.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | non-participant | ❌ | ✅ (as owner) | ❌ | ❌ | – | ❌ | ❌ |
 | participant | ✅ | – | ✅ | ❌ | ✅ | ❌ | ❌ |
-| owner | ✅ | ✅ | ✅ | ✅ (one at a time) | ❌ | ✅ | ✅ (when `deleting`) |
+| owner | ✅ | ✅ | ✅ | ✅ (one at a time) | ❌ | ✅ | ✅ (settled → `deleting` → delete) |
 
-## Known gaps
-- **G1** Balances are computed on the client; rules only check counters / `updatedAt`, so any participant can write arbitrary `balances` / `pairBalances` / `totalSpent` (with or without an entry).
-- **G2** Author / payer / receiver checks exist only in the endpoints; rules let any participant update or delete any expense or settlement (when the group doc changes in the same write).
-- **G3** Rules do not check that the group is settled before `status → 'deleting'` (client-side check only).
-- **G4** `simplifyDebts` is not owner-only (not in `splitGroupOwnerFieldsUnchanged`) — confirm whether that is intended.
+## Accepted risks
+Split groups are shared between people who trust each other; the rules stop mistakes and impersonation, not a participant who deliberately forges numbers.
+- **R1** Balances and totals are computed on the client. Rules only check that every financial write updates the group doc in the same write (counters / `updatedAt`), so a participant using the SDK directly could write arbitrary `balances` / `pairBalances` / `totalSpent`. Server-side computation (Cloud Function) would close it.
+- **R2** The currency-conversion exception (I9) lets any participant rewrite the money fields of someone else's entry.
 
 ## Rules
 ```rules
@@ -101,6 +102,14 @@ match /split_groups/{groupId} {
       (request.auth.uid != resource.data.createdBy && after.hasAll(withoutSelf) && withoutSelf.hasAll(after));
   }
 
+  function splitGroupSettledBeforeDeleting() {
+    return request.resource.data.get('status', 'active') != 'deleting' ||
+      resource.data.get('status', 'active') == 'deleting' ||
+      (request.resource.data.get('simplifyDebts', false)
+        ? request.resource.data.balances.size() == 0
+        : request.resource.data.pairBalances.size() == 0);
+  }
+
   function splitGroupOwnerFieldsUnchanged() {
     return request.resource.data.name == resource.data.name &&
       request.resource.data.description == resource.data.description &&
@@ -122,6 +131,7 @@ match /split_groups/{groupId} {
     request.resource.data.createdBy == resource.data.createdBy &&
     request.resource.data.get('version', 0) >= resource.data.get('version', 0) &&
     splitGroupParticipantsChangeAllowed() &&
+    splitGroupSettledBeforeDeleting() &&
     (resource.data.createdBy == request.auth.uid || splitGroupOwnerFieldsUnchanged());
   allow delete: if isAuthenticated() &&
     resource.data.createdBy == request.auth.uid &&
@@ -132,7 +142,7 @@ match /split_groups/{groupId} {
 ```
 
 ## Tests
-- `firestore-tests/split_groups/split_groups.spec.ts` — create, query, participants changes, owner fields, delete flow; G1–G4 as `todo`.
+- `firestore-tests/split_groups/split_groups.spec.ts` — create, query, participants changes, owner fields, `simplifyDebts`, delete flow (unsettled group denied).
 
 ---
 
@@ -173,7 +183,7 @@ match /split_groups/{groupId} {
 | Actor \ operation | read | create (with group update) | create (without group update) | update / delete own | update / delete someone else's |
 | --- | --- | --- | --- | --- | --- |
 | non-participant | ❌ | ❌ | ❌ | ❌ | ❌ |
-| participant | ✅ | ✅ | ❌ | ✅ | ❌ ⚠️ G2 |
+| participant | ✅ | ✅ | ❌ | ✅ | ❌ (✅ currency conversion only) |
 | owner, group `deleting` | ✅ | – | – | ✅ delete | ✅ delete |
 
 ### Rules
@@ -190,15 +200,19 @@ match /expenses/{expenseId} {
   allow update: if isAuthenticated() && isSplitGroupParticipant() &&
     request.resource.data.createdBy == resource.data.createdBy &&
     request.resource.data.groupId == resource.data.groupId &&
+    // The author edits; anyone converts the group currency (money fields only)
+    (resource.data.createdBy == request.auth.uid || onlyChanges(['currency', 'amount', 'splits', 'conversion'])) &&
     splitGroupCounterChangedBy('expensesCount', 0) &&
     splitGroupTouchedInSameWrite();
-  allow delete: if isAuthenticated() && isSplitGroupParticipant() &&
-    (splitGroupCounterChangedBy('expensesCount', -1) || (isSplitGroupDeleting() && isSplitGroupOwner()));
+  allow delete: if isAuthenticated() && isSplitGroupParticipant() && (
+    (resource.data.createdBy == request.auth.uid && splitGroupCounterChangedBy('expensesCount', -1)) ||
+    (isSplitGroupDeleting() && isSplitGroupOwner())
+  );
 }
 ```
 
 ### Tests
-- `firestore-tests/split_groups/split_groups.spec.ts` — add / edit / delete transactions, write without group update, outsider.
+- `firestore-tests/split_groups/split_groups.spec.ts` — add / edit / delete transactions, conversion by another participant, someone else's expense edit / delete denied, write without group update, outsider.
 
 ---
 
@@ -237,7 +251,7 @@ match /expenses/{expenseId} {
 | Actor \ operation | read | create (with group update) | confirm | delete (payer / receiver) | update / delete (third participant) |
 | --- | --- | --- | --- | --- | --- |
 | non-participant | ❌ | ❌ | ❌ | ❌ | ❌ |
-| participant | ✅ | ✅ | ✅ receiver only ⚠️ G2 | ✅ | ❌ ⚠️ G2 |
+| participant | ✅ | ✅ | ✅ receiver only | ✅ | ❌ (✅ currency conversion only) |
 
 ### Rules
 ```rules
@@ -252,13 +266,24 @@ match /settlements/{settlementId} {
     splitGroupCounterChangedBy('settlementsCount', 1);
   allow update: if isAuthenticated() && isSplitGroupParticipant() &&
     request.resource.data.createdBy == resource.data.createdBy &&
-    request.resource.data.groupId == resource.data.groupId &&
+    request.resource.data.groupId == resource.data.groupId && (
+      // The receiver confirms a pending settlement
+      (resource.data.receiverId == request.auth.uid &&
+        resource.data.get('status', 'confirmed') == 'pending' &&
+        request.resource.data.status == 'confirmed' &&
+        onlyChanges(['status'])) ||
+      // Anyone converts the group currency (money fields only)
+      onlyChanges(['currency', 'amount', 'conversion'])
+    ) &&
     splitGroupCounterChangedBy('settlementsCount', 0) &&
     splitGroupTouchedInSameWrite();
-  allow delete: if isAuthenticated() && isSplitGroupParticipant() &&
-    (splitGroupCounterChangedBy('settlementsCount', -1) || (isSplitGroupDeleting() && isSplitGroupOwner()));
+  allow delete: if isAuthenticated() && isSplitGroupParticipant() && (
+    ((resource.data.payerId == request.auth.uid || resource.data.receiverId == request.auth.uid) &&
+      splitGroupCounterChangedBy('settlementsCount', -1)) ||
+    (isSplitGroupDeleting() && isSplitGroupOwner())
+  );
 }
 ```
 
 ### Tests
-- `firestore-tests/split_groups/split_groups.spec.ts` — record, request + confirm, delete; G2 as `todo`.
+- `firestore-tests/split_groups/split_groups.spec.ts` — record, request + confirm, delete, confirmation by a non-receiver / deletion by a third participant denied, conversion allowed.

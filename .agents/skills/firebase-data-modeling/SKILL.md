@@ -31,7 +31,7 @@ Firebase Firestore requires a NoSQL-first mindset. Denormalization and reading e
 ## 4. Security Rules & Deployment
 - Always assume the client is compromised.
 - Write strict rules for any new collection you design (via the `firestore-rules-manager` spec). Verify that users can only read/write their own data or data they have explicit access to.
-- **Deployment follows the branch** (`.github/workflows/deploy-firestore.yml`): merging rules / indexes into `develop` deploys them to `flaner-v2-dev`, merging into `master` deploys them to `flaner-v2`. Never deploy to PROD before the code that needs the change is on `master`. Manual fallback and details: `firestore-rules-manager` skill, section 6 (NEVER use the MCP `firebase_deploy` tool).
+- **Deployment follows the branch** (`.github/workflows/deploy-firestore.yml`): merging rules / indexes into `develop` deploys them to `flaner-v2-dev`, merging into `master` deploys them to `flaner-v2`. Never deploy to PROD before the code that needs the change is on `master`. Feature-branch testing (emulators, manual DEV deploy), manual fallback and details: `firestore-rules-manager` skill, sections 6–7 (NEVER use the MCP `firebase_deploy` tool).
 
 ## 5. Type-Safe Firestore API & References Pattern
 - **NEVER use manual type casting** (e.g. `doc.data() as Group` or `collection(...) as CollectionReference<Group>`).

@@ -3,9 +3,9 @@
 Pending friend requests (MFE `community`). The doc id is `${senderUid}_${receiverUid}`; accepting or rejecting deletes the doc (see `users.md` → friendships).
 
 ## Invariants
-- **I1** Only the sender creates a request, in their own name, with `status: 'pending'`. ⚠️ G1
-- **I2** Only the two parties read the request; the sender cancels it, the receiver accepts / rejects it (delete). ⚠️ G2
-- **I3** A request is never edited after creation. ⚠️ G2
+- **I1** Only the sender creates a request, in their own name, to someone else, with `status: 'pending'` and the id `${senderUid}_${receiverUid}`.
+- **I2** Only the two parties read the request; the sender cancels it, the receiver accepts / rejects it (delete).
+- **I3** A request is never edited after creation (re-sending an existing request is denied).
 
 ## Schema
 | Field | Type | Required | Notes |
@@ -21,10 +21,10 @@ All endpoints: `packages/community/src/api/users/endpoints.ts`.
 
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
-| Send | `sendFriendRequest` | set request, create `users/{receiver}/notifications/*` | ❌ sequential |
+| Send | `sendFriendRequest` | set request, create `users/{receiver}/notifications/*` | ✅ batch |
 | Cancel (sender) | `cancelFriendRequest` | delete request | – |
-| Accept (receiver) | `acceptFriendRequest` | delete request + friendships + notification (see `users.md`) | ❌ sequential |
-| Reject (receiver) | `rejectFriendRequest` | delete request, create `users/{sender}/notifications/*` | ❌ sequential |
+| Accept (receiver) | `acceptFriendRequest` | delete request + friendships + notification (see `users.md`) | ✅ batch |
+| Reject (receiver) | `rejectFriendRequest` | delete request, create `users/{sender}/notifications/*` | ✅ batch |
 
 ## Queries
 | Query | Endpoint | Allowed by |
@@ -35,30 +35,25 @@ All endpoints: `packages/community/src/api/users/endpoints.ts`.
 ## Access matrix
 | Actor \ operation | read | create | update | delete |
 | --- | --- | --- | --- | --- |
-| sender | ✅ | ✅ (as sender) | ❌ ⚠️ G2 | ✅ (cancel) |
-| receiver | ✅ | ❌ ⚠️ G1 | ❌ ⚠️ G2 | ✅ (accept / reject) |
-| third user | ❌ | ❌ | ❌ ⚠️ G2 | ❌ |
-
-## Known gaps
-- **G1** `create` also allows `receiverUid == me`: a user can forge a request "from" anyone to themselves.
-- **G2** `write` (create / update / delete) also passes when the *new* data names the caller: anyone can overwrite any request by setting `senderUid` to themselves; parties can edit requests.
+| sender | ✅ | ✅ (as sender) | ❌ | ✅ (cancel) |
+| receiver | ✅ | ❌ (in the sender's name) | ❌ | ✅ (accept / reject) |
+| third user | ❌ | ❌ | ❌ | ❌ |
 
 ## Rules
 ```rules
 // Reguły dla zaproszeń do znajomych
 match /friendRequests/{requestId} {
-  allow read, write: if request.auth != null && (
+  allow read, delete: if isAuthenticated() && (
     request.auth.uid == resource.data.senderUid ||
-    request.auth.uid == resource.data.receiverUid ||
-    request.auth.uid == request.resource.data.senderUid ||
-    request.auth.uid == request.resource.data.receiverUid
+    request.auth.uid == resource.data.receiverUid
   );
-  allow create: if request.auth != null && (
-    request.auth.uid == request.resource.data.senderUid ||
-    request.auth.uid == request.resource.data.receiverUid
-  );
+  allow create: if isAuthenticated() &&
+    request.resource.data.senderUid == request.auth.uid &&
+    request.resource.data.receiverUid != request.auth.uid &&
+    requestId == request.auth.uid + '_' + request.resource.data.receiverUid &&
+    request.resource.data.status == 'pending';
 }
 ```
 
 ## Tests
-- `firestore-tests/friendRequests/friendRequests.spec.ts` — send, cancel, reject, queries, third party; G1–G2 as `todo`.
+- `firestore-tests/friendRequests/friendRequests.spec.ts` — send, cancel, reject, queries, third party, forged / overwritten / edited requests denied.

@@ -1,7 +1,8 @@
 name: Deploy Firestore
 
 # Rules and indexes follow their branch: develop -> flaner-v2-dev, master -> flaner-v2.
-# Source of truth: .agents/skills/firestore-rules-manager (see its SKILL.md, section 6).
+# Manual run ("Run workflow" on a feature branch) deploys that branch to DEV only, for testing
+# against real data before merging. Source of truth: .agents/skills/firestore-rules-manager (SKILL.md, sections 6-7).
 on:
   push:
     branches: [develop, master]
@@ -12,7 +13,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-firestore-${{ github.ref_name }}
+  group: deploy-firestore-${{ github.ref_name == 'master' && 'prod' || 'dev' }}
   cancel-in-progress: false
 
 permissions:
@@ -20,8 +21,7 @@ permissions:
 
 jobs:
   deploy:
-    name: Deploy rules and indexes (${{ github.ref_name }})
-    if: github.ref_name == 'develop' || github.ref_name == 'master'
+    name: Deploy rules and indexes (${{ github.ref_name }} -> ${{ github.ref_name == 'master' && 'prod' || 'dev' }})
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'master' && 'firebase-prod' || 'firebase-dev' }}
     env:

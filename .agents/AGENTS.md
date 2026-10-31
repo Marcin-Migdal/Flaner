@@ -8,6 +8,13 @@
 - NEVER perform git staging (`git add`), commits (`git commit`), stashes, or pushes on your own initiative or upon completing a task.
 - Git commands that modify repository state or history are STRICTLY FORBIDDEN unless the user explicitly requests them in their prompt or it was explicitly agreed upon in the conversation.
 
+**CRITICAL BEHAVIORAL RULE: PRE-MERGE MANUAL TEST ON DEV**
+- Day-to-day work on a feature branch runs against the emulators (`npm run dev:emulators`) — no deploys.
+- BEFORE you open a PR to `develop`, and again before it is merged, you MUST remind the user to do a final manual test of the feature against the real DEV Firestore, and wait for their confirmation:
+  1. If `firestore.rules` / `firestore.indexes.json` changed on the branch: GitHub → Actions → *Deploy Firestore* → *Run workflow* on the feature branch (deploys to DEV only).
+  2. Test the functionality on the branch's Vercel Preview or with `npm run dev` (local `.env` → DEV).
+- Details: `.agents/workflows/01-feature-workflow.md` (Phase 3) and the `firestore-rules-manager` skill, section 6.
+
 **PRE-FLIGHT PROTOCOL & SKILLS USAGE**
 At the beginning of every task, before writing any code, execute the "Pre-Flight Protocol" and include it in your response:
 1. **Task Type:** [Classify the task, e.g., New Feature, Refactor, Bugfix, UI Component, Configuration]

@@ -4,6 +4,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "nx run-many -t serve",
+    "dev:emulators": "node scripts/dev-emulators.mjs",
     "build": "nx run-many -t build",
     "typecheck": "nx run-many -t typecheck",
     "lint": "nx run-many -t lint",

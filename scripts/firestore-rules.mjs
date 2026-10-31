@@ -1,14 +1,15 @@
 // Compiles the Firestore rules spec (.agents/skills/firestore-rules-manager/docs/*.md) into firestore.rules.
-// Usage: node scripts/firestore-rules.mjs [--check]
+// Usage: node scripts/firestore-rules.mjs [--check | --watch]
 //   (no flag)  writes firestore.rules
 //   --check    fails when firestore.rules differs from the spec (CI drift guard)
+//   --watch    rebuilds on every spec change (the Firestore emulator hot-reloads the output)
 //
 // Spec format (see the firestore-rules-manager skill):
 // - only ```rules fenced blocks are compiled; everything else is documentation,
 // - `_global.md` is emitted first, then the other files alphabetically (other `_*.md` files hold no rules),
 // - in a collection file the first block is the collection `match`; every further block is a subcollection
 //   inserted at the `{{subcollections}}` line of the first block.
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, watch, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -26,9 +27,10 @@ service cloud.firestore {
 const FOOTER = `  }
 }`;
 
+class SpecError extends Error {}
+
 const fail = (message) => {
-  console.error(`firestore-rules: ${message}`);
-  process.exit(1);
+  throw new SpecError(message);
 };
 
 const readText = (file) => readFileSync(file, "utf8").replace(/\r\n/g, "\n");
@@ -119,20 +121,54 @@ const compile = () => {
 };
 
 const output = path.join(ROOT, OUTPUT);
-const compiled = compile();
 
-if (process.argv.includes("--check")) {
-  let current = "";
+const readOutput = () => {
   try {
-    current = readText(output);
+    return readText(output);
   } catch {
-    // Missing file is reported as drift below
+    return "";
   }
-  if (current !== compiled) {
-    fail(`${OUTPUT} is out of sync with ${SPEC_DIR}. Run \`npm run rules:build\` and commit the result.`);
-  }
-  console.log(`${OUTPUT} is up to date.`);
-} else {
-  writeFileSync(output, compiled);
+};
+
+const build = () => {
+  const compiled = compile();
+  // Skip identical writes so the emulator only reloads on real changes
+  if (readOutput() !== compiled) writeFileSync(output, compiled);
   console.log(`Wrote ${OUTPUT} from ${SPEC_DIR}.`);
+};
+
+const report = (error) => {
+  if (!(error instanceof SpecError)) throw error;
+  console.error(`firestore-rules: ${error.message}`);
+};
+
+if (process.argv.includes("--watch")) {
+  let timer;
+  const rebuild = () => {
+    try {
+      build();
+    } catch (error) {
+      report(error);
+    }
+  };
+  rebuild();
+  watch(path.join(ROOT, SPEC_DIR), () => {
+    clearTimeout(timer);
+    timer = setTimeout(rebuild, 100);
+  });
+  console.log(`Watching ${SPEC_DIR} for changes...`);
+} else {
+  try {
+    if (process.argv.includes("--check")) {
+      if (readOutput() !== compile()) {
+        fail(`${OUTPUT} is out of sync with ${SPEC_DIR}. Run \`npm run rules:build\` and commit the result.`);
+      }
+      console.log(`${OUTPUT} is up to date.`);
+    } else {
+      build();
+    }
+  } catch (error) {
+    report(error);
+    process.exit(1);
+  }
 }

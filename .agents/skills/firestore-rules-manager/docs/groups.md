@@ -7,7 +7,7 @@ Community groups (MFE `community`). Public groups are discoverable by name; priv
 - **I2** Only the creator can create a group, and the creator is its `ownerId`.
 - **I3** `ownerId` changes only through an ownership transfer done by the current owner.
 - **I4** `rolePermissions` can be changed only by the owner; `editGroup` lets other roles change the remaining fields.
-- **I5** Only the owner deletes the group, together with all its subcollections and the invitees' `users/{uid}/groupInvitations/{groupId}` mirrors. ⚠️ G1
+- **I5** Only the owner deletes the group, together with all its subcollections and the invitees' `users/{uid}/groupInvitations/{groupId}` mirrors.
 
 ## Schema
 | Field | Type | Required | Notes |
@@ -32,7 +32,7 @@ All endpoints: `packages/community/src/api/groups/endpoints.ts`.
 | Edit group | `updateGroup` | update `groups/{id}` (+ `nameLower`, `updatedAt`) | – |
 | Edit role permissions | `updateGroupRolePermissions` | update `rolePermissions`, `updatedAt` | – |
 | Transfer ownership | `transferGroupOwnership` | update `ownerId`; `members/{old}.role = 'admin'`; `members/{new}.role = 'owner'` | ✅ batch |
-| Delete group | `deleteGroup` | delete all `members`, `requests`, `invitations`, every `users/{invitee}/groupInvitations/{id}`, then the group | ✅ batch ⚠️ G1 |
+| Delete group | `deleteGroup` | delete all `members` (incl. the owner's), `requests`, `invitations`, every `users/{invitee}/groupInvitations/{id}`, then the group | ✅ batch (required: the owner may delete their member doc only together with the group) |
 
 ## Queries
 | Query | Endpoint | Allowed by |
@@ -48,9 +48,6 @@ All endpoints: `packages/community/src/api/groups/endpoints.ts`.
 | member / moderator | ✅ | – | ❌ (✅ with `editGroup`) | ❌ | ❌ |
 | admin | ✅ | – | ❌ (✅ with `editGroup`) | ❌ | ❌ |
 | owner | ✅ | – | ✅ | ✅ | ✅ |
-
-## Known gaps
-- **G1** `deleteGroup` also deletes `users/{invitee}/groupInvitations/{groupId}`, but that rule lets only the invitee delete it → the batch fails with `permission-denied` whenever a group has pending invitations. Fix in the `users.md` → groupInvitations rule.
 
 ## Rules
 ```rules
@@ -80,7 +77,7 @@ match /groups/{groupId} {
 ```
 
 ## Tests
-- `firestore-tests/groups/groups.spec.ts` — group CRUD, search queries, ownership transfer, delete flow; G1 as `todo`.
+- `firestore-tests/groups/groups.spec.ts` — group CRUD, search queries, ownership transfer, delete flow (also with pending invitations).
 
 ---
 
@@ -90,10 +87,11 @@ match /groups/{groupId} {
 
 ### Invariants
 - **M1** Only members see the member list; every user can list their own memberships across groups (collection group, `_global.md`).
-- **M2** Joining creates `role: 'member'`; `role: 'owner'` is created only by the group creator for themselves (in `createGroup`). ⚠️ G2
+- **M2** Joining creates `role: 'member'`; `role: 'owner'` is created only by the group creator for themselves (in `createGroup`). Member docs hold only `userId` (== doc id), `role`, `joinedAt`.
 - **M3** Ways to join: owner bootstrap, public group without approval, accepted invitation, join request accepted by staff with `manageRequests` / `manageMembers`.
 - **M4** A role can be changed only by someone with `manageMembers` and strictly higher priority than both the target's current and new role; the owner can hand over `owner` (transfer) and downgrade themselves to `admin` in the same transfer.
-- **M5** Everyone can leave (delete own doc); staff with `manageMembers` can remove lower-priority members.
+- **M5** Everyone except the owner can leave (delete own doc) — the owner transfers ownership first, or deletes the whole group; staff with `manageMembers` can remove lower-priority members.
+- **M6** Updates change only `role`.
 
 ### Schema
 | Field | Type | Required | Notes |
@@ -122,18 +120,13 @@ match /groups/{groupId} {
 ### Access matrix
 | Actor \ operation | read list | create self `member` | create self `owner`/`admin` | create other | update role | delete self | delete other |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| stranger, public no approval | ❌ | ✅ | ❌ ⚠️ G2 | ❌ | ❌ | – | ❌ |
+| stranger, public no approval | ❌ | ✅ | ❌ | ❌ | ❌ | – | ❌ |
 | stranger, approval / private | ❌ | ❌ | ❌ | ❌ | ❌ | – | ❌ |
-| invitee | ❌ | ✅ | ❌ ⚠️ G2 | ❌ | ❌ | – | ❌ |
+| invitee | ❌ | ✅ | ❌ | ❌ | ❌ | – | ❌ |
 | member | ✅ | – | – | ❌ | ❌ | ✅ | ❌ |
 | moderator (default perms) | ✅ | – | – | ❌ | ❌ | ✅ | ❌ |
-| admin (default perms) | ✅ | – | – | ✅ `member` only ⚠️ G3 | ✅ below admin | ✅ | ✅ below admin |
-| owner | ✅ | ✅ (bootstrap) | ✅ (bootstrap) | ✅ | ✅ (+ transfer) | ✅ ⚠️ G4 | ✅ |
-
-### Known gaps
-- **G2** `create` does not check `request.resource.data.role`: self-join (public or via invitation) can write `role: 'owner'`.
-- **G3** Staff with `manageRequests` / `manageMembers` can create a member doc with any role, including `owner`.
-- **G4** The owner can leave the group, leaving it without an owner.
+| admin (default perms) | ✅ | – | – | ✅ `member` only | ✅ below admin | ✅ | ✅ below admin |
+| owner | ✅ | ✅ (bootstrap) | ✅ `owner` (bootstrap only) | ✅ `member` only | ✅ (+ transfer) | ❌ (✅ only with the group in `deleteGroup`) | ✅ |
 
 ### Rules
 ```rules
@@ -143,23 +136,35 @@ match /groups/{groupId} {
 match /members/{userId} {
   allow read: if isAuthenticated() && exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
 
-  allow create: if isAuthenticated() && (
-    (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
-    hasRolePermission(groupId, 'manageRequests') ||
-    hasRolePermission(groupId, 'manageMembers') ||
-    isAdminOrOwner(groupId) ||
-    (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.type == 'public' && get(/databases/$(database)/documents/groups/$(groupId)).data.requiresApproval == false) ||
-    (userId == request.auth.uid && exists(/databases/$(database)/documents/groups/$(groupId)/invitations/$(request.auth.uid)))
-  );
+  allow create: if isAuthenticated() &&
+    request.resource.data.keys().hasOnly(['userId', 'role', 'joinedAt']) &&
+    request.resource.data.userId == userId && (
+      // Owner bootstrap in createGroup
+      (userId == request.auth.uid && request.resource.data.role == 'owner' &&
+        get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
+      // Every other way in joins as a plain member
+      (request.resource.data.role == 'member' && (
+        hasRolePermission(groupId, 'manageRequests') ||
+        hasRolePermission(groupId, 'manageMembers') ||
+        isAdminOrOwner(groupId) ||
+        (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.type == 'public' && get(/databases/$(database)/documents/groups/$(groupId)).data.requiresApproval == false) ||
+        (userId == request.auth.uid && exists(/databases/$(database)/documents/groups/$(groupId)/invitations/$(request.auth.uid)))
+      ))
+    );
 
-  allow update: if isAuthenticated() && (
-    (hasRolePermission(groupId, 'manageMembers') && hasHigherPriority(groupId, userId, request.resource.data.role)) ||
-    (getRole(groupId) == 'owner' && request.resource.data.role == 'owner') ||
-    (userId == request.auth.uid && getRole(groupId) == 'owner' && request.resource.data.role == 'admin')
-  );
+  allow update: if isAuthenticated() &&
+    onlyChanges(['role']) && (
+      (hasRolePermission(groupId, 'manageMembers') && hasHigherPriority(groupId, userId, request.resource.data.role)) ||
+      (getRole(groupId) == 'owner' && request.resource.data.role == 'owner') ||
+      (userId == request.auth.uid && getRole(groupId) == 'owner' && request.resource.data.role == 'admin')
+    );
 
   allow delete: if isAuthenticated() && (
-    userId == request.auth.uid ||
+    // The owner leaves only together with the group (deleteGroup batch)
+    (userId == request.auth.uid && (
+      getRole(groupId) != 'owner' ||
+      !existsAfter(/databases/$(database)/documents/groups/$(groupId))
+    )) ||
     (hasRolePermission(groupId, 'manageMembers') && hasHigherPriority(groupId, userId, null))
   );
 }
@@ -167,7 +172,7 @@ match /members/{userId} {
 
 ### Tests
 - `firestore-tests/groups/membership.spec.ts` — joining (invitation, public, approval, private, unauthenticated, staff).
-- `firestore-tests/groups/groups.spec.ts` — role changes, leave / remove; G2–G4 as `todo`.
+- `firestore-tests/groups/groups.spec.ts` — role changes, leave / remove, privileged self-join / staff-created owners / owner leaving denied.
 
 ---
 

@@ -1,5 +1,5 @@
 import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
-import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { useTestEnv } from "../support/testEnv";
 
 const SENDER = "sender-uid";
@@ -68,7 +68,32 @@ describe("friendRequests/{senderUid}_{receiverUid}", () => {
     await assertFails(setDoc(doc(as(STRANGER), "friendRequests", REQUEST_ID), friendRequest()));
   });
 
-  it.todo("G1: blocks the receiver from creating a request in the sender's name");
-  it.todo("G2: blocks third users from overwriting a request by naming themselves the sender");
-  it.todo("G2: blocks editing a request after it was sent");
+  it("blocks the receiver from creating a request in the sender's name", async () => {
+    await assertFails(setDoc(doc(as(RECEIVER), "friendRequests", REQUEST_ID), friendRequest()));
+  });
+
+  it("blocks a request id that does not match sender_receiver, self-requests and non-pending status", async () => {
+    const db = as(SENDER);
+
+    await assertFails(setDoc(doc(db, "friendRequests", `${RECEIVER}_${SENDER}`), friendRequest()));
+    await assertFails(
+      setDoc(doc(db, "friendRequests", `${SENDER}_${SENDER}`), { ...friendRequest(), receiverUid: SENDER }),
+    );
+    await assertFails(setDoc(doc(db, "friendRequests", REQUEST_ID), { ...friendRequest(), status: "accepted" }));
+  });
+
+  it("blocks third users from overwriting a request by naming themselves the sender", async () => {
+    await seed({ [`friendRequests/${REQUEST_ID}`]: friendRequest() });
+
+    await assertFails(
+      setDoc(doc(as(STRANGER), "friendRequests", REQUEST_ID), { ...friendRequest(), senderUid: STRANGER }),
+    );
+  });
+
+  it("blocks editing or re-sending a request after it was sent", async () => {
+    await seed({ [`friendRequests/${REQUEST_ID}`]: friendRequest() });
+
+    await assertFails(updateDoc(doc(as(RECEIVER), "friendRequests", REQUEST_ID), { status: "accepted" }));
+    await assertFails(setDoc(doc(as(SENDER), "friendRequests", REQUEST_ID), friendRequest()));
+  });
 });

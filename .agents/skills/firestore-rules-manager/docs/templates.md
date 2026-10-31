@@ -30,17 +30,15 @@ Endpoints: `packages/tools/src/api/templates/endpoints.ts`.
 | --- | --- | --- |
 | `userId == me` | `fetchTemplates` | read: owner |
 
-## Known gaps
-- owned-G1 (see `_global.md`).
-
 ## Rules
 ```rules
 // ==========================================
 // SZABLONY FILAMENTU (TEMPLATES)
 // ==========================================
 match /templates/{templateId} {
-  allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-  allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+  allow read, delete: if isOwner(resource.data);
+  allow create: if isOwner(request.resource.data);
+  allow update: if isOwner(resource.data) && isOwner(request.resource.data);
 }
 ```
 

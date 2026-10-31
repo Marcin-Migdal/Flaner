@@ -28,19 +28,17 @@ Endpoints: `packages/tools/src/api/lookups/endpoints.ts`.
 | `userId == me` | `fetchLookupColors`, cascade deletes | read: owner |
 | `userId == me && materialName == X && typeName == Y && name == Z` limit 1 | `addLookupColor` | read: owner |
 
-## Known gaps
-- owned-G1 (see `_global.md`).
-
 ## Rules
 ```rules
 // ==========================================
 // LOOKUP KOLORY (LOOKUP COLORS)
 // ==========================================
 match /lookup_colors/{colorId} {
-  allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-  allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+  allow read, delete: if isOwner(resource.data);
+  allow create: if isOwner(request.resource.data);
+  allow update: if isOwner(resource.data) && isOwner(request.resource.data);
 }
 ```
 
 ## Tests
-- `firestore-tests/tools/tools.spec.ts` — add / query / cascade delete for the owner, other user denied.
+- `firestore-tests/tools/tools.spec.ts` — add / query / cascade delete for the owner, other user denied, hand-over denied.

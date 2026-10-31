@@ -19,12 +19,12 @@ Emitted first in `firestore.rules`, before any collection. Helpers defined here 
 ## Pattern: user-owned documents
 Used by the Spooler collections (`spools`, `templates`, `lookup_materials`, `lookup_types`, `lookup_colors`): every doc has a `userId` and is private to that user.
 
-| Actor \ operation | read / query `userId == me` | create (`userId == me`) | update / delete own | anything on someone else's doc |
-| --- | --- | --- | --- | --- |
-| owner | ✅ | ✅ | ✅ (must keep `userId` ⚠️ owned-G1) | ❌ |
-| other user | ❌ | ❌ (`userId` must be the caller) | – | ❌ |
+| Actor \ operation | read / query `userId == me` | create (`userId == me`) | update own (keeping `userId`) | hand over (change `userId`) | anything on someone else's doc |
+| --- | --- | --- | --- | --- | --- |
+| owner | ✅ | ✅ | ✅ | ❌ | ❌ |
+| other user | ❌ | ❌ (`userId` must be the caller) | – | – | ❌ |
 
-- **owned-G1** `update` does not check that `userId` stays the same: the owner can hand a doc over to another user (it then appears in their lists).
+Rules: `isOwner(resource.data)` for read / delete, `isOwner(request.resource.data)` for create, both for update.
 
 ## Rules
 ```rules
@@ -33,6 +33,16 @@ Used by the Spooler collections (`spools`, `templates`, `lookup_materials`, `loo
 // ==========================================
 function isAuthenticated() {
   return request.auth != null;
+}
+
+// User-owned documents (`userId` field), see "Pattern: user-owned documents"
+function isOwner(data) {
+  return isAuthenticated() && data.userId == request.auth.uid;
+}
+
+// Update whitelist: only the listed fields may differ from the stored document
+function onlyChanges(keys) {
+  return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
 }
 
 // Returns null for non-members: a missing member doc must not raise an evaluation

@@ -56,7 +56,7 @@ match /users/{userId} {
 ```
 
 ## Tests
-- `firestore-tests/users/users.spec.ts` — profile reads, own writes, search queries, sign-up and profile-edit batches.
+- `firestore-tests/users/users.spec.ts` — profile reads, own writes, search queries, sign-up and profile-edit batches; G1 as `todo`.
 
 ---
 
@@ -65,9 +65,10 @@ match /users/{userId} {
 **Path:** `/users/{userId}/friendships/{friendId}` — one doc per friend in each user's list (both directions).
 
 ### Invariants
-- **F1** A friendship exists only as a result of an accepted friend request, and always in both lists. ⚠️ G2
+- **F1** A friendship is created only by the receiver of a pending friend request (`friendRequests/{other}_{me}`), in both lists, in the same batch that deletes the request.
 - **F2** Only the owner of the list reads it.
 - **F3** Either side can end the friendship (deletes both docs).
+- **F4** Friendship docs are not edited (denormalized `username` / `avatarUrl` updates will need an explicit rule).
 
 ### Schema
 | Field | Type | Required | Notes |
@@ -82,8 +83,8 @@ All endpoints: `packages/community/src/api/users/endpoints.ts`.
 
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
-| Accept friend request (by receiver) | `acceptFriendRequest` | delete `friendRequests/{sender}_{receiver}`, set `users/{receiver}/friendships/{sender}`, set `users/{sender}/friendships/{receiver}`, create `users/{sender}/notifications/*` | ❌ sequential |
-| Remove friend | `removeFriend` | delete `users/{me}/friendships/{friend}`, delete `users/{friend}/friendships/{me}` | ❌ sequential |
+| Accept friend request (by receiver) | `acceptFriendRequest` | delete `friendRequests/{sender}_{receiver}`, set `users/{receiver}/friendships/{sender}`, set `users/{sender}/friendships/{receiver}`, create `users/{sender}/notifications/*` | ✅ batch (required: the rule checks the request exists before the batch) |
+| Remove friend | `removeFriend` | delete `users/{me}/friendships/{friend}`, delete `users/{friend}/friendships/{me}` | ✅ batch |
 
 ### Queries
 | Query | Endpoint | Allowed by |
@@ -91,25 +92,33 @@ All endpoints: `packages/community/src/api/users/endpoints.ts`.
 | list `users/{me}/friendships` | `getFriendsList`, `subscribeToFriendsList` | read: owner |
 
 ### Access matrix
-| Actor \ operation | read | write own list | write other's list (doc id == me) | write other's list (other doc id) |
-| --- | --- | --- | --- | --- |
-| self | ✅ | ✅ | – | – |
-| friend / any user | ❌ | – | ✅ ⚠️ G2 | ❌ |
-
-### Known gaps
-- **G2** Any user can write `users/{X}/friendships/{me}` (and their own list) without an accepted friend request.
+| Actor \ operation | read | create (pending request from the other user to me) | create (no such request) | update | delete |
+| --- | --- | --- | --- | --- | --- |
+| list owner | ✅ | ✅ | ❌ | ❌ | ✅ |
+| the friend (doc id == me) | ❌ | ✅ | ❌ | ❌ | ✅ |
+| any other user | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ### Rules
 ```rules
 // Subkolekcja znajomości (friendships)
 match /friendships/{friendId} {
-  allow write: if request.auth != null && (request.auth.uid == userId || request.auth.uid == friendId);
-  allow read: if request.auth != null && request.auth.uid == userId;
+  // `exists()` sees the state before the batch, so the request deleted by acceptFriendRequest still counts
+  function hasPendingRequestFrom(otherUid) {
+    return exists(/databases/$(database)/documents/friendRequests/$(otherUid + '_' + request.auth.uid));
+  }
+
+  allow read: if isAuthenticated() && request.auth.uid == userId;
+  allow create: if isAuthenticated() &&
+    request.resource.data.keys().hasOnly(['userRef', 'username', 'usernameLower', 'avatarUrl', 'createdAt']) && (
+      (request.auth.uid == userId && hasPendingRequestFrom(friendId)) ||
+      (request.auth.uid == friendId && hasPendingRequestFrom(userId))
+    );
+  allow delete: if isAuthenticated() && (request.auth.uid == userId || request.auth.uid == friendId);
 }
 ```
 
 ### Tests
-- `firestore-tests/users/friendships.spec.ts` — accept and remove flows, list reads; G2 as `todo`.
+- `firestore-tests/users/friendships.spec.ts` — accept and remove batches, list reads, friendships without a request / edits denied.
 
 ---
 
@@ -119,7 +128,8 @@ match /friendships/{friendId} {
 
 ### Invariants
 - **N1** Only the recipient reads, marks as read and deletes notifications.
-- **N2** Any signed-in user can notify another user, but only in their own name (`senderUid == me`) and with a known `type`. ⚠️ G3
+- **N2** Any signed-in user can notify another user, but only in their own name (`senderUid == me`), unread, with a known client `type` and only the schema fields. `system_alert` is written only by admin tooling (bypasses rules).
+- **N3** The recipient can only flip `read`; the content is immutable.
 
 ### Schema
 | Field | Type | Required | Notes |
@@ -144,6 +154,8 @@ match /friendships/{friendId} {
 | Pending settlement | `createSettlement` (planning) | create in receiver's inbox, in the transaction |
 | Mark as read | `markNotificationAsRead`, `markAllNotificationsAsRead` (core) | update `read: true` (single / batch) |
 
+Every writer sets `id` to the doc id.
+
 ### Queries
 | Query | Endpoint | Allowed by |
 | --- | --- | --- |
@@ -151,26 +163,36 @@ match /friendships/{friendId} {
 | `read == true` order by `createdAt desc`, paged | `getReadNotificationsPage` (core) | read: recipient |
 
 ### Access matrix
-| Actor \ operation | read | create | update / delete |
-| --- | --- | --- | --- |
-| recipient | ✅ | ✅ | ✅ |
-| other signed-in user | ❌ | ✅ (own name only ⚠️ G3) | ❌ |
-| unauthenticated | ❌ | ❌ | ❌ |
-
-### Known gaps
-- **G3** `create` has no validation: any signed-in user can write any content (fake `senderUid`, arbitrary `type`, `read: true`).
+| Actor \ operation | read | create (own name, valid) | create (fake sender / unknown type / extra fields / `read: true`) | update `read` | update other fields | delete |
+| --- | --- | --- | --- | --- | --- | --- |
+| recipient | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ |
+| other signed-in user | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| unauthenticated | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ### Rules
 ```rules
 // Subkolekcja powiadomień (notifications)
 match /notifications/{notifId} {
-  allow create: if request.auth != null;
-  allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+  allow read, delete: if isAuthenticated() && request.auth.uid == userId;
+  allow update: if isAuthenticated() && request.auth.uid == userId &&
+    onlyChanges(['read']);
+  allow create: if isAuthenticated() &&
+    request.resource.data.keys().hasOnly([
+      'id', 'type', 'senderUid', 'senderUsername', 'senderAvatarUrl', 'createdAt', 'read',
+      'eventId', 'eventName', 'splitGroupId', 'splitGroupName'
+    ]) &&
+    request.resource.data.id == notifId &&
+    request.resource.data.senderUid == request.auth.uid &&
+    request.resource.data.read == false &&
+    request.resource.data.type in [
+      'friend_request', 'friend_request_accepted', 'friend_request_rejected', 'group_invitation',
+      'event_invitation', 'event_reopened', 'split_group_invitation', 'split_settlement_pending'
+    ];
 }
 ```
 
 ### Tests
-- `firestore-tests/users/notifications.spec.ts` — cross-user create, inbox queries, mark as read; G3 as `todo`.
+- `firestore-tests/users/notifications.spec.ts` — cross-user create, inbox queries, mark as read, forged / invalid notifications and content edits denied.
 
 ---
 
@@ -180,14 +202,14 @@ match /notifications/{notifId} {
 
 ### Invariants
 - **V1** Written only by group members with `inviteMembers` (together with the group-side invitation).
-- **V2** The invitee reads and deletes it (accept / reject); deleting the group also removes it. ⚠️ G4
+- **V2** The invitee reads and deletes it (accept / reject); members with `inviteMembers` (incl. the owner) delete it when revoking the invitation or deleting the group.
 
 ### Write flows
 | Flow | Endpoint (community `groups/endpoints.ts`) | Writes |
 | --- | --- | --- |
 | Invite | `inviteUserToGroup` | set (after the group-side doc) |
 | Accept / reject | `acceptGroupInvitation`, `rejectGroupInvitation` | delete |
-| Delete group | `deleteGroup` | delete (by the owner) ⚠️ G4 |
+| Delete group | `deleteGroup` | delete (by the owner) |
 
 ### Queries
 | Query | Endpoint | Allowed by |
@@ -199,11 +221,8 @@ match /notifications/{notifId} {
 | --- | --- | --- | --- |
 | invitee | ✅ | ❌ | ✅ |
 | member without `inviteMembers` | ❌ | ❌ | ❌ |
-| member with `inviteMembers` | ❌ | ✅ | ❌ ⚠️ G4 |
-| group owner | ❌ | ✅ | ❌ ⚠️ G4 |
-
-### Known gaps
-- **G4** Only the invitee can delete → `deleteGroup` (owner) and revoking an invitation fail for this mirror (see `groups.md` G1).
+| member with `inviteMembers` | ❌ | ✅ | ✅ |
+| group owner | ❌ | ✅ | ✅ |
 
 ### Rules
 ```rules
@@ -212,9 +231,13 @@ match /groupInvitations/{groupId} {
   allow create, update: if isAuthenticated() &&
     exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)) &&
     hasRolePermission(groupId, 'inviteMembers');
-  allow read, delete: if isAuthenticated() && request.auth.uid == userId;
+  allow read: if isAuthenticated() && request.auth.uid == userId;
+  allow delete: if isAuthenticated() && (
+    request.auth.uid == userId ||
+    hasRolePermission(groupId, 'inviteMembers')
+  );
 }
 ```
 
 ### Tests
-- `firestore-tests/groups/groups.spec.ts` — invite / reject (writes both invitation docs); G4 as `todo`.
+- `firestore-tests/groups/groups.spec.ts` — invite / reject / revoke (both invitation docs), delete group with pending invitations.

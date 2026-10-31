@@ -59,5 +59,41 @@ describe("users/{userId}/notifications/{notifId}", () => {
     await assertFails(updateDoc(doc(db, inbox, "n1"), { read: true }));
   });
 
-  it.todo("G3: blocks notifications sent in someone else's name or with an unknown type");
+  it("accepts every notification shape the app writes", async () => {
+    const db = as(SENDER);
+    const shapes = [
+      { type: "friend_request_accepted" },
+      { type: "group_invitation" },
+      { type: "event_invitation", eventId: "e1", eventName: "Trip" },
+      { type: "split_settlement_pending", splitGroupId: "s1", splitGroupName: "Trip" },
+    ];
+
+    for (const shape of shapes) {
+      const ref = doc(collection(db, inbox));
+      await assertSucceeds(setDoc(ref, { ...notification(ref.id), ...shape }));
+    }
+  });
+
+  it("blocks notifications in someone else's name, unknown types, system alerts and extra fields", async () => {
+    const db = as(SENDER);
+    const ref = () => doc(collection(db, inbox));
+
+    const fake = ref();
+    await assertFails(setDoc(fake, { ...notification(fake.id), senderUid: "admin-uid" }));
+    const unknown = ref();
+    await assertFails(setDoc(unknown, { ...notification(unknown.id), type: "payment_request" }));
+    const alert = ref();
+    await assertFails(setDoc(alert, { ...notification(alert.id), type: "system_alert" }));
+    const extra = ref();
+    await assertFails(setDoc(extra, { ...notification(extra.id), link: "https://evil.example" }));
+    const alreadyRead = ref();
+    await assertFails(setDoc(alreadyRead, notification(alreadyRead.id, true)));
+    await assertFails(setDoc(ref(), notification("other-id")));
+  });
+
+  it("lets the recipient change only the read flag", async () => {
+    await seed({ [`${inbox}/n1`]: notification("n1") });
+
+    await assertFails(updateDoc(doc(as(RECIPIENT), inbox, "n1"), { senderUsername: "Someone else" }));
+  });
 });

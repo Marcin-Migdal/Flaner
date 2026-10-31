@@ -117,7 +117,20 @@ describe("spools/{spoolId}", () => {
     await assertFails(setDoc(doc(as(OTHER), "spools/spool-1/prints", "print-2"), { id: "print-2", usedWeight: 5 }));
   });
 
-  it.todo("owned-G1: blocks handing a spool / template / lookup over to another user (userId change)");
+  it("blocks handing spools, templates and lookups over to another user", async () => {
+    await seed({
+      "spools/spool-1": spool(OWNER),
+      "templates/template-1": template(OWNER),
+      "lookup_materials/m1": { id: "m1", userId: OWNER, name: "PLA", createdAt: 1 },
+      "lookup_types/t1": { id: "t1", userId: OWNER, materialName: "PLA", name: "Silk", createdAt: 1 },
+      "lookup_colors/c1": { id: "c1", userId: OWNER, materialName: "PLA", typeName: "Silk", name: "Gold", hex: "#ffd700", createdAt: 1 },
+    });
+    const db = as(OWNER);
+
+    for (const path of ["spools/spool-1", "templates/template-1", "lookup_materials/m1", "lookup_types/t1", "lookup_colors/c1"]) {
+      await assertFails(updateDoc(doc(db, path), { userId: OTHER }));
+    }
+  });
 });
 
 describe("templates/{templateId}", () => {

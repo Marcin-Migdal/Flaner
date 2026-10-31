@@ -4,9 +4,10 @@ Scheduler events (MFE `planning`): the creator proposes date slots, participants
 
 ## Invariants
 - **I1** Only the creator and participants read the event; the creator is always a participant.
-- **I2** Only the creator edits the event (name, description, slots, participants), finalizes / reopens it and deletes it. ⚠️ G1
-- **I3** Participants only vote (change `proposedDates[*].votes[me]`) and only while the event is not finalized. ⚠️ G1 G2
-- **I4** `creatorId` never changes. ⚠️ G1
+- **I1b** New events start open (`isFinalized: false`).
+- **I2** Only the creator edits the event (name, description, slots, participants), finalizes / reopens it and deletes it.
+- **I3** Participants only vote (change `proposedDates[*].votes[me]`) and only while the event is not finalized. ⚠️ G2
+- **I4** `creatorId` never changes.
 
 ## Schema
 | Field | Type | Required | Notes |
@@ -43,12 +44,11 @@ All endpoints: `packages/planning/src/api/events/endpoints.ts`.
 | Actor \ operation | read | create | vote (not finalized) | vote (finalized) | edit / finalize / reopen | delete |
 | --- | --- | --- | --- | --- | --- | --- |
 | non-participant | ❌ | ✅ (as creator) | ❌ | ❌ | ❌ | ❌ |
-| participant | ✅ | – | ✅ | ❌ | ❌ ⚠️ G1 | ❌ |
+| participant | ✅ | – | ✅ | ❌ | ❌ | ❌ |
 | creator | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ## Known gaps
-- **G1** Before finalization a participant can update **any** field: take over `creatorId` (and then delete the event), change `participants`, finalize, rewrite slots.
-- **G2** Votes live inside `proposedDates`, so a participant who may vote can also change other participants' votes. Fixing it requires moving votes to `events/{id}/votes/{uid}` (data model change).
+- **G2** Votes live inside `proposedDates`, so a participant who may vote can also change other participants' votes and the slots themselves (the rules cannot compare array items one by one). Fixing it requires moving votes out of the event doc, e.g. `events/{id}/votes/{uid}` (data model change, to be discussed).
 
 ## Rules
 ```rules
@@ -57,14 +57,21 @@ All endpoints: `packages/planning/src/api/events/endpoints.ts`.
 // ==========================================
 match /events/{eventId} {
   allow read: if isAuthenticated() && (request.auth.uid in resource.data.participants || request.auth.uid == resource.data.creatorId);
-  allow create: if isAuthenticated() && request.resource.data.creatorId == request.auth.uid && request.auth.uid in request.resource.data.participants;
+  allow create: if isAuthenticated() &&
+    request.resource.data.creatorId == request.auth.uid &&
+    request.auth.uid in request.resource.data.participants &&
+    request.resource.data.isFinalized == false;
   allow update: if isAuthenticated() && (
-    resource.data.creatorId == request.auth.uid ||
-    (resource.data.get('isFinalized', false) == false && request.auth.uid in resource.data.participants)
+    (resource.data.creatorId == request.auth.uid &&
+      request.resource.data.creatorId == resource.data.creatorId) ||
+    // Participants vote: only the slots (with their votes) change, while the event is open
+    (resource.data.get('isFinalized', false) == false &&
+      request.auth.uid in resource.data.participants &&
+      onlyChanges(['proposedDates', 'updatedAt']))
   );
   allow delete: if isAuthenticated() && resource.data.creatorId == request.auth.uid;
 }
 ```
 
 ## Tests
-- `firestore-tests/events/events.spec.ts` — create batch, query, vote, finalize / reopen, delete, outsider; G1–G2 as `todo`.
+- `firestore-tests/events/events.spec.ts` — create batch, query, vote, finalize / reopen, delete, outsider, participant edits / takeover denied; G2 as `todo`.
