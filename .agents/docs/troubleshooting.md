@@ -76,6 +76,23 @@ export const loginWithGoogle = async (auth: Auth, provider: GoogleAuthProvider):
 };
 ```
 
+## 5. `auth/popup-blocked` Right After Clicking "Continue with Google"
+
+**Symptom:** the Google account picker never appears. The error toast ("Autoryzacja przez Google nie powiodła się") shows instantly. The console shows `Google Sign In failed FirebaseError: Firebase: Error (auth/popup-blocked)`.
+
+**Cause (seen on 2026-10-31 on DEV):** an adblock / privacy extension in the user's browser blocked the popup to `<project>.firebaseapp.com/__/auth/handler`. The app code and Firebase config were fine.
+
+**How to tell it apart from a real bug:**
+1. Retry in an incognito window with extensions disabled, or in another browser.
+2. Or check in a clean Playwright browser: a Playwright click is a real user gesture, so a popup must open (`page.waitForEvent("popup")`). If it opens there, the code is fine.
+3. A real code problem looks different: an `await` before `signInWithPopup` in the click handler loses the user gesture and blocks the popup in **every** browser.
+
+**Related noise:** with an adblock active, the console can also show `net::ERR_BLOCKED_BY_CLIENT` on Firestore `Write/channel` requests (`TYPE=terminate`). On its own it is not the cause of a failing write. Read the actual error of the failed mutation instead (e.g. `permission-denied`).
+
+**Fix options:** ask the user to allow popups / disable the extension for the site, or add the redirect fallback from section 4.
+
+**Note for AI agents:** the Claude Code built-in browser pane blocks popups that the agent opens itself. `auth/popup-blocked` there says nothing about the app.
+
 
 ---
 name: vercel-configuration
