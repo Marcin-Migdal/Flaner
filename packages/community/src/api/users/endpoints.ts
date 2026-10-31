@@ -1,3 +1,4 @@
+// Firestore rules spec: .agents/skills/firestore-rules-manager/docs/friendRequests.md, users.md (keep their Write flows / Queries in sync).
 import type { FriendRequest, Friendship } from "./types";
 import { collection, doc, setDoc, getDocs, getDoc, deleteDoc, query, where, limit, onSnapshot } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";

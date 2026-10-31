@@ -1,22 +1,40 @@
-# Collection: templates
+# templates/{templateId}
 
-**Path:** `/templates/{templateId}`
+Filament templates (MFE `tools`, Spooler): reusable material / type / colour presets for spools. User-owned documents — see `_global.md` → Pattern: user-owned documents.
 
-## Document Schema
-- `id`: string
-- `userId`: string
-- `material`: string (np. PLA, PETG, ABS, TPU)
-- `type`: string (np. Basic, Matte, Tough, Silk)
-- `colorName`: string (np. Czarny, Biały, Czerwony)
-- `colorHex`: string (np. #000000)
-- `defaultWeight`: number (domyślna waga netto filamentu, np. 1000g lub 975g)
-- `createdAt`: timestamp (optional)
+## Invariants
+- **I1** A template is visible and editable only by its owner.
+- **I2** Editing a template may propagate its fields to the owner's spools; deleting it either deletes those spools or detaches them (`templateId: null`).
+
+## Schema
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | string | ✓ | == doc id |
+| `userId` | string | ✓ | owner |
+| `material`, `type` | string | ✓ | e.g. PLA / Basic |
+| `colorName`, `colorHex` | string | ✓ | |
+| `defaultWeight` | number (g) | ✓ | net filament weight, e.g. 1000 |
+| `createdAt` | Timestamp | ✓ | `serverTimestamp()` |
+
+## Write flows
+Endpoints: `packages/tools/src/api/templates/endpoints.ts`.
+
+| Flow | Endpoint | Writes | Atomic |
+| --- | --- | --- | --- |
+| Add | `addTemplate` | set template | – |
+| Edit | `updateTemplate` | update template; optionally batch-update the owner's spools | ❌ two steps |
+| Delete | `deleteTemplate` | batch delete / detach spools, then delete template | ❌ two steps |
+
+## Queries
+| Query | Endpoint | Allowed by |
+| --- | --- | --- |
+| `userId == me` | `fetchTemplates` | read: owner |
+
+## Known gaps
+- owned-G1 (see `_global.md`).
 
 ## Rules
-- **read, update, delete**: User is authenticated AND resource belongs to the user (`resource.data.userId == request.auth.uid`)
-- **create**: User is authenticated AND document belongs to the user (`request.resource.data.userId == request.auth.uid`)
-
-```javascript
+```rules
 // ==========================================
 // SZABLONY FILAMENTU (TEMPLATES)
 // ==========================================
@@ -25,3 +43,6 @@ match /templates/{templateId} {
   allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
 }
 ```
+
+## Tests
+- `firestore-tests/tools/tools.spec.ts` — CRUD and queries for the owner, other user denied.

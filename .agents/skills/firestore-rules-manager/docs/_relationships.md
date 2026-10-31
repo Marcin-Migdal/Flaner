@@ -1,28 +1,18 @@
-# Cross-Collection Relationships
+# Cross-collection dependencies
 
-This file tracks the interactions and dependencies between different collections to ensure that changes in one collection's schema don't inadvertently break rules in another.
+Index of the places where a rule of one collection reads another collection, or one flow writes several collections. The details live in each file's **Write flows** table; update both when you change one side.
 
-## 1. Groups <-> Users
-- **Dependency**: The `groups` rules frequently check the `groups/{groupId}/members/{userId}` subcollection to verify a user's role (`getRole`, `isAdminOrOwner`).
-- **Dependency**: The `users/{userId}/groupInvitations/{groupId}` subcollection relies on checking `groups/{groupId}/members/{userId}` to verify if the user is already a member before an invitation can be created.
-- **Rule of Thumb**: Any changes to the `members` subcollection structure in `groups` MUST be reflected in the `users` rules, and vice versa.
+| Rule / flow | Depends on | Spec |
+| --- | --- | --- |
+| `getRole`, `hasRolePermission`, `hasHigherPriority` | `groups/{g}/members/{uid}.role`, `groups/{g}.rolePermissions` | `_global.md`, `groups.md` |
+| `groups` read, `members` create | `groups/{g}/invitations/{uid}` exists | `groups.md` |
+| `users/{uid}/groupInvitations` create | caller's `members` doc + `inviteMembers` | `users.md`, `groups.md` |
+| `inviteUserToGroup`, `acceptGroupInvitation`, `rejectGroupInvitation`, `deleteGroup` | group invitation ↔ user mirror ↔ notification | `groups.md`, `users.md` |
+| `acceptFriendRequest`, `rejectFriendRequest`, `removeFriend` | `friendRequests` ↔ `users/*/friendships` ↔ notifications | `friendRequests.md`, `users.md` |
+| `expenses` / `settlements` rules | `get()` / `getAfter()` of `split_groups/{g}` (`participants`, counters, `updatedAt`, `status`) | `split_groups.md` |
+| `createSplitGroup`, `addParticipantToGroup`, `createSettlement`, `createSchedulerEvent`, `unfinalizeSchedulerEvent` | notification in another user's inbox, in the same batch / transaction | `split_groups.md`, `events.md`, `users.md` |
+| `spools/{s}/prints` rules | `spools/{s}.userId` | `spools.md` |
+| `updateTemplate`, `deleteTemplate` | the owner's `spools` (`templateId`) | `templates.md`, `spools.md` |
+| `deleteLookupMaterial`, `deleteLookupType` | child lookups matched by name | `lookup_*.md` |
 
-## 2. FriendRequests <-> Users
-- **Dependency**: `friendRequests` uses `senderUid` and `receiverUid` to track relationships between two users. Once a request is accepted, a document is usually written to both users' `friendships` subcollections.
-- **Rule of Thumb**: When modifying `friendRequests` schema (e.g. adding status), ensure the `friendships` creation rules are updated if necessary.
-
-## 3. Global Helpers
-- Functions in `_global.md` heavily depend on the schema of `groups/{groupId}/members/{userId}`. Specifically, they expect a `role` field (with values like 'owner', 'admin', 'moderator'). Changing these role names requires updating `getRolePriority` and `isAdminOrOwner` in `_global.md`.
-
-## 4. Lookup Collections Cascade (`lookup_materials` -> `lookup_types` -> `lookup_colors`)
-- **Dependency**: Collections prefixed with `lookup_` store dynamically created options (materials, types, colors) from select inputs.
-- **Cascading Deletions**:
-  - Deleting a `lookup_materials` entry cascades to delete all `lookup_types` where `materialName == material.name` AND all `lookup_colors` where `materialName == material.name`.
-  - Deleting a `lookup_types` entry cascades to delete all `lookup_colors` where `materialName == type.materialName` AND `typeName == type.name`.
-  - Deletions are executed atomically via client-side `writeBatch`.
-  - Existing `/templates` and `/spools` documents preserve their textual values intact when lookups are deleted.
-
-## 5. Split Groups <-> Users
-- **Dependency**: `split_groups.participants` stores `users/{userId}` IDs. Adding a participant writes an `split_group_invitation` document to `users/{userId}/notifications` in the same batch/transaction (allowed by the `notifications` create rule).
-- **Dependency**: Subcollection rules (`expenses`, `settlements`) rely on `get()`/`getAfter()` of the parent group document (`participants`, `expensesCount`, `settlementsCount`). Renaming these fields requires updating the rules in `split_groups.md`.
-
+**Denormalized copies** (not kept in sync by rules): `username` / `avatarUrl` in `friendships`, `friendRequests` and notifications; template fields in `spools`; group name / avatar in invitations.

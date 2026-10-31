@@ -1,0 +1,56 @@
+name: Deploy Firestore
+
+# Rules and indexes follow their branch: develop -> flaner-v2-dev, master -> flaner-v2.
+# Source of truth: .agents/skills/firestore-rules-manager (see its SKILL.md, section 6).
+on:
+  push:
+    branches: [develop, master]
+    paths:
+      - firestore.rules
+      - firestore.indexes.json
+      - .github/workflows/deploy-firestore.yml
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-firestore-${{ github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy rules and indexes (${{ github.ref_name }})
+    if: github.ref_name == 'develop' || github.ref_name == 'master'
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'master' && 'firebase-prod' || 'firebase-dev' }}
+    env:
+      FIREBASE_PROJECT: ${{ github.ref_name == 'master' && 'prod' || 'dev' }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - run: npm ci
+      - run: npm run rules:check
+      - run: npm run test:rules
+      - id: credentials
+        name: Load service account
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SERVICE_ACCOUNT" ]; then
+            echo "::warning::FIREBASE_SERVICE_ACCOUNT is not set for this environment - skipping deploy."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          printf '%s' "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/service-account.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/service-account.json" >> "$GITHUB_ENV"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+      - if: steps.credentials.outputs.ready == 'true'
+        run: npx firebase deploy --only firestore:rules,firestore:indexes --project "$FIREBASE_PROJECT" --non-interactive

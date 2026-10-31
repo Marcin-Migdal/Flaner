@@ -43,6 +43,8 @@ jobs:
           distribution: temurin
           java-version: "21"
       - run: npm ci
+      - run: npm run rules:check
+      - run: npx tsc -p firestore-tests/tsconfig.json --noEmit
       - run: npm run test:rules
 
   e2e:

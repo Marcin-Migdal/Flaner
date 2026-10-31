@@ -1,3 +1,4 @@
+// Firestore rules spec: .agents/skills/firestore-rules-manager/docs/users.md, usernames.md (keep their Write flows / Queries in sync).
 import {
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,

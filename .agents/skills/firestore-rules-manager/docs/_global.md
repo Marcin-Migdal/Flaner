@@ -1,10 +1,33 @@
-# Global Rules and Helper Functions
+# Global helpers and collection-group rules
 
-This file contains global definitions that are placed at the top of the `firestore.rules` file, before matching specific collections.
+Emitted first in `firestore.rules`, before any collection. Helpers defined here are visible in every `match` block.
 
-## Helper Functions
+## Invariants
+- **I1** Helpers that read optional documents (`get()` of a member doc that may not exist) never raise an evaluation error — they return `null` / `false`. An error inside one branch of an `||` chain denies the whole rule.
+- **I2** A collection-group query (`collectionGroup(...).where("userId", "==", me)`) only ever returns documents that belong to the caller.
 
-```javascript
+## Role model (groups)
+| Role | Priority | Default permissions (overridable per group in `groups.rolePermissions`) |
+| --- | --- | --- |
+| `owner` | 4 | everything, cannot be overridden |
+| `admin` | 3 | `manageMembers`, `manageRequests`, `inviteMembers` |
+| `moderator` | 2 | `inviteMembers` |
+| `member` | 1 | none |
+
+`editGroup` is `false` for every role except `owner` unless explicitly granted in `rolePermissions`. Client mirror: `DEFAULT_ROLE_PERMISSIONS` in `packages/community/src/api/groups/types.ts` — keep both in sync.
+
+## Pattern: user-owned documents
+Used by the Spooler collections (`spools`, `templates`, `lookup_materials`, `lookup_types`, `lookup_colors`): every doc has a `userId` and is private to that user.
+
+| Actor \ operation | read / query `userId == me` | create (`userId == me`) | update / delete own | anything on someone else's doc |
+| --- | --- | --- | --- | --- |
+| owner | ✅ | ✅ | ✅ (must keep `userId` ⚠️ owned-G1) | ❌ |
+| other user | ❌ | ❌ (`userId` must be the caller) | – | ❌ |
+
+- **owned-G1** `update` does not check that `userId` stays the same: the owner can hand a doc over to another user (it then appears in their lists).
+
+## Rules
+```rules
 // ==========================================
 // FUNKCJE POMOCNICZE DLA GRUP
 // ==========================================
@@ -32,9 +55,9 @@ function hasHigherPriority(groupId, targetUserId, newRole) {
   let callerPriority = getRolePriority(getRole(groupId));
   let targetDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(targetUserId));
   let targetPriority = targetDoc != null ? getRolePriority(targetDoc.data.role) : 0;
-  
+
   let assignPriority = newRole != null ? getRolePriority(newRole) : 0;
-  
+
   return callerPriority > targetPriority && callerPriority > assignPriority;
 }
 
@@ -58,11 +81,10 @@ function roleHasPermission(groupId, role, permission) {
 }
 ```
 
-## Collection Group Rules
+## Collection-group rules
+Used by `getUserGroups` / `searchParticipants` (`collectionGroup("members")`) and `getUserGroupInvitations` (`collectionGroup("invitations")`).
 
-Rules for queries that span across multiple subcollections of the same name.
-
-```javascript
+```rules
 // ==========================================
 // COLLECTION GROUP: ZAPYTANIA O CZŁONKOSTWA I ZAPROSZENIA
 // ==========================================
@@ -74,3 +96,7 @@ match /{path=**}/invitations/{invDocId} {
   allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
 }
 ```
+
+## Tests
+- `firestore-tests/groups/groups.spec.ts` — collection-group queries for members and invitations.
+- `firestore-tests/groups/membership.spec.ts` — `getRole` / `hasRolePermission` through the members rules.

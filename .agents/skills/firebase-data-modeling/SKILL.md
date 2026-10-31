@@ -8,12 +8,10 @@ description: Guidelines for modeling NoSQL data structures, structuring collecti
 Firebase Firestore requires a NoSQL-first mindset. Denormalization and reading efficiency take priority over normalization.
 
 ## 1. Documentation & Schema (The First Step)
-- **CRITICAL RULE**: Before you write any queries or design a new collection, you MUST update the Single Source of Truth schema files located in `.agents/skills/firestore-rules-manager/docs/`.
-- If you are creating a new collection, create a new Markdown file there (e.g., `products.md`).
-- If you are modifying an existing collection, update its respective Markdown file.
-- Describe the Document Schema, Paths, and Security Rules.
-- Make sure to check `_relationships.md` to see if your changes affect other collections.
-- Once you update the schema, you must run the `firestore-rules-manager` skill to rebuild the `firestore.rules` file!
+- **CRITICAL RULE**: Before you write any queries or design a new collection, you MUST update the Single Source of Truth spec files located in `.agents/skills/firestore-rules-manager/docs/`.
+- If you are creating a new collection, create a new Markdown file there (e.g., `products.md`); if you are modifying an existing collection, update its file.
+- Follow the template and workflow of the `firestore-rules-manager` skill (invariants → schema → write flows / queries → access matrix → rules → tests), and check `_relationships.md` for cross-collection effects.
+- Rebuild with `npm run rules:build` and verify with `npm run test:rules`. Never edit `firestore.rules` by hand.
 
 ## 2. Collections vs Subcollections
 - **Root-Level Collections:** Use for data that needs to be queried globally across users or entities (e.g., `community_posts`, `products`).
@@ -28,32 +26,12 @@ Firebase Firestore requires a NoSQL-first mindset. Denormalization and reading e
 - Firestore cannot do `LIKE '%text%'` searches. 
 - For simple prefix searches, store a lowercase version of the string in a dedicated field (e.g., `nameLower`) and query using:
   `where("nameLower", ">=", queryText)` and `where("nameLower", "<=", queryText + "\uf8ff")`
-- If you use complex compound queries (e.g., sorting by Date AND filtering by Category), note that this will require a Composite Index in Firestore. Define the index in `firestore.indexes.json` at the root and immediately deploy it to **both PROD and DEV/E2E environments**:
-  ```bash
-  # Deploy indexes to Production
-  npx firebase-tools deploy --only firestore:indexes --project flaner-v2
+- If you use complex compound queries (e.g., sorting by Date AND filtering by Category), note that this will require a Composite Index in Firestore. Define the index in `firestore.indexes.json` at the root; it is deployed together with the rules (see below).
 
-  # Deploy indexes to Development / E2E
-  npx firebase-tools deploy --only firestore:indexes --project flaner-v2-dev
-  ```
-
-## 4. Security Rules & Dual-Environment Deployment
+## 4. Security Rules & Deployment
 - Always assume the client is compromised.
-- Write strict `firestore.rules` for any new collection you design. Verify that users can only read/write their own data or data they have explicit access to.
-- 🚨 **MANDATORY DUAL-ENVIRONMENT CLI DEPLOYMENT**: Whenever you update `firestore.rules` or `firestore.indexes.json`, deploy them immediately to **BOTH** Firebase projects via terminal CLI (NEVER use MCP `firebase_deploy` tool):
-  - Rules to PROD & DEV:
-    ```bash
-    npx firebase-tools deploy --only firestore:rules --project flaner-v2
-    npx firebase-tools deploy --only firestore:rules --project flaner-v2-dev
-    ```
-  - Indexes to PROD & DEV:
-    ```bash
-    npx firebase-tools deploy --only firestore:indexes --project flaner-v2
-    npx firebase-tools deploy --only firestore:indexes --project flaner-v2-dev
-    ```
-    *(Windows: use `npx.cmd ...`)*
-- **Dual-Environment Parity Rule**: Any data model or schema change made locally or for E2E testing must always be synchronized between `flaner-v2` and `flaner-v2-dev`.
-- **Verify terminal output**: Ensure `Deploy complete!` is reported by the CLI for both projects.
+- Write strict rules for any new collection you design (via the `firestore-rules-manager` spec). Verify that users can only read/write their own data or data they have explicit access to.
+- **Deployment follows the branch** (`.github/workflows/deploy-firestore.yml`): merging rules / indexes into `develop` deploys them to `flaner-v2-dev`, merging into `master` deploys them to `flaner-v2`. Never deploy to PROD before the code that needs the change is on `master`. Manual fallback and details: `firestore-rules-manager` skill, section 6 (NEVER use the MCP `firebase_deploy` tool).
 
 ## 5. Type-Safe Firestore API & References Pattern
 - **NEVER use manual type casting** (e.g. `doc.data() as Group` or `collection(...) as CollectionReference<Group>`).

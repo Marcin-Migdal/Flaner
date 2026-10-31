@@ -13,7 +13,9 @@
     "test:coverage": "vitest run --coverage && node scripts/generate-monorepo-coverage.js",
     "e2e": "playwright test --config=e2e/playwright.config.ts",
     "e2e:ui": "playwright test --config=e2e/playwright.config.ts --ui",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-flaner \"vitest run --config firestore-tests/vitest.config.ts\""
+    "test:rules": "firebase emulators:exec --only firestore --project demo-flaner \"vitest run --config firestore-tests/vitest.config.ts\"",
+    "rules:build": "node scripts/firestore-rules.mjs",
+    "rules:check": "node scripts/firestore-rules.mjs --check"
   },
   "private": true,
   "devDependencies": {

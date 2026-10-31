@@ -1,32 +1,71 @@
-# Collection: groups
+# groups/{groupId}
 
-**Path:** `/groups/{groupId}`
+Community groups (MFE `community`). Public groups are discoverable by name; private groups are visible only to members and invitees. Membership and roles live in the `members` subcollection; roles and permissions are described in `_global.md` → Role model.
 
-## Document Schema
-- `type`: string ('public' | 'private')
-- `ownerId`: string
-- `requiresApproval`: boolean (optional)
-- `rolePermissions`: map (optional, permissions per role for admin, moderator, member)
+## Invariants
+- **I1** A group is readable by members, invitees, and — when `type == 'public'` — by every signed-in user.
+- **I2** Only the creator can create a group, and the creator is its `ownerId`.
+- **I3** `ownerId` changes only through an ownership transfer done by the current owner.
+- **I4** `rolePermissions` can be changed only by the owner; `editGroup` lets other roles change the remaining fields.
+- **I5** Only the owner deletes the group, together with all its subcollections and the invitees' `users/{uid}/groupInvitations/{groupId}` mirrors. ⚠️ G1
+
+## Schema
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | string | ✓ | == doc id |
+| `name` / `nameLower` | string | ✓ | `nameLower` drives the prefix search |
+| `description` | string | ✓ | |
+| `type` | `'public' \| 'private'` | ✓ | |
+| `requiresApproval` | boolean | ✓ | public groups only: join via request instead of directly |
+| `ownerId` | string | ✓ | uid of the owner |
+| `avatarUrl` | string \| null | – | Cloudinary URL |
+| `rolePermissions` | map<role, map<permission, bool>> | – | overrides of the defaults |
+| `createdAt` | number (ms) | ✓ | |
+| `updatedAt` | number (ms) \| Timestamp | ✓ | create writes ms, updates write `serverTimestamp()` |
+
+## Write flows
+All endpoints: `packages/community/src/api/groups/endpoints.ts`.
+
+| Flow | Endpoint | Writes | Atomic |
+| --- | --- | --- | --- |
+| Create group | `createGroup` | set `groups/{id}`, then set `members/{owner}` (`role: 'owner'`) | ❌ two writes |
+| Edit group | `updateGroup` | update `groups/{id}` (+ `nameLower`, `updatedAt`) | – |
+| Edit role permissions | `updateGroupRolePermissions` | update `rolePermissions`, `updatedAt` | – |
+| Transfer ownership | `transferGroupOwnership` | update `ownerId`; `members/{old}.role = 'admin'`; `members/{new}.role = 'owner'` | ✅ batch |
+| Delete group | `deleteGroup` | delete all `members`, `requests`, `invitations`, every `users/{invitee}/groupInvitations/{id}`, then the group | ✅ batch ⚠️ G1 |
+
+## Queries
+| Query | Endpoint | Allowed by |
+| --- | --- | --- |
+| `groups` where `type == 'public'` + `nameLower` prefix | `searchGlobalGroups`, `searchParticipants` (planning) | read: `type == 'public'` |
+| `get groups/{id}` | `getGroup`, `getUserGroups`, `searchParticipants` | read |
+
+## Access matrix
+| Actor \ operation | read | create | update fields | update `rolePermissions` / `ownerId` | delete |
+| --- | --- | --- | --- | --- | --- |
+| stranger | ✅ public only | ✅ as owner | ❌ | ❌ | ❌ |
+| invitee | ✅ | – | ❌ | ❌ | ❌ |
+| member / moderator | ✅ | – | ❌ (✅ with `editGroup`) | ❌ | ❌ |
+| admin | ✅ | – | ❌ (✅ with `editGroup`) | ❌ | ❌ |
+| owner | ✅ | – | ✅ | ✅ | ✅ |
+
+## Known gaps
+- **G1** `deleteGroup` also deletes `users/{invitee}/groupInvitations/{groupId}`, but that rule lets only the invitee delete it → the batch fails with `permission-denied` whenever a group has pending invitations. Fix in the `users.md` → groupInvitations rule.
 
 ## Rules
-- **read**: User is authenticated AND (group type is 'public' OR user is a member OR user is invited)
-- **create**: User is authenticated AND user's UID is set as `ownerId`
-- **update**: User is authenticated AND (user's role is 'owner' OR (role has 'editGroup' permission AND `ownerId` is not being changed AND `rolePermissions` is not being changed))
-- **delete**: User is authenticated AND user's role is 'owner'
-
-```javascript
+```rules
 // ==========================================
 // GRUPY (KOLEKCJA GŁÓWNA)
 // ==========================================
 match /groups/{groupId} {
   allow read: if isAuthenticated() && (
-    resource.data.type == 'public' || 
+    resource.data.type == 'public' ||
     exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)) ||
     exists(/databases/$(database)/documents/groups/$(groupId)/invitations/$(request.auth.uid))
   );
-  
+
   allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
-  
+
   allow update: if isAuthenticated() && (
     getRole(groupId) == 'owner' || (
       hasRolePermission(groupId, 'editGroup') &&
@@ -40,32 +79,70 @@ match /groups/{groupId} {
 }
 ```
 
+## Tests
+- `firestore-tests/groups/groups.spec.ts` — group CRUD, search queries, ownership transfer, delete flow; G1 as `todo`.
+
 ---
 
 ## Subcollection: members
 
-**Path:** `/groups/{groupId}/members/{userId}`
+**Path:** `/groups/{groupId}/members/{userId}` (doc id == member uid)
+
+### Invariants
+- **M1** Only members see the member list; every user can list their own memberships across groups (collection group, `_global.md`).
+- **M2** Joining creates `role: 'member'`; `role: 'owner'` is created only by the group creator for themselves (in `createGroup`). ⚠️ G2
+- **M3** Ways to join: owner bootstrap, public group without approval, accepted invitation, join request accepted by staff with `manageRequests` / `manageMembers`.
+- **M4** A role can be changed only by someone with `manageMembers` and strictly higher priority than both the target's current and new role; the owner can hand over `owner` (transfer) and downgrade themselves to `admin` in the same transfer.
+- **M5** Everyone can leave (delete own doc); staff with `manageMembers` can remove lower-priority members.
+
+### Schema
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `userId` | string | ✓ | == doc id |
+| `role` | `'owner' \| 'admin' \| 'moderator' \| 'member'` | ✓ | |
+| `joinedAt` | number (ms) | ✓ | |
+
+### Write flows
+| Flow | Endpoint | Writes | Atomic |
+| --- | --- | --- | --- |
+| Owner bootstrap | `createGroup` | set `members/{owner}` `role: 'owner'` | ❌ (after the group doc) |
+| Join public group | `addGroupMember` (`useAddGroupMemberMutation`) | set `members/{me}` `role: 'member'` | – |
+| Accept invitation | `acceptGroupInvitation` | set `members/{me}`, delete `invitations/{me}`, delete `users/{me}/groupInvitations/{gid}` | ❌ sequential |
+| Accept join request | `acceptJoinRequest` | set `members/{user}`, delete `requests/{user}` | ❌ sequential |
+| Change role | `updateGroupMemberRole` | update `role` | – |
+| Transfer ownership | `transferGroupOwnership` | see group flows | ✅ batch |
+| Leave / remove | `removeGroupMember` | delete `members/{user}` | – |
+
+### Queries
+| Query | Endpoint | Allowed by |
+| --- | --- | --- |
+| list `members` of a group | `getGroupMembers`, `getGroupMembersAsParticipants` | read: caller is a member |
+| `collectionGroup('members')` where `userId == me` | `getUserGroups`, `searchParticipants` | `_global.md` collection-group rule |
+
+### Access matrix
+| Actor \ operation | read list | create self `member` | create self `owner`/`admin` | create other | update role | delete self | delete other |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| stranger, public no approval | ❌ | ✅ | ❌ ⚠️ G2 | ❌ | ❌ | – | ❌ |
+| stranger, approval / private | ❌ | ❌ | ❌ | ❌ | ❌ | – | ❌ |
+| invitee | ❌ | ✅ | ❌ ⚠️ G2 | ❌ | ❌ | – | ❌ |
+| member | ✅ | – | – | ❌ | ❌ | ✅ | ❌ |
+| moderator (default perms) | ✅ | – | – | ❌ | ❌ | ✅ | ❌ |
+| admin (default perms) | ✅ | – | – | ✅ `member` only ⚠️ G3 | ✅ below admin | ✅ | ✅ below admin |
+| owner | ✅ | ✅ (bootstrap) | ✅ (bootstrap) | ✅ | ✅ (+ transfer) | ✅ ⚠️ G4 | ✅ |
+
+### Known gaps
+- **G2** `create` does not check `request.resource.data.role`: self-join (public or via invitation) can write `role: 'owner'`.
+- **G3** Staff with `manageRequests` / `manageMembers` can create a member doc with any role, including `owner`.
+- **G4** The owner can leave the group, leaving it without an owner.
 
 ### Rules
-- **read**: User is authenticated AND is a member of the group
-- **create**: User is authenticated AND ONE OF:
-  - User is adding themselves AND is the owner of the group
-  - Caller has 'manageRequests' or 'manageMembers' permission or is admin/owner
-  - User is adding themselves AND group is 'public' AND does not require approval
-  - User is adding themselves AND has an invitation
-- **update**: User is authenticated AND ONE OF:
-  - Caller has 'manageMembers' permission and a higher priority role than the target member and the new role being assigned
-  - Caller is 'owner' and assigning 'owner' role
-  - User is the target AND group owner AND is downgrading their role to 'admin'
-- **delete**: User is authenticated AND (is the target user OR (caller has 'manageMembers' permission AND has higher priority than the target))
-
-```javascript
+```rules
 // ------------------------------------------
 // PODKOLEKCJA: CZŁONKOWIE (MEMBERS)
 // ------------------------------------------
 match /members/{userId} {
   allow read: if isAuthenticated() && exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
-  
+
   allow create: if isAuthenticated() && (
     (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
     hasRolePermission(groupId, 'manageRequests') ||
@@ -82,54 +159,117 @@ match /members/{userId} {
   );
 
   allow delete: if isAuthenticated() && (
-    userId == request.auth.uid || 
+    userId == request.auth.uid ||
     (hasRolePermission(groupId, 'manageMembers') && hasHigherPriority(groupId, userId, null))
   );
 }
 ```
 
+### Tests
+- `firestore-tests/groups/membership.spec.ts` — joining (invitation, public, approval, private, unauthenticated, staff).
+- `firestore-tests/groups/groups.spec.ts` — role changes, leave / remove; G2–G4 as `todo`.
+
 ---
 
 ## Subcollection: invitations
 
-**Path:** `/groups/{groupId}/invitations/{userId}`
+**Path:** `/groups/{groupId}/invitations/{userId}` (doc id == invitee uid). Mirrored to `users/{userId}/groupInvitations/{groupId}` (see `users.md`) so the invitee can list their invitations.
+
+### Invariants
+- **N1** Only members with `inviteMembers` invite; the invitee and members can read the invitation.
+- **N2** The invitee (accept / reject) or a member with `inviteMembers` (revoke) deletes it.
+
+### Schema
+| Field | Type | Required |
+| --- | --- | --- |
+| `groupId`, `groupName` | string | ✓ |
+| `groupAvatarUrl` | string \| null | ✓ |
+| `userId` | string (invitee, == doc id) | ✓ |
+| `invitedByUserId` | string | ✓ |
+| `invitedAt` | number (ms) | ✓ |
+
+### Write flows
+| Flow | Endpoint | Writes | Atomic |
+| --- | --- | --- | --- |
+| Invite | `inviteUserToGroup` | set `invitations/{invitee}`, set `users/{invitee}/groupInvitations/{gid}`, create `users/{invitee}/notifications/*` (`group_invitation`) | ❌ sequential |
+| Accept | `acceptGroupInvitation` | see members flows | ❌ |
+| Reject | `rejectGroupInvitation` | delete both invitation docs | ❌ |
+
+### Queries
+| Query | Endpoint | Allowed by |
+| --- | --- | --- |
+| list `invitations` of a group | `getGroupInvitations` | read: caller is a member |
+| `collectionGroup('invitations')` where `userId == me` | `getUserGroupInvitations` (fallback) | `_global.md` collection-group rule |
+
+### Access matrix
+| Actor \ operation | read | create / update | delete |
+| --- | --- | --- | --- |
+| stranger | ❌ | ❌ | ❌ |
+| invitee | ✅ own | ❌ | ✅ own |
+| member (default perms) | ✅ | ❌ | ❌ |
+| moderator / admin / owner | ✅ | ✅ | ✅ |
 
 ### Rules
-- **read**: User is authenticated AND (is the target user OR is a member of the group)
-- **create, update**: User is authenticated AND is a member of the group AND has 'inviteMembers' permission
-- **delete**: User is authenticated AND (is the target user OR has 'inviteMembers' permission)
-
-```javascript
+```rules
 // ------------------------------------------
 // PODKOLEKCJA: ZAPROSZENIA DO GRUPY (INVITATIONS)
 // ------------------------------------------
 match /invitations/{userId} {
   allow read: if isAuthenticated() && (
-    userId == request.auth.uid || 
+    userId == request.auth.uid ||
     exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid))
   );
-  allow create, update: if isAuthenticated() && 
+  allow create, update: if isAuthenticated() &&
     exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)) &&
     hasRolePermission(groupId, 'inviteMembers');
   allow delete: if isAuthenticated() && (
-    userId == request.auth.uid || 
+    userId == request.auth.uid ||
     hasRolePermission(groupId, 'inviteMembers')
   );
 }
 ```
 
+### Tests
+- `firestore-tests/groups/groups.spec.ts` — invite, reject, revoke, member without permission.
+- `firestore-tests/groups/membership.spec.ts` — invitee clean-up after joining.
+
 ---
 
 ## Subcollection: requests
 
-**Path:** `/groups/{groupId}/requests/{userId}`
+**Path:** `/groups/{groupId}/requests/{userId}` (doc id == requester uid)
+
+### Invariants
+- **R1** A user can only request to join for themselves; staff with `manageRequests` see and resolve requests.
+
+### Schema
+| Field | Type | Required |
+| --- | --- | --- |
+| `userId` | string (== doc id) | ✓ |
+| `requestedAt` | number (ms) | ✓ |
+
+### Write flows
+| Flow | Endpoint | Writes |
+| --- | --- | --- |
+| Request to join | `requestJoinGroup` | set `requests/{me}` |
+| Accept | `acceptJoinRequest` | see members flows |
+| Reject / withdraw | `rejectJoinRequest` | delete `requests/{user}` |
+
+### Queries
+| Query | Endpoint | Allowed by |
+| --- | --- | --- |
+| list `requests` of a group | `getGroupRequests` | read: `manageRequests` |
+| `get requests/{me}` | `getUserGroupRequest` | read: own doc |
+
+### Access matrix
+| Actor \ operation | read | create | delete |
+| --- | --- | --- | --- |
+| requester | ✅ own | ✅ own | ✅ own |
+| member / moderator (default perms) | ❌ | – | ❌ |
+| admin / owner | ✅ | – | ✅ |
 
 ### Rules
-- **read**: User is authenticated AND (is the target user OR caller has 'manageRequests' permission)
-- **create**: User is authenticated AND is the target user
-- **delete**: User is authenticated AND (is the target user OR caller has 'manageRequests' permission)
-
-```javascript
+```rules
 // ------------------------------------------
 // PODKOLEKCJA: PROŚBY O DOŁĄCZENIE (REQUESTS)
 // ------------------------------------------
@@ -139,3 +279,6 @@ match /requests/{userId} {
   allow delete: if isAuthenticated() && (userId == request.auth.uid || hasRolePermission(groupId, 'manageRequests'));
 }
 ```
+
+### Tests
+- `firestore-tests/groups/groups.spec.ts` — request, accept, reject, member cannot read requests.

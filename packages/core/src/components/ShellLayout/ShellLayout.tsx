@@ -116,6 +116,7 @@ function ShellLayoutContent() {
     }
   };
 
+  // Writes users/{uid} (Firestore rules spec: .agents/skills/firestore-rules-manager/docs/users.md)
   const handleLanguageChange = async (nextLang: "pl" | "en") => {
     i18n.changeLanguage(nextLang);
     if (user?.uid) {

@@ -1,3 +1,5 @@
+// GENERATED FILE - DO NOT EDIT.
+// Source: .agents/skills/firestore-rules-manager/docs/*.md (rebuild with `npm run rules:build`).
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -28,9 +30,9 @@ service cloud.firestore {
       let callerPriority = getRolePriority(getRole(groupId));
       let targetDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(targetUserId));
       let targetPriority = targetDoc != null ? getRolePriority(targetDoc.data.role) : 0;
-      
+
       let assignPriority = newRole != null ? getRolePriority(newRole) : 0;
-      
+
       return callerPriority > targetPriority && callerPriority > assignPriority;
     }
 
@@ -64,27 +66,6 @@ service cloud.firestore {
       allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
 
-    // Kolekcja nazw użytkowników (do weryfikacji unikalności)
-    match /usernames/{username} {
-      allow read: if true;
-      allow create, update: if request.auth != null && request.resource.data.uid == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
-    }
-
-    // Reguły dla zaproszeń do znajomych
-    match /friendRequests/{requestId} {
-      allow read, write: if request.auth != null && (
-        request.auth.uid == resource.data.senderUid || 
-        request.auth.uid == resource.data.receiverUid ||
-        request.auth.uid == request.resource.data.senderUid ||
-        request.auth.uid == request.resource.data.receiverUid
-      );
-      allow create: if request.auth != null && (
-        request.auth.uid == request.resource.data.senderUid ||
-        request.auth.uid == request.resource.data.receiverUid
-      );
-    }
-
     // ==========================================
     // WYDARZENIA (EVENTS)
     // ==========================================
@@ -96,6 +77,119 @@ service cloud.firestore {
         (resource.data.get('isFinalized', false) == false && request.auth.uid in resource.data.participants)
       );
       allow delete: if isAuthenticated() && resource.data.creatorId == request.auth.uid;
+    }
+
+    // Reguły dla zaproszeń do znajomych
+    match /friendRequests/{requestId} {
+      allow read, write: if request.auth != null && (
+        request.auth.uid == resource.data.senderUid ||
+        request.auth.uid == resource.data.receiverUid ||
+        request.auth.uid == request.resource.data.senderUid ||
+        request.auth.uid == request.resource.data.receiverUid
+      );
+      allow create: if request.auth != null && (
+        request.auth.uid == request.resource.data.senderUid ||
+        request.auth.uid == request.resource.data.receiverUid
+      );
+    }
+
+    // ==========================================
+    // GRUPY (KOLEKCJA GŁÓWNA)
+    // ==========================================
+    match /groups/{groupId} {
+      allow read: if isAuthenticated() && (
+        resource.data.type == 'public' ||
+        exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)) ||
+        exists(/databases/$(database)/documents/groups/$(groupId)/invitations/$(request.auth.uid))
+      );
+
+      allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
+
+      allow update: if isAuthenticated() && (
+        getRole(groupId) == 'owner' || (
+          hasRolePermission(groupId, 'editGroup') &&
+          request.resource.data.ownerId == resource.data.ownerId &&
+          request.resource.data.get('rolePermissions', null) == resource.data.get('rolePermissions', null)
+        )
+      );
+      allow delete: if isAuthenticated() && getRole(groupId) == 'owner';
+
+      // ------------------------------------------
+      // PODKOLEKCJA: CZŁONKOWIE (MEMBERS)
+      // ------------------------------------------
+      match /members/{userId} {
+        allow read: if isAuthenticated() && exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+
+        allow create: if isAuthenticated() && (
+          (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
+          hasRolePermission(groupId, 'manageRequests') ||
+          hasRolePermission(groupId, 'manageMembers') ||
+          isAdminOrOwner(groupId) ||
+          (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.type == 'public' && get(/databases/$(database)/documents/groups/$(groupId)).data.requiresApproval == false) ||
+          (userId == request.auth.uid && exists(/databases/$(database)/documents/groups/$(groupId)/invitations/$(request.auth.uid)))
+        );
+
+        allow update: if isAuthenticated() && (
+          (hasRolePermission(groupId, 'manageMembers') && hasHigherPriority(groupId, userId, request.resource.data.role)) ||
+          (getRole(groupId) == 'owner' && request.resource.data.role == 'owner') ||
+          (userId == request.auth.uid && getRole(groupId) == 'owner' && request.resource.data.role == 'admin')
+        );
+
+        allow delete: if isAuthenticated() && (
+          userId == request.auth.uid ||
+          (hasRolePermission(groupId, 'manageMembers') && hasHigherPriority(groupId, userId, null))
+        );
+      }
+
+      // ------------------------------------------
+      // PODKOLEKCJA: ZAPROSZENIA DO GRUPY (INVITATIONS)
+      // ------------------------------------------
+      match /invitations/{userId} {
+        allow read: if isAuthenticated() && (
+          userId == request.auth.uid ||
+          exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid))
+        );
+        allow create, update: if isAuthenticated() &&
+          exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)) &&
+          hasRolePermission(groupId, 'inviteMembers');
+        allow delete: if isAuthenticated() && (
+          userId == request.auth.uid ||
+          hasRolePermission(groupId, 'inviteMembers')
+        );
+      }
+
+      // ------------------------------------------
+      // PODKOLEKCJA: PROŚBY O DOŁĄCZENIE (REQUESTS)
+      // ------------------------------------------
+      match /requests/{userId} {
+        allow read: if isAuthenticated() && (userId == request.auth.uid || hasRolePermission(groupId, 'manageRequests'));
+        allow create: if isAuthenticated() && userId == request.auth.uid;
+        allow delete: if isAuthenticated() && (userId == request.auth.uid || hasRolePermission(groupId, 'manageRequests'));
+      }
+    }
+
+    // ==========================================
+    // LOOKUP KOLORY (LOOKUP COLORS)
+    // ==========================================
+    match /lookup_colors/{colorId} {
+      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // ==========================================
+    // LOOKUP MATERIAŁY (LOOKUP MATERIALS)
+    // ==========================================
+    match /lookup_materials/{materialId} {
+      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // ==========================================
+    // LOOKUP TYPY (LOOKUP TYPES)
+    // ==========================================
+    match /lookup_types/{typeId} {
+      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
     }
 
     // ==========================================
@@ -199,6 +293,35 @@ service cloud.firestore {
       }
     }
 
+    // ==========================================
+    // SZPULE FILAMENTU (SPOOLS)
+    // ==========================================
+    match /spools/{spoolId} {
+      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+
+      // Podkolekcja historii wydruków
+      match /prints/{printId} {
+        allow read, write: if isAuthenticated() &&
+          get(/databases/$(database)/documents/spools/$(spoolId)).data.userId == request.auth.uid;
+      }
+    }
+
+    // ==========================================
+    // SZABLONY FILAMENTU (TEMPLATES)
+    // ==========================================
+    match /templates/{templateId} {
+      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Kolekcja nazw użytkowników (do weryfikacji unikalności)
+    match /usernames/{username} {
+      allow read: if true;
+      allow create, update: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
     // Reguły dla kolekcji użytkowników
     match /users/{userId} {
       allow read: if request.auth != null;
@@ -218,132 +341,11 @@ service cloud.firestore {
 
       // Subkolekcja zaproszeń do grup (groupInvitations)
       match /groupInvitations/{groupId} {
-        allow create, update: if isAuthenticated() && 
+        allow create, update: if isAuthenticated() &&
           exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)) &&
           hasRolePermission(groupId, 'inviteMembers');
         allow read, delete: if isAuthenticated() && request.auth.uid == userId;
       }
-    }
-
-    // ==========================================
-    // GRUPY (KOLEKCJA GŁÓWNA)
-    // ==========================================
-    match /groups/{groupId} {
-      allow read: if isAuthenticated() && (
-        resource.data.type == 'public' || 
-        exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)) ||
-        exists(/databases/$(database)/documents/groups/$(groupId)/invitations/$(request.auth.uid))
-      );
-      
-      allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
-      
-      allow update: if isAuthenticated() && (
-        getRole(groupId) == 'owner' || (
-          hasRolePermission(groupId, 'editGroup') &&
-          request.resource.data.ownerId == resource.data.ownerId &&
-          request.resource.data.get('rolePermissions', null) == resource.data.get('rolePermissions', null)
-        )
-      );
-      allow delete: if isAuthenticated() && getRole(groupId) == 'owner';
-
-      // ------------------------------------------
-      // PODKOLEKCJA: CZŁONKOWIE (MEMBERS)
-      // ------------------------------------------
-      match /members/{userId} {
-        allow read: if isAuthenticated() && exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
-        
-        allow create: if isAuthenticated() && (
-          (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
-          hasRolePermission(groupId, 'manageRequests') ||
-          hasRolePermission(groupId, 'manageMembers') ||
-          isAdminOrOwner(groupId) ||
-          (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.type == 'public' && get(/databases/$(database)/documents/groups/$(groupId)).data.requiresApproval == false) ||
-          (userId == request.auth.uid && exists(/databases/$(database)/documents/groups/$(groupId)/invitations/$(request.auth.uid)))
-        );
-
-        allow update: if isAuthenticated() && (
-          (hasRolePermission(groupId, 'manageMembers') && hasHigherPriority(groupId, userId, request.resource.data.role)) ||
-          (getRole(groupId) == 'owner' && request.resource.data.role == 'owner') ||
-          (userId == request.auth.uid && getRole(groupId) == 'owner' && request.resource.data.role == 'admin')
-        );
-
-        allow delete: if isAuthenticated() && (
-          userId == request.auth.uid || 
-          (hasRolePermission(groupId, 'manageMembers') && hasHigherPriority(groupId, userId, null))
-        );
-      }
-
-      // ------------------------------------------
-      // PODKOLEKCJA: ZAPROSZENIA DO GRUPY (INVITATIONS)
-      // ------------------------------------------
-      match /invitations/{userId} {
-        allow read: if isAuthenticated() && (
-          userId == request.auth.uid || 
-          exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid))
-        );
-        allow create, update: if isAuthenticated() && 
-          exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)) &&
-          hasRolePermission(groupId, 'inviteMembers');
-        allow delete: if isAuthenticated() && (
-          userId == request.auth.uid || 
-          hasRolePermission(groupId, 'inviteMembers')
-        );
-      }
-
-      // ------------------------------------------
-      // PODKOLEKCJA: PROŚBY O DOŁĄCZENIE (REQUESTS)
-      // ------------------------------------------
-      match /requests/{userId} {
-        allow read: if isAuthenticated() && (userId == request.auth.uid || hasRolePermission(groupId, 'manageRequests'));
-        allow create: if isAuthenticated() && userId == request.auth.uid;
-        allow delete: if isAuthenticated() && (userId == request.auth.uid || hasRolePermission(groupId, 'manageRequests'));
-      }
-    }
-
-    // ==========================================
-    // SZPULE FILAMENTU (SPOOLS)
-    // ==========================================
-    match /spools/{spoolId} {
-      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-
-      // Podkolekcja historii wydruków
-      match /prints/{printId} {
-        allow read, write: if isAuthenticated() && 
-          get(/databases/$(database)/documents/spools/$(spoolId)).data.userId == request.auth.uid;
-      }
-    }
-
-    // ==========================================
-    // SZABLONY FILAMENTU (TEMPLATES)
-    // ==========================================
-    match /templates/{templateId} {
-      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-    }
-
-    // ==========================================
-    // LOOKUP MATERIAŁY (LOOKUP MATERIALS)
-    // ==========================================
-    match /lookup_materials/{materialId} {
-      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-    }
-
-    // ==========================================
-    // LOOKUP TYPY (LOOKUP TYPES)
-    // ==========================================
-    match /lookup_types/{typeId} {
-      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-    }
-
-    // ==========================================
-    // LOOKUP KOLORY (LOOKUP COLORS)
-    // ==========================================
-    match /lookup_colors/{colorId} {
-      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
     }
   }
 }

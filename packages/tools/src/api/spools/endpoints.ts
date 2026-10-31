@@ -1,3 +1,4 @@
+// Firestore rules spec: .agents/skills/firestore-rules-manager/docs/spools.md (keep their Write flows / Queries in sync).
 import {
   collection,
   getDocs,
