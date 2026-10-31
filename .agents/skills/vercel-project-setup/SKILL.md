@@ -9,6 +9,25 @@ This skill provides unified instructions and automation patterns for deploying a
 
 ---
 
+## 0. Environments (PROD vs DEV)
+
+| | PROD | DEV |
+| :--- | :--- | :--- |
+| Git branch | `master` (Vercel production branch) | `develop` (Vercel preview) |
+| Host URL | `https://flaner.vercel.app` | `https://flaner-dev.vercel.app` |
+| Remote URLs | `https://flaner-<mfe>.vercel.app` | `https://flaner-<mfe>-dev.vercel.app` (domain bound to branch `develop`) |
+| Firebase | `flaner-v2` (Vercel **Production** env vars) | `flaner-v2-dev` (Vercel **Preview** env vars) |
+
+- Projects: `flaner` (host, root `packages/core`), `flaner-community`, `flaner-planning`, `flaner-settings`, `flaner-tools`, `flaner-shopping`.
+- Every Preview deployment (any PR branch) uses DEV Firebase. Only `develop` has the stable `-dev` domains; a PR preview of the host loads remotes from the `-dev` domains.
+- Host Preview vars `VITE_MFE_*_URL` point to the `-dev` domains; Production vars to the prod domains.
+- Firebase Auth (Google sign-in) works only on authorized domains: `flaner-dev.vercel.app` is authorized in `flaner-v2-dev`, `flaner.vercel.app` in `flaner-v2`. Random PR preview URLs cannot sign in with Google.
+- Flow: `feature/*` → PR to `develop` (check on DEV) → PR `develop` → `master` (release).
+- **Deployment Protection is disabled on every project.** The host must fetch remotes cross-origin (a protected remote answers 302 to the Vercel login), and DEV is meant to be shared with testers. Data stays protected by Firebase Auth + security rules.
+- **Brand-new project:** deploy `master` to production first. A first deployment from another branch can grab the production `*.vercel.app` domain.
+- **Redeploying an unchanged app gets CANCELED** by `nx-ignore` (it sees no changes). Ship a commit that touches the app, or release via `develop` → `master`.
+- Env vars can be managed via `vercel api` (REST). In Git Bash set `MSYS_NO_PATHCONV=1`, otherwise `/v9/...` paths get rewritten to Windows paths.
+
 ## 1. Architecture & Module Federation Rules on Vercel
 
 In our Vite + Module Federation architecture:
@@ -27,6 +46,7 @@ Every subproject in `packages/<package-name>` MUST have its own `vercel.json` wi
 ```json
 {
   "buildCommand": "cd ../.. && npx nx run <PACKAGE_NAME>:build",
+  "ignoreCommand": "if [ \"$VERCEL_GIT_COMMIT_REF\" = \"develop\" ]; then exit 1; fi; cd ../.. && npx nx-ignore <PACKAGE_NAME>",
   "outputDirectory": "dist",
   "headers": [
     {
@@ -59,6 +79,7 @@ Every subproject in `packages/<package-name>` MUST have its own `vercel.json` wi
 ### Key Rules for `vercel.json`:
 1. **Root Location**: Place `vercel.json` inside the root of the specific package (e.g. `packages/planning/vercel.json`), NOT at the root of the monorepo.
 2. **Build Command**: Use `cd ../.. && npx nx run <PACKAGE_NAME>:build`. This ensures Nx runs from the monorepo root.
+2a. **Ignore Command**: `vercel.json`'s `ignoreCommand` overrides the dashboard / API setting. On `develop` it always builds (exit 1): on a new branch Vercel reports the production SHA as the previous one, so `nx-ignore` would skip and a rarely-changed remote would never exist on the DEV domains. Everywhere else `nx-ignore` skips unaffected apps.
 3. **CORS Headers**: `Access-Control-Allow-Origin: *` is strictly required for Module Federation remotes so the host can fetch `remoteEntry.js`.
 4. **SPA Rewrites**: Always use regular expression `"/(.*)"` mapping to `"/index.html"` to avoid 404s on deep route refreshes. Never enable `"cleanUrls": true`.
 
