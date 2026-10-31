@@ -28,3 +28,11 @@ For instance, if you edited `packages/core/src/App.tsx` and `packages/shared/src
 ```bash
 npx nx run-many -t lint --projects=core,shared --fix
 ```
+
+## 4. CI (GitHub Actions)
+`.github/workflows/ci.yml` runs on every PR to `develop` / `master` (deploys stay on Vercel). Parallel jobs:
+- `checks`: `npm run typecheck`, `npm run lint`, `npm test`
+- `rules`: `npm run test:rules` (Firestore emulator, Temurin 21)
+- `e2e`: Playwright only for affected projects — `scripts/e2e-affected.mjs` (Nx affected vs the PR base; details in `e2e-testing` skill §6)
+
+Before pushing, run the same commands locally for touched packages. `NX_DAEMON=false` in CI.
