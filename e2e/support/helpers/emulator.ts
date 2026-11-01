@@ -68,7 +68,9 @@ export const createUser = async (overrides: Partial<UserType> = {}): Promise<E2E
     ...overrides,
   };
 
-  await seedDocument(`users/${localId}`, user);
+  // The email lives only in Firebase Auth, never in the public profile
+  const { email: _email, ...profile } = user;
+  await seedDocument(`users/${localId}`, profile);
   await seedDocument(`usernames/${user.usernameLower}`, { uid: localId });
 
   return { ...user, password };

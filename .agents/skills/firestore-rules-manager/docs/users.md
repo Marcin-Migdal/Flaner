@@ -4,7 +4,7 @@ User profiles (doc id == Firebase Auth uid). Written by `AuthContext` (shared), 
 
 ## Invariants
 - **I1** Only the user writes their own profile.
-- **I2** Every signed-in user can read profiles (search, participant pickers). ⚠️ G1
+- **I2** Every signed-in user can read profiles (search, participant pickers), so a profile holds **only public fields** (whitelist below). Private data — e.g. the email — stays in Firebase Auth (`UserType.email` comes from `firebaseUser.email`).
 - **I3** `username` / `usernameLower` change only together with the `usernames` reservation (see `usernames.md`).
 
 ## Schema
@@ -12,16 +12,18 @@ User profiles (doc id == Firebase Auth uid). Written by `AuthContext` (shared), 
 | --- | --- | --- | --- |
 | `uid` | string | ✓ | == doc id |
 | `username` / `usernameLower` | string | ✓ | `usernameLower` drives the prefix search |
-| `email` | string | ✓ | |
 | `avatarUrl` | string | ✓ | `""` when none |
 | `darkMode` | boolean | ✓ | |
 | `language` | `'pl' \| 'en'` | ✓ | |
 | `startupWaste` | number | – | Spooler setting (grams) |
 
+No other fields are accepted. Legacy profiles may still contain `email`: `AuthContext` (`loadProfile`) deletes it on every sign-in, and any write to such a profile must remove it (the whitelist applies to the whole document).
+
 ## Write flows
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
 | Sign up (email) | `signUpWithEmailUser` (`shared/src/context/AuthContext`) | set `users/{me}` + set `usernames/{lower}` | ✅ batch |
+| Legacy email clean-up | `loadProfile` (AuthContext, every sign-in) | update `email: deleteField()` | – |
 | First Google sign-in | `signInWithGoogleUser`, `onAuthStateChanged` (AuthContext) | set `users/{me}` (no username reservation) | – |
 | Edit profile | `updateUserProfile` (`settings/src/api/users`) | merge-set `users/{me}`, set new + delete old `usernames/*` | ✅ batch |
 | Theme / language | `ShellLayout` (`core/src/components/ShellLayout`) | update `darkMode` / `language` | – |
@@ -35,28 +37,30 @@ User profiles (doc id == Firebase Auth uid). Written by `AuthContext` (shared), 
 | `get users/{uid}` | `getUsers` (community), AuthContext, Spooler settings | read: signed in |
 
 ## Access matrix
-| Actor \ operation | read | create / update / delete |
-| --- | --- | --- |
-| unauthenticated | ❌ | ❌ |
-| other user | ✅ ⚠️ G1 | ❌ |
-| self | ✅ | ✅ |
-
-## Known gaps
-- **G1** Every signed-in user reads every profile, including `email`. Consider moving private fields to `users/{uid}/private/*`.
+| Actor \ operation | read | create / update (whitelisted fields) | write any other field (e.g. `email`) | delete |
+| --- | --- | --- | --- | --- |
+| unauthenticated | ❌ | ❌ | ❌ | ❌ |
+| other user | ✅ | ❌ | ❌ | ❌ |
+| self | ✅ | ✅ | ❌ | ✅ |
 
 ## Rules
 ```rules
 // Reguły dla kolekcji użytkowników
 match /users/{userId} {
-  allow read: if request.auth != null;
-  allow write: if request.auth != null && request.auth.uid == userId;
+  allow read: if isAuthenticated();
+  // Profiles are public to signed-in users: only whitelisted, non-private fields (no email)
+  allow create, update: if isAuthenticated() && request.auth.uid == userId &&
+    request.resource.data.keys().hasOnly([
+      'uid', 'username', 'usernameLower', 'avatarUrl', 'darkMode', 'language', 'startupWaste'
+    ]);
+  allow delete: if isAuthenticated() && request.auth.uid == userId;
 
   {{subcollections}}
 }
 ```
 
 ## Tests
-- `firestore-tests/users/users.spec.ts` — profile reads, own writes, search queries, sign-up and profile-edit batches; G1 as `todo`.
+- `firestore-tests/users/users.spec.ts` — profile reads, own writes, search queries, sign-up and profile-edit batches, private / unknown fields denied, legacy email clean-up.
 
 ---
 

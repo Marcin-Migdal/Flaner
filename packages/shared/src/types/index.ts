@@ -1,12 +1,17 @@
 export type LanguageType = "pl" | "en";
 
-export type UserType = {
+/** Public profile stored in `users/{uid}`, readable by every signed-in user — never put private data here. */
+export type UserProfile = {
   avatarUrl: string;
   language: LanguageType;
   username: string;
   usernameLower: string;
   darkMode: boolean;
   uid: string;
+};
+
+/** The signed-in user: their profile plus private data that only Firebase Auth holds. */
+export type UserType = UserProfile & {
   email: string;
 };
 
@@ -19,7 +24,7 @@ export type EditUserRequest = {
   avatarUrl?: string;
 };
 
-export type SearchedUserType = UserType & { invited: boolean; isFriend: boolean };
+export type SearchedUserType = UserProfile & { invited: boolean; isFriend: boolean };
 
 export * from "./navigation";
 export * from "./api";

@@ -8,11 +8,47 @@ import {
   User,
 } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
-import { doc, getDoc, setDoc, writeBatch } from "firebase/firestore";
+import { deleteField, doc, getDoc, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 import { createContext, ReactNode, useContext, useEffect, useState, useRef } from "react";
 import { fb } from "../../firebase/firebase";
 import { useTheme } from "../../hooks/useTheme";
-import { LanguageType, UserType } from "../../types";
+import { LanguageType, UserProfile, UserType } from "../../types";
+
+const profileRef = (uid: string) => doc(fb.firestore, "users", uid);
+
+/**
+ * Reads the public profile. Older profiles also stored `email`, which every signed-in user could read:
+ * it now lives only in Firebase Auth, so the field is dropped here and removed from Firestore.
+ */
+const loadProfile = async (uid: string): Promise<UserProfile | null> => {
+  const snap = await getDoc(profileRef(uid));
+  if (!snap.exists()) return null;
+
+  const { email, ...profile } = snap.data();
+  if (email !== undefined) {
+    await updateDoc(profileRef(uid), { email: deleteField() }).catch((error) =>
+      console.error("Failed to remove the legacy email from the profile", error),
+    );
+  }
+  return profile as UserProfile;
+};
+
+const createProfile = (firebaseUser: User, language: LanguageType): UserProfile => {
+  const username = firebaseUser.displayName || "User";
+  return {
+    uid: firebaseUser.uid,
+    username,
+    usernameLower: username.toLowerCase(),
+    avatarUrl: firebaseUser.photoURL || "",
+    darkMode: true,
+    language,
+  };
+};
+
+const toUser = (profile: UserProfile, firebaseUser: User): UserType => ({
+  ...profile,
+  email: firebaseUser.email ?? "",
+});
 
 type AuthContextType = {
   user: UserType | null;
@@ -61,27 +97,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       try {
-        const userDocRef = doc(fb.firestore, "users", firebaseUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
+        let profile = await loadProfile(firebaseUser.uid);
 
-        if (userDocSnap.exists()) {
-          setUser(userDocSnap.data() as UserType);
-        } else {
+        if (!profile) {
           // If the profile document doesn't exist, create it (e.g. after Google redirect login)
-          const { displayName, photoURL, email, uid } = firebaseUser;
-          const username = displayName || "User";
-          const userProfile: UserType = {
-            uid,
-            username,
-            usernameLower: username.toLowerCase(),
-            email: email || "",
-            avatarUrl: photoURL || "",
-            darkMode: true,
-            language: "pl", // Default language
-          };
-          await setDoc(userDocRef, userProfile);
-          setUser(userProfile);
+          profile = createProfile(firebaseUser, "pl");
+          await setDoc(profileRef(firebaseUser.uid), profile);
         }
+        setUser(toUser(profile, firebaseUser));
       } catch (error) {
         console.error("Failed to load user profile", error);
         setUser(null);
@@ -113,31 +136,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isManualAuth.current = true;
     try {
       const { user: firebaseUser } = await signInWithPopup(fb.auth.auth, fb.auth.provider);
-      const userDocRef = doc(fb.firestore, "users", firebaseUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
+      let profile = await loadProfile(firebaseUser.uid);
 
-      let userProfile: UserType;
-
-      if (!userDocSnap.exists()) {
-        const { displayName, photoURL, email, uid } = firebaseUser;
-        const username = displayName || "User";
-
-        userProfile = {
-          uid,
-          username,
-          usernameLower: username.toLowerCase(),
-          email: email || "",
-          avatarUrl: photoURL || "",
-          darkMode: true,
-          language: language,
-        };
-
-        await setDoc(userDocRef, userProfile);
-      } else {
-        userProfile = userDocSnap.data() as UserType;
+      if (!profile) {
+        profile = createProfile(firebaseUser, language);
+        await setDoc(profileRef(firebaseUser.uid), profile);
       }
 
-      setUser(userProfile);
+      setUser(toUser(profile, firebaseUser));
     } catch (error) {
       console.error("Google Sign In failed", error);
       throw error;
@@ -150,14 +156,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isManualAuth.current = true;
     try {
       const { user: firebaseUser } = await signInWithEmailAndPassword(fb.auth.auth, email, password);
-      const userDocRef = doc(fb.firestore, "users", firebaseUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
+      const profile = await loadProfile(firebaseUser.uid);
 
-      if (userDocSnap.exists()) {
-        setUser(userDocSnap.data() as UserType);
-      } else {
+      if (!profile) {
         throw new Error("User profile not found in database.");
       }
+      setUser(toUser(profile, firebaseUser));
     } catch (error) {
       console.error("Email Sign In failed", error);
       throw error;
@@ -179,25 +183,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const { user: firebaseUser } = await createUserWithEmailAndPassword(fb.auth.auth, email, password);
-      const userDocRef = doc(fb.firestore, "users", firebaseUser.uid);
-
-      const userProfile: UserType = {
+      const userProfile: UserProfile = {
         uid: firebaseUser.uid,
         username,
         usernameLower,
-        email,
         avatarUrl: "",
         darkMode: true,
         language,
       };
 
       const batch = writeBatch(fb.firestore);
-      batch.set(userDocRef, userProfile);
+      batch.set(profileRef(firebaseUser.uid), userProfile);
       batch.set(usernameDocRef, { uid: firebaseUser.uid });
-      
+
       await batch.commit();
 
-      setUser(userProfile);
+      setUser(toUser(userProfile, firebaseUser));
     } catch (error) {
       console.error("Email Sign Up failed", error);
       throw error;

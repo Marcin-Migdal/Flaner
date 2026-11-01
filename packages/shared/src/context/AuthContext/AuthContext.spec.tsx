@@ -22,6 +22,8 @@ vi.mock("firebase/firestore", () => ({
   doc: vi.fn(),
   getDoc: vi.fn(),
   setDoc: vi.fn(),
+  updateDoc: vi.fn().mockResolvedValue(undefined),
+  deleteField: vi.fn(() => "delete-field-sentinel"),
   writeBatch: vi.fn(() => ({
     set: vi.fn(),
     commit: vi.fn().mockResolvedValue(undefined),
@@ -173,6 +175,36 @@ describe("AuthContext", () => {
     expect(result.current.user?.email).toBe("test@flaner.app");
   });
 
+  it("takes the email from Firebase Auth and removes a legacy email from the Firestore profile", async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    vi.mocked(firestore.getDoc).mockResolvedValueOnce({
+      exists: () => true,
+      data: () => ({ uid: "legacy-uid", username: "Legacy", email: "stale@flaner.app", darkMode: true, language: "pl" }),
+    } as never);
+
+    await act(async () => {
+      await authStateCallback?.({ uid: "legacy-uid", email: "current@flaner.app" });
+    });
+
+    expect(result.current.user?.email).toBe("current@flaner.app");
+    expect(firestore.updateDoc).toHaveBeenCalledWith(undefined, { email: "delete-field-sentinel" });
+  });
+
+  it("does not write an email into new profiles", async () => {
+    renderHook(() => useAuth(), { wrapper });
+
+    vi.mocked(firestore.getDoc).mockResolvedValueOnce({ exists: () => false } as never);
+    vi.mocked(firestore.setDoc).mockResolvedValueOnce(undefined);
+
+    await act(async () => {
+      await authStateCallback?.({ uid: "fresh-uid", email: "fresh@flaner.app", displayName: "Fresh" });
+    });
+
+    expect(firestore.setDoc).toHaveBeenCalledWith(undefined, expect.not.objectContaining({ email: expect.anything() }));
+    expect(firestore.updateDoc).not.toHaveBeenCalled();
+  });
+
   it("signs in with google and creates profile if document does not exist", async () => {
     const mockFirebaseUser = {
       uid: "google-uid-456",
@@ -203,11 +235,6 @@ describe("AuthContext", () => {
   });
 
   it("throws error in signUpWithEmailUser when username is already taken", async () => {
-    const mockFirebaseUser = { uid: "user-dup", email: "dup@flaner.app" };
-    vi.mocked(firebaseAuth.createUserWithEmailAndPassword).mockResolvedValueOnce({
-      user: mockFirebaseUser as unknown as firebaseAuth.User,
-    } as firebaseAuth.UserCredential);
-
     // Mock username check: ALREADY exists!
     vi.mocked(firestore.getDoc).mockResolvedValueOnce({
       exists: () => true,

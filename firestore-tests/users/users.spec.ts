@@ -2,6 +2,7 @@ import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import {
   collection,
   deleteDoc,
+  deleteField,
   doc,
   documentId,
   getDoc,
@@ -22,7 +23,6 @@ const profile = (uid: string, username: string) => ({
   uid,
   username,
   usernameLower: username.toLowerCase(),
-  email: `${username.toLowerCase()}@example.com`,
   avatarUrl: "",
   darkMode: true,
   language: "pl",
@@ -75,7 +75,22 @@ describe("users/{userId}", () => {
     await assertSucceeds(getDocs(query(collection(as(ALICE), "users"), where(documentId(), "in", [BOB]))));
   });
 
-  it.todo("G1: hides private profile fields (email) from other users");
+  it("blocks private or unknown fields in profiles (email stays in Firebase Auth)", async () => {
+    const db = as(ALICE);
+
+    await assertFails(setDoc(doc(db, "users", ALICE), { ...profile(ALICE, "Alice"), email: "alice@example.com" }));
+    await assertFails(updateDoc(doc(as(BOB), "users", BOB), { email: "bob@example.com" }));
+    await assertFails(updateDoc(doc(as(BOB), "users", BOB), { isAdmin: true }));
+  });
+
+  it("lets a legacy profile drop its email (loadProfile) and blocks other writes until it does", async () => {
+    await seed({ [`users/${ALICE}`]: { ...profile(ALICE, "Alice"), email: "alice@example.com" } });
+    const db = as(ALICE);
+
+    await assertFails(updateDoc(doc(db, "users", ALICE), { darkMode: false }));
+    await assertSucceeds(updateDoc(doc(db, "users", ALICE), { email: deleteField() }));
+    await assertSucceeds(updateDoc(doc(db, "users", ALICE), { darkMode: false }));
+  });
 });
 
 describe("usernames/{usernameLower}", () => {

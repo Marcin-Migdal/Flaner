@@ -2,10 +2,10 @@
 import type { FriendRequest, Friendship } from "./types";
 import { collection, doc, getDocs, getDoc, deleteDoc, query, where, limit, onSnapshot, writeBatch } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
-import { type UserType } from "@flaner/shared/types";
+import { type UserProfile } from "@flaner/shared/types";
 
 // Fetch multiple users by their UIDs
-export const getUsers = async (uids: string[]): Promise<UserType[]> => {
+export const getUsers = async (uids: string[]): Promise<UserProfile[]> => {
   if (!uids || uids.length === 0) return [];
   
   // To avoid hitting Firestore for duplicate IDs, get unique UIDs
@@ -16,17 +16,17 @@ export const getUsers = async (uids: string[]): Promise<UserType[]> => {
   const promises = uniqueUids.map(async (uid) => {
     const snap = await getDoc(doc(fb.firestore, "users", uid));
     if (snap.exists()) {
-      return { ...snap.data(), uid: snap.id } as UserType;
+      return { ...snap.data(), uid: snap.id } as UserProfile;
     }
     return null;
   });
 
   const results = await Promise.all(promises);
-  return results.filter((u): u is UserType => u !== null);
+  return results.filter((u): u is UserProfile => u !== null);
 };
 
 // 1. Search users by username (prefix match, case-insensitive)
-export const searchUsers = async (searchQuery: string, currentUserUid: string): Promise<UserType[]> => {
+export const searchUsers = async (searchQuery: string, currentUserUid: string): Promise<UserProfile[]> => {
   if (!searchQuery.trim()) return [];
   const qLower = searchQuery.toLowerCase();
   
@@ -41,7 +41,7 @@ export const searchUsers = async (searchQuery: string, currentUserUid: string): 
   return snap.docs
     .map((d) => {
       const data = d.data();
-      return { ...data, uid: d.id } as UserType;
+      return { ...data, uid: d.id } as UserProfile;
     })
     .filter((u) => u.uid !== currentUserUid);
 };

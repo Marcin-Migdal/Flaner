@@ -1,6 +1,6 @@
 import { useQuery, type UseQueryOptions, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@flaner/shared/context";
-import { type UserType } from "@flaner/shared/types";
+import { type UserProfile } from "@flaner/shared/types";
 import { searchUsers } from '../../../../api/users';
 import { reactQueryMeta } from "@flaner/shared/constants";
 
@@ -9,11 +9,11 @@ const getSearchUsersQueryKeys = (searchQuery: string, userId: string) => ["searc
 
 export const useSearchUsersQuery = (
   searchQuery: string,
-  options?: Omit<UseQueryOptions<UserType[], Error>, "queryKey" | "queryFn">
+  options?: Omit<UseQueryOptions<UserProfile[], Error>, "queryKey" | "queryFn">
 ) => {
   const { user } = useAuth();
 
-  return useQuery<UserType[], Error>({
+  return useQuery<UserProfile[], Error>({
       meta: reactQueryMeta.fetch,
     queryKey: getSearchUsersQueryKeys(searchQuery, user?.uid ?? ""),
     queryFn: () => {
