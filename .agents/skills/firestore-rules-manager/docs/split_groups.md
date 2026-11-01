@@ -59,7 +59,7 @@ All endpoints: `packages/planning/src/api/splits/endpoints.ts`.
 
 ## Accepted risks
 Split groups are shared between people who trust each other; the rules stop mistakes and impersonation, not a participant who deliberately forges numbers.
-- **R1** Balances and totals are computed on the client. Rules only check that every financial write updates the group doc in the same write (counters / `updatedAt`), so a participant using the SDK directly could write arbitrary `balances` / `pairBalances` / `totalSpent`. Server-side computation (Cloud Function) would close it.
+- **R1** Balances and totals are computed on the client. Rules only check that every financial write updates the group doc in the same write (counters / `updatedAt`), so a participant using the SDK directly could write arbitrary `balances` / `pairBalances` / `totalSpent`. Server-side computation (Cloud Function) would close it — issue #34.
 - **R2** The currency-conversion exception (I9) lets any participant rewrite the money fields of someone else's entry.
 
 ## Rules

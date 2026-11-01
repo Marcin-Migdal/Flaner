@@ -48,7 +48,7 @@ All endpoints: `packages/planning/src/api/events/endpoints.ts`.
 | creator | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ## Known gaps
-- **G2** Votes live inside `proposedDates`, so a participant who may vote can also change other participants' votes and the slots themselves (the rules cannot compare array items one by one). Fixing it requires moving votes out of the event doc, e.g. `events/{id}/votes/{uid}` (data model change, to be discussed).
+- **G2** Votes live inside `proposedDates`, so a participant who may vote can also change other participants' votes and the slots themselves (the rules cannot compare array items one by one). Fixing it requires moving votes out of the event doc, e.g. `events/{id}/votes/{uid}` (data model change, to be discussed — issue #33).
 
 ## Rules
 ```rules

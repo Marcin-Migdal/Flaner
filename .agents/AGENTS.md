@@ -15,6 +15,11 @@
   2. Test the functionality on the branch's Vercel Preview or with `npm run dev` (local `.env` → DEV).
 - Details: `.agents/workflows/01-feature-workflow.md` (Phase 3) and the `firestore-rules-manager` skill, section 6.
 
+**BACKLOG: GITHUB ISSUES**
+- Future work lives in GitHub Issues of this repo (template `.github/ISSUE_TEMPLATE/task.yml`; labels `area:*`, `type:*`, `priority:*`).
+- Whenever something is deferred ("later", out of scope, found while working on something else), propose an issue with full context (why, goal, files, acceptance criteria) and create it once the user agrees.
+- When a task starts from an issue, read it first; reference it in the PR (`Closes #N`).
+
 **PRE-FLIGHT PROTOCOL & SKILLS USAGE**
 At the beginning of every task, before writing any code, execute the "Pre-Flight Protocol" and include it in your response:
 1. **Task Type:** [Classify the task, e.g., New Feature, Refactor, Bugfix, UI Component, Configuration]
