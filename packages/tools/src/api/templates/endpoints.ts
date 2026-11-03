@@ -1,3 +1,4 @@
+// Firestore rules spec: .agents/skills/firestore-rules-manager/docs/templates.md, spools.md (keep their Write flows / Queries in sync).
 import { collection, getDocs, query, where, setDoc, updateDoc, deleteDoc, doc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
 import { firestoreConverter } from "@flaner/shared/utils";

@@ -1,26 +1,44 @@
-# Collection: lookup_colors
+# lookup_colors/{colorId}
 
-**Path:** `/lookup_colors/{colorId}`
+Colour options per material + type. Child of `lookup_types` (by `materialName` + `typeName`). User-owned documents — see `_global.md` → Pattern: user-owned documents. Existing `templates` / `spools` keep their text values when a lookup is deleted.
 
-## Document Schema
-- `id`: string (doc ID)
-- `userId`: string (owner ID)
-- `materialName`: string (parent material name, e.g. PLA, PETG, Nylon)
-- `typeName`: string (parent type name, e.g. Silk, Basic, Matte)
-- `name`: string (e.g. Lime Green, Lavender, Galaxy Black)
-- `hex`: string (e.g. #7c3aed)
-- `createdAt`: timestamp (serverTimestamp)
+## Schema
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `id` | string | ✓ | == doc id |
+| `userId` | string | ✓ | owner |
+| `materialName`, `typeName` | string | ✓ | parent names |
+| `name` | string | ✓ | e.g. Lime Green, Galaxy Black |
+| `hex` | string | ✓ | e.g. #7c3aed |
+| `createdAt` | Timestamp | ✓ | `serverTimestamp()` |
+
+## Write flows
+Endpoints: `packages/tools/src/api/lookups/endpoints.ts`.
+
+| Flow | Endpoint | Writes | Atomic |
+| --- | --- | --- | --- |
+| Add / update hex (idempotent) | `addLookupColor` | query by `userId` + names, update `hex` or set new | – |
+| Change hex | `updateLookupColorHex` | update `hex` | – |
+| Delete | `deleteLookupColor` | delete | – |
+| Parent deleted | `deleteLookupMaterial`, `deleteLookupType` | delete | ✅ batch |
+
+## Queries
+| Query | Endpoint | Allowed by |
+| --- | --- | --- |
+| `userId == me` | `fetchLookupColors`, cascade deletes | read: owner |
+| `userId == me && materialName == X && typeName == Y && name == Z` limit 1 | `addLookupColor` | read: owner |
 
 ## Rules
-- **read, update, delete**: User is authenticated AND resource belongs to the user (`resource.data.userId == request.auth.uid`)
-- **create**: User is authenticated AND document belongs to the user (`request.resource.data.userId == request.auth.uid`)
-
-```javascript
+```rules
 // ==========================================
 // LOOKUP KOLORY (LOOKUP COLORS)
 // ==========================================
 match /lookup_colors/{colorId} {
-  allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-  allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+  allow read, delete: if isOwner(resource.data);
+  allow create: if isOwner(request.resource.data);
+  allow update: if isOwner(resource.data) && isOwner(request.resource.data);
 }
 ```
+
+## Tests
+- `firestore-tests/tools/tools.spec.ts` — add / query / cascade delete for the owner, other user denied, hand-over denied.

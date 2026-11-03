@@ -86,7 +86,6 @@ export function SearchTabContent() {
                   </Avatar>
                   <div className="min-w-0">
                     <span className="font-semibold text-sm text-foreground/90 block truncate">{match.username}</span>
-                    <span className="text-[10px] text-muted-foreground block truncate">{match.email}</span>
                   </div>
                 </div>
 

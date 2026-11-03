@@ -1,3 +1,4 @@
+// Firestore rules spec: .agents/skills/firestore-rules-manager/docs/users.md, usernames.md (keep their Write flows / Queries in sync).
 import { FirebaseError } from "firebase/app";
 import { doc, getDoc, writeBatch } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
