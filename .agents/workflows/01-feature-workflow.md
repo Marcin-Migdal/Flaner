@@ -21,7 +21,7 @@ After implementation is complete:
 1. **Linting:** Ensure `nx lint` has been run dynamically on the modified packages (e.g., `npx nx run <package-name>:lint`).
 2. **Skill Verification:** Double-check the modified/created code against the core skills used in Phase 1 (e.g., verify that `react-hook-form` inputs use `FormProvider`).
 3. **Walkthrough:** Summarize the changes in a `walkthrough.md` artifact so the user knows exactly what was built and how to test it.
-4. **Pre-merge manual test on DEV (mandatory prompt):** Before opening the PR to `develop` (and before it is merged), ask the user to test the feature against the real DEV Firestore, and wait for their confirmation:
-   - If the branch changes `firestore.rules` / `firestore.indexes.json`: GitHub → Actions → *Deploy Firestore* → *Run workflow* on the feature branch (DEV only).
-   - Test on the branch's Vercel Preview or with `npm run dev` (local `.env` → DEV). Include in the walkthrough the exact scenarios to click through.
+4. **Pre-merge manual test (mandatory prompt):** Before opening the PR to `develop` (and before it is merged), ask the user to test the feature manually, and wait for their confirmation. Include in the walkthrough the exact scenarios to click through.
+   - If the branch does not change `firestore.rules` / `firestore.indexes.json`: a local test (`npm run dev:emulators` or `npm run dev`) is enough — the emulators run the same rules and indexes as DEV. Exception: a new or changed Firestore query must also be tested on DEV, because the emulator does not enforce composite indexes.
+   - If it does: GitHub → Actions → *Deploy Firestore* → *Run workflow* on the feature branch (DEV only), then test on the branch's Vercel Preview or with `npm run dev` (local `.env` → DEV).
    - If the branch is abandoned after a DEV deploy, run the workflow on `develop` to restore DEV.

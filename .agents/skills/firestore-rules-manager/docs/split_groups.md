@@ -240,7 +240,7 @@ match /expenses/{expenseId} {
 | Request (pending) | `createSettlement` (`status: 'pending'`) | set settlement; group: `settlementsCount + 1`, `version + 1`, `updatedAt`; `split_settlement_pending` notification | ✅ transaction |
 | Confirm (receiver) | `confirmSettlement` | set `status: 'confirmed'`; group: balances, `version + 1`, `updatedAt` | ✅ transaction |
 | Delete | `deleteSettlement` | delete; group: balances (if confirmed), `settlementsCount - 1`, `version + 1`, `updatedAt` | ✅ transaction |
-| Convert currency | `convertSplitGroupCurrency` | see expenses | ✅ transaction |
+| Convert currency | `convertSplitGroupCurrency` | see expenses; `pending` ones are converted without touching balances, `amount` capped at the converted debt if rounding pushes it above | ✅ transaction |
 
 ### Queries
 | Query | Endpoint | Allowed by |

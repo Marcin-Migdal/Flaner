@@ -8,11 +8,11 @@
 - NEVER perform git staging (`git add`), commits (`git commit`), stashes, or pushes on your own initiative or upon completing a task.
 - Git commands that modify repository state or history are STRICTLY FORBIDDEN unless the user explicitly requests them in their prompt or it was explicitly agreed upon in the conversation.
 
-**CRITICAL BEHAVIORAL RULE: PRE-MERGE MANUAL TEST ON DEV**
+**CRITICAL BEHAVIORAL RULE: PRE-MERGE MANUAL TEST**
 - Day-to-day work on a feature branch runs against the emulators (`npm run dev:emulators`) — no deploys.
-- BEFORE you open a PR to `develop`, and again before it is merged, you MUST remind the user to do a final manual test of the feature against the real DEV Firestore, and wait for their confirmation:
-  1. If `firestore.rules` / `firestore.indexes.json` changed on the branch: GitHub → Actions → *Deploy Firestore* → *Run workflow* on the feature branch (deploys to DEV only).
-  2. Test the functionality on the branch's Vercel Preview or with `npm run dev` (local `.env` → DEV).
+- BEFORE you open a PR to `develop`, and again before it is merged, you MUST remind the user to do a final manual test of the feature, and wait for their confirmation. Where it runs depends on the branch:
+  - **`firestore.rules` / `firestore.indexes.json` unchanged:** a local manual test (`npm run dev:emulators` or `npm run dev`) counts as the final test. The emulators load the same rules and indexes that DEV runs, so a test on the Vercel Preview is not required. Exception: if the branch adds or changes a Firestore query, also test it on DEV — the emulator does not enforce composite indexes, so a missing entry in `firestore.indexes.json` fails only there.
+  - **Changed:** GitHub → Actions → *Deploy Firestore* → *Run workflow* on the feature branch (deploys to DEV only), then test on the branch's Vercel Preview or with `npm run dev` (local `.env` → DEV).
 - Details: `.agents/workflows/01-feature-workflow.md` (Phase 3) and the `firestore-rules-manager` skill, section 6.
 
 **BACKLOG: GITHUB ISSUES**

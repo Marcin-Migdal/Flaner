@@ -747,15 +747,32 @@ export const convertSplitGroupCurrency = async (groupId: string, targetCurrency:
       converted++;
     });
 
+    const pendingSettlements: { ref: DocumentReference<Settlement>; current: Settlement; next: Settlement }[] = [];
+
     settlementSnaps.forEach((snap) => {
       if (!snap.exists()) return;
       const current = snap.data();
       if (current.currency === targetCurrency) return;
 
       const next = convertSettlement(current, targetCurrency, rates);
+      converted++;
+      // Pending settlements were never applied to balances, so they must not be reverted from them
+      if (current.status === "pending") {
+        pendingSettlements.push({ ref: snap.ref, current, next });
+        return;
+      }
       state = applySettlementToBalances(applySettlementToBalances(state, current, -1), next, 1);
       transaction.set(snap.ref, next);
-      converted++;
+    });
+
+    // Per-entry rounding can push a pending amount a few minor units above the converted debt, which
+    // would block its confirmation; cap it, but only if it fitted the debt before the conversion.
+    const convertedGroup: SplitGroup = { ...group, ...state };
+    pendingSettlements.forEach(({ ref, current, next }) => {
+      const debtBefore = getOutstandingDebtAmount(group, current.payerId, current.receiverId, current.currency);
+      const debtAfter = getOutstandingDebtAmount(convertedGroup, current.payerId, current.receiverId, targetCurrency);
+      const fitsDebt = current.amount <= debtBefore && debtAfter > 0;
+      transaction.set(ref, fitsDebt ? { ...next, amount: Math.min(next.amount, debtAfter) } : next);
     });
 
     transaction.update(groupRef, {

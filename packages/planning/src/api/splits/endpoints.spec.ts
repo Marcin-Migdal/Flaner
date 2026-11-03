@@ -1157,6 +1157,107 @@ describe("splits endpoints", () => {
       expect(convertedCount).toBe(0);
     });
 
+    describe("pending settlements", () => {
+      // user-2 owes user-1 half of every expense, all in USD; the rate to EUR is 0.9
+      const usdExpense = (id: string, amount: number): Expense => ({
+        id,
+        groupId: "group-1",
+        title: "Dinner",
+        amount,
+        currency: "USD",
+        category: "food",
+        date: "2026-06-01",
+        paidBy: "user-1",
+        splitType: "equally",
+        splits: [
+          { userId: "user-1", amount: amount / 2 },
+          { userId: "user-2", amount: amount / 2 },
+        ],
+        createdBy: "user-1",
+        createdAt: 100,
+      });
+
+      const pendingUsdSettlement = (amount: number): Settlement => ({
+        id: "set-pending",
+        groupId: "group-1",
+        payerId: "user-2",
+        receiverId: "user-1",
+        amount,
+        currency: "USD",
+        date: "2026-06-01",
+        note: "",
+        status: "pending",
+        createdBy: "user-2",
+        createdAt: 200,
+      });
+
+      const convertToEur = async (expenses: Expense[], settlement: Settlement) => {
+        const debt = expenses.reduce((sum, expense) => sum + expense.amount / 2, 0);
+        const group = createMockGroup({
+          balances: { USD: { "user-1": debt, "user-2": -debt } },
+          pairBalances: { USD: { "user-1__user-2": debt } },
+          totalSpent: { USD: debt * 2 },
+          expensesCount: expenses.length,
+          settlementsCount: 1,
+        });
+
+        mockGetDocs
+          .mockResolvedValueOnce({ docs: expenses.map((expense) => ({ data: () => expense })) })
+          .mockResolvedValueOnce({ docs: [{ data: () => settlement }] });
+        vi.mocked(exchangeRatesApi.getExchangeRate).mockResolvedValue({ rate: 0.9, date: "2026-06-01" });
+
+        transactionMock.get.mockResolvedValueOnce({ exists: () => true, data: () => group });
+        expenses.forEach((expense) =>
+          transactionMock.get.mockResolvedValueOnce({ exists: () => true, data: () => expense, ref: { id: expense.id } }),
+        );
+        transactionMock.get.mockResolvedValueOnce({ exists: () => true, data: () => settlement, ref: { id: settlement.id } });
+
+        const count = await convertSplitGroupCurrency("group-1", "EUR");
+        const settlementWrite = transactionMock.set.mock.calls.find(([ref]) => ref.id === settlement.id)?.[1];
+        return { count, settlementWrite };
+      };
+
+      it("converts a pending settlement without changing balances", async () => {
+        const { count, settlementWrite } = await convertToEur([usdExpense("exp-1", 10000)], pendingUsdSettlement(5000));
+
+        expect(count).toBe(2);
+        expect(transactionMock.update).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({
+            balances: { EUR: { "user-1": 4500, "user-2": -4500 } },
+            pairBalances: { EUR: { "user-1__user-2": 4500 } },
+            totalSpent: { EUR: 9000 },
+          }),
+        );
+        expect(settlementWrite).toEqual(
+          expect.objectContaining({
+            currency: "EUR",
+            amount: 4500,
+            status: "pending",
+            conversion: expect.objectContaining({ originalCurrency: "USD", originalAmount: 5000, rate: 0.9 }),
+          }),
+        );
+      });
+
+      it("caps a pending settlement at the converted debt when rounding pushes it above", async () => {
+        // 5 × 10.09 USD → 5 × 9.08 EUR = 45.40 EUR of debt, while 50.45 USD alone rounds to 45.41 EUR
+        const expenses = ["e1", "e2", "e3", "e4", "e5"].map((id) => usdExpense(id, 2018));
+        const { settlementWrite } = await convertToEur(expenses, pendingUsdSettlement(5045));
+
+        expect(transactionMock.update).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({ balances: { EUR: { "user-1": 4540, "user-2": -4540 } } }),
+        );
+        expect(settlementWrite).toEqual(expect.objectContaining({ currency: "EUR", amount: 4540, status: "pending" }));
+      });
+
+      it("does not cap a pending settlement that already exceeded the debt before conversion", async () => {
+        const { settlementWrite } = await convertToEur([usdExpense("exp-1", 10000)], pendingUsdSettlement(6000));
+
+        expect(settlementWrite).toEqual(expect.objectContaining({ currency: "EUR", amount: 5400 }));
+      });
+    });
+
     it("deleteExpense successfully deletes expense and updates group balances", async () => {
       const group = createMockGroup({ expensesCount: 1, totalSpent: { EUR: 50 } });
       const expense: Expense = {
