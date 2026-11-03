@@ -1,4 +1,11 @@
 import { type UserType } from "../../../packages/shared/src/types";
+import type { AmountsByCurrency, Expense, Settlement } from "../../../packages/planning/src/api/splits/types";
+import {
+  addToCurrencyTotals,
+  applyExpenseToBalances,
+  applySettlementToBalances,
+  type GroupBalanceState,
+} from "../../../packages/planning/src/utils/splitBalances";
 
 // `demo-` prefix: the Firebase SDK and emulators treat it as offline-only, it can never hit a real project
 export const E2E_PROJECT_ID = "demo-flaner";
@@ -7,20 +14,35 @@ export const E2E_API_KEY = "demo-api-key";
 const AUTH_URL = "http://127.0.0.1:9099";
 const FIRESTORE_URL = `http://127.0.0.1:8080/v1/projects/${E2E_PROJECT_ID}/databases/(default)/documents`;
 
+export type SeedValue = string | boolean | number | null | undefined | SeedValue[] | { [key: string]: SeedValue };
+type SeedData = { [key: string]: SeedValue };
+
 type FirestoreValue =
   | { stringValue: string }
   | { booleanValue: boolean }
   | { integerValue: string }
-  | { nullValue: null };
+  | { doubleValue: number }
+  | { nullValue: null }
+  | { arrayValue: { values: FirestoreValue[] } }
+  | { mapValue: { fields: Record<string, FirestoreValue> } };
 
-const toFirestoreFields = (data: Record<string, string | boolean | number | null>) =>
+const toFirestoreValue = (value: Exclude<SeedValue, undefined>): FirestoreValue => {
+  if (value === null) return { nullValue: null };
+  if (typeof value === "boolean") return { booleanValue: value };
+  if (typeof value === "number") return Number.isInteger(value) ? { integerValue: String(value) } : { doubleValue: value };
+  if (typeof value === "string") return { stringValue: value };
+  if (Array.isArray(value)) {
+    return { arrayValue: { values: value.flatMap((item) => (item === undefined ? [] : [toFirestoreValue(item)])) } };
+  }
+  return { mapValue: { fields: toFirestoreFields(value) } };
+};
+
+// Undefined fields are skipped, like optional fields the app never writes
+const toFirestoreFields = (data: SeedData): Record<string, FirestoreValue> =>
   Object.fromEntries(
-    Object.entries(data).map(([key, value]): [string, FirestoreValue] => {
-      if (value === null) return [key, { nullValue: null }];
-      if (typeof value === "boolean") return [key, { booleanValue: value }];
-      if (typeof value === "number") return [key, { integerValue: String(value) }];
-      return [key, { stringValue: value }];
-    }),
+    Object.entries(data).flatMap(([key, value]): [string, FirestoreValue][] =>
+      value === undefined ? [] : [[key, toFirestoreValue(value)]],
+    ),
   );
 
 const request = async (url: string, init: RequestInit) => {
@@ -32,7 +54,7 @@ const request = async (url: string, init: RequestInit) => {
 };
 
 /** Writes a document bypassing security rules (emulator admin access). */
-export const seedDocument = async (path: string, data: Record<string, string | boolean | number | null>) => {
+export const seedDocument = async (path: string, data: SeedData) => {
   await request(`${FIRESTORE_URL}/${path}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json", Authorization: "Bearer owner" },
@@ -119,4 +141,86 @@ export const seedGroupInvitation = async (group: SeededGroup, invitee: E2EUser, 
   };
   await seedDocument(`groups/${group.id}/invitations/${invitee.uid}`, invitation);
   await seedDocument(`users/${invitee.uid}/groupInvitations/${group.id}`, invitation);
+};
+
+export type SeedExpense = Pick<Expense, "amount" | "currency" | "date" | "paidBy" | "splits">;
+export type SeedSettlement = Pick<Settlement, "payerId" | "receiverId" | "amount" | "currency" | "date" | "status">;
+
+export type SeedSplitGroupOptions = {
+  defaultCurrency: string;
+  expenses: SeedExpense[];
+  settlements: SeedSettlement[];
+};
+
+/**
+ * Seeds a split group created by `members[0]` with its expenses and settlements, deriving balances,
+ * totals and counters with the app's own helpers (pending settlements stay out of balances, as in `createSettlement`).
+ */
+export const seedSplitGroup = async (
+  members: E2EUser[],
+  { defaultCurrency, expenses, settlements }: SeedSplitGroupOptions,
+): Promise<SeededGroup> => {
+  const id = `sg-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  const name = `E2E Split ${id}`;
+  const now = Date.now();
+
+  let state: GroupBalanceState = { balances: {}, pairBalances: {} };
+  let totalSpent: AmountsByCurrency = {};
+  expenses.forEach((expense) => {
+    state = applyExpenseToBalances(state, expense, 1);
+    totalSpent = addToCurrencyTotals(totalSpent, expense.currency, expense.amount);
+  });
+  settlements
+    .filter((settlement) => settlement.status !== "pending")
+    .forEach((settlement) => {
+      state = applySettlementToBalances(state, settlement, 1);
+    });
+
+  await seedDocument(`split_groups/${id}`, {
+    id,
+    name,
+    description: "",
+    defaultCurrency,
+    lastUsedCurrency: defaultCurrency,
+    createdBy: members[0].uid,
+    participants: members.map((member) => member.uid),
+    formerParticipants: [],
+    balances: state.balances,
+    pairBalances: state.pairBalances,
+    totalSpent,
+    expensesCount: expenses.length,
+    settlementsCount: settlements.length,
+    simplifyDebts: false,
+    version: 0,
+    status: "active",
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  await Promise.all([
+    ...expenses.map((expense, index) =>
+      seedDocument(`split_groups/${id}/expenses/e${index}`, {
+        ...expense,
+        id: `e${index}`,
+        groupId: id,
+        title: `Expense ${index + 1}`,
+        category: "general",
+        splitType: "exact",
+        createdBy: expense.paidBy,
+        createdAt: now + index,
+      }),
+    ),
+    ...settlements.map((settlement, index) =>
+      seedDocument(`split_groups/${id}/settlements/s${index}`, {
+        ...settlement,
+        id: `s${index}`,
+        groupId: id,
+        note: "",
+        createdBy: settlement.payerId,
+        createdAt: now + index,
+      }),
+    ),
+  ]);
+
+  return { id, name };
 };
