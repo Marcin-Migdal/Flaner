@@ -14,7 +14,7 @@ export const useUndoLastPrintMutation = (
   return useMutation<void, Error, UndoPrintInput>({
     mutationFn: async (input: UndoPrintInput) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
-      await undoLastPrint(input.spoolId, input.printId, input.usedWeight);
+      await undoLastPrint(input.spoolId, input.printId);
     },
     meta: {
       successMessageKey: "tools:toasts.spools.undoSuccess",

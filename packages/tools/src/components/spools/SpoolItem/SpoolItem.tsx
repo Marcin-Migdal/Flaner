@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@flaner/ui-components";
 import type { FilamentSpool } from "../../../api/spools";
-import { useToolsTranslations } from "../../../hooks/useToolsTranslations";
+import { useGetLastSpoolPrintQuery, useToolsTranslations } from "../../../hooks";
 import { bambuFilaments } from "../../../utils/bambuFilaments";
 
 type SpoolItemProps = {
@@ -31,6 +31,7 @@ export const SpoolItem: React.FC<SpoolItemProps> = ({
   onUndoLastPrint,
 }) => {
   const { t } = useToolsTranslations();
+  const { data: lastPrint } = useGetLastSpoolPrintQuery(spool.id);
   const percentage = Math.max(0, Math.min(100, (spool.currentWeight / spool.initialWeight) * 100));
 
   const displayHex = useMemo(() => {
@@ -50,7 +51,8 @@ export const SpoolItem: React.FC<SpoolItemProps> = ({
   }, [spool.colorHex, spool.material, spool.type, spool.colorName]);
 
   return (
-    <div
+    <article
+      aria-label={spool.name}
       className="bg-card border border-border rounded-2xl p-5 hover:border-brand/40 transition-all shadow-sm relative flex flex-col justify-between min-h-[160px]"
       style={{ boxShadow: `inset 5px 0 0 0 ${displayHex}99` }}
     >
@@ -88,6 +90,7 @@ export const SpoolItem: React.FC<SpoolItemProps> = ({
             size="sm"
             variant="outline"
             onClick={onUndoLastPrint}
+            disabled={!lastPrint}
             className="size-8 p-0"
             title={t("spooler.spools.undoLastPrint")}
           >
@@ -143,7 +146,7 @@ export const SpoolItem: React.FC<SpoolItemProps> = ({
           />
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 

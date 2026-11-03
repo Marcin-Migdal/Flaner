@@ -46,13 +46,13 @@ describe("useUndoLastPrintMutation", () => {
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     const { result } = renderHook(() => useUndoLastPrintMutation(), { wrapper: Wrapper });
-    const payload = { spoolId: "spool-1", printId: "print-1", usedWeight: 50 };
+    const payload = { spoolId: "spool-1", printId: "print-1" };
 
     result.current.mutate(payload);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(spoolsApi.undoLastPrint).toHaveBeenCalledWith("spool-1", "print-1", 50);
+    expect(spoolsApi.undoLastPrint).toHaveBeenCalledWith("spool-1", "print-1");
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["spools", "user-1"] });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["spoolPrints", "spool-1"] });
   });
@@ -63,7 +63,7 @@ describe("useUndoLastPrintMutation", () => {
 
     const { Wrapper } = createWrapper();
     const { result } = renderHook(() => useUndoLastPrintMutation({ onSuccess: onSuccessMock }), { wrapper: Wrapper });
-    const payload = { spoolId: "spool-1", printId: "print-1", usedWeight: 50 };
+    const payload = { spoolId: "spool-1", printId: "print-1" };
 
     result.current.mutate(payload);
 
@@ -84,7 +84,7 @@ describe("useUndoLastPrintMutation", () => {
 
     const { Wrapper } = createWrapper();
     const { result } = renderHook(() => useUndoLastPrintMutation(), { wrapper: Wrapper });
-    const payload = { spoolId: "spool-1", printId: "print-1", usedWeight: 50 };
+    const payload = { spoolId: "spool-1", printId: "print-1" };
 
     result.current.mutate(payload);
 

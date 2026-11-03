@@ -30,7 +30,6 @@
       "deleteColorDesc": "Czy na pewno chcesz usunąć ten własny kolor z listy wyboru?"
     },
     "templates": {
-
       "title": "Szablony Szpul",
       "subtitle": "Zdefiniuj parametry materiałów, domyślną wagę oraz kolory dla swoich szpul.",
       "noTemplates": "Brak szablonów filamentów.",
@@ -60,7 +59,6 @@
       "deleteMaterialTooltip": "Usuń ten własny materiał",
       "deleteTypeTooltip": "Usuń ten własny typ",
       "deleteColorTooltip": "Usuń ten własny kolor",
-
       "validation": {
         "materialRequired": "Materiał jest wymagany",
         "typeRequired": "Typ jest wymagany",
@@ -236,6 +234,8 @@
       "deleteColorSuccess": "Usunięto własny kolor",
       "deleteColorError": "Nie udało się usunąć koloru"
     }
+  },
+  "errors": {
+    "noPrintToUndo": "Brak wydruku do cofnięcia"
   }
 }
-

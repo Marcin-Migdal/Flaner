@@ -62,7 +62,6 @@ export const SpoolHistoryModal: React.FC<SpoolHistoryModalProps> = ({
       undoPrintMutation.mutate({
         spoolId: spool.id,
         printId: confirmUndoPrint.id,
-        usedWeight: confirmUndoPrint.usedWeight,
       });
     }
   };
