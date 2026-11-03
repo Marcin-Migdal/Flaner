@@ -8,7 +8,16 @@ import {
   User,
 } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
-import { deleteField, doc, getDoc, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import {
+  clearIndexedDbPersistence,
+  deleteField,
+  doc,
+  getDoc,
+  setDoc,
+  terminate,
+  updateDoc,
+  writeBatch,
+} from "firebase/firestore";
 import { createContext, ReactNode, useContext, useEffect, useState, useRef } from "react";
 import { fb } from "../../firebase/firebase";
 import { useTheme } from "../../hooks/useTheme";
@@ -120,15 +129,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser((prev) => (prev ? { ...prev, ...updatedUser } : null));
   };
 
+  // Wipes the previous user's data from the device: the terminated Firestore instance cannot be reused,
+  // so a full reload re-creates it and also drops the in-memory React Query cache.
   const signOutUser = async () => {
     setIsLoading(true);
     try {
+      await terminate(fb.firestore);
+      // Best effort: a failure here must not block the sign-out.
+      await clearIndexedDbPersistence(fb.firestore).catch((error) =>
+        console.error("Failed to clear the Firestore cache", error),
+      );
       await firebaseSignOut(fb.auth.auth);
-      setUser(null);
     } catch (error) {
       console.error("Sign out failed", error);
     } finally {
-      setIsLoading(false);
+      window.location.assign("/login");
     }
   };
 

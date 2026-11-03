@@ -1,5 +1,5 @@
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { AuthProvider, useAuth } from "./AuthContext";
 import * as firebaseAuth from "firebase/auth";
@@ -23,6 +23,8 @@ vi.mock("firebase/firestore", () => ({
   getDoc: vi.fn(),
   setDoc: vi.fn(),
   updateDoc: vi.fn().mockResolvedValue(undefined),
+  terminate: vi.fn().mockResolvedValue(undefined),
+  clearIndexedDbPersistence: vi.fn().mockResolvedValue(undefined),
   deleteField: vi.fn(() => "delete-field-sentinel"),
   writeBatch: vi.fn(() => ({
     set: vi.fn(),
@@ -38,9 +40,16 @@ vi.mock("../../firebase/firebase", () => ({
 }));
 
 describe("AuthContext", () => {
+  const assignMock = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
     authStateCallback = null;
+    vi.stubGlobal("location", { ...window.location, assign: assignMock });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -146,6 +155,40 @@ describe("AuthContext", () => {
 
     expect(firebaseAuth.signOut).toHaveBeenCalled();
     expect(result.current.user).toBeNull();
+  });
+
+  it("clears the Firestore cache before signing out and reloads to /login", async () => {
+    vi.mocked(firebaseAuth.signOut).mockResolvedValueOnce(undefined);
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await result.current.signOutUser();
+    });
+
+    const terminateOrder = vi.mocked(firestore.terminate).mock.invocationCallOrder[0];
+    const clearOrder = vi.mocked(firestore.clearIndexedDbPersistence).mock.invocationCallOrder[0];
+    const signOutOrder = vi.mocked(firebaseAuth.signOut).mock.invocationCallOrder[0];
+    const reloadOrder = assignMock.mock.invocationCallOrder[0];
+
+    expect(terminateOrder).toBeLessThan(clearOrder);
+    expect(clearOrder).toBeLessThan(signOutOrder);
+    expect(signOutOrder).toBeLessThan(reloadOrder);
+    expect(assignMock).toHaveBeenCalledWith("/login");
+  });
+
+  it("still signs out and reloads when clearing the Firestore cache fails", async () => {
+    vi.mocked(firestore.clearIndexedDbPersistence).mockRejectedValueOnce(new Error("failed-precondition"));
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await result.current.signOutUser();
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith("Failed to clear the Firestore cache", expect.any(Error));
+    expect(firebaseAuth.signOut).toHaveBeenCalled();
+    expect(assignMock).toHaveBeenCalledWith("/login");
+    consoleSpy.mockRestore();
   });
 
   it("signs in user with email and loads firestore user profile", async () => {
@@ -282,6 +325,7 @@ describe("AuthContext", () => {
     });
 
     expect(consoleSpy).toHaveBeenCalledWith("Sign out failed", expect.any(Error));
+    expect(assignMock).toHaveBeenCalledWith("/login");
     consoleSpy.mockRestore();
   });
 
