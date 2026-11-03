@@ -134,43 +134,36 @@ export const fetchSpoolPrints = async (spoolId: string): Promise<SpoolPrint[]> =
   });
 };
 
-export const undoLastPrint = async (
-  spoolId: string,
-  printId?: string,
-  usedWeight?: number,
-): Promise<void> => {
-  let targetPrintId = printId;
-  let targetWeight = usedWeight;
+export const fetchLastPrint = async (spoolId: string): Promise<SpoolPrint | null> => {
+  const q = query(spoolRefs.prints(spoolId), orderBy("createdAt", "desc"), limit(1));
+  const snap = await getDocs(q);
+  const last = snap.docs[0];
+  return last ? { ...last.data(), id: last.id } : null;
+};
 
-  if (!targetPrintId || targetWeight === undefined) {
-    const q = query(spoolRefs.prints(spoolId), orderBy("createdAt", "desc"), limit(1));
-    const snap = await getDocs(q);
-    if (!snap.empty) {
-      const docData = snap.docs[0].data();
-      targetPrintId = snap.docs[0].id;
-      targetWeight = docData.usedWeight;
+export const undoLastPrint = async (spoolId: string, printId?: string): Promise<void> => {
+  const targetPrintId = printId ?? (await fetchLastPrint(spoolId))?.id;
+  if (!targetPrintId) throw new Error("tools:errors.noPrintToUndo");
+
+  await runTransaction(fb.firestore, async (transaction) => {
+    const printRef = spoolRefs.print(spoolId, targetPrintId);
+    const spoolRef = spoolRefs.spool(spoolId);
+    // Read the print inside the transaction so a double undo cannot restore the same weight twice.
+    const printSnap = await transaction.get(printRef);
+    if (!printSnap.exists()) throw new Error("tools:errors.noPrintToUndo");
+
+    const snap = await transaction.get(spoolRef);
+    if (snap.exists()) {
+      const current = snap.data();
+      const updatedWeight = parseFloat((current.currentWeight + printSnap.data().usedWeight).toFixed(2));
+      transaction.update(spoolRef, {
+        currentWeight: updatedWeight,
+        isFinished: updatedWeight <= 0,
+        finishedAt: updatedWeight <= 0 ? current.finishedAt : null,
+      });
     }
-  }
-
-  if (targetPrintId && targetWeight !== undefined) {
-    const finalPrintId = targetPrintId;
-    const finalWeight = targetWeight;
-
-    await runTransaction(fb.firestore, async (transaction) => {
-      const spoolRef = spoolRefs.spool(spoolId);
-      const snap = await transaction.get(spoolRef);
-      if (snap.exists()) {
-        const current = snap.data();
-        const updatedWeight = parseFloat((current.currentWeight + finalWeight).toFixed(2));
-        transaction.update(spoolRef, {
-          currentWeight: updatedWeight,
-          isFinished: updatedWeight <= 0,
-          finishedAt: updatedWeight <= 0 ? current.finishedAt : null,
-        });
-      }
-      transaction.delete(doc(fb.firestore, `spools/${spoolId}/prints`, finalPrintId));
-    });
-  }
+    transaction.delete(printRef);
+  });
 };
 
 export const deleteSpool = async (spoolId: string): Promise<void> => {

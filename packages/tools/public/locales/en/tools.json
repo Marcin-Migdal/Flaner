@@ -234,6 +234,8 @@
       "deleteColorSuccess": "Custom color deleted",
       "deleteColorError": "Failed to delete color"
     }
+  },
+  "errors": {
+    "noPrintToUndo": "There is no print to undo"
   }
 }
-

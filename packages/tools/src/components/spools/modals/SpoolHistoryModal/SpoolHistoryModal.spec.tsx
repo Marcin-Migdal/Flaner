@@ -141,7 +141,6 @@ describe("SpoolHistoryModal", () => {
     expect(undoMutationMock).toHaveBeenCalledWith({
       spoolId: "spool-1",
       printId: "print-1",
-      usedWeight: 45,
     });
   });
 
