@@ -61,7 +61,7 @@ Sections, in this order (subcollections repeat them under `## Subcollection: <na
 1. **Day to day — emulators, no deploy**: `npm run dev:emulators` runs the rules compiler in watch mode, the Auth + Firestore emulators (project `demo-flaner`, they hot-reload `firestore.rules`) and all dev servers wired to them. Edit the spec `.md` → the rules rebuild → the emulator reloads. Data (accounts, documents) persists in `.emulator-data/` (gitignored) between runs; stop with Ctrl+C so the emulators can export it.
 2. **Final manual test against real data — DEV deploy from the branch**: GitHub → Actions → *Deploy Firestore* → *Run workflow* → pick the feature branch. A manual run from any branch other than `master` deploys to **DEV only**. Then test on the branch's Vercel Preview or with the plain `npm run dev` (local `.env` → DEV).
    - DEV is shared: the branch's rules replace `develop`'s until the next deploy. If the branch is abandoned, run the workflow on `develop` to restore DEV.
-3. **Before the PR to `develop` is merged**, the agent must remind the user to do step 2 (see `AGENTS.md` → pre-merge manual test).
+3. **Before the PR to `develop` is merged**, the agent must remind the user to do step 2 when the branch changes `firestore.rules` / `firestore.indexes.json`; otherwise a local manual test on the emulators is enough (see `AGENTS.md` → pre-merge manual test).
 
 ## 7. Deployment
 Rules and indexes deploy through GitHub Actions (`.github/workflows/deploy-firestore.yml`), so each environment follows its branch:
