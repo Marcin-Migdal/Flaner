@@ -3,6 +3,7 @@ import { toast } from "@flaner/shared/utils";
 import { Toaster } from "@flaner/ui-components";
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { QueryCacheReset } from "./components/QueryCacheReset";
 import { RouterProvider } from "react-router";
 import i18n from "./i18n/i18n";
 import { router } from "./routes/router";
@@ -62,6 +63,7 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <QueryCacheReset />
         <RouterProvider router={router} />
         <Toaster />
       </AuthProvider>
