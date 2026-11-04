@@ -49,11 +49,12 @@ export const SpoolerSettingsModal: React.FC<SpoolerSettingsModalProps> = ({
     formState: { isSubmitting, isDirty },
   } = methods;
 
+  // Reset on every open so unsaved edits from a closed modal are discarded
   useEffect(() => {
-    if (startupWaste !== undefined) {
+    if (isOpen) {
       reset({ startupWaste });
     }
-  }, [startupWaste, reset]);
+  }, [isOpen, startupWaste, reset]);
 
   const onSubmit = (data: SettingsFormData) => {
     updateMutation.mutate(data.startupWaste);
