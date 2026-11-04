@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "nx run-many -t serve",
     "dev:emulators": "node scripts/dev-emulators.mjs",
+    "dev:wipe": "node scripts/wipe-dev.mjs",
     "build": "nx run-many -t build",
     "typecheck": "nx run-many -t typecheck",
     "lint": "nx run-many -t lint",

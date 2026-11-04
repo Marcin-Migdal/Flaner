@@ -19,6 +19,7 @@ The single source of truth for AI rules and skills is `.agents/` (shared with Cu
 ## Commands
 - `npm run dev` — all dev servers (host at `localhost:4200`) against the real DEV Firebase (local `.env`)
 - `npm run dev:emulators` — dev servers + Auth/Firestore emulators + rules compiler in watch mode (no deploys; data kept in `.emulator-data/`). Default mode for feature work
+- `npm run dev:wipe` — dry run / `-- --yes` deletes ALL Firestore data and Auth accounts on DEV (never PROD). Needs an Admin SDK key: `.agents/docs/admin-scripts.md` (also `scripts/backfill-usernames.mjs`)
 - `npx nx run <pkg>:lint --fix` — lint only the touched packages (mandatory after changes)
 - `npx nx run <pkg>:typecheck`, `npm run typecheck`
 - `npm test` / `npx vitest run --project <pkg>` — unit tests (Vitest)
