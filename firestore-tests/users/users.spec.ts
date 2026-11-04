@@ -43,8 +43,53 @@ describe("users/{userId}", () => {
     await assertFails(getDoc(doc(anonymous(), "users", BOB)));
   });
 
-  it("lets a user create their own profile on first sign-in (AuthContext)", async () => {
-    await assertSucceeds(setDoc(doc(as(ALICE), "users", ALICE), profile(ALICE, "Alice")));
+  it("accepts the first Google sign-in batch: profile + reservation (createProfileWithReservation)", async () => {
+    await seed({ "usernames/alice": { uid: BOB } });
+    const db = as(ALICE);
+    const batch = writeBatch(db);
+    batch.set(doc(db, "users", ALICE), profile(ALICE, "Alice4821"));
+    batch.set(doc(db, "usernames", "alice4821"), { uid: ALICE });
+
+    await assertSucceeds(batch.commit());
+  });
+
+  it("blocks the Google sign-in batch when the display name is already reserved", async () => {
+    await seed({ "usernames/alice": { uid: BOB } });
+    const db = as(ALICE);
+    const batch = writeBatch(db);
+    batch.set(doc(db, "users", ALICE), profile(ALICE, "Alice"));
+    batch.set(doc(db, "usernames", "alice"), { uid: ALICE });
+
+    await assertFails(batch.commit());
+  });
+
+  it("blocks creating a profile without a username reservation", async () => {
+    await assertFails(setDoc(doc(as(ALICE), "users", ALICE), profile(ALICE, "Alice")));
+  });
+
+  it("blocks a profile whose usernameLower does not match the username", async () => {
+    const db = as(ALICE);
+    const batch = writeBatch(db);
+    batch.set(doc(db, "users", ALICE), { ...profile(ALICE, "Alice"), usernameLower: "mallory" });
+    batch.set(doc(db, "usernames", "mallory"), { uid: ALICE });
+
+    await assertFails(batch.commit());
+  });
+
+  it("blocks renaming without reserving the new username", async () => {
+    await seed({ [`users/${ALICE}`]: profile(ALICE, "Alice"), "usernames/alice": { uid: ALICE } });
+
+    await assertFails(updateDoc(doc(as(ALICE), "users", ALICE), { username: "Alicia", usernameLower: "alicia" }));
+  });
+
+  it("lets a legacy profile without a reservation save settings and reserve its name (updateUserProfile)", async () => {
+    await seed({ [`users/${ALICE}`]: profile(ALICE, "Alice") });
+    const db = as(ALICE);
+    const batch = writeBatch(db);
+    batch.set(doc(db, "usernames", "alice"), { uid: ALICE });
+    batch.set(doc(db, "users", ALICE), { username: "Alice", darkMode: false }, { merge: true });
+
+    await assertSucceeds(batch.commit());
   });
 
   it("lets a user update theme, language and Spooler settings (ShellLayout, updateStartupWaste)", async () => {
@@ -122,6 +167,18 @@ describe("usernames/{usernameLower}", () => {
 
   it("blocks reserving a username for someone else", async () => {
     await assertFails(setDoc(doc(as(ALICE), "usernames", "bob"), { uid: BOB }));
+  });
+
+  it("blocks releasing the username the profile still points at", async () => {
+    await seed({ [`users/${ALICE}`]: profile(ALICE, "Alice"), "usernames/alice": { uid: ALICE } });
+
+    await assertFails(deleteDoc(doc(as(ALICE), "usernames", "alice")));
+  });
+
+  it("lets a user release a stale reservation of their own", async () => {
+    await seed({ [`users/${ALICE}`]: profile(ALICE, "Alice"), "usernames/old-alice": { uid: ALICE } });
+
+    await assertSucceeds(deleteDoc(doc(as(ALICE), "usernames", "old-alice")));
   });
 
   it("blocks releasing someone else's username", async () => {

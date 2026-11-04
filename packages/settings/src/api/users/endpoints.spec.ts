@@ -49,7 +49,7 @@ describe("settings users endpoints - updateUserProfile", () => {
   it("handles username change successfully when new username is available", async () => {
     mockGetDoc
       .mockResolvedValueOnce({ exists: () => false }) // new username doesn't exist
-      .mockResolvedValueOnce({ exists: () => true }); // old username exists
+      .mockResolvedValueOnce({ exists: () => true, data: () => ({ uid: "user-1" }) }); // old username is ours
 
     await updateUserProfile(
       "user-1",
@@ -88,15 +88,58 @@ describe("settings users endpoints - updateUserProfile", () => {
     consoleSpy.mockRestore();
   });
 
-  it("handles username without oldUsernameLower provided", async () => {
+  it("reserves the username when oldUsernameLower is missing", async () => {
+    mockGetDoc.mockResolvedValueOnce({ exists: () => false });
+
     await updateUserProfile("user-1", { username: "BrandNew" });
 
+    expect(mockBatchSet).toHaveBeenCalledWith(
+      expect.objectContaining({ collectionName: "usernames", id: "brandnew" }),
+      { uid: "user-1" },
+    );
     expect(mockBatchSet).toHaveBeenCalledWith(
       expect.objectContaining({ collectionName: "users", id: "user-1" }),
       { username: "BrandNew", usernameLower: "brandnew" },
       { merge: true },
     );
     expect(mockBatchDelete).not.toHaveBeenCalled();
+  });
+
+  it("reserves an unchanged username that has no reservation yet (legacy profile)", async () => {
+    mockGetDoc.mockResolvedValueOnce({ exists: () => false });
+
+    await updateUserProfile("user-1", { username: "Alice", darkMode: false }, "alice");
+
+    expect(mockBatchSet).toHaveBeenCalledWith(
+      expect.objectContaining({ collectionName: "usernames", id: "alice" }),
+      { uid: "user-1" },
+    );
+    expect(mockBatchDelete).not.toHaveBeenCalled();
+  });
+
+  it("saves an unchanged username reserved by someone else without reserving it (legacy collision)", async () => {
+    mockGetDoc.mockResolvedValueOnce({ exists: () => true, data: () => ({ uid: "other-user" }) });
+
+    await updateUserProfile("user-1", { username: "Alice", darkMode: false }, "alice");
+
+    expect(mockBatchSet).toHaveBeenCalledTimes(1);
+    expect(mockBatchSet).toHaveBeenCalledWith(
+      expect.objectContaining({ collectionName: "users", id: "user-1" }),
+      { username: "Alice", usernameLower: "alice", darkMode: false },
+      { merge: true },
+    );
+    expect(mockBatchCommit).toHaveBeenCalled();
+  });
+
+  it("does not release an old reservation that belongs to someone else", async () => {
+    mockGetDoc
+      .mockResolvedValueOnce({ exists: () => false })
+      .mockResolvedValueOnce({ exists: () => true, data: () => ({ uid: "other-user" }) });
+
+    await updateUserProfile("user-1", { username: "Alicia" }, "alice");
+
+    expect(mockBatchDelete).not.toHaveBeenCalled();
+    expect(mockBatchCommit).toHaveBeenCalled();
   });
 
   it("handles missing old reservation doc when changing username", async () => {
