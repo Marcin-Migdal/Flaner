@@ -174,7 +174,7 @@ describe("GroupDetailsView page", () => {
 
   it("shows the loader instead of access denied while the user's groups are loading", () => {
     const mockGroup: Group = createMockGroup({ id: "grp-1", type: "private" });
-    vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: undefined, isLoading: true } as never);
+    vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: undefined, isPending: true, isLoading: false } as never);
     vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false } as never);
 
     renderWithProviders(<GroupDetailsView />);

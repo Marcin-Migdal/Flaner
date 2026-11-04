@@ -51,7 +51,8 @@ export function GroupDetailsView() {
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
-  const { data: userGroups = [], isLoading: userGroupsLoading } = useGetUserGroupsQuery();
+  // isPending, not isLoading: the query is disabled until auth restores the user, and a disabled query reports isLoading=false.
+  const { data: userGroups = [], isPending: userGroupsLoading } = useGetUserGroupsQuery();
   const isMember = userGroups.some((g) => g.id === groupId);
 
   const { data: group, isLoading: groupLoading } = useGetGroupQuery(groupId || "");
