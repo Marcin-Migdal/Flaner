@@ -66,7 +66,7 @@ export function SettingsView() {
         avatarUrl = await uploadToCloudinary(compressed);
       } catch (err) {
         console.error(err);
-        toast.failure((err as Error)?.message || t("notifications.avatarError"));
+        toast.failure(t("notifications.avatarError"));
         return;
       }
     } else if (data.avatar === null) {

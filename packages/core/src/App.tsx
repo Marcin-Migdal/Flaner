@@ -6,27 +6,16 @@ import { useState } from "react";
 import { QueryCacheReset } from "./components/QueryCacheReset";
 import { RouterProvider } from "react-router";
 import i18n from "./i18n/i18n";
+import { resolveApiToastMessage } from "./utils/resolveApiToastMessage";
 import { router } from "./routes/router";
 
-const resolveApiToastMessage = (metaKey?: string, dynamicMessage?: string, fallbackKey?: string) => {
-  const t = (key: string) => i18n.t(key);
-  if (dynamicMessage?.includes("permission-denied")) {
-    return t("errors.permissionDenied");
-  }
-
-  // Matches strictly keys starting with toasts. or errors. (e.g., "toasts.error" or "community:errors.permissionDenied")
-  const isDynamicKey = dynamicMessage && /^([a-zA-Z0-9_]+:)?(toasts\.|errors\.)/.test(dynamicMessage);
-
-  if (isDynamicKey) return t(dynamicMessage);
-  if (metaKey) return t(metaKey);
-  return fallbackKey ? t(fallbackKey) : undefined;
-};
+const t = (key: string) => i18n.t(key);
 
 const getQueryClient = () =>
   new QueryClient({
     queryCache: new QueryCache({
       onError: (error, { meta }) => {
-        const finalMessage = resolveApiToastMessage(meta?.errorMessageKey, error?.message, "errors.fetchError");
+        const finalMessage = resolveApiToastMessage(t, meta?.errorMessageKey, error, "errors.fetchError");
 
         if (finalMessage) toast.failure(finalMessage);
       },
@@ -39,12 +28,12 @@ const getQueryClient = () =>
           dynamicMsg = data.message;
         }
 
-        const finalMessage = resolveApiToastMessage(meta?.successMessageKey, dynamicMsg);
+        const finalMessage = resolveApiToastMessage(t, meta?.successMessageKey, dynamicMsg ? { message: dynamicMsg } : null);
 
         if (finalMessage) toast.success(finalMessage);
       },
       onError: (error, _variables, _context, { meta }) => {
-        const finalMessage = resolveApiToastMessage(meta?.errorMessageKey, error?.message, "errors.mutationError");
+        const finalMessage = resolveApiToastMessage(t, meta?.errorMessageKey, error, "errors.mutationError");
 
         if (finalMessage) toast.failure(finalMessage);
       },

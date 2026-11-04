@@ -34,25 +34,25 @@ const getIcon = (notificationType: NotificationType) => {
 const getText = (notificationType: NotificationType, t: TFunction) => {
   switch (notificationType) {
     case "friend_request":
-      return t("notifications.friendRequest", { defaultValue: "Wysłał(a) Ci zaproszenie do znajomych." });
+      return t("notifications.friendRequest");
     case "friend_request_accepted":
-      return t("notifications.friendAccepted", { defaultValue: "Zaakceptował(a) Twoje zaproszenie." });
+      return t("notifications.friendAccepted");
     case "friend_request_rejected":
-      return t("notifications.friendRejected", { defaultValue: "Odrzucił(a) Twoje zaproszenie." });
+      return t("notifications.friendRejected");
     case "group_invitation":
-      return t("notifications.groupInvitation", { defaultValue: "Zaprosił(a) Cię do grupy." });
+      return t("notifications.groupInvitation");
     case "event_invitation":
-      return t("notifications.eventInvitation", { defaultValue: "Zaprosił(a) Cię do wydarzenia." });
+      return t("notifications.eventInvitation");
     case "event_reopened":
-      return t("notifications.eventReopened", { defaultValue: "Wznowił(a) głosowanie w wydarzeniu." });
+      return t("notifications.eventReopened");
     case "split_group_invitation":
       return t("notifications.splitGroupInvitation");
     case "split_settlement_pending":
       return t("notifications.splitSettlementPending");
     case "system_alert":
-      return t("notifications.systemAlert", { defaultValue: "Ważne powiadomienie systemowe." });
+      return t("notifications.systemAlert");
     default:
-      return t("notifications.system", { defaultValue: "Masz nowe powiadomienie." });
+      return t("notifications.system");
   }
 };
 

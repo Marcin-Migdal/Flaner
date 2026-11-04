@@ -216,7 +216,10 @@
     "accept": "Accept",
     "reject": "Reject",
     "invitedBy": "Invited by:",
-    "empty": "No invitations"
+    "empty": "No invitations",
+    "loading": "Loading...",
+    "someone": "Someone",
+    "joining": "Joining..."
   },
   "inviteToGroup": {
     "title": "Invite Users",
@@ -290,5 +293,8 @@
         "desc": "Allows sending invitations to friends."
       }
     }
+  },
+  "errors": {
+    "notGroupMember": "You are not a member of this group, so you cannot send invitations."
   }
-}
+}

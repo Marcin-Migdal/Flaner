@@ -64,7 +64,7 @@ describe("cloudinary utility", () => {
 
       vi.spyOn(globalThis, "fetch").mockResolvedValue(mockResponse as never);
 
-      await expect(uploadToCloudinary(mockFile)).rejects.toThrow(/Nie udało się przesłać pliku/);
+      await expect(uploadToCloudinary(mockFile)).rejects.toThrow(/Cloudinary upload failed/);
       vi.unstubAllEnvs();
     });
   });
@@ -72,8 +72,8 @@ describe("cloudinary utility", () => {
   describe("compressImage", () => {
     it("rejects when sizeLimit is less than or equal to 0", async () => {
       const mockFile = new File(["data"], "test.png", { type: "image/png" });
-      await expect(compressImage(mockFile, 0)).rejects.toThrow(/Nieprawidłowy limit rozmiaru/);
-      await expect(compressImage(mockFile, -100)).rejects.toThrow(/Nieprawidłowy limit rozmiaru/);
+      await expect(compressImage(mockFile, 0)).rejects.toThrow(/Invalid compression size limit/);
+      await expect(compressImage(mockFile, -100)).rejects.toThrow(/Invalid compression size limit/);
     });
 
     it("handles image load failure during compression", async () => {
@@ -93,7 +93,7 @@ describe("cloudinary utility", () => {
       window.Image = MockImage as unknown as typeof Image;
 
       await expect(compressImage(mockFile, 1024 * 1024)).rejects.toThrow(
-        /Nie udało się załadować obrazu/
+        /Failed to load image for compression/
       );
 
       window.Image = originalImage;
@@ -149,7 +149,7 @@ describe("cloudinary utility", () => {
       const getContextSpy = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
 
       await expect(compressImage(mockFile, 1024 * 1024)).rejects.toThrow(
-        "Nie można stworzyć kontekstu graficznego 2D."
+        "Unable to create 2D canvas context."
       );
 
       getContextSpy.mockRestore();
@@ -179,7 +179,7 @@ describe("cloudinary utility", () => {
       });
 
       await expect(compressImage(mockFile, 1024 * 1024)).rejects.toThrow(
-        "Konwersja obrazu do blob nie powiodła się."
+        "Canvas to blob conversion failed."
       );
 
       getContextSpy.mockRestore();
@@ -211,7 +211,7 @@ describe("cloudinary utility", () => {
       });
 
       await expect(compressImage(mockFile, 10)).rejects.toThrow(
-        "Kompresja obrazu nie powiodła się. Plik przekracza dozwolony limit rozmiaru."
+        "Image compression failed: file exceeds the size limit."
       );
 
       getContextSpy.mockRestore();

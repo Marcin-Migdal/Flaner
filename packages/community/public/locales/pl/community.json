@@ -205,7 +205,10 @@
     "accept": "Akceptuj",
     "reject": "Odrzuć",
     "invitedBy": "Zaprosił(a):",
-    "empty": "Brak zaproszeń"
+    "empty": "Brak zaproszeń",
+    "loading": "Ładowanie...",
+    "someone": "Ktoś",
+    "joining": "Dołączanie..."
   },
   "inviteToGroup": {
     "title": "Zaproś użytkowników",
@@ -279,5 +282,8 @@
         "desc": "Pozwala na wysyłanie zaproszeń do znajomych."
       }
     }
+  },
+  "errors": {
+    "notGroupMember": "Nie jesteś członkiem tej grupy, więc nie możesz wysyłać zaproszeń."
   }
-}
+}

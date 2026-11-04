@@ -290,7 +290,7 @@ export const inviteUserToGroup = async (
 ): Promise<void> => {
   const memberSnap = await getDoc(refs.member(groupId, invitedByUserId));
   if (!memberSnap.exists()) {
-    throw new Error("Nie jesteś członkiem tej grupy, więc nie możesz wysyłać zaproszeń.");
+    throw new Error("community:errors.notGroupMember");
   }
 
   const invitationData: GroupInvitation = {
