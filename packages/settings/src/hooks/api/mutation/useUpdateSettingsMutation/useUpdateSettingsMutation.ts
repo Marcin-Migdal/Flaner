@@ -22,7 +22,8 @@ export const useUpdateSettingsMutation = (options?: UseMutationOptions<void, Err
     ...options,
     onSuccess: async (...args) => {
       const [_data, variables] = args;
-      updateUser(variables);
+      // Keep usernameLower in sync: the next rename releases the reservation it points at
+      updateUser(variables.username ? { ...variables, usernameLower: variables.username.toLowerCase() } : variables);
 
       if (options?.onSuccess) {
         await options.onSuccess(...args);

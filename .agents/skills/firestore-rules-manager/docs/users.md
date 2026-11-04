@@ -5,7 +5,7 @@ User profiles (doc id == Firebase Auth uid). Written by `AuthContext` (shared), 
 ## Invariants
 - **I1** Only the user writes their own profile.
 - **I2** Every signed-in user can read profiles (search, participant pickers), so a profile holds **only public fields** (whitelist below). Private data — e.g. the email — stays in Firebase Auth (`UserType.email` comes from `firebaseUser.email`).
-- **I3** `username` / `usernameLower` change only together with the `usernames` reservation (see `usernames.md`).
+- **I3** Every profile has exactly one `usernames` reservation: a profile is created, and `username` / `usernameLower` change, only together with a reservation of `usernameLower` owned by the user (`usernameLower == username.lower()`), see `usernames.md`. Profiles created before this was enforced are fixed by `scripts/backfill-usernames.mjs`.
 
 ## Schema
 | Field | Type | Required | Notes |
@@ -22,10 +22,11 @@ No other fields are accepted. Legacy profiles may still contain `email`: `AuthCo
 ## Write flows
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
-| Sign up (email) | `signUpWithEmailUser` (`shared/src/context/AuthContext`) | set `users/{me}` + set `usernames/{lower}` | ✅ batch |
+| Sign up (email) | `signUpWithEmailUser` (`shared/src/context/AuthContext`) | set `users/{me}` + set `usernames/{lower}`; on failure the new Auth account is deleted (`deleteUser`) | ✅ batch |
 | Legacy email clean-up | `loadProfile` (AuthContext, every sign-in) | update `email: deleteField()` | – |
-| First Google sign-in | `signInWithGoogleUser`, `onAuthStateChanged` (AuthContext) | set `users/{me}` (no username reservation) | – |
-| Edit profile | `updateUserProfile` (`settings/src/api/users`) | merge-set `users/{me}`, set new + delete old `usernames/*` | ✅ batch |
+| First Google sign-in | `createProfileWithReservation` via `signInWithGoogleUser`, `onAuthStateChanged` (AuthContext) | set `users/{me}` + set `usernames/{lower}` (display name, random suffix on collision) | ✅ batch |
+| Edit profile | `updateUserProfile` (`settings/src/api/users`) | merge-set `users/{me}`, set new `usernames/*` when free + delete own old one | ✅ batch |
+| Legacy backfill | `scripts/backfill-usernames.mjs` (Admin SDK, bypasses rules) | reserve missing names, rename colliding profiles, delete stale reservations | ✅ batch per user |
 | Theme / language | `ShellLayout` (`core/src/components/ShellLayout`) | update `darkMode` / `language` | – |
 | Spooler startup waste | `updateStartupWaste` (`tools/src/api/settings`) | update `startupWaste` | – |
 
@@ -41,18 +42,36 @@ No other fields are accepted. Legacy profiles may still contain `email`: `AuthCo
 | --- | --- | --- | --- | --- |
 | unauthenticated | ❌ | ❌ | ❌ | ❌ |
 | other user | ✅ | ❌ | ❌ | ❌ |
-| self | ✅ | ✅ | ❌ | ✅ |
+| self | ✅ | ✅ (with own reservation of `usernameLower`) | ❌ | ✅ |
+
+Creating a profile, or changing `username` / `usernameLower`, without the user's own reservation of the new `usernameLower` in the same batch is denied (I3).
 
 ## Rules
 ```rules
 // Reguły dla kolekcji użytkowników
 match /users/{userId} {
-  allow read: if isAuthenticated();
   // Profiles are public to signed-in users: only whitelisted, non-private fields (no email)
-  allow create, update: if isAuthenticated() && request.auth.uid == userId &&
-    request.resource.data.keys().hasOnly([
+  function hasAllowedFields() {
+    return request.resource.data.keys().hasOnly([
       'uid', 'username', 'usernameLower', 'avatarUrl', 'darkMode', 'language', 'startupWaste'
     ]);
+  }
+
+  // I3: the (new) username is reserved by this user after the batch
+  function hasOwnUsernameReservation() {
+    let reservation = getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.usernameLower));
+    return request.resource.data.usernameLower == request.resource.data.username.lower() &&
+      reservation != null && reservation.data.uid == userId;
+  }
+
+  allow read: if isAuthenticated();
+  allow create: if isAuthenticated() && request.auth.uid == userId &&
+    hasAllowedFields() && hasOwnUsernameReservation();
+  allow update: if isAuthenticated() && request.auth.uid == userId &&
+    hasAllowedFields() && (
+      !request.resource.data.diff(resource.data).affectedKeys().hasAny(['username', 'usernameLower']) ||
+      hasOwnUsernameReservation()
+    );
   allow delete: if isAuthenticated() && request.auth.uid == userId;
 
   {{subcollections}}
@@ -60,7 +79,7 @@ match /users/{userId} {
 ```
 
 ## Tests
-- `firestore-tests/users/users.spec.ts` — profile reads, own writes, search queries, sign-up and profile-edit batches, private / unknown fields denied, legacy email clean-up.
+- `firestore-tests/users/users.spec.ts` — profile reads, own writes, search queries, sign-up, Google and profile-edit batches, profiles / renames without a reservation denied, private / unknown fields denied, legacy email clean-up.
 
 ---
 

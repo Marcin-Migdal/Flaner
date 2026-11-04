@@ -1,6 +1,7 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/users.md, usernames.md (keep their Write flows / Queries in sync).
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -13,7 +14,6 @@ import {
   deleteField,
   doc,
   getDoc,
-  setDoc,
   terminate,
   updateDoc,
   writeBatch,
@@ -42,16 +42,41 @@ const loadProfile = async (uid: string): Promise<UserProfile | null> => {
   return profile as UserProfile;
 };
 
-const createProfile = (firebaseUser: User, language: LanguageType): UserProfile => {
-  const username = firebaseUser.displayName || "User";
-  return {
-    uid: firebaseUser.uid,
-    username,
-    usernameLower: username.toLowerCase(),
-    avatarUrl: firebaseUser.photoURL || "",
-    darkMode: true,
-    language,
-  };
+const usernameRef = (usernameLower: string) => doc(fb.firestore, "usernames", usernameLower);
+
+const USERNAME_ATTEMPTS = 5;
+
+/**
+ * First Google sign-in: creates the profile together with a free `usernames` reservation.
+ * The display name is tried first, then the name with a random 4-digit suffix.
+ */
+const createProfileWithReservation = async (firebaseUser: User, language: LanguageType): Promise<UserProfile> => {
+  // "/" is not allowed in a doc id; the settings form requires at least 3 characters
+  const displayName = (firebaseUser.displayName ?? "").replace(/\//g, "").trim();
+  const base = displayName.length >= 3 ? displayName : "User";
+
+  for (let attempt = 0; attempt < USERNAME_ATTEMPTS; attempt++) {
+    const username = attempt === 0 ? base : `${base}${Math.floor(1000 + Math.random() * 9000)}`;
+    const usernameLower = username.toLowerCase();
+    const reservation = await getDoc(usernameRef(usernameLower));
+    if (reservation.exists() && reservation.data().uid !== firebaseUser.uid) continue;
+
+    const profile: UserProfile = {
+      uid: firebaseUser.uid,
+      username,
+      usernameLower,
+      avatarUrl: firebaseUser.photoURL || "",
+      darkMode: true,
+      language,
+    };
+    const batch = writeBatch(fb.firestore);
+    batch.set(profileRef(firebaseUser.uid), profile);
+    batch.set(usernameRef(usernameLower), { uid: firebaseUser.uid });
+    await batch.commit();
+    return profile;
+  }
+
+  throw new FirebaseError("app/username-already-in-use", "No free username found");
 };
 
 const toUser = (profile: UserProfile, firebaseUser: User): UserType => ({
@@ -110,8 +135,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (!profile) {
           // If the profile document doesn't exist, create it (e.g. after Google redirect login)
-          profile = createProfile(firebaseUser, "pl");
-          await setDoc(profileRef(firebaseUser.uid), profile);
+          profile = await createProfileWithReservation(firebaseUser, "pl");
         }
         setUser(toUser(profile, firebaseUser));
       } catch (error) {
@@ -154,8 +178,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       let profile = await loadProfile(firebaseUser.uid);
 
       if (!profile) {
-        profile = createProfile(firebaseUser, language);
-        await setDoc(profileRef(firebaseUser.uid), profile);
+        profile = await createProfileWithReservation(firebaseUser, language);
       }
 
       setUser(toUser(profile, firebaseUser));
@@ -189,10 +212,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isManualAuth.current = true;
     try {
       const usernameLower = username.toLowerCase();
-      
-      const usernameDocRef = doc(fb.firestore, "usernames", usernameLower);
+
+      const usernameDocRef = usernameRef(usernameLower);
       const usernameDocSnap = await getDoc(usernameDocRef);
-      
+
       if (usernameDocSnap.exists()) {
         throw new FirebaseError("app/username-already-in-use", "This username is already taken");
       }
@@ -211,7 +234,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       batch.set(profileRef(firebaseUser.uid), userProfile);
       batch.set(usernameDocRef, { uid: firebaseUser.uid });
 
-      await batch.commit();
+      try {
+        await batch.commit();
+      } catch (error) {
+        // Never leave an Auth account without a profile (e.g. the username was taken in a race)
+        await deleteUser(firebaseUser).catch((deleteError) =>
+          console.error("Failed to roll back the Auth account", deleteError),
+        );
+        throw error;
+      }
 
       setUser(toUser(userProfile, firebaseUser));
     } catch (error) {

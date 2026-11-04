@@ -36,7 +36,8 @@
   },
   "validation": {
     "usernameRequired": "Nazwa użytkownika jest wymagana",
-    "usernameMin": "Nazwa użytkownika musi mieć co najmniej 3 znaki"
+    "usernameMin": "Nazwa użytkownika musi mieć co najmniej 3 znaki",
+    "usernameInUse": "Ta nazwa użytkownika jest już zajęta."
   },
   "toasts": {
     "notifications": {

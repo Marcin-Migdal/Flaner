@@ -36,7 +36,8 @@
   },
   "validation": {
     "usernameRequired": "Username is required",
-    "usernameMin": "Username must be at least 3 characters"
+    "usernameMin": "Username must be at least 3 characters",
+    "usernameInUse": "This username is already taken."
   },
   "toasts": {
     "notifications": {
