@@ -12,6 +12,8 @@ import {
   limit,
   runTransaction,
   writeBatch,
+  type FieldValue,
+  type Timestamp,
 } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
 import { firestoreConverter } from "@flaner/shared/utils";
@@ -25,6 +27,12 @@ export const spoolRefs = {
     collection(fb.firestore, `spools/${spoolId}/prints`).withConverter(firestoreConverter<SpoolPrint>()),
   print: (spoolId: string, printId: string) =>
     doc(fb.firestore, `spools/${spoolId}/prints`, printId).withConverter(firestoreConverter<SpoolPrint>()),
+};
+
+// Keep the original finish date while the spool stays finished; stamp it only on the transition.
+const resolveFinishedAt = (current: FilamentSpool, isFinished: boolean): Timestamp | FieldValue | null => {
+  if (!isFinished) return null;
+  return current.isFinished && current.finishedAt ? current.finishedAt : serverTimestamp();
 };
 
 export const fetchSpools = async (userId: string): Promise<FilamentSpool[]> => {
@@ -69,18 +77,26 @@ export const editSpool = async (
   data: SpoolInput,
   selectedTemplate?: FilamentTemplate,
 ): Promise<void> => {
-  const spoolRef = doc(fb.firestore, "spools", spoolId);
-  await updateDoc(spoolRef, {
-    templateId: data.templateId,
-    name: data.name,
-    initialWeight: data.initialWeight,
-    currentWeight: data.currentWeight,
-    isFinished: data.currentWeight <= 0,
-    finishedAt: data.currentWeight <= 0 ? serverTimestamp() : null,
-    material: selectedTemplate?.material ?? "Unknown",
-    type: selectedTemplate?.type ?? "Custom",
-    colorName: selectedTemplate?.colorName ?? "Default",
-    colorHex: selectedTemplate?.colorHex ?? "#808080",
+  await runTransaction(fb.firestore, async (transaction) => {
+    const spoolRef = spoolRefs.spool(spoolId);
+    const snap = await transaction.get(spoolRef);
+    if (!snap.exists()) {
+      throw new Error("Spool not found");
+    }
+
+    const isFinished = data.currentWeight <= 0;
+    transaction.update(spoolRef, {
+      templateId: data.templateId,
+      name: data.name,
+      initialWeight: data.initialWeight,
+      currentWeight: data.currentWeight,
+      isFinished,
+      finishedAt: resolveFinishedAt(snap.data(), isFinished),
+      material: selectedTemplate?.material ?? "Unknown",
+      type: selectedTemplate?.type ?? "Custom",
+      colorName: selectedTemplate?.colorName ?? "Default",
+      colorHex: selectedTemplate?.colorHex ?? "#808080",
+    });
   });
 };
 
@@ -102,7 +118,7 @@ export const recordSpoolUsage = async (
     transaction.update(spoolRef, {
       currentWeight: newWeight,
       isFinished,
-      finishedAt: isFinished ? serverTimestamp() : null,
+      finishedAt: resolveFinishedAt(currentSpool, isFinished),
     });
 
     const printsColRef = collection(fb.firestore, `spools/${spool.id}/prints`);

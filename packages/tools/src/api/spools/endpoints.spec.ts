@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Timestamp } from "firebase/firestore";
 import type { FilamentSpool, SpoolInput } from "./types";
 import type { FilamentTemplate } from "../templates/types";
 import {
@@ -48,7 +49,8 @@ vi.mock("@flaner/shared/firebase", () => ({
   },
 }));
 
-vi.mock("firebase/firestore", () => ({
+vi.mock("firebase/firestore", async (importOriginal) => ({
+  Timestamp: (await importOriginal<typeof import("firebase/firestore")>()).Timestamp,
   collection: vi.fn((_db: unknown, path: string) => ({
     path,
     withConverter: vi.fn().mockReturnValue({ path }),
@@ -190,7 +192,20 @@ describe("tools spools endpoints", () => {
   });
 
   describe("editSpool", () => {
+    const spoolSnap = (data: Partial<FilamentSpool>) => ({ exists: () => true, data: () => data });
+
+    const template: FilamentTemplate = {
+      id: "tpl-2",
+      userId: "user-1",
+      material: "PETG",
+      type: "Translucent",
+      colorName: "Clear",
+      colorHex: "#cccccc",
+      defaultWeight: 1000,
+    };
+
     it("updates spool document with template and input data", async () => {
+      mockTransactionGet.mockResolvedValueOnce(spoolSnap({ isFinished: false, finishedAt: null }));
       const spoolInput: SpoolInput = {
         templateId: "tpl-2",
         name: "Updated Spool",
@@ -198,19 +213,9 @@ describe("tools spools endpoints", () => {
         currentWeight: 500,
       };
 
-      const template: FilamentTemplate = {
-        id: "tpl-2",
-        userId: "user-1",
-        material: "PETG",
-        type: "Translucent",
-        colorName: "Clear",
-        colorHex: "#cccccc",
-        defaultWeight: 1000,
-      };
-
       await editSpool("spool-1", spoolInput, template);
 
-      expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect(mockTransactionUpdate).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           templateId: "tpl-2",
@@ -227,7 +232,8 @@ describe("tools spools endpoints", () => {
       );
     });
 
-    it("updates spool document as finished when currentWeight <= 0 with fallback defaults", async () => {
+    it("stamps finishedAt when the spool becomes finished, with fallback defaults", async () => {
+      mockTransactionGet.mockResolvedValueOnce(spoolSnap({ isFinished: false, finishedAt: null }));
       const spoolInput: SpoolInput = {
         templateId: "tpl-1",
         name: "Depleted Spool",
@@ -237,7 +243,7 @@ describe("tools spools endpoints", () => {
 
       await editSpool("spool-1", spoolInput);
 
-      expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect(mockTransactionUpdate).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           isFinished: true,
@@ -248,6 +254,39 @@ describe("tools spools endpoints", () => {
           colorHex: "#808080",
         }),
       );
+    });
+
+    it("keeps the original finishedAt when editing an already finished spool", async () => {
+      const originalFinishedAt = new Timestamp(1000, 0);
+      mockTransactionGet.mockResolvedValueOnce(spoolSnap({ isFinished: true, finishedAt: originalFinishedAt }));
+
+      await editSpool("spool-1", { templateId: "tpl-1", name: "Renamed", initialWeight: 1000, currentWeight: 0 });
+
+      expect(mockTransactionUpdate).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ isFinished: true, finishedAt: originalFinishedAt }),
+      );
+    });
+
+    it("clears finishedAt when a finished spool gets weight back", async () => {
+      mockTransactionGet.mockResolvedValueOnce(spoolSnap({ isFinished: true, finishedAt: new Timestamp(1000, 0) }));
+
+      await editSpool("spool-1", { templateId: "tpl-1", name: "Refilled", initialWeight: 1000, currentWeight: 200 });
+
+      expect(mockTransactionUpdate).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ isFinished: false, finishedAt: null }),
+      );
+    });
+
+    it("throws without writing when the spool does not exist", async () => {
+      mockTransactionGet.mockResolvedValueOnce({ exists: () => false });
+
+      await expect(
+        editSpool("spool-1", { templateId: "tpl-1", name: "Gone", initialWeight: 1000, currentWeight: 100 }),
+      ).rejects.toThrow("Spool not found");
+
+      expect(mockTransactionUpdate).not.toHaveBeenCalled();
     });
   });
 
@@ -325,6 +364,21 @@ describe("tools spools endpoints", () => {
           isFinished: true,
           finishedAt: 123456789,
         }),
+      );
+    });
+
+    it("keeps the original finishedAt when recording a print on an already finished spool", async () => {
+      const originalFinishedAt = new Timestamp(1000, 0);
+      mockTransactionGet.mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ currentWeight: 0, isFinished: true, finishedAt: originalFinishedAt }),
+      });
+
+      await recordSpoolUsage(baseSpool, 10);
+
+      expect(mockTransactionUpdate).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ currentWeight: 0, isFinished: true, finishedAt: originalFinishedAt }),
       );
     });
   });
