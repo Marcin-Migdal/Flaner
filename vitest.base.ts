@@ -8,15 +8,6 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     pool: "threads",
-    environmentMatchGlobs: [
-      ["**/schemas/**", "node"],
-      ["**/packages/shared/src/utils/**", "node"],
-      ["**/packages/planning/src/utils/**", "node"],
-      ["**/packages/community/src/utils/**", "node"],
-      ["**/packages/tools/src/utils/**", "node"],
-      ["**/packages/settings/src/utils/**", "node"],
-      ["**/packages/core/src/utils/**", "node"],
-    ],
     setupFiles: [path.resolve(__dirname, "./vitest.setup.ts")],
     include: [
       "src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",

@@ -41,7 +41,7 @@ describe("NotificationCard", () => {
     );
 
     expect(screen.getByText("JohnDoe")).toBeInTheDocument();
-    expect(screen.getByText("Wysłał(a) Ci zaproszenie do znajomych.")).toBeInTheDocument();
+    expect(screen.getByText("notifications.friendRequest")).toBeInTheDocument();
   });
 
   it("calls onRead, navigates to friend requests, and closes popover when clicked", async () => {

@@ -352,7 +352,7 @@ describe("SettingsView", () => {
     await user.click(saveButton);
 
     await waitFor(() => {
-      expect(toast.failure).toHaveBeenCalledWith("Compression error");
+      expect(toast.failure).toHaveBeenCalledWith("notifications.avatarError");
       expect(mockMutate).not.toHaveBeenCalled();
     });
 

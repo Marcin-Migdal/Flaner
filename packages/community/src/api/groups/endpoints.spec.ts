@@ -390,7 +390,7 @@ describe("community groups endpoints", () => {
 
       await expect(
         inviteUserToGroup("group-1", "Hiking", "user-2", "user-outsider"),
-      ).rejects.toThrow("Nie jesteś członkiem tej grupy");
+      ).rejects.toThrow("community:errors.notGroupMember");
     });
 
     it("inviteUserToGroup sets invitation docs and creates notification", async () => {

@@ -189,9 +189,9 @@ When working across multiple packages and MFEs in the monorepo, follow these Typ
 
 ## 10. Performance, Vitest Pool & Troubleshooting (`JavaScript heap out of memory`)
 
-### A. Pool Configuration (`pool: 'threads'` & `node` environment)
+### A. Pool Configuration (`pool: 'threads'` & `jsdom` environment)
 - **Fast Execution on Windows:** In `vitest.base.ts`, Vitest is configured with `pool: 'threads'` to utilize Node worker threads instead of process forking (`forks`). This eliminates process creation and NTFS file-locking overhead on Windows, reducing test duration by ~40%.
-- **Lightweight Environments:** All schemas (`**/schemas/**`) and pure utility modules (`packages/*/src/utils/**` except `cropImage` which needs canvas) run under `environment: 'node'` via `environmentMatchGlobs` in `vitest.base.ts`. Pure logic does not instantiate JSDOM, booting in 0-2 ms instead of 150-200 ms.
+- **Single Environment:** All tests run under `environment: 'jsdom'` (`vitest.base.ts`). Vitest 4 removed `environmentMatchGlobs`; marking the pure utils / schemas specs with `// @vitest-environment node` was measured (2026-11, 280 files) and gave no gain (~49.5 s either way), so it is not used. A single spec that must run without a DOM may still add the docblock (e.g. `useTheme.node.spec.ts`).
 
 ### B. Troubleshooting: `JavaScript heap out of memory` (OOM)
 If test suites grow into thousands of tests and Node throws an Out-Of-Memory error:

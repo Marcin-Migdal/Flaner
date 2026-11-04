@@ -38,12 +38,12 @@ export function NotificationsPopover() {
     <SidebarMenuItem>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <SidebarMenuButton tooltip={t("nav.notifications", { defaultValue: "Powiadomienia" })}>
+          <SidebarMenuButton tooltip={t("nav.notifications")}>
             <div className="relative flex items-center justify-center">
               <Bell className="size-4 shrink-0" />
               {unreadCount > 0 && <div className="absolute -top-1 -right-1 size-2 bg-brand rounded-full" />}
             </div>
-            <span>{t("nav.notifications", { defaultValue: "Powiadomienia" })}</span>
+            <span>{t("nav.notifications")}</span>
             {unreadCount > 0 && (
               <span className="ml-auto bg-brand text-brand-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                 {unreadCount > 99 ? "99+" : unreadCount}
@@ -95,10 +95,10 @@ export function NotificationsPopover() {
                     <Bell className="size-6 text-muted-foreground/50" />
                   </div>
                   <p className="text-sm font-medium text-foreground">
-                    {t("notifications.empty.title", { defaultValue: "Jesteś na bieżąco!" })}
+                    {t("notifications.empty.title")}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {t("notifications.empty.subtitle", { defaultValue: "Nie masz żadnych nowych powiadomień." })}
+                    {t("notifications.empty.subtitle")}
                   </p>
                 </div>
               ) : (
@@ -126,12 +126,10 @@ export function NotificationsPopover() {
                     <Inbox className="size-6 text-muted-foreground/50" />
                   </div>
                   <p className="text-sm font-medium text-foreground">
-                    {t("notifications.readPlaceholder.title", { defaultValue: "Brak historii" })}
+                    {t("notifications.readPlaceholder.title")}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1 max-w-[250px]">
-                    {t("notifications.readPlaceholder.subtitle", {
-                      defaultValue: "Tutaj znajdziesz swoje przeczytane powiadomienia.",
-                    })}
+                    {t("notifications.readPlaceholder.subtitle")}
                   </p>
                 </div>
               ) : (

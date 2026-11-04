@@ -79,13 +79,13 @@ export function GroupInvitationsSheet() {
           {isLoading ? (
             <div className="flex justify-center items-center py-8 text-muted-foreground gap-2">
               <Loader2 className="size-4 animate-spin text-brand" />
-              <span>Ładowanie...</span>
+              <span>{t("groupInvitations.loading")}</span>
             </div>
           ) : (
             <div className="space-y-3">
               {invitations.map((inv) => {
                 const invitor = invitorProfiles?.find(p => p.uid === inv.invitedByUserId);
-                const invitorName = invitor?.username || "Ktoś";
+                const invitorName = invitor?.username || t("groupInvitations.someone");
                 const isAccepting = processingId === `accept-${inv.groupId}`;
                 const isRejecting = processingId === `reject-${inv.groupId}`;
                 const isBusy = !!processingId;
@@ -117,7 +117,7 @@ export function GroupInvitationsSheet() {
                         {isAccepting ? (
                           <>
                             <Loader2 className="size-4 animate-spin" />
-                            <span>Dołączanie...</span>
+                            <span>{t("groupInvitations.joining")}</span>
                           </>
                         ) : (
                           <>

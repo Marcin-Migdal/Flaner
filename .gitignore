@@ -51,6 +51,7 @@ vitest.config.*.timestamp*
 **/.mf/
 .vercel
 .env*
+!.env.example
 playwright-report/
 test-results/
 
