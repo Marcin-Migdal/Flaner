@@ -172,6 +172,17 @@ describe("GroupDetailsView page", () => {
     await user.click(backBtn);
   });
 
+  it("shows the loader instead of access denied while the user's groups are loading", () => {
+    const mockGroup: Group = createMockGroup({ id: "grp-1", type: "private" });
+    vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: undefined, isLoading: true } as never);
+    vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false } as never);
+
+    renderWithProviders(<GroupDetailsView />);
+
+    expect(screen.getByText("groupDetails.loading")).toBeInTheDocument();
+    expect(screen.queryByText("groupDetails.accessDenied")).not.toBeInTheDocument();
+  });
+
   it("allows non-member to join a public group without approval", async () => {
     const user = userEvent.setup();
     const joinGroupMock = vi.fn().mockResolvedValue(undefined);

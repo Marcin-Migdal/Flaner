@@ -51,7 +51,7 @@ export function GroupDetailsView() {
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
-  const { data: userGroups = [] } = useGetUserGroupsQuery();
+  const { data: userGroups = [], isLoading: userGroupsLoading } = useGetUserGroupsQuery();
   const isMember = userGroups.some((g) => g.id === groupId);
 
   const { data: group, isLoading: groupLoading } = useGetGroupQuery(groupId || "");
@@ -87,7 +87,8 @@ export function GroupDetailsView() {
     },
   });
 
-  if (groupLoading || (isMember && membersLoading)) return <div className="p-8 text-center">{t("groupDetails.loading")}</div>;
+  // Membership unknown until the user's groups load; deciding earlier flashes "Access Denied" for members.
+  if (groupLoading || userGroupsLoading || (isMember && membersLoading)) return <div className="p-8 text-center">{t("groupDetails.loading")}</div>;
   if (!group) return <div className="p-8 text-center text-destructive">{t("groupDetails.notFound")}</div>;
 
   const currentUserRole = members.find((m) => m.userId === user?.uid)?.role;

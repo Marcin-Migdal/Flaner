@@ -3,6 +3,7 @@ import { toast as sonnerToast } from "sonner";
 export type ToastOptions = {
   description?: string;
   duration?: number;
+  action?: { label: string; onClick: () => void };
 }
 
 export const toast = {
@@ -28,6 +29,7 @@ export const toast = {
     sonnerToast(message, {
       description: options?.description,
       duration: options?.duration,
+      action: options?.action,
     });
   },
 };
