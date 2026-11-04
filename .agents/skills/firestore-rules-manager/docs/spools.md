@@ -25,7 +25,7 @@ Endpoints: `packages/tools/src/api/spools/endpoints.ts`, `templates/endpoints.ts
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
 | Add | `addSpool` | set spool | – |
-| Edit | `editSpool` | update spool | – |
+| Edit | `editSpool` | read spool, update spool (`finishedAt` kept while still finished) | ✅ transaction |
 | Record print | `recordSpoolUsage` | update `currentWeight` / `isFinished` / `finishedAt`, set `prints/{id}` | ✅ transaction |
 | Undo print | `undoLastPrint` | read print, update weight, delete `prints/{id}` | ✅ transaction (print re-read inside) |
 | Mark finished | `markSpoolAsFinished` | update | – |
