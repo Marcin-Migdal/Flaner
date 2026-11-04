@@ -195,18 +195,6 @@ export const getOutstandingDebtAmount = (
   receiverId: string,
   currency: string,
 ): number => {
-  const pairwiseDebt =
-    getPairwiseDebts(group.pairBalances).find(
-      (d) => d.from === payerId && d.to === receiverId && d.currency === currency,
-    )?.amount ?? 0;
-
-  const simplifiedDebt =
-    getSimplifiedDebts(group.balances).find(
-      (d) => d.from === payerId && d.to === receiverId && d.currency === currency,
-    )?.amount ?? 0;
-
-  if (group.simplifyDebts) {
-    return Math.max(simplifiedDebt, pairwiseDebt);
-  }
-  return pairwiseDebt;
+  const debts = group.simplifyDebts ? getSimplifiedDebts(group.balances) : getPairwiseDebts(group.pairBalances);
+  return debts.find((d) => d.from === payerId && d.to === receiverId && d.currency === currency)?.amount ?? 0;
 };

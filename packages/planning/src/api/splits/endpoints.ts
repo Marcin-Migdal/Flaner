@@ -1,7 +1,7 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/split_groups.md (keep their Write flows / Queries in sync).
 import { fb } from "@flaner/shared/firebase";
 import type { UserType } from "@flaner/shared/types";
-import { firestoreConverter } from "@flaner/shared/utils";
+import { BATCH_LIMIT, deleteInBatches, firestoreConverter } from "@flaner/shared/utils";
 import {
   collection,
   deleteDoc,
@@ -48,8 +48,6 @@ type SplitGroupNotification = {
   createdAt: number;
   read: boolean;
 };
-
-const BATCH_LIMIT = 450;
 
 const refs = {
   groups: () => collection(fb.firestore, "split_groups").withConverter(firestoreConverter<SplitGroup>()),
@@ -200,14 +198,6 @@ export const updateSplitGroup = async (groupId: string, data: UpdateSplitGroupIn
   });
 };
 
-const deleteInBatches = async (docRefs: DocumentReference[]) => {
-  for (let index = 0; index < docRefs.length; index += BATCH_LIMIT) {
-    const batch = writeBatch(fb.firestore);
-    docRefs.slice(index, index + BATCH_LIMIT).forEach((ref) => batch.delete(ref));
-    await batch.commit();
-  }
-};
-
 /**
  * Deletes a fully settled group: marks it as `deleting` (hidden from lists and unlocking subcollection
  * deletion for the owner), removes all expenses and settlements in batches and finally the group itself.
@@ -230,7 +220,10 @@ export const deleteSplitGroup = async (groupId: string, userId: string): Promise
     getDocs(refs.expenses(groupId)),
     getDocs(refs.settlements(groupId)),
   ]);
-  await deleteInBatches([...expensesSnap.docs.map((d) => d.ref), ...settlementsSnap.docs.map((d) => d.ref)]);
+  await deleteInBatches(fb.firestore, [
+    ...expensesSnap.docs.map((d) => d.ref),
+    ...settlementsSnap.docs.map((d) => d.ref),
+  ]);
   await deleteDoc(groupRef);
 };
 

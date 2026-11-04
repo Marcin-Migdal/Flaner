@@ -82,7 +82,10 @@ export const SchedulerCalendarPanel = ({
             currentCalendarView={currentCalendarView}
             onViewChange={setCurrentCalendarView}
             onVoteSlot={handleVoteSlot}
-            onSlotClick={setVotingSlotIndex}
+            onSlotClick={(slotIndex) => {
+              // A finalized event is read-only; its results stay available in the ranked sheet
+              if (!activeEvent.isFinalized) setVotingSlotIndex(slotIndex);
+            }}
             onOpenRankedSheet={() => setIsRankedSheetOpen(true)}
           />
         ) : (

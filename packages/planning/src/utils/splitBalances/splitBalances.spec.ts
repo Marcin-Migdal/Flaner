@@ -210,6 +210,38 @@ describe("splitBalances", () => {
     expect(amountZero).toBe(0);
   });
 
+  it("getOutstandingDebtAmount uses only the simplified debt in a chain A→B→C", () => {
+    // A owes B 10, B owes C 10 → simplified: A owes C 10, A and B owe each other nothing
+    const group: SplitGroup = {
+      id: "group-1",
+      name: "Trip",
+      description: "",
+      defaultCurrency: "PLN",
+      lastUsedCurrency: "PLN",
+      createdBy: "userA",
+      participants: ["userA", "userB", "userC"],
+      formerParticipants: [],
+      balances: { PLN: { userA: -10, userC: 10 } },
+      pairBalances: { PLN: { [getPairKey("userA", "userB")]: -10, [getPairKey("userB", "userC")]: -10 } },
+      totalSpent: { PLN: 20 },
+      expensesCount: 2,
+      settlementsCount: 0,
+      simplifyDebts: false,
+      status: "active",
+      createdAt: 1000,
+      updatedAt: 1000,
+    };
+
+    expect(getOutstandingDebtAmount(group, "userA", "userB", "PLN")).toBe(10);
+    expect(getOutstandingDebtAmount(group, "userB", "userC", "PLN")).toBe(10);
+    expect(getOutstandingDebtAmount(group, "userA", "userC", "PLN")).toBe(0);
+
+    const simplified = { ...group, simplifyDebts: true };
+    expect(getOutstandingDebtAmount(simplified, "userA", "userB", "PLN")).toBe(0);
+    expect(getOutstandingDebtAmount(simplified, "userB", "userC", "PLN")).toBe(0);
+    expect(getOutstandingDebtAmount(simplified, "userA", "userC", "PLN")).toBe(10);
+  });
+
   it("handles negative pair balance, invalid keys, and unrelated debts in summarizeUserDebts", () => {
     // Negative pair balance (userA owes userB) and invalid key without separator
     const pairDebts = getPairwiseDebts({

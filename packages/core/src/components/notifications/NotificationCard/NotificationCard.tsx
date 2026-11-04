@@ -80,7 +80,7 @@ export function NotificationCard({ notification, onRead, onClosePopover }: Notif
     } else if (notification.type === "group_invitation") {
       navigate("/community/groups#group-invitations");
     } else if (notification.type === "event_invitation" || notification.type === "event_reopened") {
-      navigate("/planning");
+      navigate({ pathname: "/planning/scheduling", hash: notification.eventId ?? "" });
     } else if (notification.type === "split_group_invitation" || notification.type === "split_settlement_pending") {
       navigate({ pathname: "/planning/splits", hash: notification.splitGroupId ?? "" });
     }

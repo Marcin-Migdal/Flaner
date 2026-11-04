@@ -32,7 +32,7 @@ All endpoints: `packages/community/src/api/groups/endpoints.ts`.
 | Edit group | `updateGroup` | update `groups/{id}` (+ `nameLower`, `updatedAt`) | – |
 | Edit role permissions | `updateGroupRolePermissions` | update `rolePermissions`, `updatedAt` | – |
 | Transfer ownership | `transferGroupOwnership` | update `ownerId`; `members/{old}.role = 'admin'`; `members/{new}.role = 'owner'` | ✅ batch |
-| Delete group | `deleteGroup` | delete all `members` (incl. the owner's), `requests`, `invitations`, every `users/{invitee}/groupInvitations/{id}`, then the group | ✅ batch (required: the owner may delete their member doc only together with the group) |
+| Delete group | `deleteGroup` | delete the other `members`, `requests`, `invitations`, every `users/{invitee}/groupInvitations/{id}`; then the owner's member doc + the group | ❌ sequential batches of ≤450 (`deleteInBatches`); the last batch holds the owner's member doc + the group (required: the owner may delete their member doc only together with the group) |
 
 ## Queries
 | Query | Endpoint | Allowed by |

@@ -140,16 +140,21 @@ describe("groups/{groupId}", () => {
     await assertSucceeds(batch.commit());
   });
 
-  it("accepts the delete batch for a group without pending invitations (deleteGroup)", async () => {
+  it("accepts the delete batches for a group without pending invitations (deleteGroup)", async () => {
     await seedGroup();
     await seed({ [`${GROUP}/requests/${REQUESTER}`]: { userId: REQUESTER, requestedAt: 1 } });
     const db = as(OWNER);
+    // Batch 1..n: everything except the owner's member doc
     const batch = writeBatch(db);
-    [OWNER, ADMIN, MODERATOR, MEMBER].forEach((uid) => batch.delete(doc(db, `${GROUP}/members`, uid)));
+    [ADMIN, MODERATOR, MEMBER].forEach((uid) => batch.delete(doc(db, `${GROUP}/members`, uid)));
     batch.delete(doc(db, `${GROUP}/requests`, REQUESTER));
-    batch.delete(doc(db, GROUP));
-
     await assertSucceeds(batch.commit());
+
+    // Last batch: the owner's member doc together with the group
+    const lastBatch = writeBatch(db);
+    lastBatch.delete(doc(db, `${GROUP}/members`, OWNER));
+    lastBatch.delete(doc(db, GROUP));
+    await assertSucceeds(lastBatch.commit());
   });
 
   it("lets only the owner delete the group", async () => {
@@ -166,12 +171,15 @@ describe("groups/{groupId}", () => {
     });
     const db = as(OWNER);
     const batch = writeBatch(db);
-    [OWNER, ADMIN, MODERATOR, MEMBER].forEach((uid) => batch.delete(doc(db, `${GROUP}/members`, uid)));
+    [ADMIN, MODERATOR, MEMBER].forEach((uid) => batch.delete(doc(db, `${GROUP}/members`, uid)));
     batch.delete(doc(db, `${GROUP}/invitations`, INVITEE));
     batch.delete(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID));
-    batch.delete(doc(db, GROUP));
-
     await assertSucceeds(batch.commit());
+
+    const lastBatch = writeBatch(db);
+    lastBatch.delete(doc(db, `${GROUP}/members`, OWNER));
+    lastBatch.delete(doc(db, GROUP));
+    await assertSucceeds(lastBatch.commit());
   });
 });
 

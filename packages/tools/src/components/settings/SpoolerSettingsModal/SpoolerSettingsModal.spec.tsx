@@ -66,6 +66,20 @@ describe("SpoolerSettingsModal", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it("discards an unsaved value when the modal is closed and reopened", () => {
+    const { rerender } = render(<SpoolerSettingsModal isOpen={true} onClose={vi.fn()} />);
+
+    const input = screen.getByLabelText("spooler.settings.startupWasteLabel");
+    fireEvent.change(input, { target: { value: "1.75" } });
+    expect(input).toHaveValue(1.75);
+
+    rerender(<SpoolerSettingsModal isOpen={false} onClose={vi.fn()} />);
+    rerender(<SpoolerSettingsModal isOpen={true} onClose={vi.fn()} />);
+
+    expect(screen.getByLabelText("spooler.settings.startupWasteLabel")).toHaveValue(1.5);
+    expect(updateMutationMock).not.toHaveBeenCalled();
+  });
+
   it("calls onClose when cancel button is clicked", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
