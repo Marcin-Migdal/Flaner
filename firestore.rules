@@ -383,17 +383,40 @@ service cloud.firestore {
         resource.data.uid == request.auth.uid &&
         request.resource.data.keys().hasOnly(['uid']) &&
         request.resource.data.uid == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      // I4: the profile must point elsewhere after the batch (or be deleted)
+      function isReleasedByProfile(username) {
+        let profile = getAfter(/databases/$(database)/documents/users/$(request.auth.uid));
+        return profile == null || profile.data.get('usernameLower', '') != username;
+      }
+
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid &&
+        isReleasedByProfile(username);
     }
 
     // Reguły dla kolekcji użytkowników
     match /users/{userId} {
-      allow read: if isAuthenticated();
       // Profiles are public to signed-in users: only whitelisted, non-private fields (no email)
-      allow create, update: if isAuthenticated() && request.auth.uid == userId &&
-        request.resource.data.keys().hasOnly([
+      function hasAllowedFields() {
+        return request.resource.data.keys().hasOnly([
           'uid', 'username', 'usernameLower', 'avatarUrl', 'darkMode', 'language', 'startupWaste'
         ]);
+      }
+
+      // I3: the (new) username is reserved by this user after the batch
+      function hasOwnUsernameReservation() {
+        let reservation = getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.usernameLower));
+        return request.resource.data.usernameLower == request.resource.data.username.lower() &&
+          reservation != null && reservation.data.uid == userId;
+      }
+
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == userId &&
+        hasAllowedFields() && hasOwnUsernameReservation();
+      allow update: if isAuthenticated() && request.auth.uid == userId &&
+        hasAllowedFields() && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['username', 'usernameLower']) ||
+          hasOwnUsernameReservation()
+        );
       allow delete: if isAuthenticated() && request.auth.uid == userId;
 
       // Subkolekcja znajomości (friendships)
