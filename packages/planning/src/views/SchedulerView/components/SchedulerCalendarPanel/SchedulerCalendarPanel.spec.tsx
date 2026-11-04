@@ -125,4 +125,20 @@ describe("SchedulerCalendarPanel", () => {
     await user.click(voteBtn);
     expect(mockVoteSlot).not.toHaveBeenCalled();
   });
+
+  it("does not open the voting modal on slot click when activeEvent is finalized", async () => {
+    const user = userEvent.setup();
+    const finalizedEvent: SchedulerEvent = {
+      ...mockEvent,
+      isFinalized: true,
+      finalizedSlotIndex: 0,
+    };
+
+    renderWithProviders(
+      <SchedulerCalendarPanel activeEvent={finalizedEvent} participants={mockParticipants} />,
+    );
+
+    await user.click(screen.getByText("Trigger Slot Click"));
+    expect(screen.queryByText("voting.yourVote")).not.toBeInTheDocument();
+  });
 });
