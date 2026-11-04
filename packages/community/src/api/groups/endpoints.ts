@@ -1,6 +1,6 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/groups.md, users.md (keep their Write flows / Queries in sync).
 import { fb } from "@flaner/shared/firebase";
-import { firestoreConverter } from "@flaner/shared/utils";
+import { deleteInBatches, firestoreConverter } from "@flaner/shared/utils";
 import {
   collection,
   collectionGroup,
@@ -102,33 +102,32 @@ export const updateGroupRolePermissions = async (
 
 // Delete Group (Cascading delete of subcollections)
 export const deleteGroup = async (groupId: string): Promise<void> => {
-  const batch = writeBatch(fb.firestore);
+  const [membersSnap, requestsSnap, invitationsSnap] = await Promise.all([
+    getDocs(refs.members(groupId)),
+    getDocs(refs.requests(groupId)),
+    getDocs(refs.invitations(groupId)),
+  ]);
 
-  // 1. Delete all member docs
-  const membersSnap = await getDocs(refs.members(groupId));
-  membersSnap.docs.forEach((d) => batch.delete(d.ref));
+  // The owner's member doc is what authorizes the other deletes, and the owner may delete it only
+  // together with the group — so it goes last, in one batch with the group doc.
+  const ownerMemberDocs = membersSnap.docs.filter((d) => d.data().role === "owner");
+  const otherMemberDocs = membersSnap.docs.filter((d) => d.data().role !== "owner");
 
-  // 2. Delete all request docs
-  const requestsSnap = await getDocs(refs.requests(groupId));
-  requestsSnap.docs.forEach((d) => batch.delete(d.ref));
-
-  // 3. Delete all invitation docs in group AND recipient users subcollections
-  const invitationsSnap = await getDocs(refs.invitations(groupId));
-  invitationsSnap.docs.forEach((d) => {
-    // Delete from group's invitations subcollection
-    batch.delete(d.ref);
-
-    // Delete from recipient user's groupInvitations subcollection
-    const invData = d.data();
-    const recipientUserId = invData.userId || d.id;
-    if (recipientUserId) {
-      batch.delete(refs.userInvitation(recipientUserId, groupId));
-    }
+  const invitationRefs = invitationsSnap.docs.flatMap((d) => {
+    // Delete from the group's invitations AND the recipient user's groupInvitations mirror
+    const recipientUserId = d.data().userId || d.id;
+    return recipientUserId ? [d.ref, refs.userInvitation(recipientUserId, groupId)] : [d.ref];
   });
 
-  // 4. Delete the group document itself
-  batch.delete(refs.group(groupId));
+  await deleteInBatches(fb.firestore, [
+    ...otherMemberDocs.map((d) => d.ref),
+    ...requestsSnap.docs.map((d) => d.ref),
+    ...invitationRefs,
+  ]);
 
+  const batch = writeBatch(fb.firestore);
+  ownerMemberDocs.forEach((d) => batch.delete(d.ref));
+  batch.delete(refs.group(groupId));
   await batch.commit();
 };
 

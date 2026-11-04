@@ -30,7 +30,7 @@ Endpoints: `packages/tools/src/api/spools/endpoints.ts`, `templates/endpoints.ts
 | Undo print | `undoLastPrint` | read print, update weight, delete `prints/{id}` | ✅ transaction (print re-read inside) |
 | Mark finished | `markSpoolAsFinished` | update | – |
 | Delete | `deleteSpool` | delete all `prints`, delete spool | ✅ batch |
-| Template edited / deleted | `updateTemplate` (propagate), `deleteTemplate` | update denormalized fields / `templateId: null`, or delete spools | ✅ batch |
+| Template edited / deleted | `updateTemplate` (propagate), `deleteTemplate` | update denormalized fields / `templateId: null`, or delete spools with their `prints` | ✅ batch / ❌ sequential batches (delete) |
 
 ## Queries
 | Query | Endpoint | Allowed by |
@@ -71,7 +71,7 @@ match /spools/{spoolId} {
 ### Queries
 | Query | Endpoint | Allowed by |
 | --- | --- | --- |
-| list `prints` | `fetchSpoolPrints`, `deleteSpool` | read: spool owner |
+| list `prints` | `fetchSpoolPrints`, `deleteSpool`, `deleteTemplate` | read: spool owner |
 | order by `createdAt desc` limit 1 | `fetchLastPrint` (`undoLastPrint`, undo button state) | read: spool owner |
 
 ### Access matrix

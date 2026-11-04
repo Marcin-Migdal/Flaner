@@ -23,7 +23,7 @@ Endpoints: `packages/tools/src/api/templates/endpoints.ts`.
 | --- | --- | --- | --- |
 | Add | `addTemplate` | set template | – |
 | Edit | `updateTemplate` | update template; optionally batch-update the owner's spools | ❌ two steps |
-| Delete | `deleteTemplate` | batch delete / detach spools, then delete template | ❌ two steps |
+| Delete | `deleteTemplate` | detach spools (one batch), or delete every spool with its `prints` (sequential batches of ≤450, a spool's prints before the spool), then delete template | ❌ sequential |
 
 ## Queries
 | Query | Endpoint | Allowed by |
