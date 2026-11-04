@@ -80,6 +80,7 @@ Every subproject in `packages/<package-name>` MUST have its own `vercel.json` wi
 1. **Root Location**: Place `vercel.json` inside the root of the specific package (e.g. `packages/planning/vercel.json`), NOT at the root of the monorepo.
 2. **Build Command**: Use `cd ../.. && npx nx run <PACKAGE_NAME>:build`. This ensures Nx runs from the monorepo root.
 2a. **Ignore Command**: `vercel.json`'s `ignoreCommand` overrides the dashboard / API setting. On `develop` it always builds (exit 1): on a new branch Vercel reports the production SHA as the previous one, so `nx-ignore` would skip and a rarely-changed remote would never exist on the DEV domains. Everywhere else `nx-ignore` skips unaffected apps.
+2b. **Pin `nx` to an exact version** in the root `package.json` (`"nx": "23.3.1"`, never `"^23.3.1"`). `nx-ignore` reads that spec and parses the major with `/^(\d+)\./`. A range prefix gives major 0, so it calls the removed `nx affected:graph`, errors and exits 0, which **cancels every gated deployment** (issue #35). Keep the `@nx/*` plugins on the same exact version. Running `nx-ignore` locally runs `npm install --force` in the workspace and deletes `node_modules` afterwards: reproduce only in a throwaway clone.
 3. **CORS Headers**: `Access-Control-Allow-Origin: *` is strictly required for Module Federation remotes so the host can fetch `remoteEntry.js`.
 4. **SPA Rewrites**: Always use regular expression `"/(.*)"` mapping to `"/index.html"` to avoid 404s on deep route refreshes. Never enable `"cleanUrls": true`.
 
@@ -180,12 +181,8 @@ Always provide the user with these exact steps for the Vercel Dashboard:
    - **Output Directory**: Zostaw domyślne `dist`.
 
 5. **Ustaw Ignored Build Step (Tylko zmienione MFE będą budowane!)**:
-   - W zakładce **Settings ➔ Git**:
-   - W sekcji **Ignored Build Step** zaznacz **Override** / wpisz komendę:
-     ```bash
-     npx nx-ignore <PACKAGE_NAME>
-     ```
-   - *Dzięki temu Vercel w 2 sekundy sprawdzi graf Nx i automatycznie anuluje (skipnie) deployment, jeśli ten MFE ani jego pakiety współdzielone nie uległy zmianie w danym commicie.*
+   - Nic do ustawiania w dashboardzie: `ignoreCommand` z `packages/<PACKAGE_NAME>/vercel.json` nadpisuje ustawienie **Settings ➔ Git ➔ Ignored Build Step** (patrz punkt 2a i 2b).
+   - *Vercel sprawdza graf Nx (`nx-ignore`) i anuluje deployment, jeśli ten MFE ani jego pakiety współdzielone nie uległy zmianie.*
 
 6. **Wdrożenie i Redeploy w Core**:
    - W zakładce **Deployments** kliknij **Redeploy** na najnowszym commicie.
