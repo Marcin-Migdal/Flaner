@@ -1,96 +1,44 @@
 import { describe, it, expect } from "vitest";
-import { createGroupSchema, updateGroupSchema } from "./groups";
+import { getGroupSchema } from "./groups";
 
-describe("groups validation schemas", () => {
-  describe("createGroupSchema", () => {
-    it("validates valid group creation payload", () => {
-      const validData = {
-        name: "Climbing Enthusiasts",
-        description: "Outdoor and indoor climbing community.",
-        type: "public" as const,
-        requiresApproval: false,
-      };
+// Identity translator: the schema must pass translated messages, so the keys show up as messages here
+const schema = getGroupSchema((key) => key);
 
-      const result = createGroupSchema.safeParse(validData);
-      expect(result.success).toBe(true);
-    });
+describe("getGroupSchema", () => {
+  it("validates valid group creation payload", () => {
+    const validData = {
+      name: "Climbing Enthusiasts",
+      description: "Outdoor and indoor climbing community.",
+      type: "public" as const,
+      requiresApproval: false,
+    };
 
-    it("accepts string avatarUrl or File avatarUrl", () => {
-      const withStringAvatar = {
-        name: "Board Gamers",
-        type: "private" as const,
-        requiresApproval: true,
-        avatarUrl: "https://example.com/avatar.jpg",
-      };
-      expect(createGroupSchema.safeParse(withStringAvatar).success).toBe(true);
-
-      const withFileAvatar = {
-        name: "Board Gamers",
-        type: "private" as const,
-        requiresApproval: true,
-        avatarUrl: new File(["dummy"], "avatar.png", { type: "image/png" }),
-      };
-      expect(createGroupSchema.safeParse(withFileAvatar).success).toBe(true);
-    });
-
-    it("rejects names shorter than 3 characters", () => {
-      const invalidData = {
-        name: "AB",
-        type: "public" as const,
-        requiresApproval: false,
-      };
-
-      const result = createGroupSchema.safeParse(invalidData);
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].message).toBe("form.errors.minLength");
-      }
-    });
-
-    it("rejects names longer than 50 characters", () => {
-      const invalidData = {
-        name: "A".repeat(51),
-        type: "public" as const,
-        requiresApproval: false,
-      };
-
-      const result = createGroupSchema.safeParse(invalidData);
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].message).toBe("form.errors.maxLength");
-      }
-    });
-
-    it("rejects description longer than 255 characters", () => {
-      const invalidData = {
-        name: "Valid Group Name",
-        description: "A".repeat(256),
-        type: "public" as const,
-        requiresApproval: false,
-      };
-
-      const result = createGroupSchema.safeParse(invalidData);
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].message).toBe("form.errors.maxLength");
-      }
-    });
-
-    it("rejects invalid type", () => {
-      const invalidData = {
-        name: "Valid Group Name",
-        type: "secret",
-        requiresApproval: false,
-      };
-
-      const result = createGroupSchema.safeParse(invalidData);
-      expect(result.success).toBe(false);
-    });
+    expect(schema.safeParse(validData).success).toBe(true);
   });
 
-  describe("updateGroupSchema", () => {
-    it("is identical to createGroupSchema", () => {
-      expect(updateGroupSchema).toBe(createGroupSchema);
-    });
+  it("accepts string avatarUrl or File avatarUrl", () => {
+    const base = { name: "Board Gamers", type: "private" as const, requiresApproval: true };
+
+    expect(schema.safeParse({ ...base, avatarUrl: "https://example.com/avatar.jpg" }).success).toBe(true);
+    expect(
+      schema.safeParse({ ...base, avatarUrl: new File(["dummy"], "avatar.png", { type: "image/png" }) }).success,
+    ).toBe(true);
+  });
+
+  it.each([
+    ["names shorter than 3 characters", { name: "AB" }, "validation.groupNameMin"],
+    ["names longer than 50 characters", { name: "A".repeat(51) }, "validation.groupNameMax"],
+    ["descriptions longer than 255 characters", { name: "Valid Group Name", description: "A".repeat(256) }, "validation.descriptionMax"],
+  ])("rejects %s with a translated message", (_label, fields, key) => {
+    const result = schema.safeParse({ type: "public", requiresApproval: false, ...fields });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe(key);
+    }
+  });
+
+  it("rejects invalid type", () => {
+    expect(schema.safeParse({ name: "Valid Group Name", type: "secret", requiresApproval: false }).success).toBe(false);
   });
 });

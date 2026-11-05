@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useCreateGroupMutation } from "../../hooks";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
-import { createGroupSchema, type CreateGroupSchema } from "../../utils/schemas/groups";
+import { getGroupSchema, type GroupSchema } from "../../utils/schemas/groups";
 
 export interface CreateGroupModalProps {
   open: boolean;
@@ -29,8 +29,8 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
   const [isUploading, setIsUploading] = useState(false);
   const isPending = isCreating || isUploading;
 
-  const methods = useForm<CreateGroupSchema>({
-    resolver: zodResolver(createGroupSchema),
+  const methods = useForm<GroupSchema>({
+    resolver: zodResolver(getGroupSchema(t)),
     defaultValues: {
       name: "",
       description: "",
@@ -55,7 +55,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
     }
   }, [open, reset]);
 
-  const onSubmit = async (data: CreateGroupSchema) => {
+  const onSubmit = async (data: GroupSchema) => {
     try {
       setIsUploading(true);
       let finalAvatarUrl: string | null = null;

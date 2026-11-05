@@ -158,6 +158,7 @@ describe("GroupDetailsView page", () => {
     expect(screen.getByText("Hikes and trails")).toBeInTheDocument();
     expect(screen.getByText("ClimberOwner")).toBeInTheDocument();
     expect(screen.getByTestId("manage-group-sheet")).toBeInTheDocument();
+    expect(screen.getByText(/groupDetails\.membersCount/)).toBeInTheDocument();
   });
 
   it("renders access denied for non-member in private group", async () => {
@@ -196,6 +197,8 @@ describe("GroupDetailsView page", () => {
     vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false } as never);
 
     renderWithProviders(<GroupDetailsView />);
+    // Outsiders cannot read the member list, so no (always 0) member count
+    expect(screen.queryByText(/groupDetails\.membersCount/)).not.toBeInTheDocument();
     const joinBtn = screen.getByRole("button", { name: "groupDetails.joinGroup" });
     await user.click(joinBtn);
     expect(joinGroupMock).toHaveBeenCalledWith({ groupId: "grp-1", userId: "user-123" });

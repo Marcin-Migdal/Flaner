@@ -172,7 +172,8 @@
     "loading": "Loading...",
     "notFound": "Group not found.",
     "backToList": "Back to groups list",
-    "membersCount": "{{count}} members",
+    "membersCount_one": "{{count}} member",
+    "membersCount_other": "{{count}} members",
     "private": "Private",
     "public": "Public",
     "copyLinkBtn": "Copy link",
@@ -296,5 +297,11 @@
   },
   "errors": {
     "notGroupMember": "You are not a member of this group, so you cannot send invitations."
+  },
+  "validation": {
+    "groupNameMin": "Group name must be at least 3 characters.",
+    "groupNameMax": "Group name can be at most 50 characters.",
+    "descriptionMax": "Description can be at most 255 characters.",
+    "avatarFile": "Choose an image file."
   }
 }

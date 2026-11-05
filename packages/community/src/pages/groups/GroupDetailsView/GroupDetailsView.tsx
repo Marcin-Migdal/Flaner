@@ -210,10 +210,13 @@ export function GroupDetailsView() {
             )}
 
             <div className={groupDetailsViewStyles.badgeList}>
-              <span className={groupDetailsViewStyles.badge}>
-                <Users className="size-3 sm:size-3.5" />
-                {t("groupDetails.membersCount", { count: members.length })}
-              </span>
+              {/* Only members can read the member list (rules M1), so outsiders would always see 0 */}
+              {isMember && (
+                <span className={groupDetailsViewStyles.badge}>
+                  <Users className="size-3 sm:size-3.5" />
+                  {t("groupDetails.membersCount", { count: members.length })}
+                </span>
+              )}
               <span className={groupDetailsViewStyles.badge}>
                 <Shield className="size-3 sm:size-3.5" />
                 {group.type === "private" ? t("groupDetails.private") : t("groupDetails.public")}
