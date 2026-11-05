@@ -31,8 +31,8 @@ All endpoints: `packages/community/src/api/groups/endpoints.ts`.
 | Create group | `createGroup` | set `groups/{id}`, set `members/{owner}` (`role: 'owner'`) | ✅ batch (required: the owner bootstrap rule reads the group with `getAfter()`) |
 | Edit group | `updateGroup` | update `groups/{id}` (+ `nameLower`, `updatedAt`) | – |
 | Edit role permissions | `updateGroupRolePermissions` | update `rolePermissions`, `updatedAt` | – |
-| Transfer ownership | `transferGroupOwnership` | update `ownerId`; `members/{old}.role = 'admin'`; `members/{new}.role = 'owner'` | ✅ batch |
-| Delete group | `deleteGroup` | delete the other `members`, `requests`, `invitations`, every `users/{invitee}/groupInvitations/{id}`; then the owner's member doc + the group | ❌ sequential batches of ≤450 (`deleteInBatches`); the last batch holds the owner's member doc + the group (required: the owner may delete their member doc only together with the group) |
+| Transfer ownership | `transferGroupOwnership` | update `ownerId`; `members/{old}.role = 'admin'`; `members/{new}.role = 'owner'`; notification `group_ownership_transferred` to the new owner | ✅ batch |
+| Delete group | `deleteGroup` | delete the other `members`, `requests`, `invitations`, every `users/{invitee}/groupInvitations/{id}`; then the owner's member doc + the group + a `group_deleted` notification per other member | ❌ sequential batches of ≤450 (`deleteInBatches`); the last batch holds the owner's member doc + the group (required: the owner may delete their member doc only together with the group) |
 
 ## Queries
 | Query | Endpoint | Allowed by |
@@ -105,8 +105,8 @@ match /groups/{groupId} {
 | --- | --- | --- | --- |
 | Owner bootstrap | `createGroup` | set `members/{owner}` `role: 'owner'` | ✅ batch with the group doc |
 | Join public group | `addGroupMember` (`useAddGroupMemberMutation`) | set `members/{me}` `role: 'member'` | – |
-| Accept invitation | `acceptGroupInvitation` | set `members/{me}`, delete `invitations/{me}`, delete `users/{me}/groupInvitations/{gid}` | ✅ batch (`exists()` sees the invitation from before the batch) |
-| Accept join request | `acceptJoinRequest` | set `members/{user}`, delete `requests/{user}` | ✅ batch |
+| Accept invitation | `acceptGroupInvitation` | set `members/{me}`, delete `invitations/{me}`, delete `users/{me}/groupInvitations/{gid}`, notification `group_invitation_accepted` to the inviter | ✅ batch (`exists()` sees the invitation from before the batch) |
+| Accept join request | `acceptJoinRequest` | set `members/{user}`, delete `requests/{user}`, notification `group_request_accepted` to the requester | ✅ batch |
 | Change role | `updateGroupMemberRole` | update `role` | – |
 | Transfer ownership | `transferGroupOwnership` | see group flows | ✅ batch |
 | Leave / remove | `removeGroupMember` | delete `members/{user}` | – |
@@ -198,7 +198,7 @@ match /members/{userId} {
 | --- | --- | --- | --- |
 | Invite | `inviteUserToGroup` | set `invitations/{invitee}`, set `users/{invitee}/groupInvitations/{gid}`, create `users/{invitee}/notifications/*` (`group_invitation`) | ✅ batch |
 | Accept | `acceptGroupInvitation` | see members flows | ✅ batch |
-| Reject | `rejectGroupInvitation` | delete both invitation docs | ✅ batch |
+| Reject | `rejectGroupInvitation` | delete both invitation docs, notification `group_invitation_rejected` to the inviter | ✅ batch |
 
 ### Queries
 | Query | Endpoint | Allowed by |
@@ -258,7 +258,7 @@ match /invitations/{userId} {
 | --- | --- | --- |
 | Request to join | `requestJoinGroup` | set `requests/{me}` |
 | Accept | `acceptJoinRequest` | see members flows |
-| Reject / withdraw | `rejectJoinRequest` | delete `requests/{user}` |
+| Reject / withdraw | `rejectJoinRequest` | delete `requests/{user}` + notification `group_request_rejected` to the requester (batch) |
 
 ### Queries
 | Query | Endpoint | Allowed by |

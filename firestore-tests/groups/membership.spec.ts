@@ -1,5 +1,5 @@
 import { assertFails, assertSucceeds, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
-import { doc, setDoc, writeBatch } from "firebase/firestore";
+import { collection, doc, setDoc, writeBatch } from "firebase/firestore";
 import { createTestEnv } from "../support/testEnv";
 
 const OWNER = "owner-uid";
@@ -80,6 +80,19 @@ describe("groups/{groupId}/members — joining a group", () => {
       batch.set(doc(db, `groups/${GROUP_ID}/members`, INVITEE), { userId: INVITEE, role: "member", joinedAt: 1 });
       batch.delete(doc(db, `groups/${GROUP_ID}/invitations`, INVITEE));
       batch.delete(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID));
+      // group_invitation_accepted to the inviter
+      const notifRef = doc(collection(db, `users/${OWNER}/notifications`));
+      batch.set(notifRef, {
+        id: notifRef.id,
+        type: "group_invitation_accepted",
+        senderUid: INVITEE,
+        senderUsername: "Invitee",
+        senderAvatarUrl: "",
+        groupId: GROUP_ID,
+        groupName: "Test group",
+        createdAt: Date.now(),
+        read: false,
+      });
 
       await assertSucceeds(batch.commit());
     });

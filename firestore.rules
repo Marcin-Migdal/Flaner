@@ -443,13 +443,15 @@ service cloud.firestore {
         allow create: if isAuthenticated() &&
           request.resource.data.keys().hasOnly([
             'id', 'type', 'senderUid', 'senderUsername', 'senderAvatarUrl', 'createdAt', 'read',
-            'eventId', 'eventName', 'splitGroupId', 'splitGroupName'
+            'eventId', 'eventName', 'splitGroupId', 'splitGroupName', 'groupId', 'groupName'
           ]) &&
           request.resource.data.id == notifId &&
           request.resource.data.senderUid == request.auth.uid &&
           request.resource.data.read == false &&
           request.resource.data.type in [
             'friend_request', 'friend_request_accepted', 'friend_request_rejected', 'group_invitation',
+            'group_invitation_accepted', 'group_invitation_rejected', 'group_request_accepted', 'group_request_rejected',
+            'group_ownership_transferred', 'group_deleted',
             'event_invitation', 'event_reopened', 'split_group_invitation', 'split_settlement_pending'
           ];
       }

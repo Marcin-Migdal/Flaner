@@ -18,6 +18,7 @@ import {
   where,
   writeBatch,
   type QueryDocumentSnapshot,
+  type WriteBatch,
 } from "firebase/firestore";
 import type { Group, GroupInvitation, GroupMember, GroupRequest, GroupRole, RolePermissionsMap } from "./types";
 
@@ -97,9 +98,49 @@ export const updateGroupRolePermissions = async (
   });
 };
 
+// ==========================================
+// GROUP NOTIFICATIONS (written in the same batch as the action)
+// ==========================================
+
+type GroupNotificationType =
+  | "group_invitation"
+  | "group_invitation_accepted"
+  | "group_invitation_rejected"
+  | "group_request_accepted"
+  | "group_request_rejected"
+  | "group_ownership_transferred"
+  | "group_deleted";
+
+type NotificationSender = { senderUid: string; senderUsername: string; senderAvatarUrl: string };
+
+const getNotificationSender = async (uid: string): Promise<NotificationSender> => {
+  const profile = (await getDoc(doc(fb.firestore, `users/${uid}`))).data();
+  return { senderUid: uid, senderUsername: profile?.username || "", senderAvatarUrl: profile?.avatarUrl || "" };
+};
+
+const addGroupNotification = (
+  batch: WriteBatch,
+  recipientId: string,
+  type: GroupNotificationType,
+  sender: NotificationSender,
+  group: { id: string; name: string },
+) => {
+  const notifRef = refs.userNotification(recipientId);
+  batch.set(notifRef, {
+    id: notifRef.id,
+    type,
+    ...sender,
+    groupId: group.id,
+    groupName: group.name,
+    createdAt: Date.now(),
+    read: false,
+  });
+};
+
 // Delete Group (Cascading delete of subcollections)
 export const deleteGroup = async (groupId: string): Promise<void> => {
-  const [membersSnap, requestsSnap, invitationsSnap] = await Promise.all([
+  const [groupSnap, membersSnap, requestsSnap, invitationsSnap] = await Promise.all([
+    getDoc(refs.group(groupId)),
     getDocs(refs.members(groupId)),
     getDocs(refs.requests(groupId)),
     getDocs(refs.invitations(groupId)),
@@ -125,6 +166,15 @@ export const deleteGroup = async (groupId: string): Promise<void> => {
   const batch = writeBatch(fb.firestore);
   ownerMemberDocs.forEach((d) => batch.delete(d.ref));
   batch.delete(refs.group(groupId));
+
+  // shortcut: one notification per member in the final batch, so >~495 members overflow the 500-write limit; chunk if groups get that big
+  const ownerId = ownerMemberDocs[0]?.data().userId;
+  if (ownerId) {
+    const sender = await getNotificationSender(ownerId);
+    const group = { id: groupId, name: groupSnap.data()?.name ?? "" };
+    otherMemberDocs.forEach((d) => addGroupNotification(batch, d.data().userId, "group_deleted", sender, group));
+  }
+
   await batch.commit();
 };
 
@@ -207,11 +257,16 @@ export const transferGroupOwnership = async (
   currentOwnerId: string,
   newOwnerId: string,
 ): Promise<void> => {
+  const [groupSnap, sender] = await Promise.all([getDoc(refs.group(groupId)), getNotificationSender(currentOwnerId)]);
   const batch = writeBatch(fb.firestore);
 
   batch.update(refs.group(groupId), { ownerId: newOwnerId, updatedAt: serverTimestamp() });
   batch.update(refs.member(groupId, currentOwnerId), { role: "admin" });
   batch.update(refs.member(groupId, newOwnerId), { role: "owner" });
+  addGroupNotification(batch, newOwnerId, "group_ownership_transferred", sender, {
+    id: groupId,
+    name: groupSnap.data()?.name ?? "",
+  });
 
   await batch.commit();
 };
@@ -224,18 +279,24 @@ export const requestJoinGroup = async (groupId: string, userId: string): Promise
   });
 };
 
-// Accept Join Request
-export const acceptJoinRequest = async (groupId: string, userId: string): Promise<void> => {
+// Accept / reject a join request; actorId is the staff member resolving it (the notification sender)
+const resolveJoinRequest = async (groupId: string, userId: string, actorId: string, accept: boolean) => {
+  const [groupSnap, sender] = await Promise.all([getDoc(refs.group(groupId)), getNotificationSender(actorId)]);
   const batch = writeBatch(fb.firestore);
-  batch.set(refs.member(groupId, userId), { userId, role: "member", joinedAt: Date.now() });
+  if (accept) batch.set(refs.member(groupId, userId), { userId, role: "member", joinedAt: Date.now() });
   batch.delete(refs.request(groupId, userId));
+  addGroupNotification(batch, userId, accept ? "group_request_accepted" : "group_request_rejected", sender, {
+    id: groupId,
+    name: groupSnap.data()?.name ?? "",
+  });
   await batch.commit();
 };
 
-// Reject Join Request
-export const rejectJoinRequest = async (groupId: string, userId: string): Promise<void> => {
-  await deleteDoc(refs.request(groupId, userId));
-};
+export const acceptJoinRequest = (groupId: string, userId: string, actorId: string): Promise<void> =>
+  resolveJoinRequest(groupId, userId, actorId, true);
+
+export const rejectJoinRequest = (groupId: string, userId: string, actorId: string): Promise<void> =>
+  resolveJoinRequest(groupId, userId, actorId, false);
 
 // Get Group Members
 export const getGroupMembers = async (groupId: string): Promise<GroupMember[]> => {
@@ -294,40 +355,46 @@ export const inviteUserToGroup = async (
     invitedAt: Date.now(),
   };
 
-  const invitorData = (await getDoc(doc(fb.firestore, `users/${invitedByUserId}`))).data();
-  const notifRef = refs.userNotification(userId);
+  const sender = await getNotificationSender(invitedByUserId);
 
   const batch = writeBatch(fb.firestore);
   batch.set(refs.invitation(groupId, userId), invitationData);
   batch.set(refs.userInvitation(userId, groupId), invitationData);
-  batch.set(notifRef, {
-    id: notifRef.id,
-    type: "group_invitation",
-    senderUid: invitedByUserId,
-    senderUsername: invitorData?.username || "",
-    senderAvatarUrl: invitorData?.avatarUrl || "",
-    createdAt: Date.now(),
-    read: false,
-  });
+  addGroupNotification(batch, userId, "group_invitation", sender, { id: groupId, name: groupName });
   await batch.commit();
 };
 
-// The member create rule checks the invitation with exists(), which sees the state before the batch,
-// so deleting the invitation in the same batch is allowed.
-export const acceptGroupInvitation = async (groupId: string, userId: string): Promise<void> => {
+// The invitee answers; the inviter (from the invitation doc) gets an accepted / rejected notification.
+const answerGroupInvitation = async (groupId: string, userId: string, accept: boolean) => {
+  const [invitationSnap, sender] = await Promise.all([
+    getDoc(refs.invitation(groupId, userId)),
+    getNotificationSender(userId),
+  ]);
+  const invitation = invitationSnap.data();
+
   const batch = writeBatch(fb.firestore);
-  batch.set(refs.member(groupId, userId), { userId, role: "member", joinedAt: Date.now() });
+  // The member create rule checks the invitation with exists(), which sees the state before the batch,
+  // so deleting the invitation in the same batch is allowed.
+  if (accept) batch.set(refs.member(groupId, userId), { userId, role: "member", joinedAt: Date.now() });
   batch.delete(refs.invitation(groupId, userId));
   batch.delete(refs.userInvitation(userId, groupId));
+  if (invitation && invitation.invitedByUserId !== userId) {
+    addGroupNotification(
+      batch,
+      invitation.invitedByUserId,
+      accept ? "group_invitation_accepted" : "group_invitation_rejected",
+      sender,
+      { id: groupId, name: invitation.groupName },
+    );
+  }
   await batch.commit();
 };
 
-export const rejectGroupInvitation = async (groupId: string, userId: string): Promise<void> => {
-  const batch = writeBatch(fb.firestore);
-  batch.delete(refs.invitation(groupId, userId));
-  batch.delete(refs.userInvitation(userId, groupId));
-  await batch.commit();
-};
+export const acceptGroupInvitation = (groupId: string, userId: string): Promise<void> =>
+  answerGroupInvitation(groupId, userId, true);
+
+export const rejectGroupInvitation = (groupId: string, userId: string): Promise<void> =>
+  answerGroupInvitation(groupId, userId, false);
 
 export const getUserGroupInvitations = async (userId: string): Promise<GroupInvitation[]> => {
   if (!userId) return [];

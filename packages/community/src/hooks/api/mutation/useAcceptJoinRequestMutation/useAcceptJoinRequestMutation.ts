@@ -1,3 +1,4 @@
+import { useAuth } from "@flaner/shared/context";
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 import { acceptJoinRequest } from '../../../../api/groups';
 
@@ -7,13 +8,15 @@ import { useInvalidateGroupRequestsQuery } from "../../query/useGetGroupRequests
 export const useAcceptJoinRequestMutation = (
   options?: UseMutationOptions<void, Error, { groupId: string; userId: string }>
 ) => {
+  const { user } = useAuth();
   const invalidateMembers = useInvalidateGroupMembersQuery();
   const invalidateRequests = useInvalidateGroupRequestsQuery();
 
 
   return useMutation<void, Error, { groupId: string; userId: string }>({
     mutationFn: async ({ groupId, userId }) => {
-      await acceptJoinRequest(groupId, userId);
+      if (!user) throw new Error("errors.userNotAuthenticated");
+      await acceptJoinRequest(groupId, userId, user.uid);
     },
     meta: {
       successMessageKey: "community:toasts.requestsSheet.acceptSuccess",

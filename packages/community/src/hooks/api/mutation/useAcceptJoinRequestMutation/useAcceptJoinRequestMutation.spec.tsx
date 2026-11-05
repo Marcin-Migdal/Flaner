@@ -6,6 +6,10 @@ import { createTestQueryClient } from "@flaner/test-utils";
 import { useAcceptJoinRequestMutation } from "./useAcceptJoinRequestMutation";
 import * as groupsApi from "../../../../api/groups";
 
+vi.mock("@flaner/shared/context", () => ({
+  useAuth: () => ({ user: { uid: "staff-1" } }),
+}));
+
 vi.mock("../../../../api/groups", () => ({
   acceptJoinRequest: vi.fn(),
 }));
@@ -35,7 +39,7 @@ describe("useAcceptJoinRequestMutation", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(groupsApi.acceptJoinRequest).toHaveBeenCalledWith("grp-1", "u-1");
+    expect(groupsApi.acceptJoinRequest).toHaveBeenCalledWith("grp-1", "u-1", "staff-1");
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["groupMembers", "grp-1"] });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["groupRequests", "grp-1"] });
   });

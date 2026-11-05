@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@flaner/ui-components";
 import { formatDistanceToNow } from "date-fns";
 import { pl, enUS } from "date-fns/locale";
 import { TFunction } from "i18next";
-import { AlertCircle, Bell, Calendar, CheckCircle, HandCoins, UserPlus, Users, Wallet, XCircle } from "lucide-react";
+import { AlertCircle, Bell, Calendar, CheckCircle, Crown, HandCoins, Trash2, UserPlus, Users, Wallet, XCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { AppNotification, NotificationType } from "../../../api/notifications";
@@ -12,9 +12,17 @@ const getIcon = (notificationType: NotificationType) => {
     case "friend_request":
       return <UserPlus className="size-4 text-blue-500" />;
     case "friend_request_accepted":
+    case "group_invitation_accepted":
+    case "group_request_accepted":
       return <CheckCircle className="size-4 text-green-500" />;
     case "friend_request_rejected":
+    case "group_invitation_rejected":
+    case "group_request_rejected":
       return <XCircle className="size-4 text-red-500" />;
+    case "group_ownership_transferred":
+      return <Crown className="size-4 text-amber-500" />;
+    case "group_deleted":
+      return <Trash2 className="size-4 text-red-500" />;
     case "group_invitation":
       return <Users className="size-4 text-brand" />;
     case "event_invitation":
@@ -31,8 +39,8 @@ const getIcon = (notificationType: NotificationType) => {
   }
 };
 
-const getText = (notificationType: NotificationType, t: TFunction) => {
-  switch (notificationType) {
+const getText = ({ type, groupName }: AppNotification, t: TFunction) => {
+  switch (type) {
     case "friend_request":
       return t("notifications.friendRequest");
     case "friend_request_accepted":
@@ -41,6 +49,18 @@ const getText = (notificationType: NotificationType, t: TFunction) => {
       return t("notifications.friendRejected");
     case "group_invitation":
       return t("notifications.groupInvitation");
+    case "group_invitation_accepted":
+      return t("notifications.groupInvitationAccepted", { groupName });
+    case "group_invitation_rejected":
+      return t("notifications.groupInvitationRejected", { groupName });
+    case "group_request_accepted":
+      return t("notifications.groupRequestAccepted", { groupName });
+    case "group_request_rejected":
+      return t("notifications.groupRequestRejected", { groupName });
+    case "group_ownership_transferred":
+      return t("notifications.groupOwnershipTransferred", { groupName });
+    case "group_deleted":
+      return t("notifications.groupDeleted", { groupName });
     case "event_invitation":
       return t("notifications.eventInvitation");
     case "event_reopened":
@@ -79,6 +99,15 @@ export function NotificationCard({ notification, onRead, onClosePopover }: Notif
       navigate("/community/friends");
     } else if (notification.type === "group_invitation") {
       navigate("/community/groups#group-invitations");
+    } else if (
+      notification.groupId &&
+      (notification.type === "group_invitation_accepted" ||
+        notification.type === "group_request_accepted" ||
+        notification.type === "group_ownership_transferred")
+    ) {
+      navigate(`/community/groups/${notification.groupId}`);
+    } else if (notification.type === "group_invitation_rejected" || notification.type === "group_request_rejected" || notification.type === "group_deleted") {
+      navigate("/community/groups");
     } else if (notification.type === "event_invitation" || notification.type === "event_reopened") {
       navigate({ pathname: "/planning/scheduling", hash: notification.eventId ?? "" });
     } else if (notification.type === "split_group_invitation" || notification.type === "split_settlement_pending") {
@@ -115,7 +144,7 @@ export function NotificationCard({ notification, onRead, onClosePopover }: Notif
       <div className="flex-1 min-w-0 space-y-1">
         <p className="text-sm text-foreground leading-tight">
           <span className="font-semibold mr-1">{notification.senderUsername}</span>
-          <span className="text-muted-foreground">{getText(notification.type, t)}</span>
+          <span className="text-muted-foreground">{getText(notification, t)}</span>
         </p>
         <p className="text-xs text-muted-foreground">{timeAgo}</p>
       </div>

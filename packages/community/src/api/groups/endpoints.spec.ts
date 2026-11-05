@@ -91,6 +91,13 @@ const mockGroup: Group = {
   updatedAt: 1000,
 };
 
+// getDoc results in call order: the endpoints read [group or invitation, sender profile] in parallel
+const mockReads = (...docs: Array<Record<string, unknown> | undefined>) => {
+  docs.forEach((data) => mockGetDoc.mockResolvedValueOnce({ exists: () => data !== undefined, data: () => data }));
+};
+const notificationOf = (type: string) =>
+  expect.objectContaining({ type, groupId: "group-1", senderUsername: "Alice", read: false });
+
 describe("community groups endpoints", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -175,6 +182,25 @@ describe("community groups endpoints", () => {
       // The owner's member doc and the group doc go last, in their own batch
       const deletedIds = mockBatchDelete.mock.calls.map(([ref]) => ref.id);
       expect(deletedIds.slice(-2)).toEqual(["owner-1", "group-1"]);
+    });
+
+    it("notifies every member except the owner in the final delete batch", async () => {
+      mockGetDocs
+        .mockResolvedValueOnce({
+          docs: [
+            { ref: { id: "owner-1" }, data: () => ({ role: "owner", userId: "owner-1" }) },
+            { ref: { id: "m-1" }, data: () => ({ role: "member", userId: "m-1" }) },
+            { ref: { id: "m-2" }, data: () => ({ role: "admin", userId: "m-2" }) },
+          ],
+        })
+        .mockResolvedValueOnce({ docs: [] })
+        .mockResolvedValueOnce({ docs: [] });
+      mockReads({ name: "Hiking" }, { username: "Alice" });
+
+      await deleteGroup("group-1");
+
+      expect(mockBatchSet).toHaveBeenCalledTimes(2);
+      expect(mockBatchSet).toHaveBeenCalledWith(expect.anything(), notificationOf("group_deleted"));
     });
 
     it("splits deleting a large group into batches and keeps the owner + group in the last one", async () => {
@@ -325,10 +351,12 @@ describe("community groups endpoints", () => {
       );
     });
 
-    it("transferGroupOwnership updates group owner and member roles in batch", async () => {
+    it("transferGroupOwnership updates owner + roles and notifies the new owner in one batch", async () => {
+      mockReads({ name: "Hiking" }, { username: "Alice" });
       await transferGroupOwnership("group-1", "user-1", "user-2");
       expect(mockBatchUpdate).toHaveBeenCalledTimes(3);
-      expect(mockBatchCommit).toHaveBeenCalled();
+      expect(mockBatchSet).toHaveBeenCalledWith(expect.anything(), notificationOf("group_ownership_transferred"));
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -341,16 +369,22 @@ describe("community groups endpoints", () => {
       );
     });
 
-    it("acceptJoinRequest adds member and deletes request", async () => {
-      await acceptJoinRequest("group-1", "user-2");
+    it("acceptJoinRequest adds member, deletes request and notifies the requester", async () => {
+      mockReads({ name: "Hiking" }, { username: "Alice" });
+      await acceptJoinRequest("group-1", "user-2", "admin-1");
       expect(mockBatchSet).toHaveBeenCalledWith(expect.anything(), { userId: "user-2", role: "member", joinedAt: expect.any(Number) });
+      expect(mockBatchSet).toHaveBeenCalledWith(expect.anything(), notificationOf("group_request_accepted"));
       expect(mockBatchDelete).toHaveBeenCalledTimes(1);
       expect(mockBatchCommit).toHaveBeenCalledTimes(1);
     });
 
-    it("rejectJoinRequest deletes request", async () => {
-      await rejectJoinRequest("group-1", "user-2");
-      expect(mockDeleteDoc).toHaveBeenCalled();
+    it("rejectJoinRequest deletes request and notifies the requester in one batch", async () => {
+      mockReads({ name: "Hiking" }, { username: "Alice" });
+      await rejectJoinRequest("group-1", "user-2", "admin-1");
+      expect(mockBatchDelete).toHaveBeenCalledTimes(1);
+      expect(mockBatchSet).toHaveBeenCalledTimes(1);
+      expect(mockBatchSet).toHaveBeenCalledWith(expect.anything(), notificationOf("group_request_rejected"));
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
     });
 
     it("getGroupMembers returns members", async () => {
@@ -436,17 +470,28 @@ describe("community groups endpoints", () => {
       );
     });
 
-    it("acceptGroupInvitation adds member and deletes invitations", async () => {
+    it("acceptGroupInvitation adds member, deletes invitations and notifies the inviter", async () => {
+      mockReads({ invitedByUserId: "user-1", groupName: "Hiking" }, { username: "Alice" });
       await acceptGroupInvitation("group-1", "user-2");
       expect(mockBatchSet).toHaveBeenCalledWith(expect.anything(), { userId: "user-2", role: "member", joinedAt: expect.any(Number) });
+      expect(mockBatchSet).toHaveBeenCalledWith(expect.anything(), notificationOf("group_invitation_accepted"));
       expect(mockBatchDelete).toHaveBeenCalledTimes(2);
       expect(mockBatchCommit).toHaveBeenCalledTimes(1);
     });
 
-    it("rejectGroupInvitation deletes invitations", async () => {
+    it("rejectGroupInvitation deletes invitations and notifies the inviter", async () => {
+      mockReads({ invitedByUserId: "user-1", groupName: "Hiking" }, { username: "Alice" });
       await rejectGroupInvitation("group-1", "user-2");
       expect(mockBatchDelete).toHaveBeenCalledTimes(2);
+      expect(mockBatchSet).toHaveBeenCalledWith(expect.anything(), notificationOf("group_invitation_rejected"));
       expect(mockBatchCommit).toHaveBeenCalledTimes(1);
+    });
+
+    it("rejectGroupInvitation skips the notification when the invitation is already gone", async () => {
+      mockReads(undefined, { username: "Alice" });
+      await rejectGroupInvitation("group-1", "user-2");
+      expect(mockBatchDelete).toHaveBeenCalledTimes(2);
+      expect(mockBatchSet).not.toHaveBeenCalled();
     });
 
     it("getUserGroupInvitations returns empty array when userId is empty", async () => {
