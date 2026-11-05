@@ -63,7 +63,15 @@ describe("users/{userId}/notifications/{notifId}", () => {
     const db = as(SENDER);
     const shapes = [
       { type: "friend_request_accepted" },
-      { type: "group_invitation" },
+      { type: "group_invitation", groupId: "g1", groupName: "Hikers" },
+      ...[
+        "group_invitation_accepted",
+        "group_invitation_rejected",
+        "group_request_accepted",
+        "group_request_rejected",
+        "group_ownership_transferred",
+        "group_deleted",
+      ].map((type) => ({ type, groupId: "g1", groupName: "Hikers" })),
       { type: "event_invitation", eventId: "e1", eventName: "Trip" },
       { type: "split_settlement_pending", splitGroupId: "s1", splitGroupName: "Trip" },
     ];

@@ -1,8 +1,9 @@
 import { useAuth } from "@flaner/shared/context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getUserGroupRequest } from '../../../../api/groups';
+import { getUserGroupRequest, subscribeToUserGroupRequest } from '../../../../api/groups';
 import type { GroupRequest } from '../../../../api/groups';
 import { reactQueryMeta } from "@flaner/shared/constants";
+import { useRealtimeQueryData } from "../../../useRealtimeQueryData";
 
 
 const getUserGroupRequestQueryKeys = (groupId: string, userId: string) => ["userGroupRequest", groupId, userId];
@@ -10,7 +11,11 @@ const getUserGroupRequestQueryKeys = (groupId: string, userId: string) => ["user
 export const useGetUserGroupRequestQuery = (groupId: string) => {
   const { user } = useAuth();
 
-
+  useRealtimeQueryData<GroupRequest | null>(
+    getUserGroupRequestQueryKeys(groupId, user?.uid ?? ""),
+    (onUpdate) => subscribeToUserGroupRequest(groupId, user?.uid ?? "", onUpdate),
+    !!groupId && !!user,
+  );
 
   return useQuery<GroupRequest | null, Error>({
       meta: reactQueryMeta.fetch,
@@ -21,6 +26,7 @@ export const useGetUserGroupRequestQuery = (groupId: string) => {
       return getUserGroupRequest(groupId, user.uid);
     },
     enabled: !!groupId && !!user,
+    staleTime: Infinity, // the listener keeps it fresh
   });
 };
 

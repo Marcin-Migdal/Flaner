@@ -351,7 +351,7 @@ export const EventModal = ({
                     </p>
                   )}
                   <div className="flex justify-end">
-                    <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
+                    <Button type="submit" disabled={isSaving || methods.formState.isSubmitting} className="w-full sm:w-auto">
                       {isSaving ? t("actions.saving") : eventToEdit ? t("actions.save") : t("actions.add")}
                     </Button>
                   </div>
@@ -401,7 +401,7 @@ export const EventModal = ({
                   </p>
                 )}
                 <div className="flex justify-end">
-                  <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
+                  <Button type="submit" disabled={isSaving || methods.formState.isSubmitting} className="w-full sm:w-auto">
                     {isSaving ? t("actions.saving") : eventToEdit ? t("actions.save") : t("actions.add")}
                   </Button>
                 </div>

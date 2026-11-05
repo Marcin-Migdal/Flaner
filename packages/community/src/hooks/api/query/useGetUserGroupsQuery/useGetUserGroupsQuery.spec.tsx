@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createTestQueryClient, createMockGroup } from "@flaner/test-utils";
 import { useGetUserGroupsQuery, useInvalidateUserGroupsQuery } from "./useGetUserGroupsQuery";
@@ -14,6 +14,7 @@ vi.mock("@flaner/shared/context", () => ({
 
 vi.mock("../../../../api/groups", () => ({
   getUserGroups: vi.fn(),
+  subscribeToUserGroups: vi.fn(() => () => {}),
 }));
 
 describe("useGetUserGroupsQuery", () => {
@@ -78,5 +79,22 @@ describe("useGetUserGroupsQuery", () => {
 
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["userGroups", ""] });
   });
+  it("applies live snapshots from the Firestore listener", async () => {
+    vi.mocked(groupsApi.getUserGroups).mockResolvedValueOnce([]);
+    let push: (data: Group[]) => void = () => {};
+    vi.mocked(groupsApi.subscribeToUserGroups).mockImplementationOnce((_userId, onUpdate) => {
+      push = onUpdate;
+      return () => {};
+    });
+    const live: Group[] = [createMockGroup({ id: "g-live" })];
+
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useGetUserGroupsQuery(), { wrapper: Wrapper });
+    await waitFor(() => expect(result.current.data).toBeDefined());
+
+    act(() => push(live));
+    await waitFor(() => expect(result.current.data).toEqual(live));
+  });
 });
+
 

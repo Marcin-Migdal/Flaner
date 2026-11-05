@@ -51,8 +51,27 @@ test.describe("Group membership flows", () => {
     await expect(inviteeView.membersHeading).toBeVisible();
     await expect(inviteeView.member(owner.username)).toBeVisible();
 
-    await page.reload();
+    // Live: the owner's member list updates without a reload
     await expect(ownerView.member(other.username)).toBeVisible();
+  });
+
+  test("the inviter's \"Invited\" label clears live when the invitee rejects", async ({ page, browser }) => {
+    const group = await seedGroup(owner, { type: "private", requiresApproval: false });
+    await signIn(page, owner);
+    const ownerView = new GroupDetailsPage(page);
+    await ownerView.goto(group.id);
+    await ownerView.inviteButton.click();
+    await ownerView.dialog.getByPlaceholder(/search users/i).fill(other.username);
+    await ownerView.dialog.getByRole("button", { name: /^invite$/i }).click();
+    await expect(ownerView.dialog.getByRole("button", { name: /^invited$/i })).toBeVisible();
+
+    const inviteePage = await openSessionAs(browser, other);
+    await openGroupInvitations(inviteePage);
+    await inviteePage.getByRole("dialog").getByRole("button", { name: /^reject$/i }).click();
+
+    // The owner's invite modal stays open: the label goes back to "Invite" without a reload
+    await expect(ownerView.dialog.getByRole("button", { name: /^invite$/i })).toBeVisible();
+    await expect(ownerView.dialog.getByRole("button", { name: /^invited$/i })).toHaveCount(0);
   });
 
   test("invitee rejects an invitation and does not join the group", async ({ page, browser }) => {
@@ -107,7 +126,7 @@ test.describe("Group membership flows", () => {
     await page.keyboard.press("Escape");
     await expect(ownerView.member(other.username)).toBeVisible();
 
-    await requesterPage.reload();
+    // Live: the requester's view switches to member without a reload
     await expect(requesterView.membersHeading).toBeVisible();
   });
 
@@ -128,7 +147,7 @@ test.describe("Group membership flows", () => {
     await page.keyboard.press("Escape");
     await expect(ownerView.member(other.username)).toHaveCount(0);
 
-    await requesterPage.reload();
+    // Live: the pending request disappears for the requester without a reload
     await expect(requesterView.requestToJoinButton).toBeVisible();
     await expect(requesterView.membersHeading).toHaveCount(0);
   });

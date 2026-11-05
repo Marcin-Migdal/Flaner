@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@flaner/test-utils";
 import { CreateGroupModal } from "./CreateGroupModal";
@@ -122,6 +122,23 @@ describe("CreateGroupModal component", () => {
     });
 
     expect(onOpenChangeMock).toHaveBeenCalledWith(false);
+  });
+
+  it("creates the group once on a double click (button busy while submitting)", async () => {
+    const user = userEvent.setup();
+    // Never resolves: the submit stays in flight, like a slow network
+    mockMutateAsync.mockReturnValueOnce(new Promise(() => {}));
+
+    renderWithProviders(<CreateGroupModal open={true} onOpenChange={vi.fn()} />);
+    await user.type(screen.getByPlaceholderText(/groupsview\.createmodal\.nameplaceholder/i), "Himalaya Trekkers");
+
+    // Two clicks before the async zod validation finishes (a fast double click)
+    fireEvent.click(getSubmitButton());
+    fireEvent.click(getSubmitButton());
+
+    await waitFor(() => expect(mockMutateAsync).toHaveBeenCalled());
+    expect(getSubmitButton()).toBeDisabled();
+    expect(mockMutateAsync).toHaveBeenCalledTimes(1);
   });
 
   it("calls onOpenChange(false) when cancel button is clicked", async () => {

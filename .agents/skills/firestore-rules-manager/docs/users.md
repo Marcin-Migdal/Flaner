@@ -164,14 +164,19 @@ match /friendships/{friendId} {
 | `read` | boolean | ✓ | `false` on create |
 | `eventId`, `eventName` | string | – | `event_*` types |
 | `splitGroupId`, `splitGroupName` | string | – | `split_*` types |
+| `groupId`, `groupName` | string | – | `group_*` types |
 
-`type`: `friend_request`, `friend_request_accepted`, `friend_request_rejected`, `group_invitation`, `system_alert`, `event_invitation`, `event_reopened`, `split_group_invitation`, `split_settlement_pending` (`core/src/api/notifications/types.ts`).
+`type`: `friend_request`, `friend_request_accepted`, `friend_request_rejected`, `group_invitation`, `group_invitation_accepted`, `group_invitation_rejected`, `group_request_accepted`, `group_request_rejected`, `group_ownership_transferred`, `group_deleted`, `system_alert`, `event_invitation`, `event_reopened`, `split_group_invitation`, `split_settlement_pending` (`core/src/api/notifications/types.ts`).
 
 ### Write flows
 | Flow | Endpoint | Writes |
 | --- | --- | --- |
 | Friend request sent / accepted / rejected | `sendFriendRequest`, `acceptFriendRequest`, `rejectFriendRequest` (community) | create in the other user's inbox |
 | Group invitation | `inviteUserToGroup` (community) | create in invitee's inbox, in the invitation batch |
+| Group invitation accepted / rejected | `acceptGroupInvitation`, `rejectGroupInvitation` (community) | create in the inviter's inbox, in the answer batch |
+| Join request accepted / rejected | `acceptJoinRequest`, `rejectJoinRequest` (community) | create in the requester's inbox, in the resolve batch |
+| Ownership transferred | `transferGroupOwnership` (community) | create in the new owner's inbox, in the transfer batch |
+| Group deleted | `deleteGroup` (community) | create per member (not the owner), in the final delete batch |
 | Event invitation / reopened | `createSchedulerEvent`, `unfinalizeSchedulerEvent` (planning) | create per participant, in the event batch |
 | Split group invitation | `createSplitGroup`, `addParticipantToGroup` (planning) | create per new participant, in the group batch / transaction |
 | Pending settlement | `createSettlement` (planning) | create in receiver's inbox, in the transaction |
@@ -202,13 +207,15 @@ match /notifications/{notifId} {
   allow create: if isAuthenticated() &&
     request.resource.data.keys().hasOnly([
       'id', 'type', 'senderUid', 'senderUsername', 'senderAvatarUrl', 'createdAt', 'read',
-      'eventId', 'eventName', 'splitGroupId', 'splitGroupName'
+      'eventId', 'eventName', 'splitGroupId', 'splitGroupName', 'groupId', 'groupName'
     ]) &&
     request.resource.data.id == notifId &&
     request.resource.data.senderUid == request.auth.uid &&
     request.resource.data.read == false &&
     request.resource.data.type in [
       'friend_request', 'friend_request_accepted', 'friend_request_rejected', 'group_invitation',
+      'group_invitation_accepted', 'group_invitation_rejected', 'group_request_accepted', 'group_request_rejected',
+      'group_ownership_transferred', 'group_deleted',
       'event_invitation', 'event_reopened', 'split_group_invitation', 'split_settlement_pending'
     ];
 }

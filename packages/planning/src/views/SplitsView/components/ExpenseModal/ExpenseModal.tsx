@@ -250,7 +250,7 @@ export const ExpenseModal = ({ open, onOpenChange, group, members, expenseToEdit
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
                 {t("splits.actions.cancel")}
               </Button>
-              <Button type="submit" variant="brand" isBusy={isPending}>
+              <Button type="submit" variant="brand" isBusy={isPending || methods.formState.isSubmitting}>
                 {isEdit ? t("splits.actions.save") : t("splits.actions.addExpense")}
               </Button>
             </div>

@@ -1,3 +1,4 @@
+import { useAuth } from "@flaner/shared/context";
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 import { rejectJoinRequest } from '../../../../api/groups';
 import { useInvalidateGroupRequestsQuery } from "../../query/useGetGroupRequestsQuery";
@@ -7,6 +8,7 @@ import { reactQueryMeta } from "@flaner/shared/constants";
 export const useRejectJoinRequestMutation = (
   options?: UseMutationOptions<void, Error, { groupId: string; userId: string }>
 ) => {
+  const { user } = useAuth();
   const invalidateRequests = useInvalidateGroupRequestsQuery();
 
 
@@ -14,7 +16,8 @@ export const useRejectJoinRequestMutation = (
   return useMutation<void, Error, { groupId: string; userId: string }>({
     meta: reactQueryMeta.mutate,
     mutationFn: async ({ groupId, userId }) => {
-      await rejectJoinRequest(groupId, userId);
+      if (!user) throw new Error("errors.userNotAuthenticated");
+      await rejectJoinRequest(groupId, userId, user.uid);
     },
     ...options,
     onSuccess: async (...args) => {

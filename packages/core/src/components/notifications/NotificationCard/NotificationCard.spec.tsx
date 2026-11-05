@@ -219,4 +219,28 @@ describe("NotificationCard", () => {
     );
     expect(screen.getByText("EnUser")).toBeInTheDocument();
   });
+  it.each([
+    ["group_invitation_accepted", "notifications.groupInvitationAccepted", "/community/groups/grp-1"],
+    ["group_request_accepted", "notifications.groupRequestAccepted", "/community/groups/grp-1"],
+    ["group_ownership_transferred", "notifications.groupOwnershipTransferred", "/community/groups/grp-1"],
+    ["group_invitation_rejected", "notifications.groupInvitationRejected", "/community/groups"],
+    ["group_request_rejected", "notifications.groupRequestRejected", "/community/groups"],
+    ["group_deleted", "notifications.groupDeleted", "/community/groups"],
+  ] as const)("renders %s and navigates to %s", async (type, textKey, path) => {
+    const user = userEvent.setup();
+    mockNavigate.mockClear();
+
+    renderWithProviders(
+      <NotificationCard
+        notification={{ ...baseNotification, type, groupId: "grp-1", groupName: "Hikers" }}
+        onRead={vi.fn()}
+        onClosePopover={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(textKey)).toBeInTheDocument();
+    await user.click(screen.getByRole("button"));
+    expect(mockNavigate).toHaveBeenCalledWith(path);
+  });
 });
+

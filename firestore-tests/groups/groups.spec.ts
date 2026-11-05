@@ -12,6 +12,7 @@ import {
   updateDoc,
   where,
   writeBatch,
+  type WriteBatch,
 } from "firebase/firestore";
 import { useTestEnv } from "../support/testEnv";
 
@@ -51,6 +52,22 @@ const invitation = (userId: string, invitedByUserId: string) => ({
   invitedByUserId,
   invitedAt: 1,
 });
+
+// Group notification the endpoints add to their batches (`addGroupNotification`)
+const addGroupNotification = (batch: WriteBatch, db: ReturnType<typeof as>, recipient: string, type: string, sender: string) => {
+  const ref = doc(collection(db, `users/${recipient}/notifications`));
+  batch.set(ref, {
+    id: ref.id,
+    type,
+    senderUid: sender,
+    senderUsername: sender,
+    senderAvatarUrl: "",
+    groupId: GROUP_ID,
+    groupName: "Test group",
+    createdAt: Date.now(),
+    read: false,
+  });
+};
 
 const seedGroup = (overrides: Record<string, unknown> = {}) =>
   seed({
@@ -145,6 +162,7 @@ describe("groups/{groupId}", () => {
     batch.update(doc(db, GROUP), { ownerId: ADMIN, updatedAt: 2 });
     batch.update(doc(db, `${GROUP}/members`, OWNER), { role: "admin" });
     batch.update(doc(db, `${GROUP}/members`, ADMIN), { role: "owner" });
+    addGroupNotification(batch, db, ADMIN, "group_ownership_transferred", OWNER);
 
     await assertSucceeds(batch.commit());
   });
@@ -163,6 +181,7 @@ describe("groups/{groupId}", () => {
     const lastBatch = writeBatch(db);
     lastBatch.delete(doc(db, `${GROUP}/members`, OWNER));
     lastBatch.delete(doc(db, GROUP));
+    [ADMIN, MODERATOR, MEMBER].forEach((uid) => addGroupNotification(lastBatch, db, uid, "group_deleted", OWNER));
     await assertSucceeds(lastBatch.commit());
   });
 
@@ -299,6 +318,7 @@ describe("groups/{groupId}/invitations/{userId}", () => {
     const batch = writeBatch(db);
     batch.delete(doc(db, `${GROUP}/invitations`, INVITEE));
     batch.delete(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID));
+    addGroupNotification(batch, db, OWNER, "group_invitation_rejected", INVITEE);
     await assertSucceeds(batch.commit());
   });
 
@@ -349,6 +369,18 @@ describe("groups/{groupId}/requests/{userId}", () => {
     const batch = writeBatch(db);
     batch.set(doc(db, `${GROUP}/members`, REQUESTER), member(REQUESTER, "member"));
     batch.delete(doc(db, `${GROUP}/requests`, REQUESTER));
+    addGroupNotification(batch, db, REQUESTER, "group_request_accepted", ADMIN);
+    await assertSucceeds(batch.commit());
+  });
+
+  it("accepts the rejectJoinRequest batch: delete the request + notify the requester", async () => {
+    await seedGroup({ type: "public" });
+    await seed({ [`${GROUP}/requests/${REQUESTER}`]: { userId: REQUESTER, requestedAt: 1 } });
+    const db = as(ADMIN);
+    const batch = writeBatch(db);
+    batch.delete(doc(db, `${GROUP}/requests`, REQUESTER));
+    addGroupNotification(batch, db, REQUESTER, "group_request_rejected", ADMIN);
+
     await assertSucceeds(batch.commit());
   });
 });

@@ -212,7 +212,7 @@ export const SettleUpModal = ({ draft, onClose, group, members }: SettleUpModalP
               <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
                 {t("splits.actions.cancel")}
               </Button>
-              <Button type="submit" variant="brand" isBusy={isPending}>
+              <Button type="submit" variant="brand" isBusy={isPending || methods.formState.isSubmitting}>
                 {t("splits.actions.save")}
               </Button>
             </div>
