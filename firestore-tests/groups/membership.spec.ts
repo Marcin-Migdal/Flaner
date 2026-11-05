@@ -1,5 +1,5 @@
 import { assertFails, assertSucceeds, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
-import { deleteDoc, doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, writeBatch } from "firebase/firestore";
 import { createTestEnv } from "../support/testEnv";
 
 const OWNER = "owner-uid";
@@ -73,13 +73,15 @@ describe("groups/{groupId}/members — joining a group", () => {
       await assertSucceeds(joinAs(INVITEE));
     });
 
-    it("lets the invitee clean up both invitation docs after joining", async () => {
+    it("accepts the acceptGroupInvitation batch: join + delete both invitation docs", async () => {
       await seedGroup({ type: "private", requiresApproval: true }, INVITEE);
       const db = env.authenticatedContext(INVITEE).firestore();
+      const batch = writeBatch(db);
+      batch.set(doc(db, `groups/${GROUP_ID}/members`, INVITEE), { userId: INVITEE, role: "member", joinedAt: 1 });
+      batch.delete(doc(db, `groups/${GROUP_ID}/invitations`, INVITEE));
+      batch.delete(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID));
 
-      await assertSucceeds(joinAs(INVITEE));
-      await assertSucceeds(deleteDoc(doc(db, `groups/${GROUP_ID}/invitations`, INVITEE)));
-      await assertSucceeds(deleteDoc(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID)));
+      await assertSucceeds(batch.commit());
     });
 
     it("does not let an invitee add someone else as a member", async () => {

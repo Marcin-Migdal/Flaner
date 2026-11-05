@@ -8,6 +8,8 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     pool: "threads",
+    // CI runs typecheck / lint / test / build in parallel on a small runner; interaction-heavy specs that take ~1 s locally hit 5 s there
+    testTimeout: 15000,
     // .env is not in the repo; specs that import the real firebase.ts need a non-empty config (never contacted)
     env: {
       VITE_API_KEY: "test-api-key",
