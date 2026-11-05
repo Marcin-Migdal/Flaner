@@ -42,7 +42,7 @@ export function SettingsView() {
   const {
     handleSubmit,
     reset,
-    formState: { isDirty },
+    formState: { isDirty, isSubmitting },
   } = settingsForm;
 
   const blocker = useUnsavedChangesWarning(isDirty);
@@ -209,7 +209,7 @@ export function SettingsView() {
               type="submit"
               variant="brand"
               disabled={!isDirty}
-              isBusy={mutation.isPending}
+              isBusy={mutation.isPending || isSubmitting}
               className={settingsViewStyles.submitButton}
             >
               {t("actions.save")}

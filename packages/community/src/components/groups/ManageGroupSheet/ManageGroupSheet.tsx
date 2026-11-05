@@ -93,7 +93,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
     handleSubmit,
     reset,
     control,
-    formState: { isDirty },
+    formState: { isDirty, isSubmitting },
   } = methods;
   const groupType = useWatch({ control, name: "type" });
 
@@ -339,8 +339,8 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                         <Button
                           type="submit"
                           variant="brand"
-                          isBusy={isUpdatingGroup}
-                          disabled={!isDirty || isUpdatingGroup}
+                          isBusy={isUpdatingGroup || isSubmitting}
+                          disabled={!isDirty}
                           className="w-full rounded-xl h-10 font-semibold"
                         >
                           {t("manageGroupSheet.saveChanges")}

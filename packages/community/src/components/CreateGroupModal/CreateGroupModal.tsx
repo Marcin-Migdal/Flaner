@@ -40,7 +40,12 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
     },
   });
 
-  const { handleSubmit, reset, control } = methods;
+  const {
+    handleSubmit,
+    reset,
+    control,
+    formState: { isSubmitting },
+  } = methods;
   const groupType = useWatch({ control, name: "type" });
 
   useEffect(() => {
@@ -144,7 +149,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
                 {t("groupsView.createModal.cancel")}
               </Button>
-              <Button type="submit" isBusy={isPending}>
+              <Button type="submit" isBusy={isPending || isSubmitting}>
                 {t("groupsView.createModal.submit")}
               </Button>
             </div>
