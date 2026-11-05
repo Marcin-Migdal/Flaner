@@ -56,10 +56,6 @@ vi.mock("firebase/firestore", () => ({
   updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
 }));
 
-vi.mock("lucide-react/dynamic", () => ({
-  DynamicIcon: () => <span data-testid="dynamic-icon" />,
-}));
-
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router");
   return {
