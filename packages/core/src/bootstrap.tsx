@@ -2,7 +2,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import './index.css';
-import './i18n/i18n';
+import i18n from './i18n/i18n';
+import { toast } from '@flaner/shared/utils';
 
 // Service Worker management:
 // - In development: unregister any previously registered SW to prevent stale cache interference
@@ -19,10 +20,14 @@ if ('serviceWorker' in navigator) {
   } else {
     // Production: dynamically import the PWA register module
     import('virtual:pwa-register').then(({ registerSW }) => {
-      registerSW({
+      const updateSW = registerSW({
         immediate: true,
+        // Ask instead of reloading: a forced reload mid-use loses unsaved forms.
         onNeedRefresh() {
-          window.location.reload();
+          toast.message(i18n.t('pwa.updateAvailable'), {
+            duration: Infinity,
+            action: { label: i18n.t('pwa.refresh'), onClick: () => void updateSW(true) },
+          });
         },
       });
     });

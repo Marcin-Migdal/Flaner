@@ -4,6 +4,10 @@
   "confirm": "Potwierdź",
   "loading": "Ładowanie...",
   "error": "Wystąpił błąd",
+  "pwa": {
+    "updateAvailable": "Dostępna jest nowa wersja aplikacji.",
+    "refresh": "Odśwież"
+  },
   "nav": {
     "home": "Start",
     "community": "Społeczność",

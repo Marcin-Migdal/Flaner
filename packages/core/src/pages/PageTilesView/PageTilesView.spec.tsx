@@ -21,10 +21,6 @@ vi.mock("@module-federation/runtime", () => ({
   loadRemote: vi.fn(),
 }));
 
-vi.mock("lucide-react/dynamic", () => ({
-  DynamicIcon: () => <span data-testid="dynamic-icon" />,
-}));
-
 describe("PageTilesView", () => {
   const i18n = createTestI18n({
     en: {

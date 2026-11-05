@@ -1,6 +1,7 @@
+// Firestore rules spec: .agents/skills/firestore-rules-manager/docs/split_groups.md (keep their Write flows / Queries in sync).
 import { fb } from "@flaner/shared/firebase";
 import type { UserType } from "@flaner/shared/types";
-import { firestoreConverter } from "@flaner/shared/utils";
+import { BATCH_LIMIT, deleteInBatches, firestoreConverter } from "@flaner/shared/utils";
 import {
   collection,
   deleteDoc,
@@ -47,8 +48,6 @@ type SplitGroupNotification = {
   createdAt: number;
   read: boolean;
 };
-
-const BATCH_LIMIT = 450;
 
 const refs = {
   groups: () => collection(fb.firestore, "split_groups").withConverter(firestoreConverter<SplitGroup>()),
@@ -199,14 +198,6 @@ export const updateSplitGroup = async (groupId: string, data: UpdateSplitGroupIn
   });
 };
 
-const deleteInBatches = async (docRefs: DocumentReference[]) => {
-  for (let index = 0; index < docRefs.length; index += BATCH_LIMIT) {
-    const batch = writeBatch(fb.firestore);
-    docRefs.slice(index, index + BATCH_LIMIT).forEach((ref) => batch.delete(ref));
-    await batch.commit();
-  }
-};
-
 /**
  * Deletes a fully settled group: marks it as `deleting` (hidden from lists and unlocking subcollection
  * deletion for the owner), removes all expenses and settlements in batches and finally the group itself.
@@ -229,7 +220,10 @@ export const deleteSplitGroup = async (groupId: string, userId: string): Promise
     getDocs(refs.expenses(groupId)),
     getDocs(refs.settlements(groupId)),
   ]);
-  await deleteInBatches([...expensesSnap.docs.map((d) => d.ref), ...settlementsSnap.docs.map((d) => d.ref)]);
+  await deleteInBatches(fb.firestore, [
+    ...expensesSnap.docs.map((d) => d.ref),
+    ...settlementsSnap.docs.map((d) => d.ref),
+  ]);
   await deleteDoc(groupRef);
 };
 
@@ -746,15 +740,32 @@ export const convertSplitGroupCurrency = async (groupId: string, targetCurrency:
       converted++;
     });
 
+    const pendingSettlements: { ref: DocumentReference<Settlement>; current: Settlement; next: Settlement }[] = [];
+
     settlementSnaps.forEach((snap) => {
       if (!snap.exists()) return;
       const current = snap.data();
       if (current.currency === targetCurrency) return;
 
       const next = convertSettlement(current, targetCurrency, rates);
+      converted++;
+      // Pending settlements were never applied to balances, so they must not be reverted from them
+      if (current.status === "pending") {
+        pendingSettlements.push({ ref: snap.ref, current, next });
+        return;
+      }
       state = applySettlementToBalances(applySettlementToBalances(state, current, -1), next, 1);
       transaction.set(snap.ref, next);
-      converted++;
+    });
+
+    // Per-entry rounding can push a pending amount a few minor units above the converted debt, which
+    // would block its confirmation; cap it, but only if it fitted the debt before the conversion.
+    const convertedGroup: SplitGroup = { ...group, ...state };
+    pendingSettlements.forEach(({ ref, current, next }) => {
+      const debtBefore = getOutstandingDebtAmount(group, current.payerId, current.receiverId, current.currency);
+      const debtAfter = getOutstandingDebtAmount(convertedGroup, current.payerId, current.receiverId, targetCurrency);
+      const fitsDebt = current.amount <= debtBefore && debtAfter > 0;
+      transaction.set(ref, fitsDebt ? { ...next, amount: Math.min(next.amount, debtAfter) } : next);
     });
 
     transaction.update(groupRef, {

@@ -66,6 +66,7 @@ function renderPopover() {
   const i18nInstance = createTestI18n({
     en: {
       common: {
+        "nav.notifications": "Powiadomienia",
         "notifications.tabs.new": "Nowe",
         "notifications.tabs.read": "Przeczytane",
         "notifications.markAllRead": "Oznacz jako przeczytane",

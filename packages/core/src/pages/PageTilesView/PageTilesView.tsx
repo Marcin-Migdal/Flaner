@@ -2,10 +2,10 @@ import { type MfeName } from "@flaner/shared/constants";
 import { type AppRouteObject } from "@flaner/shared/types";
 import { LoadingFallback } from "@flaner/ui-components";
 import { loadRemote } from "@module-federation/runtime";
-import { DynamicIcon } from "lucide-react/dynamic";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { NavIcon } from "../../components/NavIcon";
 
 export type PageTilesViewProps = {
   mfe: MfeName;
@@ -119,7 +119,7 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
               >
                 {handle?.icon ? (
                   <div className="p-4 bg-brand/10 text-brand group-hover:bg-brand/20 group-hover:scale-110 rounded-2xl mb-4 transition-all duration-300">
-                    <DynamicIcon name={handle.icon} className="size-8" />
+                    <NavIcon name={handle.icon} className="size-8" />
                   </div>
                 ) : (
                   <div className="p-4 bg-zinc-800 text-muted-foreground rounded-2xl mb-4" />

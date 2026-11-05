@@ -28,3 +28,13 @@ For instance, if you edited `packages/core/src/App.tsx` and `packages/shared/src
 ```bash
 npx nx run-many -t lint --projects=core,shared --fix
 ```
+
+## 4. CI (GitHub Actions)
+`.github/workflows/ci.yml` runs on every PR to `develop` / `master` (app deploys stay on Vercel). Parallel jobs:
+- `checks`: `npx nx affected -t typecheck lint test build --base=<PR base sha>` (`fetch-depth: 0`) — only projects touched by the PR, incl. their build; `nx.json` → `defaultBase: "develop"`, so locally `npx nx affected -t typecheck lint test build` compares with `develop`
+- `rules`: `npm run rules:check` (generated `firestore.rules` matches the spec), `tsc -p firestore-tests`, `npm run test:rules` (Firestore emulator, Temurin 21)
+- `e2e`: Playwright only for affected projects — `scripts/e2e-affected.mjs` (Nx affected vs the PR base; details in `e2e-testing` skill §6)
+
+`.github/workflows/deploy-firestore.yml` deploys Firestore rules and indexes on push to `develop` (DEV) / `master` (PROD), and on a manual run of a feature branch (DEV only) — see the `firestore-rules-manager` skill, sections 6–7.
+
+Before pushing, run the same commands locally for touched packages. `NX_DAEMON=false` in CI.

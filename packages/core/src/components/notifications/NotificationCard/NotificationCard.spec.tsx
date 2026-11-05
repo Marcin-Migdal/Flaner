@@ -41,7 +41,7 @@ describe("NotificationCard", () => {
     );
 
     expect(screen.getByText("JohnDoe")).toBeInTheDocument();
-    expect(screen.getByText("Wysłał(a) Ci zaproszenie do znajomych.")).toBeInTheDocument();
+    expect(screen.getByText("notifications.friendRequest")).toBeInTheDocument();
   });
 
   it("calls onRead, navigates to friend requests, and closes popover when clicked", async () => {
@@ -106,16 +106,28 @@ describe("NotificationCard", () => {
     const onRead = vi.fn();
     const onClosePopover = vi.fn();
 
-    renderWithProviders(
+    const { unmount } = renderWithProviders(
       <NotificationCard
-        notification={{ ...baseNotification, type: "event_invitation" }}
+        notification={{ ...baseNotification, type: "event_invitation", eventId: "evt-1" }}
         onRead={onRead}
         onClosePopover={onClosePopover}
       />
     );
 
     await user.click(screen.getByRole("button"));
-    expect(mockNavigate).toHaveBeenCalledWith("/planning");
+    expect(mockNavigate).toHaveBeenCalledWith({ pathname: "/planning/scheduling", hash: "evt-1" });
+    unmount();
+
+    renderWithProviders(
+      <NotificationCard
+        notification={{ ...baseNotification, type: "event_reopened", eventId: "evt-2" }}
+        onRead={onRead}
+        onClosePopover={onClosePopover}
+      />
+    );
+
+    await user.click(screen.getByRole("button"));
+    expect(mockNavigate).toHaveBeenLastCalledWith({ pathname: "/planning/scheduling", hash: "evt-2" });
   });
 
   it("navigates correctly for split_group_invitation with splitGroupId", async () => {

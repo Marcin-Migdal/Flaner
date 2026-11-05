@@ -1,6 +1,6 @@
 {
   "buildCommand": "cd ../.. && npx nx run planning:build",
-  "ignoreCommand": "if [ \"$VERCEL_GIT_COMMIT_REF\" = \"develop\" ]; then exit 1; fi; cd ../.. && npx nx-ignore planning",
+  "ignoreCommand": "bash ../../scripts/vercel-ignore.sh planning",
   "outputDirectory": "dist",
   "headers": [
     {
@@ -19,12 +19,6 @@
           "value": "X-Requested-With, content-type, Authorization"
         }
       ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
     }
   ]
 }

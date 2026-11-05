@@ -57,7 +57,7 @@ describe("shared firebase setup", () => {
     expect(fb.auth.provider).toBeDefined();
     expect(fb.firestore).toBeDefined();
     expect(mockUseDeviceLanguage).toHaveBeenCalled();
-    expect(mockAddScope).toHaveBeenCalledWith("https://www.googleapis.com/auth/contacts.readonly");
+    expect(mockAddScope).not.toHaveBeenCalled();
   });
 
   it("falls back to getApp() when initializeApp throws an 'already exists' error", async () => {

@@ -44,5 +44,4 @@ export type RecordUsageResult = {
 export type UndoPrintInput = {
   spoolId: string;
   printId?: string;
-  usedWeight?: number;
 };

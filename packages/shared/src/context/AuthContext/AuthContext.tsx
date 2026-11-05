@@ -1,5 +1,7 @@
+// Firestore rules spec: .agents/skills/firestore-rules-manager/docs/users.md, usernames.md (keep their Write flows / Queries in sync).
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -7,11 +9,80 @@ import {
   User,
 } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
-import { doc, getDoc, setDoc, writeBatch } from "firebase/firestore";
+import {
+  clearIndexedDbPersistence,
+  deleteField,
+  doc,
+  getDoc,
+  terminate,
+  updateDoc,
+  writeBatch,
+} from "firebase/firestore";
 import { createContext, ReactNode, useContext, useEffect, useState, useRef } from "react";
 import { fb } from "../../firebase/firebase";
 import { useTheme } from "../../hooks/useTheme";
-import { LanguageType, UserType } from "../../types";
+import { LanguageType, UserProfile, UserType } from "../../types";
+
+const profileRef = (uid: string) => doc(fb.firestore, "users", uid);
+
+/**
+ * Reads the public profile. Older profiles also stored `email`, which every signed-in user could read:
+ * it now lives only in Firebase Auth, so the field is dropped here and removed from Firestore.
+ */
+const loadProfile = async (uid: string): Promise<UserProfile | null> => {
+  const snap = await getDoc(profileRef(uid));
+  if (!snap.exists()) return null;
+
+  const { email, ...profile } = snap.data();
+  if (email !== undefined) {
+    await updateDoc(profileRef(uid), { email: deleteField() }).catch((error) =>
+      console.error("Failed to remove the legacy email from the profile", error),
+    );
+  }
+  return profile as UserProfile;
+};
+
+const usernameRef = (usernameLower: string) => doc(fb.firestore, "usernames", usernameLower);
+
+const USERNAME_ATTEMPTS = 5;
+
+/**
+ * First Google sign-in: creates the profile together with a free `usernames` reservation.
+ * The display name is tried first, then the name with a random 4-digit suffix.
+ */
+const createProfileWithReservation = async (firebaseUser: User, language: LanguageType): Promise<UserProfile> => {
+  // "/" is not allowed in a doc id; the settings form requires at least 3 characters
+  const displayName = (firebaseUser.displayName ?? "").replace(/\//g, "").trim();
+  const base = displayName.length >= 3 ? displayName : "User";
+
+  for (let attempt = 0; attempt < USERNAME_ATTEMPTS; attempt++) {
+    const username = attempt === 0 ? base : `${base}${Math.floor(1000 + Math.random() * 9000)}`;
+    const usernameLower = username.toLowerCase();
+    const reservation = await getDoc(usernameRef(usernameLower));
+    if (reservation.exists() && reservation.data().uid !== firebaseUser.uid) continue;
+
+    const profile: UserProfile = {
+      uid: firebaseUser.uid,
+      username,
+      usernameLower,
+      avatarUrl: firebaseUser.photoURL || "",
+      darkMode: true,
+      language,
+    };
+    const batch = writeBatch(fb.firestore);
+    batch.set(profileRef(firebaseUser.uid), profile);
+    batch.set(usernameRef(usernameLower), { uid: firebaseUser.uid });
+    await batch.commit();
+    return profile;
+  }
+
+  throw new FirebaseError("app/username-already-in-use", "No free username found");
+};
+
+const toUser = (profile: UserProfile, firebaseUser: User): UserType => ({
+  ...profile,
+  email: firebaseUser.email ?? "",
+});
 
 type AuthContextType = {
   user: UserType | null;
@@ -60,27 +131,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       try {
-        const userDocRef = doc(fb.firestore, "users", firebaseUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
+        let profile = await loadProfile(firebaseUser.uid);
 
-        if (userDocSnap.exists()) {
-          setUser(userDocSnap.data() as UserType);
-        } else {
+        if (!profile) {
           // If the profile document doesn't exist, create it (e.g. after Google redirect login)
-          const { displayName, photoURL, email, uid } = firebaseUser;
-          const username = displayName || "User";
-          const userProfile: UserType = {
-            uid,
-            username,
-            usernameLower: username.toLowerCase(),
-            email: email || "",
-            avatarUrl: photoURL || "",
-            darkMode: true,
-            language: "pl", // Default language
-          };
-          await setDoc(userDocRef, userProfile);
-          setUser(userProfile);
+          profile = await createProfileWithReservation(firebaseUser, "pl");
         }
+        setUser(toUser(profile, firebaseUser));
       } catch (error) {
         console.error("Failed to load user profile", error);
         setUser(null);
@@ -96,15 +153,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser((prev) => (prev ? { ...prev, ...updatedUser } : null));
   };
 
+  // Wipes the previous user's data from the device: the terminated Firestore instance cannot be reused,
+  // so a full reload re-creates it and also drops the in-memory React Query cache.
   const signOutUser = async () => {
     setIsLoading(true);
     try {
+      await terminate(fb.firestore);
+      // Best effort: a failure here must not block the sign-out.
+      await clearIndexedDbPersistence(fb.firestore).catch((error) =>
+        console.error("Failed to clear the Firestore cache", error),
+      );
       await firebaseSignOut(fb.auth.auth);
-      setUser(null);
     } catch (error) {
       console.error("Sign out failed", error);
     } finally {
-      setIsLoading(false);
+      window.location.assign("/login");
     }
   };
 
@@ -112,31 +175,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isManualAuth.current = true;
     try {
       const { user: firebaseUser } = await signInWithPopup(fb.auth.auth, fb.auth.provider);
-      const userDocRef = doc(fb.firestore, "users", firebaseUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
+      let profile = await loadProfile(firebaseUser.uid);
 
-      let userProfile: UserType;
-
-      if (!userDocSnap.exists()) {
-        const { displayName, photoURL, email, uid } = firebaseUser;
-        const username = displayName || "User";
-
-        userProfile = {
-          uid,
-          username,
-          usernameLower: username.toLowerCase(),
-          email: email || "",
-          avatarUrl: photoURL || "",
-          darkMode: true,
-          language: language,
-        };
-
-        await setDoc(userDocRef, userProfile);
-      } else {
-        userProfile = userDocSnap.data() as UserType;
+      if (!profile) {
+        profile = await createProfileWithReservation(firebaseUser, language);
       }
 
-      setUser(userProfile);
+      setUser(toUser(profile, firebaseUser));
     } catch (error) {
       console.error("Google Sign In failed", error);
       throw error;
@@ -149,14 +194,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isManualAuth.current = true;
     try {
       const { user: firebaseUser } = await signInWithEmailAndPassword(fb.auth.auth, email, password);
-      const userDocRef = doc(fb.firestore, "users", firebaseUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
+      const profile = await loadProfile(firebaseUser.uid);
 
-      if (userDocSnap.exists()) {
-        setUser(userDocSnap.data() as UserType);
-      } else {
+      if (!profile) {
         throw new Error("User profile not found in database.");
       }
+      setUser(toUser(profile, firebaseUser));
     } catch (error) {
       console.error("Email Sign In failed", error);
       throw error;
@@ -169,34 +212,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isManualAuth.current = true;
     try {
       const usernameLower = username.toLowerCase();
-      
-      const usernameDocRef = doc(fb.firestore, "usernames", usernameLower);
+
+      const usernameDocRef = usernameRef(usernameLower);
       const usernameDocSnap = await getDoc(usernameDocRef);
-      
+
       if (usernameDocSnap.exists()) {
         throw new FirebaseError("app/username-already-in-use", "This username is already taken");
       }
 
       const { user: firebaseUser } = await createUserWithEmailAndPassword(fb.auth.auth, email, password);
-      const userDocRef = doc(fb.firestore, "users", firebaseUser.uid);
-
-      const userProfile: UserType = {
+      const userProfile: UserProfile = {
         uid: firebaseUser.uid,
         username,
         usernameLower,
-        email,
         avatarUrl: "",
         darkMode: true,
         language,
       };
 
       const batch = writeBatch(fb.firestore);
-      batch.set(userDocRef, userProfile);
+      batch.set(profileRef(firebaseUser.uid), userProfile);
       batch.set(usernameDocRef, { uid: firebaseUser.uid });
-      
-      await batch.commit();
 
-      setUser(userProfile);
+      try {
+        await batch.commit();
+      } catch (error) {
+        // Never leave an Auth account without a profile (e.g. the username was taken in a race)
+        await deleteUser(firebaseUser).catch((deleteError) =>
+          console.error("Failed to roll back the Auth account", deleteError),
+        );
+        throw error;
+      }
+
+      setUser(toUser(userProfile, firebaseUser));
     } catch (error) {
       console.error("Email Sign Up failed", error);
       throw error;

@@ -1,11 +1,13 @@
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { AuthProvider, useAuth } from "./AuthContext";
 import * as firebaseAuth from "firebase/auth";
 import * as firestore from "firebase/firestore";
 
 let authStateCallback: ((user: unknown) => void) | null = null;
+
+const mockBatch = vi.hoisted(() => ({ set: vi.fn(), commit: vi.fn() }));
 
 vi.mock("firebase/auth", () => ({
   onAuthStateChanged: vi.fn((_auth, callback) => {
@@ -15,17 +17,18 @@ vi.mock("firebase/auth", () => ({
   signOut: vi.fn(),
   signInWithEmailAndPassword: vi.fn(),
   createUserWithEmailAndPassword: vi.fn(),
+  deleteUser: vi.fn().mockResolvedValue(undefined),
   signInWithPopup: vi.fn(),
 }));
 
 vi.mock("firebase/firestore", () => ({
-  doc: vi.fn(),
+  doc: vi.fn((_db: unknown, collectionName: string, id: string) => ({ path: `${collectionName}/${id}` })),
   getDoc: vi.fn(),
-  setDoc: vi.fn(),
-  writeBatch: vi.fn(() => ({
-    set: vi.fn(),
-    commit: vi.fn().mockResolvedValue(undefined),
-  })),
+  updateDoc: vi.fn().mockResolvedValue(undefined),
+  terminate: vi.fn().mockResolvedValue(undefined),
+  clearIndexedDbPersistence: vi.fn().mockResolvedValue(undefined),
+  deleteField: vi.fn(() => "delete-field-sentinel"),
+  writeBatch: vi.fn(() => mockBatch),
 }));
 
 vi.mock("../../firebase/firebase", () => ({
@@ -36,9 +39,19 @@ vi.mock("../../firebase/firebase", () => ({
 }));
 
 describe("AuthContext", () => {
+  const assignMock = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
     authStateCallback = null;
+    // Default: no profile and every username free
+    vi.mocked(firestore.getDoc).mockResolvedValue({ exists: () => false } as never);
+    mockBatch.commit.mockResolvedValue(undefined);
+    vi.stubGlobal("location", { ...window.location, assign: assignMock });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -67,12 +80,6 @@ describe("AuthContext", () => {
   it("creates default user profile in onAuthStateChanged if document does not exist", async () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
 
-    vi.mocked(firestore.getDoc).mockResolvedValueOnce({
-      exists: () => false,
-    } as never);
-
-    vi.mocked(firestore.setDoc).mockResolvedValueOnce(undefined);
-
     await act(async () => {
       await authStateCallback?.({
         uid: "auto-created-uid",
@@ -81,7 +88,8 @@ describe("AuthContext", () => {
       });
     });
 
-    expect(firestore.setDoc).toHaveBeenCalled();
+    expect(mockBatch.set).toHaveBeenCalledWith({ path: "usernames/auto user" }, { uid: "auto-created-uid" });
+    expect(mockBatch.commit).toHaveBeenCalled();
     expect(result.current.user?.username).toBe("Auto User");
     expect(result.current.isLoading).toBe(false);
   });
@@ -146,6 +154,40 @@ describe("AuthContext", () => {
     expect(result.current.user).toBeNull();
   });
 
+  it("clears the Firestore cache before signing out and reloads to /login", async () => {
+    vi.mocked(firebaseAuth.signOut).mockResolvedValueOnce(undefined);
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await result.current.signOutUser();
+    });
+
+    const terminateOrder = vi.mocked(firestore.terminate).mock.invocationCallOrder[0];
+    const clearOrder = vi.mocked(firestore.clearIndexedDbPersistence).mock.invocationCallOrder[0];
+    const signOutOrder = vi.mocked(firebaseAuth.signOut).mock.invocationCallOrder[0];
+    const reloadOrder = assignMock.mock.invocationCallOrder[0];
+
+    expect(terminateOrder).toBeLessThan(clearOrder);
+    expect(clearOrder).toBeLessThan(signOutOrder);
+    expect(signOutOrder).toBeLessThan(reloadOrder);
+    expect(assignMock).toHaveBeenCalledWith("/login");
+  });
+
+  it("still signs out and reloads when clearing the Firestore cache fails", async () => {
+    vi.mocked(firestore.clearIndexedDbPersistence).mockRejectedValueOnce(new Error("failed-precondition"));
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await result.current.signOutUser();
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith("Failed to clear the Firestore cache", expect.any(Error));
+    expect(firebaseAuth.signOut).toHaveBeenCalled();
+    expect(assignMock).toHaveBeenCalledWith("/login");
+    consoleSpy.mockRestore();
+  });
+
   it("signs in user with email and loads firestore user profile", async () => {
     const mockFirebaseUser = { uid: "user-123", email: "test@flaner.app" };
     vi.mocked(firebaseAuth.signInWithEmailAndPassword).mockResolvedValueOnce({
@@ -173,6 +215,36 @@ describe("AuthContext", () => {
     expect(result.current.user?.email).toBe("test@flaner.app");
   });
 
+  it("takes the email from Firebase Auth and removes a legacy email from the Firestore profile", async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    vi.mocked(firestore.getDoc).mockResolvedValueOnce({
+      exists: () => true,
+      data: () => ({ uid: "legacy-uid", username: "Legacy", email: "stale@flaner.app", darkMode: true, language: "pl" }),
+    } as never);
+
+    await act(async () => {
+      await authStateCallback?.({ uid: "legacy-uid", email: "current@flaner.app" });
+    });
+
+    expect(result.current.user?.email).toBe("current@flaner.app");
+    expect(firestore.updateDoc).toHaveBeenCalledWith({ path: "users/legacy-uid" }, { email: "delete-field-sentinel" });
+  });
+
+  it("does not write an email into new profiles", async () => {
+    renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await authStateCallback?.({ uid: "fresh-uid", email: "fresh@flaner.app", displayName: "Fresh" });
+    });
+
+    expect(mockBatch.set).toHaveBeenCalledWith(
+      { path: "users/fresh-uid" },
+      expect.not.objectContaining({ email: expect.anything() }),
+    );
+    expect(firestore.updateDoc).not.toHaveBeenCalled();
+  });
+
   it("signs in with google and creates profile if document does not exist", async () => {
     const mockFirebaseUser = {
       uid: "google-uid-456",
@@ -185,29 +257,78 @@ describe("AuthContext", () => {
       user: mockFirebaseUser as unknown as firebaseAuth.User,
     } as firebaseAuth.UserCredential);
 
-    vi.mocked(firestore.getDoc).mockResolvedValueOnce({
-      exists: () => false,
-    } as never);
-
-    vi.mocked(firestore.setDoc).mockResolvedValueOnce(undefined);
-
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     await act(async () => {
       await result.current.signInWithGoogleUser("en");
     });
 
-    expect(firestore.setDoc).toHaveBeenCalled();
+    expect(mockBatch.set).toHaveBeenCalledWith(
+      { path: "users/google-uid-456" },
+      expect.objectContaining({ username: "Google User", usernameLower: "google user" }),
+    );
+    expect(mockBatch.set).toHaveBeenCalledWith({ path: "usernames/google user" }, { uid: "google-uid-456" });
     expect(result.current.user?.username).toBe("Google User");
     expect(result.current.user?.language).toBe("en");
   });
 
-  it("throws error in signUpWithEmailUser when username is already taken", async () => {
-    const mockFirebaseUser = { uid: "user-dup", email: "dup@flaner.app" };
-    vi.mocked(firebaseAuth.createUserWithEmailAndPassword).mockResolvedValueOnce({
-      user: mockFirebaseUser as unknown as firebaseAuth.User,
-    } as firebaseAuth.UserCredential);
+  it("adds a random suffix when the Google display name is already reserved", async () => {
+    vi.mocked(firebaseAuth.signInWithPopup).mockResolvedValueOnce({
+      user: { uid: "google-uid", displayName: "Jan Kowalski" },
+    } as never);
+    vi.mocked(firestore.getDoc)
+      .mockResolvedValueOnce({ exists: () => false } as never) // no profile
+      .mockResolvedValueOnce({ exists: () => true, data: () => ({ uid: "other-uid" }) } as never); // name taken
 
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await result.current.signInWithGoogleUser("pl");
+    });
+
+    const username = result.current.user?.username ?? "";
+    expect(username).toMatch(/^Jan Kowalski\d{4}$/);
+    expect(mockBatch.set).toHaveBeenCalledWith({ path: `usernames/${username.toLowerCase()}` }, { uid: "google-uid" });
+  });
+
+  it("reuses a reservation that already belongs to the Google user", async () => {
+    vi.mocked(firebaseAuth.signInWithPopup).mockResolvedValueOnce({
+      user: { uid: "google-uid", displayName: "Jan" },
+    } as never);
+    vi.mocked(firestore.getDoc)
+      .mockResolvedValueOnce({ exists: () => false } as never)
+      .mockResolvedValueOnce({ exists: () => true, data: () => ({ uid: "google-uid" }) } as never);
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await result.current.signInWithGoogleUser("pl");
+    });
+
+    expect(result.current.user?.username).toBe("Jan");
+  });
+
+  it("fails the Google sign-in when no free username is found", async () => {
+    vi.mocked(firebaseAuth.signInWithPopup).mockResolvedValueOnce({
+      user: { uid: "google-uid", displayName: "Popular" },
+    } as never);
+    vi.mocked(firestore.getDoc)
+      .mockResolvedValueOnce({ exists: () => false } as never)
+      .mockResolvedValue({ exists: () => true, data: () => ({ uid: "other-uid" }) } as never);
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await expect(
+      act(async () => {
+        await result.current.signInWithGoogleUser("pl");
+      }),
+    ).rejects.toThrow("No free username found");
+
+    expect(mockBatch.commit).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
+  it("throws error in signUpWithEmailUser when username is already taken", async () => {
     // Mock username check: ALREADY exists!
     vi.mocked(firestore.getDoc).mockResolvedValueOnce({
       exists: () => true,
@@ -245,6 +366,26 @@ describe("AuthContext", () => {
     expect(result.current.user?.email).toBe("new@flaner.app");
   });
 
+  it("deletes the new Auth account when the sign-up batch fails", async () => {
+    const mockFirebaseUser = { uid: "race-uid", email: "race@flaner.app" };
+    vi.mocked(firebaseAuth.createUserWithEmailAndPassword).mockResolvedValueOnce({
+      user: mockFirebaseUser as unknown as firebaseAuth.User,
+    } as firebaseAuth.UserCredential);
+    mockBatch.commit.mockRejectedValueOnce(new Error("permission-denied"));
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await expect(
+      act(async () => {
+        await result.current.signUpWithEmailUser("race@flaner.app", "pass1234", "racer", "pl");
+      }),
+    ).rejects.toThrow("permission-denied");
+
+    expect(firebaseAuth.deleteUser).toHaveBeenCalledWith(mockFirebaseUser);
+    expect(result.current.user).toBeNull();
+    consoleSpy.mockRestore();
+  });
+
   it("handles sign out failure gracefully", async () => {
     vi.mocked(firebaseAuth.signOut).mockRejectedValueOnce(new Error("Network error during logout"));
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -255,6 +396,7 @@ describe("AuthContext", () => {
     });
 
     expect(consoleSpy).toHaveBeenCalledWith("Sign out failed", expect.any(Error));
+    expect(assignMock).toHaveBeenCalledWith("/login");
     consoleSpy.mockRestore();
   });
 
@@ -283,7 +425,7 @@ describe("AuthContext", () => {
     });
 
     expect(result.current.user?.username).toBe("ExistingGoogle");
-    expect(firestore.setDoc).not.toHaveBeenCalled();
+    expect(mockBatch.set).not.toHaveBeenCalled();
   });
 
   it("throws and logs error when Google sign in fails", async () => {
@@ -380,11 +522,6 @@ describe("AuthContext", () => {
 
   it("creates user profile with fallback values when authUser fields are null in onAuthStateChanged and Google signin", async () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
-
-    vi.mocked(firestore.getDoc).mockResolvedValue({
-      exists: () => false,
-    } as never);
-    vi.mocked(firestore.setDoc).mockResolvedValue(undefined);
 
     // 1. onAuthStateChanged with null fields
     await act(async () => {

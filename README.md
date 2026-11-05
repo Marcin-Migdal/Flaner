@@ -1,108 +1,136 @@
-# FlanerV2
+# Flaner v2
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+Nx monorepo (npm workspaces): React 19 + Vite 8 + Module Federation, Firebase (Firestore + Auth), each app deployed separately to Vercel.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+| Package | Role | Local port |
+| :--- | :--- | :--- |
+| `core` | Module Federation host (routing, i18n, service worker) | 4200 |
+| `settings` | MFE | 4201 |
+| `community` | MFE | 4202 |
+| `shopping` | MFE | 4203 |
+| `planning` | MFE | 4204 |
+| `tools` | MFE (Spooler) | 4205 |
+| `shared`, `ui-components`, `test-utils` | libraries (`@flaner/*`) | — |
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/npm-workspaces-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+Project rules, workflows and AI skills live in `.agents/` (see `CLAUDE.md` / `.agents/AGENTS.md`).
 
-## Run tasks
+---
 
-To run tasks with Nx use:
+## 1. Local setup (fresh clone)
 
-```sh
-npx nx <target> <project-name>
-```
+### Prerequisites
+- **Node** `24.22.1` (`.node-version`) with npm 11.
+- **JDK 21** with `JAVA_HOME` set. Required by the Firebase emulators (`dev:emulators`, `test:rules`, `e2e`).
+- **Git**. On Windows the scripts are run from PowerShell or Git Bash.
+- Optional: Firebase CLI is installed as a dev dependency (`npx firebase ...`); Vercel CLI only for env var management.
 
-For example:
+### Steps
+1. Clone and install:
+   ```bash
+   git clone https://github.com/Marcin-Migdal/Flaner.git
+   cd Flaner
+   npm ci
+   ```
+2. Create `.env` (it is **not** in the repo):
+   ```bash
+   cp .env.example .env
+   ```
+   Fill in the values for the **DEV** Firebase project `flaner-v2-dev`:
+   - `VITE_API_KEY` … `VITE_MEASUREMENT_ID`: Firebase console → `flaner-v2-dev` → ⚙️ *Project settings* → *General* → *Your apps* → Web app → *SDK setup and configuration* → *Config*.
+   - `VITE_CLOUDINARY_CLOUD_NAME`: Cloudinary dashboard → *Cloud name*.
+   - Leave `VITE_MFE_*_URL` commented out locally (the host falls back to `localhost:4201-4205`).
 
-```sh
-npx nx build myproject
-```
+   The Firebase web config is public by design (security comes from Auth + Firestore rules), but `.env` stays out of git so DEV / PROD values cannot be mixed up.
+3. AI tooling (Claude Code only): recreate the skills junction (PowerShell):
+   ```powershell
+   New-Item -ItemType Junction -Path .claude\skills -Target .agents\skills
+   ```
+4. Playwright browser (only for E2E):
+   ```bash
+   npx playwright install chromium
+   ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+### Run
+| Command | What it does |
+| :--- | :--- |
+| `npm run dev:emulators` | **Default for feature work.** All dev servers + Auth/Firestore emulators (`demo-flaner`, data kept in `.emulator-data/`) + rules compiler in watch mode. Overrides the Firebase values from `.env` with the emulator ones and deploys nothing. |
+| `npm run dev` | All dev servers against the real **DEV** Firebase (values from `.env`). |
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Open `http://localhost:4200`.
 
-## Versioning and releasing
+### Checks
+| Command | What it does |
+| :--- | :--- |
+| `npx nx run <pkg>:lint --fix` | Lint a touched package |
+| `npm run typecheck` | Typecheck all packages |
+| `npm test` | Unit tests (Vitest) |
+| `npm run test:rules` | Firestore security rules tests on the emulator (JDK 21) |
+| `npm run rules:build` / `npm run rules:check` | Compile `firestore.rules` from the spec / fail on drift (never edit `firestore.rules` by hand) |
+| `npm run e2e` | Playwright against the emulators; starts emulators + dev servers itself. Needs free ports 4200–4205, 8080, 9099 |
 
-To version and release the library use
+---
 
-```
-npx nx release
-```
+## 2. Environments
 
-Pass `--dry-run` to see what would happen without actually releasing the library.
+| | PROD | DEV |
+| :--- | :--- | :--- |
+| Git branch | `master` | `develop` |
+| Host URL | `https://flaner.vercel.app` | `https://flaner-dev.vercel.app` |
+| Remotes | `https://flaner-<mfe>.vercel.app` | `https://flaner-<mfe>-dev.vercel.app` |
+| Firebase project | `flaner-v2` (`--project prod`) | `flaner-v2-dev` (`--project dev`) |
+| Vercel env vars | *Production* | *Preview* (all PR previews use DEV) |
 
-[Learn more about Nx release &raquo;](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Flow: `feature/*` → PR to `develop` → PR `develop` → `master`. Details: `.agents/workflows/01-feature-workflow.md`, `vercel-project-setup` skill.
 
-## Add new projects
+---
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
+## 3. Accounts, secrets and access
 
-To install a new plugin you can use the `nx add` command. Here's an example of adding the React plugin:
-```sh
-npx nx add @nx/react
-```
+No secret value is stored in the repo. This is the inventory of everything a new maintainer needs access to, and where each secret lives.
 
-Use the plugin's generator to create new projects. For example, to create a new React app or library:
+### Firebase (`flaner-v2`, `flaner-v2-dev`)
+- **Project members:** Firebase console → ⚙️ *Project settings* → *Users and permissions*. A maintainer needs *Owner* or *Editor* on both projects to deploy manually, manage Auth templates and create service-account keys. Give testers no project access — they only need an app account.
+- **Authentication:** providers *Email/Password* and *Google* enabled. *Settings → Authorized domains*: `flaner.vercel.app` (PROD), `flaner-dev.vercel.app` (DEV), `localhost`. Random PR preview URLs cannot use Google sign-in.
+- **Firestore rules / indexes:** deployed by GitHub Actions (below), not by hand.
+- **CI service account** (one per project): Google Cloud console → *IAM & Admin* → *Service accounts*. Roles: *Firebase Rules Admin*, *Cloud Datastore Index Admin*, *Service Usage Consumer*. Its JSON key is stored only as the GitHub secret `FIREBASE_SERVICE_ACCOUNT` (see below).
+- **Admin SDK key for local scripts** (`dev:wipe`, `backfill-usernames`): a personal, short-lived key kept outside the repo — see `.agents/docs/admin-scripts.md` (incl. revoking it afterwards).
 
-```sh
-# Generate an app
-npx nx g @nx/react:app demo
+### GitHub (`Marcin-Migdal/Flaner`)
+| Where | Name | Value |
+| :--- | :--- | :--- |
+| *Settings → Environments → `firebase-dev`* | secret `FIREBASE_SERVICE_ACCOUNT` | CI service-account JSON of `flaner-v2-dev` |
+| *Settings → Environments → `firebase-prod`* | secret `FIREBASE_SERVICE_ACCOUNT` | CI service-account JSON of `flaner-v2` |
 
-# Generate a library
-npx nx g @nx/react:lib some-lib
-```
+- Used by `.github/workflows/deploy-firestore.yml` (push to `develop` → DEV, `master` → PROD, manual run on a feature branch → DEV). Without the secret the deploy step is skipped with a warning.
+- `.github/workflows/ci.yml` needs no secrets (it runs against the `demo-flaner` emulator).
+- Rotating a key: create a new key for the service account, paste the JSON into the environment secret, delete the old key in Google Cloud.
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+### Vercel
+Six projects, each with *Root Directory* `packages/<pkg>` and *Build Command* `cd ../.. && npx nx run <pkg>:build` (setup steps: `vercel-project-setup` skill):
+`flaner` (core), `flaner-community`, `flaner-planning`, `flaner-settings`, `flaner-shopping`, `flaner-tools`.
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Environment variables (*Project → Settings → Environment Variables*), set on **every** project:
 
-## Set up CI!
+| Variable | Production | Preview |
+| :--- | :--- | :--- |
+| `VITE_API_KEY`, `VITE_AUTH_DOMAIN`, `VITE_PROJECT_ID`, `VITE_STORAGE_BUCKET`, `VITE_MESSAGING_SENDER_ID`, `VITE_APP_ID`, `VITE_MEASUREMENT_ID` | `flaner-v2` web config | `flaner-v2-dev` web config |
+| `VITE_CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name | same |
 
-### Step 1
+Additionally on the host project `flaner` only:
 
-To connect to Nx Cloud, run the following command:
+| Variable | Production | Preview |
+| :--- | :--- | :--- |
+| `VITE_MFE_SETTINGS_URL`, `VITE_MFE_COMMUNITY_URL`, `VITE_MFE_PLANNING_URL`, `VITE_MFE_SHOPPING_URL`, `VITE_MFE_TOOLS_URL` | `https://flaner-<mfe>.vercel.app` | `https://flaner-<mfe>-dev.vercel.app` |
 
-```sh
-npx nx connect
-```
+- No trailing slash in URLs. A changed variable takes effect only after a redeploy.
+- Deployment Protection is disabled on all projects (the host loads remotes cross-origin).
+- Vercel team members: *Team → Settings → Members*.
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+### Cloudinary
+- Account owner manages the cloud; the app needs only the **cloud name** (no API secret in the client).
+- Unsigned upload presets used by the app: `flaner_avatars`, `flaner_product_icons` (*Settings → Upload → Upload presets*). Both must exist and be *Unsigned*.
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+---
 
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
-```
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/getting-started/tutorials/npm-workspaces-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## 4. Troubleshooting
+`.agents/docs/troubleshooting.md`.

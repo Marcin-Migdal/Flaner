@@ -4,6 +4,10 @@
   "confirm": "Confirm",
   "loading": "Loading...",
   "error": "An error occurred",
+  "pwa": {
+    "updateAvailable": "A new version of the app is available.",
+    "refresh": "Refresh"
+  },
   "nav": {
     "home": "Home",
     "community": "Community",

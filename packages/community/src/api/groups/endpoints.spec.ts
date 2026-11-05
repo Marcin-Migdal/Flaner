@@ -146,7 +146,12 @@ describe("community groups endpoints", () => {
 
     it("deletes group with all members, requests, invitations cascading", async () => {
       mockGetDocs
-        .mockResolvedValueOnce({ docs: [{ ref: { id: "m-1" } }] }) // members
+        .mockResolvedValueOnce({
+          docs: [
+            { ref: { id: "owner-1" }, data: () => ({ role: "owner" }) },
+            { ref: { id: "m-1" }, data: () => ({ role: "member" }) },
+          ],
+        }) // members
         .mockResolvedValueOnce({ docs: [{ ref: { id: "r-1" } }] }) // requests
         .mockResolvedValueOnce({
           docs: [
@@ -158,9 +163,31 @@ describe("community groups endpoints", () => {
 
       await deleteGroup("group-1");
 
-      // 1 member + 1 request + 3 group-invitations + 2 user-invitations + 1 group-doc = 8
-      expect(mockBatchDelete).toHaveBeenCalledTimes(8);
-      expect(mockBatchCommit).toHaveBeenCalled();
+      // 2 members + 1 request + 3 group-invitations + 2 user-invitations + 1 group-doc = 9
+      expect(mockBatchDelete).toHaveBeenCalledTimes(9);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(2);
+      // The owner's member doc and the group doc go last, in their own batch
+      const deletedIds = mockBatchDelete.mock.calls.map(([ref]) => ref.id);
+      expect(deletedIds.slice(-2)).toEqual(["owner-1", "group-1"]);
+    });
+
+    it("splits deleting a large group into batches and keeps the owner + group in the last one", async () => {
+      const members = Array.from({ length: 600 }, (_, index) => ({
+        ref: { id: `m-${index}` },
+        data: () => ({ role: "member" }),
+      }));
+      mockGetDocs
+        .mockResolvedValueOnce({ docs: [{ ref: { id: "owner-1" }, data: () => ({ role: "owner" }) }, ...members] })
+        .mockResolvedValueOnce({ docs: [] })
+        .mockResolvedValueOnce({ docs: [] });
+
+      await deleteGroup("group-1");
+
+      // 600 members → 450 + 150, then owner + group
+      expect(mockBatchCommit).toHaveBeenCalledTimes(3);
+      expect(mockBatchDelete).toHaveBeenCalledTimes(602);
+      const deletedIds = mockBatchDelete.mock.calls.map(([ref]) => ref.id);
+      expect(deletedIds.slice(-2)).toEqual(["owner-1", "group-1"]);
     });
   });
 
@@ -363,7 +390,7 @@ describe("community groups endpoints", () => {
 
       await expect(
         inviteUserToGroup("group-1", "Hiking", "user-2", "user-outsider"),
-      ).rejects.toThrow("Nie jesteś członkiem tej grupy");
+      ).rejects.toThrow("community:errors.notGroupMember");
     });
 
     it("inviteUserToGroup sets invitation docs and creates notification", async () => {

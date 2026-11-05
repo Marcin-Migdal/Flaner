@@ -2,6 +2,7 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { FirebaseError } from "firebase/app";
 import { renderWithProviders, createMockUser } from "@flaner/test-utils";
 import { useAuth } from "@flaner/shared/context";
 import { compressImage, uploadToCloudinary, toast } from "@flaner/shared/utils";
@@ -266,6 +267,23 @@ describe("SettingsView", () => {
     consoleErrorSpy.mockRestore();
   });
 
+  it("shows a field error when the new username is already taken", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mockMutate.mockImplementationOnce((_payload, { onError }) =>
+      onError(new FirebaseError("app/username-already-in-use", "This username is already taken")),
+    );
+    renderWithProviders(<SettingsView />);
+
+    const usernameInput = screen.getByRole("textbox", { name: "profile.username" });
+    await user.clear(usernameInput);
+    await user.type(usernameInput, "taken");
+    await user.click(screen.getByRole("button", { name: "actions.save" }));
+
+    expect(await screen.findByText("validation.usernameInUse")).toBeInTheDocument();
+    vi.mocked(console.error).mockRestore();
+  });
+
   it("handles avatar upload when a File is provided", async () => {
     const user = userEvent.setup();
     const mockCompressedFile = new File(["compressed"], "avatar.jpg", { type: "image/jpeg" });
@@ -334,7 +352,7 @@ describe("SettingsView", () => {
     await user.click(saveButton);
 
     await waitFor(() => {
-      expect(toast.failure).toHaveBeenCalledWith("Compression error");
+      expect(toast.failure).toHaveBeenCalledWith("notifications.avatarError");
       expect(mockMutate).not.toHaveBeenCalled();
     });
 

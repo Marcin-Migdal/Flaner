@@ -1,10 +1,11 @@
+// Firestore rules spec: .agents/skills/firestore-rules-manager/docs/friendRequests.md, users.md (keep their Write flows / Queries in sync).
 import type { FriendRequest, Friendship } from "./types";
-import { collection, doc, setDoc, getDocs, getDoc, deleteDoc, query, where, limit, onSnapshot } from "firebase/firestore";
+import { collection, doc, getDocs, getDoc, deleteDoc, query, where, limit, onSnapshot, writeBatch } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
-import { type UserType } from "@flaner/shared/types";
+import { type UserProfile } from "@flaner/shared/types";
 
 // Fetch multiple users by their UIDs
-export const getUsers = async (uids: string[]): Promise<UserType[]> => {
+export const getUsers = async (uids: string[]): Promise<UserProfile[]> => {
   if (!uids || uids.length === 0) return [];
   
   // To avoid hitting Firestore for duplicate IDs, get unique UIDs
@@ -15,17 +16,17 @@ export const getUsers = async (uids: string[]): Promise<UserType[]> => {
   const promises = uniqueUids.map(async (uid) => {
     const snap = await getDoc(doc(fb.firestore, "users", uid));
     if (snap.exists()) {
-      return { ...snap.data(), uid: snap.id } as UserType;
+      return { ...snap.data(), uid: snap.id } as UserProfile;
     }
     return null;
   });
 
   const results = await Promise.all(promises);
-  return results.filter((u): u is UserType => u !== null);
+  return results.filter((u): u is UserProfile => u !== null);
 };
 
 // 1. Search users by username (prefix match, case-insensitive)
-export const searchUsers = async (searchQuery: string, currentUserUid: string): Promise<UserType[]> => {
+export const searchUsers = async (searchQuery: string, currentUserUid: string): Promise<UserProfile[]> => {
   if (!searchQuery.trim()) return [];
   const qLower = searchQuery.toLowerCase();
   
@@ -40,7 +41,7 @@ export const searchUsers = async (searchQuery: string, currentUserUid: string): 
   return snap.docs
     .map((d) => {
       const data = d.data();
-      return { ...data, uid: d.id } as UserType;
+      return { ...data, uid: d.id } as UserProfile;
     })
     .filter((u) => u.uid !== currentUserUid);
 };
@@ -53,8 +54,9 @@ export const sendFriendRequest = async (
   try {
     const requestId = `${sender.uid}_${receiver.uid}`;
     const reqRef = doc(fb.firestore, "friendRequests", requestId);
-    
-    await setDoc(reqRef, {
+    const batch = writeBatch(fb.firestore);
+
+    batch.set(reqRef, {
       senderUid: sender.uid,
       receiverUid: receiver.uid,
       senderUsername: sender.username,
@@ -67,7 +69,7 @@ export const sendFriendRequest = async (
 
     // Create notification for receiver
     const notifRef = doc(collection(fb.firestore, `users/${receiver.uid}/notifications`));
-    await setDoc(notifRef, {
+    batch.set(notifRef, {
       id: notifRef.id,
       type: "friend_request",
       senderUid: sender.uid,
@@ -76,6 +78,8 @@ export const sendFriendRequest = async (
       createdAt: Date.now(),
       read: false,
     });
+
+    await batch.commit();
   } catch (error) {
     console.error("sendFriendRequest failed:", error);
     throw error;
@@ -94,7 +98,8 @@ export const cancelFriendRequest = async (senderUid: string, receiverUid: string
   }
 };
 
-// 4. Accept friend request (creates mutual friendship records, notifies sender)
+// 4. Accept friend request (creates mutual friendship records, notifies sender).
+// One batch: the rules allow the friendships only while the request still exists before the batch.
 export const acceptFriendRequest = async (
   sender: { uid: string; username: string; avatarUrl?: string },
   receiver: { uid: string; username: string; avatarUrl?: string }
@@ -102,13 +107,14 @@ export const acceptFriendRequest = async (
   try {
     const requestId = `${sender.uid}_${receiver.uid}`;
     const reqRef = doc(fb.firestore, "friendRequests", requestId);
-    
+    const batch = writeBatch(fb.firestore);
+
     // Delete the request
-    await deleteDoc(reqRef);
+    batch.delete(reqRef);
 
     // Add friendship to receiver (B)'s subcollection
     const friendshipB = doc(fb.firestore, `users/${receiver.uid}/friendships`, sender.uid);
-    await setDoc(friendshipB, {
+    batch.set(friendshipB, {
       userRef: doc(fb.firestore, "users", sender.uid),
       username: sender.username,
       usernameLower: sender.username.toLowerCase(),
@@ -118,7 +124,7 @@ export const acceptFriendRequest = async (
 
     // Add friendship to sender (A)'s subcollection
     const friendshipA = doc(fb.firestore, `users/${sender.uid}/friendships`, receiver.uid);
-    await setDoc(friendshipA, {
+    batch.set(friendshipA, {
       userRef: doc(fb.firestore, "users", receiver.uid),
       username: receiver.username,
       usernameLower: receiver.username.toLowerCase(),
@@ -128,7 +134,7 @@ export const acceptFriendRequest = async (
 
     // Create notification for sender (A) notifying that receiver (B) accepted
     const notifRef = doc(collection(fb.firestore, `users/${sender.uid}/notifications`));
-    await setDoc(notifRef, {
+    batch.set(notifRef, {
       id: notifRef.id,
       type: "friend_request_accepted",
       senderUid: receiver.uid,
@@ -137,6 +143,8 @@ export const acceptFriendRequest = async (
       createdAt: Date.now(),
       read: false,
     });
+
+    await batch.commit();
   } catch (error) {
     console.error("acceptFriendRequest failed:", error);
     throw error;
@@ -151,13 +159,14 @@ export const rejectFriendRequest = async (
   try {
     const requestId = `${sender.uid}_${receiver.uid}`;
     const reqRef = doc(fb.firestore, "friendRequests", requestId);
-    
+    const batch = writeBatch(fb.firestore);
+
     // Delete the request
-    await deleteDoc(reqRef);
+    batch.delete(reqRef);
 
     // Create notification for sender (A) notifying that receiver (B) declined
     const notifRef = doc(collection(fb.firestore, `users/${sender.uid}/notifications`));
-    await setDoc(notifRef, {
+    batch.set(notifRef, {
       id: notifRef.id,
       type: "friend_request_rejected",
       senderUid: receiver.uid,
@@ -166,6 +175,8 @@ export const rejectFriendRequest = async (
       createdAt: Date.now(),
       read: false,
     });
+
+    await batch.commit();
   } catch (error) {
     console.error("rejectFriendRequest failed:", error);
     throw error;
@@ -177,9 +188,11 @@ export const removeFriend = async (currentUserUid: string, friendUid: string): P
   try {
     const friendshipB = doc(fb.firestore, `users/${currentUserUid}/friendships`, friendUid);
     const friendshipA = doc(fb.firestore, `users/${friendUid}/friendships`, currentUserUid);
-    
-    await deleteDoc(friendshipB);
-    await deleteDoc(friendshipA);
+    const batch = writeBatch(fb.firestore);
+
+    batch.delete(friendshipB);
+    batch.delete(friendshipA);
+    await batch.commit();
   } catch (error) {
     console.error("removeFriend failed:", error);
     throw error;

@@ -137,20 +137,15 @@ Every view must be verified on mobile viewports (`Pixel 7`, `iPhone 14`) for vis
 
 ---
 
-## 6. Selective Execution & CI Integration (Nx Affected)
+## 6. Selective Execution & CI (GitHub Actions)
 
-To keep CI execution fast:
-1. **Projects Configuration in `playwright.config.ts`**:
-   Projects are defined per domain (`core`, `community`, `settings`, `mobile`):
-   ```typescript
-   projects: [
-     { name: "core", testDir: "./e2e/core" },
-     { name: "community", testDir: "./e2e/community" },
-     { name: "settings", testDir: "./e2e/settings" },
-     { name: "mobile", testDir: "./e2e/mobile" },
-   ]
-   ```
-2. **Targeted Execution in GitHub Actions:**
-   - Run tests for an impacted MFE: `npx playwright test --project=community`
-   - Run mobile tests: `npx playwright test --project=mobile`
-   - Run all E2E tests: `npx playwright test`
+CI lives in `.github/workflows/ci.yml` (runs on PRs to `develop` / `master`). The `e2e` job runs `scripts/e2e-affected.mjs <PR base sha>`, which combines `nx show projects --affected` with `git diff` to pick Playwright projects (defined per domain in `e2e/playwright.config.ts`):
+
+- `core`, `shared`, `ui-components`, `test-utils` affected, or a change in `e2e/support`, e2e config, root config, lockfile or `.github/` → **full suite**.
+- One MFE affected → that MFE's project + `core` + `mobile`.
+- Change in `e2e/<project>/` → that project.
+- Only `.agents/**` / `*.md` → E2E skipped.
+
+The selection runs in a single `npx playwright test --config=e2e/playwright.config.ts --project=a --project=b` call, so emulators and dev servers start once. On failure `playwright-report/` is uploaded as an artifact. When adding a new MFE / Playwright project, update `MFES` and the `e2e/<project>` regex in `scripts/e2e-affected.mjs`.
+
+Locally, single projects: `npx nx run e2e:e2e:<project>` or `npx playwright test --config=e2e/playwright.config.ts --project=<project>`.

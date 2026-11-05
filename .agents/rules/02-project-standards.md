@@ -35,7 +35,7 @@ This file defines the absolute technological foundations for the Flaner v2 proje
 
 ## Testing & Vitest Performance
 - **Folder-per-Unit:** Every tested unit (component, hook, util, schema) MUST have its dedicated directory aggregating the implementation, `*.spec.ts(x)`, styles, and `index.ts`.
-- **Vitest Execution (`pool: 'threads'`):** In `vitest.base.ts`, Vitest uses worker threads (`pool: 'threads'`) and `node` environment for schemas/utils to ensure fast execution on Windows.
+- **Vitest Execution (`pool: 'threads'`):** In `vitest.base.ts`, Vitest uses worker threads (`pool: 'threads'`) to ensure fast execution on Windows; all tests run in `jsdom` (a per-file `// @vitest-environment node` docblock is allowed when a spec must run without a DOM).
 - **Troubleshooting `JavaScript heap out of memory` (OOM):**
   If test suites grow very large and Node runs out of memory (`JavaScript heap out of memory`), apply these remedies:
   1. Switch `pool: 'threads'` back to `pool: 'forks'` in `vitest.base.ts` (OS reclaims 100% memory after each file).

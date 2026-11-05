@@ -10,6 +10,7 @@ import {
   Separator,
 } from "@flaner/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { FirebaseError } from "firebase/app";
 import { ArrowLeft } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
@@ -65,7 +66,7 @@ export function SettingsView() {
         avatarUrl = await uploadToCloudinary(compressed);
       } catch (err) {
         console.error(err);
-        toast.failure((err as Error)?.message || t("notifications.avatarError"));
+        toast.failure(t("notifications.avatarError"));
         return;
       }
     } else if (data.avatar === null) {
@@ -87,6 +88,9 @@ export function SettingsView() {
       },
       onError: (err) => {
         console.error(err);
+        if (err instanceof FirebaseError && err.code === "app/username-already-in-use") {
+          settingsForm.setError("username", { type: "manual", message: t("validation.usernameInUse") });
+        }
       },
     });
   };

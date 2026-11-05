@@ -15,11 +15,13 @@ import {
   subscribeToSentFriendRequests,
 } from "./endpoints";
 
-const mockSetDoc = vi.fn().mockResolvedValue(undefined);
 const mockDeleteDoc = vi.fn().mockResolvedValue(undefined);
 const mockGetDoc = vi.fn();
 const mockGetDocs = vi.fn();
 const mockOnSnapshot = vi.fn();
+const mockBatchSet = vi.fn();
+const mockBatchDelete = vi.fn();
+const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@flaner/shared/firebase", () => ({
   fb: {
@@ -33,7 +35,6 @@ vi.mock("firebase/firestore", () => ({
     id: parts[parts.length - 1] || "mock-doc-id",
     path: parts.join("/"),
   })),
-  setDoc: (...args: unknown[]) => mockSetDoc(...args),
   deleteDoc: (...args: unknown[]) => mockDeleteDoc(...args),
   getDoc: (...args: unknown[]) => mockGetDoc(...args),
   getDocs: (...args: unknown[]) => mockGetDocs(...args),
@@ -41,6 +42,11 @@ vi.mock("firebase/firestore", () => ({
   where: vi.fn((...args: unknown[]) => args),
   limit: vi.fn((n: number) => ({ limit: n })),
   onSnapshot: (...args: unknown[]) => mockOnSnapshot(...args),
+  writeBatch: vi.fn(() => ({
+    set: (...args: unknown[]) => mockBatchSet(...args),
+    delete: (...args: unknown[]) => mockBatchDelete(...args),
+    commit: () => mockBatchCommit(),
+  })),
 }));
 
 describe("community users endpoints", () => {
@@ -96,14 +102,15 @@ describe("community users endpoints", () => {
   });
 
   describe("sendFriendRequest & cancelFriendRequest", () => {
-    it("creates friend request and writes notification for receiver", async () => {
+    it("creates friend request and writes notification for receiver in one batch", async () => {
       const sender = { uid: "u-1", username: "Alice", avatarUrl: "alice.png" };
       const receiver = { uid: "u-2", username: "Bob" };
 
       await sendFriendRequest(sender, receiver);
 
-      expect(mockSetDoc).toHaveBeenCalledTimes(2);
-      expect(mockSetDoc).toHaveBeenCalledWith(
+      expect(mockBatchSet).toHaveBeenCalledTimes(2);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
+      expect(mockBatchSet).toHaveBeenCalledWith(
         expect.objectContaining({ path: "friendRequests/u-1_u-2" }),
         expect.objectContaining({
           senderUid: "u-1",
@@ -119,7 +126,7 @@ describe("community users endpoints", () => {
 
       await sendFriendRequest(sender, receiver);
 
-      expect(mockSetDoc).toHaveBeenCalledWith(
+      expect(mockBatchSet).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           senderAvatarUrl: "",
@@ -136,17 +143,18 @@ describe("community users endpoints", () => {
   });
 
   describe("acceptFriendRequest & rejectFriendRequest", () => {
-    it("acceptFriendRequest removes request, writes mutual friendships, and notifies sender", async () => {
+    it("acceptFriendRequest removes request, writes mutual friendships, and notifies sender in one batch", async () => {
       const sender = { uid: "u-1", username: "Alice" };
       const receiver = { uid: "u-2", username: "Bob" };
 
       await acceptFriendRequest(sender, receiver);
 
-      expect(mockDeleteDoc).toHaveBeenCalledWith(
+      expect(mockBatchDelete).toHaveBeenCalledWith(
         expect.objectContaining({ path: "friendRequests/u-1_u-2" }),
       );
-      // 2 friendship setDocs + 1 notification setDoc
-      expect(mockSetDoc).toHaveBeenCalledTimes(3);
+      // 2 friendships + 1 notification
+      expect(mockBatchSet).toHaveBeenCalledTimes(3);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
     });
 
     it("rejectFriendRequest deletes request and sends notification to sender", async () => {
@@ -155,17 +163,19 @@ describe("community users endpoints", () => {
 
       await rejectFriendRequest(sender, receiver);
 
-      expect(mockDeleteDoc).toHaveBeenCalledWith(
+      expect(mockBatchDelete).toHaveBeenCalledWith(
         expect.objectContaining({ path: "friendRequests/u-1_u-2" }),
       );
-      expect(mockSetDoc).toHaveBeenCalledTimes(1);
+      expect(mockBatchSet).toHaveBeenCalledTimes(1);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("removeFriend", () => {
-    it("deletes both mutual friendship documents", async () => {
+    it("deletes both mutual friendship documents in one batch", async () => {
       await removeFriend("u-1", "u-2");
-      expect(mockDeleteDoc).toHaveBeenCalledTimes(2);
+      expect(mockBatchDelete).toHaveBeenCalledTimes(2);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -234,7 +244,7 @@ describe("community users endpoints", () => {
       const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       // sendFriendRequest throws
-      mockSetDoc.mockRejectedValueOnce(new Error("Send failed"));
+      mockBatchCommit.mockRejectedValueOnce(new Error("Send failed"));
       await expect(
         sendFriendRequest(
           { uid: "u-1", username: "Alice" },
@@ -247,7 +257,7 @@ describe("community users endpoints", () => {
       await expect(cancelFriendRequest("u-1", "u-2")).rejects.toThrow("Cancel failed");
 
       // acceptFriendRequest throws
-      mockDeleteDoc.mockRejectedValueOnce(new Error("Accept failed"));
+      mockBatchCommit.mockRejectedValueOnce(new Error("Accept failed"));
       await expect(
         acceptFriendRequest(
           { uid: "u-1", username: "Alice" },
@@ -256,7 +266,7 @@ describe("community users endpoints", () => {
       ).rejects.toThrow("Accept failed");
 
       // rejectFriendRequest throws
-      mockDeleteDoc.mockRejectedValueOnce(new Error("Reject failed"));
+      mockBatchCommit.mockRejectedValueOnce(new Error("Reject failed"));
       await expect(
         rejectFriendRequest(
           { uid: "u-1", username: "Alice" },
@@ -265,7 +275,7 @@ describe("community users endpoints", () => {
       ).rejects.toThrow("Reject failed");
 
       // removeFriend throws
-      mockDeleteDoc.mockRejectedValueOnce(new Error("Remove failed"));
+      mockBatchCommit.mockRejectedValueOnce(new Error("Remove failed"));
       await expect(removeFriend("u-1", "u-2")).rejects.toThrow("Remove failed");
 
       // getFriendsList throws

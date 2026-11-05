@@ -33,7 +33,7 @@ import {
 } from "@flaner/ui-components";
 import { doc, updateDoc } from "firebase/firestore";
 import { ChevronRight, ChevronsUpDown, Globe, LogOut, Settings, SunMoon } from "lucide-react";
-import { DynamicIcon } from "lucide-react/dynamic";
+import { NavIcon } from "../NavIcon";
 import { Suspense, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useLocation, useNavigation } from "react-router";
@@ -116,6 +116,7 @@ function ShellLayoutContent() {
     }
   };
 
+  // Writes users/{uid} (Firestore rules spec: .agents/skills/firestore-rules-manager/docs/users.md)
   const handleLanguageChange = async (nextLang: "pl" | "en") => {
     i18n.changeLanguage(nextLang);
     if (user?.uid) {
@@ -174,7 +175,7 @@ function ShellLayoutContent() {
                   <div className="relative w-full flex items-center">
                     <SidebarMenuButton asChild isActive={isLinkActive(item.path)} tooltip={t(item.labelKey)}>
                       <NavLink to={item.path} onClick={handleNavClick}>
-                        <DynamicIcon name={item.icon} />
+                        <NavIcon name={item.icon} />
                         <span>{t(item.labelKey)}</span>
                       </NavLink>
                     </SidebarMenuButton>

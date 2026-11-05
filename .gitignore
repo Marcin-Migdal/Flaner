@@ -51,6 +51,7 @@ vitest.config.*.timestamp*
 **/.mf/
 .vercel
 .env*
+!.env.example
 playwright-report/
 test-results/
 
@@ -67,3 +68,6 @@ eslint-errors.txt
 
 # Module Federation generated remote types
 @mf-types/
+
+# Firebase emulator data (npm run dev:emulators)
+.emulator-data/

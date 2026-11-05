@@ -18,4 +18,5 @@ export type AppNotification = {
   createdAt: number;
   read: boolean;
   splitGroupId?: string;
+  eventId?: string;
 };

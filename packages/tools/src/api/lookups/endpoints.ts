@@ -1,3 +1,4 @@
+// Firestore rules spec: .agents/skills/firestore-rules-manager/docs/lookup_materials.md, lookup_types.md, lookup_colors.md (keep their Write flows / Queries in sync).
 import {
   collection,
   doc,

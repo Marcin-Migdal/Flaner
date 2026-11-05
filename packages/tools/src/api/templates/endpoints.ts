@@ -1,8 +1,10 @@
+// Firestore rules spec: .agents/skills/firestore-rules-manager/docs/templates.md, spools.md (keep their Write flows / Queries in sync).
 import { collection, getDocs, query, where, setDoc, updateDoc, deleteDoc, doc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
-import { firestoreConverter } from "@flaner/shared/utils";
+import { deleteInBatches, firestoreConverter } from "@flaner/shared/utils";
 import type { FilamentTemplate, TemplateInput } from "./types";
 import type { FilamentSpool } from "../spools/types";
+import { spoolRefs } from "../spools/endpoints";
 
 export const templateRefs = {
   templates: () => collection(fb.firestore, "templates").withConverter(firestoreConverter<FilamentTemplate>()),
@@ -82,15 +84,16 @@ export const deleteTemplate = async (
       where("templateId", "==", templateId),
     );
     const snap = await getDocs(spoolsQuery);
-    if (!snap.empty) {
+    if (deleteSpools) {
+      // Each spool's prints come before the spool: the prints rule reads the spool doc
+      const printsSnaps = await Promise.all(snap.docs.map((docSnap) => getDocs(spoolRefs.prints(docSnap.id))));
+      await deleteInBatches(
+        fb.firestore,
+        snap.docs.flatMap((docSnap, index) => [...printsSnaps[index].docs.map((d) => d.ref), docSnap.ref]),
+      );
+    } else if (!snap.empty) {
       const batch = writeBatch(fb.firestore);
-      snap.docs.forEach((docSnap) => {
-        if (deleteSpools) {
-          batch.delete(docSnap.ref);
-        } else {
-          batch.update(docSnap.ref, { templateId: null });
-        }
-      });
+      snap.docs.forEach((docSnap) => batch.update(docSnap.ref, { templateId: null }));
       await batch.commit();
     }
   }

@@ -8,15 +8,12 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     pool: "threads",
-    environmentMatchGlobs: [
-      ["**/schemas/**", "node"],
-      ["**/packages/shared/src/utils/**", "node"],
-      ["**/packages/planning/src/utils/**", "node"],
-      ["**/packages/community/src/utils/**", "node"],
-      ["**/packages/tools/src/utils/**", "node"],
-      ["**/packages/settings/src/utils/**", "node"],
-      ["**/packages/core/src/utils/**", "node"],
-    ],
+    // .env is not in the repo; specs that import the real firebase.ts need a non-empty config (never contacted)
+    env: {
+      VITE_API_KEY: "test-api-key",
+      VITE_AUTH_DOMAIN: "demo-flaner.firebaseapp.com",
+      VITE_PROJECT_ID: "demo-flaner",
+    },
     setupFiles: [path.resolve(__dirname, "./vitest.setup.ts")],
     include: [
       "src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",

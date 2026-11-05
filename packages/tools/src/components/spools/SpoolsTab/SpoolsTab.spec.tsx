@@ -94,6 +94,7 @@ vi.mock("../../../hooks", () => ({
     isPending: false,
   }),
   useGetSpoolPrintsQuery: () => ({ data: [], isLoading: false }),
+  useGetLastSpoolPrintQuery: () => ({ data: { id: "print-1", usedWeight: 10, createdAt: null } }),
 }));
 
 const mockTemplates: FilamentTemplate[] = [

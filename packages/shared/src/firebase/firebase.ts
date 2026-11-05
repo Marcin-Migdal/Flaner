@@ -45,7 +45,6 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
 auth.useDeviceLanguage();
-provider.addScope("https://www.googleapis.com/auth/contacts.readonly");
 
 // Initialize Firestore with offline persistence (IndexedDB) and multi-tab support.
 // Emulator runs use an in-memory cache so no data leaks between E2E tests.

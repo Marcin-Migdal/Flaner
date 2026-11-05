@@ -1,14 +1,15 @@
 import React from "react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SpoolItem } from "./SpoolItem";
-import type { FilamentSpool } from "../../../api/spools";
+import type { FilamentSpool, SpoolPrint } from "../../../api/spools";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
+let lastPrint: SpoolPrint | null = { id: "print-1", usedWeight: 10, createdAt: null };
+
+vi.mock("../../../hooks", () => ({
+  useToolsTranslations: () => ({ t: (key: string) => key }),
+  useGetLastSpoolPrintQuery: () => ({ data: lastPrint }),
 }));
 
 const mockSpool: FilamentSpool = {
@@ -26,6 +27,29 @@ const mockSpool: FilamentSpool = {
 };
 
 describe("SpoolItem", () => {
+  beforeEach(() => {
+    lastPrint = { id: "print-1", usedWeight: 10, createdAt: null };
+  });
+
+  it("disables undo when the spool has no prints", () => {
+    lastPrint = null;
+
+    render(
+      <SpoolItem
+        spool={mockSpool}
+        onRecordPrint={vi.fn()}
+        onEdit={vi.fn()}
+        onMarkFinished={vi.fn()}
+        onDelete={vi.fn()}
+        onViewHistory={vi.fn()}
+        onUndoLastPrint={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTitle("spooler.spools.undoLastPrint")).toBeDisabled();
+    expect(screen.getByTitle("spooler.spools.recordUsage")).toBeEnabled();
+  });
+
   it("renders spool info and progress correctly", () => {
     render(
       <SpoolItem

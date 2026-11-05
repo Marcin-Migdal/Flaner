@@ -44,6 +44,17 @@ describe("toast utility", () => {
     expect(sonnerToast).toHaveBeenCalledWith("Hello", {
       description: undefined,
       duration: undefined,
+      action: undefined,
+    });
+  });
+
+  it("passes an action button to sonner", () => {
+    const onClick = vi.fn();
+    toast.message("Update", { duration: Infinity, action: { label: "Refresh", onClick } });
+    expect(sonnerToast).toHaveBeenCalledWith("Update", {
+      description: undefined,
+      duration: Infinity,
+      action: { label: "Refresh", onClick },
     });
   });
 });

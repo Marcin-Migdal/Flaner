@@ -25,7 +25,7 @@ This skill provides unified instructions and automation patterns for deploying a
 - Flow: `feature/*` → PR to `develop` (check on DEV) → PR `develop` → `master` (release).
 - **Deployment Protection is disabled on every project.** The host must fetch remotes cross-origin (a protected remote answers 302 to the Vercel login), and DEV is meant to be shared with testers. Data stays protected by Firebase Auth + security rules.
 - **Brand-new project:** deploy `master` to production first. A first deployment from another branch can grab the production `*.vercel.app` domain.
-- **Redeploying an unchanged app gets CANCELED** by `nx-ignore` (it sees no changes). Ship a commit that touches the app, or release via `develop` → `master`.
+- **Redeploying an unchanged app gets CANCELED** by the ignore step (`scripts/vercel-ignore.sh` → `nx-ignore` sees no changes). Ship a commit that touches the app, or release via `develop` → `master`.
 - Env vars can be managed via `vercel api` (REST). In Git Bash set `MSYS_NO_PATHCONV=1`, otherwise `/v9/...` paths get rewritten to Windows paths.
 
 ## 1. Architecture & Module Federation Rules on Vercel
@@ -46,7 +46,7 @@ Every subproject in `packages/<package-name>` MUST have its own `vercel.json` wi
 ```json
 {
   "buildCommand": "cd ../.. && npx nx run <PACKAGE_NAME>:build",
-  "ignoreCommand": "if [ \"$VERCEL_GIT_COMMIT_REF\" = \"develop\" ]; then exit 1; fi; cd ../.. && npx nx-ignore <PACKAGE_NAME>",
+  "ignoreCommand": "bash ../../scripts/vercel-ignore.sh <PACKAGE_NAME>",
   "outputDirectory": "dist",
   "headers": [
     {
@@ -79,7 +79,9 @@ Every subproject in `packages/<package-name>` MUST have its own `vercel.json` wi
 ### Key Rules for `vercel.json`:
 1. **Root Location**: Place `vercel.json` inside the root of the specific package (e.g. `packages/planning/vercel.json`), NOT at the root of the monorepo.
 2. **Build Command**: Use `cd ../.. && npx nx run <PACKAGE_NAME>:build`. This ensures Nx runs from the monorepo root.
-2a. **Ignore Command**: `vercel.json`'s `ignoreCommand` overrides the dashboard / API setting. On `develop` it always builds (exit 1): on a new branch Vercel reports the production SHA as the previous one, so `nx-ignore` would skip and a rarely-changed remote would never exist on the DEV domains. Everywhere else `nx-ignore` skips unaffected apps.
+2a. **Ignore Command**: `vercel.json`'s `ignoreCommand` overrides the dashboard / API setting. It calls `scripts/vercel-ignore.sh <app>` (exit 0 = skip, exit 1 = build). On `develop` it always builds: on a new branch Vercel reports the production SHA as the previous one, so `nx-ignore` would skip and a rarely-changed remote would never exist on the DEV domains. Everywhere else `nx-ignore` skips unaffected apps.
+2a'. **Fail-safe:** `nx-ignore` exits 0 (skip) on its own errors too. The script skips only when the output says `is not affected` or `Skip build due to commit message`; anything else, errors included, builds. Never call `npx nx-ignore` directly from `ignoreCommand`. If a newer `nx-ignore` rewords those messages, every app builds (safe), so update the patterns in the script.
+2b. **Pin `nx` to an exact version** in the root `package.json` (`"nx": "23.3.1"`, never `"^23.3.1"`). `nx-ignore` reads that spec and parses the major with `/^(\d+)\./`. A range prefix gives major 0, so it calls the removed `nx affected:graph` and errors (before the fail-safe script this canceled every gated deployment, issue #35; now it builds every app). Keep the `@nx/*` plugins on the same exact version. Running `nx-ignore` locally runs `npm install --force` in the workspace and deletes `node_modules` afterwards: reproduce only in a throwaway clone.
 3. **CORS Headers**: `Access-Control-Allow-Origin: *` is strictly required for Module Federation remotes so the host can fetch `remoteEntry.js`.
 4. **SPA Rewrites**: Always use regular expression `"/(.*)"` mapping to `"/index.html"` to avoid 404s on deep route refreshes. Never enable `"cleanUrls": true`.
 
@@ -180,12 +182,8 @@ Always provide the user with these exact steps for the Vercel Dashboard:
    - **Output Directory**: Zostaw domyślne `dist`.
 
 5. **Ustaw Ignored Build Step (Tylko zmienione MFE będą budowane!)**:
-   - W zakładce **Settings ➔ Git**:
-   - W sekcji **Ignored Build Step** zaznacz **Override** / wpisz komendę:
-     ```bash
-     npx nx-ignore <PACKAGE_NAME>
-     ```
-   - *Dzięki temu Vercel w 2 sekundy sprawdzi graf Nx i automatycznie anuluje (skipnie) deployment, jeśli ten MFE ani jego pakiety współdzielone nie uległy zmianie w danym commicie.*
+   - Nic do ustawiania w dashboardzie: `ignoreCommand` z `packages/<PACKAGE_NAME>/vercel.json` nadpisuje ustawienie **Settings ➔ Git ➔ Ignored Build Step** (patrz punkt 2a i 2b).
+   - *Vercel sprawdza graf Nx (`nx-ignore`) i anuluje deployment, jeśli ten MFE ani jego pakiety współdzielone nie uległy zmianie.*
 
 6. **Wdrożenie i Redeploy w Core**:
    - W zakładce **Deployments** kliknij **Redeploy** na najnowszym commicie.

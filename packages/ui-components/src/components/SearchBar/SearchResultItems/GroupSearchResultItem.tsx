@@ -23,9 +23,9 @@ export function GroupSearchResultItem({
 }: GroupSearchResultItemProps) {
   const { t } = useTranslation("common");
 
-  const defaultPrivateGroupText = privateGroupText || t("community.groups.private", { defaultValue: "Wymaga akceptacji" });
-  const defaultPublicGroupText = publicGroupText || t("community.groups.public", { defaultValue: "Publiczna" });
-  const defaultMembersCountText = membersCountText || t("community.groups.members", { defaultValue: "członk." });
+  const defaultPrivateGroupText = privateGroupText || t("community.groups.private");
+  const defaultPublicGroupText = publicGroupText || t("community.groups.public");
+  const defaultMembersCountText = membersCountText || t("community.groups.members");
 
   return (
     <div className="flex items-center gap-3">

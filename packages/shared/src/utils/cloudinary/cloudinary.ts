@@ -30,7 +30,7 @@ export const uploadToCloudinary = async (
     });
 
     if (!response.ok) {
-      throw new Error("Nie udało się przesłać pliku na serwer Cloudinary.");
+      throw new Error("Cloudinary upload failed.");
     }
 
     const data = await response.json();
@@ -49,11 +49,11 @@ const getCompressionPenalty = (attempt: number): number =>
 const compressImageInternal = (originalFile: File, sizeLimit: number, attempt: number): Promise<File> => {
   return new Promise((resolve, reject) => {
     if (sizeLimit <= 0) {
-      return reject(new Error("Nieprawidłowy limit rozmiaru kompresji."));
+      return reject(new Error("Invalid compression size limit."));
     }
 
     if (attempt > MAX_COMPRESSION_ATTEMPTS) {
-      return reject(new Error("Kompresja obrazu nie powiodła się. Plik przekracza dozwolony limit rozmiaru."));
+      return reject(new Error("Image compression failed: file exceeds the size limit."));
     }
 
     const img = new Image();
@@ -70,7 +70,7 @@ const compressImageInternal = (originalFile: File, sizeLimit: number, attempt: n
 
       if (!ctx) {
         URL.revokeObjectURL(objectUrl);
-        return reject(new Error("Nie można stworzyć kontekstu graficznego 2D."));
+        return reject(new Error("Unable to create 2D canvas context."));
       }
 
       ctx.drawImage(img, 0, 0);
@@ -80,7 +80,7 @@ const compressImageInternal = (originalFile: File, sizeLimit: number, attempt: n
           URL.revokeObjectURL(objectUrl);
 
           if (!blob) {
-            return reject(new Error("Konwersja obrazu do blob nie powiodła się."));
+            return reject(new Error("Canvas to blob conversion failed."));
           }
 
           const compressedFile = new File([blob], originalFile.name, { type: "image/webp" });
@@ -100,7 +100,7 @@ const compressImageInternal = (originalFile: File, sizeLimit: number, attempt: n
 
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
-      reject(new Error("Nie udało się załadować obrazu do kompresji."));
+      reject(new Error("Failed to load image for compression."));
     };
 
     img.src = objectUrl;

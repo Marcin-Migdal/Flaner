@@ -218,19 +218,25 @@ describe("tools templates endpoints", () => {
       expect(mockDeleteDoc).toHaveBeenCalled();
     });
 
-    it("deletes template and cascades deletion to spools when deleteSpools is true", async () => {
-      mockGetDocs.mockResolvedValueOnce({
-        empty: false,
-        docs: [
-          { ref: { id: "spool-1" } },
-          { ref: { id: "spool-2" } },
-        ],
-      });
+    it("deletes template and cascades deletion to spools and their prints when deleteSpools is true", async () => {
+      mockGetDocs
+        .mockResolvedValueOnce({
+          empty: false,
+          docs: [
+            { id: "spool-1", ref: { id: "spool-1" } },
+            { id: "spool-2", ref: { id: "spool-2" } },
+          ],
+        })
+        .mockResolvedValueOnce({ docs: [{ ref: { id: "print-1a" } }, { ref: { id: "print-1b" } }] }) // spool-1 prints
+        .mockResolvedValueOnce({ docs: [] }); // spool-2 prints
 
       await deleteTemplate("tpl-1", true, "user-1");
 
-      expect(mockBatchDelete).toHaveBeenCalledTimes(2);
-      expect(mockBatchCommit).toHaveBeenCalled();
+      // Prints of a spool are deleted before the spool itself
+      const deletedIds = mockBatchDelete.mock.calls.map(([ref]) => ref.id);
+      expect(deletedIds).toEqual(["print-1a", "print-1b", "spool-1", "spool-2"]);
+      expect(mockGetDocs).toHaveBeenCalledWith(expect.objectContaining({ path: "spools/spool-1/prints" }));
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
       expect(mockDeleteDoc).toHaveBeenCalled();
     });
 

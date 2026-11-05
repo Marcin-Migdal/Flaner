@@ -186,7 +186,7 @@ describe("GroupInvitationsSheet component", () => {
 
     renderWithProviders(<GroupInvitationsSheet />);
 
-    expect(screen.getByText("Ktoś")).toBeInTheDocument();
+    expect(screen.getByText("groupInvitations.someone")).toBeInTheDocument();
     expect(screen.getByText("HI")).toBeInTheDocument();
 
     const acceptButtons = screen.getAllByRole("button", { name: "groupInvitations.accept" });
@@ -247,7 +247,7 @@ describe("GroupInvitationsSheet component", () => {
     } as unknown as ReturnType<typeof hooks.useGetUserGroupInvitationsQuery>);
 
     renderWithProviders(<GroupInvitationsSheet />);
-    expect(screen.getByText("Ładowanie...")).toBeInTheDocument();
+    expect(screen.getByText("groupInvitations.loading")).toBeInTheDocument();
   });
 
   it("handles reject when multiple invitations exist without closing", async () => {

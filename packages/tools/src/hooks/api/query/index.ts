@@ -1,6 +1,7 @@
 export * from "./useGetTemplatesQuery";
 export * from "./useGetSpoolsQuery";
 export * from "./useGetSpoolPrintsQuery";
+export * from "./useGetLastSpoolPrintQuery";
 export * from "./useGetStartupWasteQuery";
 export * from "./useGetLookupMaterialsQuery";
 export * from "./useGetLookupTypesQuery";

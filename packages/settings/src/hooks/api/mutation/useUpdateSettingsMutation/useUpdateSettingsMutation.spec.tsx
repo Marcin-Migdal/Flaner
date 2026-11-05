@@ -70,8 +70,20 @@ describe("useUpdateSettingsMutation", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(updateUserProfile).toHaveBeenCalledWith("user-456", payload, "john_doe");
-    expect(mockUpdateUser).toHaveBeenCalledWith(payload);
+    // usernameLower must follow the rename, otherwise the next rename releases a stale reservation
+    expect(mockUpdateUser).toHaveBeenCalledWith({ ...payload, usernameLower: "johnny" });
     expect(onSuccessMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves usernameLower alone when the username is not part of the update", async () => {
+    vi.mocked(updateUserProfile).mockResolvedValueOnce(undefined);
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useUpdateSettingsMutation(), { wrapper: Wrapper });
+
+    result.current.mutate({ darkMode: false });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockUpdateUser).toHaveBeenCalledWith({ darkMode: false });
   });
 
   it("throws an error when user is not authenticated", async () => {

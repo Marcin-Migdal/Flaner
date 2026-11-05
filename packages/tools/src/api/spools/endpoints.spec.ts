@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Timestamp } from "firebase/firestore";
 import type { FilamentSpool, SpoolInput } from "./types";
 import type { FilamentTemplate } from "../templates/types";
 import {
   addSpool,
   deleteSpool,
   editSpool,
+  fetchLastPrint,
   fetchSpoolPrints,
   fetchSpools,
   markSpoolAsFinished,
@@ -47,7 +49,8 @@ vi.mock("@flaner/shared/firebase", () => ({
   },
 }));
 
-vi.mock("firebase/firestore", () => ({
+vi.mock("firebase/firestore", async (importOriginal) => ({
+  Timestamp: (await importOriginal<typeof import("firebase/firestore")>()).Timestamp,
   collection: vi.fn((_db: unknown, path: string) => ({
     path,
     withConverter: vi.fn().mockReturnValue({ path }),
@@ -189,7 +192,20 @@ describe("tools spools endpoints", () => {
   });
 
   describe("editSpool", () => {
+    const spoolSnap = (data: Partial<FilamentSpool>) => ({ exists: () => true, data: () => data });
+
+    const template: FilamentTemplate = {
+      id: "tpl-2",
+      userId: "user-1",
+      material: "PETG",
+      type: "Translucent",
+      colorName: "Clear",
+      colorHex: "#cccccc",
+      defaultWeight: 1000,
+    };
+
     it("updates spool document with template and input data", async () => {
+      mockTransactionGet.mockResolvedValueOnce(spoolSnap({ isFinished: false, finishedAt: null }));
       const spoolInput: SpoolInput = {
         templateId: "tpl-2",
         name: "Updated Spool",
@@ -197,19 +213,9 @@ describe("tools spools endpoints", () => {
         currentWeight: 500,
       };
 
-      const template: FilamentTemplate = {
-        id: "tpl-2",
-        userId: "user-1",
-        material: "PETG",
-        type: "Translucent",
-        colorName: "Clear",
-        colorHex: "#cccccc",
-        defaultWeight: 1000,
-      };
-
       await editSpool("spool-1", spoolInput, template);
 
-      expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect(mockTransactionUpdate).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           templateId: "tpl-2",
@@ -226,7 +232,8 @@ describe("tools spools endpoints", () => {
       );
     });
 
-    it("updates spool document as finished when currentWeight <= 0 with fallback defaults", async () => {
+    it("stamps finishedAt when the spool becomes finished, with fallback defaults", async () => {
+      mockTransactionGet.mockResolvedValueOnce(spoolSnap({ isFinished: false, finishedAt: null }));
       const spoolInput: SpoolInput = {
         templateId: "tpl-1",
         name: "Depleted Spool",
@@ -236,7 +243,7 @@ describe("tools spools endpoints", () => {
 
       await editSpool("spool-1", spoolInput);
 
-      expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect(mockTransactionUpdate).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           isFinished: true,
@@ -247,6 +254,39 @@ describe("tools spools endpoints", () => {
           colorHex: "#808080",
         }),
       );
+    });
+
+    it("keeps the original finishedAt when editing an already finished spool", async () => {
+      const originalFinishedAt = new Timestamp(1000, 0);
+      mockTransactionGet.mockResolvedValueOnce(spoolSnap({ isFinished: true, finishedAt: originalFinishedAt }));
+
+      await editSpool("spool-1", { templateId: "tpl-1", name: "Renamed", initialWeight: 1000, currentWeight: 0 });
+
+      expect(mockTransactionUpdate).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ isFinished: true, finishedAt: originalFinishedAt }),
+      );
+    });
+
+    it("clears finishedAt when a finished spool gets weight back", async () => {
+      mockTransactionGet.mockResolvedValueOnce(spoolSnap({ isFinished: true, finishedAt: new Timestamp(1000, 0) }));
+
+      await editSpool("spool-1", { templateId: "tpl-1", name: "Refilled", initialWeight: 1000, currentWeight: 200 });
+
+      expect(mockTransactionUpdate).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ isFinished: false, finishedAt: null }),
+      );
+    });
+
+    it("throws without writing when the spool does not exist", async () => {
+      mockTransactionGet.mockResolvedValueOnce({ exists: () => false });
+
+      await expect(
+        editSpool("spool-1", { templateId: "tpl-1", name: "Gone", initialWeight: 1000, currentWeight: 100 }),
+      ).rejects.toThrow("Spool not found");
+
+      expect(mockTransactionUpdate).not.toHaveBeenCalled();
     });
   });
 
@@ -326,6 +366,21 @@ describe("tools spools endpoints", () => {
         }),
       );
     });
+
+    it("keeps the original finishedAt when recording a print on an already finished spool", async () => {
+      const originalFinishedAt = new Timestamp(1000, 0);
+      mockTransactionGet.mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ currentWeight: 0, isFinished: true, finishedAt: originalFinishedAt }),
+      });
+
+      await recordSpoolUsage(baseSpool, 10);
+
+      expect(mockTransactionUpdate).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ currentWeight: 0, isFinished: true, finishedAt: originalFinishedAt }),
+      );
+    });
   });
 
   describe("fetchSpoolPrints", () => {
@@ -372,15 +427,36 @@ describe("tools spools endpoints", () => {
     });
   });
 
-  describe("undoLastPrint", () => {
-    it("uses provided printId and usedWeight directly", async () => {
-      mockTransactionGet.mockResolvedValueOnce({
-        exists: () => true,
-        data: () => ({ currentWeight: 100, finishedAt: null }),
+  describe("fetchLastPrint", () => {
+    it("returns the latest print", async () => {
+      mockGetDocs.mockResolvedValueOnce({
+        docs: [{ id: "latest-print", data: () => ({ usedWeight: 75, createdAt: null }) }],
       });
 
-      await undoLastPrint("spool-1", "print-1", 50);
+      const print = await fetchLastPrint("spool-1");
 
+      expect(print).toEqual({ id: "latest-print", usedWeight: 75, createdAt: null });
+    });
+
+    it("returns null when the spool has no prints", async () => {
+      mockGetDocs.mockResolvedValueOnce({ docs: [] });
+
+      expect(await fetchLastPrint("spool-1")).toBeNull();
+    });
+  });
+
+  describe("undoLastPrint", () => {
+    const printSnap = (usedWeight: number) => ({ exists: () => true, data: () => ({ usedWeight }) });
+    const missingSnap = { exists: () => false };
+
+    it("restores the weight read from the print inside the transaction", async () => {
+      mockTransactionGet
+        .mockResolvedValueOnce(printSnap(50))
+        .mockResolvedValueOnce({ exists: () => true, data: () => ({ currentWeight: 100, finishedAt: null }) });
+
+      await undoLastPrint("spool-1", "print-1");
+
+      expect(mockGetDocs).not.toHaveBeenCalled();
       expect(mockTransactionUpdate).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
@@ -389,24 +465,16 @@ describe("tools spools endpoints", () => {
           finishedAt: null,
         }),
       );
-      expect(mockTransactionDelete).toHaveBeenCalled();
+      expect(mockTransactionDelete).toHaveBeenCalledWith(expect.objectContaining({ id: "print-1" }));
     });
 
-    it("queries the latest print when parameters are not provided", async () => {
+    it("queries the latest print when printId is not provided", async () => {
       mockGetDocs.mockResolvedValueOnce({
-        empty: false,
-        docs: [
-          {
-            id: "latest-print",
-            data: () => ({ usedWeight: 75 }),
-          },
-        ],
+        docs: [{ id: "latest-print", data: () => ({ usedWeight: 75 }) }],
       });
-
-      mockTransactionGet.mockResolvedValueOnce({
-        exists: () => true,
-        data: () => ({ currentWeight: 0, finishedAt: 12345 }),
-      });
+      mockTransactionGet
+        .mockResolvedValueOnce(printSnap(75))
+        .mockResolvedValueOnce({ exists: () => true, data: () => ({ currentWeight: 0, finishedAt: 12345 }) });
 
       await undoLastPrint("spool-1");
 
@@ -419,38 +487,41 @@ describe("tools spools endpoints", () => {
           finishedAt: null,
         }),
       );
-      expect(mockTransactionDelete).toHaveBeenCalled();
+      expect(mockTransactionDelete).toHaveBeenCalledWith(expect.objectContaining({ id: "latest-print" }));
     });
 
-    it("does nothing when prints query is empty", async () => {
-      mockGetDocs.mockResolvedValueOnce({
-        empty: true,
-        docs: [],
-      });
+    it("throws noPrintToUndo without writing when the spool has no prints", async () => {
+      mockGetDocs.mockResolvedValueOnce({ docs: [] });
 
-      await undoLastPrint("spool-1");
+      await expect(undoLastPrint("spool-1")).rejects.toThrow("tools:errors.noPrintToUndo");
 
       expect(mockRunTransaction).not.toHaveBeenCalled();
     });
 
-    it("handles non-existing spool snapshot during undoLastPrint transaction", async () => {
-      mockTransactionGet.mockResolvedValueOnce({
-        exists: () => false,
-      });
+    it("throws noPrintToUndo without writing when the print was already undone", async () => {
+      mockTransactionGet.mockResolvedValueOnce(missingSnap);
 
-      await undoLastPrint("spool-1", "print-1", 50);
+      await expect(undoLastPrint("spool-1", "print-1")).rejects.toThrow("tools:errors.noPrintToUndo");
+
+      expect(mockTransactionUpdate).not.toHaveBeenCalled();
+      expect(mockTransactionDelete).not.toHaveBeenCalled();
+    });
+
+    it("deletes the print when the spool snapshot does not exist", async () => {
+      mockTransactionGet.mockResolvedValueOnce(printSnap(50)).mockResolvedValueOnce(missingSnap);
+
+      await undoLastPrint("spool-1", "print-1");
 
       expect(mockTransactionUpdate).not.toHaveBeenCalled();
       expect(mockTransactionDelete).toHaveBeenCalled();
     });
 
     it("keeps spool marked as finished when restored weight remains <= 0", async () => {
-      mockTransactionGet.mockResolvedValueOnce({
-        exists: () => true,
-        data: () => ({ currentWeight: -50, finishedAt: 99999 }),
-      });
+      mockTransactionGet
+        .mockResolvedValueOnce(printSnap(20))
+        .mockResolvedValueOnce({ exists: () => true, data: () => ({ currentWeight: -50, finishedAt: 99999 }) });
 
-      await undoLastPrint("spool-1", "print-1", 20);
+      await undoLastPrint("spool-1", "print-1");
 
       expect(mockTransactionUpdate).toHaveBeenCalledWith(
         expect.anything(),

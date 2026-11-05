@@ -56,6 +56,7 @@ vi.mock("../../hooks", () => ({
   useEditSpoolMutation: () => ({ mutate: vi.fn(), isPending: false }),
   useRecordSpoolUsageMutation: () => ({ mutate: vi.fn(), isPending: false }),
   useGetSpoolPrintsQuery: () => ({ data: [], isLoading: false }),
+  useGetLastSpoolPrintQuery: () => ({ data: null }),
   useGetLookupMaterialsQuery: () => ({ data: [] }),
   useGetLookupTypesQuery: () => ({ data: [] }),
   useGetLookupColorsQuery: () => ({ data: [] }),
