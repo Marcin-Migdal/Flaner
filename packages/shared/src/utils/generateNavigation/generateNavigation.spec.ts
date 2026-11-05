@@ -2,10 +2,10 @@ import { describe, it, expect } from "vitest";
 import { generateNavigation } from "./generateNavigation";
 import type { AppRouteObject } from "../../types/navigation";
 
-import type { IconName } from "lucide-react/dynamic";
+import type { NavIconName } from "../../types";
 
 // Simple dummy icon name for test handles
-const DummyIcon: IconName = "calendar";
+const DummyIcon: NavIconName = "calendar";
 
 describe("generateNavigation", () => {
   it("returns an empty array when given an empty routes array", () => {

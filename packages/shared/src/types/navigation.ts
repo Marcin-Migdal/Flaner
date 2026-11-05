@@ -1,9 +1,12 @@
-import type { IconName } from "lucide-react/dynamic";
 import type { RouteObject } from "react-router";
+
+// Icons the host can render in navigation. A static list (not lucide's DynamicIcon) keeps ~1900 icon chunks
+// out of the build and the PWA precache; a remote that needs a new icon adds it here and in core's NavIcon.
+export type NavIconName = "calendar" | "disc" | "home" | "settings" | "shopping-bag" | "users" | "wallet" | "wrench";
 
 export type NavigationRouteHandle = {
   label?: string;
-  icon?: IconName;
+  icon?: NavIconName;
   hideInNav?: boolean;
 };
 
@@ -15,6 +18,6 @@ export type AppRouteObject = Omit<RouteObject, "children" | "handle"> & {
 export type NavigationItem = {
   path: string;
   labelKey: string;
-  icon: IconName;
+  icon: NavIconName;
   children?: NavigationItem[];
 }
