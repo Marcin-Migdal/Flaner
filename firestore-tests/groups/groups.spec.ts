@@ -12,7 +12,6 @@ import {
   updateDoc,
   where,
   writeBatch,
-  type Firestore,
   type WriteBatch,
 } from "firebase/firestore";
 import { useTestEnv } from "../support/testEnv";
@@ -55,7 +54,7 @@ const invitation = (userId: string, invitedByUserId: string) => ({
 });
 
 // Group notification the endpoints add to their batches (`addGroupNotification`)
-const addGroupNotification = (batch: WriteBatch, db: Firestore, recipient: string, type: string, sender: string) => {
+const addGroupNotification = (batch: WriteBatch, db: ReturnType<typeof as>, recipient: string, type: string, sender: string) => {
   const ref = doc(collection(db, `users/${recipient}/notifications`));
   batch.set(ref, {
     id: ref.id,
