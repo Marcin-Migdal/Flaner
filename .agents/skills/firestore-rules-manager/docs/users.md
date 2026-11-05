@@ -171,7 +171,7 @@ match /friendships/{friendId} {
 | Flow | Endpoint | Writes |
 | --- | --- | --- |
 | Friend request sent / accepted / rejected | `sendFriendRequest`, `acceptFriendRequest`, `rejectFriendRequest` (community) | create in the other user's inbox |
-| Group invitation | `inviteUserToGroup` (community) | create in invitee's inbox |
+| Group invitation | `inviteUserToGroup` (community) | create in invitee's inbox, in the invitation batch |
 | Event invitation / reopened | `createSchedulerEvent`, `unfinalizeSchedulerEvent` (planning) | create per participant, in the event batch |
 | Split group invitation | `createSplitGroup`, `addParticipantToGroup` (planning) | create per new participant, in the group batch / transaction |
 | Pending settlement | `createSettlement` (planning) | create in receiver's inbox, in the transaction |
@@ -230,8 +230,8 @@ match /notifications/{notifId} {
 ### Write flows
 | Flow | Endpoint (community `groups/endpoints.ts`) | Writes |
 | --- | --- | --- |
-| Invite | `inviteUserToGroup` | set (after the group-side doc) |
-| Accept / reject | `acceptGroupInvitation`, `rejectGroupInvitation` | delete |
+| Invite | `inviteUserToGroup` | set (batch with the group-side doc and the notification) |
+| Accept / reject | `acceptGroupInvitation`, `rejectGroupInvitation` | delete (batch with the group-side doc; accept also creates the member doc) |
 | Delete group | `deleteGroup` | delete (by the owner) |
 
 ### Queries

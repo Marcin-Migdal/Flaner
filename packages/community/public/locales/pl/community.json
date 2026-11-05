@@ -161,7 +161,10 @@
     "loading": "Ładowanie...",
     "notFound": "Nie znaleziono grupy.",
     "backToList": "Wróć do listy grup",
-    "membersCount": "{{count}} członków",
+    "membersCount_one": "{{count}} członek",
+    "membersCount_few": "{{count}} członków",
+    "membersCount_many": "{{count}} członków",
+    "membersCount_other": "{{count}} członka",
     "private": "Prywatna",
     "public": "Publiczna",
     "copyLinkBtn": "Kopiuj link",
@@ -285,5 +288,11 @@
   },
   "errors": {
     "notGroupMember": "Nie jesteś członkiem tej grupy, więc nie możesz wysyłać zaproszeń."
+  },
+  "validation": {
+    "groupNameMin": "Nazwa grupy musi mieć co najmniej 3 znaki.",
+    "groupNameMax": "Nazwa grupy może mieć najwyżej 50 znaków.",
+    "descriptionMax": "Opis może mieć najwyżej 255 znaków.",
+    "avatarFile": "Wybierz plik obrazu."
   }
 }

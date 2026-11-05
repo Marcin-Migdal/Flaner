@@ -139,9 +139,9 @@ service cloud.firestore {
         allow create: if isAuthenticated() &&
           request.resource.data.keys().hasOnly(['userId', 'role', 'joinedAt']) &&
           request.resource.data.userId == userId && (
-            // Owner bootstrap in createGroup
+            // Owner bootstrap in createGroup (same batch as the group doc, hence getAfter)
             (userId == request.auth.uid && request.resource.data.role == 'owner' &&
-              get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
+              getAfter(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
             // Every other way in joins as a plain member
             (request.resource.data.role == 'member' && (
               hasRolePermission(groupId, 'manageRequests') ||

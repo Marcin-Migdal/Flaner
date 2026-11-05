@@ -107,7 +107,11 @@ describe("community groups endpoints", () => {
       const groupId = await createGroup(input, "user-1");
 
       expect(groupId).toBeDefined();
-      expect(mockSetDoc).toHaveBeenCalledTimes(2); // group doc + owner member doc
+      // group doc + owner member doc in one batch
+      expect(mockBatchSet).toHaveBeenCalledTimes(2);
+      expect(mockBatchSet).toHaveBeenCalledWith(expect.anything(), { userId: "user-1", role: "owner", joinedAt: expect.any(Number) });
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
+      expect(mockSetDoc).not.toHaveBeenCalled();
     });
 
     it("updates group with nameLower when name is modified", async () => {
@@ -337,8 +341,9 @@ describe("community groups endpoints", () => {
 
     it("acceptJoinRequest adds member and deletes request", async () => {
       await acceptJoinRequest("group-1", "user-2");
-      expect(mockSetDoc).toHaveBeenCalled();
-      expect(mockDeleteDoc).toHaveBeenCalled();
+      expect(mockBatchSet).toHaveBeenCalledWith(expect.anything(), { userId: "user-2", role: "member", joinedAt: expect.any(Number) });
+      expect(mockBatchDelete).toHaveBeenCalledTimes(1);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
     });
 
     it("rejectJoinRequest deletes request", async () => {
@@ -402,8 +407,13 @@ describe("community groups endpoints", () => {
 
       await inviteUserToGroup("group-1", "Hiking", "user-2", "user-1");
 
-      // 2 invitation docs + 1 notification doc
-      expect(mockSetDoc).toHaveBeenCalledTimes(3);
+      // 2 invitation docs + 1 notification doc in one batch
+      expect(mockBatchSet).toHaveBeenCalledTimes(3);
+      expect(mockBatchSet).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ type: "group_invitation", senderUsername: "Alice", senderAvatarUrl: "alice.png" }),
+      );
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
     });
 
     it("inviteUserToGroup handles missing invitor username and avatarUrl gracefully", async () => {
@@ -415,7 +425,7 @@ describe("community groups endpoints", () => {
 
       await inviteUserToGroup("group-1", "Hiking", "user-2", "user-1");
 
-      expect(mockSetDoc).toHaveBeenCalledWith(
+      expect(mockBatchSet).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           senderUsername: "",
@@ -426,13 +436,15 @@ describe("community groups endpoints", () => {
 
     it("acceptGroupInvitation adds member and deletes invitations", async () => {
       await acceptGroupInvitation("group-1", "user-2");
-      expect(mockSetDoc).toHaveBeenCalled();
-      expect(mockDeleteDoc).toHaveBeenCalledTimes(2);
+      expect(mockBatchSet).toHaveBeenCalledWith(expect.anything(), { userId: "user-2", role: "member", joinedAt: expect.any(Number) });
+      expect(mockBatchDelete).toHaveBeenCalledTimes(2);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
     });
 
     it("rejectGroupInvitation deletes invitations", async () => {
       await rejectGroupInvitation("group-1", "user-2");
-      expect(mockDeleteDoc).toHaveBeenCalledTimes(2);
+      expect(mockBatchDelete).toHaveBeenCalledTimes(2);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
     });
 
     it("getUserGroupInvitations returns empty array when userId is empty", async () => {
@@ -540,16 +552,11 @@ describe("community groups endpoints", () => {
       expect(res).toBeNull();
     });
 
-    it("inviteUserToGroup handles notification creation error gracefully", async () => {
-      mockGetDoc.mockResolvedValueOnce({ exists: () => true });
-      mockSetDoc
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(undefined)
-        .mockRejectedValueOnce(new Error("Notification failed"));
+    it("inviteUserToGroup rejects when the batch fails, so no partial invitation is left", async () => {
+      mockGetDoc.mockResolvedValueOnce({ exists: () => true }).mockResolvedValueOnce({ data: () => undefined });
+      mockBatchCommit.mockRejectedValueOnce(new Error("permission-denied"));
 
-      await expect(
-        inviteUserToGroup("group-1", "Hiking", "user-2", "user-1")
-      ).resolves.not.toThrow();
+      await expect(inviteUserToGroup("group-1", "Hiking", "user-2", "user-1")).rejects.toThrow("permission-denied");
     });
 
     it("getUserGroupInvitations handles empty userId and collectionGroup fallback", async () => {

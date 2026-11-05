@@ -1,14 +1,14 @@
 import { z } from "zod";
 
-export const createGroupSchema = z.object({
-  name: z.string().min(3, "form.errors.minLength").max(50, "form.errors.maxLength"),
-  description: z.string().max(255, "form.errors.maxLength").optional(),
-  type: z.enum(["public", "private"]),
-  requiresApproval: z.boolean(),
-  avatarUrl: z.union([z.custom<File>((val) => val instanceof File, "Must be a file"), z.string()]).optional(),
-});
+type TranslateFn = (key: string) => string;
 
-export type CreateGroupSchema = z.infer<typeof createGroupSchema>;
+export const getGroupSchema = (t: TranslateFn) =>
+  z.object({
+    name: z.string().min(3, t("validation.groupNameMin")).max(50, t("validation.groupNameMax")),
+    description: z.string().max(255, t("validation.descriptionMax")).optional(),
+    type: z.enum(["public", "private"]),
+    requiresApproval: z.boolean(),
+    avatarUrl: z.union([z.custom<File>((val) => val instanceof File, t("validation.avatarFile")), z.string()]).optional(),
+  });
 
-export const updateGroupSchema = createGroupSchema;
-export type UpdateGroupSchema = z.infer<typeof updateGroupSchema>;
+export type GroupSchema = z.infer<ReturnType<typeof getGroupSchema>>;

@@ -34,4 +34,10 @@ describe("GroupSearchResultItem component", () => {
     expect(screen.getByText("Requires approval")).toBeInTheDocument();
     expect(screen.getByText("3 members")).toBeInTheDocument();
   });
+
+  it("hides the member count when it is not provided", () => {
+    render(<GroupSearchResultItem name="Climbing Club" requiresApproval={false} membersCountText="members" />);
+
+    expect(screen.queryByText(/members/)).not.toBeInTheDocument();
+  });
 });

@@ -44,7 +44,7 @@ import {
   useUpdateGroupMutation,
 } from "../../../hooks";
 import { useCommunityTranslations } from "../../../hooks/useCommunityTranslations";
-import { updateGroupSchema, type UpdateGroupSchema } from "../../../utils/schemas/groups";
+import { getGroupSchema, type GroupSchema } from "../../../utils/schemas/groups";
 import { ManageGroupRolesSection } from "../ManageGroupRolesSection";
 import { manageGroupSheetStyles } from "./ManageGroupSheet.styles";
 
@@ -78,8 +78,8 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
   const currentUserRole = members.find((m) => m.userId === user?.uid)?.role;
   const canEditGroup = currentUserRole === "owner" || hasGroupPermission(group, currentUserRole, "editGroup");
 
-  const methods = useForm<UpdateGroupSchema>({
-    resolver: zodResolver(updateGroupSchema),
+  const methods = useForm<GroupSchema>({
+    resolver: zodResolver(getGroupSchema(t)),
     defaultValues: {
       name: group?.name || "",
       description: group?.description || "",
@@ -109,7 +109,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
     }
   }, [group, isOpen, reset]);
 
-  const onSaveGroup = async (data: UpdateGroupSchema) => {
+  const onSaveGroup = async (data: GroupSchema) => {
     try {
       setIsUploading(true);
       let finalAvatarUrl: string | null = group?.avatarUrl || null;

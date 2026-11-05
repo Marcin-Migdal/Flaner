@@ -28,7 +28,7 @@ All endpoints: `packages/community/src/api/groups/endpoints.ts`.
 
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
-| Create group | `createGroup` | set `groups/{id}`, then set `members/{owner}` (`role: 'owner'`) | ❌ two writes |
+| Create group | `createGroup` | set `groups/{id}`, set `members/{owner}` (`role: 'owner'`) | ✅ batch (required: the owner bootstrap rule reads the group with `getAfter()`) |
 | Edit group | `updateGroup` | update `groups/{id}` (+ `nameLower`, `updatedAt`) | – |
 | Edit role permissions | `updateGroupRolePermissions` | update `rolePermissions`, `updatedAt` | – |
 | Transfer ownership | `transferGroupOwnership` | update `ownerId`; `members/{old}.role = 'admin'`; `members/{new}.role = 'owner'` | ✅ batch |
@@ -103,10 +103,10 @@ match /groups/{groupId} {
 ### Write flows
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
-| Owner bootstrap | `createGroup` | set `members/{owner}` `role: 'owner'` | ❌ (after the group doc) |
+| Owner bootstrap | `createGroup` | set `members/{owner}` `role: 'owner'` | ✅ batch with the group doc |
 | Join public group | `addGroupMember` (`useAddGroupMemberMutation`) | set `members/{me}` `role: 'member'` | – |
-| Accept invitation | `acceptGroupInvitation` | set `members/{me}`, delete `invitations/{me}`, delete `users/{me}/groupInvitations/{gid}` | ❌ sequential |
-| Accept join request | `acceptJoinRequest` | set `members/{user}`, delete `requests/{user}` | ❌ sequential |
+| Accept invitation | `acceptGroupInvitation` | set `members/{me}`, delete `invitations/{me}`, delete `users/{me}/groupInvitations/{gid}` | ✅ batch (`exists()` sees the invitation from before the batch) |
+| Accept join request | `acceptJoinRequest` | set `members/{user}`, delete `requests/{user}` | ✅ batch |
 | Change role | `updateGroupMemberRole` | update `role` | – |
 | Transfer ownership | `transferGroupOwnership` | see group flows | ✅ batch |
 | Leave / remove | `removeGroupMember` | delete `members/{user}` | – |
@@ -139,9 +139,9 @@ match /members/{userId} {
   allow create: if isAuthenticated() &&
     request.resource.data.keys().hasOnly(['userId', 'role', 'joinedAt']) &&
     request.resource.data.userId == userId && (
-      // Owner bootstrap in createGroup
+      // Owner bootstrap in createGroup (same batch as the group doc, hence getAfter)
       (userId == request.auth.uid && request.resource.data.role == 'owner' &&
-        get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
+        getAfter(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
       // Every other way in joins as a plain member
       (request.resource.data.role == 'member' && (
         hasRolePermission(groupId, 'manageRequests') ||
@@ -196,9 +196,9 @@ match /members/{userId} {
 ### Write flows
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
-| Invite | `inviteUserToGroup` | set `invitations/{invitee}`, set `users/{invitee}/groupInvitations/{gid}`, create `users/{invitee}/notifications/*` (`group_invitation`) | ❌ sequential |
-| Accept | `acceptGroupInvitation` | see members flows | ❌ |
-| Reject | `rejectGroupInvitation` | delete both invitation docs | ❌ |
+| Invite | `inviteUserToGroup` | set `invitations/{invitee}`, set `users/{invitee}/groupInvitations/{gid}`, create `users/{invitee}/notifications/*` (`group_invitation`) | ✅ batch |
+| Accept | `acceptGroupInvitation` | see members flows | ✅ batch |
+| Reject | `rejectGroupInvitation` | delete both invitation docs | ✅ batch |
 
 ### Queries
 | Query | Endpoint | Allowed by |

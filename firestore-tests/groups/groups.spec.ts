@@ -62,11 +62,20 @@ const seedGroup = (overrides: Record<string, unknown> = {}) =>
   });
 
 describe("groups/{groupId}", () => {
-  it("accepts createGroup: group doc, then the owner's member doc", async () => {
+  it("accepts the createGroup batch: group doc + the owner's member doc", async () => {
     const db = as(OWNER);
+    const batch = writeBatch(db);
+    batch.set(doc(db, GROUP), group());
+    batch.set(doc(db, `${GROUP}/members`, OWNER), member(OWNER, "owner"));
 
-    await assertSucceeds(setDoc(doc(db, GROUP), group()));
-    await assertSucceeds(setDoc(doc(db, `${GROUP}/members`, OWNER), member(OWNER, "owner")));
+    await assertSucceeds(batch.commit());
+  });
+
+  it("blocks the owner bootstrap without the group doc, or on someone else's group", async () => {
+    await assertFails(setDoc(doc(as(OWNER), `${GROUP}/members`, OWNER), member(OWNER, "owner")));
+
+    await seedGroup();
+    await assertFails(setDoc(doc(as(STRANGER), `${GROUP}/members`, STRANGER), member(STRANGER, "owner")));
   });
 
   it("blocks creating a group owned by someone else", async () => {
@@ -253,21 +262,21 @@ describe("groups/{groupId}/invitations/{userId}", () => {
   it("accepts inviteUserToGroup from a moderator: both invitation docs + notification", async () => {
     await seedGroup();
     const db = as(MODERATOR);
-
-    await assertSucceeds(setDoc(doc(db, `${GROUP}/invitations`, INVITEE), invitation(INVITEE, MODERATOR)));
-    await assertSucceeds(setDoc(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID), invitation(INVITEE, MODERATOR)));
     const notifRef = doc(collection(db, `users/${INVITEE}/notifications`));
-    await assertSucceeds(
-      setDoc(notifRef, {
-        id: notifRef.id,
-        type: "group_invitation",
-        senderUid: MODERATOR,
-        senderUsername: "Moderator",
-        senderAvatarUrl: "",
-        createdAt: Date.now(),
-        read: false,
-      }),
-    );
+    const batch = writeBatch(db);
+    batch.set(doc(db, `${GROUP}/invitations`, INVITEE), invitation(INVITEE, MODERATOR));
+    batch.set(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID), invitation(INVITEE, MODERATOR));
+    batch.set(notifRef, {
+      id: notifRef.id,
+      type: "group_invitation",
+      senderUid: MODERATOR,
+      senderUsername: "Moderator",
+      senderAvatarUrl: "",
+      createdAt: Date.now(),
+      read: false,
+    });
+
+    await assertSucceeds(batch.commit());
   });
 
   it("blocks invitations from members without inviteMembers", async () => {
@@ -287,8 +296,10 @@ describe("groups/{groupId}/invitations/{userId}", () => {
     const db = as(INVITEE);
 
     await assertSucceeds(getDocs(collection(db, `users/${INVITEE}/groupInvitations`)));
-    await assertSucceeds(deleteDoc(doc(db, `${GROUP}/invitations`, INVITEE)));
-    await assertSucceeds(deleteDoc(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID)));
+    const batch = writeBatch(db);
+    batch.delete(doc(db, `${GROUP}/invitations`, INVITEE));
+    batch.delete(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID));
+    await assertSucceeds(batch.commit());
   });
 
   it("lets members list the group's invitations and staff revoke the group-side doc", async () => {
@@ -334,7 +345,10 @@ describe("groups/{groupId}/requests/{userId}", () => {
 
     await assertFails(getDocs(collection(as(MEMBER), `${GROUP}/requests`)));
     await assertSucceeds(getDocs(collection(db, `${GROUP}/requests`)));
-    await assertSucceeds(setDoc(doc(db, `${GROUP}/members`, REQUESTER), member(REQUESTER, "member")));
-    await assertSucceeds(deleteDoc(doc(db, `${GROUP}/requests`, REQUESTER)));
+    // acceptJoinRequest batch
+    const batch = writeBatch(db);
+    batch.set(doc(db, `${GROUP}/members`, REQUESTER), member(REQUESTER, "member"));
+    batch.delete(doc(db, `${GROUP}/requests`, REQUESTER));
+    await assertSucceeds(batch.commit());
   });
 });
