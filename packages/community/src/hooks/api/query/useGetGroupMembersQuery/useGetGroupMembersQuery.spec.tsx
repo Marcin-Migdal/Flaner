@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createTestQueryClient } from "@flaner/test-utils";
 import { useGetGroupMembersQuery, useInvalidateGroupMembersQuery } from "./useGetGroupMembersQuery";
@@ -9,6 +9,7 @@ import type { GroupMember } from "../../../../api/groups";
 
 vi.mock("../../../../api/groups", () => ({
   getGroupMembers: vi.fn(),
+  subscribeToGroupMembers: vi.fn(() => () => {}),
 }));
 
 describe("useGetGroupMembersQuery", () => {
@@ -49,4 +50,21 @@ describe("useGetGroupMembersQuery", () => {
 
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["groupMembers", "grp-123"] });
   });
+  it("applies live snapshots from the Firestore listener", async () => {
+    vi.mocked(groupsApi.getGroupMembers).mockResolvedValueOnce([]);
+    let push: (data: GroupMember[]) => void = () => {};
+    vi.mocked(groupsApi.subscribeToGroupMembers).mockImplementationOnce((_groupId, onUpdate) => {
+      push = onUpdate;
+      return () => {};
+    });
+    const live: GroupMember[] = [{ userId: "u-2", role: "member", joinedAt: 2 }];
+
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useGetGroupMembersQuery("grp-123"), { wrapper: Wrapper });
+    await waitFor(() => expect(result.current.data).toBeDefined());
+
+    act(() => push(live));
+    await waitFor(() => expect(result.current.data).toEqual(live));
+  });
 });
+

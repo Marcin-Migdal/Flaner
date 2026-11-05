@@ -19,7 +19,9 @@ import {
   removeGroupMember,
   requestJoinGroup,
   searchGlobalGroups,
+  subscribeToGroup,
   subscribeToUserGroupInvitations,
+  subscribeToUserGroups,
   transferGroupOwnership,
   updateGroup,
   updateGroupMemberRole,
@@ -671,5 +673,77 @@ describe("community groups endpoints", () => {
       });
     });
   });
+  describe("realtime subscriptions", () => {
+    type Listener = { next: (snap: unknown) => void; error: (e: Error) => void; unsubscribe: ReturnType<typeof vi.fn> };
+    let listeners: Listener[];
+
+    beforeEach(() => {
+      listeners = [];
+      mockOnSnapshot.mockImplementation((_target: unknown, next: Listener["next"], error: Listener["error"]) => {
+        const unsubscribe = vi.fn();
+        listeners.push({ next, error, unsubscribe });
+        return unsubscribe;
+      });
+    });
+
+    const groupSnap = (group: Group | null) => ({ exists: () => group !== null, data: () => group });
+    const membersSnap = (groupIds: string[]) => ({
+      docs: groupIds.map((id) => ({ ref: { parent: { parent: { id } } } })),
+    });
+
+    it("subscribeToGroup reports the group, null when missing and null on a listener error", () => {
+      const onUpdate = vi.fn();
+      subscribeToGroup("group-1", onUpdate);
+
+      listeners[0].next(groupSnap(mockGroup));
+      listeners[0].next(groupSnap(null));
+      listeners[0].error(new Error("permission-denied"));
+
+      expect(onUpdate.mock.calls).toEqual([[mockGroup], [null], [null]]);
+    });
+
+    it("subscribeToUserGroups emits once every group has loaded and follows membership changes", () => {
+      const onUpdate = vi.fn();
+      const unsubscribe = subscribeToUserGroups("user-1", onUpdate);
+      const [members] = listeners;
+      const groupB: Group = { ...mockGroup, id: "group-2", name: "B" };
+
+      members.next(membersSnap(["group-1", "group-2"]));
+      const [, groupAListener, groupBListener] = listeners;
+
+      groupAListener.next(groupSnap(mockGroup));
+      expect(onUpdate).not.toHaveBeenCalled(); // group-2 not loaded yet
+
+      groupBListener.next(groupSnap(groupB));
+      expect(onUpdate).toHaveBeenLastCalledWith([mockGroup, groupB]);
+
+      // A live rename
+      groupBListener.next(groupSnap({ ...groupB, name: "B renamed" }));
+      expect(onUpdate).toHaveBeenLastCalledWith([mockGroup, { ...groupB, name: "B renamed" }]);
+
+      // Left group-1: its listener is closed and it drops out of the list
+      members.next(membersSnap(["group-2"]));
+      expect(groupAListener.unsubscribe).toHaveBeenCalled();
+      expect(onUpdate).toHaveBeenLastCalledWith([{ ...groupB, name: "B renamed" }]);
+
+      unsubscribe();
+      expect(members.unsubscribe).toHaveBeenCalled();
+      expect(groupBListener.unsubscribe).toHaveBeenCalled();
+    });
+
+    it("subscribeToUserGroups skips groups that became unreadable and reports [] when the membership query fails", () => {
+      const onUpdate = vi.fn();
+      subscribeToUserGroups("user-1", onUpdate);
+      const [members] = listeners;
+
+      members.next(membersSnap(["group-1"]));
+      listeners[1].error(new Error("permission-denied"));
+      expect(onUpdate).toHaveBeenLastCalledWith([]);
+
+      members.error(new Error("failed"));
+      expect(onUpdate).toHaveBeenLastCalledWith([]);
+    });
+  });
 });
+
 

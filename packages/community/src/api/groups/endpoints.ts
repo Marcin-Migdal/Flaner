@@ -377,3 +377,102 @@ export const getGroupInvitations = async (groupId: string): Promise<GroupInvitat
   const snap = await getDocs(refs.invitations(groupId));
   return snap.docs.map((d) => d.data());
 };
+
+// ==========================================
+// REALTIME SUBSCRIPTIONS
+// A listener error (usually permission-denied after losing access, e.g. removed from a private group)
+// reports the empty value instead of throwing, so the views fall back to "no access" / empty lists.
+// ==========================================
+
+type Unsubscribe = () => void;
+
+export const subscribeToGroup = (groupId: string, onUpdate: (group: Group | null) => void): Unsubscribe =>
+  onSnapshot(
+    refs.group(groupId),
+    (snap) => onUpdate(snap.exists() ? snap.data() : null),
+    () => onUpdate(null),
+  );
+
+export const subscribeToGroupMembers = (groupId: string, onUpdate: (members: GroupMember[]) => void): Unsubscribe =>
+  onSnapshot(
+    refs.members(groupId),
+    (snap) => onUpdate(snap.docs.map((d) => d.data())),
+    () => onUpdate([]),
+  );
+
+export const subscribeToGroupRequests = (groupId: string, onUpdate: (requests: GroupRequest[]) => void): Unsubscribe =>
+  onSnapshot(
+    refs.requests(groupId),
+    (snap) => onUpdate(snap.docs.map((d) => d.data())),
+    () => onUpdate([]),
+  );
+
+export const subscribeToGroupInvitations = (
+  groupId: string,
+  onUpdate: (invitations: GroupInvitation[]) => void,
+): Unsubscribe =>
+  onSnapshot(
+    refs.invitations(groupId),
+    (snap) => onUpdate(snap.docs.map((d) => d.data())),
+    () => onUpdate([]),
+  );
+
+export const subscribeToUserGroupRequest = (
+  groupId: string,
+  userId: string,
+  onUpdate: (request: GroupRequest | null) => void,
+): Unsubscribe =>
+  onSnapshot(
+    refs.request(groupId, userId),
+    (snap) => onUpdate(snap.exists() ? snap.data() : null),
+    () => onUpdate(null),
+  );
+
+// Memberships come from one collection-group listener; each group doc gets its own listener so renames,
+// type changes etc. show up live. Emits only once every current group has loaded, to avoid a partial list.
+export const subscribeToUserGroups = (userId: string, onUpdate: (groups: Group[]) => void): Unsubscribe => {
+  const groupListeners = new Map<string, Unsubscribe>();
+  const groups = new Map<string, Group | null>();
+  let groupIds: string[] = [];
+
+  const emit = () => {
+    if (groupIds.some((id) => !groups.has(id))) return;
+    onUpdate(groupIds.flatMap((id) => groups.get(id) ?? []));
+  };
+
+  const unsubscribeMembers = onSnapshot(
+    query(refs.membersGroup(), where("userId", "==", userId)),
+    (snap) => {
+      groupIds = snap.docs.flatMap((d) => d.ref.parent.parent?.id ?? []);
+
+      groupListeners.forEach((unsubscribe, id) => {
+        if (groupIds.includes(id)) return;
+        unsubscribe();
+        groupListeners.delete(id);
+        groups.delete(id);
+      });
+
+      groupIds.forEach((id) => {
+        if (groupListeners.has(id)) return;
+        groupListeners.set(
+          id,
+          subscribeToGroup(id, (group) => {
+            groups.set(id, group);
+            emit();
+          }),
+        );
+      });
+
+      emit();
+    },
+    (error) => {
+      console.warn("subscribeToUserGroups failed:", error);
+      onUpdate([]);
+    },
+  );
+
+  return () => {
+    unsubscribeMembers();
+    groupListeners.forEach((unsubscribe) => unsubscribe());
+  };
+};

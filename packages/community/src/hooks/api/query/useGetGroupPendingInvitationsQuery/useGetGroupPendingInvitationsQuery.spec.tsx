@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createTestQueryClient } from "@flaner/test-utils";
 import {
@@ -12,6 +12,7 @@ import type { GroupInvitation } from "../../../../api/groups";
 
 vi.mock("../../../../api/groups", () => ({
   getGroupInvitations: vi.fn(),
+  subscribeToGroupInvitations: vi.fn(() => () => {}),
 }));
 
 describe("useGetGroupPendingInvitationsQuery", () => {
@@ -63,4 +64,21 @@ describe("useGetGroupPendingInvitationsQuery", () => {
       queryKey: ["groupPendingInvitations", "grp-1"],
     });
   });
+  it("applies live snapshots from the Firestore listener", async () => {
+    vi.mocked(groupsApi.getGroupInvitations).mockResolvedValueOnce([]);
+    let push: (data: GroupInvitation[]) => void = () => {};
+    vi.mocked(groupsApi.subscribeToGroupInvitations).mockImplementationOnce((_groupId, onUpdate) => {
+      push = onUpdate;
+      return () => {};
+    });
+    const live: GroupInvitation[] = [{ groupId: "grp-1", groupName: "G", groupAvatarUrl: null, userId: "u-2", invitedByUserId: "u-1", invitedAt: 2 }];
+
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useGetGroupPendingInvitationsQuery("grp-1"), { wrapper: Wrapper });
+    await waitFor(() => expect(result.current.data).toBeDefined());
+
+    act(() => push(live));
+    await waitFor(() => expect(result.current.data).toEqual(live));
+  });
 });
+

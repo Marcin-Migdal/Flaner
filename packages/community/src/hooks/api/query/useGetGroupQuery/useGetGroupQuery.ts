@@ -1,7 +1,8 @@
 import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
-import { getGroup } from '../../../../api/groups';
+import { getGroup, subscribeToGroup } from '../../../../api/groups';
 import type { Group } from '../../../../api/groups';
 import { reactQueryMeta } from "@flaner/shared/constants";
+import { useRealtimeQueryData } from "../../../useRealtimeQueryData";
 
 
 const getGroupQueryKeys = (groupId: string) => ["group", groupId];
@@ -10,12 +11,18 @@ export const useGetGroupQuery = (
   groupId: string,
   options?: Omit<UseQueryOptions<Group | null, Error>, "queryKey" | "queryFn">,
 ) => {
+  useRealtimeQueryData<Group | null>(
+    getGroupQueryKeys(groupId),
+    (onUpdate) => subscribeToGroup(groupId, onUpdate),
+    !!groupId && options?.enabled !== false,
+  );
 
   return useQuery<Group | null, Error>({
       meta: reactQueryMeta.fetch,
     queryKey: getGroupQueryKeys(groupId),
     queryFn: () => getGroup(groupId),
     enabled: !!groupId,
+    staleTime: Infinity, // the listener keeps it fresh
     ...options,
   });
 };
