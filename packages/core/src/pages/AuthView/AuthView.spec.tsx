@@ -9,12 +9,17 @@ import { AuthView } from "./AuthView";
 const mockSignInWithGoogleUser = vi.fn();
 const mockSignInWithEmailUser = vi.fn();
 const mockSignUpWithEmailUser = vi.fn();
+let mockUnverifiedEmail: string | null = null;
 
 vi.mock("@flaner/shared/context", () => ({
   useAuth: () => ({
     signInWithGoogleUser: mockSignInWithGoogleUser,
     signInWithEmailUser: mockSignInWithEmailUser,
     signUpWithEmailUser: mockSignUpWithEmailUser,
+    unverifiedEmail: mockUnverifiedEmail,
+    resendVerificationEmail: vi.fn(),
+    confirmEmailVerification: vi.fn(),
+    signOutUser: vi.fn(),
   }),
 }));
 
@@ -78,7 +83,7 @@ describe("AuthView", () => {
     const googleBtn = screen.getByRole("button", { name: /kontynuuj z google/i });
     await user.click(googleBtn);
 
-    expect(mockSignInWithGoogleUser).toHaveBeenCalledWith("pl");
+    expect(mockSignInWithGoogleUser).toHaveBeenCalledWith("en");
   });
 
   it("submits login form with valid credentials", async () => {
@@ -142,7 +147,7 @@ describe("AuthView", () => {
     await user.click(signUpSubmit);
 
     await waitFor(() => {
-      expect(mockSignUpWithEmailUser).toHaveBeenCalledWith("new@flaner.app", "strongpassword123", "NewUser", "pl");
+      expect(mockSignUpWithEmailUser).toHaveBeenCalledWith("new@flaner.app", "strongpassword123", "NewUser", "en");
     });
   });
 
@@ -277,5 +282,15 @@ describe("AuthView", () => {
     });
 
     consoleErrorSpy.mockRestore();
+  });
+
+  it("shows the verification card instead of the forms for an unverified account", () => {
+    mockUnverifiedEmail = "late@flaner.app";
+    renderWithProviders(<AuthView />, { i18nInstance: i18n });
+
+    expect(screen.getByRole("alert")).toHaveTextContent("verifyEmail.title");
+    expect(screen.queryByRole("button", { name: /kontynuuj z google/i })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/hasło/i)).not.toBeInTheDocument();
+    mockUnverifiedEmail = null;
   });
 });
