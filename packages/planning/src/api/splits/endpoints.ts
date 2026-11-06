@@ -1,11 +1,18 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/split_groups.md (keep their Write flows / Queries in sync).
 import { fb } from "@flaner/shared/firebase";
 import type { UserType } from "@flaner/shared/types";
-import { BATCH_LIMIT, deleteInBatches, firestoreConverter } from "@flaner/shared/utils";
+import {
+  BATCH_LIMIT,
+  deleteInBatches,
+  firestoreConverter,
+  getUnreadNotificationRefs,
+  sourceNotificationRef,
+} from "@flaner/shared/utils";
 import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   query,
@@ -13,6 +20,7 @@ import {
   where,
   writeBatch,
   type DocumentReference,
+  type Transaction,
 } from "firebase/firestore";
 import {
   addToCurrencyTotals,
@@ -63,10 +71,23 @@ const refs = {
     doc(fb.firestore, `split_groups/${groupId}/settlements`, settlementId).withConverter(
       firestoreConverter<Settlement>(),
     ),
-  notifications: (userId: string) =>
-    collection(fb.firestore, `users/${userId}/notifications`).withConverter(
+  // Deterministic ids (see sourceNotificationRef), so resolving flows can remove them while unread
+  invitationNotification: (userId: string, groupId: string) =>
+    sourceNotificationRef(fb.firestore, userId, "split_group_invitation", groupId).withConverter(
       firestoreConverter<SplitGroupNotification>(),
     ),
+  settlementNotification: (userId: string, settlementId: string) =>
+    sourceNotificationRef(fb.firestore, userId, "split_settlement_pending", settlementId).withConverter(
+      firestoreConverter<SplitGroupNotification>(),
+    ),
+};
+
+// Inside a transaction: delete the notification only while it exists and is unread (read ones stay)
+const deleteIfUnread = async (transaction: Transaction, ref: DocumentReference<SplitGroupNotification>) => {
+  const snap = await transaction.get(ref);
+  return () => {
+    if (snap.exists() && snap.data().read === false) transaction.delete(ref);
+  };
 };
 
 const buildInvitationNotification = (
@@ -74,7 +95,7 @@ const buildInvitationNotification = (
   sender: UserType,
   group: Pick<SplitGroup, "id" | "name">,
 ) => {
-  const notificationRef = doc(refs.notifications(recipientId));
+  const notificationRef = refs.invitationNotification(recipientId, group.id);
   const notification: SplitGroupNotification = {
     id: notificationRef.id,
     type: "split_group_invitation",
@@ -93,8 +114,9 @@ const buildSettlementNotification = (
   recipientId: string,
   sender: UserType,
   group: Pick<SplitGroup, "id" | "name">,
+  settlementId: string,
 ) => {
-  const notificationRef = doc(refs.notifications(recipientId));
+  const notificationRef = refs.settlementNotification(recipientId, settlementId);
   const notification: SplitGroupNotification = {
     id: notificationRef.id,
     type: "split_settlement_pending",
@@ -220,9 +242,20 @@ export const deleteSplitGroup = async (groupId: string, userId: string): Promise
     getDocs(refs.expenses(groupId)),
     getDocs(refs.settlements(groupId)),
   ]);
+  // Unread invitations of the other participants and unread pending-settlement notifications go too;
+  // the owner may remove them while the group (status 'deleting') still exists
+  const group = (await getDoc(groupRef)).data();
+  const staleNotifications = await getUnreadNotificationRefs([
+    ...(group?.participants ?? []).filter((uid) => uid !== userId).map((uid) => refs.invitationNotification(uid, groupId)),
+    ...settlementsSnap.docs
+      .map((d) => d.data())
+      .filter((settlement) => settlement.status === "pending")
+      .map((settlement) => refs.settlementNotification(settlement.receiverId, settlement.id)),
+  ]);
   await deleteInBatches(fb.firestore, [
     ...expensesSnap.docs.map((d) => d.ref),
     ...settlementsSnap.docs.map((d) => d.ref),
+    ...staleNotifications,
   ]);
   await deleteDoc(groupRef);
 };
@@ -257,6 +290,7 @@ export const removeParticipantFromGroup = async (groupId: string, participantId:
   await runTransaction(fb.firestore, async (transaction) => {
     const groupSnap = await transaction.get(groupRef);
     if (!groupSnap.exists()) throw new Error("Split group does not exist");
+    const removeInvitation = await deleteIfUnread(transaction, refs.invitationNotification(participantId, groupId));
 
     const group = groupSnap.data();
     if (group.createdBy === participantId) throw new Error("The owner cannot leave the group");
@@ -268,6 +302,7 @@ export const removeParticipantFromGroup = async (groupId: string, participantId:
       formerParticipants: Array.from(new Set([...group.formerParticipants, participantId])),
       updatedAt: Date.now(),
     });
+    removeInvitation();
   });
 };
 
@@ -469,6 +504,7 @@ export const createSettlement = async (
           data.receiverId,
           user,
           group,
+          settlementRef.id,
         );
         transaction.set(notificationRef, notification);
       }
@@ -513,6 +549,10 @@ export const confirmSettlement = async (
     if (settlement.status === "confirmed") {
       return settlement;
     }
+    const removePendingNotification = await deleteIfUnread(
+      transaction,
+      refs.settlementNotification(settlement.receiverId, settlement.id),
+    );
 
     const currentVersion = group.version ?? 0;
     if (expectedVersion !== undefined && currentVersion !== expectedVersion) {
@@ -535,6 +575,7 @@ export const confirmSettlement = async (
       version: currentVersion + 1,
       updatedAt: Date.now(),
     });
+    removePendingNotification();
 
     return updatedSettlement;
   });
@@ -559,10 +600,15 @@ export const deleteSettlement = async (groupId: string, settlementId: string, us
       throw new Error("planning:errors.notAuthorizedToDeleteSettlement");
     }
 
+    const isPending = settlement.status === "pending";
+    const removePendingNotification = isPending
+      ? await deleteIfUnread(transaction, refs.settlementNotification(settlement.receiverId, settlement.id))
+      : () => {};
+
     transaction.delete(settlementRef);
+    removePendingNotification();
 
     const nextVersion = (group.version ?? 0) + 1;
-    const isPending = settlement.status === "pending";
     if (isPending) {
       transaction.update(groupRef, {
         settlementsCount: Math.max(0, group.settlementsCount - 1),

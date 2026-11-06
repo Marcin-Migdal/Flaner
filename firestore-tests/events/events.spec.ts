@@ -127,6 +127,23 @@ describe("events/{eventId}", () => {
     await assertSucceeds(deleteDoc(doc(as(CREATOR), "events", EVENT_ID)));
   });
 
+  it("accepts deleteSchedulerEvent: the event + participants' unread event notifications, read ones stay", async () => {
+    const inbox = `users/${PARTICIPANT}/notifications`;
+    await seed({
+      [`events/${EVENT_ID}`]: schedulerEvent(),
+      [`${inbox}/event_invitation_${EVENT_ID}`]: eventNotification(`event_invitation_${EVENT_ID}`, "event_invitation"),
+      [`${inbox}/event_reopened_${EVENT_ID}`]: { ...eventNotification(`event_reopened_${EVENT_ID}`, "event_reopened"), read: true },
+    });
+    const db = as(CREATOR);
+
+    await assertSucceeds(getDoc(doc(db, inbox, `event_invitation_${EVENT_ID}`)));
+    const batch = writeBatch(db);
+    batch.delete(doc(db, "events", EVENT_ID));
+    batch.delete(doc(db, inbox, `event_invitation_${EVENT_ID}`));
+    await assertSucceeds(batch.commit());
+    await assertFails(deleteDoc(doc(db, inbox, `event_reopened_${EVENT_ID}`)));
+  });
+
   it("blocks participants from changing anything but the slots", async () => {
     await seed({ [`events/${EVENT_ID}`]: schedulerEvent() });
     const ref = doc(as(PARTICIPANT), "events", EVENT_ID);

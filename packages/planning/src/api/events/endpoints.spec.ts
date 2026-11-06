@@ -15,8 +15,9 @@ import {
 const mockBatchSet = vi.fn();
 const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
 const mockBatchUpdate = vi.fn();
-const mockDeleteDoc = vi.fn().mockResolvedValue(undefined);
-const mockUpdateDoc = vi.fn().mockResolvedValue(undefined);
+const mockBatchDelete = vi.fn();
+const mockGetDoc = vi.fn();
+const mockGetUnreadNotificationRefs = vi.fn();
 const mockGetDocs = vi.fn();
 const mockOnSnapshot = vi.fn();
 
@@ -28,6 +29,12 @@ type MockTransaction = {
 };
 
 let transactionMock: MockTransaction;
+
+// The tests choose which source notifications are still unread
+vi.mock("@flaner/shared/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@flaner/shared/utils")>()),
+  getUnreadNotificationRefs: (...args: unknown[]) => mockGetUnreadNotificationRefs(...args),
+}));
 
 vi.mock("@flaner/shared/firebase", () => ({
   fb: {
@@ -46,10 +53,10 @@ vi.mock("firebase/firestore", () => ({
   writeBatch: vi.fn(() => ({
     set: mockBatchSet,
     update: mockBatchUpdate,
+    delete: mockBatchDelete,
     commit: mockBatchCommit,
   })),
-  deleteDoc: (...args: unknown[]) => mockDeleteDoc(...args),
-  updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
+  getDoc: (...args: unknown[]) => mockGetDoc(...args),
   deleteField: vi.fn(() => "deleteFieldToken"),
   getDocs: (...args: unknown[]) => mockGetDocs(...args),
   query: vi.fn((...args: unknown[]) => args),
@@ -177,19 +184,55 @@ describe("events endpoints", () => {
   });
 
   describe("deleteSchedulerEvent", () => {
-    it("calls deleteDoc", async () => {
+    it("deletes the event and the other participants' unread event notifications in one batch", async () => {
+      mockGetDoc.mockResolvedValueOnce({ data: () => ({ creatorId: "user-1", participants: ["user-1", "user-2"] }) });
+      const staleRef = { id: "event_invitation_ev-1" };
+      mockGetUnreadNotificationRefs.mockResolvedValueOnce([staleRef]);
+
       await deleteSchedulerEvent("ev-1");
-      expect(mockDeleteDoc).toHaveBeenCalled();
+
+      expect(mockGetUnreadNotificationRefs).toHaveBeenCalledWith([
+        expect.objectContaining({ id: "event_invitation_ev-1" }),
+        expect.objectContaining({ id: "event_reopened_ev-1" }),
+      ]);
+      expect(mockBatchDelete).toHaveBeenCalledTimes(2); // event + stale notification
+      expect(mockBatchDelete).toHaveBeenCalledWith(staleRef);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
+    });
+
+    it("still deletes when the event is already gone", async () => {
+      mockGetDoc.mockResolvedValueOnce({ data: () => undefined });
+
+      await deleteSchedulerEvent("ev-1");
+
+      expect(mockGetUnreadNotificationRefs).not.toHaveBeenCalled();
+      expect(mockBatchDelete).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("updateSchedulerEvent", () => {
-    it("filters undefined properties and calls updateDoc", async () => {
+    it("filters undefined properties and updates without reading when participants don't change", async () => {
       await updateSchedulerEvent("ev-1", { name: "Updated Name", description: undefined });
-      expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect(mockBatchUpdate).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({ name: "Updated Name" }),
       );
+      expect(mockGetDoc).not.toHaveBeenCalled();
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
+    });
+
+    it("removes the unread event notifications of participants removed in the edit", async () => {
+      mockGetDoc.mockResolvedValueOnce({ data: () => ({ participants: ["user-1", "user-2", "user-3"] }) });
+      const staleRef = { id: "event_invitation_ev-1" };
+      mockGetUnreadNotificationRefs.mockResolvedValueOnce([staleRef]);
+
+      await updateSchedulerEvent("ev-1", { participants: ["user-1", "user-2"] });
+
+      expect(mockGetUnreadNotificationRefs).toHaveBeenCalledWith([
+        expect.objectContaining({ id: "event_invitation_ev-1" }),
+        expect.objectContaining({ id: "event_reopened_ev-1" }),
+      ]);
+      expect(mockBatchDelete).toHaveBeenCalledWith(staleRef);
     });
   });
 

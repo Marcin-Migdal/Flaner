@@ -184,6 +184,19 @@ describe("stale notification cleanup (N4, N5)", () => {
     const fresh = stale("event_reopened_e1", { type: "event_reopened", eventId: "e1", eventName: "Trip" });
 
     await assertSucceeds(setDoc(doc(as(SENDER), inbox, "event_reopened_e1"), fresh));
+    // Now unread and from SENDER: someone else cannot replace it
     await assertFails(setDoc(doc(as(STRANGER), inbox, "event_reopened_e1"), { ...fresh, senderUid: STRANGER }));
+  });
+
+  it("lets anyone replace a read notification with a valid one in their own name (re-invite)", async () => {
+    const id = "split_group_invitation_s1";
+    await seed({ [`${inbox}/${id}`]: stale(id, { type: "split_group_invitation", splitGroupId: "s1", splitGroupName: "S" }, true) });
+
+    await assertSucceeds(
+      setDoc(doc(as(STRANGER), inbox, id), {
+        ...stale(id, { type: "split_group_invitation", splitGroupId: "s1", splitGroupName: "S" }),
+        senderUid: STRANGER,
+      }),
+    );
   });
 });

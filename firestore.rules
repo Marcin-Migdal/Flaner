@@ -471,7 +471,7 @@ service cloud.firestore {
         allow create: if isAuthenticated() && isValidNotification();
         allow update: if isAuthenticated() && (
           (request.auth.uid == userId && onlyChanges(['read'])) ||
-          (resource.data.senderUid == request.auth.uid && isValidNotification())
+          ((resource.data.senderUid == request.auth.uid || resource.data.read == true) && isValidNotification())
         );
         allow delete: if isAuthenticated() && (
           request.auth.uid == userId ||

@@ -152,7 +152,7 @@ match /friendships/{friendId} {
 ### Invariants
 - **N1** Only the recipient lists their inbox, marks notifications as read and deletes any of them.
 - **N4** Notifications with a source (invitation, friend request, event, split group, settlement) have a deterministic id `{type}_{sourceId}` so whoever resolves the source can find them. A **resolver** — the sender, an admin / owner of the notification's `groupId`, the owner of its `splitGroupId` — may `get` that one doc and delete it **only while it is unread** (read notifications stay). Deleting / reading a doc that does not exist is allowed (a resolving batch must not fail because the recipient already deleted it).
-- **N5** The sender may overwrite their own notification with a new valid one (same id, e.g. an event reopened twice); it comes back as unread.
+- **N5** A valid new notification (own name, unread) may overwrite one with the same id when it is the caller's own (e.g. an event reopened twice) or already read (e.g. a re-added split participant invited by someone else); an unread notification from someone else is never replaced.
 - **N2** Any signed-in user can notify another user, but only in their own name (`senderUid == me`), unread, with a known client `type` and only the schema fields. `system_alert` is written only by admin tooling (bypasses rules).
 - **N3** The recipient can only flip `read`; the content is immutable except for N5.
 
@@ -198,6 +198,7 @@ Every writer sets `id` to the doc id.
 | --- | --- | --- | --- | --- | --- | --- |
 | recipient | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ |
 | sender | ✅ get only | ✅ | ❌ | ❌ | ✅ overwrite with a valid one | ✅ unread only |
+| any signed-in user | – | – | – | – | ✅ overwrite a **read** one with a valid one (N5) | – |
 | admin / owner of `groupId`, owner of `splitGroupId` | ✅ get only | – | – | ❌ | ❌ | ✅ unread only |
 | other signed-in user | ❌ (get of a missing doc ✅) | ✅ | ❌ | ❌ | ❌ | ❌ (missing doc ✅) |
 | unauthenticated | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -240,7 +241,7 @@ match /notifications/{notifId} {
   allow create: if isAuthenticated() && isValidNotification();
   allow update: if isAuthenticated() && (
     (request.auth.uid == userId && onlyChanges(['read'])) ||
-    (resource.data.senderUid == request.auth.uid && isValidNotification())
+    ((resource.data.senderUid == request.auth.uid || resource.data.read == true) && isValidNotification())
   );
   allow delete: if isAuthenticated() && (
     request.auth.uid == userId ||

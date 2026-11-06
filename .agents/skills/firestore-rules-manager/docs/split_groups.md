@@ -39,11 +39,11 @@ All endpoints: `packages/planning/src/api/splits/endpoints.ts`.
 
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
-| Create | `createSplitGroup` | set group, `split_group_invitation` notification per other participant | ✅ batch |
+| Create | `createSplitGroup` | set group, `split_group_invitation_{groupId}` notification per other participant | ✅ batch |
 | Edit settings | `updateSplitGroup` | update `name` / `description` / `defaultCurrency` / `simplifyDebts`, `updatedAt` | ✅ transaction |
-| Add participant | `addParticipantToGroup` | update `participants`, `formerParticipants`, `updatedAt`; notification | ✅ transaction |
-| Remove / leave | `removeParticipantFromGroup` | update `participants`, `formerParticipants`, `updatedAt` | ✅ transaction |
-| Delete | `deleteSplitGroup` | update `status: 'deleting'` → delete entries in batches → delete group | ✅ per step |
+| Add participant | `addParticipantToGroup` | update `participants`, `formerParticipants`, `updatedAt`; `split_group_invitation_{groupId}` notification (replaces a read one, users.md N5) | ✅ transaction |
+| Remove / leave | `removeParticipantFromGroup` | update `participants`, `formerParticipants`, `updatedAt`; delete the removed user's unread invitation notification | ✅ transaction |
+| Delete | `deleteSplitGroup` | update `status: 'deleting'` → delete entries + unread invitation / pending-settlement notifications in batches → delete group | ✅ per step |
 
 ## Queries
 | Query | Endpoint | Allowed by |
@@ -237,9 +237,9 @@ match /expenses/{expenseId} {
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
 | Record (confirmed) | `createSettlement` | set settlement; group: balances, `settlementsCount + 1`, `version + 1`, `updatedAt` | ✅ transaction |
-| Request (pending) | `createSettlement` (`status: 'pending'`) | set settlement; group: `settlementsCount + 1`, `version + 1`, `updatedAt`; `split_settlement_pending` notification | ✅ transaction |
-| Confirm (receiver) | `confirmSettlement` | set `status: 'confirmed'`; group: balances, `version + 1`, `updatedAt` | ✅ transaction |
-| Delete | `deleteSettlement` | delete; group: balances (if confirmed), `settlementsCount - 1`, `version + 1`, `updatedAt` | ✅ transaction |
+| Request (pending) | `createSettlement` (`status: 'pending'`) | set settlement; group: `settlementsCount + 1`, `version + 1`, `updatedAt`; `split_settlement_pending_{settlementId}` notification | ✅ transaction |
+| Confirm (receiver) | `confirmSettlement` | set `status: 'confirmed'`; group: balances, `version + 1`, `updatedAt`; delete own unread pending notification | ✅ transaction |
+| Delete | `deleteSettlement` | delete; group: balances (if confirmed), `settlementsCount - 1`, `version + 1`, `updatedAt`; if pending, the receiver's unread notification | ✅ transaction |
 | Convert currency | `convertSplitGroupCurrency` | see expenses; `pending` ones are converted without touching balances, `amount` capped at the converted debt if rounding pushes it above | ✅ transaction |
 
 ### Queries
