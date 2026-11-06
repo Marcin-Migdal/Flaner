@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { toast as sonnerToast } from "sonner";
 import { toast } from "./toast";
@@ -7,6 +8,8 @@ vi.mock("sonner", () => ({
     success: vi.fn(),
     error: vi.fn(),
     warning: vi.fn(),
+    custom: vi.fn(),
+    dismiss: vi.fn(),
   }),
 }));
 
@@ -56,5 +59,14 @@ describe("toast utility", () => {
       duration: Infinity,
       action: { label: "Refresh", onClick },
     });
+  });
+
+  it("passes a custom render with its id and duration, and dismisses by id", () => {
+    const render = vi.fn<(id: string | number) => ReactElement>();
+    toast.custom(render, { id: "n-1", duration: 8000 });
+    expect(sonnerToast.custom).toHaveBeenCalledWith(render, { id: "n-1", duration: 8000 });
+
+    toast.dismiss("n-1");
+    expect(sonnerToast.dismiss).toHaveBeenCalledWith("n-1");
   });
 });

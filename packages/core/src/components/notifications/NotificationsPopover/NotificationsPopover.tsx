@@ -14,14 +14,49 @@ import {
 import { Bell, Check, Inbox, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
+import { toast } from "@flaner/shared/utils";
+import { AppNotification } from "../../../api/notifications";
 import { useNotifications } from "../../../hooks/useNotifications";
 import { useReadNotifications } from "../../../hooks";
+import { getNotificationTarget } from "../../../utils/getNotificationTarget";
 import { NotificationCard } from "../NotificationCard";
+import { NotificationToast } from "../NotificationToast";
+
+const TOAST_DURATION_MS = 8000;
+// More at once (e.g. after reconnecting) would flood the screen; the rest wait in the popover
+const MAX_TOASTS = 3;
 
 export function NotificationsPopover() {
   const { isMobile } = useSidebar();
   const { t } = useTranslation("common");
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+
+  const showToasts = (added: AppNotification[]) => {
+    // The open popover already lists them
+    if (open) return;
+
+    added.slice(0, MAX_TOASTS).forEach((notification) => {
+      toast.custom(
+        (toastId) => (
+          <NotificationToast
+            notification={notification}
+            onOpen={() => {
+              markAsRead(notification.id);
+              const target = getNotificationTarget(notification);
+              if (target) navigate(target);
+              toast.dismiss(toastId);
+            }}
+            onClose={() => toast.dismiss(toastId)}
+          />
+        ),
+        { id: notification.id, duration: TOAST_DURATION_MS },
+      );
+    });
+  };
+
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications({ onNew: showToasts });
   const {
     data: readData,
     fetchNextPage,
@@ -29,7 +64,6 @@ export function NotificationsPopover() {
     isFetchingNextPage,
     isLoading: readLoading,
   } = useReadNotifications();
-  const [open, setOpen] = useState(false);
 
   const unreadNotifications = notifications.filter((n) => !n.read);
   const readNotifications = readData?.pages.flatMap((page) => page.notifications) || [];
