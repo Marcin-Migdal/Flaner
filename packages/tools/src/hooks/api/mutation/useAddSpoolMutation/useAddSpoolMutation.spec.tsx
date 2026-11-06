@@ -27,6 +27,9 @@ describe("useAddSpoolMutation", () => {
       signInWithGoogleUser: vi.fn(),
       signInWithEmailUser: vi.fn(),
       signUpWithEmailUser: vi.fn(),
+      unverifiedEmail: null,
+      resendVerificationEmail: vi.fn(),
+      confirmEmailVerification: vi.fn(),
       updateUser: vi.fn(),
     });
   });
@@ -102,6 +105,9 @@ describe("useAddSpoolMutation", () => {
       signInWithGoogleUser: vi.fn(),
       signInWithEmailUser: vi.fn(),
       signUpWithEmailUser: vi.fn(),
+      unverifiedEmail: null,
+      resendVerificationEmail: vi.fn(),
+      confirmEmailVerification: vi.fn(),
       updateUser: vi.fn(),
     });
 

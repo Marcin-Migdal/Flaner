@@ -29,6 +29,7 @@ export * from "./components/ui/attachment";
 export { Checkbox as ShadcnCheckbox } from "./components/ui/checkbox";
 export * from "./components/Avatar";
 export { AvatarImage, AvatarFallback, Avatar as ShadcnAvatar } from "./components/ui/avatar";
+export * from "./components/ui/alert";
 export * from "./components/ui/button";
 export * from "./components/ui/dialog";
 export * from "./components/ui/dropdown-menu";

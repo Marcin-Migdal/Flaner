@@ -4,6 +4,7 @@ import {
   deleteUser,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   signInWithPopup,
   User,
@@ -84,6 +85,12 @@ const toUser = (profile: UserProfile, firebaseUser: User): UserType => ({
   email: firebaseUser.email ?? "",
 });
 
+/** The link in the email brings the user back to the login page, which lets them in once verified. */
+const sendVerificationEmail = (firebaseUser: User, language: LanguageType) => {
+  fb.auth.auth.languageCode = language;
+  return sendEmailVerification(firebaseUser, { url: `${window.location.origin}/login` });
+};
+
 type AuthContextType = {
   user: UserType | null;
   isLoading: boolean;
@@ -92,6 +99,11 @@ type AuthContextType = {
   signInWithEmailUser: (email: string, password: string) => Promise<void>;
   signUpWithEmailUser: (email: string, password: string, username: string, language: LanguageType) => Promise<void>;
   updateUser: (updatedUser: Partial<UserType>) => void;
+  /** Email of a signed-in account that is kept out of the app until its email is verified. */
+  unverifiedEmail: string | null;
+  resendVerificationEmail: (language: LanguageType) => Promise<void>;
+  /** Re-reads the account; lets the user in and returns true once the email is verified. */
+  confirmEmailVerification: () => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -107,6 +119,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserType | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   // Prevents onAuthStateChanged from interfering while a manual sign-in is running
   const isManualAuth = useRef(false);
 
@@ -126,11 +139,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       if (!firebaseUser) {
         setUser(null);
+        setUnverifiedEmail(null);
         setIsLoading(false);
         return;
       }
 
       try {
+        // The cached account may predate a click on the verification link (e.g. a new tab opened from the email)
+        if (!firebaseUser.emailVerified) await firebaseUser.reload();
+        if (!firebaseUser.emailVerified) {
+          setUnverifiedEmail(firebaseUser.email);
+          setUser(null);
+          return;
+        }
+
         let profile = await loadProfile(firebaseUser.uid);
 
         if (!profile) {
@@ -194,6 +216,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isManualAuth.current = true;
     try {
       const { user: firebaseUser } = await signInWithEmailAndPassword(fb.auth.auth, email, password);
+      if (!firebaseUser.emailVerified) {
+        // The email is re-sent only on request ("Resend email" on the login page)
+        setUnverifiedEmail(firebaseUser.email);
+        return;
+      }
+
       const profile = await loadProfile(firebaseUser.uid);
 
       if (!profile) {
@@ -244,13 +272,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw error;
       }
 
-      setUser(toUser(userProfile, firebaseUser));
+      // The account stays signed in but out of the app; a failed send can be retried from the login page
+      await sendVerificationEmail(firebaseUser, language).catch((error) =>
+        console.error("Failed to send the verification email", error),
+      );
+      setUnverifiedEmail(firebaseUser.email);
     } catch (error) {
       console.error("Email Sign Up failed", error);
       throw error;
     } finally {
       isManualAuth.current = false;
     }
+  };
+
+  const resendVerificationEmail = async (language: LanguageType) => {
+    const firebaseUser = fb.auth.auth.currentUser;
+    if (!firebaseUser) throw new Error("No signed-in account to verify.");
+    await sendVerificationEmail(firebaseUser, language);
+  };
+
+  const confirmEmailVerification = async () => {
+    const firebaseUser = fb.auth.auth.currentUser;
+    if (!firebaseUser) return false;
+
+    await firebaseUser.reload();
+    if (!firebaseUser.emailVerified) return false;
+
+    const profile = await loadProfile(firebaseUser.uid);
+    if (!profile) throw new Error("User profile not found in database.");
+
+    setUser(toUser(profile, firebaseUser));
+    setUnverifiedEmail(null);
+    return true;
   };
 
   return (
@@ -263,6 +316,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signInWithEmailUser,
         signUpWithEmailUser,
         updateUser,
+        unverifiedEmail,
+        resendVerificationEmail,
+        confirmEmailVerification,
       }}
     >
       {children}

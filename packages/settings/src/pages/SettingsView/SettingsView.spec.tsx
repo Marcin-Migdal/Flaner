@@ -103,6 +103,9 @@ describe("SettingsView", () => {
       signInWithGoogleUser: vi.fn(),
       signInWithEmailUser: vi.fn(),
       signUpWithEmailUser: vi.fn(),
+      unverifiedEmail: null,
+      resendVerificationEmail: vi.fn(),
+      confirmEmailVerification: vi.fn(),
       updateUser: vi.fn(),
     } as AuthContextValue);
 
@@ -148,6 +151,9 @@ describe("SettingsView", () => {
       signInWithGoogleUser: vi.fn(),
       signInWithEmailUser: vi.fn(),
       signUpWithEmailUser: vi.fn(),
+      unverifiedEmail: null,
+      resendVerificationEmail: vi.fn(),
+      confirmEmailVerification: vi.fn(),
       updateUser: vi.fn(),
     } as AuthContextValue);
 
@@ -168,6 +174,9 @@ describe("SettingsView", () => {
       signInWithGoogleUser: vi.fn(),
       signInWithEmailUser: vi.fn(),
       signUpWithEmailUser: vi.fn(),
+      unverifiedEmail: null,
+      resendVerificationEmail: vi.fn(),
+      confirmEmailVerification: vi.fn(),
       updateUser: vi.fn(),
     } as AuthContextValue);
 
@@ -404,6 +413,9 @@ describe("SettingsView", () => {
       signInWithGoogleUser: vi.fn(),
       signInWithEmailUser: vi.fn(),
       signUpWithEmailUser: vi.fn(),
+      unverifiedEmail: null,
+      resendVerificationEmail: vi.fn(),
+      confirmEmailVerification: vi.fn(),
       updateUser: vi.fn(),
     });
 
@@ -481,6 +493,9 @@ describe("SettingsView", () => {
       signInWithGoogleUser: vi.fn(),
       signInWithEmailUser: vi.fn(),
       signUpWithEmailUser: vi.fn(),
+      unverifiedEmail: null,
+      resendVerificationEmail: vi.fn(),
+      confirmEmailVerification: vi.fn(),
       updateUser: vi.fn(),
     });
 
@@ -512,6 +527,9 @@ describe("SettingsView", () => {
       signInWithGoogleUser: vi.fn(),
       signInWithEmailUser: vi.fn(),
       signUpWithEmailUser: vi.fn(),
+      unverifiedEmail: null,
+      resendVerificationEmail: vi.fn(),
+      confirmEmailVerification: vi.fn(),
       updateUser: vi.fn(),
     });
 
@@ -541,6 +559,9 @@ describe("SettingsView", () => {
       signInWithGoogleUser: vi.fn(),
       signInWithEmailUser: vi.fn(),
       signUpWithEmailUser: vi.fn(),
+      unverifiedEmail: null,
+      resendVerificationEmail: vi.fn(),
+      confirmEmailVerification: vi.fn(),
       updateUser: vi.fn(),
     });
 
