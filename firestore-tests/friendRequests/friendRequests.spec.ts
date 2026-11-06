@@ -1,5 +1,5 @@
 import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
-import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where, writeBatch } from "firebase/firestore";
 import { useTestEnv } from "../support/testEnv";
 
 const SENDER = "sender-uid";
@@ -54,6 +54,29 @@ describe("friendRequests/{senderUid}_{receiverUid}", () => {
 
     await seed({ [`friendRequests/${REQUEST_ID}`]: friendRequest() });
     await assertSucceeds(deleteDoc(doc(as(RECEIVER), "friendRequests", REQUEST_ID)));
+  });
+
+  it("accepts the cancelFriendRequest batch: the request + the receiver's unread friend_request notification", async () => {
+    const notificationPath = `users/${RECEIVER}/notifications/friend_request_${SENDER}`;
+    await seed({
+      [`friendRequests/${REQUEST_ID}`]: friendRequest(),
+      [notificationPath]: {
+        id: `friend_request_${SENDER}`,
+        type: "friend_request",
+        senderUid: SENDER,
+        senderUsername: "Sender",
+        senderAvatarUrl: "",
+        createdAt: 1,
+        read: false,
+      },
+    });
+    const db = as(SENDER);
+
+    await assertSucceeds(getDoc(doc(db, notificationPath)));
+    const batch = writeBatch(db);
+    batch.delete(doc(db, "friendRequests", REQUEST_ID));
+    batch.delete(doc(db, notificationPath));
+    await assertSucceeds(batch.commit());
   });
 
   it("hides the request from third users", async () => {

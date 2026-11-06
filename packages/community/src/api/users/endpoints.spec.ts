@@ -23,6 +23,13 @@ const mockBatchSet = vi.fn();
 const mockBatchDelete = vi.fn();
 const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
 
+// Unread check of the source notification (real helper reads with getDoc); the tests choose what is still unread
+const mockGetUnreadNotificationRefs = vi.fn();
+vi.mock("@flaner/shared/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@flaner/shared/utils")>()),
+  getUnreadNotificationRefs: (...args: unknown[]) => mockGetUnreadNotificationRefs(...args),
+}));
+
 vi.mock("@flaner/shared/firebase", () => ({
   fb: {
     firestore: {},
@@ -48,6 +55,10 @@ vi.mock("firebase/firestore", () => ({
     commit: () => mockBatchCommit(),
   })),
 }));
+
+beforeEach(() => {
+  mockGetUnreadNotificationRefs.mockResolvedValue([]);
+});
 
 describe("community users endpoints", () => {
   beforeEach(() => {
@@ -134,11 +145,18 @@ describe("community users endpoints", () => {
       );
     });
 
-    it("deletes friend request doc on cancel", async () => {
+    it("deletes the request and the receiver's unread friend_request notification on cancel", async () => {
+      const staleRef = { path: "users/u-2/notifications/friend_request_u-1" };
+      mockGetUnreadNotificationRefs.mockResolvedValueOnce([staleRef]);
+
       await cancelFriendRequest("u-1", "u-2");
-      expect(mockDeleteDoc).toHaveBeenCalledWith(
-        expect.objectContaining({ path: "friendRequests/u-1_u-2" }),
-      );
+
+      expect(mockGetUnreadNotificationRefs).toHaveBeenCalledWith([
+        expect.objectContaining({ path: "users/u-2/notifications/friend_request_u-1" }),
+      ]);
+      expect(mockBatchDelete).toHaveBeenCalledWith(expect.objectContaining({ path: "friendRequests/u-1_u-2" }));
+      expect(mockBatchDelete).toHaveBeenCalledWith(staleRef);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -147,11 +165,15 @@ describe("community users endpoints", () => {
       const sender = { uid: "u-1", username: "Alice" };
       const receiver = { uid: "u-2", username: "Bob" };
 
+      const staleRef = { path: "users/u-2/notifications/friend_request_u-1" };
+      mockGetUnreadNotificationRefs.mockResolvedValueOnce([staleRef]);
+
       await acceptFriendRequest(sender, receiver);
 
       expect(mockBatchDelete).toHaveBeenCalledWith(
         expect.objectContaining({ path: "friendRequests/u-1_u-2" }),
       );
+      expect(mockBatchDelete).toHaveBeenCalledWith(staleRef);
       // 2 friendships + 1 notification
       expect(mockBatchSet).toHaveBeenCalledTimes(3);
       expect(mockBatchCommit).toHaveBeenCalledTimes(1);
@@ -253,7 +275,7 @@ describe("community users endpoints", () => {
       ).rejects.toThrow("Send failed");
 
       // cancelFriendRequest throws
-      mockDeleteDoc.mockRejectedValueOnce(new Error("Cancel failed"));
+      mockBatchCommit.mockRejectedValueOnce(new Error("Cancel failed"));
       await expect(cancelFriendRequest("u-1", "u-2")).rejects.toThrow("Cancel failed");
 
       // acceptFriendRequest throws

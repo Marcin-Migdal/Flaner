@@ -183,6 +183,7 @@ match /friendships/{friendId} {
 | Split group invitation | `createSplitGroup`, `addParticipantToGroup` (planning) | create per new participant, in the group batch / transaction |
 | Pending settlement | `createSettlement` (planning) | create in receiver's inbox, in the transaction |
 | Mark as read | `markNotificationAsRead`, `markAllNotificationsAsRead` (core) | update `read: true` (single / batch) |
+| Source resolved (N4) | group / friend / event / split flows (see their files) | `get` the deterministic-id notification, delete it in the resolving batch only while unread |
 
 Every writer sets `id` to the doc id.
 

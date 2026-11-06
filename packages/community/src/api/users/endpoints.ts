@@ -1,8 +1,13 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/friendRequests.md, users.md (keep their Write flows / Queries in sync).
 import type { FriendRequest, Friendship } from "./types";
-import { collection, doc, getDocs, getDoc, deleteDoc, query, where, limit, onSnapshot, writeBatch } from "firebase/firestore";
+import { collection, doc, getDocs, getDoc, query, where, limit, onSnapshot, writeBatch } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
 import { type UserProfile } from "@flaner/shared/types";
+import { getUnreadNotificationRefs, sourceNotificationRef } from "@flaner/shared/utils";
+
+// The receiver's "friend_request" notification (deterministic id, see sourceNotificationRef)
+const friendRequestNotificationRef = (senderUid: string, receiverUid: string) =>
+  sourceNotificationRef(fb.firestore, receiverUid, "friend_request", senderUid);
 
 // Fetch multiple users by their UIDs
 export const getUsers = async (uids: string[]): Promise<UserProfile[]> => {
@@ -68,7 +73,7 @@ export const sendFriendRequest = async (
     });
 
     // Create notification for receiver
-    const notifRef = doc(collection(fb.firestore, `users/${receiver.uid}/notifications`));
+    const notifRef = friendRequestNotificationRef(sender.uid, receiver.uid);
     batch.set(notifRef, {
       id: notifRef.id,
       type: "friend_request",
@@ -91,7 +96,11 @@ export const cancelFriendRequest = async (senderUid: string, receiverUid: string
   try {
     const requestId = `${senderUid}_${receiverUid}`;
     const reqRef = doc(fb.firestore, "friendRequests", requestId);
-    await deleteDoc(reqRef);
+    const staleNotifications = await getUnreadNotificationRefs([friendRequestNotificationRef(senderUid, receiverUid)]);
+    const batch = writeBatch(fb.firestore);
+    batch.delete(reqRef);
+    staleNotifications.forEach((ref) => batch.delete(ref));
+    await batch.commit();
   } catch (error) {
     console.error("cancelFriendRequest failed:", error);
     throw error;
@@ -107,10 +116,12 @@ export const acceptFriendRequest = async (
   try {
     const requestId = `${sender.uid}_${receiver.uid}`;
     const reqRef = doc(fb.firestore, "friendRequests", requestId);
+    const staleNotifications = await getUnreadNotificationRefs([friendRequestNotificationRef(sender.uid, receiver.uid)]);
     const batch = writeBatch(fb.firestore);
 
-    // Delete the request
+    // Delete the request (and the receiver's own unread "friend_request" notification)
     batch.delete(reqRef);
+    staleNotifications.forEach((ref) => batch.delete(ref));
 
     // Add friendship to receiver (B)'s subcollection
     const friendshipB = doc(fb.firestore, `users/${receiver.uid}/friendships`, sender.uid);
@@ -159,10 +170,12 @@ export const rejectFriendRequest = async (
   try {
     const requestId = `${sender.uid}_${receiver.uid}`;
     const reqRef = doc(fb.firestore, "friendRequests", requestId);
+    const staleNotifications = await getUnreadNotificationRefs([friendRequestNotificationRef(sender.uid, receiver.uid)]);
     const batch = writeBatch(fb.firestore);
 
-    // Delete the request
+    // Delete the request (and the receiver's own unread "friend_request" notification)
     batch.delete(reqRef);
+    staleNotifications.forEach((ref) => batch.delete(ref));
 
     // Create notification for sender (A) notifying that receiver (B) declined
     const notifRef = doc(collection(fb.firestore, `users/${sender.uid}/notifications`));
