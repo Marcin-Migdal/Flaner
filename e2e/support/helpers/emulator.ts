@@ -92,8 +92,30 @@ export const seedNotification = async (
 
 export type E2EUser = UserType & { password: string };
 
-/** Creates an Auth emulator account and its Firestore profile, mirroring the app's email sign-up. */
-export const createUser = async (overrides: Partial<UserType> = {}): Promise<E2EUser> => {
+/** Marks an account's email as verified (admin access), like a click on the verification link. */
+const verifyEmail = async (localId: string) => {
+  await request(`${AUTH_URL}/identitytoolkit.googleapis.com/v1/projects/${E2E_PROJECT_ID}/accounts:update`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer owner" },
+    body: JSON.stringify({ localId, emailVerified: true }),
+  });
+};
+
+/** Latest verification link the Auth emulator "sent" to `email` (the emulator sends no real emails). */
+export const getVerificationLink = async (email: string): Promise<string | undefined> => {
+  const res = await request(`${AUTH_URL}/emulator/v1/projects/${E2E_PROJECT_ID}/oobCodes`, {});
+  const { oobCodes }: { oobCodes: { email: string; requestType: string; oobLink: string }[] } = await res.json();
+  return oobCodes.filter((code) => code.email === email && code.requestType === "VERIFY_EMAIL").at(-1)?.oobLink;
+};
+
+/**
+ * Creates an Auth emulator account and its Firestore profile, mirroring the app's email sign-up.
+ * The email is verified unless `emailVerified: false` (the app keeps unverified accounts out).
+ */
+export const createUser = async (
+  overrides: Partial<UserType> = {},
+  { emailVerified = true }: { emailVerified?: boolean } = {},
+): Promise<E2EUser> => {
   // Unique per call: tests run in parallel against one shared emulator
   const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
   const username = overrides.username ?? `e2e-${suffix}`;
@@ -106,6 +128,7 @@ export const createUser = async (overrides: Partial<UserType> = {}): Promise<E2E
     body: JSON.stringify({ email, password, returnSecureToken: true }),
   });
   const { localId }: { localId: string } = await res.json();
+  if (emailVerified) await verifyEmail(localId);
 
   const user: UserType = {
     uid: localId,
