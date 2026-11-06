@@ -71,6 +71,15 @@ export const markAllNotificationsAsRead = async (uid: string): Promise<void> => 
 };
 
 /**
+ * Deletes some of the user's own notifications (stale ones, see getStaleGroupNotificationIds).
+ */
+export const deleteNotifications = async (uid: string, notificationIds: string[]): Promise<void> => {
+  const batch = writeBatch(fb.firestore);
+  notificationIds.forEach((id) => batch.delete(refs.notification(uid, id)));
+  await batch.commit();
+};
+
+/**
  * Fetches a page of read notifications for the history tab.
  * @param uid The user's UID
  * @param pageSize Number of items to fetch

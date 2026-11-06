@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppNotification } from "./types";
 import {
+  deleteNotifications,
   getReadNotificationsPage,
   markAllNotificationsAsRead,
   markNotificationAsRead,
@@ -11,6 +12,7 @@ const mockUpdateDoc = vi.fn().mockResolvedValue(undefined);
 const mockGetDocs = vi.fn();
 const mockOnSnapshot = vi.fn();
 const mockBatchUpdate = vi.fn();
+const mockBatchDelete = vi.fn();
 const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@flaner/shared/firebase", () => ({
@@ -39,6 +41,7 @@ vi.mock("firebase/firestore", () => ({
   onSnapshot: (...args: unknown[]) => mockOnSnapshot(...args),
   writeBatch: vi.fn(() => ({
     update: mockBatchUpdate,
+    delete: mockBatchDelete,
     commit: mockBatchCommit,
   })),
 }));
@@ -81,6 +84,14 @@ describe("core notifications endpoints", () => {
       subscribeToNotifications("user-1", vi.fn());
       expect(consoleErrorSpy).toHaveBeenCalledWith("Error subscribing to notifications:", expect.any(Error));
       consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe("deleteNotifications", () => {
+    it("deletes the given notifications of the user in one batch", async () => {
+      await deleteNotifications("user-1", ["n1", "n2"]);
+      expect(mockBatchDelete).toHaveBeenCalledTimes(2);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
     });
   });
 
