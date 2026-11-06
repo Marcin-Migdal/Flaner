@@ -12,12 +12,12 @@ const refs = {
 /**
  * Subscribes to real-time updates for a user's NEW (unread) notifications.
  * @param uid The user's UID
- * @param onUpdate Callback fired when notifications change
+ * @param onUpdate Callback fired when notifications change, with the ones that arrived while subscribed (`added`)
  * @returns Unsubscribe function
  */
 export const subscribeToNotifications = (
   uid: string,
-  onUpdate: (notifications: AppNotification[]) => void
+  onUpdate: (notifications: AppNotification[], added: AppNotification[]) => void
 ) => {
   const q = query(
     refs.notifications(uid),
@@ -25,9 +25,17 @@ export const subscribeToNotifications = (
     orderBy("createdAt", "desc")
   );
 
-  return onSnapshot(q, (snapshot) => {
+  // Until the first server snapshot everything is "already there": the persistent cache answers first,
+  // then the server adds what came while the app was closed. Only later additions are new (#37).
+  let synced = false;
+
+  return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
     const notifications = snapshot.docs.map((doc) => doc.data());
-    onUpdate(notifications);
+    const added = synced
+      ? snapshot.docChanges().flatMap((change) => (change.type === "added" ? [change.doc.data()] : []))
+      : [];
+    if (!snapshot.metadata.fromCache) synced = true;
+    onUpdate(notifications, added);
   }, (error) => {
     console.error("Error subscribing to notifications:", error);
   });

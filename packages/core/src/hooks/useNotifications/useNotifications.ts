@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useEffectEvent } from "react";
 import { useAuth } from "@flaner/shared/context";
 import { 
   AppNotification, 
@@ -10,7 +10,12 @@ import {
 import { getStaleGroupNotificationIds } from "../../utils/getStaleGroupNotificationIds";
 import { useInvalidateReadNotificationsQuery } from "../api/query/useReadNotifications";
 
-export const useNotifications = () => {
+type UseNotificationsOptions = {
+  /** Notifications that arrived while the app was open (not the ones already there on load) */
+  onNew?: (notifications: AppNotification[]) => void;
+};
+
+export const useNotifications = ({ onNew }: UseNotificationsOptions = {}) => {
   const { user } = useAuth();
   const invalidateReadNotifications = useInvalidateReadNotificationsQuery();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -27,14 +32,17 @@ export const useNotifications = () => {
     }
   }
 
+  const handleNew = useEffectEvent((added: AppNotification[]) => onNew?.(added));
+
   useEffect(() => {
     if (!user?.uid) {
       return;
     }
 
-    const unsubscribe = subscribeToNotifications(user.uid, (newNotifications) => {
+    const unsubscribe = subscribeToNotifications(user.uid, (newNotifications, added) => {
       setNotifications(newNotifications);
       setLoading(false);
+      if (added.length > 0) handleNew(added);
 
       // A deleted group leaves only its "group_deleted" notification; the listener then drops the rest
       const staleIds = getStaleGroupNotificationIds(newNotifications);

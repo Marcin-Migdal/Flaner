@@ -31,7 +31,6 @@
     "profile": "Profile",
     "notifications": "Notifications"
   },
-
   "community": {
     "friends": "Friends",
     "groups": {
@@ -94,7 +93,10 @@
     "splitGroupInvitation": "Added you to an split group.",
     "splitSettlementPending": "Submitted a settlement in an expense group.",
     "systemAlert": "Important system alert.",
-    "system": "You have a new notification."
+    "system": "You have a new notification.",
+    "toast": {
+      "dismiss": "Dismiss"
+    }
   },
   "errors": {
     "fetchError": "An error occurred while fetching data.",

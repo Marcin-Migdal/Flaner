@@ -62,22 +62,54 @@ describe("core notifications endpoints", () => {
   });
 
   describe("subscribeToNotifications", () => {
-    it("subscribes to unread notifications and fires onUpdate with data", () => {
-      const onUpdate = vi.fn();
+    type Snapshot = {
+      docs: { data: () => AppNotification }[];
+      docChanges: () => { type: "added" | "modified" | "removed"; doc: { data: () => AppNotification } }[];
+      metadata: { fromCache: boolean };
+    };
 
-      mockOnSnapshot.mockImplementationOnce((_q: unknown, onNext: (snap: { docs: { data: () => AppNotification }[] }) => void) => {
-        onNext({ docs: [{ data: () => mockNotification }] });
+    const snapshot = (notifications: AppNotification[], added: AppNotification[], fromCache = false): Snapshot => ({
+      docs: notifications.map((notification) => ({ data: () => notification })),
+      docChanges: () => added.map((notification) => ({ type: "added", doc: { data: () => notification } })),
+      metadata: { fromCache },
+    });
+
+    const subscribe = () => {
+      const onUpdate = vi.fn();
+      let emit: (snap: Snapshot) => void = () => {};
+      mockOnSnapshot.mockImplementationOnce((_q: unknown, _options: unknown, onNext: (snap: Snapshot) => void) => {
+        emit = onNext;
         return vi.fn();
       });
-
       subscribeToNotifications("user-1", onUpdate);
+      return { onUpdate, emit: (snap: Snapshot) => emit(snap) };
+    };
 
-      expect(onUpdate).toHaveBeenCalledWith([mockNotification]);
+    const newer: AppNotification = { ...mockNotification, id: "notif-2" };
+
+    it("subscribes to unread notifications and fires onUpdate with data, nothing added on the first snapshot", () => {
+      const { onUpdate, emit } = subscribe();
+
+      emit(snapshot([mockNotification], [mockNotification]));
+
+      expect(onUpdate).toHaveBeenCalledWith([mockNotification], []);
+    });
+
+    it("reports additions only after the first server snapshot", () => {
+      const { onUpdate, emit } = subscribe();
+
+      emit(snapshot([mockNotification], [mockNotification], true)); // persistent cache
+      emit(snapshot([mockNotification, newer], [newer])); // server adds what came while the app was closed
+      expect(onUpdate).toHaveBeenLastCalledWith([mockNotification, newer], []);
+
+      const newest: AppNotification = { ...mockNotification, id: "notif-3" };
+      emit(snapshot([newest, mockNotification, newer], [newest]));
+      expect(onUpdate).toHaveBeenLastCalledWith([newest, mockNotification, newer], [newest]);
     });
 
     it("handles error during subscribeToNotifications", () => {
       const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      mockOnSnapshot.mockImplementationOnce((_q: unknown, _onNext: unknown, onError: (err: Error) => void) => {
+      mockOnSnapshot.mockImplementationOnce((_q: unknown, _options: unknown, _onNext: unknown, onError: (err: Error) => void) => {
         onError(new Error("Subscription failed"));
         return vi.fn();
       });

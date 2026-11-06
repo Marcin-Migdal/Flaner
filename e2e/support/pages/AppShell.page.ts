@@ -21,6 +21,15 @@ export class AppShellPage {
     await this.page.goto(path);
   }
 
+  /** Sidebar notifications trigger; its text includes the unread count */
+  get notificationsButton(): Locator {
+    return this.page.locator("[data-sidebar='sidebar']").getByRole("button", { name: /notifications|powiadomienia/i });
+  }
+
+  get toasts(): Locator {
+    return this.page.locator("[data-sonner-toast]");
+  }
+
   getNavLink(name: string | RegExp): Locator {
     return this.page.locator("[data-sidebar='content']").getByRole("link", { name });
   }

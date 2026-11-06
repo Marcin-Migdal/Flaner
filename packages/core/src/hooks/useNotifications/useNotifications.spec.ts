@@ -53,7 +53,7 @@ describe("useNotifications", () => {
 
   it("subscribes to notifications when user is authenticated", () => {
     const unsubscribeMock = vi.fn();
-    let listenerCallback: (notifs: AppNotification[]) => void = () => {};
+    let listenerCallback: (notifs: AppNotification[], added: AppNotification[]) => void = () => {};
 
     vi.mocked(notificationsApi.subscribeToNotifications).mockImplementation((_uid, cb) => {
       listenerCallback = cb;
@@ -66,7 +66,7 @@ describe("useNotifications", () => {
     expect(result.current.loading).toBe(true);
 
     act(() => {
-      listenerCallback(mockNotifications);
+      listenerCallback(mockNotifications, []);
     });
 
     expect(result.current.notifications).toEqual(mockNotifications);
@@ -89,7 +89,7 @@ describe("useNotifications", () => {
 
   it("marks single notification as read optimistically and triggers API", async () => {
     vi.mocked(notificationsApi.subscribeToNotifications).mockImplementation((_uid, cb) => {
-      cb(mockNotifications);
+      cb(mockNotifications, []);
       return vi.fn();
     });
 
@@ -107,7 +107,7 @@ describe("useNotifications", () => {
 
   it("marks all notifications as read optimistically and triggers API", async () => {
     vi.mocked(notificationsApi.subscribeToNotifications).mockImplementation((_uid, cb) => {
-      cb(mockNotifications);
+      cb(mockNotifications, []);
       return vi.fn();
     });
 
@@ -156,7 +156,7 @@ describe("useNotifications", () => {
   it("handles errors during markAsRead and markAllAsRead gracefully", async () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(notificationsApi.subscribeToNotifications).mockImplementation((_uid, cb) => {
-      cb(mockNotifications);
+      cb(mockNotifications, []);
       return vi.fn();
     });
     vi.mocked(notificationsApi.markNotificationAsRead).mockRejectedValueOnce(new Error("Fail read"));
@@ -175,7 +175,7 @@ describe("useNotifications", () => {
   });
 
   it("removes the other unread notifications of a group once its group_deleted notification arrives", () => {
-    let listenerCallback: (notifs: AppNotification[]) => void = () => {};
+    let listenerCallback: (notifs: AppNotification[], added: AppNotification[]) => void = () => {};
     vi.mocked(notificationsApi.subscribeToNotifications).mockImplementation((_uid, cb) => {
       listenerCallback = cb;
       return vi.fn();
@@ -188,23 +188,38 @@ describe("useNotifications", () => {
         { ...base, id: "deleted", type: "group_deleted", groupId: "g1" },
         { ...base, id: "accepted", type: "group_invitation_accepted", groupId: "g1" },
         { ...base, id: "friend", type: "friend_request" },
-      ]);
+      ], []);
     });
 
     expect(notificationsApi.deleteNotifications).toHaveBeenCalledWith("user-123", ["accepted"]);
   });
 
   it("does not delete anything without a group_deleted notification", () => {
-    let listenerCallback: (notifs: AppNotification[]) => void = () => {};
+    let listenerCallback: (notifs: AppNotification[], added: AppNotification[]) => void = () => {};
     vi.mocked(notificationsApi.subscribeToNotifications).mockImplementation((_uid, cb) => {
       listenerCallback = cb;
       return vi.fn();
     });
 
     renderHook(() => useNotifications());
-    act(() => listenerCallback(mockNotifications));
+    act(() => listenerCallback(mockNotifications, []));
 
     expect(notificationsApi.deleteNotifications).not.toHaveBeenCalled();
   });
-});
 
+  it("passes only the notifications that arrived while subscribed to onNew", () => {
+    let listenerCallback: (notifs: AppNotification[], added: AppNotification[]) => void = () => {};
+    vi.mocked(notificationsApi.subscribeToNotifications).mockImplementation((_uid, cb) => {
+      listenerCallback = cb;
+      return vi.fn();
+    });
+    const onNew = vi.fn();
+
+    renderHook(() => useNotifications({ onNew }));
+    act(() => listenerCallback(mockNotifications, []));
+    expect(onNew).not.toHaveBeenCalled();
+
+    act(() => listenerCallback(mockNotifications, [mockNotifications[0]]));
+    expect(onNew).toHaveBeenCalledExactlyOnceWith([mockNotifications[0]]);
+  });
+});

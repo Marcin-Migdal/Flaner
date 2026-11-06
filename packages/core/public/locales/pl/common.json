@@ -93,7 +93,10 @@
     "splitGroupInvitation": "Dodał(a) Cię do rozliczenia.",
     "splitSettlementPending": "Zgłosił(a) spłatę w rozliczeniu.",
     "systemAlert": "Ważne powiadomienie systemowe.",
-    "system": "Masz nowe powiadomienie."
+    "system": "Masz nowe powiadomienie.",
+    "toast": {
+      "dismiss": "Zamknij"
+    }
   },
   "errors": {
     "fetchError": "Wystąpił błąd podczas pobierania danych.",
