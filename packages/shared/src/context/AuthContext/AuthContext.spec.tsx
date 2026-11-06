@@ -8,6 +8,7 @@ import * as firestore from "firebase/firestore";
 let authStateCallback: ((user: unknown) => void) | null = null;
 
 const mockBatch = vi.hoisted(() => ({ set: vi.fn(), commit: vi.fn() }));
+const mockAuth = vi.hoisted(() => ({ currentUser: null as object | null, languageCode: null as string | null }));
 
 vi.mock("firebase/auth", () => ({
   onAuthStateChanged: vi.fn((_auth, callback) => {
@@ -19,6 +20,7 @@ vi.mock("firebase/auth", () => ({
   createUserWithEmailAndPassword: vi.fn(),
   deleteUser: vi.fn().mockResolvedValue(undefined),
   signInWithPopup: vi.fn(),
+  sendEmailVerification: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("firebase/firestore", () => ({
@@ -33,7 +35,7 @@ vi.mock("firebase/firestore", () => ({
 
 vi.mock("../../firebase/firebase", () => ({
   fb: {
-    auth: { auth: {}, provider: {} },
+    auth: { auth: mockAuth, provider: {} },
     firestore: {},
   },
 }));
@@ -44,6 +46,8 @@ describe("AuthContext", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authStateCallback = null;
+    mockAuth.currentUser = null;
+    mockAuth.languageCode = null;
     // Default: no profile and every username free
     vi.mocked(firestore.getDoc).mockResolvedValue({ exists: () => false } as never);
     mockBatch.commit.mockResolvedValue(undefined);
@@ -83,6 +87,7 @@ describe("AuthContext", () => {
     await act(async () => {
       await authStateCallback?.({
         uid: "auto-created-uid",
+        emailVerified: true,
         email: "auto@flaner.app",
         displayName: "Auto User",
       });
@@ -101,7 +106,7 @@ describe("AuthContext", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     await act(async () => {
-      await authStateCallback?.({ uid: "error-uid", email: "err@flaner.app" });
+      await authStateCallback?.({ emailVerified: true, uid: "error-uid", email: "err@flaner.app" });
     });
 
     expect(result.current.user).toBeNull();
@@ -124,7 +129,7 @@ describe("AuthContext", () => {
     } as never);
 
     await act(async () => {
-      await authStateCallback?.({ uid: "user-abc", email: "abc@flaner.app" });
+      await authStateCallback?.({ emailVerified: true, uid: "user-abc", email: "abc@flaner.app" });
     });
 
     expect(result.current.user?.username).toBe("OldName");
@@ -189,7 +194,7 @@ describe("AuthContext", () => {
   });
 
   it("signs in user with email and loads firestore user profile", async () => {
-    const mockFirebaseUser = { uid: "user-123", email: "test@flaner.app" };
+    const mockFirebaseUser = { emailVerified: true, uid: "user-123", email: "test@flaner.app" };
     vi.mocked(firebaseAuth.signInWithEmailAndPassword).mockResolvedValueOnce({
       user: mockFirebaseUser as unknown as firebaseAuth.User,
     } as firebaseAuth.UserCredential);
@@ -224,7 +229,7 @@ describe("AuthContext", () => {
     } as never);
 
     await act(async () => {
-      await authStateCallback?.({ uid: "legacy-uid", email: "current@flaner.app" });
+      await authStateCallback?.({ emailVerified: true, uid: "legacy-uid", email: "current@flaner.app" });
     });
 
     expect(result.current.user?.email).toBe("current@flaner.app");
@@ -235,7 +240,7 @@ describe("AuthContext", () => {
     renderHook(() => useAuth(), { wrapper });
 
     await act(async () => {
-      await authStateCallback?.({ uid: "fresh-uid", email: "fresh@flaner.app", displayName: "Fresh" });
+      await authStateCallback?.({ emailVerified: true, uid: "fresh-uid", email: "fresh@flaner.app", displayName: "Fresh" });
     });
 
     expect(mockBatch.set).toHaveBeenCalledWith(
@@ -346,8 +351,8 @@ describe("AuthContext", () => {
     consoleSpy.mockRestore();
   });
 
-  it("registers new user with email and creates both user document and username index", async () => {
-    const mockFirebaseUser = { uid: "new-user-789", email: "new@flaner.app" };
+  it("registers new user with email, sends the verification email and keeps them out of the app", async () => {
+    const mockFirebaseUser = { uid: "new-user-789", email: "new@flaner.app", emailVerified: false };
     vi.mocked(firebaseAuth.createUserWithEmailAndPassword).mockResolvedValueOnce({
       user: mockFirebaseUser as unknown as firebaseAuth.User,
     } as firebaseAuth.UserCredential);
@@ -362,8 +367,113 @@ describe("AuthContext", () => {
       await result.current.signUpWithEmailUser("new@flaner.app", "pass1234", "newuser", "en");
     });
 
-    expect(result.current.user?.username).toBe("newuser");
-    expect(result.current.user?.email).toBe("new@flaner.app");
+    expect(mockBatch.set).toHaveBeenCalledWith({ path: "users/new-user-789" }, expect.objectContaining({ username: "newuser" }));
+    expect(mockBatch.set).toHaveBeenCalledWith({ path: "usernames/newuser" }, { uid: "new-user-789" });
+    expect(firebaseAuth.sendEmailVerification).toHaveBeenCalledWith(mockFirebaseUser, {
+      url: `${window.location.origin}/login`,
+    });
+    expect(mockAuth.languageCode).toBe("en");
+    expect(result.current.user).toBeNull();
+    expect(result.current.unverifiedEmail).toBe("new@flaner.app");
+  });
+
+  it("still shows the verification state when sending the email after sign-up fails", async () => {
+    vi.mocked(firebaseAuth.createUserWithEmailAndPassword).mockResolvedValueOnce({
+      user: { uid: "u", email: "u@flaner.app", emailVerified: false },
+    } as never);
+    vi.mocked(firebaseAuth.sendEmailVerification).mockRejectedValueOnce(new Error("quota"));
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await result.current.signUpWithEmailUser("u@flaner.app", "pass1234", "user", "pl");
+    });
+
+    expect(result.current.unverifiedEmail).toBe("u@flaner.app");
+    consoleSpy.mockRestore();
+  });
+
+  it("keeps an unverified email account out of the app on sign-in without re-sending the email", async () => {
+    vi.mocked(firebaseAuth.signInWithEmailAndPassword).mockResolvedValueOnce({
+      user: { uid: "unverified-uid", email: "late@flaner.app", emailVerified: false },
+    } as never);
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await result.current.signInWithEmailUser("late@flaner.app", "pass1234");
+    });
+
+    expect(result.current.user).toBeNull();
+    expect(result.current.unverifiedEmail).toBe("late@flaner.app");
+    expect(firestore.getDoc).not.toHaveBeenCalled();
+    expect(firebaseAuth.sendEmailVerification).not.toHaveBeenCalled();
+  });
+
+  it("keeps a restored unverified session out of the app after re-reading the account", async () => {
+    const reload = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await authStateCallback?.({ uid: "restored-uid", email: "restored@flaner.app", emailVerified: false, reload });
+    });
+
+    expect(reload).toHaveBeenCalled();
+    expect(result.current.user).toBeNull();
+    expect(result.current.unverifiedEmail).toBe("restored@flaner.app");
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it("lets a restored session in when re-reading the account shows the email was verified meanwhile", async () => {
+    const firebaseUser = { uid: "fresh-uid", email: "fresh@flaner.app", displayName: "Fresh", emailVerified: false, reload: vi.fn() };
+    firebaseUser.reload.mockImplementation(async () => {
+      firebaseUser.emailVerified = true;
+    });
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await authStateCallback?.(firebaseUser);
+    });
+
+    expect(result.current.user?.uid).toBe("fresh-uid");
+    expect(result.current.unverifiedEmail).toBeNull();
+  });
+
+  it("re-sends the verification email to the signed-in account in the given language", async () => {
+    const currentUser = { uid: "u", email: "u@flaner.app", emailVerified: false };
+    mockAuth.currentUser = currentUser;
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await result.current.resendVerificationEmail("pl");
+    });
+
+    expect(firebaseAuth.sendEmailVerification).toHaveBeenCalledWith(currentUser, { url: `${window.location.origin}/login` });
+    expect(mockAuth.languageCode).toBe("pl");
+  });
+
+  it("confirms the verification only once the account reports a verified email", async () => {
+    const currentUser = { uid: "user-123", email: "test@flaner.app", emailVerified: false, reload: vi.fn().mockResolvedValue(undefined) };
+    mockAuth.currentUser = currentUser;
+    vi.mocked(firestore.getDoc).mockResolvedValue({
+      exists: () => true,
+      data: () => ({ uid: "user-123", username: "TestGuy", language: "pl", darkMode: true }),
+    } as never);
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    let confirmed = true;
+    await act(async () => {
+      confirmed = await result.current.confirmEmailVerification();
+    });
+    expect(confirmed).toBe(false);
+    expect(result.current.user).toBeNull();
+
+    currentUser.emailVerified = true;
+    await act(async () => {
+      confirmed = await result.current.confirmEmailVerification();
+    });
+    expect(confirmed).toBe(true);
+    expect(result.current.user?.username).toBe("TestGuy");
+    expect(result.current.unverifiedEmail).toBeNull();
   });
 
   it("deletes the new Auth account when the sign-up batch fails", async () => {
@@ -444,7 +554,7 @@ describe("AuthContext", () => {
   });
 
   it("throws error in signInWithEmailUser when user profile is missing in database", async () => {
-    const mockFirebaseUser = { uid: "user-no-profile", email: "noprofile@flaner.app" };
+    const mockFirebaseUser = { emailVerified: true, uid: "user-no-profile", email: "noprofile@flaner.app" };
     vi.mocked(firebaseAuth.signInWithEmailAndPassword).mockResolvedValueOnce({
       user: mockFirebaseUser as unknown as firebaseAuth.User,
     } as firebaseAuth.UserCredential);
@@ -527,6 +637,7 @@ describe("AuthContext", () => {
     await act(async () => {
       await authStateCallback?.({
         uid: "fallback-uid",
+        emailVerified: true,
         displayName: null,
         email: null,
         photoURL: null,
