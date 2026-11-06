@@ -1,6 +1,6 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/groups.md, users.md (keep their Write flows / Queries in sync).
 import { fb } from "@flaner/shared/firebase";
-import { deleteInBatches, firestoreConverter } from "@flaner/shared/utils";
+import { deleteInBatches, firestoreConverter, getUnreadNotificationRefs, sourceNotificationRef } from "@flaner/shared/utils";
 import {
   collection,
   collectionGroup,
@@ -45,6 +45,9 @@ const refs = {
   invitationsGroup: () =>
     collectionGroup(fb.firestore, "invitations").withConverter(firestoreConverter<GroupInvitation>()),
   userNotification: (userId: string) => doc(collection(fb.firestore, `users/${userId}/notifications`)),
+  // The invitee's "group_invitation" notification (deterministic id, removed when the invitation resolves)
+  invitationNotification: (userId: string, groupId: string) =>
+    sourceNotificationRef(fb.firestore, userId, "group_invitation", groupId),
 };
 
 // Create Group
@@ -125,7 +128,8 @@ const addGroupNotification = (
   sender: NotificationSender,
   group: { id: string; name: string },
 ) => {
-  const notifRef = refs.userNotification(recipientId);
+  const notifRef =
+    type === "group_invitation" ? refs.invitationNotification(recipientId, group.id) : refs.userNotification(recipientId);
   batch.set(notifRef, {
     id: notifRef.id,
     type,
@@ -163,9 +167,15 @@ export const deleteGroup = async (groupId: string): Promise<void> => {
     ...invitationRefs,
   ]);
 
+  // Pending invitees' unread "group_invitation" notifications (read ones stay); the owner may delete them while still a member
+  const staleNotifications = await getUnreadNotificationRefs(
+    invitationsSnap.docs.map((d) => refs.invitationNotification(d.data().userId || d.id, groupId)),
+  );
+
   const batch = writeBatch(fb.firestore);
   ownerMemberDocs.forEach((d) => batch.delete(d.ref));
   batch.delete(refs.group(groupId));
+  staleNotifications.forEach((ref) => batch.delete(ref));
 
   // shortcut: one notification per member in the final batch, so >~495 members overflow the 500-write limit; chunk if groups get that big
   const ownerId = ownerMemberDocs[0]?.data().userId;
@@ -366,9 +376,10 @@ export const inviteUserToGroup = async (
 
 // The invitee answers; the inviter (from the invitation doc) gets an accepted / rejected notification.
 const answerGroupInvitation = async (groupId: string, userId: string, accept: boolean) => {
-  const [invitationSnap, sender] = await Promise.all([
+  const [invitationSnap, sender, staleNotifications] = await Promise.all([
     getDoc(refs.invitation(groupId, userId)),
     getNotificationSender(userId),
+    getUnreadNotificationRefs([refs.invitationNotification(userId, groupId)]),
   ]);
   const invitation = invitationSnap.data();
 
@@ -378,6 +389,7 @@ const answerGroupInvitation = async (groupId: string, userId: string, accept: bo
   if (accept) batch.set(refs.member(groupId, userId), { userId, role: "member", joinedAt: Date.now() });
   batch.delete(refs.invitation(groupId, userId));
   batch.delete(refs.userInvitation(userId, groupId));
+  staleNotifications.forEach((ref) => batch.delete(ref));
   if (invitation && invitation.invitedByUserId !== userId) {
     addGroupNotification(
       batch,

@@ -437,11 +437,19 @@ service cloud.firestore {
 
       // Subkolekcja powiadomień (notifications)
       match /notifications/{notifId} {
-        allow read, delete: if isAuthenticated() && request.auth.uid == userId;
-        allow update: if isAuthenticated() && request.auth.uid == userId &&
-          onlyChanges(['read']);
-        allow create: if isAuthenticated() &&
-          request.resource.data.keys().hasOnly([
+        // Who resolves the source of this notification (N4): sender, staff of its group, owner of its split group
+        function isNotificationResolver() {
+          let data = resource.data;
+          let splitGroup = data.get('splitGroupId', null) != null
+            ? get(/databases/$(database)/documents/split_groups/$(data.splitGroupId))
+            : null;
+          return data.senderUid == request.auth.uid ||
+            (data.get('groupId', null) != null && isAdminOrOwner(data.groupId)) ||
+            (splitGroup != null && splitGroup.data.createdBy == request.auth.uid);
+        }
+
+        function isValidNotification() {
+          return request.resource.data.keys().hasOnly([
             'id', 'type', 'senderUid', 'senderUsername', 'senderAvatarUrl', 'createdAt', 'read',
             'eventId', 'eventName', 'splitGroupId', 'splitGroupName', 'groupId', 'groupName'
           ]) &&
@@ -454,6 +462,22 @@ service cloud.firestore {
             'group_ownership_transferred', 'group_deleted',
             'event_invitation', 'event_reopened', 'split_group_invitation', 'split_settlement_pending'
           ];
+        }
+
+        allow list: if isAuthenticated() && request.auth.uid == userId;
+        allow get: if isAuthenticated() && (
+          request.auth.uid == userId || resource == null || isNotificationResolver()
+        );
+        allow create: if isAuthenticated() && isValidNotification();
+        allow update: if isAuthenticated() && (
+          (request.auth.uid == userId && onlyChanges(['read'])) ||
+          ((resource.data.senderUid == request.auth.uid || resource.data.read == true) && isValidNotification())
+        );
+        allow delete: if isAuthenticated() && (
+          request.auth.uid == userId ||
+          resource == null ||
+          (resource.data.read == false && isNotificationResolver())
+        );
       }
 
       // Subkolekcja zaproszeń do grup (groupInvitations)

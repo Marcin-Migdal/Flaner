@@ -29,7 +29,11 @@ const mockBatchSet = vi.fn();
 const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
 const mockBatchDelete = vi.fn();
 const mockDeleteDoc = vi.fn().mockResolvedValue(undefined);
+const mockGetDoc = vi.fn();
 const mockGetDocs = vi.fn();
+const mockGetUnreadNotificationRefs = vi.fn();
+// Snapshot the transaction returns for a source notification (tests set it; default: none)
+let notificationSnap: { exists: () => boolean; data: () => { read: boolean } | undefined };
 const mockOnSnapshot = vi.fn();
 
 type MockTransaction = {
@@ -40,6 +44,11 @@ type MockTransaction = {
 };
 
 let transactionMock: MockTransaction;
+
+vi.mock("@flaner/shared/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@flaner/shared/utils")>()),
+  getUnreadNotificationRefs: (...args: unknown[]) => mockGetUnreadNotificationRefs(...args),
+}));
 
 vi.mock("@flaner/shared/firebase", () => ({
   fb: {
@@ -61,6 +70,7 @@ vi.mock("firebase/firestore", () => ({
     commit: mockBatchCommit,
   })),
   deleteDoc: (...args: unknown[]) => mockDeleteDoc(...args),
+  getDoc: (...args: unknown[]) => mockGetDoc(...args),
   getDocs: (...args: unknown[]) => mockGetDocs(...args),
   query: vi.fn((...args: unknown[]) => args),
   where: vi.fn((...args: unknown[]) => args),
@@ -105,8 +115,11 @@ const createMockGroup = (overrides?: Partial<SplitGroup>): SplitGroup => ({
 describe("splits endpoints", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    notificationSnap = { exists: () => false, data: () => undefined };
+    mockGetUnreadNotificationRefs.mockResolvedValue([]);
     transactionMock = {
-      get: vi.fn(),
+      // Queued values serve the group / settlement reads; any further read is the source notification
+      get: vi.fn(async () => notificationSnap),
       set: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -237,9 +250,21 @@ describe("splits endpoints", () => {
 
       mockGetDocs
         .mockResolvedValueOnce({ docs: [{ ref: { id: "exp-1" } }] }) // expenses
-        .mockResolvedValueOnce({ docs: [{ ref: { id: "set-1" } }] }); // settlements
+        .mockResolvedValueOnce({
+          docs: [{ ref: { id: "set-1" }, data: () => ({ id: "set-1", status: "pending", receiverId: "user-2" }) }],
+        }); // settlements
+      mockGetDoc.mockResolvedValueOnce({ data: () => group });
+      const staleRef = { id: "split_group_invitation_group-1" };
+      mockGetUnreadNotificationRefs.mockResolvedValueOnce([staleRef]);
 
       await deleteSplitGroup("group-1", "user-1");
+
+      // user-2's invitation + the pending settlement's notification are checked; the unread ones are deleted
+      expect(mockGetUnreadNotificationRefs).toHaveBeenCalledWith([
+        expect.objectContaining({ id: "split_group_invitation_group-1" }),
+        expect.objectContaining({ id: "split_settlement_pending_set-1" }),
+      ]);
+      expect(mockBatchDelete).toHaveBeenCalledWith(staleRef);
 
       expect(transactionMock.update).toHaveBeenCalledWith(
         expect.anything(),
@@ -302,8 +327,11 @@ describe("splits endpoints", () => {
         data: () => group,
       });
 
+      notificationSnap = { exists: () => true, data: () => ({ read: false }) };
+
       await removeParticipantFromGroup("group-1", "user-2");
 
+      expect(transactionMock.delete).toHaveBeenCalledWith(expect.objectContaining({ id: "split_group_invitation_group-1" }));
       expect(transactionMock.update).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
@@ -494,9 +522,12 @@ describe("splits endpoints", () => {
         .mockResolvedValueOnce({ exists: () => true, data: () => group })
         .mockResolvedValueOnce({ exists: () => true, data: () => pendingSettlement });
 
+      notificationSnap = { exists: () => true, data: () => ({ read: false }) };
+
       const result = await confirmSettlement("group-1", "s1", "user-2");
       expect(result.status).toBe("confirmed");
       expect(transactionMock.set).toHaveBeenCalled();
+      expect(transactionMock.delete).toHaveBeenCalledWith(expect.objectContaining({ id: "split_settlement_pending_s1" }));
     });
 
     it("deleteSettlement deletes settlement and reverts balances", async () => {
@@ -519,9 +550,12 @@ describe("splits endpoints", () => {
         .mockResolvedValueOnce({ exists: () => true, data: () => group })
         .mockResolvedValueOnce({ exists: () => true, data: () => settlement });
 
+      // Already read by the receiver: it stays
+      notificationSnap = { exists: () => true, data: () => ({ read: true }) };
+
       await deleteSettlement("group-1", "s1", "user-1");
 
-      expect(transactionMock.delete).toHaveBeenCalled();
+      expect(transactionMock.delete).toHaveBeenCalledTimes(1); // the settlement only
       expect(transactionMock.update).toHaveBeenCalled();
     });
 

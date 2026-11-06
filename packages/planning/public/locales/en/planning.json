@@ -2,6 +2,7 @@
   "hub": {
     "event": "Event",
     "selectEvent": "Select event",
+    "addEvent": "Add event",
     "noEvents": "No events found",
     "participants": "Participants",
     "status": {
@@ -20,6 +21,9 @@
   },
   "calendar": {
     "more": "more"
+  },
+  "ranking": {
+    "title": "Ranked slots"
   },
   "create": {
     "title": "Create new event",

@@ -110,6 +110,19 @@ const updateGroupAs = (uid: string, data: DocumentData) => {
   });
 };
 
+// A notification about this split group at a deterministic id (path's last segment)
+const splitNotification = (path: string, type: string, senderUid: string) => ({
+  id: path.split("/").pop(),
+  type,
+  senderUid,
+  senderUsername: senderUid,
+  senderAvatarUrl: "",
+  splitGroupId: GROUP_ID,
+  splitGroupName: "Trip",
+  createdAt: 1,
+  read: false,
+});
+
 describe("split_groups/{groupId}", () => {
   it("accepts createSplitGroup: group + invitation notifications in one batch", async () => {
     const db = as(OWNER);
@@ -203,6 +216,22 @@ describe("split_groups/{groupId}", () => {
     );
   });
 
+  it("lets the owner remove a participant together with their unread invitation sent by someone else", async () => {
+    const notificationPath = `users/${THIRD}/notifications/split_group_invitation_${GROUP_ID}`;
+    await seed({ [GROUP]: splitGroup(), [notificationPath]: splitNotification(notificationPath, "split_group_invitation", PARTICIPANT) });
+    const db = as(OWNER);
+
+    await assertSucceeds(
+      runTransaction(db, async (transaction) => {
+        const groupRef = doc(db, GROUP);
+        await transaction.get(groupRef);
+        await transaction.get(doc(db, notificationPath));
+        transaction.update(groupRef, { participants: [OWNER, PARTICIPANT], formerParticipants: [THIRD], updatedAt: Date.now() });
+        transaction.delete(doc(db, notificationPath));
+      }),
+    );
+  });
+
   it("blocks removing other participants as a non-owner and the owner leaving", async () => {
     await seed({ [GROUP]: splitGroup() });
 
@@ -232,6 +261,22 @@ describe("split_groups/{groupId}", () => {
     batch.delete(doc(db, `${GROUP}/settlements`, "s1"));
     await assertSucceeds(batch.commit());
     await assertSucceeds(deleteDoc(doc(db, GROUP)));
+  });
+
+  it("lets the owner remove unread invitation / pending notifications while the group is being deleted", async () => {
+    const invitation = `users/${THIRD}/notifications/split_group_invitation_${GROUP_ID}`;
+    const pending = `users/${PARTICIPANT}/notifications/split_settlement_pending_s1`;
+    await seed({
+      [GROUP]: splitGroup({ status: "deleting" }),
+      [invitation]: splitNotification(invitation, "split_group_invitation", PARTICIPANT),
+      [pending]: splitNotification(pending, "split_settlement_pending", THIRD),
+    });
+    const db = as(OWNER);
+
+    const batch = writeBatch(db);
+    batch.delete(doc(db, invitation));
+    batch.delete(doc(db, pending));
+    await assertSucceeds(batch.commit());
   });
 
   it("blocks deleting an active group and deleting by a participant", async () => {
@@ -427,6 +472,27 @@ describe("split_groups/{groupId}/settlements/{settlementId}", () => {
           transaction.set(doc(receiverDb, `${GROUP}/settlements`, "s1"), settlement("s1", PARTICIPANT, "confirmed")),
         () => ({}),
       ),
+    );
+  });
+
+  it("accepts deleteSettlement of a pending one by the payer, with the receiver's unread notification", async () => {
+    const pending = `users/${OWNER}/notifications/split_settlement_pending_s1`;
+    await seed({
+      [GROUP]: splitGroup({ settlementsCount: 1 }),
+      [`${GROUP}/settlements/s1`]: settlement("s1", PARTICIPANT, "pending"),
+      [pending]: splitNotification(pending, "split_settlement_pending", PARTICIPANT),
+    });
+    const db = as(PARTICIPANT);
+
+    await assertSucceeds(
+      runTransaction(db, async (transaction) => {
+        const groupRef = doc(db, GROUP);
+        const group = (await transaction.get(groupRef)).data() ?? {};
+        await transaction.get(doc(db, pending));
+        transaction.delete(doc(db, `${GROUP}/settlements`, "s1"));
+        transaction.delete(doc(db, pending));
+        transaction.update(groupRef, { settlementsCount: group.settlementsCount - 1, version: (group.version ?? 0) + 1, updatedAt: Date.now() });
+      }),
     );
   });
 

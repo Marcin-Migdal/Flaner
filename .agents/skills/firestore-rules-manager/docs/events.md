@@ -28,12 +28,12 @@ All endpoints: `packages/planning/src/api/events/endpoints.ts`.
 
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
-| Create | `createSchedulerEvent` | set event, create `event_invitation` notification per other participant | ✅ batch |
-| Edit (creator) | `updateSchedulerEvent` (`useUpdateEventMutation`) | update fields + `updatedAt` | – |
+| Create | `createSchedulerEvent` | set event, create `event_invitation_{eventId}` notification per other participant | ✅ batch |
+| Edit (creator) | `updateSchedulerEvent` (`useUpdateEventMutation`) | update fields + `updatedAt`; removed participants' unread `event_invitation_` / `event_reopened_{eventId}` notifications deleted | ✅ batch |
 | Finalize (creator) | `updateSchedulerEvent` (`useFinalizeEventMutation`) | update `isFinalized: true`, `finalizedSlotIndex`, `updatedAt` | – |
-| Reopen (creator) | `unfinalizeSchedulerEvent` | update `isFinalized: false`, delete `finalizedSlotIndex`, prune past slots; `event_reopened` notifications | ✅ batch |
+| Reopen (creator) | `unfinalizeSchedulerEvent` | update `isFinalized: false`, delete `finalizedSlotIndex`, prune past slots; `event_reopened_{eventId}` notifications (overwrite the previous one, users.md N5) | ✅ batch |
 | Vote | `voteSchedulerEventSlot`, `batchVoteUnvotedSlots` | update `proposedDates`, `updatedAt` | ✅ transaction |
-| Delete (creator) | `deleteSchedulerEvent` | delete event | – |
+| Delete (creator) | `deleteSchedulerEvent` | delete event + other participants' unread `event_invitation_` / `event_reopened_{eventId}` notifications | ✅ batch |
 
 ## Queries
 | Query | Endpoint | Allowed by |

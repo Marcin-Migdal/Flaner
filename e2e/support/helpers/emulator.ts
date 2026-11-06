@@ -62,6 +62,34 @@ export const seedDocument = async (path: string, data: SeedData) => {
   });
 };
 
+/** Ids of the documents in a collection, read bypassing security rules. */
+export const listDocumentIds = async (collectionPath: string): Promise<string[]> => {
+  const res = await request(`${FIRESTORE_URL}/${collectionPath}?pageSize=300`, {
+    headers: { Authorization: "Bearer owner" },
+  });
+  const body: { documents?: { name: string }[] } = await res.json();
+  return (body.documents ?? []).map((document) => document.name.split("/").pop() ?? "");
+};
+
+/** Seeds a notification in `recipient`'s inbox at `id` (deterministic ids: `{type}_{sourceId}`). */
+export const seedNotification = async (
+  recipient: E2EUser,
+  id: string,
+  { type, sender, read = false, groupId, groupName }: { type: string; sender: E2EUser; read?: boolean; groupId?: string; groupName?: string },
+) => {
+  await seedDocument(`users/${recipient.uid}/notifications/${id}`, {
+    id,
+    type,
+    senderUid: sender.uid,
+    senderUsername: sender.username,
+    senderAvatarUrl: "",
+    groupId,
+    groupName,
+    createdAt: Date.now(),
+    read,
+  });
+};
+
 export type E2EUser = UserType & { password: string };
 
 /** Creates an Auth emulator account and its Firestore profile, mirroring the app's email sign-up. */

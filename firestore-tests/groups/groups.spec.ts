@@ -191,11 +191,23 @@ describe("groups/{groupId}", () => {
     await assertFails(deleteDoc(doc(as(ADMIN), GROUP)));
   });
 
-  it("accepts the delete batch with pending invitations (invitee mirrors included)", async () => {
+  it("accepts the delete batch with pending invitations (invitee mirrors + their unread notification sent by an admin)", async () => {
     await seedGroup();
+    const notificationPath = `users/${INVITEE}/notifications/group_invitation_${GROUP_ID}`;
     await seed({
-      [`${GROUP}/invitations/${INVITEE}`]: invitation(INVITEE, OWNER),
-      [`users/${INVITEE}/groupInvitations/${GROUP_ID}`]: invitation(INVITEE, OWNER),
+      [`${GROUP}/invitations/${INVITEE}`]: invitation(INVITEE, ADMIN),
+      [`users/${INVITEE}/groupInvitations/${GROUP_ID}`]: invitation(INVITEE, ADMIN),
+      [notificationPath]: {
+        id: `group_invitation_${GROUP_ID}`,
+        type: "group_invitation",
+        senderUid: ADMIN,
+        senderUsername: "Admin",
+        senderAvatarUrl: "",
+        groupId: GROUP_ID,
+        groupName: "Test group",
+        createdAt: 1,
+        read: false,
+      },
     });
     const db = as(OWNER);
     const batch = writeBatch(db);
@@ -204,9 +216,12 @@ describe("groups/{groupId}", () => {
     batch.delete(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID));
     await assertSucceeds(batch.commit());
 
+    // The owner (not the sender) finds the invitee's notification and removes it while unread
+    await assertSucceeds(getDoc(doc(db, notificationPath)));
     const lastBatch = writeBatch(db);
     lastBatch.delete(doc(db, `${GROUP}/members`, OWNER));
     lastBatch.delete(doc(db, GROUP));
+    lastBatch.delete(doc(db, notificationPath));
     await assertSucceeds(lastBatch.commit());
   });
 });

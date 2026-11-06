@@ -2,6 +2,7 @@
   "hub": {
     "event": "Wydarzenie",
     "selectEvent": "Wybierz wydarzenie",
+    "addEvent": "Dodaj wydarzenie",
     "noEvents": "Brak wydarzeń",
     "participants": "Uczestnicy",
     "status": {
@@ -20,6 +21,9 @@
   },
   "calendar": {
     "more": "więcej"
+  },
+  "ranking": {
+    "title": "Ranking terminów"
   },
   "create": {
     "title": "Utwórz nowe wydarzenie",

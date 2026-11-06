@@ -150,9 +150,11 @@ match /friendships/{friendId} {
 **Path:** `/users/{userId}/notifications/{notifId}` — inbox shown in the shell (`core`).
 
 ### Invariants
-- **N1** Only the recipient reads, marks as read and deletes notifications.
+- **N1** Only the recipient lists their inbox, marks notifications as read and deletes any of them.
+- **N4** Notifications with a source (invitation, friend request, event, split group, settlement) have a deterministic id `{type}_{sourceId}` so whoever resolves the source can find them. A **resolver** — the sender, an admin / owner of the notification's `groupId`, the owner of its `splitGroupId` — may `get` that one doc and delete it **only while it is unread** (read notifications stay). Deleting / reading a doc that does not exist is allowed (a resolving batch must not fail because the recipient already deleted it).
+- **N5** A valid new notification (own name, unread) may overwrite one with the same id when it is the caller's own (e.g. an event reopened twice) or already read (e.g. a re-added split participant invited by someone else); an unread notification from someone else is never replaced.
 - **N2** Any signed-in user can notify another user, but only in their own name (`senderUid == me`), unread, with a known client `type` and only the schema fields. `system_alert` is written only by admin tooling (bypasses rules).
-- **N3** The recipient can only flip `read`; the content is immutable.
+- **N3** The recipient can only flip `read`; the content is immutable except for N5.
 
 ### Schema
 | Field | Type | Required | Notes |
@@ -181,6 +183,7 @@ match /friendships/{friendId} {
 | Split group invitation | `createSplitGroup`, `addParticipantToGroup` (planning) | create per new participant, in the group batch / transaction |
 | Pending settlement | `createSettlement` (planning) | create in receiver's inbox, in the transaction |
 | Mark as read | `markNotificationAsRead`, `markAllNotificationsAsRead` (core) | update `read: true` (single / batch) |
+| Source resolved (N4) | group / friend / event / split flows (see their files) | `get` the deterministic-id notification, delete it in the resolving batch only while unread |
 
 Every writer sets `id` to the doc id.
 
@@ -194,18 +197,29 @@ Every writer sets `id` to the doc id.
 | Actor \ operation | read | create (own name, valid) | create (fake sender / unknown type / extra fields / `read: true`) | update `read` | update other fields | delete |
 | --- | --- | --- | --- | --- | --- | --- |
 | recipient | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ |
-| other signed-in user | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| sender | ✅ get only | ✅ | ❌ | ❌ | ✅ overwrite with a valid one | ✅ unread only |
+| any signed-in user | – | – | – | – | ✅ overwrite a **read** one with a valid one (N5) | – |
+| admin / owner of `groupId`, owner of `splitGroupId` | ✅ get only | – | – | ❌ | ❌ | ✅ unread only |
+| other signed-in user | ❌ (get of a missing doc ✅) | ✅ | ❌ | ❌ | ❌ | ❌ (missing doc ✅) |
 | unauthenticated | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ### Rules
 ```rules
 // Subkolekcja powiadomień (notifications)
 match /notifications/{notifId} {
-  allow read, delete: if isAuthenticated() && request.auth.uid == userId;
-  allow update: if isAuthenticated() && request.auth.uid == userId &&
-    onlyChanges(['read']);
-  allow create: if isAuthenticated() &&
-    request.resource.data.keys().hasOnly([
+  // Who resolves the source of this notification (N4): sender, staff of its group, owner of its split group
+  function isNotificationResolver() {
+    let data = resource.data;
+    let splitGroup = data.get('splitGroupId', null) != null
+      ? get(/databases/$(database)/documents/split_groups/$(data.splitGroupId))
+      : null;
+    return data.senderUid == request.auth.uid ||
+      (data.get('groupId', null) != null && isAdminOrOwner(data.groupId)) ||
+      (splitGroup != null && splitGroup.data.createdBy == request.auth.uid);
+  }
+
+  function isValidNotification() {
+    return request.resource.data.keys().hasOnly([
       'id', 'type', 'senderUid', 'senderUsername', 'senderAvatarUrl', 'createdAt', 'read',
       'eventId', 'eventName', 'splitGroupId', 'splitGroupName', 'groupId', 'groupName'
     ]) &&
@@ -218,6 +232,22 @@ match /notifications/{notifId} {
       'group_ownership_transferred', 'group_deleted',
       'event_invitation', 'event_reopened', 'split_group_invitation', 'split_settlement_pending'
     ];
+  }
+
+  allow list: if isAuthenticated() && request.auth.uid == userId;
+  allow get: if isAuthenticated() && (
+    request.auth.uid == userId || resource == null || isNotificationResolver()
+  );
+  allow create: if isAuthenticated() && isValidNotification();
+  allow update: if isAuthenticated() && (
+    (request.auth.uid == userId && onlyChanges(['read'])) ||
+    ((resource.data.senderUid == request.auth.uid || resource.data.read == true) && isValidNotification())
+  );
+  allow delete: if isAuthenticated() && (
+    request.auth.uid == userId ||
+    resource == null ||
+    (resource.data.read == false && isNotificationResolver())
+  );
 }
 ```
 

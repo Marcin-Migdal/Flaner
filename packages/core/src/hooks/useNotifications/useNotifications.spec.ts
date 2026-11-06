@@ -17,6 +17,7 @@ vi.mock("../api/query/useReadNotifications", () => ({
 
 vi.mock("../../api/notifications", () => ({
   subscribeToNotifications: vi.fn(),
+  deleteNotifications: vi.fn().mockResolvedValue(undefined),
   markNotificationAsRead: vi.fn(),
   markAllNotificationsAsRead: vi.fn(),
 }));
@@ -172,4 +173,38 @@ describe("useNotifications", () => {
     expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to mark all as read", expect.any(Error));
     consoleErrorSpy.mockRestore();
   });
+
+  it("removes the other unread notifications of a group once its group_deleted notification arrives", () => {
+    let listenerCallback: (notifs: AppNotification[]) => void = () => {};
+    vi.mocked(notificationsApi.subscribeToNotifications).mockImplementation((_uid, cb) => {
+      listenerCallback = cb;
+      return vi.fn();
+    });
+    const base = { senderUid: "u2", senderUsername: "U2", senderAvatarUrl: "", read: false, createdAt: 1 };
+
+    renderHook(() => useNotifications());
+    act(() => {
+      listenerCallback([
+        { ...base, id: "deleted", type: "group_deleted", groupId: "g1" },
+        { ...base, id: "accepted", type: "group_invitation_accepted", groupId: "g1" },
+        { ...base, id: "friend", type: "friend_request" },
+      ]);
+    });
+
+    expect(notificationsApi.deleteNotifications).toHaveBeenCalledWith("user-123", ["accepted"]);
+  });
+
+  it("does not delete anything without a group_deleted notification", () => {
+    let listenerCallback: (notifs: AppNotification[]) => void = () => {};
+    vi.mocked(notificationsApi.subscribeToNotifications).mockImplementation((_uid, cb) => {
+      listenerCallback = cb;
+      return vi.fn();
+    });
+
+    renderHook(() => useNotifications());
+    act(() => listenerCallback(mockNotifications));
+
+    expect(notificationsApi.deleteNotifications).not.toHaveBeenCalled();
+  });
 });
+

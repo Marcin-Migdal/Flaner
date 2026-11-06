@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@flaner/shared/context";
 import { 
   AppNotification, 
+  deleteNotifications,
   subscribeToNotifications, 
   markNotificationAsRead, 
   markAllNotificationsAsRead 
 } from "../../api/notifications";
+import { getStaleGroupNotificationIds } from "../../utils/getStaleGroupNotificationIds";
 import { useInvalidateReadNotificationsQuery } from "../api/query/useReadNotifications";
 
 export const useNotifications = () => {
@@ -33,6 +35,14 @@ export const useNotifications = () => {
     const unsubscribe = subscribeToNotifications(user.uid, (newNotifications) => {
       setNotifications(newNotifications);
       setLoading(false);
+
+      // A deleted group leaves only its "group_deleted" notification; the listener then drops the rest
+      const staleIds = getStaleGroupNotificationIds(newNotifications);
+      if (staleIds.length > 0) {
+        deleteNotifications(user.uid, staleIds).catch((error) =>
+          console.error("Failed to remove stale group notifications", error),
+        );
+      }
     });
 
     return () => unsubscribe();

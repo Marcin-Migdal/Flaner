@@ -39,6 +39,13 @@ const mockBatchDelete = vi.fn();
 const mockBatchUpdate = vi.fn();
 const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
 
+// Unread check of the source notification (real helper reads with getDoc); the tests choose what is still unread
+const mockGetUnreadNotificationRefs = vi.fn();
+vi.mock("@flaner/shared/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@flaner/shared/utils")>()),
+  getUnreadNotificationRefs: (...args: unknown[]) => mockGetUnreadNotificationRefs(...args),
+}));
+
 vi.mock("@flaner/shared/firebase", () => ({
   fb: {
     firestore: {},
@@ -99,6 +106,10 @@ const notificationOf = (type: string) =>
   expect.objectContaining({ type, groupId: "group-1", senderUsername: "Alice", read: false });
 
 describe("community groups endpoints", () => {
+  beforeEach(() => {
+    mockGetUnreadNotificationRefs.mockResolvedValue([]);
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -182,6 +193,23 @@ describe("community groups endpoints", () => {
       // The owner's member doc and the group doc go last, in their own batch
       const deletedIds = mockBatchDelete.mock.calls.map(([ref]) => ref.id);
       expect(deletedIds.slice(-2)).toEqual(["owner-1", "group-1"]);
+    });
+
+    it("removes pending invitees' unread group_invitation notifications in the final batch", async () => {
+      mockGetDocs
+        .mockResolvedValueOnce({ docs: [{ ref: { id: "owner-1" }, data: () => ({ role: "owner", userId: "owner-1" }) }] })
+        .mockResolvedValueOnce({ docs: [] })
+        .mockResolvedValueOnce({ docs: [{ id: "u-invited", ref: { id: "i-1" }, data: () => ({ userId: "u-invited" }) }] });
+      mockReads({ name: "Hiking" }, { username: "Alice" });
+      const staleRef = { id: "group_invitation_group-1" };
+      mockGetUnreadNotificationRefs.mockResolvedValueOnce([staleRef]);
+
+      await deleteGroup("group-1");
+
+      expect(mockGetUnreadNotificationRefs).toHaveBeenCalledWith([
+        expect.objectContaining({ id: "group_invitation_group-1" }),
+      ]);
+      expect(mockBatchDelete).toHaveBeenCalledWith(staleRef);
     });
 
     it("notifies every member except the owner in the final delete batch", async () => {
@@ -485,6 +513,19 @@ describe("community groups endpoints", () => {
       expect(mockBatchDelete).toHaveBeenCalledTimes(2);
       expect(mockBatchSet).toHaveBeenCalledWith(expect.anything(), notificationOf("group_invitation_rejected"));
       expect(mockBatchCommit).toHaveBeenCalledTimes(1);
+    });
+
+    it("answering an invitation also removes the invitee's own unread group_invitation notification", async () => {
+      const staleRef = { path: "users/user-2/notifications/group_invitation_group-1" };
+      mockGetUnreadNotificationRefs.mockResolvedValueOnce([staleRef]);
+      mockReads({ invitedByUserId: "user-1", groupName: "Hiking" }, { username: "Alice" });
+
+      await acceptGroupInvitation("group-1", "user-2");
+
+      expect(mockGetUnreadNotificationRefs).toHaveBeenCalledWith([
+        expect.objectContaining({ id: "group_invitation_group-1" }),
+      ]);
+      expect(mockBatchDelete).toHaveBeenCalledWith(staleRef);
     });
 
     it("rejectGroupInvitation skips the notification when the invitation is already gone", async () => {
