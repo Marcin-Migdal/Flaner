@@ -158,8 +158,7 @@ describe("ShellLayout", () => {
     });
     expect(mockUpdateDoc).toHaveBeenCalled();
 
-    // Test persistence error
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    // A failed write leaves the profile in the context untouched
     mockUpdateDoc.mockRejectedValueOnce(new Error("Firestore write error"));
 
     await user.click(profileButton);
@@ -168,10 +167,8 @@ describe("ShellLayout", () => {
     const plOption = await screen.findByText("Polski");
     fireEvent.click(plOption);
 
-    await waitFor(() => {
-      expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to persist language change", expect.any(Error));
-    });
-    consoleErrorSpy.mockRestore();
+    await waitFor(() => expect(mockUpdateDoc).toHaveBeenCalledTimes(2));
+    expect(mockUpdateUser).not.toHaveBeenCalledWith({ language: "pl" });
 
     // Test without user uid (unauthenticated / missing uid)
     currentUser = null;
@@ -201,8 +198,7 @@ describe("ShellLayout", () => {
       expect(mockUpdateUser).toHaveBeenCalledWith({ darkMode: true });
     });
 
-    // Test persistence error
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    // A failed write leaves the profile in the context untouched
     mockUpdateDoc.mockRejectedValueOnce(new Error("Theme write error"));
 
     await user.click(profileButton);
@@ -212,10 +208,8 @@ describe("ShellLayout", () => {
     fireEvent.click(lightOption);
 
     expect(mockSetTheme).toHaveBeenCalledWith("light");
-    await waitFor(() => {
-      expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to persist theme change", expect.any(Error));
-    });
-    consoleErrorSpy.mockRestore();
+    await waitFor(() => expect(mockUpdateDoc).toHaveBeenCalledTimes(2));
+    expect(mockUpdateUser).not.toHaveBeenCalledWith({ darkMode: false });
 
     // Test without user uid
     currentUser = null;
@@ -298,7 +292,7 @@ describe("ShellLayout", () => {
     fireEvent.click(darkOption);
 
     expect(mockSetTheme).toHaveBeenCalledWith("dark");
-    expect(mockUpdateDoc).toHaveBeenCalled();
+    await waitFor(() => expect(mockUpdateDoc).toHaveBeenCalled());
 
     mockIsDark = false;
   });
