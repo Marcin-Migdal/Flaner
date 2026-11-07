@@ -17,3 +17,5 @@ The app sets `auth.languageCode` to the login page language before sending (`Aut
 ## Email address verification
 
 Sent after an email/password sign-up and on "Resend email" from the login page. The link's continue URL is `<origin>/login`, where the app lets the user in once verified (#38).
+
+The continue URL must be on the project's **Authorized domains** (Authentication → Settings): `localhost`, `flaner-dev.vercel.app` (DEV), `flaner.vercel.app` (PROD). Vercel Preview domains and `127.0.0.1` on DEV are not listed (Firebase has no wildcards), so there `sendVerificationEmail` falls back to a link without a continue URL: it still verifies, and the login page lets the user in when they come back to the tab.

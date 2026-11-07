@@ -1,3 +1,4 @@
+import { FirebaseError } from "firebase/app";
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
@@ -449,6 +450,22 @@ describe("AuthContext", () => {
 
     expect(firebaseAuth.sendEmailVerification).toHaveBeenCalledWith(currentUser, { url: `${window.location.origin}/login` });
     expect(mockAuth.languageCode).toBe("pl");
+  });
+
+  it("sends the plain link when the origin is not an authorized continue URL domain", async () => {
+    const currentUser = { uid: "u", email: "u@flaner.app", emailVerified: false };
+    mockAuth.currentUser = currentUser;
+    vi.mocked(firebaseAuth.sendEmailVerification).mockRejectedValueOnce(
+      new FirebaseError("auth/unauthorized-continue-uri", "Domain not allowlisted by project"),
+    );
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await result.current.resendVerificationEmail("en");
+    });
+
+    expect(firebaseAuth.sendEmailVerification).toHaveBeenCalledTimes(2);
+    expect(firebaseAuth.sendEmailVerification).toHaveBeenLastCalledWith(currentUser);
   });
 
   it("confirms the verification only once the account reports a verified email", async () => {
