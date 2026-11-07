@@ -2,11 +2,19 @@ import { useCallback, useMemo, useState } from "react";
 import type { FilamentTemplate } from "../../../../../api/templates";
 import { CUSTOM_COLOR_HEX_STORAGE_KEY, HEX_COLOR_REGEX } from "../../TemplateFormModal/TemplateFormModal.constants";
 
+// localStorage is user-editable: accept only a plain { name: hex } object
+const isStringRecord = (value: unknown): value is Record<string, string> =>
+  typeof value === "object" &&
+  value !== null &&
+  !Array.isArray(value) &&
+  Object.values(value).every((v) => typeof v === "string");
+
 export const getStoredCustomColorHexes = (): Record<string, string> => {
   try {
     const item = localStorage.getItem(CUSTOM_COLOR_HEX_STORAGE_KEY);
     if (item) {
-      return JSON.parse(item) as Record<string, string>;
+      const parsed: unknown = JSON.parse(item);
+      if (isStringRecord(parsed)) return parsed;
     }
   } catch {
     // Ignore storage parse error

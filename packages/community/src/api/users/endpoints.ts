@@ -15,6 +15,10 @@ const FIRESTORE_IN_LIMIT = 30;
 const friendshipsRef = (userUid: string) =>
   collection(fb.firestore, `users/${userUid}/friendships`).withConverter(firestoreConverter<FriendshipDoc>());
 
+const usersRef = () => collection(fb.firestore, "users").withConverter(firestoreConverter<UserProfile>());
+const friendRequestsRef = () =>
+  collection(fb.firestore, "friendRequests").withConverter(firestoreConverter<FriendRequest>());
+
 const toFriendship = (d: QueryDocumentSnapshot<FriendshipDoc>): Friendship => ({ uid: d.id, createdAt: d.data().createdAt });
 
 /**
@@ -28,7 +32,6 @@ export const subscribeToUsers = (uids: string[], onUpdate: (users: UserProfile[]
     return () => {};
   }
 
-  const usersRef = collection(fb.firestore, "users").withConverter(firestoreConverter<UserProfile>());
   const chunks = Array.from({ length: Math.ceil(unique.length / FIRESTORE_IN_LIMIT) }, (_, i) =>
     unique.slice(i * FIRESTORE_IN_LIMIT, (i + 1) * FIRESTORE_IN_LIMIT),
   );
@@ -36,7 +39,7 @@ export const subscribeToUsers = (uids: string[], onUpdate: (users: UserProfile[]
 
   const unsubscribes = chunks.map((chunk, index) =>
     onSnapshot(
-      query(usersRef, where(documentId(), "in", chunk)),
+      query(usersRef(), where(documentId(), "in", chunk)),
       (snapshot) => {
         byChunk[index] = snapshot.docs.map((d) => ({ ...d.data(), uid: d.id }));
         if (byChunk.every((users) => users !== undefined)) onUpdate(byChunk.flatMap((users) => users ?? []));
@@ -58,11 +61,8 @@ export const getUsers = async (uids: string[]): Promise<UserProfile[]> => {
   // For simplicity and avoiding the 10-item limit of 'in' queries,
   // we fetch individually. In production with many members, this should be batched.
   const promises = uniqueUids.map(async (uid) => {
-    const snap = await getDoc(doc(fb.firestore, "users", uid));
-    if (snap.exists()) {
-      return { ...snap.data(), uid: snap.id } as UserProfile;
-    }
-    return null;
+    const snap = await getDoc(doc(usersRef(), uid));
+    return snap.exists() ? { ...snap.data(), uid: snap.id } : null;
   });
 
   const results = await Promise.all(promises);
@@ -75,7 +75,7 @@ export const searchUsers = async (searchQuery: string, currentUserUid: string): 
   const qLower = searchQuery.toLowerCase();
   
   const q = query(
-    collection(fb.firestore, "users"),
+    usersRef(),
     where("usernameLower", ">=", qLower),
     where("usernameLower", "<=", qLower + "\uf8ff"),
     limit(20)
@@ -83,10 +83,7 @@ export const searchUsers = async (searchQuery: string, currentUserUid: string): 
 
   const snap = await getDocs(q);
   return snap.docs
-    .map((d) => {
-      const data = d.data();
-      return { ...data, uid: d.id } as UserProfile;
-    })
+    .map((d) => ({ ...d.data(), uid: d.id }))
     .filter((u) => u.uid !== currentUserUid);
 };
 
@@ -271,7 +268,7 @@ export const subscribeToFriendsList = (
 export const getSentFriendRequests = async (userUid: string): Promise<FriendRequest[]> => {
   try {
     const q = query(
-      collection(fb.firestore, "friendRequests"),
+      friendRequestsRef(),
       where("senderUid", "==", userUid),
       where("status", "==", "pending")
     );
@@ -279,7 +276,7 @@ export const getSentFriendRequests = async (userUid: string): Promise<FriendRequ
     return snap.docs.map((d) => ({
       ...d.data(),
       id: d.id,
-    })) as FriendRequest[];
+    }));
   } catch (error) {
     console.error("getSentFriendRequests failed:", error);
     throw error;
@@ -291,7 +288,7 @@ export const subscribeToSentFriendRequests = (
   onUpdate: (requests: FriendRequest[]) => void
 ) => {
   const q = query(
-    collection(fb.firestore, "friendRequests"),
+    friendRequestsRef(),
     where("senderUid", "==", userUid),
     where("status", "==", "pending")
   );
@@ -300,7 +297,7 @@ export const subscribeToSentFriendRequests = (
     const requests = snapshot.docs.map((d) => ({
       ...d.data(),
       id: d.id,
-    })) as FriendRequest[];
+    }));
     onUpdate(requests);
   }, (error) => {
     console.error("subscribeToSentFriendRequests failed:", error);
@@ -311,7 +308,7 @@ export const subscribeToSentFriendRequests = (
 export const getReceivedFriendRequests = async (userUid: string): Promise<FriendRequest[]> => {
   try {
     const q = query(
-      collection(fb.firestore, "friendRequests"),
+      friendRequestsRef(),
       where("receiverUid", "==", userUid),
       where("status", "==", "pending")
     );
@@ -319,7 +316,7 @@ export const getReceivedFriendRequests = async (userUid: string): Promise<Friend
     return snap.docs.map((d) => ({
       ...d.data(),
       id: d.id,
-    })) as FriendRequest[];
+    }));
   } catch (error) {
     console.error("getReceivedFriendRequests failed:", error);
     throw error;
@@ -331,7 +328,7 @@ export const subscribeToReceivedFriendRequests = (
   onUpdate: (requests: FriendRequest[]) => void
 ) => {
   const q = query(
-    collection(fb.firestore, "friendRequests"),
+    friendRequestsRef(),
     where("receiverUid", "==", userUid),
     where("status", "==", "pending")
   );
@@ -340,7 +337,7 @@ export const subscribeToReceivedFriendRequests = (
     const requests = snapshot.docs.map((d) => ({
       ...d.data(),
       id: d.id,
-    })) as FriendRequest[];
+    }));
     onUpdate(requests);
   }, (error) => {
     console.error("subscribeToReceivedFriendRequests failed:", error);

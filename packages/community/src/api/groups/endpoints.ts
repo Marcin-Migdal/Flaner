@@ -11,7 +11,6 @@ import {
   limit,
   onSnapshot,
   query,
-  serverTimestamp,
   setDoc,
   startAfter,
   updateDoc,
@@ -83,7 +82,7 @@ export const updateGroup = async (
   groupId: string,
   updates: Partial<Omit<Group, "id" | "createdAt" | "ownerId">>,
 ): Promise<void> => {
-  const dataToUpdate: Partial<Group> = { ...updates, updatedAt: serverTimestamp() };
+  const dataToUpdate: Partial<Group> = { ...updates, updatedAt: Date.now() };
   if (updates.name) {
     dataToUpdate.nameLower = updates.name.toLowerCase();
   }
@@ -97,7 +96,7 @@ export const updateGroupRolePermissions = async (
 ): Promise<void> => {
   await updateDoc(refs.group(groupId), {
     rolePermissions,
-    updatedAt: serverTimestamp(),
+    updatedAt: Date.now(),
   });
 };
 
@@ -270,7 +269,7 @@ export const transferGroupOwnership = async (
   const [groupSnap, sender] = await Promise.all([getDoc(refs.group(groupId)), getNotificationSender(currentOwnerId)]);
   const batch = writeBatch(fb.firestore);
 
-  batch.update(refs.group(groupId), { ownerId: newOwnerId, updatedAt: serverTimestamp() });
+  batch.update(refs.group(groupId), { ownerId: newOwnerId, updatedAt: Date.now() });
   batch.update(refs.member(groupId, currentOwnerId), { role: "admin" });
   batch.update(refs.member(groupId, newOwnerId), { role: "owner" });
   addGroupNotification(batch, newOwnerId, "group_ownership_transferred", sender, {

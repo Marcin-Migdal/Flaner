@@ -74,16 +74,16 @@ export function SettingsView() {
     }
 
     const payload = {
-      username: data.username as string,
-      language: data.language as "pl" | "en",
-      darkMode: data.darkMode as boolean,
+      username: data.username,
+      language: data.language,
+      darkMode: data.darkMode,
       avatarUrl,
     };
 
     mutation.mutate(payload, {
       onSuccess: () => {
         // Sync global app translation language immediately
-        i18n.changeLanguage(data.language as string);
+        i18n.changeLanguage(data.language);
         reset(data);
       },
       onError: (err) => {
@@ -143,7 +143,7 @@ export function SettingsView() {
                       className={settingsViewStyles.avatarPreview}
                       onError={(e) => {
                         // Fallback on broken URL
-                        (e.target as HTMLImageElement).src =
+                        e.currentTarget.src =
                           `https://api.dicebear.com/7.x/initials/svg?seed=${user?.username || "User"}`;
                       }}
                     />

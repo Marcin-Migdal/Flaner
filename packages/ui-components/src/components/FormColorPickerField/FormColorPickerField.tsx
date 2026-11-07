@@ -38,6 +38,7 @@ export function FormColorPickerField<
       disabled={disabled}
       value={field.value ?? ""}
       onChange={(val) => {
+        // shortcut: react-hook-form cannot tie a string to a generic field path; the field is a color string by contract
         field.onChange(val as PathValue<TFieldValues, TName>);
         props.onChange?.(val);
       }}

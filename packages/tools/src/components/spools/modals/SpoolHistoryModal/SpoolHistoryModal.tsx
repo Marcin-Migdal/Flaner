@@ -38,11 +38,11 @@ export const SpoolHistoryModal: React.FC<SpoolHistoryModalProps> = ({
     },
   });
 
-  const formatDate = (createdAt?: { seconds?: number } | null) => {
-    if (!createdAt || typeof createdAt.seconds !== "number") {
+  const formatDate = (createdAt?: number | null) => {
+    if (!createdAt) {
       return { dateStr: "-", timeStr: "" };
     }
-    const date = new Date(createdAt.seconds * 1000);
+    const date = new Date(createdAt);
     const locale = i18n.language === "pl" ? "pl-PL" : "en-US";
     return {
       dateStr: date.toLocaleDateString(locale, {

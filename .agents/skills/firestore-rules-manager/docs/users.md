@@ -27,7 +27,7 @@ No other fields are accepted. Legacy profiles may still contain `email`: `AuthCo
 | First Google sign-in | `createProfileWithReservation` via `signInWithGoogleUser`, `onAuthStateChanged` (AuthContext) | set `users/{me}` + set `usernames/{lower}` (display name, random suffix on collision) | ✅ batch |
 | Edit profile | `updateUserProfile` (`settings/src/api/users`) | merge-set `users/{me}`, set new `usernames/*` when free + delete own old one | ✅ batch |
 | Legacy backfill | `scripts/backfill-usernames.mjs` (Admin SDK, bypasses rules) | reserve missing names, rename colliding profiles, delete stale reservations | ✅ batch per user |
-| Theme / language | `ShellLayout` (`core/src/components/ShellLayout`) | update `darkMode` / `language` | – |
+| Theme / language | `updateUserPreferences` (`core/src/api/users`, used by `ShellLayout`) | update `darkMode` / `language` | – |
 | Spooler startup waste | `updateStartupWaste` (`tools/src/api/settings`) | update `startupWaste` | – |
 
 ## Queries

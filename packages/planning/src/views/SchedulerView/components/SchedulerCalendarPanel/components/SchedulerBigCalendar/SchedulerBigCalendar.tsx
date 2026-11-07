@@ -111,12 +111,12 @@ export const SchedulerBigCalendar = ({
           events={hiddenEvents}
           day={day}
           onSlotClick={(calEv) => {
-            onSlotClick(parseInt(calEv.id as string, 10));
+            onSlotClick(parseInt(String(calEv.id), 10));
           }}
         />
       )}
       onEventClick={(calEv) => {
-        onSlotClick(parseInt(calEv.id as string, 10));
+        onSlotClick(parseInt(String(calEv.id), 10));
       }}
     />
   );

@@ -2,6 +2,9 @@ import { useMemo } from "react";
 import { useController, type UseControllerProps, type FieldValues, type FieldPath, type PathValue } from "react-hook-form";
 import { CustomSelectProps, Select, type SelectOption } from "../Select";
 
+const isOptionGroup = (item: SelectOption | { options: readonly SelectOption[] }): item is { options: readonly SelectOption[] } =>
+  "options" in item && Array.isArray(item.options);
+
 export type FormSelectProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
@@ -32,13 +35,11 @@ export function FormSelect<
   const selectedOption = useMemo(() => {
     if (props.options) {
       for (const item of props.options) {
-        if ("options" in item && Array.isArray((item as { options: readonly SelectOption[] }).options)) {
-          const found = (item as { options: readonly SelectOption[] }).options.find(
-            (opt: SelectOption) => opt.value === field.value,
-          );
+        if (isOptionGroup(item)) {
+          const found = item.options.find((opt) => opt.value === field.value);
           if (found) return found;
-        } else if ("value" in item && (item as SelectOption).value === field.value) {
-          return item as SelectOption;
+        } else if (item.value === field.value) {
+          return item;
         }
       }
     }
@@ -53,6 +54,7 @@ export function FormSelect<
       {...props}
       {...field}
       value={selectedOption}
+      // shortcut: react-hook-form cannot tie the option value to a generic field path; the field holds the option value by contract
       onChange={(option) => field.onChange((option ? option.value : "") as PathValue<TFieldValues, TName>)}
       error={fieldState.error?.message}
     />

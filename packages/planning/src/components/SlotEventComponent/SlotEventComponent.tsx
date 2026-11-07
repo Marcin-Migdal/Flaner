@@ -72,7 +72,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            onClick?.(e as unknown as React.MouseEvent);
+            onClick?.(e);
           }
         }}
         onMouseEnter={onMouseEnter}
@@ -142,7 +142,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          onClick?.(e as unknown as React.MouseEvent);
+          onClick?.(e);
         }
       }}
       onMouseEnter={onMouseEnter}

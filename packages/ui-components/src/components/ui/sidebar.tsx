@@ -110,6 +110,7 @@ const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderProps>(
       <SidebarContext.Provider value={contextValue}>
         <TooltipPrimitive.Provider delayDuration={0}>
           <div
+            // shortcut: React.CSSProperties has no CSS custom properties (generated shadcn code)
             style={
               {
                 "--sidebar-width": "16rem",

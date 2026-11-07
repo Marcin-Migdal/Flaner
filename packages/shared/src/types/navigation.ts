@@ -10,7 +10,8 @@ export type NavigationRouteHandle = {
   hideInNav?: boolean;
 };
 
-export type AppRouteObject = Omit<RouteObject, "children" | "handle"> & {
+// Stays a RouteObject (no Omit), so arrays of it go straight into useRoutes / createBrowserRouter
+export type AppRouteObject = RouteObject & {
   handle?: NavigationRouteHandle;
   children?: AppRouteObject[];
 };

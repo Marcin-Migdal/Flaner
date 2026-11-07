@@ -15,8 +15,8 @@ Filament spools (MFE `tools`, Spooler). User-owned documents — see `_global.md
 | `name` | string | ✓ | |
 | `initialWeight`, `currentWeight` | number (g) | ✓ | |
 | `isFinished` | boolean | ✓ | `currentWeight <= 0` |
-| `finishedAt` | Timestamp \| null | ✓ | |
-| `createdAt` | Timestamp | ✓ | `serverTimestamp()` |
+| `finishedAt` | number (ms) \| null | ✓ | set when the spool becomes finished |
+| `createdAt` | number (ms) | ✓ | |
 | `material`, `type`, `colorName`, `colorHex` | string | ✓ | denormalized from the template |
 
 ## Write flows
@@ -66,7 +66,7 @@ match /spools/{spoolId} {
 | --- | --- | --- |
 | `id` | string (== doc id) | ✓ |
 | `usedWeight` | number (g) | ✓ |
-| `createdAt` | Timestamp | ✓ |
+| `createdAt` | number (ms) | ✓ |
 
 ### Queries
 | Query | Endpoint | Allowed by |

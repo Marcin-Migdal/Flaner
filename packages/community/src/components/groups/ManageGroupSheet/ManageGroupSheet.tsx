@@ -359,7 +359,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                   </AccordionTrigger>
                   <AccordionContent className={manageGroupSheetStyles.accordionContent}>
                     <ManageGroupRolesSection
-                      key={`${groupId}-${group?.updatedAt ? (typeof group.updatedAt === "object" && "toMillis" in group.updatedAt ? group.updatedAt.toMillis() : group.updatedAt) : 0}`}
+                      key={`${groupId}-${group?.updatedAt ?? 0}`}
                       groupId={groupId}
                       group={group}
                     />
@@ -425,7 +425,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-48">
-                                  {(["admin", "moderator", "member"] as GroupRole[]).map((roleToAssign) => {
+                                  {(["admin", "moderator", "member"] satisfies GroupRole[]).map((roleToAssign) => {
                                     if (currentPriority <= ROLE_PRIORITY[roleToAssign] || roleToAssign === member.role) {
                                       return null;
                                     }

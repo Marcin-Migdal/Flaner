@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Timestamp } from "firebase/firestore";
 import type { FilamentSpool, SpoolInput } from "./types";
 import type { FilamentTemplate } from "../templates/types";
 import {
@@ -49,8 +48,7 @@ vi.mock("@flaner/shared/firebase", () => ({
   },
 }));
 
-vi.mock("firebase/firestore", async (importOriginal) => ({
-  Timestamp: (await importOriginal<typeof import("firebase/firestore")>()).Timestamp,
+vi.mock("firebase/firestore", () => ({
   collection: vi.fn((_db: unknown, path: string) => ({
     path,
     withConverter: vi.fn().mockReturnValue({ path }),
@@ -64,7 +62,6 @@ vi.mock("firebase/firestore", async (importOriginal) => ({
   where: vi.fn((...args: unknown[]) => args),
   orderBy: vi.fn((...args: unknown[]) => args),
   limit: vi.fn((n: number) => ({ limit: n })),
-  serverTimestamp: vi.fn(() => 123456789),
   setDoc: (...args: unknown[]) => mockSetDoc(...args),
   updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
   getDocs: (...args: unknown[]) => mockGetDocs(...args),
@@ -87,6 +84,7 @@ vi.mock("firebase/firestore", async (importOriginal) => ({
 describe("tools spools endpoints", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(Date, "now").mockReturnValue(123456789);
   });
 
   describe("spoolRefs", () => {
@@ -104,11 +102,11 @@ describe("tools spools endpoints", () => {
         docs: [
           {
             id: "spool-1",
-            data: () => ({ name: "Spool Old", createdAt: { seconds: 100 } }),
+            data: () => ({ name: "Spool Old", createdAt: 100 }),
           },
           {
             id: "spool-2",
-            data: () => ({ name: "Spool New", createdAt: { seconds: 200 } }),
+            data: () => ({ name: "Spool New", createdAt: 200 }),
           },
           {
             id: "spool-3",
@@ -257,7 +255,7 @@ describe("tools spools endpoints", () => {
     });
 
     it("keeps the original finishedAt when editing an already finished spool", async () => {
-      const originalFinishedAt = new Timestamp(1000, 0);
+      const originalFinishedAt = 1_000_000;
       mockTransactionGet.mockResolvedValueOnce(spoolSnap({ isFinished: true, finishedAt: originalFinishedAt }));
 
       await editSpool("spool-1", { templateId: "tpl-1", name: "Renamed", initialWeight: 1000, currentWeight: 0 });
@@ -269,7 +267,7 @@ describe("tools spools endpoints", () => {
     });
 
     it("clears finishedAt when a finished spool gets weight back", async () => {
-      mockTransactionGet.mockResolvedValueOnce(spoolSnap({ isFinished: true, finishedAt: new Timestamp(1000, 0) }));
+      mockTransactionGet.mockResolvedValueOnce(spoolSnap({ isFinished: true, finishedAt: 1_000_000 }));
 
       await editSpool("spool-1", { templateId: "tpl-1", name: "Refilled", initialWeight: 1000, currentWeight: 200 });
 
@@ -368,7 +366,7 @@ describe("tools spools endpoints", () => {
     });
 
     it("keeps the original finishedAt when recording a print on an already finished spool", async () => {
-      const originalFinishedAt = new Timestamp(1000, 0);
+      const originalFinishedAt = 1_000_000;
       mockTransactionGet.mockResolvedValueOnce({
         exists: () => true,
         data: () => ({ currentWeight: 0, isFinished: true, finishedAt: originalFinishedAt }),
@@ -389,11 +387,11 @@ describe("tools spools endpoints", () => {
         docs: [
           {
             id: "print-1",
-            data: () => ({ usedWeight: 25, createdAt: { seconds: 10 } }),
+            data: () => ({ usedWeight: 25, createdAt: 10 }),
           },
           {
             id: "print-2",
-            data: () => ({ usedWeight: 50, createdAt: { seconds: 30 } }),
+            data: () => ({ usedWeight: 50, createdAt: 30 }),
           },
         ],
       });
@@ -414,7 +412,7 @@ describe("tools spools endpoints", () => {
           },
           {
             id: "print-date",
-            data: () => ({ usedWeight: 50, createdAt: { seconds: 100 } }),
+            data: () => ({ usedWeight: 50, createdAt: 100 }),
           },
         ],
       });

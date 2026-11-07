@@ -90,7 +90,10 @@ export function ManageGroupRolesSection({ groupId, group }: ManageGroupRolesSect
       {/* Zakładki ról */}
       <Tabs
         value={activeRole}
-        onValueChange={(val) => setActiveRole(val as ConfigurableGroupRole)}
+        onValueChange={(val) => {
+          const role = ROLES.find((r) => r.key === val)?.key;
+          if (role) setActiveRole(role);
+        }}
         className="w-full"
       >
         <TabsList className={manageGroupRolesSectionStyles.tabsList}>

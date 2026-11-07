@@ -107,6 +107,7 @@ export function FormMoneyInput<
   onCurrencyChange: propOnCurrencyChange,
   ...props
 }: FormMoneyInputProps<TFieldValues, TAmountName, TCurrencyName>) {
+  // shortcut: TS cannot narrow `name` (TName) to TAmountName; they are the same field when amountName is omitted
   const resolvedAmountName = (amountName ?? name) as TAmountName;
 
   if (!resolvedAmountName) {
@@ -128,7 +129,7 @@ export function FormMoneyInput<
             control={control}
             rules={amountRules ?? rules}
             shouldUnregister={shouldUnregister}
-            currencyValue={currencyField.value as string | undefined}
+            currencyValue={typeof currencyField.value === "string" ? currencyField.value : undefined}
             onCurrencyChange={(val) => {
               currencyField.onChange(val);
               propOnCurrencyChange?.(val);

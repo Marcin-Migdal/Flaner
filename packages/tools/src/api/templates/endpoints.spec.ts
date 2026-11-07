@@ -35,7 +35,6 @@ vi.mock("firebase/firestore", () => ({
   })),
   query: vi.fn((...args: unknown[]) => args),
   where: vi.fn((...args: unknown[]) => args),
-  serverTimestamp: vi.fn(() => 123456789),
   setDoc: (...args: unknown[]) => mockSetDoc(...args),
   updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
   deleteDoc: (...args: unknown[]) => mockDeleteDoc(...args),
@@ -50,6 +49,7 @@ vi.mock("firebase/firestore", () => ({
 describe("tools templates endpoints", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(Date, "now").mockReturnValue(123456789);
   });
 
   describe("templateRefs", () => {
@@ -66,11 +66,11 @@ describe("tools templates endpoints", () => {
         docs: [
           {
             id: "tpl-1",
-            data: () => ({ material: "PLA", createdAt: { seconds: 10 } }),
+            data: () => ({ material: "PLA", createdAt: 10 }),
           },
           {
             id: "tpl-2",
-            data: () => ({ material: "PETG", createdAt: { seconds: 50 } }),
+            data: () => ({ material: "PETG", createdAt: 50 }),
           },
           {
             id: "tpl-3",
@@ -96,7 +96,7 @@ describe("tools templates endpoints", () => {
           },
           {
             id: "tpl-date",
-            data: () => ({ material: "PETG", createdAt: { seconds: 50 } }),
+            data: () => ({ material: "PETG", createdAt: 50 }),
           },
         ],
       });
@@ -109,7 +109,7 @@ describe("tools templates endpoints", () => {
   });
 
   describe("addTemplate", () => {
-    it("creates a new template with serverTimestamp", async () => {
+    it("creates a new template stamped with the current time", async () => {
       const templateInput: TemplateInput = {
         material: "PLA",
         type: "Basic",

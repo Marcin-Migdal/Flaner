@@ -49,7 +49,7 @@ export type CalendarEventComponentProps<T = unknown> = {
   /** Pre-built className including continuation / hover modifiers. */
   className: string;
   /** onClick handler – already calls `e.stopPropagation()` and delegates to `onEventClick`. */
-  onClick: (e: React.MouseEvent) => void;
+  onClick: (e: React.SyntheticEvent) => void;
 };
 
 export type CustomViewConfig<_T = unknown> = {
@@ -65,7 +65,7 @@ type BigCalendarBaseProps<T = unknown> = {
   views?: BigCalendarView[];
   customViews?: CustomViewsMap<T>;
   events?: CalendarEvent<T>[];
-  onEventClick?: (event: CalendarEvent<T>, e: React.MouseEvent) => void;
+  onEventClick?: (event: CalendarEvent<T>, e: React.SyntheticEvent) => void;
   /** Custom component used to render each event. When omitted the default event UI is used. */
   renderEvent?: React.ComponentType<CalendarEventComponentProps<T>>;
   /** Custom component used to render the "+X more" element when there are hidden events. */

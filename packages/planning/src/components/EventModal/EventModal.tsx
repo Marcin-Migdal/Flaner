@@ -224,7 +224,7 @@ export const EventModal = ({
     }
   };
 
-  const handleEventClick = (event: CalendarEvent, e: React.MouseEvent) => {
+  const handleEventClick = (event: CalendarEvent, e: React.SyntheticEvent) => {
     e.stopPropagation();
     const currentDates = methods.getValues("proposedDates") || [];
     const indexToRemove = typeof event.id === "string" ? parseInt(event.id, 10) : event.id;
