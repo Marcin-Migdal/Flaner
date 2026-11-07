@@ -75,8 +75,8 @@ const pairs: [string, string, number][] = [
   ]),
   ...["medal-gold", "medal-silver", "medal-bronze"].map((medal): [string, string, number] => [medal, "background", TEXT]),
   ["ring", "background", GRAPHIC],
-  ["input", "card", GRAPHIC],
-  ["input", "background", GRAPHIC],
+  ["input-border", "card", GRAPHIC],
+  ["input-border", "background", GRAPHIC],
   ...[1, 2, 3, 4, 5, 6, 7, 8].map((i): [string, string, number] => [`chart-${i}`, "background", GRAPHIC]),
 ];
 

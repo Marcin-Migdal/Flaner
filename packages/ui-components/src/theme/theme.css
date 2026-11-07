@@ -82,7 +82,8 @@
   --accent-foreground: var(--p-ink);
   --border: oklch(0.85 0.008 80);
   --border-subtle: oklch(0.9 0.006 80);
-  --input: oklch(0.62 0.01 80);
+  --input: oklch(0.85 0.008 80);
+  --input-border: oklch(0.62 0.01 80);
   --ring: oklch(0.52 0.12 65);
   --radius: 0.625rem;
 
@@ -157,7 +158,8 @@
   --accent-foreground: oklch(0.985 0 0);
   --border: oklch(1 0 0 / 10%);
   --border-subtle: oklch(1 0 0 / 5%);
-  --input: oklch(0.52 0 0);
+  --input: oklch(1 0 0 / 15%);
+  --input-border: oklch(0.52 0 0);
   --ring: var(--p-brand);
 
   --brand-text: var(--p-brand);
@@ -227,6 +229,7 @@
   --color-border: var(--border);
   --color-border-subtle: var(--border-subtle);
   --color-input: var(--input);
+  --color-input-border: var(--input-border);
   --color-ring: var(--ring);
 
   --color-brand: var(--brand);

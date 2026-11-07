@@ -126,7 +126,8 @@ Semantic meaning of raw colours in use: `emerald` = success / "yes", `amber` = w
 | `background` / `foreground` | warm neutral `oklch(0.968 0.004 80)` / `oklch(0.16 0.01 80)` | `oklch(0.145 0 0)` / `oklch(0.985 0 0)` | unchanged |
 | `card`, `popover` (+ `-foreground`) | white | `oklch(0.205 0 0)` | unchanged |
 | `surface-subtle` | `oklch(0.94 0.005 80)` | `oklch(1 0 0 / 5%)` | replaces `bg-white/5` |
-| `border` / `border-subtle` / `input` | `oklch(0.85 0.008 80)` / `oklch(0.9 0.006 80)` / `oklch(0.62 0.01 80)` | `oklch(1 0 0 / 10%)` / `oklch(1 0 0 / 5%)` / `oklch(0.52 0 0)` | `input` ≥ 3:1 vs. card and background (WCAG 1.4.11) — today 1.58 light / ≈1.9 dark |
+| `border` / `border-subtle` | `oklch(0.85 0.008 80)` / `oklch(0.9 0.006 80)` | `oklch(1 0 0 / 10%)` / `oklch(1 0 0 / 5%)` | decorative borders |
+| `input` / `input-border` | `oklch(0.85 0.008 80)` / `oklch(0.62 0.01 80)` | `oklch(1 0 0 / 15%)` / `oklch(0.52 0 0)` | `input` = shadcn field fill tint (`bg-input/30`); `input-border` = form-control outline ≥ 3:1 vs. card and background (WCAG 1.4.11) — was 1.58 light / ≈1.9 dark |
 | `primary`, `secondary`, `muted`, `accent` (+ `-foreground`) | unchanged | unchanged | shadcn roles |
 | `brand` / `brand-dark` / `brand-foreground` | `#edad5e` / `#c98d3c` / `oklch(0.16 0.01 80)` | same | ink on brand 10:1; `brand-dark` = gradient end |
 | `brand-text` | `oklch(0.52 0.12 65)` (5.2:1) | `#edad5e` (10:1) | brand-coloured text/icons |

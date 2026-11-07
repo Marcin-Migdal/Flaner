@@ -101,7 +101,7 @@ export const QuickUsageModal: React.FC<QuickUsageModalProps> = ({
                   step="any"
                   {...register("modelWeight", { valueAsNumber: true })}
                   placeholder={t("spooler.spools.modelWeightPlaceholder")}
-                  className="w-full h-10 rounded-xl border border-input bg-background pl-4 pr-36 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-full h-10 rounded-xl border border-input-border bg-background pl-4 pr-36 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-brand-text select-none pointer-events-none">
                   {t("spooler.spools.startWasteBadge", { weight: startupWaste })}

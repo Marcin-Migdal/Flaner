@@ -17,6 +17,7 @@ The single theme source is `packages/ui-components/src/theme/theme.css` (spec: `
 |---|---|---|
 | Subtle surface / hover / pressed | `bg-surface-subtle` / `bg-surface-hover` / `bg-surface-strong` | `bg-white/5`, `bg-zinc-900` |
 | Hairline / normal border | `border-border-subtle` / `border-border` | `border-white/10` |
+| Form-control outline / field fill | `border-input-border` (≥ 3:1) / `bg-input/30` | `border-input` (fill tint, too faint for an outline) |
 | Brand fill + text on it | `bg-brand text-brand-foreground` | `text-zinc-950`, `text-white` on brand |
 | Brand-coloured text / icon | `text-brand-text` | `text-brand` (fails contrast in light mode) |
 | Status | `bg-success|warning|danger|info` + `text-*-foreground`; text `text-*-text`; tint `bg-*-subtle` or `bg-success/10` | `emerald-*`, `amber-*`, `rose-*`, `red-*` |

@@ -3,7 +3,7 @@ import { cva } from "class-variance-authority";
 export const selectControlVariants = cva("border transition-all", {
   variants: {
     variant: {
-      default: "rounded-lg bg-transparent dark:bg-input/30 min-h-[40px] text-sm duration-200 border-input hover:border-accent",
+      default: "rounded-lg bg-transparent dark:bg-input/30 min-h-[40px] text-sm duration-200 border-input-border hover:border-accent",
       glass:
         "rounded-xl backdrop-blur-md shadow-sm min-h-[36px] md:min-h-[44px] text-xs md:text-sm duration-300 border-border-subtle bg-surface-subtle hover:bg-surface-hover hover:border-border",
     },
@@ -11,13 +11,13 @@ export const selectControlVariants = cva("border transition-all", {
       idle: "cursor-pointer",
       focused: "cursor-pointer",
       error: "cursor-pointer",
-      disabled: "cursor-not-allowed opacity-50 bg-input/20 dark:bg-input/50 hover:border-input",
+      disabled: "cursor-not-allowed opacity-50 bg-input/20 dark:bg-input/50 hover:border-input-border",
     },
   },
   compoundVariants: [
     { variant: "default", state: "focused", class: "border-ring ring-1 ring-ring" },
     { variant: "default", state: "error", class: "border-destructive focus-visible:ring-destructive" },
-    { variant: "default", state: "disabled", class: "border-input/50 opacity-50 bg-input/20 dark:bg-input/50" },
+    { variant: "default", state: "disabled", class: "border-input-border/50 opacity-50 bg-input/20 dark:bg-input/50" },
     {
       variant: "glass",
       state: "focused",
