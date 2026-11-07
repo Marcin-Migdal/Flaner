@@ -127,9 +127,6 @@ export const acceptFriendRequest = async (
     const friendshipB = doc(fb.firestore, `users/${receiver.uid}/friendships`, sender.uid);
     batch.set(friendshipB, {
       userRef: doc(fb.firestore, "users", sender.uid),
-      username: sender.username,
-      usernameLower: sender.username.toLowerCase(),
-      avatarUrl: sender.avatarUrl || "",
       createdAt: Date.now(),
     });
 
@@ -137,9 +134,6 @@ export const acceptFriendRequest = async (
     const friendshipA = doc(fb.firestore, `users/${sender.uid}/friendships`, receiver.uid);
     batch.set(friendshipA, {
       userRef: doc(fb.firestore, "users", receiver.uid),
-      username: receiver.username,
-      usernameLower: receiver.username.toLowerCase(),
-      avatarUrl: receiver.avatarUrl || "",
       createdAt: Date.now(),
     });
 
