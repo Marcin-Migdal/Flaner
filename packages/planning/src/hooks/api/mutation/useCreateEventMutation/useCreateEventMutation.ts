@@ -1,6 +1,6 @@
 import { useAuth } from "@flaner/shared/context";
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { createSchedulerEvent, type SchedulerEvent, type VoteType } from "../../../../api/events";
+import { createSchedulerEvent, getSlotKey, type SchedulerEvent, type VoteType } from "../../../../api/events";
 
 export type CreateEventInput = Omit<SchedulerEvent, "id" | "createdAt" | "updatedAt" | "creatorId"> & {
   autoVoteProposedDates?: boolean;
@@ -16,20 +16,14 @@ export const useCreateEventMutation = (
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
 
       const creatorVote: VoteType = "yes";
-      const proposedDates = autoVoteProposedDates
-        ? data.proposedDates.map((slot) => ({
-            ...slot,
-            votes: {
-              ...(slot.votes || {}),
-              [user.uid]: creatorVote,
-            },
-          }))
-        : data.proposedDates;
+      const votes = autoVoteProposedDates
+        ? { [user.uid]: Object.fromEntries(data.proposedDates.map((slot) => [getSlotKey(slot), creatorVote])) }
+        : undefined;
 
       return createSchedulerEvent(
         {
           ...data,
-          proposedDates,
+          ...(votes && { votes }),
           creatorId: user.uid,
         },
         user,

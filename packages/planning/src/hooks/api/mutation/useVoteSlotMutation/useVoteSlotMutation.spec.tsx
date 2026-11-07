@@ -38,14 +38,14 @@ describe("useVoteSlotMutation", () => {
     act(() => {
       result.current.mutate({
         eventId: "evt-1",
-        slotIndex: 0,
+        slotKey: "2026-06-01_2026-06-01",
         userId: "user-123",
         vote: "yes",
       });
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(eventsApi.voteSchedulerEventSlot).toHaveBeenCalledWith("evt-1", 0, "user-123", "yes");
+    expect(eventsApi.voteSchedulerEventSlot).toHaveBeenCalledWith("evt-1", "2026-06-01_2026-06-01", "user-123", "yes");
   });
 
   it("calls custom onSuccess when provided in options", async () => {
@@ -58,7 +58,7 @@ describe("useVoteSlotMutation", () => {
     act(() => {
       result.current.mutate({
         eventId: "evt-1",
-        slotIndex: 0,
+        slotKey: "2026-06-01_2026-06-01",
         userId: "user-123",
         vote: "yes",
       });
@@ -77,7 +77,7 @@ describe("useVoteSlotMutation", () => {
     act(() => {
       result.current.mutate({
         eventId: "evt-1",
-        slotIndex: 0,
+        slotKey: "2026-06-01_2026-06-01",
         userId: "user-123",
         vote: "yes",
       });

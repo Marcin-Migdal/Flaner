@@ -89,7 +89,7 @@ describe("SchedulerCalendarPanel", () => {
     await user.click(voteBtn);
     expect(mockVoteSlot).toHaveBeenCalledWith({
       eventId: "evt-cal",
-      slotIndex: 0,
+      slotKey: "2026-08-10_2026-08-11",
       userId: "u1",
       vote: "yes",
     });

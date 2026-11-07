@@ -4,18 +4,19 @@ import type { UserType } from "@flaner/shared/types";
 import { firestoreConverter, getUnreadNotificationRefs, sourceNotificationRef } from "@flaner/shared/utils";
 import { isBefore, parseISO, startOfDay } from "date-fns";
 import {
-  collection,
+  collection,
   deleteField,
   doc,
+  FieldPath,
   getDoc,
   getDocs,
   onSnapshot,
   query,
-  runTransaction,
+  updateDoc,
   where,
   writeBatch,
 } from "firebase/firestore";
-import type { ProposedDateSlot, SchedulerEvent, VoteType } from "./types";
+import { getSlotKey, type ProposedDateSlot, type SchedulerEvent, type VoteType } from "./types";
 
 const refs = {
   events: () => collection(fb.firestore, "events").withConverter(firestoreConverter<SchedulerEvent>()),
@@ -41,6 +42,7 @@ export const createSchedulerEvent = async (
 
   const newEvent: SchedulerEvent = {
     ...data,
+    proposedDates: withoutSlotVotes(data.proposedDates),
     id: eventRef.id,
     isFinalized: false,
     createdAt: Date.now(),
@@ -70,6 +72,24 @@ export const createSchedulerEvent = async (
   return newEvent;
 };
 
+// Puts each current participant's vote back on its slot, so screens read `slot.votes`
+const withSlotVotes = (event: SchedulerEvent): SchedulerEvent => ({
+  ...event,
+  proposedDates: event.proposedDates.map((slot) => {
+    const key = getSlotKey(slot);
+    const votes = Object.fromEntries(
+      event.participants.flatMap((uid) => {
+        const vote = event.votes?.[uid]?.[key];
+        return vote ? [[uid, vote]] : [];
+      }),
+    );
+    return { ...slot, votes };
+  }),
+});
+
+// Slots are stored without votes (they live in `votes`)
+const withoutSlotVotes = (slots: ProposedDateSlot[]) => slots.map(({ start, end, color }) => ({ start, end, color }));
+
 export const getUserSchedulerEvents = async (userId: string): Promise<SchedulerEvent[]> => {
   const q = query(
     refs.events(),
@@ -77,7 +97,7 @@ export const getUserSchedulerEvents = async (userId: string): Promise<SchedulerE
   );
   
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => doc.data());
+  return snapshot.docs.map((d) => withSlotVotes(d.data()));
 };
 
 export const subscribeToUserSchedulerEvents = (
@@ -93,7 +113,7 @@ export const subscribeToUserSchedulerEvents = (
   return onSnapshot(
     q,
     (snapshot) => {
-      const events = snapshot.docs.map((doc) => doc.data());
+      const events = snapshot.docs.map((d) => withSlotVotes(d.data()));
       callback(events);
     },
     (error) => {
@@ -119,7 +139,9 @@ export const updateSchedulerEvent = async (
   data: Partial<Omit<SchedulerEvent, "id" | "createdAt" | "updatedAt">>,
 ): Promise<void> => {
   const cleanData = Object.fromEntries(
-    Object.entries(data).filter(([_, v]) => v !== undefined),
+    Object.entries({ ...data, proposedDates: data.proposedDates && withoutSlotVotes(data.proposedDates) }).filter(
+      ([_, v]) => v !== undefined,
+    ),
   );
 
   // Participants removed in this edit lose their unread event notifications
@@ -137,86 +159,34 @@ export const updateSchedulerEvent = async (
   await batch.commit();
 };
 
-export const voteSchedulerEventSlot = async (
+/** Sets (or clears, with `null`) only the voter's own entry: the rules reject any other change (#33) */
+export const voteSchedulerEventSlot = (
   eventId: string,
-  slotIndex: number,
+  slotKey: string,
   userId: string,
   vote: VoteType | null,
-): Promise<void> => {
-  const eventRef = refs.event(eventId);
-
-  await runTransaction(fb.firestore, async (transaction) => {
-    const sfDoc = await transaction.get(eventRef);
-    if (!sfDoc.exists()) {
-      throw new Error("Event does not exist");
-    }
-
-    const eventData = sfDoc.data();
-    if (eventData.isFinalized) {
-      throw new Error("Event is already finalized");
-    }
-
-    const proposedDates = [...eventData.proposedDates];
-    if (slotIndex < 0 || slotIndex >= proposedDates.length) {
-      throw new Error("Invalid slot index");
-    }
-
-    const currentSlot = proposedDates[slotIndex];
-    let updatedVotes = { ...(currentSlot.votes || {}) };
-
-    if (vote === null) {
-      const { [userId]: _omitted, ...rest } = updatedVotes;
-      updatedVotes = rest;
-    } else {
-      updatedVotes[userId] = vote;
-    }
-
-    proposedDates[slotIndex] = {
-      ...currentSlot,
-      votes: updatedVotes,
-    };
-
-    transaction.update(eventRef, {
-      proposedDates,
-      updatedAt: Date.now(),
-    });
-  });
-};
+): Promise<void> =>
+  updateDoc(refs.event(eventId), new FieldPath("votes", userId, slotKey), vote ?? deleteField(), "updatedAt", Date.now());
 
 export const batchVoteUnvotedSlots = async (
   eventId: string,
   userId: string,
   fallbackVote: VoteType = "no",
 ): Promise<void> => {
-  const eventRef = refs.event(eventId);
+  const event = (await getDoc(refs.event(eventId))).data();
+  if (!event) throw new Error("Event does not exist");
+  if (event.isFinalized) throw new Error("Event is already finalized");
 
-  await runTransaction(fb.firestore, async (transaction) => {
-    const sfDoc = await transaction.get(eventRef);
-    if (!sfDoc.exists()) {
-      throw new Error("Event does not exist");
-    }
+  const mine = event.votes?.[userId] ?? {};
+  const unvoted = event.proposedDates.map(getSlotKey).filter((key) => !mine[key]);
+  if (unvoted.length === 0) return;
 
-    const eventData = sfDoc.data();
-    if (eventData.isFinalized) {
-      throw new Error("Event is already finalized");
-    }
-
-    const proposedDates = (eventData.proposedDates || []).map((slot: ProposedDateSlot) => {
-      const votes = { ...(slot.votes || {}) };
-      if (!votes[userId]) {
-        votes[userId] = fallbackVote;
-      }
-      return {
-        ...slot,
-        votes,
-      };
-    });
-
-    transaction.update(eventRef, {
-      proposedDates,
-      updatedAt: Date.now(),
-    });
-  });
+  await updateDoc(
+    refs.event(eventId),
+    "updatedAt",
+    Date.now(),
+    ...unvoted.flatMap((key) => [new FieldPath("votes", userId, key), fallbackVote]),
+  );
 };
 
 export const unfinalizeSchedulerEvent = async (
@@ -241,7 +211,7 @@ export const unfinalizeSchedulerEvent = async (
   batch.update(eventRef, {
     isFinalized: false,
     finalizedSlotIndex: deleteField(),
-    proposedDates: activeProposedDates.length > 0 ? activeProposedDates : event.proposedDates,
+    proposedDates: withoutSlotVotes(activeProposedDates.length > 0 ? activeProposedDates : event.proposedDates),
     updatedAt: Date.now(),
   });
 

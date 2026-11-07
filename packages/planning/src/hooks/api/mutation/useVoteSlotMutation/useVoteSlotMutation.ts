@@ -4,7 +4,7 @@ import { voteSchedulerEventSlot, type VoteType } from "../../../../api/events";
 
 export type VoteSlotParams = {
   eventId: string;
-  slotIndex: number;
+  slotKey: string;
   userId: string;
   vote: VoteType | null;
 };
@@ -15,9 +15,9 @@ export const useVoteSlotMutation = (
   const { user } = useAuth();
 
   return useMutation<void, Error, VoteSlotParams>({
-    mutationFn: async ({ eventId, slotIndex, userId, vote }) => {
+    mutationFn: async ({ eventId, slotKey, userId, vote }) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
-      await voteSchedulerEventSlot(eventId, slotIndex, userId, vote);
+      await voteSchedulerEventSlot(eventId, slotKey, userId, vote);
     },
     meta: {
       errorMessageKey: "planning:toasts.events.voteError",

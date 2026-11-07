@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { Check, X, Loader2 } from "lucide-react";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import type { ParticipantResult } from "../../api/participants";
-import type { SchedulerEvent, VoteType } from "../../api/events/types";
+import { getSlotKey, type SchedulerEvent, type VoteType } from "../../api/events/types";
 import { useVoteSlotMutation } from "../../hooks/api/mutation/useVoteSlotMutation";
 import {
   slotVotingOptionButtonVariants,
@@ -52,7 +52,7 @@ export function SlotVotingModal({
 
     await voteSlot({
       eventId: event.id,
-      slotIndex,
+      slotKey: getSlotKey(slot),
       userId: currentUserId,
       vote: newVote,
     });

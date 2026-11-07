@@ -84,7 +84,7 @@ describe("SlotVotingModal", () => {
 
     expect(mockVoteSlotMutateAsync).toHaveBeenCalledWith({
       eventId: "evt-1",
-      slotIndex: 0,
+      slotKey: "2026-07-20T10:00:00Z_2026-07-20T12:00:00Z",
       userId: "u1",
       vote: "maybe",
     });
@@ -111,7 +111,7 @@ describe("SlotVotingModal", () => {
 
     expect(mockVoteSlotMutateAsync).toHaveBeenCalledWith({
       eventId: "evt-1",
-      slotIndex: 0,
+      slotKey: "2026-07-20T10:00:00Z_2026-07-20T12:00:00Z",
       userId: "u1",
       vote: null,
     });
@@ -164,7 +164,7 @@ describe("SlotVotingModal", () => {
 
     expect(mockVoteSlotMutateAsync).toHaveBeenCalledWith({
       eventId: "evt-1",
-      slotIndex: 0,
+      slotKey: "2026-07-20T10:00:00Z_2026-07-20T12:00:00Z",
       userId: "u1",
       vote: "no",
     });
