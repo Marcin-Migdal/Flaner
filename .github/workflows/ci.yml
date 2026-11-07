@@ -69,7 +69,13 @@ jobs:
           distribution: temurin
           java-version: "21"
       - if: steps.affected.outputs.run == 'true'
-        run: npx playwright install --with-deps chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      # No --with-deps: the runner image already has Chrome's system libraries, and apt mirrors can stall for minutes
+      - if: steps.affected.outputs.run == 'true'
+        run: npx playwright install chromium
       # Emulators (demo-flaner) + `npm run dev` are started by the Playwright config — no secrets.
       - if: steps.affected.outputs.run == 'true'
         run: npx playwright test --config=e2e/playwright.config.ts ${{ steps.affected.outputs.projects }}
