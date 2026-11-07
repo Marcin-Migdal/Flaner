@@ -53,14 +53,14 @@ export const getCellClass = ({
   }
 
   if (selectionMode === "single") {
-    if (selectedDate && isSameDay(day, selectedDate as Date)) {
+    if (selectedDate instanceof Date && isSameDay(day, selectedDate)) {
       classes.push("bg-brand text-brand-foreground hover:bg-brand/90");
     } else {
       classes.push("hover:bg-accent/50");
     }
   } else {
     // Range mode
-    const rangeDate = selectedDate as [Date, Date?] | null | undefined;
+    const rangeDate = Array.isArray(selectedDate) ? selectedDate : null;
     const rangeStart = rangeDate?.[0];
     const rangeEnd = rangeDate?.[1];
 

@@ -23,7 +23,7 @@ export type MonthViewRangeProps = {
 
 export type MonthViewBaseProps<T = unknown> = {
   events?: CalendarEvent<T>[];
-  onEventClick?: (event: CalendarEvent<T>, e: React.MouseEvent) => void;
+  onEventClick?: (event: CalendarEvent<T>, e: React.SyntheticEvent) => void;
   renderEvent?: React.ComponentType<CalendarEventComponentProps<T>>;
   renderMoreEvents?: (events: CalendarEvent<T>[], day: Date) => React.ReactNode;
   maxEventsPerDay?: number;

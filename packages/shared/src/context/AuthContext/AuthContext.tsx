@@ -23,8 +23,11 @@ import { createContext, ReactNode, useContext, useEffect, useState, useRef } fro
 import { fb } from "../../firebase/firebase";
 import { useTheme } from "../../hooks/useTheme";
 import { LanguageType, UserProfile, UserType } from "../../types";
+import { firestoreConverter } from "../../utils/firestoreConverter";
 
-const profileRef = (uid: string) => doc(fb.firestore, "users", uid);
+// `email` only on profiles created before it moved to Firebase Auth
+const profileRef = (uid: string) =>
+  doc(fb.firestore, "users", uid).withConverter(firestoreConverter<UserProfile & { email?: string }>());
 
 /**
  * Reads the public profile. Older profiles also stored `email`, which every signed-in user could read:
@@ -40,7 +43,7 @@ const loadProfile = async (uid: string): Promise<UserProfile | null> => {
       console.error("Failed to remove the legacy email from the profile", error),
     );
   }
-  return profile as UserProfile;
+  return profile;
 };
 
 const usernameRef = (usernameLower: string) => doc(fb.firestore, "usernames", usernameLower);

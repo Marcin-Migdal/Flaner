@@ -62,6 +62,7 @@ export const BigCalendarHeader = ({
     }
   };
 
+  // shortcut: `view` may be a custom view key, shown as the only button; widen the views type if custom views need more
   const resolvedViews = views ?? (onViewChange ? VIEWS : [view as BigCalendarView]);
 
   const availableViews: { id: string; label: string }[] = [

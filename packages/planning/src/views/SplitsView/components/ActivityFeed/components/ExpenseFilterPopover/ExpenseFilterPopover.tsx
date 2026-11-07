@@ -4,7 +4,7 @@ import { format, parseISO } from "date-fns";
 import { Filter, Search, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { EXPENSE_CATEGORIES, type ExpenseCategory } from "../../../../../../api/splits";
+import { EXPENSE_CATEGORIES } from "../../../../../../api/splits";
 import type { SplitGroupMember } from "../../../../../../hooks/useSplitGroupMembers";
 import { usePlanningTranslations } from "../../../../../../hooks/usePlanningTranslations";
 import {
@@ -15,7 +15,6 @@ import {
 import {
   countActiveFilters,
   DEFAULT_EXPENSE_FILTERS,
-  type ExpenseFilterScope,
   type ExpenseFilters,
 } from "./types";
 
@@ -215,7 +214,7 @@ export const ExpenseFilterPopover = ({
               onClick={() =>
                 setDraft((prev) => ({
                   ...prev,
-                  scope: scopeOption.value as ExpenseFilterScope,
+                  scope: scopeOption.value,
                 }))
               }
             >
@@ -263,7 +262,7 @@ export const ExpenseFilterPopover = ({
           onChange={(e) =>
             setDraft((prev) => ({
               ...prev,
-              category: (e.target.value as ExpenseCategory) || null,
+              category: EXPENSE_CATEGORIES.find((c) => c === e.target.value) ?? null,
             }))
           }
           className={styles.selectInput}

@@ -36,7 +36,7 @@ export const searchParticipants = async (searchStr: string, currentUserId?: stri
     
     const users: ParticipantResult[] = usersSnap.docs.map(d => {
       const data = d.data();
-      const username = data.username || (data as unknown as { name?: string }).name || d.id;
+      const username = data.username || data.name || d.id;
       return { 
         type: "user", 
         id: d.id, 
@@ -64,7 +64,7 @@ export const searchParticipants = async (searchStr: string, currentUserId?: stri
         const userGroupsSnap = await getDocs(
           query(collectionGroup(fb.firestore, "members"), where("userId", "==", currentUserId))
         );
-        const groupIds = userGroupsSnap.docs.map(d => d.ref.parent.parent?.id).filter(Boolean) as string[];
+        const groupIds = userGroupsSnap.docs.flatMap(d => d.ref.parent.parent?.id ?? []);
         
         if (groupIds.length > 0) {
           const groupSnaps = await Promise.all(
@@ -109,7 +109,7 @@ export const searchParticipants = async (searchStr: string, currentUserId?: stri
 export const getGroupMembersAsParticipants = async (groupId: string, groupName: string): Promise<ParticipantResult[]> => {
   try {
     const membersSnap = await getDocs(collection(fb.firestore, `groups/${groupId}/members`));
-    const userIds = membersSnap.docs.map(d => (d.data() as { userId?: string })?.userId || d.id).filter(Boolean);
+    const userIds = membersSnap.docs.map(d => d.data().userId || d.id);
     
     if (userIds.length === 0) return [];
     
@@ -125,7 +125,7 @@ export const getGroupMembersAsParticipants = async (groupId: string, groupName: 
     const results: ParticipantResult[] = [];
     snaps.forEach(snap => {
       snap.docs.forEach(d => {
-        const data = d.data() as { username?: string; name?: string; usernameLower?: string; avatarUrl?: string };
+        const data = d.data();
         const username = data?.username || data?.name || d.id;
         results.push({
           type: "user",

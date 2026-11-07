@@ -25,7 +25,10 @@ vi.mock("firebase/auth", () => ({
 }));
 
 vi.mock("firebase/firestore", () => ({
-  doc: vi.fn((_db: unknown, collectionName: string, id: string) => ({ path: `${collectionName}/${id}` })),
+  // withConverter lives on the prototype, so assertions can still compare refs to plain { path }
+  doc: vi.fn((_db: unknown, collectionName: string, id: string) =>
+    Object.assign(Object.create({ withConverter() { return this; } }), { path: `${collectionName}/${id}` }),
+  ),
   getDoc: vi.fn(),
   updateDoc: vi.fn().mockResolvedValue(undefined),
   terminate: vi.fn().mockResolvedValue(undefined),

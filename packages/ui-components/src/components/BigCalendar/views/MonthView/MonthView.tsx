@@ -14,7 +14,7 @@ import {
 } from "date-fns";
 import { enUS, pl } from "date-fns/locale";
 import { X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useUiTranslations } from "../../../../hooks/useUiTranslations";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../ui/popover";
@@ -228,7 +228,7 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
                   isHovered,
                 }),
               )}
-              style={event.color ? ({ backgroundColor: event.color } as CSSProperties) : undefined}
+              style={event.color ? { backgroundColor: event.color } : undefined}
               onMouseEnter={() => setHoveredEventId(event.id)}
               onMouseLeave={() => setHoveredEventId(null)}
               onClick={(e) => {
@@ -407,7 +407,7 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
                                 className="text-xs px-2 py-1 rounded-md font-medium truncate cursor-pointer transition-all duration-150 hover:brightness-110"
                                 style={
                                   event.color
-                                    ? ({ backgroundColor: event.color, color: "#fff" } as CSSProperties)
+                                    ? { backgroundColor: event.color, color: "#fff" }
                                     : undefined
                                 }
                                 onClick={(e) => {

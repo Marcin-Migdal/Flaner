@@ -68,15 +68,15 @@ function DialogContent({
           onOpenAutoFocus?.(e);
         }}
         onPointerDownOutside={(e) => {
-          const target = e.target as HTMLElement | null;
-          if (target?.closest?.('[class*="react-select"], [class*="-menu"], [data-radix-popper-content-wrapper]')) {
+          const target = e.target;
+          if (target instanceof Element && target.closest('[class*="react-select"], [class*="-menu"], [data-radix-popper-content-wrapper]')) {
             e.preventDefault();
           }
           onPointerDownOutside?.(e);
         }}
         onInteractOutside={(e) => {
-          const target = e.target as HTMLElement | null;
-          if (target?.closest?.('[class*="react-select"], [class*="-menu"], [data-radix-popper-content-wrapper]')) {
+          const target = e.target;
+          if (target instanceof Element && target.closest('[class*="react-select"], [class*="-menu"], [data-radix-popper-content-wrapper]')) {
             e.preventDefault();
           }
           onInteractOutside?.(e);

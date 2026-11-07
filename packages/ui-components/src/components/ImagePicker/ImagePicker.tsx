@@ -295,7 +295,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
               img.onerror = () => {
                 resolve(labels?.dimensionReadError || t("imagePicker.dimensionReadError"));
               };
-              img.src = e.target?.result as string;
+              if (typeof e.target?.result === "string") img.src = e.target.result;
             };
             reader.onerror = () => {
               resolve(labels?.fileLoadError || t("imagePicker.fileLoadError"));
@@ -350,7 +350,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
+      const file = e.target.files?.[0];
       if (file) {
         handleSelectedFile(file);
       }
