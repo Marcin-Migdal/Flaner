@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage, Button, Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@flaner/ui-components";
+import { Avatar, AvatarFallback, Badge, AvatarImage, Button, Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@flaner/ui-components";
 import { Check, Loader2, Mail, X } from "lucide-react";
 import { useAuth } from "@flaner/shared/context";
 import { useCommunityTranslations } from "../../../hooks/useCommunityTranslations";
@@ -61,9 +61,14 @@ export function GroupInvitationsSheet() {
         >
           <Mail className="size-5" />
           {invitations.length > 0 && (
-            <div className="absolute -top-1 -right-1 bg-danger text-danger-foreground text-3xs font-bold h-5 min-w-5 px-1 flex items-center justify-center rounded-full ring-2 ring-background animate-pulse">
+            <Badge
+              shape="count"
+              size="sm"
+              variant="solid-danger"
+              className="absolute -top-1 -right-1 ring-2 ring-background animate-pulse"
+            >
               {invitations.length > 99 ? "99+" : invitations.length}
-            </div>
+            </Badge>
           )}
         </Button>
       </SheetTrigger>

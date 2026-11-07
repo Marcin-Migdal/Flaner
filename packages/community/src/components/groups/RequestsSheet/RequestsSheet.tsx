@@ -6,6 +6,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  Badge,
 } from "@flaner/ui-components";
 import { UserPlus } from "lucide-react";
 import {
@@ -42,9 +43,9 @@ export function RequestsSheet({ groupId }: RequestsSheetProps) {
           <UserPlus className="size-3.5 sm:size-4 shrink-0" />
           <span>{t("requestsSheet.btnTitle")}</span>
           {requests.length > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 size-4.5 bg-brand text-brand-foreground text-3xs font-bold flex items-center justify-center rounded-full">
+            <Badge shape="count" size="sm" variant="solid" className="absolute -top-1.5 -right-1.5">
               {requests.length}
-            </span>
+            </Badge>
           )}
         </Button>
       </SheetTrigger>

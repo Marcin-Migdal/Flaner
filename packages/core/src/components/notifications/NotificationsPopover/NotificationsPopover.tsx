@@ -10,6 +10,7 @@ import {
   TabsList,
   TabsTrigger,
   useSidebar,
+  Badge,
 } from "@flaner/ui-components";
 import { Bell, Check, Inbox, Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -79,9 +80,9 @@ export function NotificationsPopover() {
             </div>
             <span>{t("nav.notifications")}</span>
             {unreadCount > 0 && (
-              <span className="ml-auto bg-brand text-brand-foreground text-3xs font-bold px-1.5 py-0.5 rounded-full">
+              <Badge variant="solid" size="sm" className="ml-auto">
                 {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
+              </Badge>
             )}
           </SidebarMenuButton>
         </PopoverTrigger>

@@ -1,4 +1,4 @@
-import { Tabs, TabsList, TabsTrigger } from "@flaner/ui-components";
+import { PageHeader, Tabs, TabsList, TabsTrigger } from "@flaner/ui-components";
 import { Users } from "lucide-react";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
 import { useGetFriendsListRealtimeQuery } from "../../hooks";
@@ -13,21 +13,7 @@ export function FriendsView() {
   return (
     <div className="max-w-4xl mx-auto py-4 space-y-6 px-4 md:px-0">
       {/* Header bar */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-brand/10 text-brand-text rounded-xl">
-            <Users className="size-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground font-heading">
-              {t("friends")}
-            </h1>
-          </div>
-        </div>
-
-        {/* Sheet flyout for invitations */}
-        <InvitationsSheet />
-      </div>
+      <PageHeader icon={<Users />} title={t("friends")} actions={<InvitationsSheet />} />
 
       <Tabs defaultValue="friends" className="w-full">
         <TabsList className="grid grid-cols-2 w-full max-w-md h-10 group-data-horizontal/tabs:h-10 bg-muted/40 border border-border/50 p-1 rounded-xl mb-1">

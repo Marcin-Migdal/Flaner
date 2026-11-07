@@ -1,6 +1,7 @@
 import { type MfeName } from "@flaner/shared/constants";
 import { type AppRouteObject } from "@flaner/shared/types";
-import { LoadingFallback } from "@flaner/ui-components";
+import { EmptyState, LoadingFallback, PageHeader } from "@flaner/ui-components";
+import { LayoutGrid } from "lucide-react";
 import { loadRemote } from "@module-federation/runtime";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -88,18 +89,15 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
 
   return (
     <div className="max-w-6xl mx-auto py-6 space-y-6">
-      <div className="flex items-center gap-3 px-6">
-        <h1 className="text-3xl font-black tracking-tight text-foreground font-heading">{t(`nav.${mfe}`)}</h1>
-      </div>
+      <PageHeader className="px-6" title={t(`nav.${mfe}`)} />
 
       {tiles.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 text-center max-w-md mx-auto my-12 animate-in fade-in duration-300">
-          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground mb-4 font-bold text-xl">
-            ?
-          </div>
-          <h2 className="text-foreground font-semibold mb-2">{t("mfe.noViewsTitle")}</h2>
-          <p className="text-muted-foreground text-sm">{t("mfe.noViewsDesc")}</p>
-        </div>
+        <EmptyState
+          className="max-w-md mx-auto my-12 animate-in fade-in duration-300"
+          icon={<LayoutGrid />}
+          title={t("mfe.noViewsTitle")}
+          description={t("mfe.noViewsDesc")}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-6 animate-in fade-in duration-200">
           {tiles.map((route, index) => {

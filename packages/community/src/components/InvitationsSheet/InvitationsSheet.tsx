@@ -10,6 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  Badge,
 } from "@flaner/ui-components";
 import { Inbox, Loader2, Send } from "lucide-react";
 import {
@@ -55,9 +56,14 @@ export function InvitationsSheet() {
           <Inbox className="size-4 shrink-0" />
           <span className="hidden sm:inline">{t("invitations.button")}</span>
           {pendingCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-destructive text-3xs font-bold text-destructive-foreground ring-2 ring-background animate-pulse">
+            <Badge
+              shape="count"
+              size="sm"
+              variant="solid-danger"
+              className="absolute -top-1 -right-1 ring-2 ring-background animate-pulse"
+            >
               {pendingCount > 99 ? "99+" : pendingCount}
-            </span>
+            </Badge>
           )}
         </Button>
       </SheetTrigger>
