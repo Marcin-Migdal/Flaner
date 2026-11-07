@@ -24,7 +24,7 @@ export const activityFeedStyles = {
   indicatorDot: "size-2 rounded-full bg-warning shrink-0 shadow-dot-warning animate-pulse",
   accordionContent: "pt-1 pb-3 flex flex-col gap-3.5",
   scrollArea:
-    "max-h-[340px] sm:max-h-[560px] overflow-y-auto px-0.5 pb-0.5 flex flex-col gap-3.5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-surface-strong [&::-webkit-scrollbar-thumb:hover]:bg-surface-strong [&::-webkit-scrollbar-thumb]:rounded-full [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.15)_transparent]",
+    "max-h-[340px] sm:max-h-[560px] overflow-y-auto px-0.5 pb-0.5 flex flex-col gap-3.5",
   section: "flex flex-col gap-2",
   sectionTitle: "text-2xs font-bold text-muted-foreground/60 uppercase tracking-widest px-1",
   items: "flex flex-col gap-2",

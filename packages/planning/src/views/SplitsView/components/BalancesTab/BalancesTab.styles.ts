@@ -35,7 +35,7 @@ export const balancesTabStyles = {
   sectionHeader: "flex flex-col sm:flex-row sm:items-center justify-between gap-2",
   sectionTitle: "text-2xs font-bold text-muted-foreground/60 uppercase tracking-widest px-1",
   members:
-    "grid grid-cols-1 wide:grid-cols-2 gap-2 max-h-[340px] sm:max-h-[248px] overflow-y-auto px-0.5 pb-0.5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-surface-strong [&::-webkit-scrollbar-thumb:hover]:bg-surface-strong [&::-webkit-scrollbar-thumb]:rounded-full [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.15)_transparent]",
+    "grid grid-cols-1 wide:grid-cols-2 gap-2 max-h-[340px] sm:max-h-[248px] overflow-y-auto px-0.5 pb-0.5",
   memberRow:
     "flex items-center gap-2.5 wide:gap-3 rounded-2xl border border-border-subtle bg-surface-subtle p-2.5 wide:p-3 transition-colors",
   memberAvatar: "size-8 shrink-0",
@@ -43,7 +43,7 @@ export const balancesTabStyles = {
   memberName: "flex-1 min-w-0 text-sm font-medium truncate cursor-default",
   memberBalances: "flex flex-col items-end gap-0.5 shrink-0 ml-auto",
   debts:
-    "flex flex-col gap-2 max-h-[340px] sm:max-h-[640px] overflow-y-auto px-0.5 pb-0.5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-surface-strong [&::-webkit-scrollbar-thumb:hover]:bg-surface-strong [&::-webkit-scrollbar-thumb]:rounded-full [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.15)_transparent]",
+    "flex flex-col gap-2 max-h-[340px] sm:max-h-[640px] overflow-y-auto px-0.5 pb-0.5",
   settledState:
     "flex items-center justify-center gap-2 py-8 rounded-2xl border border-dashed border-success/20 text-sm text-success-text",
   settledIcon: "size-4",

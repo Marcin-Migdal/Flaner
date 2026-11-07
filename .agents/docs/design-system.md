@@ -1,6 +1,8 @@
 # Flaner Design System — Research, Audit & Decisions
 
-Issue: #61. Status: **phase 1+2 (research + tailoring) — awaiting approval**. Implementation (phase 3–4) lands in the same PR after approval; the component catalogue (Storybook) is a separate, follow-up PR.
+Issue: #61. Status: **implemented** (decisions approved 2026-11-07). Theme source: `packages/ui-components/src/theme/theme.css`. The component catalogue (Storybook) is a separate, follow-up PR.
+
+> Sections 1–3 are the research and the decision record. Section 4 onwards describes the system as implemented — when it disagrees with an earlier decision, section 4+ wins (deviations are listed in §8).
 
 ---
 
@@ -88,7 +90,7 @@ Semantic meaning of raw colours in use: `emerald` = success / "yes", `amber` = w
 ### Adopt
 | # | Decision |
 |---|---|
-| D1 | **One theme source**: `packages/ui-components/src/styles/theme.css` (tokens, `@custom-variant dark`, base layer, scrollbars, font import). `core` and every MFE `index.css` = `@import "tailwindcss"` + `@import` of the theme + own `@source` lines. No MFE defines tokens. |
+| D1 | **One theme source**: `packages/ui-components/src/theme/theme.css` (tokens, `@custom-variant dark`, base layer, scrollbars, font import). `core` and every MFE `index.css` = `@import "tailwindcss"` + `@import` of the theme + own `@source` lines. No MFE defines tokens. |
 | D2 | **Token tiers**: (1) *primitive* — raw OKLCH values in `:root` / `.dark` (private, prefixed `--p-*`, never used in components); (2) *semantic* — shadcn roles + Flaner additions, exposed to Tailwind via `@theme inline`; (3) *domain* — `vote-*` (and future domain sets) defined **only as aliases** of semantic tokens. |
 | D3 | **Every fill has a `-foreground`**: add `brand-foreground`, `destructive-foreground`, status foregrounds. Fixes B3. |
 | D4 | **Status roles** `success`, `warning`, `danger` (= alias of `destructive`), `info`, each with `DEFAULT` (solid fill), `-foreground` (text on fill), `-subtle` (tinted background), `-text` (AA text on background). Light/dark tuned separately. |
@@ -126,23 +128,31 @@ Semantic meaning of raw colours in use: `emerald` = success / "yes", `amber` = w
 | `surface-subtle` | `oklch(0.94 0.005 80)` | `oklch(1 0 0 / 5%)` | replaces `bg-white/5` |
 | `border` / `border-subtle` / `input` | `oklch(0.85 0.008 80)` / `oklch(0.9 0.006 80)` / `oklch(0.62 0.01 80)` | `oklch(1 0 0 / 10%)` / `oklch(1 0 0 / 5%)` / `oklch(0.52 0 0)` | `input` ≥ 3:1 vs. card and background (WCAG 1.4.11) — today 1.58 light / ≈1.9 dark |
 | `primary`, `secondary`, `muted`, `accent` (+ `-foreground`) | unchanged | unchanged | shadcn roles |
-| `brand` / `brand-foreground` | `#edad5e` / `oklch(0.16 0.01 80)` | same | ink on brand 10:1 |
+| `brand` / `brand-dark` / `brand-foreground` | `#edad5e` / `#c98d3c` / `oklch(0.16 0.01 80)` | same | ink on brand 10:1; `brand-dark` = gradient end |
 | `brand-text` | `oklch(0.52 0.12 65)` (5.2:1) | `#edad5e` (10:1) | brand-coloured text/icons |
 | `brand-subtle` | `oklch(0.795 0.12 70 / 15%)` | same | tinted backgrounds |
-| `success` / `warning` / `danger` / `info` (solid) | L≈0.50, C 0.14, hue 155 / 65 / 20 / 240 | L≈0.75, same hues | fills (badges, active vote) |
+| `success` / `warning` / `danger` / `info` (solid) | `oklch(0.52 0.15 155)` / `oklch(0.53 0.15 60)` / `oklch(0.52 0.19 25)` / `oklch(0.52 0.15 245)` | `oklch(0.75 0.16 155)` / `oklch(0.78 0.15 70)` / `oklch(0.7 0.19 22)` / `oklch(0.75 0.13 240)` | fills (badges, active vote) |
 | `*-foreground` | white (≥ 5:1) | ink (≥ 8:1) | text on solid |
 | `*-text` | same as solid (≥ 5:1 on bg) | same as solid (≥ 8:1) | status text on background |
 | `*-subtle` | solid / 12% | solid / 15% | tinted backgrounds |
+| `surface-hover` / `surface-strong` | `oklch(0.91 0.006 80)` / `oklch(0.87 0.008 80)` | white / 10% / 15% | hover, pressed, tracks |
+| `surface-inverse` (+ `-foreground`) | near-black | near-white | tooltips |
+| `on-media` / `scrim` | white / black | same | text on photos, user-chosen colours and slot pills / modal backdrops (`bg-scrim/10`) |
+| `medal-gold|silver|bronze` | AA text colours | AA text colours | domain tier (ranking) |
 | `destructive` | alias of `danger` | alias of `danger` | shadcn compatibility |
-| `vote-yes|maybe|no` (+ `-foreground`, `-subtle`, `-text`, `-border`) | alias of `success` / `warning` / `danger` | alias | domain tier; `-hover` dropped (use `/90`) |
+| `vote-yes|maybe|no` (+ `-foreground`, `-subtle`, `-text`, `-border`) | alias of `success` / `warning` / `danger` | alias | domain tier; `-hover` dropped (use `/90`), `-tint` renamed `-subtle` |
 | `ring` | `oklch(0.52 0.12 65)` | `#edad5e` | focus, ≥ 3:1 |
 | `chart-1..8`, `chart-positive|negative` | see D14 | see D14 | data-viz |
 
-Exact values are verified by a contrast unit test (`theme.spec.ts`) that parses `theme.css` and asserts the pairs in §2.3 reach AA.
+Exact values are verified by `packages/ui-components/src/theme/theme.spec.ts`, which parses `theme.css` and asserts AA for text pairs (4.5:1) and graphics / focus / inputs / charts (3:1) in both themes (64 checks).
+
+**Forced-dark surfaces:** an element that is always dark regardless of the theme (calendar slot pills mixed from the event colour) carries the `dark` class, so every token inside resolves to its dark value.
 
 ### 4.2 Typography
 | Token | Size / line-height | Use |
 |---|---|---|
+| `text-5xs` | 8px / 10px | dense calendar grid only |
+| `text-4xs` | 9px / 12px | dense grids (availability grid, slot badges) only |
 | `text-3xs` | 10px / 14px | counters, calendar micro-labels |
 | `text-2xs` | 11px / 16px | meta, captions, badges |
 | `text-xs` | 12px / 16px | helper text |
@@ -151,7 +161,14 @@ Exact values are verified by a contrast unit test (`theme.spec.ts`) that parses 
 | `text-lg`…`text-3xl` | Tailwind | headings (`PageHeader` = `text-2xl sm:text-3xl`, section = `text-lg`) |
 
 ### 4.3 Other scales
-Spacing — Tailwind 4px scale. Radius — D9. Elevation — D10. Motion — D11. Breakpoints — D12. Z-index — D13.
+Spacing — Tailwind 4px scale. Radius — D9 (`rounded-[3px]` → `rounded-xs`).
+
+| Scale | Tokens |
+|---|---|
+| Elevation | `shadow-raised` (cards), `shadow-overlay` (popovers), `shadow-modal` (dialogs), `shadow-edge` (sticky grid column), `shadow-drawer` (side panel), `shadow-glow-brand` / `-glow-warning` / `-glow-danger` / `-dot-warning` (highlights); Tailwind `shadow-xs…2xl` stay allowed |
+| Motion | `duration-150` (hover, toggles), `duration-200` (popovers, tabs), `duration-300` (sheets, modals); `ease-standard`, `ease-emphasized`; global `prefers-reduced-motion` rule |
+| Breakpoints | Tailwind `sm` / `md` / `lg` + `xs` 360px, `desktop` 1080px, `split` 1200px, `calendar` 1284px, `wide` 1440px |
+| Z-index | Tailwind numeric scale: `z-0`, `z-1`, `z-10`, `z-20`, `z-40`, `z-50`, `z-70` (popover over popover), `z-100` (slot hover toolbar) |
 
 ---
 
@@ -194,9 +211,20 @@ Existing: `Tabs`, `Toaster`, `Tooltip`, `Sheet`, `Dialog` stay; their usage rule
 6. Update skills `component-styling`, `shadcn-ui-components`, `frontend-design` (token rules, new components, ban list).
 7. Testing: unit (`npm test`), `npm run typecheck`, lint, `npm run e2e`; Playwright screenshot tests of key views (home, friends, groups, scheduler, splits, spooler, settings) × light/dark × mobile/desktop; manual visual pass confirmed by the user.
 
+Status: all steps done in PR1. Adopted in views: `PageHeader` (Friends, Groups, MFE tiles, Spooler), `EmptyState` (scheduler, MFE tiles), `Badge` (invitation / request / notification counts). Wider adoption of `Card` / `ListItem` / `Skeleton` happens when those views are next touched.
+
 **PR2 (follow-up):** Storybook catalogue for `ui-components` (stories for every component, light/dark toggle, a11y addon).
 
 ---
 
-## 8. Changelog
+## 8. Deviations from the decision list
+- **D7** — two extra micro sizes `text-4xs` (9px) / `text-5xs` (8px) for dense grids; banning them would have broken calendar cell heights.
+- **D11** — durations use Tailwind's numeric `duration-150/200/300` (v4 has no duration theme namespace); only easing is tokenised.
+- **D12** — breakpoints keep today's values (`desktop` 1080, `split` 1200, `calendar` 1284, `wide` 1440, `xs` 360) instead of collapsing them to two, to avoid layout regressions.
+- **D13** — no named z-index layers (v4 has no z-index theme namespace); arbitrary `z-[N]` became the numeric scale.
+- **D5** — `brand-dark` kept (gradient end); `brand-light` removed.
+- **D9** — `rounded-[4px]` stays in the stock shadcn checkbox (primitives keep their sizing).
+
+## 9. Changelog
 - 2026-11-07 — initial research, audit and decision list (#61).
+- 2026-11-07 — implemented: theme source, semantic tokens, migration of all packages, new components, `lint:tokens` in CI, contrast spec, skills updated (#61).

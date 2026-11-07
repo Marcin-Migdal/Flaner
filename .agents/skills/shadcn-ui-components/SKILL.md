@@ -5,7 +5,24 @@ description: Standards for implementing shadcn/ui components correctly in this p
 
 # Shadcn UI Components — Project Standards
 
-This project uses shadcn/ui with a **dark zinc theme** (`zinc-950` background). The default shadcn component output is often too compact or uses incorrect default sizes for this design. Always apply the corrections below when adding or modifying shadcn components.
+This project uses shadcn/ui with a light and a dark theme driven by the semantic tokens in `packages/ui-components/src/theme/theme.css` (see `component-styling` §0 and `.agents/docs/design-system.md`). The default shadcn component output is often too compact or uses incorrect default sizes for this design. Always apply the corrections below when adding or modifying shadcn components, and replace any raw palette colour (`zinc-*`, `white`, `black`) the CLI generates with a semantic token.
+
+---
+
+## Design-system components (use before building your own)
+
+| Need | Component (`@flaner/ui-components`) |
+|---|---|
+| Surface / panel | `Card` (+ `CardHeader`, `CardTitle`, `CardDescription`, `CardAction`, `CardContent`, `CardFooter`); `variant` `default` / `subtle` / `interactive`, `padding` `none` / `sm` / `md` |
+| View title | `PageHeader` (`title`, `description`, `icon`, `actions`, `back`, `as`) |
+| Nothing to show | `EmptyState` (`icon`, `title`, `description`, `action`, `variant` `plain` / `card`) |
+| Row in a list | `ListItem` (`leading`, `title`, `description`, `trailing`, `interactive`, `asChild`) |
+| Loading placeholder | `Skeleton` (same size as the content it replaces) |
+| Status / counter | `Badge` (`variant` `neutral` / `outline` / `brand` / `success` / `warning` / `danger` / `info` / `solid` / `solid-danger`, `shape` `pill` / `tag` / `count`) |
+| Multi-step flow | `Stepper` (`steps`, `currentStep`) |
+| Chart frame + legend | `ChartContainer` (`title`, `legend` with `chart-*` colours; the chart renders in `children`) |
+
+Sheet vs. modal: `Sheet` for browsing/managing a collection or secondary context; `Dialog` for a short focused task; destructive confirmation = `ConfirmationPopup`.
 
 ---
 
@@ -90,7 +107,7 @@ All shadcn components live in **`packages/ui-components/src/components/`** and a
 ## Adding a new shadcn component
 
 1. `cd packages/ui-components`
-2. `npx shadcn add <component-name>`
+2. `npx shadcn add <component-name>` (if the CLI cannot resolve the `utils` alias in the monorepo, copy the component from the shadcn docs by hand and import `cn` from `@flaner/shared/utils`)
 3. After adding, **check** the generated component for compact defaults and apply the corrections above if needed
 4. Export it from `packages/ui-components/src/index.ts`
 5. Import in consuming packages via `@flaner/ui-components`

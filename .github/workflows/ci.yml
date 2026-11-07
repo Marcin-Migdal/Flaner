@@ -27,6 +27,9 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
+      # Design tokens: no raw colours / arbitrary sizes outside theme.css (#61).
+      - run: npm run lint:tokens
+      - run: node --test scripts/check-design-tokens.test.mjs
       # Only projects affected by the PR; build catches failures before Vercel does.
       - run: npx nx affected -t typecheck lint test build --base=${{ github.event.pull_request.base.sha }} --head=HEAD
 

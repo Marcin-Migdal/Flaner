@@ -10,6 +10,7 @@
     "typecheck": "nx run-many -t typecheck",
     "lint": "nx run-many -t lint",
     "lint:fix": "nx run-many -t lint -- --fix",
+    "lint:tokens": "node scripts/check-design-tokens.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage && node scripts/generate-monorepo-coverage.js",
