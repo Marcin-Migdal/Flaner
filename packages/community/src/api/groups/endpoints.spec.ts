@@ -75,7 +75,6 @@ vi.mock("firebase/firestore", () => ({
   where: vi.fn((...args: unknown[]) => args),
   limit: vi.fn((n: number) => ({ limit: n })),
   startAfter: vi.fn((cursor: unknown) => ({ cursor })),
-  serverTimestamp: vi.fn(() => 123456789),
   onSnapshot: (...args: unknown[]) => mockOnSnapshot(...args),
   writeBatch: vi.fn(() => ({
     set: mockBatchSet,

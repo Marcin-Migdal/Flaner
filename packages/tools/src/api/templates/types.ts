@@ -1,5 +1,3 @@
-import type { Timestamp } from "firebase/firestore";
-
 export type FilamentTemplate = {
   id: string;
   userId: string;
@@ -8,7 +6,7 @@ export type FilamentTemplate = {
   colorName: string;
   colorHex: string;
   defaultWeight: number;
-  createdAt?: Timestamp | null;
+  createdAt?: number | null;
 };
 
 export type TemplateInput = Omit<FilamentTemplate, "id" | "userId" | "createdAt">;

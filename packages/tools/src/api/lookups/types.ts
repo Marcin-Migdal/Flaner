@@ -1,10 +1,8 @@
-import type { Timestamp } from "firebase/firestore";
-
 export type LookupMaterial = {
   id: string;
   userId: string;
   name: string;
-  createdAt?: Timestamp;
+  createdAt?: number;
 };
 
 export type LookupType = {
@@ -12,7 +10,7 @@ export type LookupType = {
   userId: string;
   materialName: string;
   name: string;
-  createdAt?: Timestamp;
+  createdAt?: number;
 };
 
 export type LookupColor = {
@@ -22,7 +20,7 @@ export type LookupColor = {
   typeName: string;
   name: string;
   hex: string;
-  createdAt?: Timestamp;
+  createdAt?: number;
 };
 
 export type AddLookupMaterialInput = {

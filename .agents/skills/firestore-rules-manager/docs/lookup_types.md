@@ -9,7 +9,7 @@ Type options per material (e.g. Silk, Matte). Child of `lookup_materials` (by `m
 | `userId` | string | ✓ | owner |
 | `materialName` | string | ✓ | parent material name |
 | `name` | string | ✓ | e.g. Silk, Matte, Galaxy; unique per user + material |
-| `createdAt` | Timestamp | ✓ | `serverTimestamp()` |
+| `createdAt` | number (ms) | ✓ | |
 
 ## Write flows
 Endpoints: `packages/tools/src/api/lookups/endpoints.ts`.

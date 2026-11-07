@@ -8,7 +8,7 @@ Material options created from the Spooler selects (e.g. PLA, PETG). Parent of `l
 | `id` | string | ✓ | == doc id |
 | `userId` | string | ✓ | owner |
 | `name` | string | ✓ | e.g. PLA, PETG, ABS, Nylon; unique per user |
-| `createdAt` | Timestamp | ✓ | `serverTimestamp()` |
+| `createdAt` | number (ms) | ✓ | |
 
 ## Write flows
 Endpoints: `packages/tools/src/api/lookups/endpoints.ts`.

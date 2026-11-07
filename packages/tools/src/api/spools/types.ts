@@ -1,5 +1,3 @@
-import type { Timestamp } from "firebase/firestore";
-
 export type FilamentSpool = {
   id: string;
   userId: string;
@@ -8,8 +6,8 @@ export type FilamentSpool = {
   initialWeight: number;
   currentWeight: number;
   isFinished: boolean;
-  finishedAt?: Timestamp | null;
-  createdAt?: Timestamp | null;
+  finishedAt?: number | null;
+  createdAt?: number | null;
   material: string;
   type: string;
   colorName: string;
@@ -26,7 +24,7 @@ export type SpoolInput = {
 export type SpoolPrint = {
   id: string;
   usedWeight: number;
-  createdAt: Timestamp | null;
+  createdAt: number | null;
 };
 
 export type RecordUsageInput = {

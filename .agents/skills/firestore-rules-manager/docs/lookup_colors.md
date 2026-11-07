@@ -10,7 +10,7 @@ Colour options per material + type. Child of `lookup_types` (by `materialName` +
 | `materialName`, `typeName` | string | ✓ | parent names |
 | `name` | string | ✓ | e.g. Lime Green, Galaxy Black |
 | `hex` | string | ✓ | e.g. #7c3aed |
-| `createdAt` | Timestamp | ✓ | `serverTimestamp()` |
+| `createdAt` | number (ms) | ✓ | |
 
 ## Write flows
 Endpoints: `packages/tools/src/api/lookups/endpoints.ts`.

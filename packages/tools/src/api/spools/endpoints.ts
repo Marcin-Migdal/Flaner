@@ -7,13 +7,10 @@ import {
   setDoc,
   updateDoc,
   doc,
-  serverTimestamp,
   orderBy,
   limit,
   runTransaction,
   writeBatch,
-  type FieldValue,
-  type Timestamp,
 } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
 import { firestoreConverter } from "@flaner/shared/utils";
@@ -30,9 +27,9 @@ export const spoolRefs = {
 };
 
 // Keep the original finish date while the spool stays finished; stamp it only on the transition.
-const resolveFinishedAt = (current: FilamentSpool, isFinished: boolean): Timestamp | FieldValue | null => {
+const resolveFinishedAt = (current: FilamentSpool, isFinished: boolean): number | null => {
   if (!isFinished) return null;
-  return current.isFinished && current.finishedAt ? current.finishedAt : serverTimestamp();
+  return current.isFinished && current.finishedAt ? current.finishedAt : Date.now();
 };
 
 export const fetchSpools = async (userId: string): Promise<FilamentSpool[]> => {
@@ -41,9 +38,7 @@ export const fetchSpools = async (userId: string): Promise<FilamentSpool[]> => {
   const items = snap.docs.map((d) => ({ ...d.data(), id: d.id }));
 
   return items.sort((a, b) => {
-    const aSec = a.createdAt?.seconds ?? 0;
-    const bSec = b.createdAt?.seconds ?? 0;
-    return bSec - aSec;
+    return (b.createdAt ?? 0) - (a.createdAt ?? 0);
   });
 };
 
@@ -62,8 +57,8 @@ export const addSpool = async (
     initialWeight: data.initialWeight,
     currentWeight: data.currentWeight,
     isFinished: data.currentWeight <= 0,
-    finishedAt: data.currentWeight <= 0 ? serverTimestamp() : null,
-    createdAt: serverTimestamp(),
+    finishedAt: data.currentWeight <= 0 ? Date.now() : null,
+    createdAt: Date.now(),
     material: selectedTemplate?.material ?? "Unknown",
     type: selectedTemplate?.type ?? "Custom",
     colorName: selectedTemplate?.colorName ?? "Default",
@@ -126,7 +121,7 @@ export const recordSpoolUsage = async (
     transaction.set(newPrintRef, {
       id: newPrintRef.id,
       usedWeight: parseFloat(usage.toFixed(2)),
-      createdAt: serverTimestamp(),
+      createdAt: Date.now(),
     });
 
     return {
@@ -144,9 +139,7 @@ export const fetchSpoolPrints = async (spoolId: string): Promise<SpoolPrint[]> =
   const items = snap.docs.map((d) => ({ ...d.data(), id: d.id }));
 
   return items.sort((a, b) => {
-    const aSec = a.createdAt?.seconds ?? 0;
-    const bSec = b.createdAt?.seconds ?? 0;
-    return bSec - aSec;
+    return (b.createdAt ?? 0) - (a.createdAt ?? 0);
   });
 };
 
@@ -195,6 +188,6 @@ export const markSpoolAsFinished = async (spoolId: string): Promise<void> => {
   await updateDoc(spoolRef, {
     currentWeight: 0,
     isFinished: true,
-    finishedAt: serverTimestamp(),
+    finishedAt: Date.now(),
   });
 };

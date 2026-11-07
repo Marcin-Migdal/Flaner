@@ -39,7 +39,6 @@ vi.mock("firebase/firestore", () => ({
   query: vi.fn((...args: unknown[]) => args),
   where: vi.fn((...args: unknown[]) => args),
   limit: vi.fn((n: number) => ({ limit: n })),
-  serverTimestamp: vi.fn(() => 123456789),
   setDoc: (...args: unknown[]) => mockSetDoc(...args),
   deleteDoc: (...args: unknown[]) => mockDeleteDoc(...args),
   updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),

@@ -9,7 +9,6 @@ import {
   setDoc,
   deleteDoc,
   updateDoc,
-  serverTimestamp,
   writeBatch,
 } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
@@ -77,7 +76,7 @@ export const addLookupMaterial = async (
     id: newDocRef.id,
     userId,
     name: trimmedName,
-    createdAt: serverTimestamp(),
+    createdAt: Date.now(),
   });
   return newDocRef.id;
 };
@@ -107,7 +106,7 @@ export const addLookupType = async (
     userId,
     materialName: trimmedMaterial,
     name: trimmedName,
-    createdAt: serverTimestamp(),
+    createdAt: Date.now(),
   });
   return newDocRef.id;
 };
@@ -147,7 +146,7 @@ export const addLookupColor = async (
     typeName: trimmedType,
     name: trimmedName,
     hex,
-    createdAt: serverTimestamp(),
+    createdAt: Date.now(),
   });
   return newDocRef.id;
 };

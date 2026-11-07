@@ -21,7 +21,7 @@ Community groups (MFE `community`). Public groups are discoverable by name; priv
 | `avatarUrl` | string \| null | – | Cloudinary URL |
 | `rolePermissions` | map<role, map<permission, bool>> | – | overrides of the defaults |
 | `createdAt` | number (ms) | ✓ | |
-| `updatedAt` | number (ms) \| Timestamp | ✓ | create writes ms, updates write `serverTimestamp()` |
+| `updatedAt` | number (ms) | ✓ | |
 
 ## Write flows
 All endpoints: `packages/community/src/api/groups/endpoints.ts`.
