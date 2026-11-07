@@ -66,10 +66,10 @@ export const AvailabilityGridHeader = ({
           >
             <span className="text-xs font-bold text-foreground truncate max-w-full">{dateDisplay}</span>
 
-            <div className="flex items-center justify-center gap-1 text-[10px] sm:text-[11px] font-semibold text-muted-foreground">
-              {isTop && !isFinalized ? <Trophy className="w-3 h-3 text-amber-500 shrink-0" /> : null}
-              <span className="text-emerald-500 font-bold">✓{stat.yesCount}</span>
-              {stat.maybeCount > 0 && <span className="text-amber-500">?{stat.maybeCount}</span>}
+            <div className="flex items-center justify-center gap-1 text-3xs sm:text-2xs font-semibold text-muted-foreground">
+              {isTop && !isFinalized ? <Trophy className="w-3 h-3 text-warning-text shrink-0" /> : null}
+              <span className="text-success-text font-bold">✓{stat.yesCount}</span>
+              {stat.maybeCount > 0 && <span className="text-warning-text">?{stat.maybeCount}</span>}
               <span className="text-primary font-bold">({stat.matchPercentage}%)</span>
             </div>
           </div>

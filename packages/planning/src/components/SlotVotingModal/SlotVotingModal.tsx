@@ -136,7 +136,7 @@ export function SlotVotingModal({
                 {isVoting && currentUserVote !== "maybe" ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <span className="font-extrabold text-[13px] leading-none select-none">?</span>
+                  <span className="font-extrabold text-sm leading-none select-none">?</span>
                 )}
                 {t("voting.maybe")}
               </div>
@@ -183,7 +183,7 @@ export function SlotVotingModal({
                       {p.avatarUrl ? (
                         <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[9px] font-bold text-vote-yes-text">
+                        <div className="w-full h-full flex items-center justify-center text-4xs font-bold text-vote-yes-text">
                           {p.name.charAt(0).toUpperCase()}
                         </div>
                       )}
@@ -199,7 +199,7 @@ export function SlotVotingModal({
           {maybeParticipants.length > 0 && (
             <div className="flex flex-col gap-1.5">
               <span className={slotVotingSectionHeaderVariants({ vote: "maybe" })}>
-                <span className="font-extrabold text-[12px] leading-none select-none">?</span>
+                <span className="font-extrabold text-xs leading-none select-none">?</span>
                 {t("voting.maybe")} ({maybeParticipants.length})
               </span>
               <div className="flex flex-wrap gap-2">
@@ -212,7 +212,7 @@ export function SlotVotingModal({
                       {p.avatarUrl ? (
                         <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[9px] font-bold text-vote-maybe-text">
+                        <div className="w-full h-full flex items-center justify-center text-4xs font-bold text-vote-maybe-text">
                           {p.name.charAt(0).toUpperCase()}
                         </div>
                       )}
@@ -241,7 +241,7 @@ export function SlotVotingModal({
                       {p.avatarUrl ? (
                         <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[9px] font-bold text-vote-no-text">
+                        <div className="w-full h-full flex items-center justify-center text-4xs font-bold text-vote-no-text">
                           {p.name.charAt(0).toUpperCase()}
                         </div>
                       )}
@@ -269,7 +269,7 @@ export function SlotVotingModal({
                       {p.avatarUrl ? (
                         <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[9px] font-bold">
+                        <div className="w-full h-full flex items-center justify-center text-4xs font-bold">
                           {p.name.charAt(0).toUpperCase()}
                         </div>
                       )}

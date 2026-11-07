@@ -32,27 +32,27 @@ export const FinalizedDateCard = ({ event, isOwner, onReopen }: FinalizedDateCar
   const yesVotes = Object.values(votes).filter((v) => v === "yes").length;
 
   return (
-    <div className="w-full relative overflow-hidden rounded-xl border border-emerald-500/30 bg-emerald-500/10 dark:bg-emerald-950/20 p-3.5 backdrop-blur-md shadow-md flex flex-col gap-2 transition-all">
+    <div className="w-full relative overflow-hidden rounded-xl border border-success/30 bg-success/10 p-3.5 backdrop-blur-md shadow-md flex flex-col gap-2 transition-all">
       <div className="flex items-center justify-between gap-2">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-success/20 text-success-text border border-success/30">
           <CheckCircle className="w-3.5 h-3.5" />
           <span>{t("finalizedCard.status")}</span>
         </div>
 
-        <div className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+        <div className="flex items-center gap-1 text-xs font-medium text-success-text">
           <Users className="w-3.5 h-3.5" />
           <span>{yesVotes}/{event.participants.length}</span>
         </div>
       </div>
 
       <div className="flex items-center gap-2 mt-0.5">
-        <Calendar className="w-4 h-4 text-emerald-500 shrink-0" />
+        <Calendar className="w-4 h-4 text-success-text shrink-0" />
         <span className="text-sm sm:text-base font-bold text-foreground tracking-tight">
           {dateDisplay}
         </span>
       </div>
 
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-2xs text-muted-foreground">
         {t("finalizedCard.lockedNotice")}
       </p>
 
@@ -61,7 +61,7 @@ export const FinalizedDateCard = ({ event, isOwner, onReopen }: FinalizedDateCar
           type="button"
           variant="outline"
           size="sm"
-          className="mt-1 w-full border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold text-xs gap-1.5 cursor-pointer"
+          className="mt-1 w-full border-success/30 bg-success/10 hover:bg-success/20 text-success-text font-semibold text-xs gap-1.5 cursor-pointer"
           onClick={onReopen}
         >
           <RotateCcw className="w-3.5 h-3.5" />

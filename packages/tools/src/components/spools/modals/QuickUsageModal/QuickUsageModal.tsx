@@ -103,7 +103,7 @@ export const QuickUsageModal: React.FC<QuickUsageModalProps> = ({
                   placeholder={t("spooler.spools.modelWeightPlaceholder")}
                   className="w-full h-10 rounded-xl border border-input bg-background pl-4 pr-36 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-brand select-none pointer-events-none">
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-brand-text select-none pointer-events-none">
                   {t("spooler.spools.startWasteBadge", { weight: startupWaste })}
                 </div>
               </div>
@@ -141,7 +141,7 @@ export const QuickUsageModal: React.FC<QuickUsageModalProps> = ({
               <div className="h-px bg-border my-1" />
               <div className="flex justify-between font-semibold text-foreground">
                 <span>{t("spooler.spools.totalSubtracted")}:</span>
-                <span className="text-brand font-bold">{totalWeight} g</span>
+                <span className="text-brand-text font-bold">{totalWeight} g</span>
               </div>
             </div>
           )}

@@ -9,32 +9,32 @@ import { AppNotification, NotificationType } from "../../../api/notifications";
 const getIcon = (notificationType: NotificationType) => {
   switch (notificationType) {
     case "friend_request":
-      return <UserPlus className="size-4 text-blue-500" />;
+      return <UserPlus className="size-4 text-info-text" />;
     case "friend_request_accepted":
     case "group_invitation_accepted":
     case "group_request_accepted":
-      return <CheckCircle className="size-4 text-green-500" />;
+      return <CheckCircle className="size-4 text-success-text" />;
     case "friend_request_rejected":
     case "group_invitation_rejected":
     case "group_request_rejected":
-      return <XCircle className="size-4 text-red-500" />;
+      return <XCircle className="size-4 text-danger-text" />;
     case "group_ownership_transferred":
-      return <Crown className="size-4 text-amber-500" />;
+      return <Crown className="size-4 text-warning-text" />;
     case "group_deleted":
-      return <Trash2 className="size-4 text-red-500" />;
+      return <Trash2 className="size-4 text-danger-text" />;
     case "group_invitation":
-      return <Users className="size-4 text-brand" />;
+      return <Users className="size-4 text-brand-text" />;
     case "event_invitation":
     case "event_reopened":
-      return <Calendar className="size-4 text-brand" />;
+      return <Calendar className="size-4 text-brand-text" />;
     case "split_group_invitation":
-      return <Wallet className="size-4 text-brand" />;
+      return <Wallet className="size-4 text-brand-text" />;
     case "split_settlement_pending":
-      return <HandCoins className="size-4 text-amber-500" />;
+      return <HandCoins className="size-4 text-warning-text" />;
     case "system_alert":
-      return <AlertCircle className="size-4 text-amber-500" />;
+      return <AlertCircle className="size-4 text-warning-text" />;
     default:
-      return <Bell className="size-4 text-brand" />;
+      return <Bell className="size-4 text-brand-text" />;
   }
 };
 

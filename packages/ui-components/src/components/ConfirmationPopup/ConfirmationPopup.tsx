@@ -80,7 +80,7 @@ export function ConfirmationPopup({
             type="button"
             variant={buttonVariant}
             className={cn(
-              isWarning && "bg-amber-600 hover:bg-amber-500 text-white font-semibold shadow-md shadow-amber-600/20 border-transparent",
+              isWarning && "bg-warning hover:bg-warning/90 text-warning-foreground font-semibold shadow-md shadow-warning/20 border-transparent",
               confirmClassName,
             )}
             onClick={(e) => {

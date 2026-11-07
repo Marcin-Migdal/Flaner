@@ -144,11 +144,11 @@ export const HeroMetricsWidget = ({ defaultCurrency, netBalances, totalSpent, de
             tone={netTone}
             icon={Wallet}
             className={cn(
-              "max-[1079px]:col-start-1 max-[1079px]:row-start-1",
+              "max-desktop:col-start-1 max-desktop:row-start-1",
               activeIndex === 0
-                ? "max-[1079px]:opacity-100 max-[1079px]:z-1"
-                : "max-[1079px]:opacity-0 max-[1079px]:pointer-events-none max-[1079px]:z-0",
-              "min-[1080px]:col-span-2 min-[1438px]:col-span-1 min-[1080px]:opacity-100 min-[1080px]:pointer-events-auto",
+                ? "max-desktop:opacity-100 max-desktop:z-1"
+                : "max-desktop:opacity-0 max-desktop:pointer-events-none max-desktop:z-0",
+              "desktop:col-span-2 wide:col-span-1 desktop:opacity-100 desktop:pointer-events-auto",
             )}
           />
           <MetricCard
@@ -158,11 +158,11 @@ export const HeroMetricsWidget = ({ defaultCurrency, netBalances, totalSpent, de
             tone={debtSummary.youOweCount > 0 ? "negative" : "neutral"}
             icon={ArrowUpRight}
             className={cn(
-              "max-[1079px]:col-start-1 max-[1079px]:row-start-1",
+              "max-desktop:col-start-1 max-desktop:row-start-1",
               activeIndex === 1
-                ? "max-[1079px]:opacity-100 max-[1079px]:z-1"
-                : "max-[1079px]:opacity-0 max-[1079px]:pointer-events-none max-[1079px]:z-0",
-              "min-[1080px]:col-span-1 min-[1438px]:col-span-1 min-[1080px]:opacity-100 min-[1080px]:pointer-events-auto",
+                ? "max-desktop:opacity-100 max-desktop:z-1"
+                : "max-desktop:opacity-0 max-desktop:pointer-events-none max-desktop:z-0",
+              "desktop:col-span-1 wide:col-span-1 desktop:opacity-100 desktop:pointer-events-auto",
             )}
           />
           <MetricCard
@@ -172,11 +172,11 @@ export const HeroMetricsWidget = ({ defaultCurrency, netBalances, totalSpent, de
             tone={debtSummary.owedToYouCount > 0 ? "positive" : "neutral"}
             icon={ArrowDownLeft}
             className={cn(
-              "max-[1079px]:col-start-1 max-[1079px]:row-start-1",
+              "max-desktop:col-start-1 max-desktop:row-start-1",
               activeIndex === 2
-                ? "max-[1079px]:opacity-100 max-[1079px]:z-1"
-                : "max-[1079px]:opacity-0 max-[1079px]:pointer-events-none max-[1079px]:z-0",
-              "min-[1080px]:col-span-1 min-[1438px]:col-span-1 min-[1080px]:opacity-100 min-[1080px]:pointer-events-auto",
+                ? "max-desktop:opacity-100 max-desktop:z-1"
+                : "max-desktop:opacity-0 max-desktop:pointer-events-none max-desktop:z-0",
+              "desktop:col-span-1 wide:col-span-1 desktop:opacity-100 desktop:pointer-events-auto",
             )}
           />
         </section>

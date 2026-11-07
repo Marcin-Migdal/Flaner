@@ -347,10 +347,10 @@ export const CustomDateSlotsPopover = ({
       type="button"
       variant="outline"
       size="sm"
-      className="h-7 sm:h-9 px-2 sm:px-3 text-[11px] sm:text-xs gap-1.5 font-medium border-border/80 hover:bg-white/5 cursor-pointer"
+      className="h-7 sm:h-9 px-2 sm:px-3 text-2xs sm:text-xs gap-1.5 font-medium border-border/80 hover:bg-surface-subtle cursor-pointer"
       title={t("customSlots.triggerTooltip")}
     >
-      <Layers className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-brand" />
+      <Layers className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-brand-text" />
       <span className="hidden sm:inline">{t("customSlots.triggerButton")}</span>
     </Button>
   );

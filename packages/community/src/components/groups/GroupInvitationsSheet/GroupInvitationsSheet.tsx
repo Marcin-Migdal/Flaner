@@ -61,7 +61,7 @@ export function GroupInvitationsSheet() {
         >
           <Mail className="size-5" />
           {invitations.length > 0 && (
-            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold h-5 min-w-5 px-1 flex items-center justify-center rounded-full ring-2 ring-background animate-pulse">
+            <div className="absolute -top-1 -right-1 bg-danger text-danger-foreground text-3xs font-bold h-5 min-w-5 px-1 flex items-center justify-center rounded-full ring-2 ring-background animate-pulse">
               {invitations.length > 99 ? "99+" : invitations.length}
             </div>
           )}
@@ -78,7 +78,7 @@ export function GroupInvitationsSheet() {
         <div className="flex-1 overflow-y-auto space-y-4 py-4 pr-1 scrollbar-none">
           {isLoading ? (
             <div className="flex justify-center items-center py-8 text-muted-foreground gap-2">
-              <Loader2 className="size-4 animate-spin text-brand" />
+              <Loader2 className="size-4 animate-spin text-brand-text" />
               <span>{t("groupInvitations.loading")}</span>
             </div>
           ) : (
@@ -95,7 +95,7 @@ export function GroupInvitationsSheet() {
                     <div className="flex items-center gap-3">
                       <Avatar className="size-12 border border-border shrink-0">
                         {inv.groupAvatarUrl && <AvatarImage src={inv.groupAvatarUrl} alt={inv.groupName} />}
-                        <AvatarFallback className="bg-brand/20 text-brand font-bold">
+                        <AvatarFallback className="bg-brand/20 text-brand-text font-bold">
                           {inv.groupName.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>

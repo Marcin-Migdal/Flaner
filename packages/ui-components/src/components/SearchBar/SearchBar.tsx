@@ -171,7 +171,7 @@ export function SearchBar<T>({
       >
         {isLoading && results.length === 0 ? (
           <div className="flex items-center justify-center py-6 text-muted-foreground">
-            <Loader2 className="size-6 animate-spin text-brand" />
+            <Loader2 className="size-6 animate-spin text-brand-text" />
           </div>
         ) : results.length > 0 ? (
           <ul
@@ -211,8 +211,8 @@ export function SearchBar<T>({
                     onShowMore?.();
                   }}
                   className={cn(
-                    "w-full cursor-pointer px-4 py-2 text-center text-sm font-medium text-brand transition-colors rounded-lg",
-                    selectedIndex === results.length ? "bg-accent text-brand" : "hover:bg-accent/50",
+                    "w-full cursor-pointer px-4 py-2 text-center text-sm font-medium text-brand-text transition-colors rounded-lg",
+                    selectedIndex === results.length ? "bg-accent text-brand-text" : "hover:bg-accent/50",
                   )}
                 >
                   {isFetchingNextPage ? <Loader2 className="size-4 animate-spin mx-auto" /> : t(showMoreText)}

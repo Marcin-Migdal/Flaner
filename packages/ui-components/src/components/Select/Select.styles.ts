@@ -5,7 +5,7 @@ export const selectControlVariants = cva("border transition-all", {
     variant: {
       default: "rounded-lg bg-transparent dark:bg-input/30 min-h-[40px] text-sm duration-200 border-input hover:border-accent",
       glass:
-        "rounded-xl backdrop-blur-md shadow-sm min-h-[36px] md:min-h-[44px] text-xs md:text-sm duration-300 border-white/5 bg-white/[0.04] hover:bg-white/[0.06] hover:border-white/10",
+        "rounded-xl backdrop-blur-md shadow-sm min-h-[36px] md:min-h-[44px] text-xs md:text-sm duration-300 border-border-subtle bg-surface-subtle hover:bg-surface-hover hover:border-border",
     },
     state: {
       idle: "cursor-pointer",
@@ -21,10 +21,10 @@ export const selectControlVariants = cva("border transition-all", {
     {
       variant: "glass",
       state: "focused",
-      class: "border-brand/40 bg-white/[0.08] shadow-[0_0_15px_-3px_rgba(255,165,0,0.15)]",
+      class: "border-brand/40 bg-surface-hover shadow-glow-brand",
     },
     { variant: "glass", state: "error", class: "border-destructive bg-destructive/10" },
-    { variant: "glass", state: "disabled", class: "opacity-40 bg-white/[0.01] border-white/5 shadow-none" },
+    { variant: "glass", state: "disabled", class: "opacity-40 bg-transparent border-border-subtle shadow-none" },
   ],
   defaultVariants: {
     variant: "default",
@@ -36,7 +36,7 @@ export const selectOptionVariants = cva("group px-3 text-sm cursor-pointer trans
   variants: {
     variant: {
       default: "py-2 duration-150 text-foreground/80 hover:text-foreground",
-      glass: "py-2.5 duration-200 rounded-xl w-full text-foreground/70 hover:text-foreground hover:bg-white/5",
+      glass: "py-2.5 duration-200 rounded-xl w-full text-foreground/70 hover:text-foreground hover:bg-surface-subtle",
     },
     state: {
       idle: "",
@@ -46,9 +46,9 @@ export const selectOptionVariants = cva("group px-3 text-sm cursor-pointer trans
   },
   compoundVariants: [
     { variant: "default", state: "focused", class: "bg-accent text-accent-foreground" },
-    { variant: "default", state: "selected", class: "bg-brand text-zinc-950 font-semibold" },
-    { variant: "glass", state: "focused", class: "bg-white/10 text-foreground" },
-    { variant: "glass", state: "selected", class: "bg-brand/15 text-brand font-bold" },
+    { variant: "default", state: "selected", class: "bg-brand text-brand-foreground font-semibold" },
+    { variant: "glass", state: "focused", class: "bg-surface-hover text-foreground" },
+    { variant: "glass", state: "selected", class: "bg-brand-subtle text-brand-text font-bold" },
   ],
   defaultVariants: {
     variant: "default",

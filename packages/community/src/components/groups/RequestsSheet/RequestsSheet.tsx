@@ -42,7 +42,7 @@ export function RequestsSheet({ groupId }: RequestsSheetProps) {
           <UserPlus className="size-3.5 sm:size-4 shrink-0" />
           <span>{t("requestsSheet.btnTitle")}</span>
           {requests.length > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 size-4.5 bg-brand text-white text-[10px] font-bold flex items-center justify-center rounded-full">
+            <span className="absolute -top-1.5 -right-1.5 size-4.5 bg-brand text-brand-foreground text-3xs font-bold flex items-center justify-center rounded-full">
               {requests.length}
             </span>
           )}
@@ -56,7 +56,7 @@ export function RequestsSheet({ groupId }: RequestsSheetProps) {
         <div className="flex-1 overflow-y-auto space-y-6 py-4 pr-1 scrollbar-none">
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground/80 flex items-center gap-2">
-              <UserPlus className="size-4 text-brand" />
+              <UserPlus className="size-4 text-brand-text" />
               {t("requestsSheet.btnTitlePending", { count: requests.length })}
             </h3>
             {isLoading ? (

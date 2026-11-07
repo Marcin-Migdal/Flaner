@@ -289,7 +289,7 @@ export const ExpenseFilterPopover = ({
                 <button
                   type="button"
                   onClick={handleClearDateFrom}
-                  className="text-[10px] text-muted-foreground/60 hover:text-foreground cursor-pointer"
+                  className="text-3xs text-muted-foreground/60 hover:text-foreground cursor-pointer"
                 >
                   {t("splits.filters.clear")}
                 </button>
@@ -311,7 +311,7 @@ export const ExpenseFilterPopover = ({
                 <button
                   type="button"
                   onClick={handleClearDateTo}
-                  className="text-[10px] text-muted-foreground/60 hover:text-foreground cursor-pointer"
+                  className="text-3xs text-muted-foreground/60 hover:text-foreground cursor-pointer"
                 >
                   {t("splits.filters.clear")}
                 </button>

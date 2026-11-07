@@ -32,7 +32,7 @@ export function RequestItem({
       <div className="flex items-center gap-3 min-w-0">
         <Avatar className="size-10 border border-border">
           {avatarUrl && <AvatarImage src={avatarUrl} alt={username} />}
-          <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-bold text-sm">
+          <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-brand-foreground font-bold text-sm">
             {getInitials(username)}
           </AvatarFallback>
         </Avatar>

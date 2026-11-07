@@ -35,7 +35,7 @@ export const TemplateOptionLabel: React.FC<TemplateOptionLabelProps> = ({
       </div>
       <div className="flex items-center gap-1.5 shrink-0">
         {isCustom && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-brand/10 text-brand border border-brand/20 font-medium shrink-0">
+          <span className="text-3xs px-1.5 py-0.5 rounded-md bg-brand/10 text-brand-text border border-brand/20 font-medium shrink-0">
             {customLabel}
           </span>
         )}
@@ -53,7 +53,7 @@ export const TemplateOptionLabel: React.FC<TemplateOptionLabelProps> = ({
               e.stopPropagation();
               onDelete();
             }}
-            className="opacity-0 group-hover:opacity-100 flex items-center justify-center size-6 rounded-md bg-zinc-950 text-vote-no hover:bg-vote-no hover:text-zinc-950 border border-white/20 shadow-xs transition-colors shrink-0 cursor-pointer"
+            className="opacity-0 group-hover:opacity-100 flex items-center justify-center size-6 rounded-md bg-card text-danger-text hover:bg-danger hover:text-danger-foreground border border-border shadow-xs transition-colors shrink-0 cursor-pointer"
           >
             <Trash2 className="size-3.5" />
           </button>

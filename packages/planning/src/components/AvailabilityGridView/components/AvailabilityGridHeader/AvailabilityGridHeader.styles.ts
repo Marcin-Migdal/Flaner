@@ -4,7 +4,7 @@ import { cva } from "@flaner/shared/utils";
  * Pierwsza, zamrożona (sticky) kolumna w wierszu nagłówka siatki
  */
 export const gridHeaderFirstColStyles =
-  "relative sticky left-0 z-20 bg-card p-2.5 sm:p-3 flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground border-r border-border/50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] overflow-hidden shrink-0";
+  "relative sticky left-0 z-20 bg-card p-2.5 sm:p-3 flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground border-r border-border/50 shadow-edge overflow-hidden shrink-0";
 
 /**
  * Komórki nagłówka poszczególnych slotów dat
@@ -14,8 +14,8 @@ export const gridHeaderCellVariants = cva(
   {
     variants: {
       highlight: {
-        winning: "bg-emerald-500/15",
-        top: "bg-amber-500/10",
+        winning: "bg-success/15",
+        top: "bg-warning/10",
         none: "",
       },
     },

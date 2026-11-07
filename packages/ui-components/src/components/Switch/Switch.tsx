@@ -38,7 +38,7 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
             {...props}
           />
           {/* Switch track and thumb */}
-          <div className="w-10 h-6 bg-zinc-200 dark:bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand dark:peer-checked:bg-brand transition-colors" />
+          <div className="w-10 h-6 bg-surface-strong peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-media after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand dark:peer-checked:bg-brand transition-colors" />
         </label>
         {error && <FieldError className="w-full">{error}</FieldError>}
       </Field>

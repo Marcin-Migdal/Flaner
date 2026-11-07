@@ -138,8 +138,8 @@ export const RankedSlotsSheet = ({
         className="w-[90vw] max-w-[90vw] data-[side=right]:w-[90vw] sm:data-[side=right]:w-full sm:max-w-[498px] 2xl:max-w-[600px] p-0 flex flex-col bg-card/95 backdrop-blur-xl border-l border-border shadow-2xl"
       >
         <SheetHeader className="p-5 pb-4 border-b border-border/40">
-          <div className="flex items-center gap-2 text-amber-500 font-semibold text-xs tracking-wider uppercase">
-            <Trophy className="w-4 h-4 text-amber-500" />
+          <div className="flex items-center gap-2 text-warning-text font-semibold text-xs tracking-wider uppercase">
+            <Trophy className="w-4 h-4 text-warning-text" />
             <span>{t("rankedSheet.eyebrow")}</span>
           </div>
           <SheetTitle className="text-xl font-bold tracking-tight text-foreground mt-2">
@@ -163,21 +163,21 @@ export const RankedSlotsSheet = ({
             let rankBadge = null;
             if (isRankOne) {
               rankBadge = (
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-500/15 text-yellow-500 border border-yellow-500/30 shrink-0">
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-medal-gold/15 text-medal-gold border border-medal-gold/30 shrink-0">
                   <Trophy className="w-3.5 h-3.5" />
                   <span>#1</span>
                 </div>
               );
             } else if (item.score > 0 && item.rank === 2) {
               rankBadge = (
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-slate-400/15 text-slate-400 border border-slate-400/30 shrink-0">
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-medal-silver/15 text-medal-silver border border-medal-silver/30 shrink-0">
                   <Medal className="w-3.5 h-3.5" />
                   <span>#2</span>
                 </div>
               );
             } else if (item.score > 0 && item.rank === 3) {
               rankBadge = (
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-700/15 text-amber-600 border border-amber-700/30 shrink-0">
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-medal-bronze/15 text-medal-bronze border border-medal-bronze/30 shrink-0">
                   <Award className="w-3.5 h-3.5" />
                   <span>#3</span>
                 </div>
@@ -221,7 +221,7 @@ export const RankedSlotsSheet = ({
                 <div className="flex flex-col gap-2 pt-1">
                   {/* YES Voters */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold bg-vote-yes-tint text-vote-yes-text border border-vote-yes-border/30">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-2xs font-bold bg-vote-yes-subtle text-vote-yes-text border border-vote-yes-border/30">
                       <Check className="w-3 h-3 stroke-[3]" />
                       <span>{item.yesVoters.length}</span>
                     </span>
@@ -236,7 +236,7 @@ export const RankedSlotsSheet = ({
                             tooltip={profile?.name}
                           >
                             <AvatarImage src={profile?.avatarUrl} />
-                            <AvatarFallback className="text-[9px]">
+                            <AvatarFallback className="text-4xs">
                               {profile?.name?.[0]?.toUpperCase() || "?"}
                             </AvatarFallback>
                           </Avatar>
@@ -248,8 +248,8 @@ export const RankedSlotsSheet = ({
                   {/* MAYBE Voters */}
                   {item.maybeVoters.length > 0 && (
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold bg-vote-maybe-tint text-vote-maybe-text border border-vote-maybe-border/30">
-                        <span className="font-extrabold text-[11px] leading-none select-none">?</span>
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-2xs font-bold bg-vote-maybe-subtle text-vote-maybe-text border border-vote-maybe-border/30">
+                        <span className="font-extrabold text-2xs leading-none select-none">?</span>
                         <span>{item.maybeVoters.length}</span>
                       </span>
 
@@ -263,7 +263,7 @@ export const RankedSlotsSheet = ({
                               tooltip={profile?.name}
                             >
                               <AvatarImage src={profile?.avatarUrl} />
-                              <AvatarFallback className="text-[9px]">
+                              <AvatarFallback className="text-4xs">
                                 {profile?.name?.[0]?.toUpperCase() || "?"}
                               </AvatarFallback>
                             </Avatar>
@@ -276,7 +276,7 @@ export const RankedSlotsSheet = ({
                   {/* NO Voters */}
                   {item.noVoters.length > 0 && (
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold bg-vote-no-tint text-vote-no-text border border-vote-no-border/30">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-2xs font-bold bg-vote-no-subtle text-vote-no-text border border-vote-no-border/30">
                         <X className="w-3 h-3 stroke-[3]" />
                         <span>{item.noVoters.length}</span>
                       </span>
@@ -291,7 +291,7 @@ export const RankedSlotsSheet = ({
                               tooltip={profile?.name}
                             >
                               <AvatarImage src={profile?.avatarUrl} />
-                              <AvatarFallback className="text-[9px]">
+                              <AvatarFallback className="text-4xs">
                                 {profile?.name?.[0]?.toUpperCase() || "?"}
                               </AvatarFallback>
                             </Avatar>
@@ -305,7 +305,7 @@ export const RankedSlotsSheet = ({
                 {/* Quick vote actions inside sheet */}
                 {!event.isFinalized && onVoteSlot && currentUserId && (
                   <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/30">
-                    <span className="text-[11px] text-muted-foreground mr-auto">
+                    <span className="text-2xs text-muted-foreground mr-auto">
                       {t("voting.yourVote")}:
                     </span>
 
@@ -342,7 +342,7 @@ export const RankedSlotsSheet = ({
                       }
                       title={item.currentUserVote === "maybe" ? t("voting.unvoted") : t("voting.maybe")}
                     >
-                      <span className="font-extrabold text-[13px] leading-none select-none">?</span>
+                      <span className="font-extrabold text-sm leading-none select-none">?</span>
                     </button>
 
                     {/* Button 3: Nie (No) */}

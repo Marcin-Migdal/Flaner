@@ -10,21 +10,21 @@ export const monthViewEventSegmentVariants = cva(
   {
     variants: {
       position: {
-        single: "rounded-[3px] md:rounded-md px-[1px] md:px-2",
+        single: "rounded-xs md:rounded-md px-[1px] md:px-2",
         start: "rounded-l-[3px] md:rounded-l-md rounded-r-none pl-[1px] md:pl-2 pr-[1px]",
         middle: "rounded-none px-[1px]",
         end: "rounded-r-[3px] md:rounded-r-md rounded-l-none pl-[1px] pr-[1px] md:pr-2",
       },
       continuesNextInRow: {
-        true: "w-[calc(100%+1px)] -mr-[1px] relative z-[1]",
+        true: "w-[calc(100%+1px)] -mr-[1px] relative z-1",
         false: "w-full",
       },
       hasColor: {
-        true: "text-white",
+        true: "text-on-media",
         false: "bg-brand/10 text-brand-foreground hover:bg-brand/20",
       },
       isHovered: {
-        true: "z-10 shadow-md ring-1 ring-white/40 brightness-105",
+        true: "z-10 shadow-md ring-1 ring-on-media/40 brightness-105",
         false: "",
       },
     },

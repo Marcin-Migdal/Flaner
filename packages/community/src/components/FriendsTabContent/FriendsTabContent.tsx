@@ -77,7 +77,7 @@ export function FriendsTabContent() {
 
       {loadingFriends || loadingProfiles ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="size-8 animate-spin text-brand" />
+          <Loader2 className="size-8 animate-spin text-brand-text" />
         </div>
       ) : filteredFriends.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border bg-card/50 rounded-2xl p-6 shadow-sm">
@@ -99,7 +99,7 @@ export function FriendsTabContent() {
                 <div className="flex items-center gap-3 min-w-0">
                   <Avatar className="size-11 border border-border shadow-sm">
                     {friend.avatarUrl && <AvatarImage src={friend.avatarUrl} alt={friend.username} />}
-                    <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-bold text-sm">
+                    <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-brand-foreground font-bold text-sm">
                       {getInitials(friend.username)}
                     </AvatarFallback>
                   </Avatar>
@@ -107,7 +107,7 @@ export function FriendsTabContent() {
                     <span className={cn("font-semibold text-sm block truncate", friend.isDeleted ? "italic text-muted-foreground" : "text-foreground/90")}>
                       {friend.username}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-3xs text-muted-foreground">
                       {t("friendsList.addedAt", { date: new Date(friend.createdAt).toLocaleDateString() })}
                     </span>
                   </div>

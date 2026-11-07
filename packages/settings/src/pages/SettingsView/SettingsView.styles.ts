@@ -16,7 +16,7 @@ export const settingsViewStyles = {
   avatarWrapper: "flex items-center gap-5",
   avatarPreview: "w-16 h-16 rounded-full object-cover border-2 border-border bg-background",
   avatarPlaceholder:
-    "w-16 h-16 rounded-full bg-gradient-to-tr from-brand to-brand-dark flex items-center justify-center text-zinc-950 font-black text-xl border-2 border-brand/20 shadow-md",
+    "w-16 h-16 rounded-full bg-gradient-to-tr from-brand to-brand-dark flex items-center justify-center text-brand-foreground font-black text-xl border-2 border-brand/20 shadow-md",
   profileInfo: "flex flex-col",
   profileUsername: "text-sm font-semibold text-foreground/80",
   profileEmail: "text-xs text-muted-foreground mt-0.5",

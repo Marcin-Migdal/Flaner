@@ -43,7 +43,7 @@ export const SpoolerView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-6">
         <div className="text-left space-y-1">
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground flex items-center gap-2.5">
-            <Disc className="size-7 text-brand" />
+            <Disc className="size-7 text-brand-text" />
             <span>{t("spooler.title")}</span>
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -68,7 +68,7 @@ export const SpoolerView: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-card border border-border rounded-2xl p-4 text-left shadow-xs">
           <span className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-            <ShoppingBag className="size-3.5 text-brand" />
+            <ShoppingBag className="size-3.5 text-brand-text" />
             {t("spooler.stats.totalWeight")}
           </span>
           <p className="text-2xl font-bold text-foreground mt-1">{totalWeightFormatted}</p>
@@ -76,7 +76,7 @@ export const SpoolerView: React.FC = () => {
 
         <div className="bg-card border border-border rounded-2xl p-4 text-left shadow-xs">
           <span className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-            <Disc className="size-3.5 text-emerald-500" />
+            <Disc className="size-3.5 text-success-text" />
             {t("spooler.stats.activeSpools")}
           </span>
           <p className="text-2xl font-bold text-foreground mt-1">{activeSpools.length}</p>

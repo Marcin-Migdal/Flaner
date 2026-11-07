@@ -18,9 +18,9 @@ export const splitTypeButtonVariants = cva(
 export const splitSummaryVariants = cva("text-xs font-semibold tabular-nums", {
   variants: {
     state: {
-      balanced: "text-emerald-500",
-      remaining: "text-amber-500",
-      exceeded: "text-rose-500",
+      balanced: "text-success-text",
+      remaining: "text-warning-text",
+      exceeded: "text-danger-text",
       neutral: "text-muted-foreground",
     },
   },
@@ -37,7 +37,7 @@ export const splitEditorStyles = {
   rows: "flex flex-col divide-y divide-border/50 rounded-xl border border-border/60 bg-muted/20",
   row: "flex items-center gap-3 px-3 py-2 min-h-12",
   rowAvatar: "size-7 shrink-0",
-  rowAvatarFallback: "text-[10px] font-semibold",
+  rowAvatarFallback: "text-3xs font-semibold",
   rowName: "flex-1 min-w-0 text-sm truncate",
   rowCheckbox: "flex-1 min-w-0 py-0",
   rowShare: "text-sm tabular-nums text-muted-foreground shrink-0",

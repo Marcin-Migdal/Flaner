@@ -134,8 +134,8 @@ export const FinalizeEventModal = ({
               >
                 {/* Left: Trophy icon on the far left across the row height */}
                 {isTop && (
-                   <div className="shrink-0 self-stretch flex items-center justify-center pr-0.5 text-amber-500">
-                    <Trophy className="w-5 h-5 text-amber-500" />
+                   <div className="shrink-0 self-stretch flex items-center justify-center pr-0.5 text-warning-text">
+                    <Trophy className="w-5 h-5 text-warning-text" />
                   </div>
                 )}
 
@@ -154,9 +154,9 @@ export const FinalizeEventModal = ({
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       <div className="px-2 py-0.5 rounded-md bg-muted/60 text-xs font-semibold text-foreground flex items-center gap-1">
-                        <span className="text-emerald-500 font-bold">✓ {item.yesCount}</span>
+                        <span className="text-success-text font-bold">✓ {item.yesCount}</span>
                         {item.maybeCount > 0 && (
-                          <span className="text-amber-500 font-medium">? {item.maybeCount}</span>
+                          <span className="text-warning-text font-medium">? {item.maybeCount}</span>
                         )}
                       </div>
                       <span className="text-xs font-bold text-primary">
@@ -168,7 +168,7 @@ export const FinalizeEventModal = ({
                   {/* Progress bar of votes */}
                   <div className="w-full bg-muted/40 rounded-full h-1.5 overflow-hidden">
                     <div
-                      className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                      className="h-full bg-success rounded-full transition-all duration-300"
                       style={{ width: `${item.matchPercentage}%` }}
                     />
                   </div>

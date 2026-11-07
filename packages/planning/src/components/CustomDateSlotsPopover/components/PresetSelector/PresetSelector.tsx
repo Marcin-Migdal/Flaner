@@ -57,7 +57,7 @@ export const PresetSelector = ({
           onClick={() => onSelectPreset("daily")}
         >
           <span>{t("customSlots.presets.daily")}</span>
-          {selectedPreset === "daily" && <Check className="h-3.5 w-3.5 text-brand" />}
+          {selectedPreset === "daily" && <Check className="h-3.5 w-3.5 text-brand-text" />}
         </button>
 
         <button
@@ -66,7 +66,7 @@ export const PresetSelector = ({
           onClick={() => onSelectPreset("weekly")}
         >
           <span>{t("customSlots.presets.weeklyWithDay", { day: weeklyDayName })}</span>
-          {selectedPreset === "weekly" && <Check className="h-3.5 w-3.5 text-brand" />}
+          {selectedPreset === "weekly" && <Check className="h-3.5 w-3.5 text-brand-text" />}
         </button>
 
         <button
@@ -79,7 +79,7 @@ export const PresetSelector = ({
               day: getOrdinalSuffix(monthlyDayNumber, i18n.language),
             })}
           </span>
-          {selectedPreset === "monthly" && <Check className="h-3.5 w-3.5 text-brand" />}
+          {selectedPreset === "monthly" && <Check className="h-3.5 w-3.5 text-brand-text" />}
         </button>
 
         <div className={customSlotsStyles.divider} />
@@ -90,7 +90,7 @@ export const PresetSelector = ({
           onClick={() => onSelectPreset("weekdays")}
         >
           <span>{t("customSlots.presets.weekdays")}</span>
-          {selectedPreset === "weekdays" && <Check className="h-3.5 w-3.5 text-brand" />}
+          {selectedPreset === "weekdays" && <Check className="h-3.5 w-3.5 text-brand-text" />}
         </button>
 
         <button
@@ -99,7 +99,7 @@ export const PresetSelector = ({
           onClick={() => onSelectPreset("weekends")}
         >
           <span>{t("customSlots.presets.weekends")}</span>
-          {selectedPreset === "weekends" && <Check className="h-3.5 w-3.5 text-brand" />}
+          {selectedPreset === "weekends" && <Check className="h-3.5 w-3.5 text-brand-text" />}
         </button>
 
         <div className={customSlotsStyles.divider} />
@@ -111,9 +111,9 @@ export const PresetSelector = ({
         >
           <div className="flex items-center gap-1.5">
             <span>{t("customSlots.presets.custom")}</span>
-            {selectedPreset === "custom" && <Check className="h-3.5 w-3.5 text-brand" />}
+            {selectedPreset === "custom" && <Check className="h-3.5 w-3.5 text-brand-text" />}
           </div>
-          <ChevronRight className="h-4 w-4 text-brand/80" />
+          <ChevronRight className="h-4 w-4 text-brand-text/80" />
         </button>
 
         <div className={customSlotsStyles.divider} />

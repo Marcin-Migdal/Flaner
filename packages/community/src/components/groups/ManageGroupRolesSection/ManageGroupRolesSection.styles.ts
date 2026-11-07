@@ -12,6 +12,6 @@ export const manageGroupRolesSectionStyles = {
     "flex items-center justify-between p-3 rounded-xl bg-card border border-border/60 hover:border-border/90 shadow-2xs transition-all gap-3",
   permissionInfo: "flex-1 min-w-0 flex flex-col gap-0.5",
   permissionTitle: "text-xs font-semibold text-foreground flex items-center gap-1.5",
-  permissionDesc: "text-[11px] text-muted-foreground leading-tight",
+  permissionDesc: "text-2xs text-muted-foreground leading-tight",
   saveButton: "w-full rounded-xl h-10 font-semibold mt-2",
 };

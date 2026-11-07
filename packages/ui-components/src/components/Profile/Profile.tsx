@@ -44,7 +44,7 @@ export const Profile = React.forwardRef<HTMLDivElement, ProfileProps>(
         {/* Avatar Component */}
         <Avatar className={currentSizes.avatar} tooltip={!showName ? username : undefined}>
           {avatarUrl && <AvatarImage src={avatarUrl} alt={`${username}'s avatar`} referrerPolicy="no-referrer" />}
-          <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-black tracking-wider w-full h-full flex items-center justify-center">
+          <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-brand-foreground font-black tracking-wider w-full h-full flex items-center justify-center">
             {getInitials(username)}
           </AvatarFallback>
         </Avatar>

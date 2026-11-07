@@ -79,7 +79,7 @@ export function NotificationsPopover() {
             </div>
             <span>{t("nav.notifications")}</span>
             {unreadCount > 0 && (
-              <span className="ml-auto bg-brand text-brand-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+              <span className="ml-auto bg-brand text-brand-foreground text-3xs font-bold px-1.5 py-0.5 rounded-full">
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}
@@ -97,7 +97,7 @@ export function NotificationsPopover() {
                 <TabsTrigger value="new" className="text-xs">
                   {t("notifications.tabs.new")}
                   {unreadCount > 0 && (
-                    <span className="ml-1.5 bg-brand/20 text-brand px-1.5 py-0.5 rounded-full text-[10px] font-bold">
+                    <span className="ml-1.5 bg-brand/20 text-brand-text px-1.5 py-0.5 rounded-full text-3xs font-bold">
                       {unreadCount}
                     </span>
                   )}
@@ -111,7 +111,7 @@ export function NotificationsPopover() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 text-xs text-brand bg-brand/10 hover:bg-brand/20 border border-brand/20 rounded-lg shrink-0 px-2.5 flex items-center gap-1.5 font-semibold transition-all shadow-sm"
+                  className="h-8 text-xs text-brand-text bg-brand/10 hover:bg-brand/20 border border-brand/20 rounded-lg shrink-0 px-2.5 flex items-center gap-1.5 font-semibold transition-all shadow-sm"
                   onClick={() => markAllAsRead()}
                   title={t("notifications.markAllRead")}
                   aria-label={t("notifications.markAllRead")}

@@ -75,7 +75,7 @@ export function SlotMoreEventsPopover({
                     className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
                     style={{ backgroundColor: ev.color || "var(--primary)" }}
                   />
-                  <span className="text-xs font-semibold truncate group-hover/item:text-brand transition-colors">
+                  <span className="text-xs font-semibold truncate group-hover/item:text-brand-text transition-colors">
                     {rangeText}
                   </span>
                 </button>
@@ -114,7 +114,7 @@ export function SlotMoreEventsPopover({
                         meta.onQuickVote?.(currentUserVote === "maybe" ? null : "maybe");
                       }}
                     >
-                      <span className="font-extrabold text-[12px] leading-none select-none">?</span>
+                      <span className="font-extrabold text-xs leading-none select-none">?</span>
                     </button>
 
                     {/* No Button */}

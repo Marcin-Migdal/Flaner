@@ -15,7 +15,7 @@ export function FriendsView() {
       {/* Header bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-brand/10 text-brand rounded-xl">
+          <div className="p-2 bg-brand/10 text-brand-text rounded-xl">
             <Users className="size-6" />
           </div>
           <div>

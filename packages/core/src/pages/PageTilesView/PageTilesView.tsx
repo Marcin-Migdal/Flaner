@@ -118,13 +118,13 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
                 className="flex flex-col items-center justify-center p-8 bg-card text-card-foreground border border-border hover:border-brand/40 rounded-2xl cursor-pointer transition-all duration-300 group hover:-translate-y-1 shadow-sm hover:shadow-md hover:shadow-brand/5 w-full text-left"
               >
                 {handle?.icon ? (
-                  <div className="p-4 bg-brand/10 text-brand group-hover:bg-brand/20 group-hover:scale-110 rounded-2xl mb-4 transition-all duration-300">
+                  <div className="p-4 bg-brand/10 text-brand-text group-hover:bg-brand/20 group-hover:scale-110 rounded-2xl mb-4 transition-all duration-300">
                     <NavIcon name={handle.icon} className="size-8" />
                   </div>
                 ) : (
-                  <div className="p-4 bg-zinc-800 text-muted-foreground rounded-2xl mb-4" />
+                  <div className="p-4 bg-muted text-muted-foreground rounded-2xl mb-4" />
                 )}
-                <h3 className="font-semibold text-lg text-foreground group-hover:text-brand transition-colors duration-300">
+                <h3 className="font-semibold text-lg text-foreground group-hover:text-brand-text transition-colors duration-300">
                   {labelText}
                 </h3>
               </button>

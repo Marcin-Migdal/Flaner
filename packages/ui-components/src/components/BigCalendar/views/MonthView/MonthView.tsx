@@ -43,9 +43,9 @@ const WEEKDAYS = [
 ] as const;
 
 const SLOT_HEIGHT_CLASSES: Record<NonNullable<MonthViewProps["slotSize"]>, string> = {
-  sm: "h-[12px] md:h-[20px] min-h-[12px] md:min-h-[20px] max-h-[12px] md:max-h-[20px] shrink-0 text-[8px] md:text-xs",
-  md: "h-[14px] md:h-[24px] min-h-[14px] md:min-h-[24px] max-h-[14px] md:max-h-[24px] shrink-0 text-[9px] md:text-xs",
-  lg: "h-[16px] md:h-[28px] min-h-[16px] md:min-h-[28px] max-h-[16px] md:max-h-[28px] shrink-0 text-[10px] md:text-sm",
+  sm: "h-[12px] md:h-[20px] min-h-[12px] md:min-h-[20px] max-h-[12px] md:max-h-[20px] shrink-0 text-5xs md:text-xs",
+  md: "h-[14px] md:h-[24px] min-h-[14px] md:min-h-[24px] max-h-[14px] md:max-h-[24px] shrink-0 text-4xs md:text-xs",
+  lg: "h-[16px] md:h-[28px] min-h-[16px] md:min-h-[28px] max-h-[16px] md:max-h-[28px] shrink-0 text-3xs md:text-sm",
 };
 
 const getSlotHeightPixels = (size?: "sm" | "md" | "lg") => {
@@ -191,8 +191,8 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
           isHovered={isHovered}
           className={cn(
             slotHeight,
-            "mb-[1px] md:mb-0.5 relative hover:z-[50]",
-            isHovered && "z-[50]",
+            "mb-[1px] md:mb-0.5 relative hover:z-50",
+            isHovered && "z-50",
           )}
           onMouseEnter={() => setHoveredEventId(event.id)}
           onMouseLeave={() => setHoveredEventId(null)}
@@ -237,9 +237,9 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
               }}
             >
               {isFirstSegment && (
-                <span className="font-semibold leading-none tabular-nums text-white/95 min-w-0 flex items-center h-full">
+                <span className="font-semibold leading-none tabular-nums text-on-media/95 min-w-0 flex items-center h-full">
                   <span className="hidden md:inline font-medium text-xs truncate leading-none">{event.title}</span>
-                  <span className="md:hidden text-[8px] tracking-tighter whitespace-nowrap pl-0.5 leading-none flex items-center h-full">
+                  <span className="md:hidden text-5xs tracking-tighter whitespace-nowrap pl-0.5 leading-none flex items-center h-full">
                     {isSameDay(event.start, event.end)
                       ? format(event.start, "dd.MM")
                       : `${format(event.start, "dd.MM")} - ${format(event.end, "dd.MM")}`}
@@ -382,7 +382,7 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
                       <PopoverTrigger asChild>
                         <button
                           type="button"
-                          className="text-[10px] md:text-[11px] text-muted-foreground hover:text-foreground cursor-pointer px-1 mx-0.5 font-semibold md:font-medium hover:bg-muted/50 rounded-md py-0 mt-0.5 transition-colors block text-left bg-transparent border-0 truncate leading-tight"
+                          className="text-3xs md:text-2xs text-muted-foreground hover:text-foreground cursor-pointer px-1 mx-0.5 font-semibold md:font-medium hover:bg-muted/50 rounded-md py-0 mt-0.5 transition-colors block text-left bg-transparent border-0 truncate leading-tight"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <span className="md:hidden">+{hiddenEventsCount}</span>
