@@ -71,6 +71,13 @@ export const listDocumentIds = async (collectionPath: string): Promise<string[]>
   return (body.documents ?? []).map((document) => document.name.split("/").pop() ?? "");
 };
 
+/** A document's raw Firestore REST fields, read bypassing security rules. */
+export const readDocumentFields = async (path: string): Promise<Record<string, FirestoreValue>> => {
+  const res = await request(`${FIRESTORE_URL}/${path}`, { headers: { Authorization: "Bearer owner" } });
+  const body: { fields?: Record<string, FirestoreValue> } = await res.json();
+  return body.fields ?? {};
+};
+
 /** Seeds a notification in `recipient`'s inbox at `id` (deterministic ids: `{type}_{sourceId}`). */
 export const seedNotification = async (
   recipient: E2EUser,

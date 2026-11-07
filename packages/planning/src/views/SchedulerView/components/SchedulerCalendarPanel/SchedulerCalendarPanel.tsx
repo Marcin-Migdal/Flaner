@@ -1,6 +1,6 @@
 import { useAuth } from "@flaner/shared/context";
 import { useMemo, useState } from "react";
-import type { SchedulerEvent, VoteType } from "../../../../api/events/types";
+import { getSlotKey, type SchedulerEvent, type VoteType } from "../../../../api/events/types";
 import type { ParticipantResult } from "../../../../api/participants";
 import { RankedSlotsSheet } from "../../../../components/RankedSlotsSheet";
 import { SlotVotingModal } from "../../../../components/SlotVotingModal/SlotVotingModal";
@@ -60,10 +60,11 @@ export const SchedulerCalendarPanel = ({
   }, [activeEvent]);
 
   const handleVoteSlot = async (slotIndex: number, newVote: VoteType | null) => {
-    if (user?.uid && activeEvent && !activeEvent.isFinalized) {
+    const slot = activeEvent?.proposedDates[slotIndex];
+    if (user?.uid && activeEvent && slot && !activeEvent.isFinalized) {
       await voteSlot({
         eventId: activeEvent.id,
-        slotIndex,
+        slotKey: getSlotKey(slot),
         userId: user.uid,
         vote: newVote,
       });

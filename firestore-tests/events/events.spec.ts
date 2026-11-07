@@ -3,11 +3,11 @@ import {
   collection,
   deleteDoc,
   deleteField,
+  FieldPath,
   doc,
   getDoc,
   getDocs,
   query,
-  runTransaction,
   setDoc,
   updateDoc,
   where,
@@ -28,7 +28,7 @@ const schedulerEvent = (overrides: Record<string, unknown> = {}) => ({
   description: "",
   creatorId: CREATOR,
   participants: [CREATOR, PARTICIPANT],
-  proposedDates: [{ start: "2026-11-01", end: "2026-11-02", color: "#fff", votes: {} }],
+  proposedDates: [{ start: "2026-11-01", end: "2026-11-02", color: "#fff" }],
   isFinalized: false,
   createdAt: 1,
   updatedAt: 1,
@@ -47,19 +47,11 @@ const eventNotification = (id: string, type: string) => ({
   read: false,
 });
 
-/** Mirrors voteSchedulerEventSlot. */
-const vote = (uid: string) => {
-  const db = as(uid);
-  return runTransaction(db, async (transaction) => {
-    const ref = doc(db, "events", EVENT_ID);
-    const snap = await transaction.get(ref);
-    const proposedDates = snap.data()?.proposedDates.map((slot: { votes: Record<string, string> }) => ({
-      ...slot,
-      votes: { ...slot.votes, [uid]: "yes" },
-    }));
-    transaction.update(ref, { proposedDates, updatedAt: Date.now() });
-  });
-};
+const SLOT_KEY = "2026-11-01_2026-11-02";
+
+/** Mirrors voteSchedulerEventSlot: one field path in the voter's own entry. */
+const vote = (uid: string, voter = uid, value = "yes") =>
+  updateDoc(doc(as(uid), "events", EVENT_ID), new FieldPath("votes", voter, SLOT_KEY), value, "updatedAt", Date.now());
 
 describe("events/{eventId}", () => {
   it("accepts the create batch with invitations (createSchedulerEvent)", async () => {
@@ -160,5 +152,21 @@ describe("events/{eventId}", () => {
     await assertFails(updateDoc(doc(as(CREATOR), "events", EVENT_ID), { creatorId: PARTICIPANT }));
     await assertFails(setDoc(doc(as(CREATOR), "events", "event-2"), schedulerEvent({ id: "event-2", isFinalized: true })));
   });
-  it.todo("G2: blocks participants from changing other participants' votes");
+  it("blocks participants from changing other participants' votes or the slots", async () => {
+    await seed({ [`events/${EVENT_ID}`]: schedulerEvent({ votes: { [CREATOR]: { [SLOT_KEY]: "yes" } } }) });
+    const db = as(PARTICIPANT);
+
+    await assertFails(vote(PARTICIPANT, CREATOR, "no"));
+    await assertFails(updateDoc(doc(db, "events", EVENT_ID), { votes: {}, updatedAt: Date.now() }));
+    await assertFails(updateDoc(doc(db, "events", EVENT_ID), { proposedDates: [], updatedAt: Date.now() }));
+  });
+
+  it("lets a new event carry only the creator's own votes", async () => {
+    const db = as(CREATOR);
+
+    await assertSucceeds(setDoc(doc(db, "events", EVENT_ID), schedulerEvent({ votes: { [CREATOR]: { [SLOT_KEY]: "yes" } } })));
+    await assertFails(
+      setDoc(doc(db, "events", "event-2"), schedulerEvent({ id: "event-2", votes: { [PARTICIPANT]: { [SLOT_KEY]: "no" } } })),
+    );
+  });
 });
