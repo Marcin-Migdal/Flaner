@@ -333,6 +333,7 @@
     "saving": "Zapisywanie...",
     "cancel": "Anuluj",
     "delete": "Usuń",
+    "edit": "Edytuj",
     "finalizeEvent": "Zatwierdź ostateczny termin",
     "finalizeShort": "Sfinalizuj",
     "rejectUnvoted": "Odrzuć resztę ({{count}})",

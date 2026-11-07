@@ -114,14 +114,11 @@ export const EventModal = ({
     const formattedDates = sortedProposedDates.map((d) => {
       const startStr = format(d.start, "yyyy-MM-dd");
       const endStr = format(d.end, "yyyy-MM-dd");
-      const existingSlot = eventToEdit?.proposedDates.find(
-        (orig) => orig.start === startStr && orig.end === endStr,
-      );
+      // Votes stay on the event keyed by slot dates, so an edit does not carry them
       return {
         start: startStr,
         end: endStr,
         color: d.color,
-        ...(existingSlot?.votes ? { votes: existingSlot.votes } : {}),
       };
     });
 

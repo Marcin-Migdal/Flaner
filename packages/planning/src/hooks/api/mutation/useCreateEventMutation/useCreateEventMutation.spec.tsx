@@ -20,7 +20,8 @@ vi.mock("@flaner/shared/context", () => ({
   useAuth: () => ({ user: mockUser }),
 }));
 
-vi.mock("../../../../api/events", () => ({
+vi.mock("../../../../api/events", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../../api/events")>()),
   createSchedulerEvent: vi.fn(),
 }));
 
@@ -40,7 +41,7 @@ describe("useCreateEventMutation", () => {
       description: "Desc",
       creatorId: "user-123",
       participants: ["user-123"],
-      proposedDates: [{ id: "slot-1", start: "100", end: "200", color: "#3b82f6", votes: { "user-123": "yes" } }],
+      proposedDates: [{ start: "100", end: "200", color: "#3b82f6", votes: { "user-123": "yes" } }],
       createdAt: 1700000000000,
       updatedAt: 1700000000000,
     };
@@ -56,8 +57,8 @@ describe("useCreateEventMutation", () => {
         description: "Desc",
         participants: ["user-123"],
         proposedDates: [
-          { id: "slot-1", start: "100", end: "200", color: "#3b82f6", votes: { "other-user": "yes" } },
-          { id: "slot-2", start: "200", end: "300", color: "#3b82f6" },
+          { start: "100", end: "200", color: "#3b82f6" },
+          { start: "200", end: "300", color: "#3b82f6" },
         ],
         autoVoteProposedDates: true,
       });
@@ -66,11 +67,7 @@ describe("useCreateEventMutation", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(eventsApi.createSchedulerEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        proposedDates: expect.arrayContaining([
-          expect.objectContaining({
-            votes: { "user-123": "yes" },
-          }),
-        ]),
+        votes: { "user-123": { "100_200": "yes", "200_300": "yes" } },
       }),
       mockUser,
     );
@@ -106,7 +103,7 @@ describe("useCreateEventMutation", () => {
         name: "Manual Vote Event",
         description: "Desc",
         participants: ["user-123"],
-        proposedDates: [{ id: "slot-1", start: "100", end: "200", color: "#3b82f6" }],
+        proposedDates: [{ start: "100", end: "200", color: "#3b82f6" }],
         autoVoteProposedDates: false,
       });
     });
@@ -114,7 +111,7 @@ describe("useCreateEventMutation", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(eventsApi.createSchedulerEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        proposedDates: [{ id: "slot-1", start: "100", end: "200", color: "#3b82f6" }],
+        proposedDates: [{ start: "100", end: "200", color: "#3b82f6" }],
       }),
       mockUser,
     );

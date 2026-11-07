@@ -20,15 +20,7 @@ const mockGetDoc = vi.fn();
 const mockGetUnreadNotificationRefs = vi.fn();
 const mockGetDocs = vi.fn();
 const mockOnSnapshot = vi.fn();
-
-type MockTransaction = {
-  get: ReturnType<typeof vi.fn>;
-  set: ReturnType<typeof vi.fn>;
-  update: ReturnType<typeof vi.fn>;
-  delete: ReturnType<typeof vi.fn>;
-};
-
-let transactionMock: MockTransaction;
+const mockUpdateDoc = vi.fn().mockResolvedValue(undefined);
 
 // The tests choose which source notifications are still unread
 vi.mock("@flaner/shared/utils", async (importOriginal) => ({
@@ -62,9 +54,13 @@ vi.mock("firebase/firestore", () => ({
   query: vi.fn((...args: unknown[]) => args),
   where: vi.fn((...args: unknown[]) => args),
   onSnapshot: (...args: unknown[]) => mockOnSnapshot(...args),
-  runTransaction: vi.fn(async (_db: unknown, callback: (tx: MockTransaction) => Promise<unknown>) => {
-    return callback(transactionMock);
-  }),
+  updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
+  FieldPath: class {
+    path: string[];
+    constructor(...path: string[]) {
+      this.path = path;
+    }
+  },
 }));
 
 const mockUser: UserType = {
@@ -79,12 +75,6 @@ const mockUser: UserType = {
 
 describe("events endpoints", () => {
   beforeEach(() => {
-    transactionMock = {
-      get: vi.fn(),
-      set: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    };
     vi.clearAllMocks();
   });
 
@@ -132,13 +122,20 @@ describe("events endpoints", () => {
       mockGetDocs.mockResolvedValueOnce({
         docs: [
           {
-            data: () => ({ id: "ev-1", name: "Party" }),
+            data: () => ({
+              id: "ev-1",
+              name: "Party",
+              participants: ["user-1", "user-2"],
+              proposedDates: [{ start: "2026-06-01", end: "2026-06-02", color: "#fff" }],
+              // user-3 left the event: their vote is not shown
+              votes: { "user-2": { "2026-06-01_2026-06-02": "maybe" }, "user-3": { "2026-06-01_2026-06-02": "no" } },
+            }),
           },
         ],
       });
 
-      const events = await getUserSchedulerEvents("user-1");
-      expect(events).toEqual([{ id: "ev-1", name: "Party" }]);
+      const [event] = await getUserSchedulerEvents("user-1");
+      expect(event.proposedDates[0].votes).toEqual({ "user-2": "maybe" });
     });
   });
 
@@ -156,13 +153,13 @@ describe("events endpoints", () => {
       const callback = vi.fn();
       mockOnSnapshot.mockImplementation((_query, onNext) => {
         onNext({
-          docs: [{ data: () => ({ id: "ev-1", name: "Party" }) }],
+          docs: [{ data: () => ({ id: "ev-1", name: "Party", participants: ["user-1"], proposedDates: [] }) }],
         });
         return () => {};
       });
 
       const unsubscribe = subscribeToUserSchedulerEvents("user-1", callback);
-      expect(callback).toHaveBeenCalledWith([{ id: "ev-1", name: "Party" }]);
+      expect(callback).toHaveBeenCalledWith([{ id: "ev-1", name: "Party", participants: ["user-1"], proposedDates: [] }]);
       expect(typeof unsubscribe).toBe("function");
     });
 
@@ -237,156 +234,78 @@ describe("events endpoints", () => {
   });
 
   describe("voteSchedulerEventSlot", () => {
-    it("throws error when event doc does not exist", async () => {
-      transactionMock.get.mockResolvedValueOnce({
-        exists: () => false,
-      });
+    it("writes only the voter's own entry, by slot key", async () => {
+      await voteSchedulerEventSlot("ev-1", "2026-06-01_2026-06-02", "user-1", "yes");
 
-      await expect(voteSchedulerEventSlot("ev-1", 0, "user-1", "yes")).rejects.toThrow(
-        "Event does not exist",
-      );
-    });
-
-    it("throws error when event is already finalized", async () => {
-      transactionMock.get.mockResolvedValueOnce({
-        exists: () => true,
-        data: () => ({ isFinalized: true }),
-      });
-
-      await expect(voteSchedulerEventSlot("ev-1", 0, "user-1", "yes")).rejects.toThrow(
-        "Event is already finalized",
-      );
-    });
-
-    it("throws error when slotIndex is out of bounds", async () => {
-      transactionMock.get.mockResolvedValue({
-        exists: () => true,
-        data: () => ({
-          isFinalized: false,
-          proposedDates: [{ start: "2026-06-01T10:00:00Z", end: "2026-06-01T12:00:00Z" }],
-        }),
-      });
-
-      await expect(voteSchedulerEventSlot("ev-1", 5, "user-1", "yes")).rejects.toThrow(
-        "Invalid slot index",
-      );
-      await expect(voteSchedulerEventSlot("ev-1", -1, "user-1", "yes")).rejects.toThrow(
-        "Invalid slot index",
-      );
-    });
-
-    it("updates votes with a new vote", async () => {
-      transactionMock.get.mockResolvedValueOnce({
-        exists: () => true,
-        data: () => ({
-          isFinalized: false,
-          proposedDates: [
-            {
-              start: "2026-06-01T10:00:00Z",
-              end: "2026-06-01T12:00:00Z",
-              votes: { "other-user": "yes" },
-            },
-          ],
-        }),
-      });
-
-      await voteSchedulerEventSlot("ev-1", 0, "user-1", "yes");
-
-      expect(transactionMock.update).toHaveBeenCalledWith(
+      expect(mockUpdateDoc).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({
-          proposedDates: [
-            expect.objectContaining({
-              votes: { "other-user": "yes", "user-1": "yes" },
-            }),
-          ],
-        }),
+        { path: ["votes", "user-1", "2026-06-01_2026-06-02"] },
+        "yes",
+        "updatedAt",
+        expect.any(Number),
       );
     });
 
-    it("removes user vote when vote is null", async () => {
-      transactionMock.get.mockResolvedValueOnce({
-        exists: () => true,
-        data: () => ({
-          isFinalized: false,
-          proposedDates: [
-            {
-              start: "2026-06-01T10:00:00Z",
-              end: "2026-06-01T12:00:00Z",
-              votes: { "user-1": "yes", "other-user": "no" },
-            },
-          ],
-        }),
-      });
+    it("clears the voter's entry when the vote is null", async () => {
+      await voteSchedulerEventSlot("ev-1", "2026-06-01_2026-06-02", "user-1", null);
 
-      await voteSchedulerEventSlot("ev-1", 0, "user-1", null);
-
-      expect(transactionMock.update).toHaveBeenCalledWith(
+      expect(mockUpdateDoc).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({
-          proposedDates: [
-            expect.objectContaining({
-              votes: { "other-user": "no" },
-            }),
-          ],
-        }),
+        { path: ["votes", "user-1", "2026-06-01_2026-06-02"] },
+        "deleteFieldToken",
+        "updatedAt",
+        expect.any(Number),
       );
     });
   });
-
   describe("batchVoteUnvotedSlots", () => {
-    it("throws error when event doc does not exist", async () => {
-      transactionMock.get.mockResolvedValueOnce({
-        exists: () => false,
-      });
+    const eventDoc = (data: Record<string, unknown> | undefined) => ({ data: () => data });
 
+    it("throws when the event does not exist or is finalized", async () => {
+      mockGetDoc.mockResolvedValueOnce(eventDoc(undefined));
       await expect(batchVoteUnvotedSlots("ev-1", "user-1")).rejects.toThrow("Event does not exist");
+
+      mockGetDoc.mockResolvedValueOnce(eventDoc({ isFinalized: true, proposedDates: [] }));
+      await expect(batchVoteUnvotedSlots("ev-1", "user-1")).rejects.toThrow("Event is already finalized");
     });
 
-    it("throws error when event is already finalized", async () => {
-      transactionMock.get.mockResolvedValueOnce({
-        exists: () => true,
-        data: () => ({ isFinalized: true }),
-      });
-
-      await expect(batchVoteUnvotedSlots("ev-1", "user-1")).rejects.toThrow(
-        "Event is already finalized",
-      );
-    });
-
-    it("populates unvoted slots with fallback vote and updates transaction", async () => {
-      transactionMock.get.mockResolvedValueOnce({
-        exists: () => true,
-        data: () => ({
+    it("fills only the voter's unvoted slots with the fallback vote", async () => {
+      mockGetDoc.mockResolvedValueOnce(
+        eventDoc({
           isFinalized: false,
           proposedDates: [
-            {
-              start: "2026-06-01T10:00:00Z",
-              end: "2026-06-01T12:00:00Z",
-              votes: { "user-1": "yes" },
-            },
-            {
-              start: "2026-06-02T10:00:00Z",
-              end: "2026-06-02T12:00:00Z",
-            },
+            { start: "2026-06-01", end: "2026-06-01", color: "#fff" },
+            { start: "2026-06-02", end: "2026-06-02", color: "#fff" },
           ],
+          votes: { "user-1": { "2026-06-01_2026-06-01": "yes" } },
         }),
-      });
+      );
 
       await batchVoteUnvotedSlots("ev-1", "user-1", "maybe");
 
-      expect(transactionMock.update).toHaveBeenCalledWith(
+      expect(mockUpdateDoc).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({
-          proposedDates: [
-            expect.objectContaining({ votes: { "user-1": "yes" } }),
-            expect.objectContaining({ votes: { "user-1": "maybe" } }),
-          ],
-        }),
+        "updatedAt",
+        expect.any(Number),
+        { path: ["votes", "user-1", "2026-06-02_2026-06-02"] },
+        "maybe",
       );
     });
-  });
 
+    it("writes nothing when every slot already has the voter's vote", async () => {
+      mockGetDoc.mockResolvedValueOnce(
+        eventDoc({
+          isFinalized: false,
+          proposedDates: [{ start: "2026-06-01", end: "2026-06-01", color: "#fff" }],
+          votes: { "user-1": { "2026-06-01_2026-06-01": "no" } },
+        }),
+      );
+
+      await batchVoteUnvotedSlots("ev-1", "user-1");
+
+      expect(mockUpdateDoc).not.toHaveBeenCalled();
+    });
+  });
   describe("unfinalizeSchedulerEvent", () => {
     it("filters past dates, sends notifications and resets finalized status", async () => {
       const event: SchedulerEvent = {
@@ -410,10 +329,8 @@ describe("events endpoints", () => {
           },
           {
             start: "2099-01-01T10:00:00Z",
+            end: "not-a-date", // Unparsable, kept
             color: "#3b82f6",
-            get end(): string {
-              throw new Error("Date parsing error");
-            },
           },
         ],
         createdAt: 1700000000000,
@@ -476,52 +393,6 @@ describe("events endpoints", () => {
       );
     });
 
-    it("falls back to empty votes when currentSlot.votes is undefined", async () => {
-      transactionMock.get.mockResolvedValueOnce({
-        exists: () => true,
-        data: () => ({
-          isFinalized: false,
-          proposedDates: [
-            {
-              start: "2026-06-01T10:00:00Z",
-              end: "2026-06-01T12:00:00Z",
-              color: "#3b82f6",
-            },
-          ],
-        }),
-      });
-
-      await voteSchedulerEventSlot("ev-1", 0, "user-1", "yes");
-
-      expect(transactionMock.update).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          proposedDates: [
-            expect.objectContaining({
-              votes: { "user-1": "yes" },
-            }),
-          ],
-        }),
-      );
-    });
-
-    it("falls back to empty array when proposedDates is undefined in batchVoteUnvotedSlots", async () => {
-      transactionMock.get.mockResolvedValueOnce({
-        exists: () => true,
-        data: () => ({
-          isFinalized: false,
-        }),
-      });
-
-      await batchVoteUnvotedSlots("ev-1", "user-1", "no");
-
-      expect(transactionMock.update).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          proposedDates: [],
-        }),
-      );
-    });
 
     it("falls back to empty avatarUrl when user.avatarUrl is missing in unfinalizeSchedulerEvent", async () => {
       const event: SchedulerEvent = {
