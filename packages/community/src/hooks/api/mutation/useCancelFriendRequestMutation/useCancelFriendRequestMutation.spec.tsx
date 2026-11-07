@@ -41,7 +41,6 @@ describe("useCancelFriendRequestMutation", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(usersApi.cancelFriendRequest).toHaveBeenCalledWith("user-123", "user-456");
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["friendsList", "user-123"] });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["searchUsers"] });
   });
 

@@ -32,7 +32,7 @@ describe("useGetFriendsListRealtimeQuery", () => {
 
   it("subscribes to realtime updates and sets query data", async () => {
     const mockFriends: Friendship[] = [
-      { uid: "f-1", username: "Friend1", usernameLower: "friend1", createdAt: 100, userRef: {} as never },
+      { uid: "f-1", createdAt: 100 },
     ];
     const unsubscribeMock = vi.fn();
 
@@ -74,7 +74,7 @@ describe("useGetFriendsListRealtimeQuery", () => {
 
   it("executes queryFn on refetch for authenticated user", async () => {
     const mockFriends: Friendship[] = [
-      { uid: "f-2", username: "Friend2", usernameLower: "friend2", createdAt: 200, userRef: {} as never },
+      { uid: "f-2", createdAt: 200 },
     ];
     vi.mocked(usersApi.getFriendsList).mockResolvedValueOnce(mockFriends);
     vi.mocked(usersApi.subscribeToFriendsList).mockReturnValue(vi.fn());

@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, Button, Dialog, DialogContent, DialogDescriptio
 import { Check, Clock, Loader2, Search, UserPlus, X } from "lucide-react";
 import { useState } from "react";
 import { useCommunityTranslations } from "../../../hooks/useCommunityTranslations";
-import { useGetFriendsListQuery, useGetGroupMembersQuery, useGetGroupPendingInvitationsQuery, useInviteUserToGroupMutation, useSearchUsersQuery } from "../../../hooks";
+import { useGetFriendsListRealtimeQuery, useGetGroupMembersQuery, useGetGroupPendingInvitationsQuery, useGetUsersRealtimeQuery, useInviteUserToGroupMutation, useSearchUsersQuery } from "../../../hooks";
 
 export function InviteToGroupModal({
   groupId,
@@ -26,7 +26,10 @@ export function InviteToGroupModal({
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [invitingId, setInvitingId] = useState<string | null>(null);
 
-  const { data: friends = [], isLoading: friendsLoading } = useGetFriendsListQuery();
+  const { data: friendships = [], isLoading: friendshipsLoading } = useGetFriendsListRealtimeQuery();
+  // Live profiles; a deleted account has none, so it is not offered
+  const { data: friends = [], isLoading: profilesLoading } = useGetUsersRealtimeQuery(friendships.map((f) => f.uid));
+  const friendsLoading = friendshipsLoading || profilesLoading;
   const { data: searchResults = [], isFetching: usersSearching } = useSearchUsersQuery(debouncedSearch);
   const { data: members = [], isLoading: membersLoading } = useGetGroupMembersQuery(groupId);
   const { data: pendingInvitations = [], isLoading: invitationsLoading } = useGetGroupPendingInvitationsQuery(groupId);

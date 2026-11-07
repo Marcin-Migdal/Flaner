@@ -52,6 +52,7 @@
     "cancel": "Cancel"
   },
   "friendsList": {
+    "deletedAccount": "Deleted account",
     "placeholder": "Filter friends by username...",
     "empty": "You have no friends yet.",
     "remove": "Remove",
