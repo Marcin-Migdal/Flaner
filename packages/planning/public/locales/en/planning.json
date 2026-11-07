@@ -327,6 +327,7 @@
     "saving": "Saving...",
     "cancel": "Cancel",
     "delete": "Delete",
+    "edit": "Edit",
     "finalizeEvent": "Finalize Event Date",
     "finalizeShort": "Finalize",
     "rejectUnvoted": "Reject rest ({{count}})",
