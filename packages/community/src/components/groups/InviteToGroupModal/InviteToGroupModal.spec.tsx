@@ -15,7 +15,8 @@ vi.mock("@flaner/shared/hooks", () => ({
 }));
 
 vi.mock("../../../hooks", () => ({
-  useGetFriendsListQuery: vi.fn(),
+  useGetFriendsListRealtimeQuery: vi.fn(),
+  useGetUsersRealtimeQuery: vi.fn(),
   useSearchUsersQuery: vi.fn(),
   useGetGroupMembersQuery: vi.fn(),
   useGetGroupPendingInvitationsQuery: vi.fn(),
@@ -39,6 +40,11 @@ describe("InviteToGroupModal component", () => {
       isPending: false,
     } as unknown as ReturnType<typeof hooks.useInviteUserToGroupMutation>);
 
+    vi.mocked(hooks.useGetFriendsListRealtimeQuery).mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetFriendsListRealtimeQuery>);
+
     vi.mocked(hooks.useSearchUsersQuery).mockReturnValue({
       data: [],
       isFetching: false,
@@ -49,15 +55,15 @@ describe("InviteToGroupModal component", () => {
     const user = userEvent.setup();
 
     const mockFriends = [
-      { uid: "u-member", username: "MemberUser", createdAt: 1, userRef: {} as never, usernameLower: "memberuser" },
-      { uid: "u-invited", username: "InvitedUser", createdAt: 1, userRef: {} as never, usernameLower: "inviteduser" },
-      { uid: "u-fresh", username: "FreshUser", createdAt: 1, userRef: {} as never, usernameLower: "freshuser" },
+      { uid: "u-member", username: "MemberUser", usernameLower: "memberuser" },
+      { uid: "u-invited", username: "InvitedUser", usernameLower: "inviteduser" },
+      { uid: "u-fresh", username: "FreshUser", usernameLower: "freshuser" },
     ];
 
-    vi.mocked(hooks.useGetFriendsListQuery).mockReturnValue({
+    vi.mocked(hooks.useGetUsersRealtimeQuery).mockReturnValue({
       data: mockFriends,
       isLoading: false,
-    } as unknown as ReturnType<typeof hooks.useGetFriendsListQuery>);
+    } as unknown as ReturnType<typeof hooks.useGetUsersRealtimeQuery>);
 
     vi.mocked(hooks.useGetGroupMembersQuery).mockReturnValue({
       data: [{ userId: "u-member", role: "member", joinedAt: 100 }],
@@ -136,13 +142,13 @@ describe("InviteToGroupModal component", () => {
 
     const user = userEvent.setup();
     const mockFriends = [
-      { uid: "u-fresh", username: "FreshUser", createdAt: 1, userRef: {} as never, usernameLower: "freshuser" },
+      { uid: "u-fresh", username: "FreshUser", usernameLower: "freshuser" },
     ];
 
-    vi.mocked(hooks.useGetFriendsListQuery).mockReturnValue({
+    vi.mocked(hooks.useGetUsersRealtimeQuery).mockReturnValue({
       data: mockFriends,
       isLoading: false,
-    } as unknown as ReturnType<typeof hooks.useGetFriendsListQuery>);
+    } as unknown as ReturnType<typeof hooks.useGetUsersRealtimeQuery>);
 
     vi.mocked(hooks.useGetGroupMembersQuery).mockReturnValue({
       data: [],
@@ -169,10 +175,10 @@ describe("InviteToGroupModal component", () => {
   });
 
   it("renders loading indicator when friends are loading", () => {
-    vi.mocked(hooks.useGetFriendsListQuery).mockReturnValue({
+    vi.mocked(hooks.useGetUsersRealtimeQuery).mockReturnValue({
       data: [],
       isLoading: true,
-    } as unknown as ReturnType<typeof hooks.useGetFriendsListQuery>);
+    } as unknown as ReturnType<typeof hooks.useGetUsersRealtimeQuery>);
 
     renderWithProviders(
       <InviteToGroupModal
@@ -187,10 +193,10 @@ describe("InviteToGroupModal component", () => {
   });
 
   it("handles user without username and displays ?? initials", () => {
-    vi.mocked(hooks.useGetFriendsListQuery).mockReturnValue({
-      data: [{ uid: "u-anon", username: "", createdAt: 1, userRef: {} as never, usernameLower: "" }],
+    vi.mocked(hooks.useGetUsersRealtimeQuery).mockReturnValue({
+      data: [{ uid: "u-anon", username: "", usernameLower: "" }],
       isLoading: false,
-    } as unknown as ReturnType<typeof hooks.useGetFriendsListQuery>);
+    } as unknown as ReturnType<typeof hooks.useGetUsersRealtimeQuery>);
 
     renderWithProviders(
       <InviteToGroupModal

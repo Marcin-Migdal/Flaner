@@ -1,13 +1,52 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/friendRequests.md, users.md (keep their Write flows / Queries in sync).
-import type { FriendRequest, Friendship } from "./types";
-import { collection, doc, getDocs, getDoc, query, where, limit, onSnapshot, writeBatch } from "firebase/firestore";
+import type { FriendRequest, Friendship, FriendshipDoc } from "./types";
+import { collection, doc, documentId, getDocs, getDoc, query, where, limit, onSnapshot, writeBatch, type QueryDocumentSnapshot } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
 import { type UserProfile } from "@flaner/shared/types";
-import { getUnreadNotificationRefs, sourceNotificationRef } from "@flaner/shared/utils";
+import { firestoreConverter, getUnreadNotificationRefs, sourceNotificationRef } from "@flaner/shared/utils";
 
 // The receiver's "friend_request" notification (deterministic id, see sourceNotificationRef)
 const friendRequestNotificationRef = (senderUid: string, receiverUid: string) =>
   sourceNotificationRef(fb.firestore, receiverUid, "friend_request", senderUid);
+
+// Firestore caps `in` filters at 30 values
+const FIRESTORE_IN_LIMIT = 30;
+
+const friendshipsRef = (userUid: string) =>
+  collection(fb.firestore, `users/${userUid}/friendships`).withConverter(firestoreConverter<FriendshipDoc>());
+
+const toFriendship = (d: QueryDocumentSnapshot<FriendshipDoc>): Friendship => ({ uid: d.id, createdAt: d.data().createdAt });
+
+/**
+ * Live profiles of `uids` (one `in` listener per 30 ids), emitted once every chunk has answered.
+ * A uid missing from the result has no profile: the account was deleted.
+ */
+export const subscribeToUsers = (uids: string[], onUpdate: (users: UserProfile[]) => void) => {
+  const unique = Array.from(new Set(uids));
+  if (unique.length === 0) {
+    onUpdate([]);
+    return () => {};
+  }
+
+  const usersRef = collection(fb.firestore, "users").withConverter(firestoreConverter<UserProfile>());
+  const chunks = Array.from({ length: Math.ceil(unique.length / FIRESTORE_IN_LIMIT) }, (_, i) =>
+    unique.slice(i * FIRESTORE_IN_LIMIT, (i + 1) * FIRESTORE_IN_LIMIT),
+  );
+  const byChunk: (UserProfile[] | undefined)[] = chunks.map(() => undefined);
+
+  const unsubscribes = chunks.map((chunk, index) =>
+    onSnapshot(
+      query(usersRef, where(documentId(), "in", chunk)),
+      (snapshot) => {
+        byChunk[index] = snapshot.docs.map((d) => ({ ...d.data(), uid: d.id }));
+        if (byChunk.every((users) => users !== undefined)) onUpdate(byChunk.flatMap((users) => users ?? []));
+      },
+      (error) => console.error("subscribeToUsers failed:", error),
+    ),
+  );
+
+  return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
+};
 
 // Fetch multiple users by their UIDs
 export const getUsers = async (uids: string[]): Promise<UserProfile[]> => {
@@ -127,9 +166,6 @@ export const acceptFriendRequest = async (
     const friendshipB = doc(fb.firestore, `users/${receiver.uid}/friendships`, sender.uid);
     batch.set(friendshipB, {
       userRef: doc(fb.firestore, "users", sender.uid),
-      username: sender.username,
-      usernameLower: sender.username.toLowerCase(),
-      avatarUrl: sender.avatarUrl || "",
       createdAt: Date.now(),
     });
 
@@ -137,9 +173,6 @@ export const acceptFriendRequest = async (
     const friendshipA = doc(fb.firestore, `users/${sender.uid}/friendships`, receiver.uid);
     batch.set(friendshipA, {
       userRef: doc(fb.firestore, "users", receiver.uid),
-      username: receiver.username,
-      usernameLower: receiver.username.toLowerCase(),
-      avatarUrl: receiver.avatarUrl || "",
       createdAt: Date.now(),
     });
 
@@ -215,11 +248,8 @@ export const removeFriend = async (currentUserUid: string, friendUid: string): P
 // Get friends list for a user
 export const getFriendsList = async (userUid: string): Promise<Friendship[]> => {
   try {
-    const snap = await getDocs(collection(fb.firestore, `users/${userUid}/friendships`));
-    return snap.docs.map((d) => ({
-      ...d.data(),
-      uid: d.id,
-    })) as Friendship[];
+    const snap = await getDocs(friendshipsRef(userUid));
+    return snap.docs.map(toFriendship);
   } catch (error) {
     console.error("getFriendsList failed:", error);
     throw error;
@@ -230,12 +260,8 @@ export const subscribeToFriendsList = (
   userUid: string,
   onUpdate: (friends: Friendship[]) => void
 ) => {
-  return onSnapshot(collection(fb.firestore, `users/${userUid}/friendships`), (snapshot) => {
-    const friends = snapshot.docs.map((d) => ({
-      ...d.data(),
-      uid: d.id,
-    })) as Friendship[];
-    onUpdate(friends);
+  return onSnapshot(friendshipsRef(userUid), (snapshot) => {
+    onUpdate(snapshot.docs.map(toFriendship));
   }, (error) => {
     console.error("subscribeToFriendsList failed:", error);
   });

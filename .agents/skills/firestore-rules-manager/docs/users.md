@@ -34,7 +34,7 @@ No other fields are accepted. Legacy profiles may still contain `email`: `AuthCo
 | Query | Endpoint | Allowed by |
 | --- | --- | --- |
 | `users` where `usernameLower` prefix | `searchUsers` (community), `searchParticipants` (planning) | read: signed in |
-| `users` where `documentId() in [...]` | `getGroupMembersAsParticipants`, `getEventParticipantsProfiles` (planning) | read: signed in |
+| `users` where `documentId() in [...]` | `getGroupMembersAsParticipants`, `getEventParticipantsProfiles` (planning), `subscribeToUsers` (community, friend profiles live) | read: signed in |
 | `get users/{uid}` | `getUsers` (community), AuthContext, Spooler settings | read: signed in |
 
 ## Access matrix
@@ -91,15 +91,15 @@ match /users/{userId} {
 - **F1** A friendship is created only by the receiver of a pending friend request (`friendRequests/{other}_{me}`), in both lists, in the same batch that deletes the request.
 - **F2** Only the owner of the list reads it.
 - **F3** Either side can end the friendship (deletes both docs).
-- **F4** Friendship docs are not edited (denormalized `username` / `avatarUrl` updates will need an explicit rule).
+- **F4** Friendship docs are not edited. They hold no copy of the friend's profile: lists read `users/{friendId}` live (#26), so a renamed / re-avatared friend shows up everywhere without a fan-out; a missing profile means the account was deleted.
 
 ### Schema
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `userRef` | DocumentReference (`users/{friendId}`) | ✓ | |
-| `username` / `usernameLower` | string | ✓ | denormalized from the friend's profile |
-| `avatarUrl` | string | ✓ | denormalized |
 | `createdAt` | number (ms) | ✓ | |
+
+Docs created before #26 may still carry `username` / `usernameLower` / `avatarUrl`; the app ignores them.
 
 ### Write flows
 All endpoints: `packages/community/src/api/users/endpoints.ts`.
@@ -132,7 +132,7 @@ match /friendships/{friendId} {
 
   allow read: if isAuthenticated() && request.auth.uid == userId;
   allow create: if isAuthenticated() &&
-    request.resource.data.keys().hasOnly(['userRef', 'username', 'usernameLower', 'avatarUrl', 'createdAt']) && (
+    request.resource.data.keys().hasOnly(['userRef', 'createdAt']) && (
       (request.auth.uid == userId && hasPendingRequestFrom(friendId)) ||
       (request.auth.uid == friendId && hasPendingRequestFrom(userId))
     );
@@ -141,7 +141,7 @@ match /friendships/{friendId} {
 ```
 
 ### Tests
-- `firestore-tests/users/friendships.spec.ts` — accept and remove batches, list reads, friendships without a request / edits denied.
+- `firestore-tests/users/friendships.spec.ts` — accept and remove batches, list reads, friendships without a request / with profile copies or extra fields / edits denied.
 
 ---
 

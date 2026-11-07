@@ -7,9 +7,10 @@ import {
   Input,
   TabsContent,
 } from "@flaner/ui-components";
+import { cn } from "@flaner/shared/utils";
 import { Loader2, Search, UserMinus, Users, X } from "lucide-react";
 import { useState } from "react";
-import { useGetFriendsListRealtimeQuery, useGetUsersQuery, useRemoveFriendMutation } from "../../hooks";
+import { useGetFriendsListRealtimeQuery, useGetUsersRealtimeQuery, useRemoveFriendMutation } from "../../hooks";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
 
 export function FriendsTabContent() {
@@ -19,7 +20,18 @@ export function FriendsTabContent() {
 
   const { data: friends = [], isLoading: loadingFriends } = useGetFriendsListRealtimeQuery();
   const friendUids = friends.map((f) => f.uid);
-  const { data: friendProfiles = [] } = useGetUsersQuery(friendUids);
+  const { data: friendProfiles = [], isLoading: loadingProfiles } = useGetUsersRealtimeQuery(friendUids);
+
+  // Name and avatar come from the live profile; no profile means the account was deleted
+  const rows = friends.map((friend) => {
+    const profile = friendProfiles.find((p) => p.uid === friend.uid);
+    return {
+      ...friend,
+      isDeleted: !profile,
+      username: profile?.username ?? t("friendsList.deletedAccount"),
+      avatarUrl: profile?.avatarUrl,
+    };
+  });
 
   const deleteFriend = useRemoveFriendMutation();
 
@@ -38,7 +50,7 @@ export function FriendsTabContent() {
     }
   };
 
-  const filteredFriends = friends.filter((friend) => friend.username.toLowerCase().includes(filterQuery.toLowerCase()));
+  const filteredFriends = rows.filter((friend) => friend.username.toLowerCase().includes(filterQuery.toLowerCase()));
 
   return (
     <TabsContent value="friends" className="space-y-3 outline-none">
@@ -63,7 +75,7 @@ export function FriendsTabContent() {
         )}
       </div>
 
-      {loadingFriends ? (
+      {loadingFriends || loadingProfiles ? (
         <div className="flex justify-center py-12">
           <Loader2 className="size-8 animate-spin text-brand" />
         </div>
@@ -78,8 +90,6 @@ export function FriendsTabContent() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredFriends.map((friend) => {
             const isDeleting = deleteFriend.isPending && deleteFriend.variables === friend.uid;
-            const profile = friendProfiles.find((p) => p.uid === friend.uid);
-            const avatarUrl = profile?.avatarUrl || friend.avatarUrl;
 
             return (
               <div
@@ -88,13 +98,15 @@ export function FriendsTabContent() {
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <Avatar className="size-11 border border-border shadow-sm">
-                    {avatarUrl && <AvatarImage src={avatarUrl} alt={friend.username} />}
+                    {friend.avatarUrl && <AvatarImage src={friend.avatarUrl} alt={friend.username} />}
                     <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-bold text-sm">
                       {getInitials(friend.username)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <span className="font-semibold text-sm text-foreground/90 block truncate">{friend.username}</span>
+                    <span className={cn("font-semibold text-sm block truncate", friend.isDeleted ? "italic text-muted-foreground" : "text-foreground/90")}>
+                      {friend.username}
+                    </span>
                     <span className="text-[10px] text-muted-foreground">
                       {t("friendsList.addedAt", { date: new Date(friend.createdAt).toLocaleDateString() })}
                     </span>

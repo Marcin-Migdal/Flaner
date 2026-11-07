@@ -52,6 +52,7 @@
     "cancel": "Cofnij"
   },
   "friendsList": {
+    "deletedAccount": "Konto usunięte",
     "placeholder": "Filtruj znajomych po nazwie...",
     "empty": "Nie masz jeszcze żadnych znajomych.",
     "remove": "Usuń",

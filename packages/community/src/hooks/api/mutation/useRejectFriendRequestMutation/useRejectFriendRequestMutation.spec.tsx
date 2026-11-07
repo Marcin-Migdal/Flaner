@@ -50,7 +50,6 @@ describe("useRejectFriendRequestMutation", () => {
       { uid: "user-456", username: "sender", avatarUrl: "sender.png" },
       { uid: "user-123", username: "currentuser", avatarUrl: "avatar.png" }
     );
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["friendsList", "user-123"] });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["searchUsers"] });
   });
 
