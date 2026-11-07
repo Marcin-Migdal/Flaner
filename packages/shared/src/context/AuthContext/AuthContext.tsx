@@ -86,9 +86,16 @@ const toUser = (profile: UserProfile, firebaseUser: User): UserType => ({
 });
 
 /** The link in the email brings the user back to the login page, which lets them in once verified. */
-const sendVerificationEmail = (firebaseUser: User, language: LanguageType) => {
+const sendVerificationEmail = async (firebaseUser: User, language: LanguageType) => {
   fb.auth.auth.languageCode = language;
-  return sendEmailVerification(firebaseUser, { url: `${window.location.origin}/login` });
+  try {
+    await sendEmailVerification(firebaseUser, { url: `${window.location.origin}/login` });
+  } catch (error) {
+    // Origins outside Firebase's authorized domains (127.0.0.1, Vercel previews) reject the continue URL:
+    // send the plain link then, it still verifies and the login page notices on the user's return
+    if (!(error instanceof FirebaseError) || error.code !== "auth/unauthorized-continue-uri") throw error;
+    await sendEmailVerification(firebaseUser);
+  }
 };
 
 type AuthContextType = {
