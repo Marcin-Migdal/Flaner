@@ -12,6 +12,7 @@ import {
   sendFriendRequest,
   subscribeToFriendsList,
   subscribeToReceivedFriendRequests,
+  subscribeToUsers,
   subscribeToSentFriendRequests,
 } from "./endpoints";
 
@@ -37,7 +38,11 @@ vi.mock("@flaner/shared/firebase", () => ({
 }));
 
 vi.mock("firebase/firestore", () => ({
-  collection: vi.fn((_db: unknown, path: string) => ({ path })),
+  collection: vi.fn((_db: unknown, path: string) => {
+    const ref = { path, withConverter: () => ref };
+    return ref;
+  }),
+  documentId: vi.fn(() => "__name__"),
   doc: vi.fn((_db: unknown, ...parts: string[]) => ({
     id: parts[parts.length - 1] || "mock-doc-id",
     path: parts.join("/"),
@@ -204,22 +209,59 @@ describe("community users endpoints", () => {
   describe("Friends list & Requests queries and subscriptions", () => {
     it("getFriendsList returns friends mapped with doc id", async () => {
       mockGetDocs.mockResolvedValueOnce({
-        docs: [{ id: "f-1", data: () => ({ username: "Bob" }) }],
+        docs: [{ id: "f-1", data: () => ({ userRef: {}, createdAt: 5 }) }],
       });
 
       const res = await getFriendsList("u-1");
-      expect(res).toEqual([{ username: "Bob", uid: "f-1" }]);
+      expect(res).toEqual([{ uid: "f-1", createdAt: 5 }]);
     });
 
     it("subscribeToFriendsList invokes onUpdate with mapped friends", () => {
       const onUpdate = vi.fn();
       mockOnSnapshot.mockImplementationOnce((_col: unknown, onNext: (snap: { docs: { id: string; data: () => object }[] }) => void) => {
-        onNext({ docs: [{ id: "f-1", data: () => ({ username: "Bob" }) }] });
+        onNext({ docs: [{ id: "f-1", data: () => ({ userRef: {}, createdAt: 5 }) }] });
         return vi.fn();
       });
 
       subscribeToFriendsList("u-1", onUpdate);
-      expect(onUpdate).toHaveBeenCalledWith([{ username: "Bob", uid: "f-1" }]);
+      expect(onUpdate).toHaveBeenCalledWith([{ uid: "f-1", createdAt: 5 }]);
+    });
+
+    describe("subscribeToUsers", () => {
+      type ProfilesSnapshot = { docs: { id: string; data: () => object }[] };
+      const profile = (uid: string) => ({ id: uid, data: () => ({ username: uid }) });
+
+      it("emits [] at once and listens to nothing without uids", () => {
+        const onUpdate = vi.fn();
+        subscribeToUsers([], onUpdate);
+        expect(onUpdate).toHaveBeenCalledWith([]);
+        expect(mockOnSnapshot).not.toHaveBeenCalled();
+      });
+
+      it("listens in chunks of 30 and emits once every chunk has answered", () => {
+        const emits: ((snap: ProfilesSnapshot) => void)[] = [];
+        const unsubscribes = [vi.fn(), vi.fn()];
+        mockOnSnapshot.mockImplementation((_q: unknown, onNext: (snap: ProfilesSnapshot) => void) => {
+          emits.push(onNext);
+          return unsubscribes[emits.length - 1];
+        });
+        const onUpdate = vi.fn();
+        const uids = Array.from({ length: 31 }, (_, i) => `u-${i}`);
+
+        const unsubscribe = subscribeToUsers([...uids, "u-0"], onUpdate);
+        expect(mockOnSnapshot).toHaveBeenCalledTimes(2);
+
+        emits[0]({ docs: uids.slice(0, 30).map(profile) });
+        expect(onUpdate).not.toHaveBeenCalled();
+
+        // u-30 has no profile: a deleted account is simply missing
+        emits[1]({ docs: [] });
+        expect(onUpdate).toHaveBeenLastCalledWith(uids.slice(0, 30).map((uid) => ({ username: uid, uid })));
+
+        unsubscribe();
+        unsubscribes.forEach((fn) => expect(fn).toHaveBeenCalled());
+        mockOnSnapshot.mockReset();
+      });
     });
 
     it("getSentFriendRequests queries pending requests for user", async () => {

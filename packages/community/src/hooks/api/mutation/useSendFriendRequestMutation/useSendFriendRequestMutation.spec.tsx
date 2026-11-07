@@ -50,7 +50,6 @@ describe("useSendFriendRequestMutation", () => {
       { uid: "user-123", username: "currentuser", avatarUrl: "avatar.png" },
       { uid: "user-456", username: "otheruser", avatarUrl: "other.png" }
     );
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["friendsList", "user-123"] });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["searchUsers"] });
   });
 

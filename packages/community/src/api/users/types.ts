@@ -12,11 +12,13 @@ export type FriendRequest = {
   createdAt: number;
 };
 
-export type Friendship = {
+/** Stored doc `users/{me}/friendships/{friendUid}`: no profile copy, the profile is read live (#26) */
+export type FriendshipDoc = {
   userRef: DocumentReference;
-  username: string;
-  usernameLower: string;
-  avatarUrl?: string;
   createdAt: number;
+};
+
+export type Friendship = {
   uid: string;
+  createdAt: number;
 };

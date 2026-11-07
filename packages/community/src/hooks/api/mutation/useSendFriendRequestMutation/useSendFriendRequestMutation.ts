@@ -3,7 +3,6 @@ import { useAuth } from "@flaner/shared/context";
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 import { sendFriendRequest } from '../../../../api/users';
 
-import { useInvalidateGetFriendsListQuery } from "../../query/useGetFriendsListQuery";
 import { useInvalidateSearchUsersQuery } from "../../query/useSearchUsersQuery";
 
 export type ReceiverInput = {
@@ -14,7 +13,6 @@ export type ReceiverInput = {
 
 export const useSendFriendRequestMutation = (options?: UseMutationOptions<void, Error, ReceiverInput>) => {
   const { user } = useAuth();
-  const invalidateFriendsList = useInvalidateGetFriendsListQuery();
   const invalidateSearchUsers = useInvalidateSearchUsersQuery();
 
 
@@ -29,7 +27,6 @@ export const useSendFriendRequestMutation = (options?: UseMutationOptions<void, 
     },
     ...options,
     onSuccess: async (...args) => {
-      invalidateFriendsList();
       invalidateSearchUsers();
       if (options?.onSuccess) {
         await options.onSuccess(...args);

@@ -428,7 +428,7 @@ service cloud.firestore {
 
         allow read: if isAuthenticated() && request.auth.uid == userId;
         allow create: if isAuthenticated() &&
-          request.resource.data.keys().hasOnly(['userRef', 'username', 'usernameLower', 'avatarUrl', 'createdAt']) && (
+          request.resource.data.keys().hasOnly(['userRef', 'createdAt']) && (
             (request.auth.uid == userId && hasPendingRequestFrom(friendId)) ||
             (request.auth.uid == friendId && hasPendingRequestFrom(userId))
           );

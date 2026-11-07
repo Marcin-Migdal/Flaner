@@ -9,7 +9,7 @@ import * as hooks from "../../hooks";
 
 vi.mock("../../hooks", () => ({
   useGetFriendsListRealtimeQuery: vi.fn(),
-  useGetUsersQuery: vi.fn(),
+  useGetUsersRealtimeQuery: vi.fn(),
   useRemoveFriendMutation: vi.fn(),
 }));
 
@@ -65,10 +65,14 @@ describe("FriendsTabContent component", () => {
       variables: undefined,
     } as unknown as ReturnType<typeof hooks.useRemoveFriendMutation>);
 
-    vi.mocked(hooks.useGetUsersQuery).mockReturnValue({
-      data: [],
-      isLoading: false,
-    } as unknown as ReturnType<typeof hooks.useGetUsersQuery>);
+    // The friend mocks carry uid / username, so they double as the friends' live profiles
+    vi.mocked(hooks.useGetUsersRealtimeQuery).mockImplementation(
+      () =>
+        ({
+          data: vi.mocked(hooks.useGetFriendsListRealtimeQuery).mock.results.at(-1)?.value?.data ?? [],
+          isLoading: false,
+        }) as unknown as ReturnType<typeof hooks.useGetUsersRealtimeQuery>,
+    );
   });
 
   const renderComponent = () =>
@@ -87,6 +91,22 @@ describe("FriendsTabContent component", () => {
     renderComponent();
 
     expect(screen.getByText("friendsList.empty")).toBeInTheDocument();
+  });
+
+  it("shows a friend without a profile as a deleted account that can still be removed", () => {
+    vi.mocked(hooks.useGetFriendsListRealtimeQuery).mockReturnValue({
+      data: [{ uid: "f-gone", createdAt: 1000 }],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetFriendsListRealtimeQuery>);
+    vi.mocked(hooks.useGetUsersRealtimeQuery).mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetUsersRealtimeQuery>);
+
+    renderComponent();
+
+    expect(screen.getByText("friendsList.deletedAccount")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "friendsList.remove" })).toBeEnabled();
   });
 
   it("renders list of friends and allows filtering by username", async () => {
@@ -173,10 +193,10 @@ describe("FriendsTabContent component", () => {
       isLoading: false,
     } as unknown as ReturnType<typeof hooks.useGetFriendsListRealtimeQuery>);
 
-    vi.mocked(hooks.useGetUsersQuery).mockReturnValue({
-      data: [{ uid: "f-1", avatarUrl: "avatar.jpg" } as never],
+    vi.mocked(hooks.useGetUsersRealtimeQuery).mockReturnValue({
+      data: [{ uid: "f-1", username: "", avatarUrl: "avatar.jpg" } as never],
       isLoading: false,
-    } as unknown as ReturnType<typeof hooks.useGetUsersQuery>);
+    } as unknown as ReturnType<typeof hooks.useGetUsersRealtimeQuery>);
 
     renderComponent();
 

@@ -1,4 +1,3 @@
-export * from './useGetFriendsListQuery';
 export * from './useGetFriendsListRealtimeQuery';
 export * from './useGetGroupMembersQuery';
 export * from './useGetGroupPendingInvitationsQuery';
@@ -10,5 +9,6 @@ export * from './useGetUserGroupInvitationsQuery';
 export * from './useGetUserGroupRequestQuery';
 export * from './useGetUserGroupsQuery';
 export * from './useGetUsersQuery';
+export * from './useGetUsersRealtimeQuery';
 export * from './useSearchGlobalGroupsQuery';
 export * from './useSearchUsersQuery';

@@ -8,11 +8,9 @@ const STRANGER = "stranger-uid";
 
 const { as, seed } = useTestEnv();
 
-const friendship = (db: ReturnType<typeof as>, friendUid: string, username: string) => ({
+// No profile copy: lists read users/{friendUid} live (#26)
+const friendship = (db: ReturnType<typeof as>, friendUid: string) => ({
   userRef: doc(db, "users", friendUid),
-  username,
-  usernameLower: username.toLowerCase(),
-  avatarUrl: "",
   createdAt: Date.now(),
 });
 
@@ -35,8 +33,8 @@ const acceptAs = (uid: string) => {
   const db = as(uid);
   const batch = writeBatch(db);
   batch.delete(doc(db, "friendRequests", `${SENDER}_${RECEIVER}`));
-  batch.set(doc(db, `users/${RECEIVER}/friendships`, SENDER), friendship(db, SENDER, "Sender"));
-  batch.set(doc(db, `users/${SENDER}/friendships`, RECEIVER), friendship(db, RECEIVER, "Receiver"));
+  batch.set(doc(db, `users/${RECEIVER}/friendships`, SENDER), friendship(db, SENDER));
+  batch.set(doc(db, `users/${SENDER}/friendships`, RECEIVER), friendship(db, RECEIVER));
   const notifRef = doc(collection(db, `users/${SENDER}/notifications`));
   batch.set(notifRef, {
     id: notifRef.id,
@@ -66,8 +64,8 @@ describe("users/{userId}/friendships/{friendId}", () => {
   it("blocks creating a friendship without a pending request", async () => {
     const db = as(RECEIVER);
 
-    await assertFails(setDoc(doc(db, `users/${RECEIVER}/friendships`, SENDER), friendship(db, SENDER, "Sender")));
-    await assertFails(setDoc(doc(db, `users/${SENDER}/friendships`, RECEIVER), friendship(db, RECEIVER, "Receiver")));
+    await assertFails(setDoc(doc(db, `users/${RECEIVER}/friendships`, SENDER), friendship(db, SENDER)));
+    await assertFails(setDoc(doc(db, `users/${SENDER}/friendships`, RECEIVER), friendship(db, RECEIVER)));
   });
 
   it("blocks friendships with extra fields", async () => {
@@ -75,7 +73,21 @@ describe("users/{userId}/friendships/{friendId}", () => {
     const db = as(RECEIVER);
 
     await assertFails(
-      setDoc(doc(db, `users/${RECEIVER}/friendships`, SENDER), { ...friendship(db, SENDER, "Sender"), role: "admin" }),
+      setDoc(doc(db, `users/${RECEIVER}/friendships`, SENDER), { ...friendship(db, SENDER), role: "admin" }),
+    );
+  });
+
+  it("blocks friendships carrying a copy of the friend's profile", async () => {
+    await seedRequest();
+    const db = as(RECEIVER);
+
+    await assertFails(
+      setDoc(doc(db, `users/${RECEIVER}/friendships`, SENDER), {
+        ...friendship(db, SENDER),
+        username: "Sender",
+        usernameLower: "sender",
+        avatarUrl: "",
+      }),
     );
   });
 
@@ -111,7 +123,7 @@ describe("users/{userId}/friendships/{friendId}", () => {
     await seed({ [`users/${SENDER}/friendships/${RECEIVER}`]: { username: "Receiver", createdAt: 1 } });
     const db = as(STRANGER);
 
-    await assertFails(setDoc(doc(db, `users/${RECEIVER}/friendships`, SENDER), friendship(db, SENDER, "Sender")));
+    await assertFails(setDoc(doc(db, `users/${RECEIVER}/friendships`, SENDER), friendship(db, SENDER)));
     await assertFails(deleteDoc(doc(db, `users/${SENDER}/friendships`, RECEIVER)));
   });
 });
