@@ -30,7 +30,7 @@ export function InviteToGroupModal({
   // Live profiles; a deleted account has none, so it is not offered
   const { data: friends = [], isLoading: profilesLoading } = useGetUsersRealtimeQuery(friendships.map((f) => f.uid));
   const friendsLoading = friendshipsLoading || profilesLoading;
-  const { data: searchResults = [], isFetching: usersSearching } = useSearchUsersQuery(debouncedSearch);
+  const { data: searchResults = [], isLoading: usersSearching } = useSearchUsersQuery(debouncedSearch);
   const { data: members = [], isLoading: membersLoading } = useGetGroupMembersQuery(groupId);
   const { data: pendingInvitations = [], isLoading: invitationsLoading } = useGetGroupPendingInvitationsQuery(groupId);
   

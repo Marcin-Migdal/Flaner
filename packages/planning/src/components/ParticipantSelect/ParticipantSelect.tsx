@@ -3,6 +3,7 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { Search, User, Users, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, SearchBar } from "@flaner/ui-components";
 import { useAuth } from "@flaner/shared/context";
+import { useDebounce } from "@flaner/shared/hooks";
 import type { UserType } from "@flaner/shared/types";
 import { getGroupMembersAsParticipants, type ParticipantResult } from "../../api/participants";
 import { useGetEventParticipantsProfilesQuery, useSearchParticipantsQuery } from "../../hooks/api/query";
@@ -51,8 +52,9 @@ export const ParticipantSelect = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [addedProfilesMap, setAddedProfilesMap] = useState<Map<string, ParticipantResult>>(new Map());
 
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const { data: searchResults = [], isLoading: isSearchLoading } = useSearchParticipantsQuery(
-    searchQuery,
+    debouncedSearchQuery,
     user?.uid,
   );
 

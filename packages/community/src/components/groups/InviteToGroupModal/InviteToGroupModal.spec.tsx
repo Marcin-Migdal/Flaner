@@ -47,7 +47,7 @@ describe("InviteToGroupModal component", () => {
 
     vi.mocked(hooks.useSearchUsersQuery).mockReturnValue({
       data: [],
-      isFetching: false,
+      isLoading: false,
     } as unknown as ReturnType<typeof hooks.useSearchUsersQuery>);
   });
 

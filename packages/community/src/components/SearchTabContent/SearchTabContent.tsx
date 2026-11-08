@@ -15,7 +15,7 @@ export function SearchTabContent() {
   const { data: friends = [] } = useGetFriendsListRealtimeQuery();
   const { data: sentRequests = [] } = useGetSentFriendRequestRealtimeQuery();
   const { data: receivedRequests = [] } = useGetReceivedFriendRequestRealtimeQuery();
-  const { data: searchResults = [], isFetching: searchingUsers } = useSearchUsersQuery(debouncedSearch);
+  const { data: searchResults = [], isLoading: searchingUsers } = useSearchUsersQuery(debouncedSearch);
 
   // Mutations
   const sendRequest = useSendFriendRequestMutation();

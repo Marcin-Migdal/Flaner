@@ -73,7 +73,7 @@ describe("SearchTabContent component", () => {
   it("renders search prompt when query is empty", () => {
     vi.mocked(hooks.useSearchUsersQuery).mockReturnValue({
       data: [],
-      isFetching: false,
+      isLoading: false,
     } as unknown as ReturnType<typeof hooks.useSearchUsersQuery>);
 
     renderComponent();
@@ -91,7 +91,7 @@ describe("SearchTabContent component", () => {
 
     vi.mocked(hooks.useSearchUsersQuery).mockReturnValue({
       data: mockUsers,
-      isFetching: false,
+      isLoading: false,
     } as unknown as ReturnType<typeof hooks.useSearchUsersQuery>);
 
     renderComponent();
@@ -135,7 +135,7 @@ describe("SearchTabContent component", () => {
     const user = userEvent.setup();
     vi.mocked(hooks.useSearchUsersQuery).mockReturnValue({
       data: [{ uid: "u-anon", username: "", email: "anon@test.com" }],
-      isFetching: false,
+      isLoading: false,
     } as unknown as ReturnType<typeof hooks.useSearchUsersQuery>);
 
     renderComponent();
@@ -149,7 +149,7 @@ describe("SearchTabContent component", () => {
     const user = userEvent.setup();
     vi.mocked(hooks.useSearchUsersQuery).mockReturnValue({
       data: [],
-      isFetching: true,
+      isLoading: true,
     } as unknown as ReturnType<typeof hooks.useSearchUsersQuery>);
 
     renderComponent();
@@ -163,7 +163,7 @@ describe("SearchTabContent component", () => {
     const user = userEvent.setup();
     vi.mocked(hooks.useSearchUsersQuery).mockReturnValue({
       data: [],
-      isFetching: false,
+      isLoading: false,
     } as unknown as ReturnType<typeof hooks.useSearchUsersQuery>);
 
     renderComponent();
@@ -183,7 +183,7 @@ describe("SearchTabContent component", () => {
 
     vi.mocked(hooks.useSearchUsersQuery).mockReturnValue({
       data: mockUsers,
-      isFetching: false,
+      isLoading: false,
     } as unknown as ReturnType<typeof hooks.useSearchUsersQuery>);
 
     vi.mocked(hooks.useCancelFriendRequestMutation).mockReturnValue({
