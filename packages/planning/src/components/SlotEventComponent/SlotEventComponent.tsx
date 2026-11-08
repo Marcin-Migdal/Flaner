@@ -100,16 +100,17 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
   const score = yesVotes + maybeVotes * 0.5;
   const ratio = score / Math.max(1, totalParticipantsCount);
 
+  // Fill strength encodes the score, but never drops below a clearly visible floor
   let basePercentage: number;
   if (totalVotesCast === 0) {
-    basePercentage = 18;
+    basePercentage = 50;
   } else if (ratio === 0) {
-    basePercentage = 12;
+    basePercentage = 40;
   } else {
-    basePercentage = Math.round(Math.min(100, 25 + ratio * 75));
+    basePercentage = Math.round(Math.min(100, 55 + ratio * 45));
   }
 
-  const opacityPercentage = isHovered ? Math.min(100, basePercentage + 25) : basePercentage;
+  const opacityPercentage = isHovered ? Math.min(100, basePercentage + 15) : basePercentage;
   const baseColor = event.color || "var(--primary)";
   const backgroundColor = `color-mix(in srgb, ${baseColor} ${opacityPercentage}%, ${isHovered ? "var(--accent)" : "var(--card)"})`;
 

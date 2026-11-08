@@ -141,7 +141,7 @@ Semantic meaning of raw colours in use: `emerald` = success / "yes", `amber` = w
 | `surface-inverse` (+ `-foreground`) | near-black | near-white | tooltips |
 | `on-media` / `scrim` | white / black | same | text on photos, user-chosen colours and slot pills / modal backdrops (`bg-scrim/10`) |
 | `medal-gold|silver|bronze` | AA text colours | AA text colours | domain tier (ranking) |
-| `--event-blue|indigo|violet|purple|fuchsia|pink|cyan|sky|teal|slate` | `oklch(0.76 C H)` pastel, ink text ≥ 8.5:1 | Tailwind 500 hexes (teal 600) | domain tier (scheduler slots). Firestore stores only the key (`proposedDates[].color = "blue"`); `getSlotColorValue(key)` in `planning/src/utils/slotColors` returns `var(--event-<key>)`, so slots follow the theme switch |
+| `--event-blue|indigo|violet|purple|fuchsia|pink|cyan|sky|teal|slate` | `oklch(0.72 C H)` softened, ink text ≥ 7:1 | Tailwind 500 hexes (teal 600) | domain tier (scheduler slots). Firestore stores only the key (`proposedDates[].color = "blue"`); `getSlotColorValue(key)` in `planning/src/utils/slotColors` returns `var(--event-<key>)`, so slots follow the theme switch |
 | `destructive` | alias of `danger` | alias of `danger` | shadcn compatibility |
 | `vote-yes|maybe|no` (+ `-foreground`, `-subtle`, `-text`, `-border`) | alias of `success` / `warning` / `danger` | alias | domain tier; `-hover` dropped (use `/90`), `-tint` renamed `-subtle` |
 | `ring` | `oklch(0.52 0.12 65)` | `#edad5e` | focus, ≥ 3:1 |
