@@ -11,6 +11,7 @@
     "lint": "nx run-many -t lint",
     "lint:fix": "nx run-many -t lint -- --fix",
     "lint:tokens": "node scripts/check-design-tokens.mjs",
+    "design:export": "node scripts/design-system-export.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "storybook": "nx run @flaner/ui-components:storybook",

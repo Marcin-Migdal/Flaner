@@ -29,7 +29,7 @@ jobs:
       - run: npm ci
       # Design tokens: no raw colours / arbitrary sizes outside theme.css (#61).
       - run: npm run lint:tokens
-      - run: node --test scripts/check-design-tokens.test.mjs
+      - run: node --test scripts/check-design-tokens.test.mjs scripts/design-system-export.test.mjs
       # Only projects affected by the PR; build catches failures before Vercel does; build-storybook keeps the ui-components catalogue compiling.
       - run: npx nx affected -t typecheck lint test build build-storybook --base=${{ github.event.pull_request.base.sha }} --head=HEAD
 
