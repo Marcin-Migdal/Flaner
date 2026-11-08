@@ -59,15 +59,16 @@
   --p-black: oklch(0 0 0);
 
   /* Surfaces */
-  --background: oklch(0.968 0.004 80);
+  --background: oklch(0.95 0.007 80);
   --foreground: var(--p-ink);
   --card: var(--p-white);
   --card-foreground: var(--p-ink);
   --popover: var(--p-white);
   --popover-foreground: var(--p-ink);
-  --surface-subtle: oklch(0.94 0.005 80);
-  --surface-hover: oklch(0.91 0.006 80);
-  --surface-strong: oklch(0.87 0.008 80);
+  --surface-subtle: oklch(0.925 0.008 80);
+  --surface-raised: var(--p-white);
+  --surface-hover: oklch(0.9 0.009 80);
+  --surface-strong: oklch(0.86 0.01 80);
   --surface-inverse: oklch(0.21 0.006 80);
   --surface-inverse-foreground: oklch(0.985 0 0);
 
@@ -95,7 +96,7 @@
   --brand-subtle: color-mix(in oklch, var(--p-brand) 15%, transparent);
 
   /* Status — solid fills ≥ 4.5:1 with their foreground and as text on background */
-  --success: oklch(0.52 0.15 155);
+  --success: oklch(0.5 0.15 155);
   --success-foreground: var(--p-white);
   --warning: oklch(0.53 0.15 60);
   --warning-foreground: var(--p-white);
@@ -106,9 +107,22 @@
   --status-subtle-mix: 12%;
 
   /* Domain: ranking medals (planning) */
-  --medal-gold: oklch(0.54 0.12 85);
+  --medal-gold: oklch(0.52 0.12 85);
   --medal-silver: oklch(0.5 0.02 250);
   --medal-bronze: oklch(0.52 0.11 50);
+
+  /* Domain: event slot colours (planning). Firestore stores the key, e.g. "blue".
+     Light values keep the dark-mode hue with lower chroma / higher lightness so ink text stays ≥ 4.5:1. */
+  --event-blue: oklch(0.76 0.12 259.8);
+  --event-indigo: oklch(0.76 0.12 277.1);
+  --event-violet: oklch(0.76 0.13 292.7);
+  --event-purple: oklch(0.76 0.13 303.9);
+  --event-fuchsia: oklch(0.76 0.14 322.2);
+  --event-pink: oklch(0.76 0.13 354.3);
+  --event-cyan: oklch(0.76 0.1 215.2);
+  --event-sky: oklch(0.76 0.11 237.3);
+  --event-teal: oklch(0.76 0.09 184.7);
+  --event-slate: oklch(0.76 0.035 257.4);
 
   /* Data-viz — categorical ≥ 3:1 vs. background */
   --chart-1: oklch(0.6 0.15 65);
@@ -116,7 +130,7 @@
   --chart-3: oklch(0.6 0.15 155);
   --chart-4: oklch(0.6 0.15 20);
   --chart-5: oklch(0.6 0.15 300);
-  --chart-6: oklch(0.6 0.15 195);
+  --chart-6: oklch(0.58 0.15 195);
   --chart-7: oklch(0.6 0.15 110);
   --chart-8: oklch(0.6 0.15 340);
 
@@ -143,6 +157,7 @@
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
   --surface-subtle: oklch(1 0 0 / 5%);
+  --surface-raised: oklch(1 0 0 / 5%);
   --surface-hover: oklch(1 0 0 / 10%);
   --surface-strong: oklch(1 0 0 / 15%);
   --surface-inverse: oklch(0.985 0 0);
@@ -178,6 +193,17 @@
   --medal-silver: oklch(0.76 0.02 250);
   --medal-bronze: oklch(0.7 0.12 50);
 
+  --event-blue: #3b82f6;
+  --event-indigo: #6366f1;
+  --event-violet: #8b5cf6;
+  --event-purple: #a855f7;
+  --event-fuchsia: #d946ef;
+  --event-pink: #ec4899;
+  --event-cyan: #06b6d4;
+  --event-sky: #0ea5e9;
+  --event-teal: #0d9488;
+  --event-slate: #64748b;
+
   --chart-1: oklch(0.74 0.14 65);
   --chart-2: oklch(0.74 0.14 240);
   --chart-3: oklch(0.74 0.14 155);
@@ -211,6 +237,7 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-surface-subtle: var(--surface-subtle);
+  --color-surface-raised: var(--surface-raised);
   --color-surface-hover: var(--surface-hover);
   --color-surface-strong: var(--surface-strong);
   --color-surface-inverse: var(--surface-inverse);

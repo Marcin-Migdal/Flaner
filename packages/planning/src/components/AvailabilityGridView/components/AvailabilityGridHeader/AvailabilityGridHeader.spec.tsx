@@ -7,8 +7,8 @@ import { AvailabilityGridHeader } from "./AvailabilityGridHeader";
 
 describe("AvailabilityGridHeader", () => {
   const proposedDates: ProposedDateSlot[] = [
-    { start: "2026-06-01T10:00:00Z", end: "2026-06-01T10:00:00Z", color: "#3b82f6" },
-    { start: "2026-06-05T10:00:00Z", end: "2026-06-06T10:00:00Z", color: "#10b981" },
+    { start: "2026-06-01T10:00:00Z", end: "2026-06-01T10:00:00Z", color: "blue" },
+    { start: "2026-06-05T10:00:00Z", end: "2026-06-06T10:00:00Z", color: "teal" },
   ];
 
   const slotStats: SlotStat[] = [

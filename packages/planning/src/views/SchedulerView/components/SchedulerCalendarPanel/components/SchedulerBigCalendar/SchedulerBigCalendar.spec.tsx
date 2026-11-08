@@ -12,7 +12,7 @@ const mockEvent: SchedulerEvent = {
   creatorId: "user-1",
   participants: ["user-1"],
   proposedDates: [
-    { start: "2026-06-01T18:00:00Z", end: "2026-06-01T21:00:00Z", color: "#3b82f6" },
+    { start: "2026-06-01T18:00:00Z", end: "2026-06-01T21:00:00Z", color: "blue" },
   ],
   isFinalized: false,
   createdAt: 1700000000000,
@@ -98,7 +98,7 @@ describe("SchedulerBigCalendar", () => {
     const currentEvent: SchedulerEvent = {
       ...mockEvent,
       proposedDates: [
-        { start: todayStr, end: todayStr, color: "#3b82f6" },
+        { start: todayStr, end: todayStr, color: "blue" },
       ],
     };
 
@@ -139,7 +139,7 @@ describe("SchedulerBigCalendar", () => {
       proposedDates: Array.from({ length: 6 }).map(() => ({
         start: todayStr,
         end: todayStr,
-        color: "#3b82f6",
+        color: "blue",
       })),
     };
 

@@ -218,17 +218,17 @@ describe("EventModal", () => {
       {
         start: "2026-10-15",
         end: "2026-10-16",
-        color: "#3b82f6",
+        color: "blue",
       },
       {
         start: "2026-10-15",
         end: "2026-10-18",
-        color: "#10b981",
+        color: "teal",
       },
       {
         start: "2026-10-10",
         end: "2026-10-12",
-        color: "#6366f1",
+        color: "indigo",
       },
     ],
     createdAt: 1700000000000,
@@ -406,7 +406,7 @@ describe("EventModal", () => {
         {
           start: "2026-10-15",
           end: "2026-10-16",
-          color: "#3b82f6",
+          color: "blue",
         },
       ],
     };
@@ -489,7 +489,7 @@ describe("EventModal", () => {
       isFinalized: true,
       finalizedSlotIndex: 99,
       proposedDates: [
-        { start: "2026-10-15", end: "2026-10-16", color: "#3b82f6", votes: { "user-1": "yes" } },
+        { start: "2026-10-15", end: "2026-10-16", color: "blue", votes: { "user-1": "yes" } },
       ],
       createdAt: 1700000000000,
       updatedAt: 1700000000000,
@@ -551,7 +551,7 @@ describe("EventModal", () => {
       isFinalized: true,
       finalizedSlotIndex: 0,
       proposedDates: [
-        { start: "2026-10-15", end: "2026-10-16", color: "#3b82f6" },
+        { start: "2026-10-15", end: "2026-10-16", color: "blue" },
       ],
       createdAt: 1700000000000,
       updatedAt: 1700000000000,

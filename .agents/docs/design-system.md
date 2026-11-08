@@ -123,23 +123,25 @@ Semantic meaning of raw colours in use: `emerald` = success / "yes", `amber` = w
 ### 4.1 Colour — semantic roles
 | Token (Tailwind name) | Light | Dark | Notes |
 |---|---|---|---|
-| `background` / `foreground` | warm neutral `oklch(0.968 0.004 80)` / `oklch(0.16 0.01 80)` | `oklch(0.145 0 0)` / `oklch(0.985 0 0)` | unchanged |
+| `background` / `foreground` | warm neutral `oklch(0.95 0.007 80)` / `oklch(0.16 0.01 80)` | `oklch(0.145 0 0)` / `oklch(0.985 0 0)` | unchanged |
 | `card`, `popover` (+ `-foreground`) | white | `oklch(0.205 0 0)` | unchanged |
-| `surface-subtle` | `oklch(0.94 0.005 80)` | `oklch(1 0 0 / 5%)` | replaces `bg-white/5` |
+| `surface-subtle` | `oklch(0.925 0.008 80)` | `oklch(1 0 0 / 5%)` | section / container fill; replaces `bg-white/5` |
+| `surface-raised` | white | `oklch(1 0 0 / 5%)` | item inside a `surface-subtle` container (expense, settlement, debt rows) — light needs an opaque lift because opaque fills do not stack like the dark alphas |
 | `border` / `border-subtle` | `oklch(0.85 0.008 80)` / `oklch(0.9 0.006 80)` | `oklch(1 0 0 / 10%)` / `oklch(1 0 0 / 5%)` | decorative borders |
 | `input` / `input-border` | `oklch(0.85 0.008 80)` / `oklch(0.62 0.01 80)` | `oklch(1 0 0 / 15%)` / `oklch(0.52 0 0)` | `input` = shadcn field fill tint (`bg-input/30`); `input-border` = form-control outline ≥ 3:1 vs. card and background (WCAG 1.4.11) — was 1.58 light / ≈1.9 dark |
 | `primary`, `secondary`, `muted`, `accent` (+ `-foreground`) | unchanged | unchanged | shadcn roles |
 | `brand` / `brand-dark` / `brand-foreground` | `#edad5e` / `#c98d3c` / `oklch(0.16 0.01 80)` | same | ink on brand 10:1; `brand-dark` = gradient end |
 | `brand-text` | `oklch(0.52 0.12 65)` (5.2:1) | `#edad5e` (10:1) | brand-coloured text/icons |
 | `brand-subtle` | `oklch(0.795 0.12 70 / 15%)` | same | tinted backgrounds |
-| `success` / `warning` / `danger` / `info` (solid) | `oklch(0.52 0.15 155)` / `oklch(0.53 0.15 60)` / `oklch(0.52 0.19 25)` / `oklch(0.52 0.15 245)` | `oklch(0.75 0.16 155)` / `oklch(0.78 0.15 70)` / `oklch(0.7 0.19 22)` / `oklch(0.75 0.13 240)` | fills (badges, active vote) |
+| `success` / `warning` / `danger` / `info` (solid) | `oklch(0.5 0.15 155)` / `oklch(0.53 0.15 60)` / `oklch(0.52 0.19 25)` / `oklch(0.52 0.15 245)` | `oklch(0.75 0.16 155)` / `oklch(0.78 0.15 70)` / `oklch(0.7 0.19 22)` / `oklch(0.75 0.13 240)` | fills (badges, active vote) |
 | `*-foreground` | white (≥ 5:1) | ink (≥ 8:1) | text on solid |
 | `*-text` | same as solid (≥ 5:1 on bg) | same as solid (≥ 8:1) | status text on background |
 | `*-subtle` | solid / 12% | solid / 15% | tinted backgrounds |
-| `surface-hover` / `surface-strong` | `oklch(0.91 0.006 80)` / `oklch(0.87 0.008 80)` | white / 10% / 15% | hover, pressed, tracks |
+| `surface-hover` / `surface-strong` | `oklch(0.9 0.009 80)` / `oklch(0.86 0.01 80)` | white / 10% / 15% | hover, pressed, tracks |
 | `surface-inverse` (+ `-foreground`) | near-black | near-white | tooltips |
 | `on-media` / `scrim` | white / black | same | text on photos, user-chosen colours and slot pills / modal backdrops (`bg-scrim/10`) |
 | `medal-gold|silver|bronze` | AA text colours | AA text colours | domain tier (ranking) |
+| `--event-blue|indigo|violet|purple|fuchsia|pink|cyan|sky|teal|slate` | `oklch(0.76 C H)` pastel, ink text ≥ 8.5:1 | Tailwind 500 hexes (teal 600) | domain tier (scheduler slots). Firestore stores only the key (`proposedDates[].color = "blue"`); `getSlotColorValue(key)` in `planning/src/utils/slotColors` returns `var(--event-<key>)`, so slots follow the theme switch |
 | `destructive` | alias of `danger` | alias of `danger` | shadcn compatibility |
 | `vote-yes|maybe|no` (+ `-foreground`, `-subtle`, `-text`, `-border`) | alias of `success` / `warning` / `danger` | alias | domain tier; `-hover` dropped (use `/90`), `-tint` renamed `-subtle` |
 | `ring` | `oklch(0.52 0.12 65)` | `#edad5e` | focus, ≥ 3:1 |
@@ -147,7 +149,7 @@ Semantic meaning of raw colours in use: `emerald` = success / "yes", `amber` = w
 
 Exact values are verified by `packages/ui-components/src/theme/theme.spec.ts`, which parses `theme.css` and asserts AA for text pairs (4.5:1) and graphics / focus / inputs / charts (3:1) in both themes (64 checks).
 
-**Forced-dark surfaces:** an element that is always dark regardless of the theme (calendar slot pills mixed from the event colour) carries the `dark` class, so every token inside resolves to its dark value.
+**Forced-dark surfaces:** an element that must stay dark regardless of the theme can carry the `dark` class, so every token inside resolves to its dark value. (Scheduler slot pills used this until the theme-aware `--event-*` colours replaced it.)
 
 ### 4.2 Typography
 | Token | Size / line-height | Use |
@@ -229,3 +231,4 @@ Status: all steps done in PR1. Adopted in views: `PageHeader` (Friends, Groups, 
 ## 9. Changelog
 - 2026-11-07 — initial research, audit and decision list (#61).
 - 2026-11-07 — implemented: theme source, semantic tokens, migration of all packages, new components, `lint:tokens` in CI, contrast spec, skills updated (#61).
+- 2026-11-08 — visual pass feedback: slightly deeper light background, `surface-raised` for rows inside sections (Splits), participant cards match the active split card, scheduler slot colours stored as keys with light/dark `--event-*` tokens.

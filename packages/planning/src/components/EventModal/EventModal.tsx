@@ -25,6 +25,7 @@ import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { CreateSchedulerFormData, getCreateSchedulerSchema } from "../../utils/schemas/create-scheduler-schema";
 import { ParticipantSelect } from "../ParticipantSelect";
 import { getRandomSlotColor } from "./utils";
+import { getSlotColorValue, type SlotColorKey } from "../../utils/slotColors";
 import { CustomDateSlotsPopover, type CustomSlotsConfig } from "../CustomDateSlotsPopover/CustomDateSlotsPopover";
 import { generateCustomDateSlots } from "../../utils/generateCustomDateSlots";
 
@@ -236,7 +237,7 @@ export const EventModal = ({
     }
 
     const currentDates = methods.getValues("proposedDates") || [];
-    const newUniqueSlots: { start: Date; end: Date; color: string }[] = [];
+    const newUniqueSlots: { start: Date; end: Date; color: SlotColorKey }[] = [];
 
     for (const slot of generatedSlots) {
       const isDuplicate = currentDates.some(
@@ -277,7 +278,7 @@ export const EventModal = ({
       title: `${format(d.start, "MMM dd")} - ${format(d.end, "MMM dd")}`,
       start: d.start,
       end: d.end,
-      color: d.color,
+      color: getSlotColorValue(d.color),
     }));
   }, [rawProposedDates]);
 

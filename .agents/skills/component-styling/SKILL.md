@@ -16,6 +16,8 @@ The single theme source is `packages/ui-components/src/theme/theme.css` (spec: `
 | Need | Use | Never |
 |---|---|---|
 | Subtle surface / hover / pressed | `bg-surface-subtle` / `bg-surface-hover` / `bg-surface-strong` | `bg-white/5`, `bg-zinc-900` |
+| Row / card inside a `surface-subtle` section | `bg-surface-raised` (white in light, `white/5` in dark) + `shadow-raised` | the same `bg-surface-subtle` as the section (invisible in light mode) |
+| User-chosen event colour | store the key (`"blue"`), render `getSlotColorValue(key)` → `var(--event-blue)` | hex values in Firestore |
 | Hairline / normal border | `border-border-subtle` / `border-border` | `border-white/10` |
 | Form-control outline / field fill | `border-input-border` (≥ 3:1) / `bg-input/30` | `border-input` (fill tint, too faint for an outline) |
 | Brand fill + text on it | `bg-brand text-brand-foreground` | `text-zinc-950`, `text-white` on brand |

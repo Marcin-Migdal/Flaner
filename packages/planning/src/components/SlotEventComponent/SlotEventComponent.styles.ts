@@ -127,9 +127,9 @@ export const slotStyles = {
     "@container box-border flex items-center select-none truncate cursor-pointer overflow-hidden transition-all duration-150",
   ),
   simpleBadgeMobile:
-    "shrink-0 px-1 py-0 md:py-0.5 rounded bg-scrim/45 md:bg-scrim/35 text-4xs md:text-3xs font-bold text-success-text flex items-center gap-0.5 md:gap-1 leading-none tabular-nums max-h-full",
+    "shrink-0 px-1 py-0 md:py-0.5 rounded bg-background/60 text-4xs md:text-3xs font-bold text-success-text flex items-center gap-0.5 md:gap-1 leading-none tabular-nums max-h-full",
   desktopBadgeCard:
-    "shrink-0 px-1 py-0.5 rounded bg-scrim/35 text-3xs font-bold text-on-media/90 flex items-center gap-1 tabular-nums",
+    "shrink-0 px-1 py-0.5 rounded bg-background/60 text-3xs font-bold text-foreground/90 flex items-center gap-1 tabular-nums",
   desktopCompact: "flex @[120px]:hidden items-center",
   desktopFull: "hidden @[120px]:flex items-center gap-1.5",
 };

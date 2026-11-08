@@ -407,7 +407,7 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
                                 className="text-xs px-2 py-1 rounded-md font-medium truncate cursor-pointer transition-all duration-150 hover:brightness-110"
                                 style={
                                   event.color
-                                    ? { backgroundColor: event.color, color: "#fff" }
+                                    ? { backgroundColor: event.color, color: "var(--foreground)" }
                                     : undefined
                                 }
                                 onClick={(e) => {

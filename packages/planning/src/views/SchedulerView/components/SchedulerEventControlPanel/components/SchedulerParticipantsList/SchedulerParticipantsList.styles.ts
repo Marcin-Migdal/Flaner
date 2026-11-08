@@ -6,7 +6,7 @@ export const schedulerParticipantCardVariants = cva(
     variants: {
       isUnvoted: {
         true: "bg-danger/5 border-danger/25 hover:border-danger/40 hover:bg-danger/10",
-        false: "bg-background/50 hover:bg-surface-hover border-border-subtle hover:border-border",
+        false: "bg-brand/10 border-brand/30 shadow-sm hover:bg-brand/15 hover:border-brand/40",
       },
     },
     defaultVariants: {

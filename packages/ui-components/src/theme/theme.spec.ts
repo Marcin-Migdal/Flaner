@@ -90,3 +90,15 @@ describe("theme.css contrast (WCAG 2.2 AA)", () => {
     });
   });
 });
+
+describe("event slot colours", () => {
+  const keys = ["blue", "indigo", "violet", "purple", "fuchsia", "pink", "cyan", "sky", "teal", "slate"];
+
+  it.each(keys)("light --event-%s keeps ink text ≥ 4.5:1", (key) => {
+    expect(contrast(light, "foreground", `event-${key}`)).toBeGreaterThanOrEqual(TEXT);
+  });
+
+  it.each(keys)("--event-%s has a dark-mode value", (key) => {
+    expect(dark[`event-${key}`]).not.toBe(light[`event-${key}`]);
+  });
+});

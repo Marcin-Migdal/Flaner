@@ -1,5 +1,5 @@
 export const debtCardStyles = {
-  root: "flex flex-col wide:flex-row wide:items-center gap-2.5 wide:gap-3 rounded-2xl border border-border-subtle bg-surface-subtle p-2.5 wide:p-3 transition-colors",
+  root: "flex flex-col wide:flex-row wide:items-center gap-2.5 wide:gap-3 rounded-2xl border border-border-subtle bg-surface-raised shadow-raised p-2.5 wide:p-3 transition-colors",
   participantsRow:
     "flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] wide:grid-cols-[minmax(0,1fr)_120px_minmax(0,1fr)] items-center gap-2",
   person: "flex items-center gap-2 min-w-0",

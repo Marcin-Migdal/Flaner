@@ -6,8 +6,8 @@ import { AvailabilityGridWinnerHeader } from "./AvailabilityGridWinnerHeader";
 
 describe("AvailabilityGridWinnerHeader", () => {
   const proposedDates: ProposedDateSlot[] = [
-    { start: "2026-06-01T10:00:00Z", end: "2026-06-01T12:00:00Z", color: "#3b82f6" },
-    { start: "2026-06-02T10:00:00Z", end: "2026-06-02T12:00:00Z", color: "#10b981" },
+    { start: "2026-06-01T10:00:00Z", end: "2026-06-01T12:00:00Z", color: "blue" },
+    { start: "2026-06-02T10:00:00Z", end: "2026-06-02T12:00:00Z", color: "teal" },
   ];
 
   it("renders status column and winner badge on the winning slot", () => {

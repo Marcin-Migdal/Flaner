@@ -37,7 +37,7 @@ export const balancesTabStyles = {
   members:
     "grid grid-cols-1 wide:grid-cols-2 gap-2 max-h-[340px] sm:max-h-[248px] overflow-y-auto px-0.5 pb-0.5",
   memberRow:
-    "flex items-center gap-2.5 wide:gap-3 rounded-2xl border border-border-subtle bg-surface-subtle p-2.5 wide:p-3 transition-colors",
+    "flex items-center gap-2.5 wide:gap-3 rounded-2xl border border-border-subtle bg-surface-raised shadow-raised p-2.5 wide:p-3 transition-colors",
   memberAvatar: "size-8 shrink-0",
   memberAvatarFallback: "text-xs font-semibold",
   memberName: "flex-1 min-w-0 text-sm font-medium truncate cursor-default",

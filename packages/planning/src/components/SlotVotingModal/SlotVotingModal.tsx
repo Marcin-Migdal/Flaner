@@ -6,6 +6,7 @@ import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import type { ParticipantResult } from "../../api/participants";
 import { getSlotKey, type SchedulerEvent, type VoteType } from "../../api/events/types";
 import { useVoteSlotMutation } from "../../hooks/api/mutation/useVoteSlotMutation";
+import { getSlotColorValue } from "../../utils/slotColors";
 import {
   slotVotingOptionButtonVariants,
   slotVotingParticipantPillVariants,
@@ -84,7 +85,7 @@ export function SlotVotingModal({
           <div className="flex items-center gap-2">
             <div
               className="w-3.5 h-3.5 rounded-full shrink-0 shadow-sm"
-              style={{ backgroundColor: slot.color || "var(--primary)" }}
+              style={{ backgroundColor: getSlotColorValue(slot.color) }}
             />
             <DialogTitle className="text-lg font-bold">
               {startDateFormatted} — {endDateFormatted}

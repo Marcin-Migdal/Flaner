@@ -1,7 +1,7 @@
 export const settlementItemCardStyles = {
-  root: "group flex items-center gap-2 wide:gap-3 rounded-2xl border border-dashed border-success/20 bg-success/[0.04] hover:bg-success/[0.07] p-2.5 wide:p-3 transition-colors",
+  root: "group flex items-center gap-2 wide:gap-3 rounded-2xl border border-dashed border-success/30 bg-surface-raised bg-linear-to-r from-success/[0.06] to-success/[0.06] hover:from-success/10 hover:to-success/10 p-2.5 wide:p-3 transition-colors",
   rootPending:
-    "group flex items-center gap-2 wide:gap-3 rounded-2xl border border-dashed border-warning/30 bg-warning/[0.04] hover:bg-warning/[0.07] p-2.5 wide:p-3 transition-colors",
+    "group flex items-center gap-2 wide:gap-3 rounded-2xl border border-dashed border-warning/40 bg-surface-raised bg-linear-to-r from-warning/[0.06] to-warning/[0.06] hover:from-warning/10 hover:to-warning/10 p-2.5 wide:p-3 transition-colors",
   date: "w-8.5 wide:w-10 shrink-0 flex flex-col items-center leading-none text-muted-foreground",
   dateMonth: "text-4xs wide:text-3xs uppercase tracking-wider",
   dateDay: "text-base wide:text-lg font-bold text-foreground",

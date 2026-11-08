@@ -29,7 +29,7 @@ describe("SlotVotingModal", () => {
       {
         start: "2026-07-20T10:00:00Z",
         end: "2026-07-20T12:00:00Z",
-        color: "#3b82f6",
+        color: "blue",
         votes: {
           u1: "yes",
           u2: "maybe",
@@ -200,7 +200,7 @@ describe("SlotVotingModal", () => {
         {
           start: "2026-07-20T10:00:00Z",
           end: "2026-07-20T12:00:00Z",
-          color: "#3b82f6",
+          color: "blue",
           // votes undefined to test votes || {} fallback
         },
       ],
@@ -223,7 +223,7 @@ describe("SlotVotingModal", () => {
         {
           start: "2026-07-20T10:00:00Z",
           end: "2026-07-20T12:00:00Z",
-          color: "#3b82f6",
+          color: "blue",
           votes: {
             "u-yes-img": "yes",
             "u-yes-noimg": "yes",
@@ -263,7 +263,7 @@ describe("SlotVotingModal", () => {
         {
           start: "2026-07-20T10:00:00Z",
           end: "2026-07-20T12:00:00Z",
-          color: "",
+          color: "blue",
         },
       ],
     };

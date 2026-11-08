@@ -7,7 +7,7 @@ import { AvailabilityGridFooter } from "./AvailabilityGridFooter";
 
 describe("AvailabilityGridFooter", () => {
   const proposedDates: ProposedDateSlot[] = [
-    { start: "2026-06-01T10:00:00Z", end: "2026-06-01T10:00:00Z", color: "#3b82f6" },
+    { start: "2026-06-01T10:00:00Z", end: "2026-06-01T10:00:00Z", color: "blue" },
   ];
 
   const slotStats: SlotStat[] = [

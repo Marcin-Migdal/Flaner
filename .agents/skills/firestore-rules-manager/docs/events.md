@@ -19,7 +19,7 @@ Scheduler events (MFE `planning`): the creator proposes date slots, participants
 | `creatorId` | string | ✓ | |
 | `participants` | string[] | ✓ | contains `creatorId` |
 | `endDate` | string (YYYY-MM-DD) | – | voting deadline |
-| `proposedDates` | Array<{ `start`, `end`, `color` }> | ✓ | a slot is identified by its dates (`{start}_{end}`) |
+| `proposedDates` | Array<{ `start`, `end`, `color` }> | ✓ | a slot is identified by its dates (`{start}_{end}`); `color` is a palette key (`blue`, `teal`…, see `planning/src/utils/slotColors`), the light/dark colour lives in theme.css |
 | `votes` | map<uid, map<slotKey, `'yes' \| 'maybe' \| 'no'`>> | – | slotKey = `{start}_{end}`; each participant writes only their own entry |
 | `isFinalized` | boolean | ✓ | `false` on create |
 | `finalizedSlotIndex` | number | – | set when finalized |

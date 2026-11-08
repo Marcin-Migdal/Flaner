@@ -10,7 +10,7 @@ describe("AvailabilityGridParticipant", () => {
     {
       start: "2026-06-01T10:00:00Z",
       end: "2026-06-01T12:00:00Z",
-      color: "#3b82f6",
+      color: "blue",
       votes: { "user-1": "yes", "user-2": "no" },
     },
   ];
@@ -52,13 +52,13 @@ describe("AvailabilityGridParticipant", () => {
       {
         start: "2026-06-01T10:00:00Z",
         end: "2026-06-01T12:00:00Z",
-        color: "#3b82f6",
+        color: "blue",
         votes: { "user-2": "maybe" },
       },
       {
         start: "2026-06-02T10:00:00Z",
         end: "2026-06-02T12:00:00Z",
-        color: "#3b82f6",
+        color: "blue",
         votes: {}, // unvoted dash
       },
     ];

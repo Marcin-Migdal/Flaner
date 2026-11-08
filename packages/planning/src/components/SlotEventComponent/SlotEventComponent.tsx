@@ -56,7 +56,6 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
     return (
       <div
         className={cn(
-          "dark",
           slotStyles.emptySlot,
           slotSegmentRootVariants({ position, continuesNextInRow }),
           className,
@@ -125,7 +124,6 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
   return (
     <div
       className={cn(
-        "dark",
         slotSegmentRootVariants({
           position,
           continuesNextInRow,
@@ -256,7 +254,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
                       <span>{noVotes}/{totalParticipantsCount}</span>
                     </span>
                   ) : (
-                    <span className="text-on-media/60">0/{totalParticipantsCount}</span>
+                    <span className="text-muted-foreground">0/{totalParticipantsCount}</span>
                   )}
                 </div>
 
@@ -280,7 +278,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
                       <span>{noVotes}</span>
                     </span>
                   )}
-                  {totalVotesCast === 0 && <span className="text-on-media/60">0/{totalParticipantsCount}</span>}
+                  {totalVotesCast === 0 && <span className="text-muted-foreground">0/{totalParticipantsCount}</span>}
                 </div>
               </div>
             </div>
