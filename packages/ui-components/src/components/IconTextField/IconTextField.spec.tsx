@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Search } from "lucide-react";
 import { IconTextField } from "./IconTextField";
@@ -19,7 +19,7 @@ describe("IconTextField component", () => {
 
     expect(screen.getByTestId("search-icon")).toBeInTheDocument();
 
-    const trigger = screen.getByTestId("search-icon").closest("[role='button']");
+    const trigger = screen.getByRole("button", { name: "Search items..." });
     expect(trigger).not.toBeNull();
     if (trigger) {
       await user.click(trigger);
@@ -63,11 +63,8 @@ describe("IconTextField component", () => {
       />
     );
 
-    // The clear button contains the X icon
-    const buttons = screen.getAllByRole("button");
-    // Button 0 is the icon button, Button 1 is the clear button
-    const clearBtn = buttons[1];
-    await user.click(clearBtn);
+    // In alwaysOpen mode the icon is decorative, so the only named button is "clear"
+    await user.click(screen.getByRole("button", { name: "clear" }));
 
     expect(onClearMock).toHaveBeenCalledTimes(1);
   });
@@ -113,11 +110,10 @@ describe("IconTextField component", () => {
       />
     );
 
-    const trigger = screen.getByTestId("search-icon").closest("[role='button']");
-    expect(trigger).not.toBeNull();
-    if (trigger) {
-      fireEvent.keyDown(trigger, { key: " " });
-    }
+    const trigger = screen.getByRole("button", { name: "Search..." });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    trigger.focus();
+    await user.keyboard(" ");
     expect(onOpen).toHaveBeenCalled();
 
     const iconBtn = screen.getByTestId("search-icon").closest("button");

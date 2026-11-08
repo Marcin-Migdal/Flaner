@@ -234,10 +234,10 @@ Status: all steps done in PR1. Adopted in views: `PageHeader` (Friends, Groups, 
 - Addons: `addon-docs` (autodocs from props / CVA variants), `addon-a11y` (axe in the Accessibility panel).
 - Stories live next to the unit (`<Name>.stories.tsx`; primitives in `components/ui/<name>.stories.tsx`); catalogue pages in `src/stories/`: *Foundations/Tokens* (colours with live computed values, type scale, radius, elevation, motion, breakpoints), *Patterns/Form* (`Form*` fields in `FormProvider` + zod), *Patterns/Page shell* (PageHeader + list / loading / empty).
 - Commands: `npm run storybook` (port 6006), `npm run storybook:build` (→ `dist/storybook/ui-components`). CI builds it whenever `ui-components` is affected. Not hosted — run it locally.
-- A11y baseline (axe, WCAG 2.2 A/AA, every story in both themes, 2026-11-08): remaining findings are out-of-month calendar days (inactive, exempt) and the collapsed `IconTextField` (`nested-interactive`, needs a component refactor).
+- A11y baseline (axe, WCAG 2.2 A/AA, every story in both themes, 2026-11-08): the only remaining finding is out-of-month calendar days (inactive, exempt).
 
 ## 10. Changelog
 - 2026-11-07 — initial research, audit and decision list (#61).
 - 2026-11-07 — implemented: theme source, semantic tokens, migration of all packages, new components, `lint:tokens` in CI, contrast spec, skills updated (#61).
-- 2026-11-08 — Storybook catalogue (#61 part 2); axe audit fixes: darker light `*-text` status tokens (AA on their tints), accessible names for icon buttons (calendar navigation / remove, field clear / collapse), `Select` label wired to its input, dark-mode checked `Checkbox` visible again, faint loading / image-picker text.
+- 2026-11-08 — Storybook catalogue (#61 part 2); axe audit fixes: darker light `*-text` status tokens (AA on their tints), accessible names for icon buttons (calendar navigation / remove, field clear / collapse), `Select` label wired to its input, collapsible `IconTextField` uses its icon button as the trigger (`aria-expanded`) instead of a `role="button"` wrapper around focusable children, dark-mode checked `Checkbox` visible again, faint loading / image-picker text.
 - 2026-11-08 — visual pass feedback: slightly deeper light background, `surface-raised` for rows inside sections (Splits), participant cards match the active split card, scheduler slot colours stored as keys with light/dark `--event-*` tokens.
