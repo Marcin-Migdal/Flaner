@@ -10,6 +10,28 @@
         "command": "tsc -p tsconfig.lib.json --noEmit",
         "cwd": "packages/ui-components"
       }
+    },
+    "storybook": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "storybook dev -p 6006 -c .storybook --no-open",
+        "cwd": "packages/ui-components"
+      }
+    },
+    "build-storybook": {
+      "executor": "nx:run-commands",
+      "outputs": [
+        "{workspaceRoot}/dist/storybook/ui-components"
+      ],
+      "options": {
+        "command": "storybook build -c .storybook -o ../../dist/storybook/ui-components --quiet",
+        "cwd": "packages/ui-components"
+      },
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default"
+      ]
     }
   }
 }

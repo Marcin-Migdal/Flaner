@@ -21,13 +21,14 @@ The single source of truth for AI rules and skills is `.agents/` (shared with Cu
 - `npm run dev:emulators` — dev servers + Auth/Firestore emulators + rules compiler in watch mode (no deploys; data kept in `.emulator-data/`). Default mode for feature work
 - `npm run dev:wipe` — dry run / `-- --yes` deletes ALL Firestore data and Auth accounts on DEV (never PROD). Needs an Admin SDK key: `.agents/docs/admin-scripts.md` (also `scripts/backfill-usernames.mjs`)
 - `npx nx run <pkg>:lint --fix` — lint only the touched packages (mandatory after changes)
+- `npm run storybook` (localhost:6006) / `npm run storybook:build` — component catalogue of `ui-components` (light/dark + EN/PL toolbar, a11y panel); every component has a `*.stories.tsx` next to it
 - `npm run lint:tokens` — design-token check (no raw colours / arbitrary sizes; `.agents/docs/design-system.md`); tokens live only in `packages/ui-components/src/theme/theme.css`
 - `npx nx run <pkg>:typecheck`, `npm run typecheck`
 - `npm test` / `npx vitest run --project <pkg>` — unit tests (Vitest)
 - `npm run test:rules` — Firestore security rules tests (`firestore-tests/`) on the emulator; needs JDK 21 (`JAVA_HOME`)
 - `npm run e2e` — Playwright (`e2e/`) against Firebase emulators; starts emulators + `npm run dev` itself, needs JDK 21 and free ports 4200–4205 / 8080 / 9099 (stop your own `npm run dev` / `dev:emulators` first)
 - `npm run rules:build` / `npm run rules:check` / `npm run rules:build -- --watch` — compile `firestore.rules` from the spec in `.agents/skills/firestore-rules-manager/docs/` / fail on drift. Never edit `firestore.rules` by hand (see that skill).
-- CI: `.github/workflows/ci.yml` on PRs to `develop`/`master` — design tokens, typecheck, lint, unit, rules (`rules:check` + emulator tests), affected E2E (`scripts/e2e-affected.mjs`). Apps deploy on Vercel; Firestore rules/indexes deploy via `.github/workflows/deploy-firestore.yml` on push to `develop` (DEV) / `master` (PROD); a manual run on a feature branch deploys it to DEV only (final manual test before merge when rules / indexes change — see `AGENTS.md`).
+- CI: `.github/workflows/ci.yml` on PRs to `develop`/`master` — design tokens, typecheck, lint, unit, Storybook build, rules (`rules:check` + emulator tests), affected E2E (`scripts/e2e-affected.mjs`). Apps deploy on Vercel; Firestore rules/indexes deploy via `.github/workflows/deploy-firestore.yml` on push to `develop` (DEV) / `master` (PROD); a manual run on a feature branch deploys it to DEV only (final manual test before merge when rules / indexes change — see `AGENTS.md`).
 
 ## Rules (imported)
 @.agents/AGENTS.md

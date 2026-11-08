@@ -57,9 +57,14 @@
       "fri": "Friday",
       "sat": "Saturday",
       "sun": "Sunday"
-    }
+    },
+    "previous": "Previous",
+    "next": "Next",
+    "remove": "Remove"
   },
   "datePicker": {
     "selectDate": "Select date"
-  }
+  },
+  "clear": "Clear",
+  "collapse": "Collapse"
 }

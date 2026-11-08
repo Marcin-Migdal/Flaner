@@ -250,6 +250,7 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
                 <button
                   type="button"
                   className={monthViewStyles.removeEventButton}
+                  aria-label={t("calendar.remove")}
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -341,6 +342,7 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
                     <button
                       type="button"
                       className="p-0.5 rounded-full hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                      aria-label={t("calendar.remove")}
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
@@ -356,6 +358,7 @@ export function MonthView<T = unknown>(props: MonthViewProps<T>) {
                     <button
                       type="button"
                       className="p-0.5 rounded-full hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                      aria-label={t("calendar.remove")}
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();

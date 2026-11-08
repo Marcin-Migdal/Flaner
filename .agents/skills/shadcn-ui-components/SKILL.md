@@ -22,6 +22,8 @@ This project uses shadcn/ui with a light and a dark theme driven by the semantic
 | Multi-step flow | `Stepper` (`steps`, `currentStep`) |
 | Chart frame + legend | `ChartContainer` (`title`, `legend` with `chart-*` colours; the chart renders in `children`) |
 
+**Catalogue:** every component in `ui-components` has a `<Name>.stories.tsx` next to it (primitives: `components/ui/<name>.stories.tsx`; catalogue-level pages in `src/stories/`). Browse with `npm run storybook`; check both themes (toolbar) and the Accessibility panel before shipping a component. A new component is not done without its story.
+
 Sheet vs. modal: `Sheet` for browsing/managing a collection or secondary context; `Dialog` for a short focused task; destructive confirmation = `ConfirmationPopup`.
 
 ---

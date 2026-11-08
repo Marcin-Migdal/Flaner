@@ -22,6 +22,7 @@ export default mergeConfig(
           "packages/ui-components/src/**/index.ts",
           "packages/ui-components/src/**/types.ts",
           "packages/ui-components/src/**/*.styles.ts",
+          "packages/ui-components/src/**/*.stories.tsx",
           "packages/ui-components/src/components/ui/**",
           "packages/ui-components/src/env.d.ts",
         ],

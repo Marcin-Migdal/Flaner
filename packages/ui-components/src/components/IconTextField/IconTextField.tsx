@@ -4,6 +4,7 @@ import React, { useId, useRef, useState } from "react";
 import { Button } from "../ui/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "../ui/field";
 import { Input } from "../ui/input";
+import { useUiTranslations } from "../../hooks/useUiTranslations";
 
 export interface IconTextFieldProps extends Omit<React.ComponentPropsWithoutRef<"input">, "id" | "type" | "size"> {
   id?: string;
@@ -42,6 +43,8 @@ export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldPro
     },
     ref,
   ) => {
+    const { t } = useUiTranslations();
+    const accessibleName = label ?? props.placeholder;
     const defaultId = useId();
     const inputId = customId || defaultId;
     const [isExpandedState, setIsExpandedState] = useState(false);
@@ -129,6 +132,7 @@ export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldPro
 
         <div
           role={!isExpanded ? "button" : undefined}
+          aria-label={!isExpanded ? accessibleName : undefined}
           tabIndex={!isExpanded ? 0 : undefined}
           onClick={!isExpanded ? handleToggleExpand : undefined}
           onKeyDown={
@@ -161,6 +165,7 @@ export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldPro
             size="icon"
             onClick={isExpanded ? handleToggleExpand : undefined}
             disabled={props.disabled}
+            aria-label={isExpanded ? t("collapse") : accessibleName}
             tabIndex={isExpanded ? 0 : -1}
             className={cn(
               "shrink-0 !h-full !p-0 rounded-none transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex items-center justify-center !w-full !border-y-0 !border-l-0",
@@ -192,6 +197,7 @@ export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldPro
               variant="ghost"
               size="icon-xs"
               onClick={handleClearClick}
+              aria-label={t("clear")}
               disabled={props.disabled || !isExpanded}
               tabIndex={!isExpanded ? -1 : 0}
               className={cn(

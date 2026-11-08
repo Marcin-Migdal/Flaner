@@ -489,7 +489,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
                   <ImageIcon className="size-4" />
                 </AttachmentMedia>
                 <AttachmentContent className="ml-1 select-none">
-                  <AttachmentTitle className="text-muted-foreground/60">{meta.title}</AttachmentTitle>
+                  <AttachmentTitle className="text-muted-foreground">{meta.title}</AttachmentTitle>
                   <AttachmentDescription>{meta.desc}</AttachmentDescription>
                 </AttachmentContent>
               </Attachment>
