@@ -113,16 +113,16 @@
 
   /* Domain: event slot colours (planning). Firestore stores the key, e.g. "blue".
      Light values keep the dark-mode hue with lower chroma / higher lightness so ink text stays ≥ 4.5:1. */
-  --event-blue: oklch(0.72 0.15 259.8);
-  --event-indigo: oklch(0.72 0.15 277.1);
-  --event-violet: oklch(0.72 0.16 292.7);
-  --event-purple: oklch(0.72 0.16 303.9);
-  --event-fuchsia: oklch(0.72 0.17 322.2);
-  --event-pink: oklch(0.72 0.16 354.3);
-  --event-cyan: oklch(0.72 0.13 215.2);
-  --event-sky: oklch(0.72 0.14 237.3);
-  --event-teal: oklch(0.72 0.12 184.7);
-  --event-slate: oklch(0.72 0.05 257.4);
+  --event-blue: oklch(0.76 0.12 259.8);
+  --event-indigo: oklch(0.76 0.12 277.1);
+  --event-violet: oklch(0.76 0.13 292.7);
+  --event-purple: oklch(0.76 0.13 303.9);
+  --event-fuchsia: oklch(0.76 0.14 322.2);
+  --event-pink: oklch(0.76 0.13 354.3);
+  --event-cyan: oklch(0.76 0.1 215.2);
+  --event-sky: oklch(0.76 0.11 237.3);
+  --event-teal: oklch(0.76 0.09 184.7);
+  --event-slate: oklch(0.76 0.035 257.4);
 
   /* Data-viz — categorical ≥ 3:1 vs. background */
   --chart-1: oklch(0.6 0.15 65);
