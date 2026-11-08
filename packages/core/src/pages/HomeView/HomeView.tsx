@@ -7,7 +7,7 @@ function LinkCard({ title, description, to }: { title: string; description: stri
       to={to}
       className="block p-6 bg-card border border-border rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/[0.02]"
     >
-      <h3 className="text-lg font-bold text-foreground mb-1 transition-colors group-hover:text-brand">{title}</h3>
+      <h3 className="text-lg font-bold text-foreground mb-1 transition-colors group-hover:text-brand-text">{title}</h3>
       <p className="text-muted-foreground text-sm">{description}</p>
     </NavLink>
   );
@@ -21,7 +21,7 @@ export function HomeView() {
       <div className="bg-gradient-to-r from-brand-dark/40 via-card to-card border border-brand/20 rounded-2xl p-8 relative overflow-hidden shadow-xl">
         <div className="absolute right-0 top-0 w-72 h-72 bg-brand/10 rounded-full blur-3xl pointer-events-none" />
         <h1 className="text-3xl font-bold mb-2 text-foreground">{t('home.title')}</h1>
-        <p className="text-brand-light/80 text-sm md:text-base max-w-xl">
+        <p className="text-brand-text text-sm md:text-base max-w-xl">
           {t('home.subtitle')}
         </p>
       </div>

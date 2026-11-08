@@ -22,7 +22,7 @@ export const gridParticipantRowVariants = cva(
  * Pierwsza, zamrożona (sticky) kolumna z profilem uczestnika
  */
 export const gridParticipantFirstColVariants = cva(
-  "relative sticky left-0 z-10 bg-card p-2 sm:p-2.5 flex items-center gap-2 border-r border-border/50 overflow-hidden transition-colors shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] shrink-0",
+  "relative sticky left-0 z-10 bg-card p-2 sm:p-2.5 flex items-center gap-2 border-r border-border/50 overflow-hidden transition-colors shadow-edge shrink-0",
   {
     variants: {
       isCurrentUser: {
@@ -42,7 +42,7 @@ export const gridParticipantFirstColVariants = cva(
 export const gridParticipantAvatarVariants = cva("w-7 h-7 sm:w-8 sm:h-8", {
   variants: {
     hasNoVotes: {
-      true: "ring-2 ring-rose-500/60",
+      true: "ring-2 ring-danger/60",
       false: "",
     },
   },
@@ -59,9 +59,9 @@ export const gridStaticVoteBadgeVariants = cva(
   {
     variants: {
       vote: {
-        yes: "bg-vote-yes text-white border-vote-yes-border/60",
-        maybe: "bg-vote-maybe text-white border-vote-maybe-border/60",
-        no: "bg-vote-no text-white border-vote-no-border/60",
+        yes: "bg-vote-yes text-vote-yes-foreground border-vote-yes-border/60",
+        maybe: "bg-vote-maybe text-vote-maybe-foreground border-vote-maybe-border/60",
+        no: "bg-vote-no text-vote-no-foreground border-vote-no-border/60",
         unvoted: "bg-muted/30 text-muted-foreground/40 border-border/30 shadow-none",
       },
     },
@@ -84,7 +84,7 @@ export const gridVoteButtonVariants = cva(
         no: "",
       },
       active: {
-        true: "text-white shadow-sm scale-105",
+        true: "shadow-sm scale-105",
         false: "hover:scale-105",
       },
     },
@@ -92,35 +92,35 @@ export const gridVoteButtonVariants = cva(
       {
         vote: "yes",
         active: true,
-        class: "bg-vote-yes hover:bg-vote-yes-hover border-vote-yes-border/60",
+        class: "bg-vote-yes text-vote-yes-foreground hover:bg-vote-yes/90 border-vote-yes-border/60",
       },
       {
         vote: "yes",
         active: false,
         class:
-          "bg-vote-yes-tint text-vote-yes-text hover:bg-vote-yes/30 border-vote-yes-border/20 hover:border-vote-yes-border/50",
+          "bg-vote-yes-subtle text-vote-yes-text hover:bg-vote-yes/30 border-vote-yes-border/20 hover:border-vote-yes-border/50",
       },
       {
         vote: "maybe",
         active: true,
-        class: "bg-vote-maybe hover:bg-vote-maybe-hover border-vote-maybe-border/60",
+        class: "bg-vote-maybe text-vote-maybe-foreground hover:bg-vote-maybe/90 border-vote-maybe-border/60",
       },
       {
         vote: "maybe",
         active: false,
         class:
-          "bg-vote-maybe-tint text-vote-maybe-text hover:bg-vote-maybe/30 border-vote-maybe-border/20 hover:border-vote-maybe-border/50",
+          "bg-vote-maybe-subtle text-vote-maybe-text hover:bg-vote-maybe/30 border-vote-maybe-border/20 hover:border-vote-maybe-border/50",
       },
       {
         vote: "no",
         active: true,
-        class: "bg-vote-no hover:bg-vote-no-hover border-vote-no-border/60",
+        class: "bg-vote-no text-vote-no-foreground hover:bg-vote-no/90 border-vote-no-border/60",
       },
       {
         vote: "no",
         active: false,
         class:
-          "bg-vote-no-tint text-vote-no-text hover:bg-vote-no/30 border-vote-no-border/20 hover:border-vote-no-border/50",
+          "bg-vote-no-subtle text-vote-no-text hover:bg-vote-no/30 border-vote-no-border/20 hover:border-vote-no-border/50",
       },
     ],
     defaultVariants: {

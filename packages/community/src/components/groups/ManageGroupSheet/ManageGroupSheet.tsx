@@ -170,14 +170,14 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
     if (roleToAssign === "admin") {
       return {
         label: t("manageGroupSheet.promoteToAdmin"),
-        icon: <ShieldCheck className="size-4 mr-2 text-blue-500" />,
+        icon: <ShieldCheck className="size-4 mr-2 text-info-text" />,
       };
     }
 
     if (roleToAssign === "moderator") {
       return {
         label: isPromotion ? t("manageGroupSheet.promoteToModerator") : t("manageGroupSheet.demoteToModerator"),
-        icon: <ShieldAlert className="size-4 mr-2 text-orange-500" />,
+        icon: <ShieldAlert className="size-4 mr-2 text-warning-text" />,
       };
     }
 
@@ -239,11 +239,11 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
   const getRoleIcon = (role: GroupRole) => {
     switch (role) {
       case "owner":
-        return <Crown className="size-4 text-yellow-500" />;
+        return <Crown className="size-4 text-brand-text" />;
       case "admin":
-        return <ShieldCheck className="size-4 text-blue-500" />;
+        return <ShieldCheck className="size-4 text-info-text" />;
       case "moderator":
-        return <ShieldAlert className="size-4 text-orange-500" />;
+        return <ShieldAlert className="size-4 text-warning-text" />;
       default:
         return <Shield className="size-4 text-muted-foreground" />;
     }
@@ -372,7 +372,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                 <AccordionTrigger className={manageGroupSheetStyles.accordionTrigger}>
                   <div className="flex items-center gap-1.5">
                     <span>{t("manageGroupSheet.membersSection")}</span>
-                    <span className="text-[11px] font-normal lowercase">({members.length})</span>
+                    <span className="text-2xs font-normal lowercase">({members.length})</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className={manageGroupSheetStyles.accordionContent}>
@@ -397,7 +397,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                             <div className="flex items-center gap-3">
                               <Avatar className="size-10 border border-border">
                                 {profile?.avatarUrl && <AvatarImage src={profile.avatarUrl} alt={displayName} />}
-                                <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-bold text-sm">
+                                <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-brand-foreground font-bold text-sm">
                                   {initials}
                                 </AvatarFallback>
                               </Avatar>
@@ -405,7 +405,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                                 <div className="font-medium text-sm flex items-center gap-1.5">
                                   {displayName}
                                   {member.userId === user?.uid && (
-                                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm ml-1">
+                                    <span className="text-3xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm ml-1">
                                       {t("manageGroupSheet.you")}
                                     </span>
                                   )}
@@ -446,7 +446,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
 
                                   {currentUserRole === "owner" && (
                                     <DropdownMenuItem
-                                      className="text-yellow-600 focus:text-yellow-700"
+                                      className="text-warning-text focus:text-warning-text"
                                       onClick={() => setConfirmTransferUserId(member.userId)}
                                     >
                                       <Crown className="size-4 mr-2" />

@@ -16,7 +16,7 @@ test("a participant's votes are saved in their own entry, next to the creator's 
     description: "",
     creatorId: creator.uid,
     participants: [creator.uid, participant.uid],
-    proposedDates: [{ start: day, end: day, color: "#3b82f6" }],
+    proposedDates: [{ start: day, end: day, color: "blue" }],
     votes: { [creator.uid]: { [slotKey]: "yes" } },
     isFinalized: false,
     createdAt: Date.now(),

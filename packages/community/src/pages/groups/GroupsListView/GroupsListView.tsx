@@ -1,5 +1,5 @@
 import { useDebounce, useIsMobile } from "@flaner/shared/hooks";
-import { Button, GroupSearchResultItem, IconTextField, SearchBar } from "@flaner/ui-components";
+import { Button, GroupSearchResultItem, IconTextField, PageHeader, SearchBar } from "@flaner/ui-components";
 import { Filter, Plus, Search, Users } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
@@ -71,68 +71,64 @@ export function GroupsListView() {
 
   return (
     <div className="max-w-5xl mx-auto py-6 space-y-8 px-4 md:px-0">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-brand/10 text-brand rounded-xl">
-            <Users className="size-6" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-black tracking-tight text-foreground font-heading">{t("groupsView.title")}</h1>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <IconTextField
-            icon={<Filter className="size-4" />}
-            size="lg"
-            value={myGroupsSearchQuery}
-            onChange={(e) => setMyGroupsSearchQuery(e.target.value)}
-            placeholder={t("groupsView.filterPlaceholder")}
-            isClearable
-            onClear={() => setMyGroupsSearchQuery("")}
-            isExpanded={isFilterExpanded}
-            onOpen={handleFilterOpen}
-            onClose={handleFilterClose}
-          />
-          <SearchBar
-            icon={<Search className="size-4" />}
-            size="lg"
-            value={searchQuery}
-            onChange={(val) => setSearchQuery(val)}
-            placeholder={t("groupsView.searchPlaceholder")}
-            isClearable
-            onClear={() => setSearchQuery("")}
-            onClose={handleSearchClose}
-            onOpen={handleSearchOpen}
-            isExpanded={isSearchExpanded}
-            results={globalGroups}
-            isLoading={isFetching && !isFetchingNextPage}
-            hasMore={hasNextPage}
-            onShowMore={() => fetchNextPage()}
-            isFetchingNextPage={isFetchingNextPage}
-            renderResult={(group) => (
-              <GroupSearchResultItem
-                avatarUrl={group.avatarUrl}
-                name={group.name}
-                requiresApproval={group.requiresApproval}
-              />
-            )}
-            onSelect={handleGroupSelect}
-            alwaysOpen={false}
-          />
-          <GroupInvitationsSheet />
-          <Button
-            variant="brand"
-            size="lg"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="shrink-0 px-3 sm:px-4 flex items-center gap-1.5"
-            title={t("groupsView.createBtn")}
-            aria-label={t("groupsView.createBtn")}
-          >
-            <Plus className="size-4" />
-            <span className="hidden sm:inline">{t("groupsView.createBtn")}</span>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={<Users />}
+        title={t("groupsView.title")}
+        actions={
+          <>
+            <IconTextField
+              icon={<Filter className="size-4" />}
+              size="lg"
+              value={myGroupsSearchQuery}
+              onChange={(e) => setMyGroupsSearchQuery(e.target.value)}
+              placeholder={t("groupsView.filterPlaceholder")}
+              isClearable
+              onClear={() => setMyGroupsSearchQuery("")}
+              isExpanded={isFilterExpanded}
+              onOpen={handleFilterOpen}
+              onClose={handleFilterClose}
+            />
+            <SearchBar
+              icon={<Search className="size-4" />}
+              size="lg"
+              value={searchQuery}
+              onChange={(val) => setSearchQuery(val)}
+              placeholder={t("groupsView.searchPlaceholder")}
+              isClearable
+              onClear={() => setSearchQuery("")}
+              onClose={handleSearchClose}
+              onOpen={handleSearchOpen}
+              isExpanded={isSearchExpanded}
+              results={globalGroups}
+              isLoading={isFetching && !isFetchingNextPage}
+              hasMore={hasNextPage}
+              onShowMore={() => fetchNextPage()}
+              isFetchingNextPage={isFetchingNextPage}
+              renderResult={(group) => (
+                <GroupSearchResultItem
+                  avatarUrl={group.avatarUrl}
+                  name={group.name}
+                  requiresApproval={group.requiresApproval}
+                />
+              )}
+              onSelect={handleGroupSelect}
+              alwaysOpen={false}
+            />
+            <GroupInvitationsSheet />
+            <Button
+              variant="brand"
+              size="lg"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="shrink-0 px-3 sm:px-4 flex items-center gap-1.5"
+              title={t("groupsView.createBtn")}
+              aria-label={t("groupsView.createBtn")}
+            >
+              <Plus className="size-4" />
+              <span className="hidden sm:inline">{t("groupsView.createBtn")}</span>
+            </Button>
+          </>
+        }
+      />
 
       {isLoadingMyGroups ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

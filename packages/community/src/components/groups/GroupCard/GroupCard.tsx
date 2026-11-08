@@ -18,7 +18,7 @@ export function GroupCard({ group }: GroupCardProps) {
     >
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand/20 to-brand/5" />
       <div className="flex items-center gap-4 mb-3">
-        <div className="flex-shrink-0 size-12 rounded-xl bg-gradient-to-br from-brand/20 to-brand/5 flex items-center justify-center text-brand font-bold text-lg shadow-inner">
+        <div className="flex-shrink-0 size-12 rounded-xl bg-gradient-to-br from-brand/20 to-brand/5 flex items-center justify-center text-brand-text font-bold text-lg shadow-inner">
           {group.avatarUrl ? (
             <img src={group.avatarUrl} alt={group.name} className="size-full object-cover rounded-xl" />
           ) : (

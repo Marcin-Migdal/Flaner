@@ -137,10 +137,10 @@ function ShellLayoutContent() {
             onClick={() => isMobile && setOpenMobile(false)}
             className="flex items-center gap-2.5 w-full focus:outline-none overflow-hidden"
           >
-            <div className="size-[39px] rounded-md bg-brand flex items-center justify-center font-black text-zinc-950 text-xl shadow-md shadow-brand/15 shrink-0 select-none">
+            <div className="size-[39px] rounded-md bg-brand flex items-center justify-center font-black text-brand-foreground text-xl shadow-md shadow-brand/15 shrink-0 select-none">
               F
             </div>
-            <span className="text-2xl font-black tracking-wider text-brand truncate select-none">FLANER</span>
+            <span className="text-2xl font-black tracking-wider text-brand-text truncate select-none">FLANER</span>
           </NavLink>
         </SidebarHeader>
 
@@ -242,13 +242,13 @@ function ShellLayoutContent() {
                     <DropdownMenuSubContent sideOffset={isMobile ? -130 : 4}>
                       <DropdownMenuItem
                         onClick={() => handleLanguageChange("pl")}
-                        className={cn(i18n.language === "pl" && "text-brand font-semibold")}
+                        className={cn(i18n.language === "pl" && "text-brand-text font-semibold")}
                       >
                         {t("nav.langPl")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleLanguageChange("en")}
-                        className={cn(i18n.language === "en" && "text-brand font-semibold")}
+                        className={cn(i18n.language === "en" && "text-brand-text font-semibold")}
                       >
                         {t("nav.langEn")}
                       </DropdownMenuItem>
@@ -262,13 +262,13 @@ function ShellLayoutContent() {
                     <DropdownMenuSubContent sideOffset={isMobile ? -130 : 4}>
                       <DropdownMenuItem
                         onClick={() => handleThemeChange("light")}
-                        className={cn(!isDark && "text-brand font-semibold")}
+                        className={cn(!isDark && "text-brand-text font-semibold")}
                       >
                         {t("nav.themeLight")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleThemeChange("dark")}
-                        className={cn(isDark && "text-brand font-semibold")}
+                        className={cn(isDark && "text-brand-text font-semibold")}
                       >
                         {t("nav.themeDark")}
                       </DropdownMenuItem>
@@ -310,7 +310,7 @@ function ShellLayoutContent() {
               onClick={() => isMobile && setOpenMobile(false)}
               className="flex items-center gap-2 focus:outline-none select-none"
             >
-              <span className="text-lg font-black tracking-wider text-brand">FLANER</span>
+              <span className="text-lg font-black tracking-wider text-brand-text">FLANER</span>
             </NavLink>
           </div>
         </header>

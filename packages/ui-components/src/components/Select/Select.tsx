@@ -217,7 +217,7 @@ export const Select = <Option extends SelectOption = SelectOption>({
       cn(
         "min-w-full w-max max-w-[min(90vw,360px)] overflow-hidden z-50 pointer-events-auto",
         variant === "glass"
-          ? "rounded-2xl border border-white/10 bg-[#151515]/90 backdrop-blur-xl shadow-2xl p-1.5 flex flex-col"
+          ? "rounded-2xl border border-border bg-popover/90 backdrop-blur-xl shadow-2xl p-1.5 flex flex-col"
           : "rounded-lg border border-border bg-popover shadow-lg",
         placement === "top" ? "mb-1.5" : "mt-1.5",
       ),

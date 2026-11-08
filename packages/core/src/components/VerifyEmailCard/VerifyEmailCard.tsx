@@ -94,7 +94,7 @@ export function VerifyEmailCard({ email, language }: VerifyEmailCardProps) {
         <button
           type="button"
           onClick={signOutUser}
-          className="text-brand hover:underline font-semibold focus:outline-none cursor-pointer"
+          className="text-brand-text hover:underline font-semibold focus:outline-none cursor-pointer"
         >
           {t("verifyEmail.useAnotherAccount")}
         </button>

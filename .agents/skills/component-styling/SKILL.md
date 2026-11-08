@@ -9,6 +9,35 @@ Comprehensive guide for organizing CSS classNames, managing variants with CVA (`
 
 ---
 
+## 0. Ironclad Rule: Tokens Only (Design System)
+
+The single theme source is `packages/ui-components/src/theme/theme.css` (spec: `.agents/docs/design-system.md`). Every package `index.css` only imports it — never define tokens, `@theme` blocks or scrollbar styles in an MFE.
+
+| Need | Use | Never |
+|---|---|---|
+| Subtle surface / hover / pressed | `bg-surface-subtle` / `bg-surface-hover` / `bg-surface-strong` | `bg-white/5`, `bg-zinc-900` |
+| Row / card inside a `surface-subtle` section | `bg-surface-raised` (white in light, `white/5` in dark) + `shadow-raised` | the same `bg-surface-subtle` as the section (invisible in light mode) |
+| User-chosen event colour | store the key (`"blue"`), render `getSlotColorValue(key)` → `var(--event-blue)` | hex values in Firestore |
+| Hairline / normal border | `border-border-subtle` / `border-border` | `border-white/10` |
+| Form-control outline / field fill | `border-input-border` (≥ 3:1) / `bg-input/30` | `border-input` (fill tint, too faint for an outline) |
+| Brand fill + text on it | `bg-brand text-brand-foreground` | `text-zinc-950`, `text-white` on brand |
+| Brand-coloured text / icon | `text-brand-text` | `text-brand` (fails contrast in light mode) |
+| Status | `bg-success|warning|danger|info` + `text-*-foreground`; text `text-*-text`; tint `bg-*-subtle` or `bg-success/10` | `emerald-*`, `amber-*`, `rose-*`, `red-*` |
+| Event voting | `vote-yes|maybe|no` (+ `-foreground`, `-text`, `-subtle`, `-border`) | raw hues |
+| On photos / user-chosen colours | `text-on-media`, backdrops `bg-scrim/40` | `text-white`, `bg-black/40` |
+| Font sizes below `text-xs` | `text-2xs` (11px), `text-3xs` (10px); dense grids only `text-4xs` (9px), `text-5xs` (8px) | `text-[11px]` |
+| Shadows | `shadow-raised|overlay|modal|edge|drawer|glow-brand|glow-warning|glow-danger|dot-warning` (or Tailwind `shadow-sm…2xl`) | `shadow-[…rgba()]` |
+| Breakpoints | `xs` 360, `sm`, `md`, `lg`, `desktop` 1080, `split` 1200, `calendar` 1284, `wide` 1440 (`max-desktop:` etc.) | `min-[1080px]:` |
+| z-index | numeric scale `z-0…z-50`, `z-70`, `z-100` | `z-[50]` |
+| Charts | `bg-chart-1…8`, `chart-positive/negative`; in D3 read `var(--chart-N)` | hand-picked hexes |
+
+- A surface that is always dark (e.g. calendar slot pills tinted with the event colour) gets the `dark` class on its root so every token inside resolves to its dark value — do not hardcode light colours for it.
+- Data colours (event colours, filament colours, colour-picker presets) are content and stay hex values in TS.
+- Enforced by `npm run lint:tokens` (`scripts/check-design-tokens.mjs`, also in CI). A deliberate exception needs a `design-tokens-ignore` comment on the line with a reason.
+- Contrast of every token pair is asserted by `packages/ui-components/src/theme/theme.spec.ts`; when you add or change a token, add its pair there.
+
+---
+
 ## 1. Ironclad Rule: Strict 1:1 Style Colocation
 
 Whenever a component or view has non-trivial, multi-variant, or complex conditional classNames, **extract its styles into a dedicated `[ComponentName].styles.ts` file colocated directly next to the component**.
@@ -60,7 +89,7 @@ export const voteButtonVariants = cva(
         no: "",
       },
       active: {
-        true: "text-white shadow-sm scale-105",
+        true: "shadow-sm scale-105",
         false: "hover:scale-105",
       },
       size: {
@@ -72,22 +101,22 @@ export const voteButtonVariants = cva(
       {
         vote: "yes",
         active: true,
-        class: "bg-vote-yes hover:bg-vote-yes-hover border-vote-yes-border/60",
+        class: "bg-vote-yes text-vote-yes-foreground hover:bg-vote-yes/90 border-vote-yes-border/60",
       },
       {
         vote: "yes",
         active: false,
-        class: "bg-vote-yes-tint text-vote-yes-text hover:bg-vote-yes/30 border-vote-yes-border/20",
+        class: "bg-vote-yes-subtle text-vote-yes-text hover:bg-vote-yes/30 border-vote-yes-border/20",
       },
       {
         vote: "no",
         active: true,
-        class: "bg-vote-no hover:bg-vote-no-hover border-vote-no-border/60",
+        class: "bg-vote-no text-vote-no-foreground hover:bg-vote-no/90 border-vote-no-border/60",
       },
       {
         vote: "no",
         active: false,
-        class: "bg-vote-no-tint text-vote-no-text hover:bg-vote-no/30 border-vote-no-border/20",
+        class: "bg-vote-no-subtle text-vote-no-text hover:bg-vote-no/30 border-vote-no-border/20",
       },
     ],
     defaultVariants: {
@@ -177,4 +206,5 @@ When building multi-day calendars, event grids, or timeline rows where segments 
 - [ ] Do empty placeholders in grid/calendar structures match active segments in height and margins pixel-for-pixel?
 - [ ] Do scrollable containers have adequate `pb-4` bottom padding before any footer separators?
 - [ ] Is the responsive layout achieved with a single unified DOM tree rather than duplicated `sm:hidden` / `hidden sm:block` blocks?
+- [ ] Are only semantic tokens used (no raw palette, `white/N`, hex, `text-[Npx]`, `shadow-[…]`, `z-[N]`, `min-[Npx]:`)? `npm run lint:tokens` is green?
 - [ ] Have you run `nx run <package>:lint` and `nx run <package>:typecheck` to ensure 0 errors?

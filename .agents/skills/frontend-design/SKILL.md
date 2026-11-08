@@ -6,6 +6,8 @@ license: Complete terms in LICENSE.txt
 
 # Frontend Design
 
+> **Inside Flaner** the visual identity is fixed by the design system: tokens in `packages/ui-components/src/theme/theme.css`, rules and patterns in `.agents/docs/design-system.md`, components listed in the `shadcn-ui-components` skill. Use this skill's thinking for layout, hierarchy, copy and the one signature moment of a new view — but take colours, type scale, radius, shadows and motion from the tokens (never new hexes or fonts), and check both themes and mobile. Propose a new token in theme.css (with a contrast pair in `theme.spec.ts`) when a design genuinely needs one.
+
 Approach this as the design lead at a small studio known for giving every client a visual identity that could not be mistaken for anyone else's. This client has already rejected proposals that felt templated, and is paying for a distinctive point of view: make deliberate, opinionated choices about palette, typography, and layout that are specific to this brief, and take one real aesthetic risk you can justify.
 
 ## Ground it in the subject

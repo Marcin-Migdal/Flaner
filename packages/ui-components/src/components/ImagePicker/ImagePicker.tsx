@@ -531,18 +531,18 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
             />
             {isCompressing ? (
               <>
-                <Loader2 className="size-6 text-brand animate-spin mb-2" />
+                <Loader2 className="size-6 text-brand-text animate-spin mb-2" />
                 <span className="text-xs font-semibold text-foreground/80">
                   {labels?.compressingText || t("imagePicker.compressing")}
                 </span>
               </>
             ) : (
               <>
-                <UploadCloud className={cn("size-6 text-muted-foreground mb-2 transition-colors", isDragging && "text-brand")} />
+                <UploadCloud className={cn("size-6 text-muted-foreground mb-2 transition-colors", isDragging && "text-brand-text")} />
                 <span className="text-xs font-semibold text-foreground/80">
                   {isDragging ? (labels?.dropzoneActiveText || t("imagePicker.dropzoneActiveText")) : (labels?.dropzoneIdleText || t("imagePicker.dropzoneIdleText"))}
                 </span>
-                <span className="text-[10px] text-muted-foreground mt-0.5">
+                <span className="text-3xs text-muted-foreground mt-0.5">
                   {labels?.acceptedFormatsDesc || t("imagePicker.acceptedFormatsDesc")}
                 </span>
               </>

@@ -28,7 +28,7 @@ describe("FinalizeEventModal", () => {
       {
         start: "2026-07-01",
         end: "2026-07-01",
-        color: "#3b82f6",
+        color: "blue",
         votes: {
           "user-1": "yes",
           "user-2": "maybe",
@@ -37,7 +37,7 @@ describe("FinalizeEventModal", () => {
       {
         start: "2026-07-05",
         end: "2026-07-06",
-        color: "#10b981",
+        color: "teal",
         votes: {
           "user-1": "yes",
           "user-2": "yes",
@@ -125,31 +125,31 @@ describe("FinalizeEventModal", () => {
         {
           start: "2026-12-30",
           end: "2027-01-02",
-          color: "#ef4444",
+          color: "pink",
           votes: { "user-1": "maybe" },
         },
         {
           start: "2026-08-01",
           end: "2026-08-02",
-          color: "#10b981",
+          color: "teal",
           votes: { "user-1": "yes" }, // score 1.0, yesCount 1
         },
         {
           start: "2026-08-03",
           end: "2026-08-04",
-          color: "#06b6d4",
+          color: "cyan",
           votes: { "user-2": "yes" }, // score 1.0, yesCount 1 (triggers a.originalIndex - b.originalIndex)
         },
         {
           start: "2026-08-05",
           end: "2026-08-06",
-          color: "#3b82f6",
+          color: "blue",
           votes: { "user-1": "maybe", "user-2": "maybe" }, // score 1.0, yesCount 0
         },
         {
           start: "2026-09-01",
           end: "2026-09-02",
-          color: "#8b5cf6",
+          color: "violet",
           votes: {}, // score 0
         },
       ],
@@ -188,7 +188,7 @@ describe("FinalizeEventModal", () => {
         {
           start: "2026-07-01",
           end: "2026-07-01",
-          color: "#3b82f6",
+          color: "blue",
           votes: undefined,
         },
       ],

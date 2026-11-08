@@ -85,7 +85,7 @@ describe("events endpoints", () => {
         description: "Play night",
         creatorId: "user-1",
         participants: ["user-1", "user-2"],
-        proposedDates: [{ start: "2026-06-01T18:00:00Z", end: "2026-06-01T21:00:00Z", color: "#3b82f6" }],
+        proposedDates: [{ start: "2026-06-01T18:00:00Z", end: "2026-06-01T21:00:00Z", color: "blue" }],
         isFinalized: false,
       };
 
@@ -320,17 +320,17 @@ describe("events endpoints", () => {
           {
             start: "2020-01-01T10:00:00Z",
             end: "2020-01-01T12:00:00Z", // Past date, will be filtered
-            color: "#3b82f6",
+            color: "blue",
           },
           {
             start: "2099-01-01T10:00:00Z",
             end: "2099-01-01T12:00:00Z", // Future date, kept
-            color: "#3b82f6",
+            color: "blue",
           },
           {
             start: "2099-01-01T10:00:00Z",
             end: "not-a-date", // Unparsable, kept
-            color: "#3b82f6",
+            color: "blue",
           },
         ],
         createdAt: 1700000000000,
@@ -375,7 +375,7 @@ describe("events endpoints", () => {
           {
             start: "2010-01-01T10:00:00Z",
             end: "2010-01-01T12:00:00Z",
-            color: "#3b82f6",
+            color: "blue",
           },
         ],
         createdAt: 1700000000000,
@@ -406,7 +406,7 @@ describe("events endpoints", () => {
           {
             start: "2099-01-01T10:00:00Z",
             end: "2099-01-01T12:00:00Z",
-            color: "#3b82f6",
+            color: "blue",
           },
         ],
         createdAt: 1700000000000,

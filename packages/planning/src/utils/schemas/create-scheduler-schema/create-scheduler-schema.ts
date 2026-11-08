@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { isSameDay, startOfDay } from "date-fns";
+import { SLOT_COLOR_KEYS } from "../../slotColors";
 
 export const getCreateSchedulerSchema = (t: (key: string, options?: Record<string, unknown>) => string) =>
   z.object({
@@ -10,7 +11,7 @@ export const getCreateSchedulerSchema = (t: (key: string, options?: Record<strin
     }),
     participants: z.array(z.string()),
     proposedDates: z
-      .array(z.object({ start: z.date(), end: z.date(), color: z.string() }))
+      .array(z.object({ start: z.date(), end: z.date(), color: z.enum(SLOT_COLOR_KEYS) }))
       .min(1, t("validation.datesRequired")),
     autoVoteProposedDates: z.boolean().optional(),
   }).superRefine((data, ctx) => {

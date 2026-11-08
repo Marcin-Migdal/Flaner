@@ -29,7 +29,7 @@ describe("AvailabilityGridView", () => {
       {
         start: "2026-07-10",
         end: "2026-07-10",
-        color: "#3b82f6",
+        color: "blue",
         votes: {
           "user-1": "yes",
           "user-2": "maybe",
@@ -39,7 +39,7 @@ describe("AvailabilityGridView", () => {
       {
         start: "2026-07-15",
         end: "2026-07-15",
-        color: "#10b981",
+        color: "teal",
         // votes undefined to test votes || {} fallback
       },
     ],
@@ -146,7 +146,7 @@ describe("AvailabilityGridView", () => {
         {
           start: "2026-07-10",
           end: "2026-07-10",
-          color: "#3b82f6",
+          color: "blue",
           votes: {
             "user-1": "maybe",
             "user-2": "unknown" as unknown as "yes" | "no" | "maybe",

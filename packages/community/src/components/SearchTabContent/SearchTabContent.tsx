@@ -15,7 +15,7 @@ export function SearchTabContent() {
   const { data: friends = [] } = useGetFriendsListRealtimeQuery();
   const { data: sentRequests = [] } = useGetSentFriendRequestRealtimeQuery();
   const { data: receivedRequests = [] } = useGetReceivedFriendRequestRealtimeQuery();
-  const { data: searchResults = [], isFetching: searchingUsers } = useSearchUsersQuery(debouncedSearch);
+  const { data: searchResults = [], isLoading: searchingUsers } = useSearchUsersQuery(debouncedSearch);
 
   // Mutations
   const sendRequest = useSendFriendRequestMutation();
@@ -54,7 +54,7 @@ export function SearchTabContent() {
 
       {searchingUsers ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="size-8 animate-spin text-brand" />
+          <Loader2 className="size-8 animate-spin text-brand-text" />
         </div>
       ) : debouncedSearch && searchResults.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border bg-card/50 rounded-2xl p-6 shadow-sm">
@@ -80,7 +80,7 @@ export function SearchTabContent() {
                 <div className="flex items-center gap-3 min-w-0">
                   <Avatar className="size-11 border border-border shadow-sm">
                     <AvatarImage src={match.avatarUrl} alt={match.username} />
-                    <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-bold text-sm">
+                    <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-brand-foreground font-bold text-sm">
                       {getInitials(match.username)}
                     </AvatarFallback>
                   </Avatar>
@@ -91,7 +91,7 @@ export function SearchTabContent() {
 
                 <div className="shrink-0">
                   {friendStatus ? (
-                    <div className="flex items-center gap-1 text-emerald-500 font-medium text-xs px-3 py-1.5 bg-emerald-500/10 rounded-lg">
+                    <div className="flex items-center gap-1 text-success-text font-medium text-xs px-3 py-1.5 bg-success-subtle rounded-lg">
                       <UserCheck className="size-3.5" />
                       <span>{t("searchTab.isFriend")}</span>
                     </div>
@@ -147,7 +147,7 @@ export function SearchTabContent() {
                           avatarUrl: match.avatarUrl,
                         })
                       }
-                      className="h-9 px-3 rounded-lg border-border text-xs gap-1.5 hover:bg-brand/10 hover:border-brand/30 hover:text-brand"
+                      className="h-9 px-3 rounded-lg border-border text-xs gap-1.5 hover:bg-brand/10 hover:border-brand/30 hover:text-brand-text"
                     >
                       {isSending ? (
                         <Loader2 className="size-3.5 animate-spin" />

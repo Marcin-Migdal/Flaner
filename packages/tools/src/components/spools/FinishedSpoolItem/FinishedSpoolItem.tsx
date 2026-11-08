@@ -30,7 +30,7 @@ export const FinishedSpoolItem: React.FC<FinishedSpoolItemProps> = ({
           <h4 className="font-semibold text-muted-foreground text-sm line-through truncate" title={spool.name}>
             {spool.name}
           </h4>
-          <p className="text-[11px] text-muted-foreground/70 truncate">
+          <p className="text-2xs text-muted-foreground/70 truncate">
             {spool.material} {spool.type} • {t("spooler.spools.empty")}
           </p>
         </div>

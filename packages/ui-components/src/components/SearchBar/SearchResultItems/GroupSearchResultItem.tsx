@@ -39,7 +39,7 @@ export function GroupSearchResultItem({
         <span className="text-sm font-semibold truncate text-foreground">{name}</span>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
           {requiresApproval ? (
-            <Lock className="size-3 text-amber-500" />
+            <Lock className="size-3 text-warning-text" />
           ) : (
             <Globe className="size-3" />
           )}

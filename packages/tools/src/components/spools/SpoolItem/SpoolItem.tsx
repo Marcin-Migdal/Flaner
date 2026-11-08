@@ -113,7 +113,7 @@ export const SpoolItem: React.FC<SpoolItemProps> = ({
                 <span>{t("spooler.spools.editSpool")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onMarkFinished}>
-                <CheckCircle2 className="size-4 mr-2 text-emerald-500" />
+                <CheckCircle2 className="size-4 mr-2 text-success-text" />
                 <span>{t("spooler.spools.markFinished")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
@@ -131,7 +131,7 @@ export const SpoolItem: React.FC<SpoolItemProps> = ({
           <span>{t("spooler.spools.remainingWeight")}:</span>
           <span className="font-bold text-sm text-foreground">
             {spool.currentWeight}g{" "}
-            <span className="text-[11px] text-muted-foreground font-normal">/ {spool.initialWeight}g</span>
+            <span className="text-2xs text-muted-foreground font-normal">/ {spool.initialWeight}g</span>
           </span>
         </div>
 

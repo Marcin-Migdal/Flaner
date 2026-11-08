@@ -80,7 +80,7 @@ export const BigCalendarHeader = ({
         <Button type="button" variant="outline" size="icon" className="h-7 w-7 sm:h-9 sm:w-9" onClick={onPrev}>
           <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </Button>
-        <Button type="button" variant="outline" size="sm" className="h-7 sm:h-9 px-1.5 sm:px-3 text-[11px] sm:text-sm" onClick={onToday}>
+        <Button type="button" variant="outline" size="sm" className="h-7 sm:h-9 px-1.5 sm:px-3 text-2xs sm:text-sm" onClick={onToday}>
           {t("calendar.today")}
         </Button>
         <Button type="button" variant="outline" size="icon" className="h-7 w-7 sm:h-9 sm:w-9" onClick={onNext}>

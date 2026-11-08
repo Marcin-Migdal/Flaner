@@ -9,6 +9,7 @@ import { AvailabilityGridView } from "../../../../../../components/AvailabilityG
 import { SlotEventComponent } from "../../../../../../components/SlotEventComponent";
 import { SlotMoreEventsPopover } from "../../../../../../components/SlotMoreEventsPopover";
 import { usePlanningTranslations } from "../../../../../../hooks/usePlanningTranslations";
+import { getSlotColorValue } from "../../../../../../utils/slotColors";
 
 export type SchedulerBigCalendarProps = {
   activeEvent: SchedulerEvent;
@@ -89,7 +90,7 @@ export const SchedulerBigCalendar = ({
         title: activeEvent.name,
         start: parseISO(d.start),
         end: parseISO(d.end),
-        color: d.color,
+        color: getSlotColorValue(d.color),
         metaData: {
           slotIndex: index,
           votes: d.votes || {},

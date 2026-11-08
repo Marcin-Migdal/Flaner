@@ -54,7 +54,7 @@ export const AvailabilityGridParticipant = ({
           </Avatar>
           {hasNoVotes && (
             <span
-              className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-card"
+              className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-danger ring-2 ring-card"
               title={t("voting.unvoted")}
             />
           )}
@@ -66,12 +66,12 @@ export const AvailabilityGridParticipant = ({
               {profile?.name || uid}
             </span>
             {isCurrentUser && (
-              <span className="text-[9px] font-bold text-primary px-1 py-0.2 rounded bg-primary/10">
+              <span className="text-4xs font-bold text-primary px-1 py-0.2 rounded bg-primary/10">
                 {t("grid.you")}
               </span>
             )}
           </div>
-          <span className="text-[10px] text-muted-foreground truncate">
+          <span className="text-3xs text-muted-foreground truncate">
             {isCreator ? t("hub.status.creator") : t("hub.status.invited")}
           </span>
         </div>
@@ -112,7 +112,7 @@ export const AvailabilityGridParticipant = ({
                   onClick={() => onVoteClick(slotIdx, "maybe", vote)}
                   title={vote === "maybe" ? t("voting.unvoted") : t("voting.maybe")}
                 >
-                  <span className="font-extrabold text-[12px] leading-none select-none">?</span>
+                  <span className="font-extrabold text-xs leading-none select-none">?</span>
                 </button>
 
                 {/* Button 3: Nie (No) toggle */}
@@ -144,7 +144,7 @@ export const AvailabilityGridParticipant = ({
                     className={gridStaticVoteBadgeVariants({ vote: "maybe" })}
                     title={t("voting.maybe")}
                   >
-                    <span className="font-extrabold text-[12px] leading-none select-none">?</span>
+                    <span className="font-extrabold text-xs leading-none select-none">?</span>
                   </div>
                 )}
 

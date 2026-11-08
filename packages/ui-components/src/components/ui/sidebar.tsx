@@ -406,7 +406,7 @@ const SidebarMenuButton = React.forwardRef<
       className={cn(
         "flex w-full items-center gap-3 md:gap-2.5 rounded-lg md:rounded-md px-3 py-2.5 md:px-2.5 md:py-1 min-h-[44px] md:min-h-0 text-base md:text-sm font-medium text-sidebar-foreground transition-all duration-150 cursor-pointer outline-none border border-transparent select-none overflow-hidden",
         "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        "data-[active=true]:bg-brand data-[active=true]:text-zinc-950 data-[active=true]:font-bold data-[active=true]:shadow-md data-[active=true]:shadow-brand/5",
+        "data-[active=true]:bg-brand data-[active=true]:text-brand-foreground data-[active=true]:font-bold data-[active=true]:shadow-md data-[active=true]:shadow-brand/5",
         "[&_svg]:size-5 md:[&_svg]:size-[18px] [&_svg]:shrink-0 [&_svg]:transition-transform [&_svg]:duration-200",
         className
       )}
@@ -429,7 +429,7 @@ const SidebarMenuButton = React.forwardRef<
             side="right"
             align="center"
             sideOffset={8}
-            className="z-50 overflow-hidden rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-50 shadow-md animate-in fade-in-0 zoom-in-95"
+            className="z-50 overflow-hidden rounded-md bg-surface-inverse px-3 py-1.5 text-xs font-medium text-surface-inverse-foreground shadow-md animate-in fade-in-0 zoom-in-95"
           >
             {tooltip}
           </TooltipPrimitive.Content>
@@ -513,9 +513,9 @@ const SidebarMenuSubButton = React.forwardRef<
       data-sidebar="menu-sub-button"
       data-active={isActive}
       className={cn(
-        "flex w-full items-center gap-2.5 md:gap-2 rounded-lg md:rounded-md px-3 py-2 md:px-2 md:py-1 min-h-[38px] md:min-h-0 text-sm md:text-[13px] font-medium text-sidebar-foreground/75 hover:text-sidebar-foreground transition-all cursor-pointer outline-none border border-transparent select-none",
+        "flex w-full items-center gap-2.5 md:gap-2 rounded-lg md:rounded-md px-3 py-2 md:px-2 md:py-1 min-h-[38px] md:min-h-0 text-sm md:text-sm font-medium text-sidebar-foreground/75 hover:text-sidebar-foreground transition-all cursor-pointer outline-none border border-transparent select-none",
         "hover:bg-sidebar-accent/80",
-        "data-[active=true]:text-brand data-[active=true]:font-semibold",
+        "data-[active=true]:text-brand-text data-[active=true]:font-semibold",
         className
       )}
       {...props}

@@ -5,7 +5,7 @@ export const imageCropperModalStyles = {
     "sm:max-w-[500px] w-full p-6 gap-5 bg-card/95 backdrop-blur-md border border-border/80 shadow-2xl rounded-2xl overflow-hidden flex flex-col"
   ),
   cropperWrapper: cn(
-    "relative w-full h-[300px] sm:h-[340px] bg-zinc-950 rounded-xl overflow-hidden border border-border/60 shadow-inner"
+    "relative w-full h-[300px] sm:h-[340px] bg-scrim rounded-xl overflow-hidden border border-border/60 shadow-inner"
   ),
   controlsContainer: cn(
     "flex flex-col gap-4 py-1"

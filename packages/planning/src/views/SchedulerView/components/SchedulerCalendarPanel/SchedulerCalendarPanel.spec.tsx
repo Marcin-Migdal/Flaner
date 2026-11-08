@@ -53,7 +53,7 @@ describe("SchedulerCalendarPanel", () => {
       {
         start: "2026-08-10",
         end: "2026-08-11",
-        color: "#3b82f6",
+        color: "blue",
         votes: {
           u1: "yes",
           u2: "maybe",

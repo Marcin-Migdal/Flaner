@@ -16,7 +16,7 @@ describe("SlotMoreEventsPopover", () => {
       title: "Slot 1",
       start: new Date(2026, 6, 15, 10, 0),
       end: new Date(2026, 6, 15, 12, 0),
-      color: "#3b82f6",
+      color: "blue",
       metaData: {
         slotIndex: 0,
         totalParticipantsCount: 1,

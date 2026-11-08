@@ -72,7 +72,7 @@ export const SchedulerCalendarPanel = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col relative z-10 min-w-0 min-h-[500px] min-[1200px]:min-h-0">
+    <div className="flex-1 flex flex-col relative z-10 min-w-0 min-h-[500px] split:min-h-0">
       <div className="flex-1 w-full h-full flex flex-col overflow-hidden relative min-h-0">
         {activeEvent ? (
           <SchedulerBigCalendar

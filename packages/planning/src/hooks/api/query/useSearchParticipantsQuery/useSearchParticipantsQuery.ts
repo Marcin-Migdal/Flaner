@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
 import { reactQueryMeta } from "@flaner/shared/constants";
 import { searchParticipants, type ParticipantResult } from "../../../../api/participants";
 
@@ -17,6 +17,8 @@ export const useSearchParticipantsQuery = (
       return searchParticipants(searchQuery, currentUserId);
     },
     enabled: searchQuery.length > 0,
+    // Keeps the last results on screen while the next query loads, so typing does not flash a spinner
+    placeholderData: keepPreviousData,
     ...options,
   });
 };

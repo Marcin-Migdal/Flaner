@@ -1,4 +1,4 @@
-import { useQuery, type UseQueryOptions, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, type UseQueryOptions, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@flaner/shared/context";
 import { type UserProfile } from "@flaner/shared/types";
 import { searchUsers } from '../../../../api/users';
@@ -23,6 +23,8 @@ export const useSearchUsersQuery = (
     },
     enabled: !!user && !!searchQuery.trim(),
     staleTime: 5000,
+    // Keeps the last results on screen while the next query loads, so typing does not flash a spinner
+    placeholderData: keepPreviousData,
     ...options,
   });
 };

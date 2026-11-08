@@ -11,7 +11,7 @@ const mockEvent: SchedulerEvent = {
   creatorId: "user-1",
   participants: ["user-1", "user-2"],
   proposedDates: [
-    { start: "2026-07-01T10:00:00Z", end: "2026-07-03T18:00:00Z", color: "#3b82f6", votes: { "user-1": "yes" } },
+    { start: "2026-07-01T10:00:00Z", end: "2026-07-03T18:00:00Z", color: "blue", votes: { "user-1": "yes" } },
   ],
   isFinalized: false,
   createdAt: 1700000000000,

@@ -222,7 +222,7 @@ export function GroupDetailsView() {
                 {group.type === "private" ? t("groupDetails.private") : t("groupDetails.public")}
               </span>
               {isMember && currentUserRole && (
-                <span className="flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 bg-brand/10 text-brand rounded-full border border-brand/20 text-[11px] sm:text-xs font-semibold">
+                <span className="flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 bg-brand/10 text-brand-text rounded-full border border-brand/20 text-2xs sm:text-xs font-semibold">
                   {t(`manageGroupSheet.role_${currentUserRole}`) || currentUserRole}
                 </span>
               )}
@@ -346,14 +346,14 @@ export function GroupDetailsView() {
                       <div className="flex items-center gap-3 min-w-0">
                         <Avatar className="size-10 border border-border shrink-0">
                           {profile?.avatarUrl && <AvatarImage src={profile.avatarUrl} alt={displayName} />}
-                          <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-bold text-sm">
+                          <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-brand-foreground font-bold text-sm">
                             {initials}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
                           <span className="font-medium text-sm text-foreground block truncate">{displayName}</span>
                           {isCurrentUser && (
-                            <span className="text-[11px] text-muted-foreground block">{t("manageGroupSheet.you")}</span>
+                            <span className="text-2xs text-muted-foreground block">{t("manageGroupSheet.you")}</span>
                           )}
                         </div>
                       </div>
@@ -422,7 +422,7 @@ export function GroupDetailsView() {
                                     avatarUrl: profile?.avatarUrl,
                                   })
                                 }
-                                className={`${groupDetailsViewStyles.memberActionBtn} border-border hover:bg-brand/10 hover:border-brand/30 hover:text-brand`}
+                                className={`${groupDetailsViewStyles.memberActionBtn} border-border hover:bg-brand/10 hover:border-brand/30 hover:text-brand-text`}
                               >
                                 {isSending ? (
                                   <Loader2 className="size-3.5 animate-spin" />

@@ -5,8 +5,8 @@ export const schedulerParticipantCardVariants = cva(
   {
     variants: {
       isUnvoted: {
-        true: "bg-rose-500/5 border-rose-500/25 hover:border-rose-500/40 hover:bg-rose-500/10",
-        false: "bg-background/50 hover:bg-white/[0.08] border-white/5 hover:border-white/10",
+        true: "bg-danger/5 border-danger/25 hover:border-danger/40 hover:bg-danger/10",
+        false: "bg-brand/10 border-brand/30 shadow-sm hover:bg-brand/15 hover:border-brand/40",
       },
     },
     defaultVariants: {
@@ -20,7 +20,7 @@ export const schedulerParticipantAvatarRingVariants = cva(
   {
     variants: {
       isUnvoted: {
-        true: "ring-rose-500/70 shadow-[0_0_10px_rgba(244,63,94,0.3)]",
+        true: "ring-danger/70 shadow-glow-danger",
         false: "ring-transparent group-hover:ring-brand/40",
       },
     },

@@ -90,7 +90,7 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="text-left">
           <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <ShoppingBag className="size-5 text-brand" />
+            <ShoppingBag className="size-5 text-brand-text" />
             {t("spooler.spools.activeSpools")} ({activeSpools.length})
           </h2>
         </div>
@@ -113,7 +113,7 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
       {/* Active Spools Section */}
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="size-8 text-brand animate-spin" />
+          <Loader2 className="size-8 text-brand-text animate-spin" />
         </div>
       ) : activeSpools.length === 0 ? (
         <div className="w-full bg-card/40 border border-dashed border-border rounded-2xl py-12 px-4 text-center">

@@ -33,7 +33,7 @@ export const AvailabilityGridFooter = ({
       <div className={gridFooterFirstColStyles}>
         <div className="absolute inset-0 bg-muted/60 pointer-events-none" />
         <div className="relative z-10 flex items-center gap-1.5">
-          <Trophy className="w-4 h-4 text-amber-500" />
+          <Trophy className="w-4 h-4 text-warning-text" />
           <span>{t("grid.matchRate")}</span>
         </div>
       </div>
@@ -48,11 +48,11 @@ export const AvailabilityGridFooter = ({
             className={gridFooterCellVariants({ highlight: isTop ? "top" : "none" })}
           >
             <span
-              className={`text-sm font-bold transition-colors duration-300 ease-in-out ${isTop ? "text-amber-500" : "text-foreground"}`}
+              className={`text-sm font-bold transition-colors duration-300 ease-in-out ${isTop ? "text-warning-text" : "text-foreground"}`}
             >
               {stat.matchPercentage}%
             </span>
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-3xs text-muted-foreground">
               {stat.yesCount}/{participantsCount} {t("grid.available")}
             </span>
           </div>

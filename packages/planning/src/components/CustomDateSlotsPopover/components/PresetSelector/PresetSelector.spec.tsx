@@ -68,7 +68,7 @@ describe("PresetSelector", () => {
     const presets = ["daily", "weekly", "monthly", "weekdays", "weekends"] as const;
     for (const preset of presets) {
       rerender(<PresetSelector {...defaultProps} selectedPreset={preset} />);
-      expect(document.querySelector("svg.text-brand")).toBeInTheDocument();
+      expect(document.querySelector("svg.text-brand-text")).toBeInTheDocument();
     }
   });
 

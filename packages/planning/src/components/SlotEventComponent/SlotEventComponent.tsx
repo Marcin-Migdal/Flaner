@@ -62,9 +62,9 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
         )}
         style={{
           backgroundColor: isHovered
-            ? `color-mix(in srgb, ${event.color || "var(--primary)"} 85%, #fff)`
+            ? `color-mix(in srgb, ${event.color || "var(--primary)"} 85%, var(--foreground))`
             : event.color || "var(--primary)",
-          color: "#fff",
+          color: "var(--foreground)",
         }}
         role="button"
         tabIndex={0}
@@ -100,18 +100,12 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
   const score = yesVotes + maybeVotes * 0.5;
   const ratio = score / Math.max(1, totalParticipantsCount);
 
-  let basePercentage: number;
-  if (totalVotesCast === 0) {
-    basePercentage = 18;
-  } else if (ratio === 0) {
-    basePercentage = 12;
-  } else {
-    basePercentage = Math.round(Math.min(100, 25 + ratio * 75));
-  }
+  // Fill strength encodes the score; 25% is the floor for slots without votes or with only "no"
+  const basePercentage = totalVotesCast === 0 || ratio === 0 ? 25 : Math.round(Math.min(100, 25 + ratio * 75));
 
   const opacityPercentage = isHovered ? Math.min(100, basePercentage + 25) : basePercentage;
   const baseColor = event.color || "var(--primary)";
-  const backgroundColor = `color-mix(in srgb, ${baseColor} ${opacityPercentage}%, ${isHovered ? "#2b2b2b" : "#141414"})`;
+  const backgroundColor = `color-mix(in srgb, ${baseColor} ${opacityPercentage}%, ${isHovered ? "var(--accent)" : "var(--card)"})`;
 
   const currentUserVote = currentUserId ? votes[currentUserId] : undefined;
 
@@ -134,7 +128,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
       )}
       style={{
         backgroundColor,
-        color: "#fff",
+        color: "var(--foreground)",
       }}
       role="button"
       tabIndex={0}
@@ -181,7 +175,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
                 meta.onQuickVote?.(currentUserVote === "maybe" ? null : "maybe");
               }}
             >
-              <span className="font-extrabold text-[12px] leading-none select-none">?</span>
+              <span className="font-extrabold text-xs leading-none select-none">?</span>
             </button>
 
             {/* Nie / No Button */}
@@ -214,7 +208,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
           >
             {currentUserVote === "yes" && <Check className="w-2.5 h-2.5 md:w-3 md:h-3 stroke-[3]" />}
             {currentUserVote === "maybe" && (
-              <span className="font-extrabold text-[8px] md:text-[11px] leading-none select-none">?</span>
+              <span className="font-extrabold text-5xs md:text-2xs leading-none select-none">?</span>
             )}
             {currentUserVote === "no" && <X className="w-2.5 h-2.5 md:w-3 md:h-3 stroke-[3]" />}
           </div>
@@ -227,7 +221,7 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
             <div className={slotVoteBadgeContainerVariants({ breakpoint: "mobile", continuesNextInRow })}>
               {yesVotes > 0 ? (
                 <div className={slotStyles.simpleBadgeMobile}>
-                  <span className="text-[8.5px] md:text-[10px]">✓</span>
+                  <span className="text-5xs md:text-3xs">✓</span>
                   <span>{yesVotes}</span>
                 </div>
               ) : null}
@@ -239,46 +233,46 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
                 {/* Compact badge (active when slot width < 120px) */}
                 <div className={slotStyles.desktopCompact}>
                   {yesVotes > 0 ? (
-                    <span className="text-emerald-300 inline-flex items-center gap-0.5">
-                      <span className="text-[10px]">✓</span>
+                    <span className="text-success-text inline-flex items-center gap-0.5">
+                      <span className="text-3xs">✓</span>
                       <span>{yesVotes}/{totalParticipantsCount}</span>
                     </span>
                   ) : maybeVotes > 0 ? (
-                    <span className="text-amber-300 inline-flex items-center gap-0.5">
-                      <span className="text-[10px]">?</span>
+                    <span className="text-warning-text inline-flex items-center gap-0.5">
+                      <span className="text-3xs">?</span>
                       <span>{maybeVotes}/{totalParticipantsCount}</span>
                     </span>
                   ) : noVotes > 0 ? (
-                    <span className="text-rose-300 inline-flex items-center gap-0.5">
-                      <span className="text-[10px]">✕</span>
+                    <span className="text-danger-text inline-flex items-center gap-0.5">
+                      <span className="text-3xs">✕</span>
                       <span>{noVotes}/{totalParticipantsCount}</span>
                     </span>
                   ) : (
-                    <span className="text-white/60">0/{totalParticipantsCount}</span>
+                    <span className="text-muted-foreground">0/{totalParticipantsCount}</span>
                   )}
                 </div>
 
                 {/* Full badge (active when slot width >= 120px) */}
                 <div className={slotStyles.desktopFull}>
                   {yesVotes > 0 && (
-                    <span className="text-emerald-300 inline-flex items-center gap-0.5">
-                      <span className="text-[10px]">✓</span>
+                    <span className="text-success-text inline-flex items-center gap-0.5">
+                      <span className="text-3xs">✓</span>
                       <span>{yesVotes}</span>
                     </span>
                   )}
                   {maybeVotes > 0 && (
-                    <span className="text-amber-300 inline-flex items-center gap-0.5">
-                      <span className="text-[10px]">?</span>
+                    <span className="text-warning-text inline-flex items-center gap-0.5">
+                      <span className="text-3xs">?</span>
                       <span>{maybeVotes}</span>
                     </span>
                   )}
                   {noVotes > 0 && (
-                    <span className="text-rose-300 inline-flex items-center gap-0.5">
-                      <span className="text-[10px]">✕</span>
+                    <span className="text-danger-text inline-flex items-center gap-0.5">
+                      <span className="text-3xs">✕</span>
                       <span>{noVotes}</span>
                     </span>
                   )}
-                  {totalVotesCast === 0 && <span className="text-white/60">0/{totalParticipantsCount}</span>}
+                  {totalVotesCast === 0 && <span className="text-muted-foreground">0/{totalParticipantsCount}</span>}
                 </div>
               </div>
             </div>

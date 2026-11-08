@@ -101,7 +101,7 @@ export const SpoolHistoryModal: React.FC<SpoolHistoryModalProps> = ({
             <div>
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-10 gap-2">
-                  <Loader2 className="size-6 text-brand animate-spin" />
+                  <Loader2 className="size-6 text-brand-text animate-spin" />
                   <p className="text-xs text-muted-foreground">{t("spooler.spools.loadingHistory")}</p>
                 </div>
               ) : prints.length === 0 ? (
@@ -132,9 +132,9 @@ export const SpoolHistoryModal: React.FC<SpoolHistoryModalProps> = ({
                         >
                           <div className="flex flex-col">
                             <span className="font-medium text-foreground text-xs">{formatted.dateStr}</span>
-                            <span className="text-[10px] text-muted-foreground">{formatted.timeStr}</span>
+                            <span className="text-3xs text-muted-foreground">{formatted.timeStr}</span>
                           </div>
-                          <div className="flex items-center justify-end font-semibold text-brand gap-2">
+                          <div className="flex items-center justify-end font-semibold text-brand-text gap-2">
                             <span>-{print.usedWeight}g</span>
                             <Button
                               size="sm"

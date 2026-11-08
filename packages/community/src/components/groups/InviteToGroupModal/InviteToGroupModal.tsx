@@ -30,7 +30,7 @@ export function InviteToGroupModal({
   // Live profiles; a deleted account has none, so it is not offered
   const { data: friends = [], isLoading: profilesLoading } = useGetUsersRealtimeQuery(friendships.map((f) => f.uid));
   const friendsLoading = friendshipsLoading || profilesLoading;
-  const { data: searchResults = [], isFetching: usersSearching } = useSearchUsersQuery(debouncedSearch);
+  const { data: searchResults = [], isLoading: usersSearching } = useSearchUsersQuery(debouncedSearch);
   const { data: members = [], isLoading: membersLoading } = useGetGroupMembersQuery(groupId);
   const { data: pendingInvitations = [], isLoading: invitationsLoading } = useGetGroupPendingInvitationsQuery(groupId);
   
@@ -65,7 +65,7 @@ export function InviteToGroupModal({
       <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-xl border border-border/60 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] p-0">
         <DialogHeader className="px-6 pt-6 pb-4">
           <div className="flex items-center gap-3.5">
-            <div className="size-11 rounded-2xl bg-gradient-to-tr from-brand/20 via-brand/10 to-transparent border border-brand/20 flex items-center justify-center text-brand shadow-inner shrink-0">
+            <div className="size-11 rounded-2xl bg-gradient-to-tr from-brand/20 via-brand/10 to-transparent border border-brand/20 flex items-center justify-center text-brand-text shadow-inner shrink-0">
               <UserPlus className="size-5" />
             </div>
             <div>
@@ -103,7 +103,7 @@ export function InviteToGroupModal({
         <div className="flex-1 overflow-y-auto px-6 py-3 space-y-2 border-t border-border/40 scrollbar-none">
           {isLoading ? (
             <div className="flex justify-center items-center py-12 text-muted-foreground text-sm gap-2.5 font-medium">
-              <Loader2 className="size-5 animate-spin text-brand" />
+              <Loader2 className="size-5 animate-spin text-brand-text" />
               <span>{t("inviteToGroup.loading")}</span>
             </div>
           ) : displayedUsers.length > 0 ? (
@@ -117,12 +117,12 @@ export function InviteToGroupModal({
                 <div key={targetUser.uid} className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/40 transition-all duration-200 border border-transparent hover:border-border/50 group">
                   <div className="flex items-center gap-3">
                     <Avatar className="size-10 border border-border/60 shadow-sm">
-                      <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-bold text-sm">
+                      <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-brand-foreground font-bold text-sm">
                         {initials}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
-                      <span className="font-semibold text-sm text-foreground group-hover:text-brand transition-colors">
+                      <span className="font-semibold text-sm text-foreground group-hover:text-brand-text transition-colors">
                         {targetUser.username}
                       </span>
                     </div>
@@ -147,7 +147,7 @@ export function InviteToGroupModal({
                       </>
                     ) : isInvited ? (
                       <>
-                        <Clock className="size-3 text-amber-500" />
+                        <Clock className="size-3 text-warning-text" />
                         <span>{t("inviteToGroup.invitedBtn")}</span>
                       </>
                     ) : (

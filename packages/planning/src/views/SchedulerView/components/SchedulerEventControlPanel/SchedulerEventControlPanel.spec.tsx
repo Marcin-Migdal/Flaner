@@ -69,7 +69,7 @@ const mockEvent: SchedulerEvent = {
     {
       start: "2026-08-01",
       end: "2026-08-01",
-      color: "#3b82f6",
+      color: "blue",
       votes: {
         "user-1": "yes",
       },
@@ -310,7 +310,7 @@ describe("SchedulerEventControlPanel", () => {
         {
           start: "2026-08-01",
           end: "2026-08-01",
-          color: "#3b82f6",
+          color: "blue",
           votes: {},
         },
       ],

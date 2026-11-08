@@ -65,7 +65,7 @@ export const SpoolerSettingsModal: React.FC<SpoolerSettingsModalProps> = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Settings className="size-5 text-brand" />
+            <Settings className="size-5 text-brand-text" />
             {t("spooler.settings.title")}
           </DialogTitle>
         </DialogHeader>

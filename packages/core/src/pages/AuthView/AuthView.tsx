@@ -105,7 +105,7 @@ export function AuthView() {
       <div className="w-full max-w-md bg-card border border-border rounded-2xl p-8 shadow-xl space-y-6">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-black tracking-wider text-brand mb-1">FLANER</h1>
+          <h1 className="text-3xl font-black tracking-wider text-brand-text mb-1">FLANER</h1>
           <p className="text-muted-foreground text-sm">{isSignUp ? t("signUpSubtitle") : t("signInSubtitle")}</p>
         </div>
 
@@ -192,7 +192,7 @@ export function AuthView() {
               <button
                 onClick={toggleMode}
                 type="button"
-                className="text-brand hover:underline font-semibold focus:outline-none cursor-pointer"
+                className="text-brand-text hover:underline font-semibold focus:outline-none cursor-pointer"
               >
                 {isSignUp ? t("signInButton") : t("signUpButton")}
               </button>

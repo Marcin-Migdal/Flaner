@@ -117,15 +117,15 @@ export const SchedulerEventControlPanel = ({
   };
 
   return (
-    <div className="w-full min-[1200px]:w-[350px] min-[1200px]:h-full relative shrink-0 rounded-3xl flex flex-col shadow-[20px_0_40px_-15px_rgba(0,0,0,0.5)]">
+    <div className="w-full split:w-[350px] split:h-full relative shrink-0 rounded-3xl flex flex-col shadow-drawer">
       {/* Ambient Glow Background - only for left panel */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 rounded-3xl">
         <div className="absolute -top-[20%] -left-[10%] w-[80%] h-[60%] rounded-full bg-brand/15 blur-[100px]" />
-        <div className="absolute -bottom-[20%] -right-[10%] w-[80%] h-[60%] rounded-full bg-emerald-500/10 blur-[100px]" />
+        <div className="absolute -bottom-[20%] -right-[10%] w-[80%] h-[60%] rounded-full bg-success/10 blur-[100px]" />
       </div>
 
       {/* Panel Glass Container */}
-      <div className="relative z-10 w-full h-full flex flex-col rounded-3xl bg-card/60 backdrop-blur-2xl border border-white/10 dark:border-white/5 overflow-hidden">
+      <div className="relative z-10 w-full h-full flex flex-col rounded-3xl bg-card/60 backdrop-blur-2xl border border-border dark:border-border-subtle overflow-hidden">
         <SchedulerEventHeader
           events={events}
           isEventsLoading={isEventsLoading}

@@ -16,7 +16,7 @@ describe("FinalizedDateCard", () => {
       {
         start: "2026-07-10",
         end: "2026-07-15",
-        color: "#10b981",
+        color: "teal",
         votes: {
           "user-1": "yes",
           "user-2": "yes",
@@ -79,7 +79,7 @@ describe("FinalizedDateCard", () => {
         {
           start: "2026-07-10",
           end: "2026-07-10",
-          color: "#10b981",
+          color: "teal",
           votes: undefined,
         },
       ],

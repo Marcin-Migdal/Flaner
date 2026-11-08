@@ -11,11 +11,11 @@ export const splitsViewStyles = {
   ),
   emptyState: "flex-1 flex flex-col items-center justify-center gap-3 text-center p-8 min-h-[320px]",
   emptyIconWrapper: "size-14 rounded-2xl bg-brand/10 border border-brand/20 flex items-center justify-center",
-  emptyIcon: "size-7 text-brand",
+  emptyIcon: "size-7 text-brand-text",
   emptyTitle: "text-lg font-semibold",
   emptyDesc: "text-sm text-muted-foreground max-w-sm",
   loader: "flex-1 flex items-center justify-center min-h-[320px]",
-  loaderIcon: "size-8 animate-spin text-brand",
+  loaderIcon: "size-8 animate-spin text-brand-text",
 };
 
 export const splitsPanelVariants = cva("flex-col min-h-0", {

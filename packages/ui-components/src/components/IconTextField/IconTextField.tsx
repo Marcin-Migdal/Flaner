@@ -145,7 +145,7 @@ export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldPro
             "relative flex w-full items-center overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] rounded-lg border",
             containerHeight,
             isExpanded
-              ? "border-input bg-transparent dark:bg-input/30 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/50"
+              ? "border-input-border bg-transparent dark:bg-input/30 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/50"
               : "border-border bg-card hover:bg-accent cursor-pointer text-foreground hover:text-accent-foreground shadow-sm",
             error && isExpanded
               ? "border-destructive focus-within:border-destructive focus-within:ring-destructive/20 dark:border-destructive/50 dark:focus-within:ring-destructive/40"
