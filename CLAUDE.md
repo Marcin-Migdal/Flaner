@@ -21,6 +21,7 @@ The single source of truth for AI rules and skills is `.agents/` (shared with Cu
 - `npm run dev:emulators` — dev servers + Auth/Firestore emulators + rules compiler in watch mode (no deploys; data kept in `.emulator-data/`). Default mode for feature work
 - `npm run dev:wipe` — dry run / `-- --yes` deletes ALL Firestore data and Auth accounts on DEV (never PROD). Needs an Admin SDK key: `.agents/docs/admin-scripts.md` (also `scripts/backfill-usernames.mjs`)
 - `npx nx run <pkg>:lint --fix` — lint only the touched packages (mandatory after changes)
+- `npm run design:export` — export tokens + brand book to `.design-system/` for the "Flaner" Design System artifact in Claude; then ask Claude Code to re-sync it (`flaner-design` skill)
 - `npm run lint:tokens` — design-token check (no raw colours / arbitrary sizes; `.agents/docs/design-system.md`); tokens live only in `packages/ui-components/src/theme/theme.css`
 - `npx nx run <pkg>:typecheck`, `npm run typecheck`
 - `npm test` / `npx vitest run --project <pkg>` — unit tests (Vitest)

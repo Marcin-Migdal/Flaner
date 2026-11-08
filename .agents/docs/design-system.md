@@ -232,3 +232,4 @@ Status: all steps done in PR1. Adopted in views: `PageHeader` (Friends, Groups, 
 - 2026-11-07 — initial research, audit and decision list (#61).
 - 2026-11-07 — implemented: theme source, semantic tokens, migration of all packages, new components, `lint:tokens` in CI, contrast spec, skills updated (#61).
 - 2026-11-08 — visual pass feedback: slightly deeper light background, `surface-raised` for rows inside sections (Splits), participant cards match the active split card, scheduler slot colours stored as keys with light/dark `--event-*` tokens.
+- 2026-11-08 — exported to Claude as the "Flaner" Design System artifact (#62): `npm run design:export`, `flaner-design` skill, `.agents/docs/claude-design.md`.

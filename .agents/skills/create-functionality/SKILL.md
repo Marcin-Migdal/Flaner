@@ -65,9 +65,21 @@ After the user's choice:
 
 ---
 
+## Stage 4b — Claude Design Brief (new views / visible UI changes)
+
+Once the design path is confirmed, read the `flaner-design` skill and produce a **Claude Design brief** with its template (§2): context, screens and layout, realistic data, every state (loading / empty / error / long content), flows, phone + desktop artboards in both themes, components to use, out of scope. Base it only on what the user agreed in Stages 1–4.
+
+Then ask the user how to continue:
+- **Create the design** — make a Design artifact with the "Flaner" design system from the brief (`flaner-design` §1) and share the link, or the user pastes the brief into Claude themselves.
+- **Skip** — small changes that reuse an existing layout can go straight to Stage 5.
+
+Iterate on the design with the user until they accept it. Skip this stage for purely technical tasks (no UI).
+
+---
+
 ## Stage 5 — Detailed Implementation Plan
 
-Only after the design is confirmed, create an `implementation_plan.md` artifact with:
+Only after the design is confirmed (and, for UI work, the Claude Design artifact is accepted or explicitly skipped), create an `implementation_plan.md` artifact with:
 
 ### Plan Structure
 
@@ -81,7 +93,10 @@ Short description of what this feature does and why.
 List of proposals accepted by the user.
 
 ## Selected Design
-Description of the chosen path (or combination) with justification.
+Description of the chosen path (or combination) with justification. Link to the Claude Design artifact, if one was made (Stage 4b).
+
+## Design → Code Mapping
+Only when a design exists: table of design elements → `@flaner/ui-components` components / token utilities, and the gaps (new component, variant or token) with the user's decision — see `flaner-design` §3.
 
 ## Data Structure (Firestore)
 Collections, fields, relations, indexes if needed.
@@ -125,5 +140,6 @@ Only after explicit approval of the plan by the user:
 - **Always propose at least 3 design paths** — never just one ready-made proposal.
 - **Actively propose technical improvements** the user didn't ask for.
 - Remember: mobile view, loading/error/empty states, i18n (no hardcoded texts).
+- Visual rules, the Claude Design brief and the design → code mapping live in the `flaner-design` skill — read it for any UI work.
 - Shadcn `Sheet` is better than `Sidebar` for flyout panels.
 - Each hook has its own file, each view is in `src/pages/`, components in `src/components/`.

@@ -71,3 +71,6 @@ eslint-errors.txt
 
 # Firebase emulator data (npm run dev:emulators)
 .emulator-data/
+
+# Design system export for Claude (npm run design:export, #62)
+.design-system/
