@@ -1,6 +1,6 @@
 # Flaner Design System — Research, Audit & Decisions
 
-Issue: #61. Status: **implemented** (decisions approved 2026-11-07). Theme source: `packages/ui-components/src/theme/theme.css`. The component catalogue (Storybook) is a separate, follow-up PR.
+Issue: #61. Status: **implemented** (decisions approved 2026-11-07). Theme source: `packages/ui-components/src/theme/theme.css`. Component catalogue: Storybook in `packages/ui-components` (`npm run storybook`).
 
 > Sections 1–3 are the research and the decision record. Section 4 onwards describes the system as implemented — when it disagrees with an earlier decision, section 4+ wins (deviations are listed in §8).
 
@@ -135,7 +135,7 @@ Semantic meaning of raw colours in use: `emerald` = success / "yes", `amber` = w
 | `brand-subtle` | `oklch(0.795 0.12 70 / 15%)` | same | tinted backgrounds |
 | `success` / `warning` / `danger` / `info` (solid) | `oklch(0.5 0.15 155)` / `oklch(0.53 0.15 60)` / `oklch(0.52 0.19 25)` / `oklch(0.52 0.15 245)` | `oklch(0.75 0.16 155)` / `oklch(0.78 0.15 70)` / `oklch(0.7 0.19 22)` / `oklch(0.75 0.13 240)` | fills (badges, active vote) |
 | `*-foreground` | white (≥ 5:1) | ink (≥ 8:1) | text on solid |
-| `*-text` | same as solid (≥ 5:1 on bg) | same as solid (≥ 8:1) | status text on background |
+| `*-text` | darker than the solid (`oklch(0.44–0.46 …)`), ≥ 4.5:1 on background, card and on its own `*-subtle` tint | same as solid (≥ 8:1) | status text on surfaces and tints (Badge, banners) |
 | `*-subtle` | solid / 12% | solid / 15% | tinted backgrounds |
 | `surface-hover` / `surface-strong` | `oklch(0.9 0.009 80)` / `oklch(0.86 0.01 80)` | white / 10% / 15% | hover, pressed, tracks |
 | `surface-inverse` (+ `-foreground`) | near-black | near-white | tooltips |
@@ -216,7 +216,7 @@ Existing: `Tabs`, `Toaster`, `Tooltip`, `Sheet`, `Dialog` stay; their usage rule
 
 Status: all steps done in PR1. Adopted in views: `PageHeader` (Friends, Groups, MFE tiles, Spooler), `EmptyState` (scheduler, MFE tiles), `Badge` (invitation / request / notification counts). Wider adoption of `Card` / `ListItem` / `Skeleton` happens when those views are next touched.
 
-**PR2 (follow-up):** Storybook catalogue for `ui-components` (stories for every component, light/dark toggle, a11y addon).
+**PR2:** Storybook 10 catalogue for `ui-components` — see §9.
 
 ---
 
@@ -228,7 +228,16 @@ Status: all steps done in PR1. Adopted in views: `PageHeader` (Friends, Groups, 
 - **D5** — `brand-dark` kept (gradient end); `brand-light` removed.
 - **D9** — `rounded-[4px]` stays in the stock shadcn checkbox (primitives keep their sizing).
 
-## 9. Changelog
+## 9. Component catalogue (Storybook)
+- `packages/ui-components/.storybook/` — `@storybook/react-vite` + `@tailwindcss/vite`; `preview.css` imports `theme.css`, so stories use the real tokens.
+- Toolbar: **Theme** (toggles `.dark` on `<html>`, like the app) and **Language** (EN/PL `ui` namespace, bundled statically).
+- Addons: `addon-docs` (autodocs from props / CVA variants), `addon-a11y` (axe in the Accessibility panel).
+- Stories live next to the unit (`<Name>.stories.tsx`; primitives in `components/ui/<name>.stories.tsx`); catalogue pages in `src/stories/`: *Foundations/Tokens* (colours with live computed values, type scale, radius, elevation, motion, breakpoints), *Patterns/Form* (`Form*` fields in `FormProvider` + zod), *Patterns/Page shell* (PageHeader + list / loading / empty).
+- Commands: `npm run storybook` (port 6006), `npm run storybook:build` (→ `dist/storybook/ui-components`). CI builds it whenever `ui-components` is affected. Not hosted — run it locally.
+- A11y baseline (axe, WCAG 2.2 A/AA, every story in both themes, 2026-11-08): the only remaining finding is out-of-month calendar days (inactive, exempt).
+
+## 10. Changelog
 - 2026-11-07 — initial research, audit and decision list (#61).
 - 2026-11-07 — implemented: theme source, semantic tokens, migration of all packages, new components, `lint:tokens` in CI, contrast spec, skills updated (#61).
+- 2026-11-08 — Storybook catalogue (#61 part 2); axe audit fixes: darker light `*-text` status tokens (AA on their tints), accessible names for icon buttons (calendar navigation / remove, field clear / collapse), `Select` label wired to its input, collapsible `IconTextField` uses its icon button as the trigger (`aria-expanded`) instead of a `role="button"` wrapper around focusable children, dark-mode checked `Checkbox` visible again, faint loading / image-picker text.
 - 2026-11-08 — visual pass feedback: slightly deeper light background, `surface-raised` for rows inside sections (Splits), participant cards match the active split card, scheduler slot colours stored as keys with light/dark `--event-*` tokens.

@@ -25,13 +25,15 @@ const resolveValue = (tokens: Tokens, value: string): string => {
   return reference ? resolveValue(tokens, tokens[reference[1]]) : value;
 };
 
+const toRgb = (channel: (index: number) => number): Rgb => [channel(0), channel(1), channel(2)];
+
 const srgbToLinear = (channel: number) =>
   channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
 
 const toLinearRgb = (value: string): Rgb => {
   if (value.startsWith("#")) {
     const hex = value.slice(1);
-    return [0, 2, 4].map((i) => srgbToLinear(parseInt(hex.slice(i, i + 2), 16) / 255)) as Rgb;
+    return toRgb((i) => srgbToLinear(parseInt(hex.slice(i * 2, i * 2 + 2), 16) / 255));
   }
   const oklch = value.match(/^oklch\(([\d.]+) ([\d.]+) ([\d.]+)\)$/);
   if (!oklch) throw new Error(`Unsupported colour for contrast check: ${value}`);
@@ -48,6 +50,12 @@ const toLinearRgb = (value: string): Rgb => {
     clamp(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
   ];
 };
+
+const linearToSrgb = (channel: number) => (channel <= 0.0031308 ? 12.92 * channel : 1.055 * channel ** (1 / 2.4) - 0.055);
+
+/** `color-mix(in oklch, fill p%, transparent)` painted over `base`: browsers composite in gamma-encoded sRGB. */
+const composite = (fill: Rgb, base: Rgb, alpha: number): Rgb =>
+  toRgb((i) => srgbToLinear(alpha * linearToSrgb(fill[i]) + (1 - alpha) * linearToSrgb(base[i])));
 
 const luminance = ([r, g, b]: Rgb) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
@@ -69,8 +77,8 @@ const pairs: [string, string, number][] = [
   ["brand-text", "card", TEXT],
   ["brand-foreground", "brand", TEXT],
   ...["success", "warning", "danger", "info"].flatMap((role): [string, string, number][] => [
-    [role, "background", TEXT],
-    [role, "card", TEXT],
+    [`${role}-text`, "background", TEXT],
+    [`${role}-text`, "card", TEXT],
     [`${role}-foreground`, role, TEXT],
   ]),
   ...["medal-gold", "medal-silver", "medal-bronze"].map((medal): [string, string, number] => [medal, "background", TEXT]),
@@ -100,5 +108,23 @@ describe("event slot colours", () => {
 
   it.each(keys)("--event-%s has a dark-mode value", (key) => {
     expect(dark[`event-${key}`]).not.toBe(light[`event-${key}`]);
+  });
+});
+
+describe("status text on its own tint (Badge, banners)", () => {
+  const color = (tokens: Tokens, name: string) => toLinearRgb(resolveValue(tokens, tokens[name]));
+
+  describe.each([
+    ["light", light, 0.12],
+    ["dark", dark, 0.15],
+  ])("%s theme", (_, tokens, mix) => {
+    it.each(["success", "warning", "danger", "info"])("%s-text on %s-subtle ≥ 4.5:1", (role) => {
+      for (const base of ["background", "card", "surface-subtle"].filter((name) => !tokens[name].includes("/"))) {
+        const tint = composite(color(tokens, role), color(tokens, base), mix);
+        const text = luminance(color(tokens, `${role}-text`));
+        const [high, low] = [text, luminance(tint)].sort((x, y) => y - x);
+        expect((high + 0.05) / (low + 0.05)).toBeGreaterThanOrEqual(TEXT);
+      }
+    });
   });
 });

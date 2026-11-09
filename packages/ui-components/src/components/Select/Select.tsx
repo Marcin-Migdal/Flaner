@@ -259,7 +259,7 @@ export const Select = <Option extends SelectOption = SelectOption>({
       <div className={cn("relative w-full", isMenuOpen && "z-50")}>
         {creatable ? (
           <CreatableSelect
-            id={selectId}
+            inputId={selectId}
             options={options}
             value={value}
             onChange={onChange}
@@ -281,7 +281,7 @@ export const Select = <Option extends SelectOption = SelectOption>({
           />
         ) : (
           <ReactSelect
-            id={selectId}
+            inputId={selectId}
             options={options}
             value={value}
             onChange={onChange}

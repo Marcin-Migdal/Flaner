@@ -71,3 +71,7 @@ eslint-errors.txt
 
 # Firebase emulator data (npm run dev:emulators)
 .emulator-data/
+
+# Storybook
+*storybook.log
+storybook-static

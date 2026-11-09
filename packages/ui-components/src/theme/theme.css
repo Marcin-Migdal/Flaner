@@ -104,6 +104,11 @@
   --danger-foreground: var(--p-white);
   --info: oklch(0.52 0.15 245);
   --info-foreground: var(--p-white);
+  /* Text on surfaces and on the status tints (≥ 4.5:1 on the *-subtle fill too) */
+  --success-text: oklch(0.44 0.15 155);
+  --warning-text: oklch(0.46 0.15 60);
+  --danger-text: oklch(0.46 0.19 25);
+  --info-text: oklch(0.46 0.15 245);
   --status-subtle-mix: 12%;
 
   /* Domain: ranking medals (planning) */
@@ -187,6 +192,10 @@
   --danger-foreground: var(--p-ink);
   --info: oklch(0.75 0.13 240);
   --info-foreground: var(--p-ink);
+  --success-text: var(--success);
+  --warning-text: var(--warning);
+  --danger-text: var(--danger);
+  --info-text: var(--info);
   --status-subtle-mix: 15%;
 
   --medal-gold: oklch(0.84 0.16 92);
@@ -267,19 +276,19 @@
 
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
-  --color-success-text: var(--success);
+  --color-success-text: var(--success-text);
   --color-success-subtle: color-mix(in oklch, var(--success) var(--status-subtle-mix), transparent);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
-  --color-warning-text: var(--warning);
+  --color-warning-text: var(--warning-text);
   --color-warning-subtle: color-mix(in oklch, var(--warning) var(--status-subtle-mix), transparent);
   --color-danger: var(--danger);
   --color-danger-foreground: var(--danger-foreground);
-  --color-danger-text: var(--danger);
+  --color-danger-text: var(--danger-text);
   --color-danger-subtle: color-mix(in oklch, var(--danger) var(--status-subtle-mix), transparent);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
-  --color-info-text: var(--info);
+  --color-info-text: var(--info-text);
   --color-info-subtle: color-mix(in oklch, var(--info) var(--status-subtle-mix), transparent);
   --color-destructive: var(--danger);
   --color-destructive-foreground: var(--danger-foreground);
@@ -287,17 +296,17 @@
   /* Domain: event voting (planning) — aliases only */
   --color-vote-yes: var(--success);
   --color-vote-yes-foreground: var(--success-foreground);
-  --color-vote-yes-text: var(--success);
+  --color-vote-yes-text: var(--success-text);
   --color-vote-yes-border: var(--success);
   --color-vote-yes-subtle: color-mix(in oklch, var(--success) var(--status-subtle-mix), transparent);
   --color-vote-maybe: var(--warning);
   --color-vote-maybe-foreground: var(--warning-foreground);
-  --color-vote-maybe-text: var(--warning);
+  --color-vote-maybe-text: var(--warning-text);
   --color-vote-maybe-border: var(--warning);
   --color-vote-maybe-subtle: color-mix(in oklch, var(--warning) var(--status-subtle-mix), transparent);
   --color-vote-no: var(--danger);
   --color-vote-no-foreground: var(--danger-foreground);
-  --color-vote-no-text: var(--danger);
+  --color-vote-no-text: var(--danger-text);
   --color-vote-no-border: var(--danger);
   --color-vote-no-subtle: color-mix(in oklch, var(--danger) var(--status-subtle-mix), transparent);
 

@@ -34,6 +34,7 @@ The single theme source is `packages/ui-components/src/theme/theme.css` (spec: `
 - A surface that is always dark (e.g. calendar slot pills tinted with the event colour) gets the `dark` class on its root so every token inside resolves to its dark value — do not hardcode light colours for it.
 - Data colours (event colours, filament colours, colour-picker presets) are content and stay hex values in TS.
 - Enforced by `npm run lint:tokens` (`scripts/check-design-tokens.mjs`, also in CI). A deliberate exception needs a `design-tokens-ignore` comment on the line with a reason.
+- Tokens, type scale, radius, elevation and motion are browsable in Storybook → *Foundations/Tokens* (`npm run storybook`).
 - Contrast of every token pair is asserted by `packages/ui-components/src/theme/theme.spec.ts`; when you add or change a token, add its pair there.
 
 ---

@@ -1,6 +1,6 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { signIn } from "../support/helpers/auth";
-import { createUser, seedGroup, seedGroupInvitation, type E2EUser } from "../support/helpers/emulator";
+import { createUser, listDocumentIds, seedGroup, seedGroupInvitation, type E2EUser } from "../support/helpers/emulator";
 import { CommunityPage } from "../support/pages/Community.page";
 import { GroupDetailsPage } from "../support/pages/GroupDetails.page";
 
@@ -18,6 +18,10 @@ const openGroupInvitations = async (page: Page) => {
 };
 
 test.describe("Group membership flows", () => {
+  // Most scenarios sign in two users in separate contexts: two cold app loads (no shared cache) plus the
+  // multi-step flow regularly exceed the default 30 s under parallel workers.
+  test.describe.configure({ timeout: 60_000 });
+
   let owner: E2EUser;
   let other: E2EUser;
 
@@ -99,6 +103,9 @@ test.describe("Group membership flows", () => {
     await requesterView.goto(group.id);
     await requesterView.requestToJoinButton.click();
     await expect(requesterView.requestPendingButton).toBeVisible();
+    // The realtime listener shows the local, not yet acknowledged write; reloading before the server
+    // commits it would drop the request, so wait for it to land in the emulator first.
+    await expect.poll(() => listDocumentIds(`groups/${group.id}/requests`)).toContain(other.uid);
     await requesterPage.reload();
     await expect(requesterView.requestPendingButton).toBeVisible();
     await expect(requesterView.membersHeading).toHaveCount(0);
