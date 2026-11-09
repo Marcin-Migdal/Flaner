@@ -137,9 +137,7 @@ function ShellLayoutContent() {
             onClick={() => isMobile && setOpenMobile(false)}
             className="flex items-center gap-2.5 w-full focus:outline-none overflow-hidden"
           >
-            <div className="size-[39px] rounded-md bg-brand flex items-center justify-center font-black text-brand-foreground text-xl shadow-md shadow-brand/15 shrink-0 select-none">
-              F
-            </div>
+            <img src="/flaner-icon.svg" alt="" className="size-10 shrink-0 select-none rounded-lg shadow-md shadow-brand/15" />
             <span className="text-2xl font-black tracking-wider text-brand-text truncate select-none">FLANER</span>
           </NavLink>
         </SidebarHeader>
@@ -310,6 +308,7 @@ function ShellLayoutContent() {
               onClick={() => isMobile && setOpenMobile(false)}
               className="flex items-center gap-2 focus:outline-none select-none"
             >
+              <img src="/flaner-icon.svg" alt="" className="size-8 shrink-0 rounded-md" />
               <span className="text-lg font-black tracking-wider text-brand-text">FLANER</span>
             </NavLink>
           </div>

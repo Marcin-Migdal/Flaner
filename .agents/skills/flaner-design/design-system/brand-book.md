@@ -95,7 +95,7 @@ Use these before inventing anything. Names are the real component names.
 ## Logo
 
 - `assets/Logos/flaner-icon.svg` — the app icon: an italic “F” (12° slant) drawn as a route, its arms ending in two stops (ring at the top arm, ring with a small gap after the crossbar), ink on a `brand` tile with `radius-3xl`-like corners. Ink and amber only — no gradient, no white. Never stretch, recolour or redraw it; PNGs come from the SVG (`npm run icons`).
-- Inside the app the mark is typographic: a `brand` square (`radius-md`, ~40px) with a font-black “F” in `brand-foreground`, followed by the wordmark “FLANER” in `text-2xl` font-black, wide tracking, `brand-text` (sidebar header).
+- Inside the app the same icon (`/flaner-icon.svg`) leads the wordmark “FLANER” (font-black, wide tracking, `brand-text`): 40px + `text-2xl` in the sidebar header, 32px + `text-lg` in the mobile top bar, 56px above the heading on the sign-in card. Decorative there (`alt=""`): the wordmark names the link.
 
 ## Don't
 
