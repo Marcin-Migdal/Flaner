@@ -8,7 +8,7 @@
  *   - README      .agents/skills/flaner-design/design-system/brand-book.md
  *   - cover       .agents/skills/flaner-design/design-system/cover.html
  *   - fonts       @fontsource-variable/geist (latin + latin-ext)
- *   - logo        packages/core/public/flaner-icon.png
+ *   - logo        packages/core/public/flaner-icon.svg
  *   - screens     .design-system/screens/*.png from `npm run design:screens` (optional, kept across exports)
  *   - components  packages/ui-components (bundle via `.storybook/design-system.tsx`, React 19 as classic scripts,
  *                 one card per `*.stories.tsx`: preview + README from the brand-book table + .d.ts props);
@@ -30,7 +30,7 @@ const THEME = "packages/ui-components/src/theme/theme.css";
 const SKILL_DIR = ".agents/skills/flaner-design/design-system";
 const FONT_DIR = "node_modules/@fontsource-variable/geist";
 const FONT_FILES = ["geist-latin-wght-normal.woff2", "geist-latin-ext-wght-normal.woff2"];
-const LOGO = "packages/core/public/flaner-icon.png";
+const LOGO = "packages/core/public/flaner-icon.svg";
 
 const THEMES = [
   { id: "light", name: "Light" },
@@ -673,10 +673,10 @@ async function main() {
   for (const dir of ["fonts", "assets/Logos", "components/Cover"]) mkdirSync(join(OUT, dir), { recursive: true });
 
   for (const file of FONT_FILES) copyFileSync(join(ROOT, FONT_DIR, "files", file), join(OUT, "fonts", file));
-  copyFileSync(join(ROOT, LOGO), join(OUT, "assets/Logos/flaner-icon.png"));
+  copyFileSync(join(ROOT, LOGO), join(OUT, "assets/Logos/flaner-icon.svg"));
   writeFileSync(
     join(OUT, "assets/Logos/README.md"),
-    "`flaner-icon.png` — PWA / home-screen icon (277×277, transparent). App icon only; its blue → violet gradient is not a UI colour. In the UI the mark is typographic (see the README, Logo).\n",
+    "`flaner-icon.svg` — the app icon: an italic ink (`#1c1a17`) \"F\" drawn as a route with two stops, on a `brand` rounded tile. Source of the PWA / iOS PNGs (`npm run icons`). Single ink, no gradient.\n",
   );
   const screens = existsSync(SCREENS) ? readdirSync(SCREENS).filter((f) => f.endsWith(".png")) : [];
   if (screens.length) {

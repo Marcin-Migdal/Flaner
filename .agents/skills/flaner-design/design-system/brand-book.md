@@ -94,7 +94,7 @@ Use these before inventing anything. Names are the real component names.
 
 ## Logo
 
-- `assets/Logos/flaner-icon.png` — the PWA / home-screen icon (two connected nodes forming an “F”, blue → violet gradient). Use it only as the app icon. Its gradient is **not** a UI colour: never reuse blue / violet in components.
+- `assets/Logos/flaner-icon.svg` — the app icon: an italic “F” (12° slant) drawn as a route, its arms ending in two stops (ring at the top arm, ring with a small gap after the crossbar), ink on a `brand` tile with `radius-3xl`-like corners. Ink and amber only — no gradient, no white. Never stretch, recolour or redraw it; PNGs come from the SVG (`npm run icons`).
 - Inside the app the mark is typographic: a `brand` square (`radius-md`, ~40px) with a font-black “F” in `brand-foreground`, followed by the wordmark “FLANER” in `text-2xl` font-black, wide tracking, `brand-text` (sidebar header).
 
 ## Don't

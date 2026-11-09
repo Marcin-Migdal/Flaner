@@ -28,7 +28,7 @@ Issue: #62. Status: **pilot under review** — tokens, brand book, cover, logo, 
 ```
 theme.css ─┐
 brand-book.md, cover.html ─┼─ npm run design:export ─→ .design-system/project/ ─→ Claude Code (Artifact publish) ─→ "Flaner" Design System
-@fontsource-variable/geist, flaner-icon.png ─┘
+@fontsource-variable/geist, flaner-icon.svg ─┘
 ```
 
 - `scripts/design-system-export.mjs` (+ `scripts/design-system-export.test.mjs`, run in CI). It fails when a colour token has no usage note, when a story's component has no brand-book entry, or when a preview errors / renders blank (Playwright, both themes).
