@@ -9,18 +9,23 @@
  *   - cover       .agents/skills/flaner-design/design-system/cover.html
  *   - fonts       @fontsource-variable/geist (latin + latin-ext)
  *   - logo        packages/core/public/flaner-icon.png
+ *   - screens     .design-system/screens/*.png from `npm run design:screens` (optional, kept across exports)
+ *   - components  packages/ui-components (bundle via `.storybook/design-system.tsx`, React 19 as classic scripts,
+ *                 one card per `*.stories.tsx`: preview + README from the brand-book table + .d.ts props);
+ *                 every preview is rendered headless in both themes (Playwright) before anything is written
  *
  * Usage: npm run design:export   (then ask Claude Code to "re-sync the Flaner design system",
  * see the `flaner-design` skill). Tests: node --test scripts/design-system-export.test.mjs
  */
 import { execSync } from "node:child_process";
-import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, ".design-system", "project");
+const SCREENS = join(ROOT, ".design-system", "screens");
 const THEME = "packages/ui-components/src/theme/theme.css";
 const SKILL_DIR = ".agents/skills/flaner-design/design-system";
 const FONT_DIR = "node_modules/@fontsource-variable/geist";
@@ -296,15 +301,16 @@ export function buildTokens(theme, { fonts = [], meta } = {}) {
   }
   radius.push({ name: "radius-full", value: "9999px", usage: RADIUS_USAGE.full });
 
+  // Style names must not equal Tailwind utilities: tokens.css is unlayered and would override `font-*` utilities.
   const styles = [];
   for (const [key, size] of theme.static) {
     const m = /^text-(\w+)$/.exec(key);
     if (!m) continue;
-    styles.push({ name: key, fontSize: remToPx(size), lineHeight: remToPx(theme.static.get(`${key}--line-height`)), fontWeight: 400, usage: CUSTOM_TEXT_USAGE[m[1]] });
+    styles.push({ name: `type-${m[1]}`, fontSize: remToPx(size), lineHeight: remToPx(theme.static.get(`${key}--line-height`)), fontWeight: 400, usage: `\`${key}\` — ${CUSTOM_TEXT_USAGE[m[1]]}` });
   }
   styles.sort((a, b) => Number.parseFloat(a.fontSize) - Number.parseFloat(b.fontSize));
   for (const [name, size, lineHeight, usage] of TAILWIND_TEXT) {
-    styles.push({ name: `text-${name}`, fontSize: remToPx(size), lineHeight: remToPx(lineHeight), fontWeight: 400, usage });
+    styles.push({ name: `type-${name}`, fontSize: remToPx(size), lineHeight: remToPx(lineHeight), fontWeight: 400, usage: `\`text-${name}\` — ${usage}` });
   }
   const sans = theme.static.get("font-sans");
 
@@ -329,7 +335,7 @@ export function buildTokens(theme, { fonts = [], meta } = {}) {
           family: "sans",
           styles: [
             ...styles,
-            { name: "page-title", fontSize: "30px", lineHeight: "36px", fontWeight: 900, letterSpacing: "-0.025em", usage: "`PageHeader` title (`text-2xl sm:text-3xl font-black tracking-tight`)." },
+            { name: "type-page-title", fontSize: "30px", lineHeight: "36px", fontWeight: 900, letterSpacing: "-0.025em", usage: "`PageHeader` title (`text-2xl sm:text-3xl font-black tracking-tight`)." },
           ],
         },
       ],
@@ -377,6 +383,270 @@ export function buildTokensCss(tokens, fontFaces = []) {
 }
 
 // ---------------------------------------------------------------------------------------------
+// Components — Storybook stories → bundle, previews, guidelines, types
+// ---------------------------------------------------------------------------------------------
+
+/** "Primitives/DropdownMenu" → "DropdownMenu", "Patterns/Page shell" → "PageShell" (same rule as `.storybook/design-system.tsx`). */
+export const cardName = (title) =>
+  (title.split("/").pop() ?? title)
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join("");
+
+/** Title and story names of a CSF file; `null` for the Foundations stories (tokens are shown by the page itself). */
+export function parseStories(source, file) {
+  const title = /^\s*title:\s*"([^"]+)"/m.exec(source)?.[1];
+  if (!title) throw new Error(`No meta title in ${file}`);
+  if (title.startsWith("Foundations/")) return null;
+  const stories = [...source.matchAll(/^export const (\w+)\s*[:=]/gm)].map((m) => m[1]);
+  return { name: cardName(title), title, group: title.split("/")[0], file, stories };
+}
+
+/** Component → { need, notes } from the brand book's "Components" table; pattern → text from its "Patterns" list. */
+export function parseComponentGuides(markdown) {
+  const guides = new Map();
+  const section = (heading) => markdown.split(/^## /m).find((s) => s.startsWith(heading)) ?? "";
+  for (const row of section("Components").split("\n")) {
+    const cells = row.split("|").slice(1, -1).map((c) => c.trim());
+    if (cells.length < 3 || cells[0] === "Need" || cells[0].startsWith("---")) continue;
+    const [need, names, notes] = cells;
+    for (const m of names.matchAll(/`(\w+)`/g)) if (!guides.has(m[1])) guides.set(m[1], { need, notes });
+  }
+  for (const m of section("Patterns").matchAll(/^- \*\*([^*]+)\*\*: (.+)$/gm)) guides.set(`pattern:${m[1]}`, { need: m[1], notes: m[2] });
+  return guides;
+}
+
+const PATTERN_FOR = { PageShell: "Page", Form: "Forms" };
+
+export function componentReadme(card, guides, { exported }) {
+  const guide = card.group === "Patterns" ? guides.get(`pattern:${PATTERN_FOR[card.name]}`) : guides.get(card.name);
+  if (!guide) throw new Error(`No brand-book entry for ${card.title} — add it to the Components table (or Patterns list) in brand-book.md`);
+  const lines = [`# ${card.name}`, "", `${guide.need}.${guide.notes ? ` ${guide.notes}` : ""}`, ""];
+  if (exported) {
+    lines.push(`- Code: \`import { ${card.name} } from "@flaner/ui-components";\` — in a design: \`window.Flaner.${card.name}\` (React).`);
+  } else {
+    lines.push(`- Pattern composed from the components above; not a single export.`);
+  }
+  lines.push(`- Stories shown in the preview: ${card.stories.join(", ")} (\`packages/ui-components/${card.file}\`).`);
+  lines.push("- Follow the brand book: tokens only, both themes, mobile-first.", "");
+  return lines.join("\n");
+}
+
+/** README section an agent reads to load and mount the components (the page writes none for a code-synced system). */
+export function consumingSection(components) {
+  return [
+    "",
+    "## Consuming this system",
+    "",
+    "- Namespace: `window.Flaner` — every `@flaner/ui-components` export (React components, the same code as the app) plus `Flaner.Icon`.",
+    "- On a Design canvas load, after `support.js`: `tokens.css`, then `components/bundle.css`, then `components/bundle.js`. Do not load `components/lib/*` — the canvas supplies React; those two files are React 19 for this system's own previews.",
+    "- Mount: `<x-import component-from-global-scope=\"Flaner.Button\" variant=\"brand\">Create group</x-import>`; parts the same way (`Flaner.CardHeader`, `Flaner.TabsList`, `Flaner.TabsTrigger`). Props and their values: `components/<Name>/<Name>.d.ts` (all in `components/index.d.ts`), guidelines: `components/<Name>/README.md`.",
+    "- Icons: `<x-import component-from-global-scope=\"Flaner.Icon\" name=\"Users\"></x-import>` — any lucide icon by its PascalCase name (`Users`, `UserMinus`, `Search`, `Inbox`, `Plus`); `class=\"size-4\"` / `size-5` / `size-6`.",
+    "- Props that take a React node (`PageHeader` `icon` / `actions`, `ListItem` `leading` / `trailing`, `EmptyState` `icon` / `action`) are set from `renderVals()`: `icon: React.createElement(Flaner.Icon, { name: \"Users\" })` bound as `icon=\"{{icon}}\"`. Children go as element content (nested `x-import`s or markup).",
+    "- Theme: light by default. A dark artboard wraps its content in `<div class=\"dark\" style=\"background: var(--background); color: var(--foreground)\">` — every token and component inside switches to dark.",
+    "- Plain markup between components uses the tokens as CSS variables (`var(--card)`, `var(--muted-foreground)`, `var(--radius-2xl)`, `var(--shadow-raised)`); Tailwind utilities exist only where the components already use them, so do not rely on new utility classes.",
+    "- Overlays (`Dialog`, `Sheet`, `ConfirmationPopup`) render open with `open=\"{{yes}}\"`; one per artboard.",
+    `- Live components: ${components.map((name) => `\`${name}\``).join(", ")}.`,
+    "",
+  ].join("\n");
+}
+
+export function previewHtml(card) {
+  return [
+    `<!-- @dsCard group="${card.group}" -->`,
+    "<!doctype html>",
+    `<html><head><meta charset="utf-8"><title>${card.name} — preview</title></head>`,
+    `<body><div id="root"></div><script>window.Flaner.renderStories(document.getElementById("root"), ${JSON.stringify(card.name)});</script></body></html>`,
+    "",
+  ].join("\n");
+}
+
+/**
+ * Consumers inline the scripts: a literal `</script` or `<!--` would end or escape the element.
+ * U+FFFD (minified string literals of CSS.escape / entity decoders) is refused by the artifact upload: escape it.
+ */
+export const inlineSafe = (js) => js.replace(/<\/script/gi, "<\\/script").replace(/<!--/g, "\\x3C!--").replace(/\uFFFD/g, "\\uFFFD");
+
+const BUILD = join(ROOT, ".design-system", "build");
+const UI = join(ROOT, "packages/ui-components");
+
+async function viteIife({ entry, outDir, fileName, name, globals = {}, plugins = [] }) {
+  const { build } = await import("vite");
+  await build({
+    configFile: false,
+    root: UI,
+    logLevel: "warn",
+    plugins,
+    // CommonJS packages `require("react")`, which an IIFE cannot resolve: point them at the globals instead.
+    resolve: {
+      alias: [
+        ...Object.entries(globals).map(([module, global]) => ({ find: new RegExp(`^${module}$`), replacement: globalShim(global) })),
+        ...(globals.react ? [{ find: /^react\/jsx-(dev-)?runtime$/, replacement: jsxRuntimeShim() }] : []),
+      ],
+    },
+    define: { "process.env.NODE_ENV": JSON.stringify("production") },
+    build: {
+      outDir,
+      emptyOutDir: false,
+      minify: true,
+      cssCodeSplit: false,
+      lib: { entry, name, formats: ["iife"], fileName: () => fileName, cssFileName: "bundle" },
+    },
+  });
+}
+
+function globalShim(global) {
+  mkdirSync(BUILD, { recursive: true });
+  const file = join(BUILD, `global-${global}.cjs`);
+  writeFileSync(file, `module.exports = window.${global};\n`);
+  return file;
+}
+
+/**
+ * Elements must come from the HOST React: the Design canvas supplies React 18, the system's previews React 19.
+ * A bundled `react/jsx-runtime` (19) would tag elements React 18 cannot render, so JSX goes through `window.React.createElement`.
+ */
+function jsxRuntimeShim() {
+  mkdirSync(BUILD, { recursive: true });
+  const file = join(BUILD, "jsx-runtime.cjs");
+  writeFileSync(
+    file,
+    [
+      "const React = window.React;",
+      "const jsx = (type, props, key) => React.createElement(type, key === undefined ? props : { ...props, key });",
+      "module.exports = { Fragment: React.Fragment, jsx, jsxs: jsx, jsxDEV: jsx };",
+      "",
+    ].join("\n"),
+  );
+  return file;
+}
+
+/** React 19 has no UMD build: wrap it into classic scripts that set `window.React` / `window.ReactDOM`. */
+async function buildLibraries(outDir) {
+  mkdirSync(BUILD, { recursive: true });
+  writeFileSync(join(BUILD, "react.mjs"), 'import * as React from "react";\nwindow.React = { ...React, default: React };\n');
+  writeFileSync(
+    join(BUILD, "react-dom.mjs"),
+    'import * as ReactDOM from "react-dom";\nimport * as ReactDOMClient from "react-dom/client";\nwindow.ReactDOM = { ...ReactDOM, ...ReactDOMClient };\nwindow.ReactDOM.default = window.ReactDOM;\n',
+  );
+  await viteIife({ entry: join(BUILD, "react.mjs"), outDir, fileName: "react.js", name: "FlanerReactLib" });
+  await viteIife({ entry: join(BUILD, "react-dom.mjs"), outDir, fileName: "react-dom.js", name: "FlanerReactDomLib", globals: { react: "React" } });
+  const version = JSON.parse(readFileSync(join(ROOT, "node_modules/react/package.json"), "utf8")).version;
+  return [
+    { name: "react", version, global: "React", file: "components/lib/react.js" },
+    { name: "react-dom", version, global: "ReactDOM", file: "components/lib/react-dom.js" },
+  ];
+}
+
+async function buildBundle(outDir) {
+  const { default: react } = await import("@vitejs/plugin-react");
+  const { default: tailwindcss } = await import("@tailwindcss/vite");
+  await viteIife({
+    entry: join(UI, ".storybook/design-system.tsx"),
+    outDir,
+    fileName: "bundle.js",
+    name: "Flaner",
+    globals: { react: "React", "react-dom": "ReactDOM", "react-dom/client": "ReactDOM" },
+    plugins: [react(), tailwindcss()],
+  });
+}
+
+/** `.d.ts` of each card (its styles file first, for the CVA variant unions) — documentation for the page's props cards. */
+function buildTypes(cards) {
+  const typesDir = join(BUILD, "types");
+  rmSync(typesDir, { recursive: true, force: true });
+  execSync(`npx tsc -p packages/ui-components/tsconfig.lib.json --noEmit false --declaration --emitDeclarationOnly --declarationDir "${typesDir}" --tsBuildInfoFile "${join(BUILD, "types.tsbuildinfo")}"`, { cwd: ROOT, stdio: "inherit" });
+  const clean = (dts) =>
+    dts
+      .split("\n")
+      .filter((line) => !/^import |^export \{\};|^\/\/# sourceMappingURL/.test(line))
+      .join("\n")
+      .trim();
+  const types = new Map();
+  for (const card of cards) {
+    // Declarations land under the common root of the program (`packages/`), since ui-components imports shared
+    const base = card.file.replace(/\.stories\.tsx$/, "");
+    const files = [`${base}.styles.d.ts`, `${base}.d.ts`].map((f) => join(typesDir, "ui-components", f)).filter((f) => existsSync(f));
+    if (files.length) types.set(card.name, files.map((f) => clean(readFileSync(f, "utf8"))).join("\n\n"));
+  }
+  return types;
+}
+
+/** Renders every preview headless; returns the card names exported on `window.Flaner` and fails on errors or blank cards. */
+async function renderCheck(cards, project, shotsDir) {
+  const { chromium } = await import("@playwright/test");
+  const read = (path) => readFileSync(join(project, path), "utf8");
+  // CHROMIUM_PATH: a preinstalled Chromium when Playwright's own browser is not downloaded (e.g. cloud sessions)
+  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
+  const exported = new Set();
+  const problems = [];
+  mkdirSync(shotsDir, { recursive: true });
+  try {
+    for (const card of cards) {
+      for (const theme of THEMES.map((t) => t.id)) {
+        const page = await browser.newPage({ viewport: { width: 960, height: 600 } });
+        const errors = [];
+        page.on("pageerror", (error) => errors.push(error.message));
+        page.on("console", (message) => message.type() === "error" && errors.push(message.text()));
+        await page.setContent(`<!doctype html><html data-theme="${theme}"><head><meta charset="utf-8"></head><body><div id="root"></div></body></html>`);
+        // Fonts: bundle.css inlines Geist; file:// fonts from tokens.css would be blocked on about:blank
+        await page.addStyleTag({ content: read("tokens.css").replace(/@font-face[^}]*\}/g, "") });
+        await page.addStyleTag({ content: read("components/bundle.css") });
+        for (const lib of ["components/lib/react.js", "components/lib/react-dom.js", "components/bundle.js"]) await page.addScriptTag({ content: read(lib) });
+        if (await page.evaluate((name) => typeof window.Flaner?.[name] !== "undefined", card.name)) exported.add(card.name);
+        await page.evaluate((name) => window.Flaner.renderStories(document.getElementById("root"), name), card.name);
+        await page.waitForTimeout(400);
+        const height = await page.evaluate(() => document.getElementById("root").getBoundingClientRect().height);
+        if (errors.length) problems.push(`${card.name} (${theme}): ${errors[0]}`);
+        else if (height < 40) problems.push(`${card.name} (${theme}): blank preview`);
+        await page.screenshot({ path: join(shotsDir, `${card.name}-${theme}.png`), fullPage: true });
+        await page.close();
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+  if (problems.length) throw new Error(`Preview render check failed:\n  ${problems.join("\n  ")}`);
+  return exported;
+}
+
+async function exportComponents() {
+  const cards = readdirSync(join(UI, "src"), { recursive: true })
+    .map((f) => f.replace(/\\/g, "/"))
+    .filter((f) => f.endsWith(".stories.tsx"))
+    .sort()
+    .map((f) => parseStories(readFileSync(join(UI, "src", f), "utf8"), `src/${f}`))
+    .filter(Boolean);
+  const guides = parseComponentGuides(readFileSync(join(ROOT, SKILL_DIR, "brand-book.md"), "utf8"));
+  for (const card of cards) componentReadme(card, guides, { exported: false }); // fail fast on a missing brand-book entry
+
+  const componentsDir = join(OUT, "components");
+  const libraries = await buildLibraries(join(componentsDir, "lib"));
+  await buildBundle(componentsDir);
+  for (const file of ["lib/react.js", "lib/react-dom.js", "bundle.js"]) {
+    const path = join(componentsDir, file);
+    writeFileSync(path, inlineSafe(readFileSync(path, "utf8")));
+  }
+
+  const exported = await renderCheck(cards, OUT, join(BUILD, "check"));
+  const header = { format: 4, namespace: "Flaner", components: cards.filter((c) => exported.has(c.name)).map((c) => ({ name: c.name })) };
+  writeFileSync(join(componentsDir, "bundle.js"), `/* @ds-bundle: ${JSON.stringify(header)} */\n${readFileSync(join(componentsDir, "bundle.js"), "utf8")}`);
+
+  writeFileSync(join(OUT, "README.md"), `${readFileSync(join(OUT, "README.md"), "utf8").trimEnd()}\n${consumingSection(header.components.map((c) => c.name))}`);
+
+  const types = buildTypes(cards.filter((c) => exported.has(c.name)));
+  writeFileSync(join(componentsDir, "index.d.ts"), `import type * as React from "react";\n\n${[...types.values()].join("\n\n")}\n`);
+  for (const card of cards) {
+    const dir = join(componentsDir, card.name);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "preview.html"), previewHtml(card));
+    writeFileSync(join(dir, "README.md"), componentReadme(card, guides, { exported: exported.has(card.name) }));
+    if (types.has(card.name)) writeFileSync(join(dir, `${card.name}.d.ts`), `import type * as React from "react";\n\n${types.get(card.name)}\n`);
+  }
+  return { cards, libraries, exported };
+}
+
+// ---------------------------------------------------------------------------------------------
 // CLI
 // ---------------------------------------------------------------------------------------------
 
@@ -395,9 +665,11 @@ function git(cmd) {
   }
 }
 
-function main() {
+async function main() {
   const theme = parseTheme(readFileSync(join(ROOT, THEME), "utf8"));
+  // `.design-system/screens/` (npm run design:screens) survives a re-export; project/ and build/ are regenerated
   rmSync(OUT, { recursive: true, force: true });
+  rmSync(BUILD, { recursive: true, force: true });
   for (const dir of ["fonts", "assets/Logos", "components/Cover"]) mkdirSync(join(OUT, dir), { recursive: true });
 
   for (const file of FONT_FILES) copyFileSync(join(ROOT, FONT_DIR, "files", file), join(OUT, "fonts", file));
@@ -406,6 +678,15 @@ function main() {
     join(OUT, "assets/Logos/README.md"),
     "`flaner-icon.png` — PWA / home-screen icon (277×277, transparent). App icon only; its blue → violet gradient is not a UI colour. In the UI the mark is typographic (see the README, Logo).\n",
   );
+  const screens = existsSync(SCREENS) ? readdirSync(SCREENS).filter((f) => f.endsWith(".png")) : [];
+  if (screens.length) {
+    mkdirSync(join(OUT, "assets/Screens"), { recursive: true });
+    for (const file of screens) copyFileSync(join(SCREENS, file), join(OUT, "assets/Screens", file));
+    writeFileSync(
+      join(OUT, "assets/Screens/README.md"),
+      "Screenshots of the running app (`npm run design:screens`, emulators with seeded data): `<view>-<theme>-<mobile|desktop>.png` at 390×844 and 1440×900. Reference for density, rhythm and the app shell — the tokens and components win where they differ.\n",
+    );
+  }
   copyFileSync(join(ROOT, SKILL_DIR, "brand-book.md"), join(OUT, "README.md"));
   copyFileSync(join(ROOT, SKILL_DIR, "cover.html"), join(OUT, "components/Cover/preview.html"));
 
@@ -421,8 +702,18 @@ function main() {
   writeFileSync(join(OUT, "tokens.json"), `${JSON.stringify(tokens, null, 2)}\n`);
   writeFileSync(join(OUT, "tokens.css"), buildTokensCss(tokens, FONT_FILES.map(fontFaceFor)));
 
-  console.log(`Design system exported to ${OUT} (${tokens.color.tokens.length} colours × ${THEMES.length} themes, ref ${meta.ref}).`);
+  const { cards, libraries, exported } = await exportComponents();
+  writeFileSync(join(BUILD, "libraries.json"), `${JSON.stringify(libraries, null, 2)}\n`);
+
+  console.log(`Design system exported to ${OUT}`);
+  console.log(`  ${tokens.color.tokens.length} colours × ${THEMES.length} themes, ${cards.length} component cards (${exported.size} live exports), ref ${meta.ref}`);
+  console.log(`  preview screenshots: ${join(BUILD, "check")}`);
   console.log('Next: ask Claude Code to "re-sync the Flaner design system" (flaner-design skill).');
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

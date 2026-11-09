@@ -25,8 +25,8 @@ Flaner is a personal planning app for friends and small groups: plan events and 
 
 ### Type
 - One family: **Geist Variable** (`--font-sans`). Weights 400 / 500 / 600 / 700; 900 only for the page title.
-- Default UI text is `text-sm` (14/20). Helper text `text-xs`; meta and badges `text-2xs`; counters `text-3xs`. `text-4xs` / `text-5xs` exist only for dense calendar grids.
-- Page title: `page-title` — `text-2xl` on phones, `text-3xl` from `sm`, font-black, tight tracking. Section / card titles `text-lg` semibold. Dialog and sheet titles `text-base` medium.
+- Type styles are named `type-<size>` and map 1:1 to Tailwind's `text-<size>`. Default UI text is `text-sm` (14/20). Helper text `text-xs`; meta and badges `text-2xs`; counters `text-3xs`. `text-4xs` / `text-5xs` exist only for dense calendar grids.
+- Page title: `type-page-title` — `text-2xl` on phones, `text-3xl` from `sm`, font-black, tight tracking. Section / card titles `text-lg` semibold. Dialog and sheet titles `text-base` medium.
 - Numbers in counters and money use tabular figures.
 
 ### Spacing & layout
@@ -69,11 +69,14 @@ Use these before inventing anything. Names are the real component names.
 | Menus | `DropdownMenu`, `Popover`, `Tooltip` | |
 | Person | `Avatar` | photo or initials on the brand gradient (`brand` → `brand-dark`) |
 | Search | `SearchBar`, `IconTextField` | leading search icon, clear button |
-| Forms | `TextField`, `TextArea`, `Select`, `DatePicker`, `MoneyInput`, `Switch`, `Checkbox`, `ColorPickerField`, `ImagePicker` (+ `Form*` variants bound to react-hook-form) | label above, helper / error below (`Field`, `FieldLabel`, `FieldError`) |
+| Forms | `TextField`, `TextArea`, `Select`, `DatePicker`, `MoneyInput`, `Switch`, `Checkbox`, `ColorPickerField`, `ImagePicker`, `Field` (+ `Form*` variants bound to react-hook-form) | label above, helper / error below (`Field`, `FieldLabel`, `FieldError`) |
 | Multi-step flow | `Stepper` | `steps`, `currentStep` |
 | Chart frame | `ChartContainer` | title + legend in `chart-*` colours; chart inside |
 | Calendar | `BigCalendar`, `Calendar` | planning only |
 | Feedback | `Alert`, `Toaster` | |
+| Signed-in user chip | `Profile` | avatar + username; `size` sm / md / lg, `showName` |
+| Whole-view loading | `LoadingFallback` | centred spinner (+ optional text) while a lazy view loads |
+| Collapsible sections | `Accordion` (`AccordionItem`, `AccordionTrigger`, `AccordionContent`) | FAQ-like or advanced settings |
 
 ## Patterns
 

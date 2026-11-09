@@ -14,6 +14,7 @@ Flaner's look is fixed by code, and Claude reads the same code:
 | Decisions, contrast table, rationale | `.agents/docs/design-system.md` |
 | Components and their variants | `@flaner/ui-components` (`shadcn-ui-components` skill has the table) |
 | Claude-side copy | Design System artifact **Flaner**: https://claude.ai/artifact/MFJQyjzKsoUq3oDSsU5Wxx (private, owner Marcin) |
+| Example design (pilot) | Friends: https://claude.ai/artifact/Ssoj85MptreneBK9PVeVUQ |
 
 Research and the reasons behind this setup: `.agents/docs/claude-design.md`.
 
@@ -26,7 +27,7 @@ Read `design-system/brand-book.md` before designing or reviewing any view. It is
 1. Agree on the requirements first (`create-functionality` Stages 1–4).
 2. Write the brief with the template in §2.
 3. Create the design:
-   - **Claude Code / claude.ai:** `Artifact` `action: "quickstart"`, `intent: "design"` — its result names the Design type and the design systems you can use; pick **Flaner** (link above), then create the design from the Design type with the brief.
+   - **Claude Code / claude.ai:** `Artifact` `action: "quickstart"`, `intent: "design"` — its result names the Design type and the design systems you can use; pick **Flaner** (link above), then create the design from the Design type with the brief. Mount the real components as the design system's README ("Consuming this system") says — `x-import` of `Flaner.<Component>`, icons via `Flaner.Icon`; the pilot canvas shows the pattern (one parameterised `Main.dc.html`, other artboards `dc-import` it with `dark` / `desktop` / `empty`).
    - **The user in claude.ai:** paste the brief into a new chat and ask for a design that uses the "Flaner" design system.
 4. Review the design against the brand book (both themes, phone width, states) before anyone implements it. Ask for changes in the same artifact, not a new one.
 
@@ -93,12 +94,15 @@ Do this before writing the implementation plan's file list (`create-functionalit
 
 ## 4. Re-sync the Design System artifact
 
-Run after any change to `theme.css`, `design-system/brand-book.md`, `design-system/cover.html` or the logo (and, once added, components / stories). The artifact is marked `"editing": "code"`, so its page is read-only: every change goes through the repo and this procedure.
+Run after any change to `theme.css`, `ui-components` (components, stories), `design-system/brand-book.md`, `design-system/cover.html` or the logo. Reference screens: `npm run design:screens` first when a view changed (stop your own dev servers; same requirements as `npm run e2e`). The artifact is marked `"editing": "code"`, so its page is read-only: every change goes through the repo and this procedure.
 
-1. `npm run design:export` → writes `.design-system/project/` (gitignored): `tokens.json`, `tokens.css`, `README.md`, `fonts/`, `assets/Logos/`, `components/Cover/preview.html`. Requires `npm install` (Geist font files).
-2. `Artifact` `action: "read"` with `path: "project/design-system.json"` on the artifact URL above; save it as `.design-system/project/design-system.json`.
-3. New or changed image under `assets/` → upload it (`publish`, `asset: true`) and update its record in `assetGroups` (`blob`, `size`). Unchanged logo → keep the record as read.
-4. One `publish` to the same URL with `root: ".design-system"` (absolute path), `file_path` = the index, `files` = every changed `project/…` file (fonts and unchanged files can be left out). In the index change only `lastChange` (`by` the user, `at` now, `via` `"Claude Code · Marcin-Migdal/Flaner@<short sha>"`, `note` = what changed) and the keys the change touches; keep `createdOnFiles` and every other key.
-5. Tell the user what changed (e.g. "3 colours changed, README updated").
-
-Not synced yet (follow-up after Storybook lands): the component bundle (`components/bundle.js`, React 19 in `components/lib/`), per-component previews generated from `*.stories.tsx`, and screenshots of real views (`assets/Screens/`). Until then Claude Design draws components from the brand book's component table and the tokens.
+1. `npm run design:export` (needs `npm install`; in a cloud session without Playwright's own browser: `CHROMIUM_PATH=/opt/pw-browsers/chromium-*/chrome-linux64/chrome`). It writes `.design-system/project/` (gitignored):
+   - `tokens.json`, `tokens.css`, `README.md` (brand book), `fonts/`, `assets/Logos/`, `components/Cover/preview.html`
+   - `components/lib/react.js`, `react-dom.js` (React 19 as classic scripts), `components/bundle.js` + `bundle.css` (every `@flaner/ui-components` export + composed stories on `window.Flaner`, entry `packages/ui-components/.storybook/design-system.tsx`), `components/index.d.ts`
+   - one card per `*.stories.tsx`: `components/<Name>/preview.html` (renders its stories), `README.md` (summary from the brand book's Components table / Patterns list — the export fails when a component has no entry), `<Name>.d.ts`
+   - `assets/Screens/*.png` + `README.md` when `.design-system/screens/` has screenshots
+   - `.design-system/build/libraries.json` (the index's `libraries`) and `.design-system/build/check/*.png` — every preview rendered headless in both themes; the export fails on a render error or a blank card. Look at the screenshots of what changed.
+2. `Artifact` `action: "read"` with `path: "project/design-system.json"` on the artifact URL above; copy it to `.design-system/project/design-system.json`.
+3. New or changed image under `assets/` (logo, screens) → upload it (`publish`, `asset: true`, several at once with `file_paths`) and update its record in `assetGroups` (`blob`, `size`; group `Screens` for screenshots). Unchanged images → keep the records as read.
+4. One `publish` to the same URL with `root` = absolute path of `.design-system`, `file_path` = the index, `files` = the changed `project/…` files (unchanged fonts, logo README and cover can be left out). `.d.ts` files need `{"from": "<path>", "contentType": "text/plain"}`. In the index set `libraries` from `libraries.json` and `lastChange` (`by` the user, `at` now, `via` `"Claude Code · Marcin-Migdal/Flaner@<short sha>"`, `note` = what changed); keep `createdOnFiles`, `editing` and every other key.
+5. Tell the user what changed (e.g. "3 colours changed, 2 new component cards").

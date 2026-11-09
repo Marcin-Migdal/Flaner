@@ -1,0 +1,5 @@
+/* bundle.css of the "Flaner" Design System artifact (#62) — same theme as the app and Storybook. */
+@import "tailwindcss";
+@import "../src/theme/theme.css";
+
+@source "./design-system.tsx";
