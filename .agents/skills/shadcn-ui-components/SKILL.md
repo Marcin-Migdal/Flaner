@@ -17,6 +17,7 @@ This project uses shadcn/ui with a light and a dark theme driven by the semantic
 | View title | `PageHeader` (`title`, `description`, `icon`, `actions`, `back`, `as`) |
 | Nothing to show | `EmptyState` (`icon`, `title`, `description`, `action`, `variant` `plain` / `card`) |
 | Row in a list | `ListItem` (`leading`, `title`, `description`, `trailing`, `interactive`, `asChild`) |
+| Person | `Avatar` (`variant` `brand` = initials on the brand gradient, `neutral`) + `AvatarImage` / `AvatarFallback` — never a hand-made gradient on the fallback |
 | Loading placeholder | `Skeleton` (same size as the content it replaces) |
 | Status / counter | `Badge` (`variant` `neutral` / `outline` / `brand` / `success` / `warning` / `danger` / `info` / `solid` / `solid-danger`, `shape` `pill` / `tag` / `count`) |
 | Multi-step flow | `Stepper` (`steps`, `currentStep`) |

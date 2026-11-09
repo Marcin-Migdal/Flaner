@@ -344,9 +344,9 @@ export function GroupDetailsView() {
                       className={groupDetailsViewStyles.memberRow}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <Avatar className="size-10 border border-border shrink-0">
+                        <Avatar variant="brand" className="size-10 border border-border shrink-0">
                           {profile?.avatarUrl && <AvatarImage src={profile.avatarUrl} alt={displayName} />}
-                          <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-brand-foreground font-bold text-sm">
+                          <AvatarFallback className="text-sm">
                             {initials}
                           </AvatarFallback>
                         </Avatar>

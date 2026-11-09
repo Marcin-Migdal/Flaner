@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Flaner app icon: an italic "F" drawn as a route with two stops. Source of every PNG icon: npm run icons -->
+  <rect width="512" height="512" rx="116" fill="#edad5e"/>
+  <g id="glyph">
+    <g fill="none" stroke="#1c1a17" stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M120.1 411 L172.8 163 Q181.3 123 221.3 123 L341.3 123"/>
+      <path d="M153.2 255 L241.2 255"/>
+    </g>
+    <circle cx="365.3" cy="123" r="38" fill="#edad5e" stroke="#1c1a17" stroke-width="20"/>
+    <circle cx="317.2" cy="255" r="30" fill="none" stroke="#1c1a17" stroke-width="20"/>
+  </g>
+</svg>

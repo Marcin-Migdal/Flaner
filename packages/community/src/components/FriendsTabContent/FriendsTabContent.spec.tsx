@@ -301,7 +301,7 @@ describe("FriendsTabContent component", () => {
     expect(screen.getByText("searchTab.empty")).toBeInTheDocument();
   });
 
-  it("shows loader icon on remove button when delete is pending for that friend", () => {
+  it("marks the remove button busy while that friend is being removed", () => {
     const mockFriends = [
       {
         uid: "f-1",
@@ -322,7 +322,9 @@ describe("FriendsTabContent component", () => {
     } as unknown as ReturnType<typeof hooks.useRemoveFriendMutation>);
 
     renderComponent();
-    expect(screen.queryByText("friendsList.remove")).not.toBeInTheDocument();
+    const removeBtn = screen.getByRole("button", { name: "friendsList.remove" });
+    expect(removeBtn).toHaveAttribute("aria-busy", "true");
+    expect(removeBtn).toBeDisabled();
   });
 });
 

@@ -1,15 +1,18 @@
 import React from "react";
+import { cn } from "@flaner/shared/utils";
 import { Avatar as ShadcnAvatar } from "../ui/avatar";
+import { avatarVariants, type AvatarVariantsProps } from "./Avatar.styles";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
-export type AvatarProps = React.ComponentProps<typeof ShadcnAvatar> & {
-  tooltip?: React.ReactNode;
-};
+export type AvatarProps = React.ComponentProps<typeof ShadcnAvatar> &
+  AvatarVariantsProps & {
+    tooltip?: React.ReactNode;
+  };
 
 export const Avatar = React.forwardRef<React.ElementRef<typeof ShadcnAvatar>, AvatarProps>(
-  ({ tooltip, children, ...props }, ref) => {
+  ({ tooltip, variant, className, children, ...props }, ref) => {
     const avatar = (
-      <ShadcnAvatar ref={ref} {...props}>
+      <ShadcnAvatar ref={ref} className={cn(avatarVariants({ variant }), className)} {...props}>
         {children}
       </ShadcnAvatar>
     );

@@ -116,8 +116,8 @@ export function InviteToGroupModal({
               return (
                 <div key={targetUser.uid} className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/40 transition-all duration-200 border border-transparent hover:border-border/50 group">
                   <div className="flex items-center gap-3">
-                    <Avatar className="size-10 border border-border/60 shadow-sm">
-                      <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-brand-foreground font-bold text-sm">
+                    <Avatar variant="brand" className="size-10 border border-border/60 shadow-sm">
+                      <AvatarFallback className="text-sm">
                         {initials}
                       </AvatarFallback>
                     </Avatar>
