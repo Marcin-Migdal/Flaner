@@ -16,6 +16,26 @@ describe("Avatar component", () => {
     expect(screen.getByText("JD")).toBeInTheDocument();
   });
 
+  it("puts the initials on the brand gradient with the brand variant", () => {
+    render(
+      <Avatar variant="brand" data-testid="avatar">
+        <AvatarFallback>JD</AvatarFallback>
+      </Avatar>
+    );
+
+    expect(screen.getByTestId("avatar")).toHaveClass("*:data-[slot=avatar-fallback]:from-brand");
+  });
+
+  it("keeps the neutral fallback by default", () => {
+    render(
+      <Avatar data-testid="avatar">
+        <AvatarFallback>JD</AvatarFallback>
+      </Avatar>
+    );
+
+    expect(screen.getByTestId("avatar").className).not.toContain("from-brand");
+  });
+
   it("renders with tooltip wrapper when tooltip prop is passed", () => {
     render(
       <Avatar tooltip="John Doe">

@@ -78,9 +78,9 @@ export function SearchTabContent() {
                 className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card shadow-sm hover:shadow-md hover:border-brand/30 transition-all gap-4"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <Avatar className="size-11 border border-border shadow-sm">
+                  <Avatar variant="brand" className="size-11 border border-border shadow-sm">
                     <AvatarImage src={match.avatarUrl} alt={match.username} />
-                    <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-brand-foreground font-bold text-sm">
+                    <AvatarFallback className="text-sm">
                       {getInitials(match.username)}
                     </AvatarFallback>
                   </Avatar>

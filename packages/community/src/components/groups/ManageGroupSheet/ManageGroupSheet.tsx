@@ -395,9 +395,9 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                             className={manageGroupSheetStyles.memberItem}
                           >
                             <div className="flex items-center gap-3">
-                              <Avatar className="size-10 border border-border">
+                              <Avatar variant="brand" className="size-10 border border-border">
                                 {profile?.avatarUrl && <AvatarImage src={profile.avatarUrl} alt={displayName} />}
-                                <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-brand-foreground font-bold text-sm">
+                                <AvatarFallback className="text-sm">
                                   {initials}
                                 </AvatarFallback>
                               </Avatar>

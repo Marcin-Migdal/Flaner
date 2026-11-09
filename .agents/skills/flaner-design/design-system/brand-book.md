@@ -67,7 +67,7 @@ Use these before inventing anything. Names are the real component names.
 | Short focused task | `Dialog` | create, edit, settle up |
 | Destructive confirm | `ConfirmationPopup` | `variant` destructive |
 | Menus | `DropdownMenu`, `Popover`, `Tooltip` | |
-| Person | `Avatar` | photo or initials on the brand gradient (`brand` → `brand-dark`) |
+| Person | `Avatar` | photo, else initials (`AvatarFallback`); people use `variant=brand` — initials on the brand gradient (`brand` → `brand-dark`) in `brand-foreground`; `neutral` (default, `muted`) for placeholders |
 | Search | `SearchBar`, `IconTextField` | leading search icon, clear button |
 | Forms | `TextField`, `TextArea`, `Select`, `DatePicker`, `MoneyInput`, `Switch`, `Checkbox`, `ColorPickerField`, `ImagePicker`, `Field` (+ `Form*` variants bound to react-hook-form) | label above, helper / error below (`Field`, `FieldLabel`, `FieldError`) |
 | Multi-step flow | `Stepper` | `steps`, `currentStep` |

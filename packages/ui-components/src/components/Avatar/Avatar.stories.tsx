@@ -5,6 +5,8 @@ import { Avatar } from "./Avatar";
 const meta = {
   title: "Components/Avatar",
   component: Avatar,
+  args: { variant: "neutral" },
+  argTypes: { variant: { control: "inline-radio", options: ["neutral", "brand"] } },
   render: (args) => (
     <Avatar {...args}>
       <AvatarFallback>AN</AvatarFallback>
@@ -16,4 +18,5 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Fallback: Story = {};
+export const Brand: Story = { args: { variant: "brand" } };
 export const WithTooltip: Story = { args: { tooltip: "Anna Nowak" } };

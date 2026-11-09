@@ -3,15 +3,20 @@ import {
   AvatarFallback,
   AvatarImage,
   Button,
+  Card,
   ConfirmationPopup,
+  EmptyState,
   Input,
+  ListItem,
+  Skeleton,
   TabsContent,
 } from "@flaner/ui-components";
 import { cn } from "@flaner/shared/utils";
-import { Loader2, Search, UserMinus, Users, X } from "lucide-react";
+import { Search, UserMinus, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useGetFriendsListRealtimeQuery, useGetUsersRealtimeQuery, useRemoveFriendMutation } from "../../hooks";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
+import { friendsTabContentStyles as styles } from "./FriendsTabContent.styles";
 
 export function FriendsTabContent() {
   const { t } = useCommunityTranslations();
@@ -53,86 +58,65 @@ export function FriendsTabContent() {
   const filteredFriends = rows.filter((friend) => friend.username.toLowerCase().includes(filterQuery.toLowerCase()));
 
   return (
-    <TabsContent value="friends" className="space-y-3 outline-none">
+    <TabsContent value="friends" className={styles.root}>
       {/* Local filter input (always rendered to prevent layout shifts) */}
-      <div className="relative w-full max-w-md">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+      <div className={styles.filter}>
+        <Search className={styles.filterIcon} />
         <Input
           type="text"
           placeholder={t("friendsList.placeholder")}
           value={filterQuery}
           onChange={(e) => setFilterQuery(e.target.value)}
           disabled={friends.length === 0}
-          className="pl-10 h-10 rounded-xl bg-card border-border shadow-sm"
+          className={styles.filterInput}
         />
         {filterQuery && (
-          <button
-            onClick={() => setFilterQuery("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <button onClick={() => setFilterQuery("")} className={styles.clearButton}>
             <X className="size-4" />
           </button>
         )}
       </div>
 
       {loadingFriends || loadingProfiles ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="size-8 animate-spin text-brand-text" />
-        </div>
+        <Card variant="subtle" padding="sm" aria-busy="true">
+          {[0, 1, 2].map((row) => (
+            <Skeleton key={row} className={styles.skeletonRow} />
+          ))}
+        </Card>
       ) : filteredFriends.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border bg-card/50 rounded-2xl p-6 shadow-sm">
-          <Users className="size-12 text-muted-foreground/40 mb-3" />
-          <p className="text-sm text-muted-foreground max-w-xs">
-            {filterQuery ? t("searchTab.empty") : t("friendsList.empty")}
-          </p>
-        </div>
+        <EmptyState variant="card" icon={<Users />} title={filterQuery ? t("searchTab.empty") : t("friendsList.empty")} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredFriends.map((friend) => {
-            const isDeleting = deleteFriend.isPending && deleteFriend.variables === friend.uid;
-
-            return (
-              <div
-                key={friend.uid}
-                className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card shadow-sm hover:shadow-md hover:border-brand/30 transition-all gap-4"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <Avatar className="size-11 border border-border shadow-sm">
-                    {friend.avatarUrl && <AvatarImage src={friend.avatarUrl} alt={friend.username} />}
-                    <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-brand-foreground font-bold text-sm">
-                      {getInitials(friend.username)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <span className={cn("font-semibold text-sm block truncate", friend.isDeleted ? "italic text-muted-foreground" : "text-foreground/90")}>
-                      {friend.username}
-                    </span>
-                    <span className="text-3xs text-muted-foreground">
-                      {t("friendsList.addedAt", { date: new Date(friend.createdAt).toLocaleDateString() })}
-                    </span>
-                  </div>
-                </div>
-
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={isDeleting}
-                  onClick={() => setFriendToRemove({ uid: friend.uid, username: friend.username })}
-                  className="h-9 px-3 rounded-lg border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-xs gap-1.5"
-                >
-                  {isDeleting ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <>
-                      <UserMinus className="size-3.5" />
+        <Card variant="subtle" padding="sm">
+          <ul className={styles.list}>
+            {filteredFriends.map((friend) => (
+              <li key={friend.uid}>
+                <ListItem
+                  className={styles.row}
+                  leading={
+                    <Avatar variant="brand" className={styles.avatar}>
+                      {friend.avatarUrl && <AvatarImage src={friend.avatarUrl} alt={friend.username} />}
+                      <AvatarFallback className="text-sm">{getInitials(friend.username)}</AvatarFallback>
+                    </Avatar>
+                  }
+                  title={<span className={cn(friend.isDeleted && styles.deletedName)}>{friend.username}</span>}
+                  description={t("friendsList.addedAt", { date: new Date(friend.createdAt).toLocaleDateString() })}
+                  trailing={
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      isBusy={deleteFriend.isPending && deleteFriend.variables === friend.uid}
+                      onClick={() => setFriendToRemove({ uid: friend.uid, username: friend.username })}
+                      className={styles.removeButton}
+                    >
+                      <UserMinus />
                       <span>{t("friendsList.remove")}</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-            );
-          })}
-        </div>
+                    </Button>
+                  }
+                />
+              </li>
+            ))}
+          </ul>
+        </Card>
       )}
 
       <ConfirmationPopup

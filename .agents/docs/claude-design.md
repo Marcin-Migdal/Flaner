@@ -59,9 +59,9 @@ brand-book.md, cover.html ─┼─ npm run design:export ─→ .design-system/
 
 Brief written with the `flaner-design` template, design built on a Design canvas with the Flaner system installed and real components mounted (`PageHeader`, `Tabs`, `IconTextField`, `Card` + `ListItem`, `Avatar`, `Button`, `Badge`, `EmptyState`, `Flaner.Icon`): phone light / dark / empty, desktop light / dark with the app shell. Compare with `assets/Screens/friends-*` (the running app).
 
-Findings so far:
-- The brand book promises avatar initials on the brand gradient, but `Avatar`'s fallback is neutral; the app's Friends rows add the gradient by hand. Either `Avatar` gets a `brand` fallback variant or the brand book changes (proposal, not done here).
-- Following the patterns, the design lists friends as `ListItem` rows in a subtle `Card`; the app uses hand-made row cards in a 2-column grid. The redesign of Friends to the patterns is a separate task.
+Findings, both fixed in #62:
+- The brand book promised avatar initials on the brand gradient, but `Avatar`'s fallback was neutral and 7 places in the app added the gradient by hand → `Avatar variant="brand"` (styles the fallback through its slot), adopted everywhere (community, `Profile`).
+- The app listed friends as hand-made row cards in a 2-column grid, with a hand-made empty state and a spinner → Friends now uses the patterns: `ListItem` rows in a subtle `Card`, `EmptyState`, `Skeleton` rows, a busy `Button` while removing.
 
 ## 8. Changelog
 - 2026-11-08 — research; Design System artifact created; export of tokens, brand book, fonts, logo, cover; `flaner-design` skill; `create-functionality` brief + design → code steps.
