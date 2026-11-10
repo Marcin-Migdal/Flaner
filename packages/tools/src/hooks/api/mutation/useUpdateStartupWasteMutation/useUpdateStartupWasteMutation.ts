@@ -10,6 +10,7 @@ export const useUpdateStartupWasteMutation = (
   const invalidateStartupWaste = useInvalidateGetStartupWasteQuery();
 
   return useMutation<void, Error, number>({
+    mutationKey: ["updateStartupWaste"],
     mutationFn: async (waste: number) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       await updateStartupWaste(user.uid, waste);

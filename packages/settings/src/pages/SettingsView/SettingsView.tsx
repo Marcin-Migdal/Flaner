@@ -65,7 +65,7 @@ export function SettingsView() {
         // Upload to Cloudinary
         avatarUrl = await uploadToCloudinary(compressed);
       } catch (err) {
-        console.error(err);
+        reportError(err);
         toast.failure(t("notifications.avatarError"));
         return;
       }
@@ -87,7 +87,6 @@ export function SettingsView() {
         reset(data);
       },
       onError: (err) => {
-        console.error(err);
         if (err instanceof FirebaseError && err.code === "app/username-already-in-use") {
           settingsForm.setError("username", { type: "manual", message: t("validation.usernameInUse") });
         }

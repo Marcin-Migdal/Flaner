@@ -17,6 +17,7 @@ export const useRejectFriendRequestMutation = (options?: UseMutationOptions<void
 
 
   return useMutation<void, Error, SenderInput>({
+    mutationKey: ["rejectFriendRequest"],
     mutationFn: async (sender) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       await rejectFriendRequest(sender, { uid: user.uid, username: user.username, avatarUrl: user.avatarUrl });

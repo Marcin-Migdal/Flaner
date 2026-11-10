@@ -17,6 +17,7 @@ export const useAcceptGroupInvitationMutation = (
 
 
   return useMutation<void, Error, { groupId: string; userId: string }>({
+    mutationKey: ["acceptGroupInvitation"],
     mutationFn: ({ groupId, userId }) => acceptGroupInvitation(groupId, userId),
     meta: {
       successMessageKey: "community:toasts.groupInvitations.acceptSuccess",

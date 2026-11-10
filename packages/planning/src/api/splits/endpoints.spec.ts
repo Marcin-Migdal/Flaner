@@ -144,7 +144,7 @@ describe("splits endpoints", () => {
 
     it("subscribeToUserSplitGroups returns unsubscribe no-op when userId is empty", () => {
       const callback = vi.fn();
-      const unsub = subscribeToUserSplitGroups("", callback);
+      const unsub = subscribeToUserSplitGroups("", callback, vi.fn());
       expect(typeof unsub).toBe("function");
       expect(mockOnSnapshot).not.toHaveBeenCalled();
     });
@@ -158,7 +158,7 @@ describe("splits endpoints", () => {
         return vi.fn();
       });
 
-      subscribeToUserSplitGroups("user-1", callback);
+      subscribeToUserSplitGroups("user-1", callback, vi.fn());
       expect(callback).toHaveBeenCalledWith([g1]);
     });
   });
@@ -627,19 +627,19 @@ describe("splits endpoints", () => {
   describe("group edge cases & error branches", () => {
     it("subscribeToUserSplitGroups handles empty userId and error callback", () => {
       const callback = vi.fn();
-      const unsubscribe = subscribeToUserSplitGroups("", callback);
+      const unsubscribe = subscribeToUserSplitGroups("", callback, vi.fn());
       expect(typeof unsubscribe).toBe("function");
       unsubscribe();
 
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-      mockOnSnapshot.mockImplementation((_query, _onNext, onError) => {
-        onError(new Error("Snap error"));
+      const onError = vi.fn();
+      const error = new Error("Snap error");
+      mockOnSnapshot.mockImplementation((_query, _onNext, listenerError) => {
+        listenerError(error);
         return () => {};
       });
 
-      subscribeToUserSplitGroups("user-1", callback);
-      expect(warnSpy).toHaveBeenCalledWith("Realtime listener on user split groups failed:", expect.any(Error));
-      warnSpy.mockRestore();
+      subscribeToUserSplitGroups("user-1", callback, onError);
+      expect(onError).toHaveBeenCalledWith(error);
     });
 
     it("deleteSplitGroup throws when group does not exist, not owner, or has balances", async () => {

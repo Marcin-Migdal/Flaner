@@ -1,6 +1,7 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithProviders } from "@flaner/test-utils";
 import userEvent from "@testing-library/user-event";
 import { DeleteTemplateModal } from "./DeleteTemplateModal";
 import type { FilamentTemplate } from "../../../../api/templates";
@@ -24,7 +25,13 @@ vi.mock("../../../../api/templates", () => ({
 
 let mockDeleteIsPending = false;
 
-vi.mock("../../../../hooks", () => ({
+vi.mock("../../../../hooks", async () => ({
+  // The real query hook, over the mocked endpoint
+  useGetAssociatedSpoolsQuery: (
+    await vi.importActual<typeof import("../../../../hooks/api/query/useGetAssociatedSpoolsQuery")>(
+      "../../../../hooks/api/query/useGetAssociatedSpoolsQuery",
+    )
+  ).useGetAssociatedSpoolsQuery,
   useToolsTranslations: () => ({
     t: (key: string) => key,
   }),
@@ -54,7 +61,7 @@ describe("DeleteTemplateModal", () => {
   });
 
   it("renders null if template is null", () => {
-    const { container } = render(
+    const { container } = renderWithProviders(
       <DeleteTemplateModal
         isOpen={true}
         onClose={vi.fn()}
@@ -70,7 +77,7 @@ describe("DeleteTemplateModal", () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
 
-    render(
+    renderWithProviders(
       <DeleteTemplateModal
         isOpen={true}
         onClose={onClose}
@@ -93,7 +100,7 @@ describe("DeleteTemplateModal", () => {
     fetchAssociatedSpoolsMock.mockResolvedValue([{ id: "spool-1" }]);
     const user = userEvent.setup();
 
-    render(
+    renderWithProviders(
       <DeleteTemplateModal
         isOpen={true}
         onClose={vi.fn()}
@@ -116,7 +123,7 @@ describe("DeleteTemplateModal", () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
 
-    render(
+    renderWithProviders(
       <DeleteTemplateModal
         isOpen={true}
         onClose={onClose}
@@ -136,11 +143,10 @@ describe("DeleteTemplateModal", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("handles error when fetchAssociatedSpools rejects", async () => {
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  it("falls back to the simple confirmation when fetchAssociatedSpools rejects", async () => {
     fetchAssociatedSpoolsMock.mockRejectedValueOnce(new Error("Network fail"));
 
-    render(
+    renderWithProviders(
       <DeleteTemplateModal
         isOpen={true}
         onClose={vi.fn()}
@@ -148,10 +154,8 @@ describe("DeleteTemplateModal", () => {
       />
     );
 
-    await waitFor(() => {
-      expect(errorSpy).toHaveBeenCalled();
-    });
-    errorSpy.mockRestore();
+    await waitFor(() => expect(fetchAssociatedSpoolsMock).toHaveBeenCalledWith("user-123", "tmpl-1"));
+    expect(await screen.findByText("spooler.templates.deletePromptTitle")).toBeInTheDocument();
   });
 
   it("calls onClose when simple dialog is dismissed via Escape key", async () => {
@@ -159,7 +163,7 @@ describe("DeleteTemplateModal", () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
 
-    render(
+    renderWithProviders(
       <DeleteTemplateModal
         isOpen={true}
         onClose={onClose}
@@ -167,6 +171,7 @@ describe("DeleteTemplateModal", () => {
       />
     );
 
+    await waitFor(() => expect(fetchAssociatedSpoolsMock).toHaveBeenCalled());
     await user.keyboard("{Escape}");
     expect(onClose).toHaveBeenCalled();
   });
@@ -176,7 +181,7 @@ describe("DeleteTemplateModal", () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
 
-    render(
+    renderWithProviders(
       <DeleteTemplateModal
         isOpen={true}
         onClose={onClose}
@@ -193,7 +198,7 @@ describe("DeleteTemplateModal", () => {
     fetchAssociatedSpoolsMock.mockResolvedValue([{ id: "spool-1" }]);
     mockDeleteIsPending = true;
 
-    render(
+    renderWithProviders(
       <DeleteTemplateModal
         isOpen={true}
         onClose={vi.fn()}

@@ -1,7 +1,7 @@
 import { reactQueryMeta } from "@flaner/shared/constants";
+import { useRealtimeQueryData } from "@flaner/shared/hooks";
 import { useAuth } from "@flaner/shared/context";
-import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { getUserSplitGroups, subscribeToUserSplitGroups, type SplitGroup } from "../../../../api/splits";
 
 export const getUserSplitGroupsRealtimeQueryKeys = (userId: string) => ["splitGroups", "user", userId];
@@ -10,18 +10,13 @@ export const useGetUserSplitGroupsRealtimeQuery = (
   options?: Omit<UseQueryOptions<SplitGroup[], Error>, "queryKey" | "queryFn">,
 ) => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const queryKey = getUserSplitGroupsRealtimeQueryKeys(user?.uid ?? "");
 
-  useEffect(() => {
-    if (!user?.uid) return;
-
-    const unsubscribe = subscribeToUserSplitGroups(user.uid, (groups) => {
-      queryClient.setQueryData(getUserSplitGroupsRealtimeQueryKeys(user.uid), groups);
-    });
-
-    return () => unsubscribe();
-  }, [user?.uid, queryClient]);
+  useRealtimeQueryData(
+    queryKey,
+    (onUpdate, onError) => subscribeToUserSplitGroups(user?.uid ?? "", onUpdate, onError),
+    !!user?.uid,
+  );
 
   return useQuery<SplitGroup[], Error>({
     meta: reactQueryMeta.fetch,

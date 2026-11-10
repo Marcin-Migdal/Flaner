@@ -11,6 +11,7 @@ export const useRemoveFriendMutation = (options?: UseMutationOptions<void, Error
 
 
   return useMutation<void, Error, string>({
+    mutationKey: ["removeFriend"],
     mutationFn: async (friendUid) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       await removeFriend(user.uid, friendUid);

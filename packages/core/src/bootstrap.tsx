@@ -3,7 +3,20 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import './index.css';
 import i18n from './i18n/i18n';
-import { toast } from '@flaner/shared/utils';
+import { logError, toast } from '@flaner/shared/utils';
+
+const toError = (value: Error | string) => (value instanceof Error ? value : new Error(String(value)));
+
+// Errors outside React Query (and best-effort failures passed to reportError) end up here.
+// preventDefault: logError already prints the error (once), so the browser's own "Uncaught" line is dropped.
+window.addEventListener('error', (event) => {
+  event.preventDefault();
+  logError('global', toError(event.error ?? event.message));
+});
+window.addEventListener('unhandledrejection', (event) => {
+  event.preventDefault();
+  logError('global', toError(event.reason));
+});
 
 // Service Worker management:
 // - In development: unregister any previously registered SW to prevent stale cache interference

@@ -10,6 +10,7 @@ export const useAddLookupTypeMutation = (
   const invalidateTypes = useInvalidateGetLookupTypesQuery();
 
   return useMutation<string, Error, AddLookupTypeInput>({
+    mutationKey: ["addLookupType"],
     mutationFn: async (data: AddLookupTypeInput) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       return await addLookupType(user.uid, data);

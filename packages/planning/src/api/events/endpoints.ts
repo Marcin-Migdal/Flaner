@@ -15,6 +15,7 @@ import {
   updateDoc,
   where,
   writeBatch,
+  type FirestoreError,
 } from "firebase/firestore";
 import { getSlotKey, type ProposedDateSlot, type SchedulerEvent, type VoteType } from "./types";
 
@@ -103,6 +104,7 @@ export const getUserSchedulerEvents = async (userId: string): Promise<SchedulerE
 export const subscribeToUserSchedulerEvents = (
   userId: string,
   callback: (events: SchedulerEvent[]) => void,
+  onError: (error: FirestoreError) => void,
 ) => {
   if (!userId) return () => {};
   const q = query(
@@ -116,9 +118,7 @@ export const subscribeToUserSchedulerEvents = (
       const events = snapshot.docs.map((d) => withSlotVotes(d.data()));
       callback(events);
     },
-    (error) => {
-      console.warn("Realtime listener on user scheduler events failed:", error);
-    },
+    onError,
   );
 };
 

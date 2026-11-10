@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type UserProfile } from "@flaner/shared/types";
 import { reactQueryMeta } from "@flaner/shared/constants";
 import { getUsers, subscribeToUsers } from "../../../../api/users";
-import { useRealtimeQueryData } from "../../../useRealtimeQueryData";
+import { useRealtimeQueryData } from "@flaner/shared/hooks";
 
 const getUsersRealtimeQueryKeys = (uids: string[]) => ["usersRealtime", [...uids].sort()];
 
@@ -10,7 +10,7 @@ const getUsersRealtimeQueryKeys = (uids: string[]) => ["usersRealtime", [...uids
 export const useGetUsersRealtimeQuery = (uids: string[]) => {
   const queryKey = getUsersRealtimeQueryKeys(uids);
 
-  useRealtimeQueryData<UserProfile[]>(queryKey, (onUpdate) => subscribeToUsers(uids, onUpdate), uids.length > 0);
+  useRealtimeQueryData<UserProfile[]>(queryKey, (onUpdate, onError) => subscribeToUsers(uids, onUpdate, onError), uids.length > 0);
 
   return useQuery<UserProfile[], Error>({
     meta: reactQueryMeta.fetch,

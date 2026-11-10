@@ -31,7 +31,7 @@ export function VerifyEmailCard({ email, language }: VerifyEmailCardProps) {
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
-      confirmEmailVerification().catch((error) => console.error("Failed to check the email verification", error));
+      confirmEmailVerification().catch(reportError);
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
@@ -42,7 +42,7 @@ export function VerifyEmailCard({ email, language }: VerifyEmailCardProps) {
     try {
       if (!(await confirmEmailVerification())) toast.failure(t("verifyEmail.notConfirmed"));
     } catch (error) {
-      console.error(error);
+      reportError(error);
       toast.failure(t("errors.loginFailed"));
     } finally {
       setIsConfirming(false);
@@ -56,7 +56,7 @@ export function VerifyEmailCard({ email, language }: VerifyEmailCardProps) {
       toast.success(t("verifyEmail.resent"));
       setCooldown(RESEND_COOLDOWN_SECONDS);
     } catch (error) {
-      console.error(error);
+      reportError(error);
       const tooMany = error instanceof FirebaseError && error.code === "auth/too-many-requests";
       toast.failure(t(tooMany ? "verifyEmail.tooManyRequests" : "verifyEmail.resendFailed"));
     } finally {

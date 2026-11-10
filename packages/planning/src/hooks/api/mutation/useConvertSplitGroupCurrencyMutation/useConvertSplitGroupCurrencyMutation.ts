@@ -17,6 +17,7 @@ export const useConvertSplitGroupCurrencyMutation = (
   const invalidateGroupSettlements = useInvalidateGroupSettlementsQuery();
 
   return useMutation<number, Error, ConvertSplitGroupCurrencyParams>({
+    mutationKey: ["convertSplitGroupCurrency"],
     mutationFn: async ({ groupId, targetCurrency }) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
       return convertSplitGroupCurrency(groupId, targetCurrency);

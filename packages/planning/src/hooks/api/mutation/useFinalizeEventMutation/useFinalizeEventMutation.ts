@@ -13,6 +13,7 @@ export const useFinalizeEventMutation = (
   const { user } = useAuth();
 
   return useMutation<void, Error, FinalizeEventParams>({
+    mutationKey: ["finalizeEvent"],
     mutationFn: async ({ eventId, finalizedSlotIndex }: FinalizeEventParams) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
 

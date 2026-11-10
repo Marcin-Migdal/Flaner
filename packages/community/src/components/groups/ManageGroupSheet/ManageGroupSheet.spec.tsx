@@ -294,7 +294,7 @@ describe("ManageGroupSheet component", () => {
     const saveBtn = screen.getByRole("button", { name: "manageGroupSheet.saveChanges" });
     await user.click(saveBtn);
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to update group", expect.any(Error));
+    expect(reportError).toHaveBeenCalledWith(expect.any(Error));
     consoleErrorSpy.mockRestore();
   });
 

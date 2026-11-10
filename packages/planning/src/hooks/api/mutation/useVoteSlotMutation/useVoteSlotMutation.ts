@@ -15,6 +15,7 @@ export const useVoteSlotMutation = (
   const { user } = useAuth();
 
   return useMutation<void, Error, VoteSlotParams>({
+    mutationKey: ["voteSlot"],
     mutationFn: async ({ eventId, slotKey, userId, vote }) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
       await voteSchedulerEventSlot(eventId, slotKey, userId, vote);

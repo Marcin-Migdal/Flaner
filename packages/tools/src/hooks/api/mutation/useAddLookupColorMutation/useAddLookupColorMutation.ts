@@ -10,6 +10,7 @@ export const useAddLookupColorMutation = (
   const invalidateColors = useInvalidateGetLookupColorsQuery();
 
   return useMutation<string, Error, AddLookupColorInput>({
+    mutationKey: ["addLookupColor"],
     mutationFn: async (data: AddLookupColorInput) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       return await addLookupColor(user.uid, data);

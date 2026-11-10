@@ -14,6 +14,7 @@ export const useAcceptJoinRequestMutation = (
 
 
   return useMutation<void, Error, { groupId: string; userId: string }>({
+    mutationKey: ["acceptJoinRequest"],
     mutationFn: async ({ groupId, userId }) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       await acceptJoinRequest(groupId, userId, user.uid);

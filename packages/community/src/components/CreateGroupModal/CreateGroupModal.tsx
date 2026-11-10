@@ -81,8 +81,8 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
       await createGroup(payload);
       onOpenChange(false);
     } catch (error) {
-      console.error("Failed to create group", error);
-      
+      // Reports a failed upload; a failed mutation is already logged and toasted globally (logError skips the repeat)
+      reportError(error);
     } finally {
       setIsUploading(false);
     }

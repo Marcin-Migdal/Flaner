@@ -168,7 +168,7 @@ describe("CreateGroupModal component", () => {
     await user.click(submitBtn);
 
     await waitFor(() => {
-      expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to create group", expect.any(Error));
+      expect(reportError).toHaveBeenCalledWith(expect.any(Error));
     });
 
     consoleErrorSpy.mockRestore();

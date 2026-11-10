@@ -8,6 +8,7 @@ export const useCreateSplitGroupMutation = (
   const { user } = useAuth();
 
   return useMutation<SplitGroup, Error, CreateSplitGroupInput>({
+    mutationKey: ["createSplitGroup"],
     mutationFn: async (data) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
       return createSplitGroup(data, user);

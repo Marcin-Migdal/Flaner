@@ -89,16 +89,13 @@ export const useSyncLookups = (
         return;
       }
 
-      try {
-        const results = await Promise.allSettled(promises);
-        const failed = results.filter((r) => r.status === "rejected");
-        if (failed.length > 0) {
-          console.error("Lookup sync had errors:", failed);
-        } else {
-          syncLookupsRef.current = true;
-        }
-      } catch (err) {
-        console.error("Lookup sync failed:", err);
+      // Best effort background migration: failures are only reported (global window error handler)
+      const results = await Promise.allSettled(promises);
+      const failed = results.flatMap((r) => (r.status === "rejected" ? [r.reason] : []));
+      if (failed.length > 0) {
+        failed.forEach((reason) => reportError(reason));
+      } else {
+        syncLookupsRef.current = true;
       }
     };
 

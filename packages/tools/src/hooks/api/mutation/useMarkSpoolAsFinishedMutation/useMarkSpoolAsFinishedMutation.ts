@@ -10,6 +10,7 @@ export const useMarkSpoolAsFinishedMutation = (
   const invalidateSpools = useInvalidateGetSpoolsQuery();
 
   return useMutation<void, Error, string>({
+    mutationKey: ["markSpoolAsFinished"],
     mutationFn: async (spoolId: string) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       await markSpoolAsFinished(spoolId);

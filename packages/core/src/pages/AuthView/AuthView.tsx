@@ -38,9 +38,9 @@ export function AuthView() {
     try {
       await signInWithEmailUser(data.email, data.password);
     } catch (err) {
-      console.error(err);
-
+      // Expected auth errors map to form errors; anything else is reported (global window error handler)
       if (!(err instanceof FirebaseError)) {
+        reportError(err);
         toast.failure(t("errors.loginFailed"));
         return;
       }
@@ -55,6 +55,7 @@ export function AuthView() {
       } else if (err.code === "auth/too-many-requests") {
         loginForm.setError("email", { type: "manual", message: t("errors.tooManyRequests") });
       } else {
+        reportError(err);
         toast.failure(t("errors.loginFailed"));
       }
     }
@@ -64,9 +65,9 @@ export function AuthView() {
     try {
       await signUpWithEmailUser(data.email, data.password, data.username, language);
     } catch (err) {
-      console.error(err);
-
+      // Expected auth errors map to form errors; anything else is reported (global window error handler)
       if (!(err instanceof FirebaseError)) {
+        reportError(err);
         toast.failure(t("errors.registrationFailed"));
         return;
       }
@@ -80,6 +81,7 @@ export function AuthView() {
       } else if (err.code === "auth/invalid-email") {
         signUpForm.setError("email", { type: "manual", message: t("errors.invalidEmail") });
       } else {
+        reportError(err);
         toast.failure(t("errors.registrationFailed"));
       }
     }
@@ -89,7 +91,7 @@ export function AuthView() {
     try {
       await signInWithGoogleUser(language);
     } catch (err) {
-      console.error(err);
+      reportError(err);
       toast.failure(t("errors.googleFailed"));
     }
   };

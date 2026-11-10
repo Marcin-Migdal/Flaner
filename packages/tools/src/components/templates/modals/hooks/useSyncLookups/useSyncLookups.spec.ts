@@ -98,8 +98,7 @@ describe("useSyncLookups", () => {
     expect(lookupsApi.addLookupColor).not.toHaveBeenCalled();
   });
 
-  it("handles rejected promises from allSettled and logs errors", async () => {
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  it("reports each rejected lookup write", async () => {
     const user = createMockUser({ uid: "user-1" });
     vi.mocked(lookupsApi.addLookupMaterial).mockRejectedValueOnce(new Error("Fail sync"));
 
@@ -118,9 +117,8 @@ describe("useSyncLookups", () => {
     renderHook(() => useSyncLookups(user, customTemplates));
 
     await waitFor(() => {
-      expect(errorSpy).toHaveBeenCalled();
+      expect(reportError).toHaveBeenCalledWith(new Error("Fail sync"));
     });
-    errorSpy.mockRestore();
   });
 
   it("uses fallback #ffffff when colorHex is missing on custom template", async () => {
@@ -151,34 +149,5 @@ describe("useSyncLookups", () => {
         hex: "#ffffff",
       });
     });
-  });
-
-  it("logs error when syncLookups encounters an unexpected thrown exception", async () => {
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const user = createMockUser({ uid: "user-1" });
-    const allSettledSpy = vi.spyOn(Promise, "allSettled").mockImplementationOnce(() => {
-      throw new Error("Catastrophic error");
-    });
-
-    const customTemplates: FilamentTemplate[] = [
-      {
-        id: "t-thrown",
-        userId: "user-1",
-        material: "CustomMatThrow",
-        type: "T1",
-        colorName: "C1",
-        colorHex: "#123456",
-        defaultWeight: 1000,
-      },
-    ];
-
-    renderHook(() => useSyncLookups(user, customTemplates));
-
-    await waitFor(() => {
-      expect(errorSpy).toHaveBeenCalledWith("Lookup sync failed:", expect.any(Error));
-    });
-
-    allSettledSpy.mockRestore();
-    errorSpy.mockRestore();
   });
 });

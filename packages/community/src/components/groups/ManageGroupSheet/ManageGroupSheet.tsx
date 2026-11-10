@@ -142,7 +142,8 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
         avatarUrl: payload.avatarUrl || "",
       });
     } catch (error) {
-      console.error("Failed to update group", error);
+      // Reports a failed upload; a failed mutation is already logged and toasted globally (logError skips the repeat)
+      reportError(error);
     } finally {
       setIsUploading(false);
     }

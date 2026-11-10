@@ -14,6 +14,7 @@ export const useBatchVoteUnvotedSlotsMutation = (
   const { user } = useAuth();
 
   return useMutation<void, Error, BatchVoteUnvotedParams>({
+    mutationKey: ["batchVoteUnvotedSlots"],
     mutationFn: async ({ eventId, userId, fallbackVote = "no" }) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
       await batchVoteUnvotedSlots(eventId, userId, fallbackVote);

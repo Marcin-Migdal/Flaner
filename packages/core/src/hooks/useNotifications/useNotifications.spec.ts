@@ -62,7 +62,7 @@ describe("useNotifications", () => {
 
     const { result, unmount } = renderHook(() => useNotifications());
 
-    expect(notificationsApi.subscribeToNotifications).toHaveBeenCalledWith("user-123", expect.any(Function));
+    expect(notificationsApi.subscribeToNotifications).toHaveBeenCalledWith("user-123", expect.any(Function), expect.any(Function));
     expect(result.current.loading).toBe(true);
 
     act(() => {
@@ -169,8 +169,8 @@ describe("useNotifications", () => {
       await result.current.markAllAsRead();
     });
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to mark as read", expect.any(Error));
-    expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to mark all as read", expect.any(Error));
+    expect(reportError).toHaveBeenCalledWith(new Error("Fail read"));
+    expect(reportError).toHaveBeenCalledWith(new Error("Fail all read"));
     consoleErrorSpy.mockRestore();
   });
 

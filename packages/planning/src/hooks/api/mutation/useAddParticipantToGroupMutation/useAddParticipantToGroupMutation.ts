@@ -13,6 +13,7 @@ export const useAddParticipantToGroupMutation = (
   const { user } = useAuth();
 
   return useMutation<void, Error, AddParticipantToGroupParams>({
+    mutationKey: ["addParticipantToGroup"],
     mutationFn: async ({ groupId, participantId }) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
       await addParticipantToGroup(groupId, participantId, user);

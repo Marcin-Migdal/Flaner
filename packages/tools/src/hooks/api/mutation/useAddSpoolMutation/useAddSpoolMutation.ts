@@ -16,6 +16,7 @@ export const useAddSpoolMutation = (
   const invalidateSpools = useInvalidateGetSpoolsQuery();
 
   return useMutation<string, Error, AddSpoolVariables>({
+    mutationKey: ["addSpool"],
     mutationFn: async ({ data, selectedTemplate }) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       return await addSpool(user.uid, data, selectedTemplate);

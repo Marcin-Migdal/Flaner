@@ -11,6 +11,7 @@ export const useUpdateSplitGroupMutation = (options?: UseMutationOptions<void, E
   const { user } = useAuth();
 
   return useMutation<void, Error, UpdateSplitGroupParams>({
+    mutationKey: ["updateSplitGroup"],
     mutationFn: async ({ groupId, data }) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
       await updateSplitGroup(groupId, data);

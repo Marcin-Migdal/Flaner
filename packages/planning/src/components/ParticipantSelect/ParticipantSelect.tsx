@@ -1,7 +1,9 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Search, User, Users, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, SearchBar } from "@flaner/ui-components";
+import { reactQueryMeta } from "@flaner/shared/constants";
 import { useAuth } from "@flaner/shared/context";
 import { useDebounce } from "@flaner/shared/hooks";
 import type { UserType } from "@flaner/shared/types";
@@ -95,12 +97,20 @@ export const ParticipantSelect = ({
   }, [rawParticipantIds, selectedProfilesMap]);
 
   const effectiveCreatorId = creatorId || user?.uid;
+  const queryClient = useQueryClient();
 
   const handleSelect = async (item: ParticipantResult) => {
     const current = getValues("participants") || [];
 
     if (item.type === "group") {
-      const members = await getGroupMembersAsParticipants(item.id, item.name);
+      // A failure is logged and toasted by the global QueryCache handler
+      const members = await queryClient
+        .fetchQuery({
+          queryKey: ["groupMembersAsParticipants", item.id],
+          queryFn: () => getGroupMembersAsParticipants(item.id, item.name),
+          meta: reactQueryMeta.fetch,
+        })
+        .catch((): ParticipantResult[] => []);
       setAddedProfilesMap((prev) => {
         const next = new Map(prev);
         members.forEach((m) => {

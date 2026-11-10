@@ -16,6 +16,7 @@ import {
   updateDoc,
   where,
   writeBatch,
+  type FirestoreError,
   type QueryDocumentSnapshot,
   type WriteBatch,
 } from "firebase/firestore";
@@ -428,7 +429,11 @@ export const getUserGroupInvitations = async (userId: string): Promise<GroupInvi
   }
 };
 
-export const subscribeToUserGroupInvitations = (userId: string, callback: (invitations: GroupInvitation[]) => void) => {
+export const subscribeToUserGroupInvitations = (
+  userId: string,
+  callback: (invitations: GroupInvitation[]) => void,
+  onError: (error: FirestoreError) => void,
+) => {
   if (!userId) return () => {};
   return onSnapshot(
     refs.userInvitations(userId),
@@ -439,15 +444,7 @@ export const subscribeToUserGroupInvitations = (userId: string, callback: (invit
       }
       callback(items);
     },
-    async (error) => {
-      console.warn("Realtime listener on user groupInvitations failed, falling back to query:", error);
-      try {
-        const fallbackItems = await getUserGroupInvitations(userId);
-        callback(fallbackItems);
-      } catch {
-        callback([]);
-      }
-    },
+    onError,
   );
 };
 
@@ -458,57 +455,66 @@ export const getGroupInvitations = async (groupId: string): Promise<GroupInvitat
 
 // ==========================================
 // REALTIME SUBSCRIPTIONS
-// A listener error (usually permission-denied after losing access, e.g. removed from a private group)
-// reports the empty value instead of throwing, so the views fall back to "no access" / empty lists.
+// A listener error (usually permission-denied after losing access, e.g. removed from a private group) goes to
+// onError: useRealtimeQueryData puts the query in the error state, the views treat isError as "no access".
 // ==========================================
 
 type Unsubscribe = () => void;
+type OnError = (error: FirestoreError) => void;
 
-export const subscribeToGroup = (groupId: string, onUpdate: (group: Group | null) => void): Unsubscribe =>
+export const subscribeToGroup = (groupId: string, onUpdate: (group: Group | null) => void, onError: OnError): Unsubscribe =>
   onSnapshot(
     refs.group(groupId),
     (snap) => onUpdate(snap.exists() ? snap.data() : null),
-    () => onUpdate(null),
+    onError,
   );
 
-export const subscribeToGroupMembers = (groupId: string, onUpdate: (members: GroupMember[]) => void): Unsubscribe =>
+export const subscribeToGroupMembers = (groupId: string, onUpdate: (members: GroupMember[]) => void, onError: OnError): Unsubscribe =>
   onSnapshot(
     refs.members(groupId),
     (snap) => onUpdate(snap.docs.map((d) => d.data())),
-    () => onUpdate([]),
+    onError,
   );
 
-export const subscribeToGroupRequests = (groupId: string, onUpdate: (requests: GroupRequest[]) => void): Unsubscribe =>
+export const subscribeToGroupRequests = (groupId: string, onUpdate: (requests: GroupRequest[]) => void, onError: OnError): Unsubscribe =>
   onSnapshot(
     refs.requests(groupId),
     (snap) => onUpdate(snap.docs.map((d) => d.data())),
-    () => onUpdate([]),
+    onError,
   );
 
 export const subscribeToGroupInvitations = (
   groupId: string,
   onUpdate: (invitations: GroupInvitation[]) => void,
+  onError: OnError,
 ): Unsubscribe =>
   onSnapshot(
     refs.invitations(groupId),
     (snap) => onUpdate(snap.docs.map((d) => d.data())),
-    () => onUpdate([]),
+    onError,
   );
 
 export const subscribeToUserGroupRequest = (
   groupId: string,
   userId: string,
   onUpdate: (request: GroupRequest | null) => void,
+  onError: OnError,
 ): Unsubscribe =>
   onSnapshot(
     refs.request(groupId, userId),
     (snap) => onUpdate(snap.exists() ? snap.data() : null),
-    () => onUpdate(null),
+    onError,
   );
 
 // Memberships come from one collection-group listener; each group doc gets its own listener so renames,
 // type changes etc. show up live. Emits only once every current group has loaded, to avoid a partial list.
-export const subscribeToUserGroups = (userId: string, onUpdate: (groups: Group[]) => void): Unsubscribe => {
+// A group listener error means the user just lost access to it (removed), which the memberships listener
+// reports next, so that group is dropped instead of failing the whole list.
+export const subscribeToUserGroups = (
+  userId: string,
+  onUpdate: (groups: Group[]) => void,
+  onError: OnError,
+): Unsubscribe => {
   const groupListeners = new Map<string, Unsubscribe>();
   const groups = new Map<string, Group | null>();
   let groupIds: string[] = [];
@@ -534,19 +540,23 @@ export const subscribeToUserGroups = (userId: string, onUpdate: (groups: Group[]
         if (groupListeners.has(id)) return;
         groupListeners.set(
           id,
-          subscribeToGroup(id, (group) => {
-            groups.set(id, group);
-            emit();
-          }),
+          subscribeToGroup(
+            id,
+            (group) => {
+              groups.set(id, group);
+              emit();
+            },
+            () => {
+              groups.set(id, null);
+              emit();
+            },
+          ),
         );
       });
 
       emit();
     },
-    (error) => {
-      console.warn("subscribeToUserGroups failed:", error);
-      onUpdate([]);
-    },
+    onError,
   );
 
   return () => {

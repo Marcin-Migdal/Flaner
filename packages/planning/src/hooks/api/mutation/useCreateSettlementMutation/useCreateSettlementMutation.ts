@@ -15,6 +15,7 @@ export const useCreateSettlementMutation = (
   const invalidateGroupSettlements = useInvalidateGroupSettlementsQuery();
 
   return useMutation<Settlement, Error, CreateSettlementParams>({
+    mutationKey: ["createSettlement"],
     mutationFn: async ({ groupId, data }) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
       return createSettlement(groupId, data, user);

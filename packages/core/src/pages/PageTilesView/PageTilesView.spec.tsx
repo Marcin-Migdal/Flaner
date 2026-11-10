@@ -83,17 +83,14 @@ describe("PageTilesView", () => {
     });
   });
 
-  it("handles generic loadRemote failure and logs error", async () => {
+  it("handles generic loadRemote failure and reports the error", async () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(loadRemote).mockRejectedValueOnce(new Error("Failed network connection"));
 
     renderWithProviders(<PageTilesView mfe="tools" />, { i18nInstance: i18n });
 
     await waitFor(() => {
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "[PageTilesView] Failed to load routes for MFE: tools",
-        expect.any(Error)
-      );
+      expect(reportError).toHaveBeenCalledWith(new Error("Failed network connection"));
     });
 
     consoleErrorSpy.mockRestore();

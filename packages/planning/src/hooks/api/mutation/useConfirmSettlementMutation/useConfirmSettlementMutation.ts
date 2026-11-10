@@ -16,6 +16,7 @@ export const useConfirmSettlementMutation = (
   const invalidateGroupSettlements = useInvalidateGroupSettlementsQuery();
 
   return useMutation<Settlement, Error, ConfirmSettlementParams>({
+    mutationKey: ["confirmSettlement"],
     mutationFn: async ({ groupId, settlementId, expectedVersion }) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
       return confirmSettlement(groupId, settlementId, user.uid, expectedVersion);

@@ -191,7 +191,7 @@ describe("AuthContext", () => {
       await result.current.signOutUser();
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith("Failed to clear the Firestore cache", expect.any(Error));
+    expect(reportError).toHaveBeenCalledWith(expect.any(Error));
     expect(firebaseAuth.signOut).toHaveBeenCalled();
     expect(assignMock).toHaveBeenCalledWith("/login");
     consoleSpy.mockRestore();
@@ -525,7 +525,7 @@ describe("AuthContext", () => {
       await result.current.signOutUser();
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith("Sign out failed", expect.any(Error));
+    expect(reportError).toHaveBeenCalledWith(expect.any(Error));
     expect(assignMock).toHaveBeenCalledWith("/login");
     consoleSpy.mockRestore();
   });
@@ -558,7 +558,7 @@ describe("AuthContext", () => {
     expect(mockBatch.set).not.toHaveBeenCalled();
   });
 
-  it("throws and logs error when Google sign in fails", async () => {
+  it("throws when Google sign in fails", async () => {
     vi.mocked(firebaseAuth.signInWithPopup).mockRejectedValueOnce(new Error("Popup closed by user"));
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const { result } = renderHook(() => useAuth(), { wrapper });
@@ -569,7 +569,7 @@ describe("AuthContext", () => {
       })
     ).rejects.toThrow("Popup closed by user");
 
-    expect(consoleSpy).toHaveBeenCalledWith("Google Sign In failed", expect.any(Error));
+    expect(reportError).not.toHaveBeenCalled(); // the caller (AuthView) reports it
     consoleSpy.mockRestore();
   });
 
@@ -595,7 +595,7 @@ describe("AuthContext", () => {
     consoleSpy.mockRestore();
   });
 
-  it("throws and logs error in signInWithEmailUser when firebase auth rejects", async () => {
+  it("throws in signInWithEmailUser when firebase auth rejects", async () => {
     vi.mocked(firebaseAuth.signInWithEmailAndPassword).mockRejectedValueOnce(new Error("Wrong password"));
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const { result } = renderHook(() => useAuth(), { wrapper });
@@ -606,7 +606,7 @@ describe("AuthContext", () => {
       })
     ).rejects.toThrow("Wrong password");
 
-    expect(consoleSpy).toHaveBeenCalledWith("Email Sign In failed", expect.any(Error));
+    expect(reportError).not.toHaveBeenCalled(); // the caller (AuthView) reports it
     consoleSpy.mockRestore();
   });
 

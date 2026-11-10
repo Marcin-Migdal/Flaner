@@ -60,7 +60,8 @@ describe("useGetSentFriendRequestRealtimeQuery", () => {
 
     expect(usersApi.subscribeToSentFriendRequests).toHaveBeenCalledWith(
       "user-123",
-      expect.any(Function)
+      expect.any(Function),
+      expect.any(Function),
     );
 
     unmount();

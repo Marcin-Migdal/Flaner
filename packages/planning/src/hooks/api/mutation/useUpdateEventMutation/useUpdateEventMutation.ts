@@ -13,6 +13,7 @@ export const useUpdateEventMutation = (
   const { user } = useAuth();
 
   return useMutation<void, Error, UpdateEventParams>({
+    mutationKey: ["updateEvent"],
     mutationFn: async ({ eventId, data }) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
       await updateSchedulerEvent(eventId, data);

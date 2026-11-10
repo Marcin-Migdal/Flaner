@@ -46,7 +46,7 @@ describe("useGetFriendsListRealtimeQuery", () => {
 
     await waitFor(() => expect(result.current.data).toEqual(mockFriends));
 
-    expect(usersApi.subscribeToFriendsList).toHaveBeenCalledWith("user-123", expect.any(Function));
+    expect(usersApi.subscribeToFriendsList).toHaveBeenCalledWith("user-123", expect.any(Function), expect.any(Function));
 
     unmount();
     expect(unsubscribeMock).toHaveBeenCalled();

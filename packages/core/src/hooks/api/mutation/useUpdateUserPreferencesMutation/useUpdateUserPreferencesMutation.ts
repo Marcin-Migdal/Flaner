@@ -6,6 +6,7 @@ export const useUpdateUserPreferencesMutation = () => {
   const { user, updateUser } = useAuth();
 
   return useMutation<void, Error, UserPreferences>({
+    mutationKey: ["updateUserPreferences"],
     mutationFn: (preferences) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       return updateUserPreferences(user.uid, preferences);

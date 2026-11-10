@@ -14,6 +14,7 @@ export const useRejectGroupInvitationMutation = (
 
 
   return useMutation<void, Error, { groupId: string; userId: string }>({
+    mutationKey: ["rejectGroupInvitation"],
     meta: reactQueryMeta.mutate,
     mutationFn: ({ groupId, userId }) => rejectGroupInvitation(groupId, userId),
     ...options,

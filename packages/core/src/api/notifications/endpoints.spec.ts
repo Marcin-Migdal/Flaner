@@ -81,7 +81,7 @@ describe("core notifications endpoints", () => {
         emit = onNext;
         return vi.fn();
       });
-      subscribeToNotifications("user-1", onUpdate);
+      subscribeToNotifications("user-1", onUpdate, vi.fn());
       return { onUpdate, emit: (snap: Snapshot) => emit(snap) };
     };
 
@@ -107,15 +107,15 @@ describe("core notifications endpoints", () => {
       expect(onUpdate).toHaveBeenLastCalledWith([newest, mockNotification, newer], [newest]);
     });
 
-    it("handles error during subscribeToNotifications", () => {
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      mockOnSnapshot.mockImplementationOnce((_q: unknown, _options: unknown, _onNext: unknown, onError: (err: Error) => void) => {
-        onError(new Error("Subscription failed"));
+    it("passes a listener error to onError", () => {
+      const onError = vi.fn();
+      const error = new Error("Subscription failed");
+      mockOnSnapshot.mockImplementationOnce((_q: unknown, _options: unknown, _onNext: unknown, listenerError: (err: Error) => void) => {
+        listenerError(error);
         return vi.fn();
       });
-      subscribeToNotifications("user-1", vi.fn());
-      expect(consoleErrorSpy).toHaveBeenCalledWith("Error subscribing to notifications:", expect.any(Error));
-      consoleErrorSpy.mockRestore();
+      subscribeToNotifications("user-1", vi.fn(), onError);
+      expect(onError).toHaveBeenCalledWith(error);
     });
   });
 
@@ -137,12 +137,9 @@ describe("core notifications endpoints", () => {
       );
     });
 
-    it("logs error and re-throws when updateDoc fails", async () => {
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    it("rejects when updateDoc fails", async () => {
       mockUpdateDoc.mockRejectedValueOnce(new Error("Update failed"));
       await expect(markNotificationAsRead("user-1", "notif-1")).rejects.toThrow("Update failed");
-      expect(consoleErrorSpy).toHaveBeenCalledWith("Error marking notification as read:", expect.any(Error));
-      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -172,12 +169,9 @@ describe("core notifications endpoints", () => {
       expect(mockBatchCommit).toHaveBeenCalled();
     });
 
-    it("logs error and re-throws when batch commit fails", async () => {
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    it("rejects when the unread query fails", async () => {
       mockGetDocs.mockRejectedValueOnce(new Error("Query failed"));
       await expect(markAllNotificationsAsRead("user-1")).rejects.toThrow("Query failed");
-      expect(consoleErrorSpy).toHaveBeenCalledWith("Error marking all notifications as read:", expect.any(Error));
-      consoleErrorSpy.mockRestore();
     });
   });
 

@@ -173,6 +173,31 @@ describe("GroupDetailsView page", () => {
     await user.click(backBtn);
   });
 
+  it("renders access denied when the group listener loses access while the group is shown", () => {
+    const mockGroup: Group = createMockGroup({ id: "grp-1", type: "private" });
+    vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: [mockGroup] } as never);
+    vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false, isError: true } as never);
+
+    renderWithProviders(<GroupDetailsView />);
+
+    expect(screen.getByText("groupDetails.accessDenied")).toBeInTheDocument();
+  });
+
+  it("treats a failing member list as removed from the group before the memberships update", () => {
+    const mockGroup: Group = createMockGroup({ id: "grp-1", type: "private" });
+    vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: [mockGroup] } as never);
+    vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false } as never);
+    vi.mocked(hooks.useGetGroupMembersQuery).mockReturnValue({
+      data: [{ userId: "user-123", role: "member", joinedAt: 100 }],
+      isLoading: false,
+      isError: true,
+    } as never);
+
+    renderWithProviders(<GroupDetailsView />);
+
+    expect(screen.getByText("groupDetails.accessDenied")).toBeInTheDocument();
+  });
+
   it("shows the loader instead of access denied while the user's groups are loading", () => {
     const mockGroup: Group = createMockGroup({ id: "grp-1", type: "private" });
     vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: undefined, isPending: true, isLoading: false } as never);

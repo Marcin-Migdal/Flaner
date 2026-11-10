@@ -52,7 +52,7 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
             `[PageTilesView] MFE "${mfe}" does not expose './routes' yet. This is expected if the MFE has no sub-views.`
           );
         } else {
-          console.error(`[PageTilesView] Failed to load routes for MFE: ${mfe}`, err);
+          reportError(err);
         }
 
         if (active) {

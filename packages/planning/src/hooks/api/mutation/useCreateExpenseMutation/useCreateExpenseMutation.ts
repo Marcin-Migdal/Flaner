@@ -13,6 +13,7 @@ export const useCreateExpenseMutation = (options?: UseMutationOptions<Expense, E
   const invalidateGroupExpenses = useInvalidateGroupExpensesQuery();
 
   return useMutation<Expense, Error, CreateExpenseParams>({
+    mutationKey: ["createExpense"],
     mutationFn: async ({ groupId, data }) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
       return createExpense(groupId, data, user.uid);

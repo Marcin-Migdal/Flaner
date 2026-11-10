@@ -18,6 +18,7 @@ export const useInviteUserToGroupMutation = (
     Error,
     { groupId: string; groupName: string; userId: string; invitedByUserId: string; groupAvatarUrl?: string | null }
   >({
+    mutationKey: ["inviteUserToGroup"],
     meta: reactQueryMeta.mutate,
     mutationFn: ({ groupId, groupName, userId, invitedByUserId, groupAvatarUrl }) =>
       inviteUserToGroup(groupId, groupName, userId, invitedByUserId, groupAvatarUrl),

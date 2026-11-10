@@ -2,7 +2,7 @@ import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-
 import { getGroup, subscribeToGroup } from '../../../../api/groups';
 import type { Group } from '../../../../api/groups';
 import { reactQueryMeta } from "@flaner/shared/constants";
-import { useRealtimeQueryData } from "../../../useRealtimeQueryData";
+import { useRealtimeQueryData } from "@flaner/shared/hooks";
 
 
 const getGroupQueryKeys = (groupId: string) => ["group", groupId];
@@ -13,7 +13,7 @@ export const useGetGroupQuery = (
 ) => {
   useRealtimeQueryData<Group | null>(
     getGroupQueryKeys(groupId),
-    (onUpdate) => subscribeToGroup(groupId, onUpdate),
+    (onUpdate, onError) => subscribeToGroup(groupId, onUpdate, onError),
     !!groupId && options?.enabled !== false,
   );
 

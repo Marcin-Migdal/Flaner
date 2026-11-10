@@ -13,6 +13,7 @@ export const useDeleteExpenseMutation = (options?: UseMutationOptions<void, Erro
   const invalidateGroupExpenses = useInvalidateGroupExpensesQuery();
 
   return useMutation<void, Error, DeleteExpenseParams>({
+    mutationKey: ["deleteExpense"],
     mutationFn: async ({ groupId, expenseId }) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
       await deleteExpense(groupId, expenseId, user.uid);

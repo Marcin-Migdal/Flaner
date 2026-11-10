@@ -1,9 +1,9 @@
 import { useAuth } from "@flaner/shared/context";
-import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { getSentFriendRequests, subscribeToSentFriendRequests } from '../../../../api/users';
 import type { FriendRequest } from '../../../../api/users';
 import { reactQueryMeta } from "@flaner/shared/constants";
+import { useRealtimeQueryData } from "@flaner/shared/hooks";
 
 
 const getSentFriendRequestsRealtimeQueryKeys = (userId: string) => ["sentFriendRequestsRealtime", userId];
@@ -12,18 +12,13 @@ export const useGetSentFriendRequestRealtimeQuery = (
   options?: Omit<UseQueryOptions<FriendRequest[], Error>, "queryKey" | "queryFn">,
 ) => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const queryKey = getSentFriendRequestsRealtimeQueryKeys(user?.uid ?? "");
 
-  useEffect(() => {
-    if (!user?.uid || options?.enabled === false) return;
-
-    const unsubscribe = subscribeToSentFriendRequests(user.uid, (requests: FriendRequest[]) => {
-      queryClient.setQueryData(getSentFriendRequestsRealtimeQueryKeys(user.uid), requests);
-    });
-
-    return () => unsubscribe();
-  }, [user?.uid, options?.enabled, queryClient]);
+  useRealtimeQueryData(
+    queryKey,
+    (onUpdate, onError) => subscribeToSentFriendRequests(user?.uid ?? "", onUpdate, onError),
+    !!user?.uid && options?.enabled !== false,
+  );
 
 
 

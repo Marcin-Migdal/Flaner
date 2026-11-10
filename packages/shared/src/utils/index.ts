@@ -7,3 +7,4 @@ export * from './firestoreConverter';
 export * from './money';
 export * from './deleteInBatches';
 export * from './sourceNotifications';
+export * from './logError';
