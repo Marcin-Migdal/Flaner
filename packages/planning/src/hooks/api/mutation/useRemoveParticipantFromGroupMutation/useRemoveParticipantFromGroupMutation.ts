@@ -13,6 +13,7 @@ export const useRemoveParticipantFromGroupMutation = (
   const { user } = useAuth();
 
   return useMutation<void, Error, RemoveParticipantFromGroupParams>({
+    mutationKey: ["removeParticipantFromGroup"],
     mutationFn: async ({ groupId, participantId }) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
       await removeParticipantFromGroup(groupId, participantId);

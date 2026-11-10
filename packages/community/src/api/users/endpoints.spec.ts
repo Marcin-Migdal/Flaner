@@ -223,7 +223,7 @@ describe("community users endpoints", () => {
         return vi.fn();
       });
 
-      subscribeToFriendsList("u-1", onUpdate);
+      subscribeToFriendsList("u-1", onUpdate, vi.fn());
       expect(onUpdate).toHaveBeenCalledWith([{ uid: "f-1", createdAt: 5 }]);
     });
 
@@ -233,7 +233,7 @@ describe("community users endpoints", () => {
 
       it("emits [] at once and listens to nothing without uids", () => {
         const onUpdate = vi.fn();
-        subscribeToUsers([], onUpdate);
+        subscribeToUsers([], onUpdate, vi.fn());
         expect(onUpdate).toHaveBeenCalledWith([]);
         expect(mockOnSnapshot).not.toHaveBeenCalled();
       });
@@ -248,7 +248,7 @@ describe("community users endpoints", () => {
         const onUpdate = vi.fn();
         const uids = Array.from({ length: 31 }, (_, i) => `u-${i}`);
 
-        const unsubscribe = subscribeToUsers([...uids, "u-0"], onUpdate);
+        const unsubscribe = subscribeToUsers([...uids, "u-0"], onUpdate, vi.fn());
         expect(mockOnSnapshot).toHaveBeenCalledTimes(2);
 
         emits[0]({ docs: uids.slice(0, 30).map(profile) });
@@ -280,7 +280,7 @@ describe("community users endpoints", () => {
         return vi.fn();
       });
 
-      subscribeToSentFriendRequests("u-1", onUpdate);
+      subscribeToSentFriendRequests("u-1", onUpdate, vi.fn());
       expect(onUpdate).toHaveBeenCalledWith([{ id: "req-1", receiverUid: "u-2" }]);
     });
 
@@ -300,12 +300,11 @@ describe("community users endpoints", () => {
         return vi.fn();
       });
 
-      subscribeToReceivedFriendRequests("u-2", onUpdate);
+      subscribeToReceivedFriendRequests("u-2", onUpdate, vi.fn());
       expect(onUpdate).toHaveBeenCalledWith([{ id: "req-2", senderUid: "u-1" }]);
     });
 
-    it("handles errors and onSnapshot error callbacks", async () => {
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    it("rethrows endpoint errors and passes listener errors to onError", async () => {
 
       // sendFriendRequest throws
       mockBatchCommit.mockRejectedValueOnce(new Error("Send failed"));
@@ -359,24 +358,28 @@ describe("community users endpoints", () => {
         onError(new Error("Listener error"));
         return vi.fn();
       });
-      subscribeToFriendsList("u-1", vi.fn());
+      const onErrorFriendsList = vi.fn();
+      subscribeToFriendsList("u-1", vi.fn(), onErrorFriendsList);
+      expect(onErrorFriendsList).toHaveBeenCalledWith(new Error("Listener error"));
 
       // subscribeToSentFriendRequests error callback
       mockOnSnapshot.mockImplementationOnce((_ref, _onNext, onError) => {
         onError(new Error("Listener error"));
         return vi.fn();
       });
-      subscribeToSentFriendRequests("u-1", vi.fn());
+      const onErrorSentFriendRequests = vi.fn();
+      subscribeToSentFriendRequests("u-1", vi.fn(), onErrorSentFriendRequests);
+      expect(onErrorSentFriendRequests).toHaveBeenCalledWith(new Error("Listener error"));
 
       // subscribeToReceivedFriendRequests error callback
       mockOnSnapshot.mockImplementationOnce((_ref, _onNext, onError) => {
         onError(new Error("Listener error"));
         return vi.fn();
       });
-      subscribeToReceivedFriendRequests("u-1", vi.fn());
+      const onErrorReceivedFriendRequests = vi.fn();
+      subscribeToReceivedFriendRequests("u-1", vi.fn(), onErrorReceivedFriendRequests);
+      expect(onErrorReceivedFriendRequests).toHaveBeenCalledWith(new Error("Listener error"));
 
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
     });
   });
 });

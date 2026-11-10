@@ -53,12 +53,17 @@ export function GroupDetailsView() {
 
   // isPending, not isLoading: the query is disabled until auth restores the user, and a disabled query reports isLoading=false.
   const { data: userGroups = [], isPending: userGroupsLoading } = useGetUserGroupsQuery();
-  const isMember = userGroups.some((g) => g.id === groupId);
+  const isMemberOfGroup = userGroups.some((g) => g.id === groupId);
 
-  const { data: group, isLoading: groupLoading } = useGetGroupQuery(groupId || "");
-  const { data: members = [], isLoading: membersLoading } = useGetGroupMembersQuery(groupId || "", {
-    enabled: isMember,
-  });
+  // isError comes from the realtime listener (permission-denied after losing access, e.g. removed from a private group)
+  const { data: group, isLoading: groupLoading, isError: groupAccessLost } = useGetGroupQuery(groupId || "");
+  // Only members can read the member list (rules M1): its listener failing means the user was just removed,
+  // usually before the memberships listener reports it.
+  const { data: members = [], isLoading: membersLoading, isError: membersAccessLost } = useGetGroupMembersQuery(
+    groupId || "",
+    { enabled: isMemberOfGroup },
+  );
+  const isMember = isMemberOfGroup && !membersAccessLost;
 
   const memberUserIds = members.map((m) => m.userId);
   const { data: membersProfiles, isLoading: profilesLoading } = useGetUsersQuery(memberUserIds);
@@ -90,14 +95,10 @@ export function GroupDetailsView() {
 
   // Membership unknown until the user's groups load; deciding earlier flashes "Access Denied" for members.
   if (groupLoading || userGroupsLoading || (isMember && membersLoading)) return <div className="p-8 text-center">{t("groupDetails.loading")}</div>;
-  if (!group) return <div className="p-8 text-center text-destructive">{t("groupDetails.notFound")}</div>;
+  if (!group && !groupAccessLost) return <div className="p-8 text-center text-destructive">{t("groupDetails.notFound")}</div>;
 
-  const currentUserRole = members.find((m) => m.userId === user?.uid)?.role;
-  const hasRequested = !!userRequest;
-  const canInvite = isMember && hasGroupPermission(group, currentUserRole, "inviteMembers");
-
-  // State 2.3: Edge case - navigating to a private group without being a member
-  if (!isMember && group.type === "private") {
+  // State 2.3: Edge case - navigating to a private group without being a member, or losing access while on it
+  if (!group || groupAccessLost || (!isMember && group.type === "private")) {
     return (
       <div className={groupDetailsViewStyles.root}>
         <div className={groupDetailsViewStyles.backButtonContainer}>
@@ -112,6 +113,10 @@ export function GroupDetailsView() {
       </div>
     );
   }
+
+  const currentUserRole = members.find((m) => m.userId === user?.uid)?.role;
+  const hasRequested = !!userRequest;
+  const canInvite = isMember && hasGroupPermission(group, currentUserRole, "inviteMembers");
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);

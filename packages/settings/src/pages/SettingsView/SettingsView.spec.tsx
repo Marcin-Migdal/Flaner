@@ -269,11 +269,9 @@ describe("SettingsView", () => {
     callbacks.onSuccess();
     expect(mockChangeLanguage).toHaveBeenCalledWith("pl");
 
-    // Simulate mutation onError
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    // Simulate mutation onError: logging is left to the global MutationCache handler
     callbacks.onError(new Error("mutation error"));
-    expect(consoleErrorSpy).toHaveBeenCalled();
-    consoleErrorSpy.mockRestore();
+    expect(screen.queryByText("validation.usernameInUse")).not.toBeInTheDocument();
   });
 
   it("shows a field error when the new username is already taken", async () => {
@@ -474,7 +472,8 @@ describe("SettingsView", () => {
     await user.type(usernameInput, "newname");
     await user.click(saveButton);
 
-    expect(consoleErrorSpy).toHaveBeenCalled();
+    expect(reportError).toHaveBeenCalledWith(new Error(""));
+    expect(mockMutate).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 

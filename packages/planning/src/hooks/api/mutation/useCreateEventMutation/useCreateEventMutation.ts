@@ -12,6 +12,7 @@ export const useCreateEventMutation = (
   const { user } = useAuth();
 
   return useMutation<SchedulerEvent, Error, CreateEventInput>({
+    mutationKey: ["createEvent"],
     mutationFn: async ({ autoVoteProposedDates, ...data }) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
 

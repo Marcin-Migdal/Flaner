@@ -47,10 +47,11 @@ export const useNotifications = ({ onNew }: UseNotificationsOptions = {}) => {
       // A deleted group leaves only its "group_deleted" notification; the listener then drops the rest
       const staleIds = getStaleGroupNotificationIds(newNotifications);
       if (staleIds.length > 0) {
-        deleteNotifications(user.uid, staleIds).catch((error) =>
-          console.error("Failed to remove stale group notifications", error),
-        );
+        deleteNotifications(user.uid, staleIds).catch(reportError);
       }
+    }, (error) => {
+      setLoading(false);
+      reportError(error);
     });
 
     return () => unsubscribe();
@@ -66,12 +67,12 @@ export const useNotifications = ({ onNew }: UseNotificationsOptions = {}) => {
       prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
     );
     
+    // Best effort: the optimistic update stays, a failure is only reported (global window error handler)
     try {
       await markNotificationAsRead(user.uid, notificationId);
       invalidateReadNotifications();
     } catch (error) {
-      // Revert on error could be implemented here if needed
-      console.error("Failed to mark as read", error);
+      reportError(error);
     }
   };
 
@@ -85,7 +86,7 @@ export const useNotifications = ({ onNew }: UseNotificationsOptions = {}) => {
       await markAllNotificationsAsRead(user.uid);
       invalidateReadNotifications();
     } catch (error) {
-      console.error("Failed to mark all as read", error);
+      reportError(error);
     }
   };
 

@@ -8,6 +8,7 @@ export const useDeleteEventMutation = (
   const { user } = useAuth();
 
   return useMutation<void, Error, string>({
+    mutationKey: ["deleteEvent"],
     mutationFn: async (eventId: string) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
       await deleteSchedulerEvent(eventId);

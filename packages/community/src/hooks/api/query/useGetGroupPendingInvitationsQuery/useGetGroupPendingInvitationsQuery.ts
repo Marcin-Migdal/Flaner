@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getGroupInvitations, subscribeToGroupInvitations } from '../../../../api/groups';
 import type { GroupInvitation } from '../../../../api/groups';
 import { reactQueryMeta } from "@flaner/shared/constants";
-import { useRealtimeQueryData } from "../../../useRealtimeQueryData";
+import { useRealtimeQueryData } from "@flaner/shared/hooks";
 
 
 const getGroupPendingInvitationsQueryKey = (groupId: string) => ["groupPendingInvitations", groupId];
@@ -10,7 +10,7 @@ const getGroupPendingInvitationsQueryKey = (groupId: string) => ["groupPendingIn
 export const useGetGroupPendingInvitationsQuery = (groupId: string | undefined) => {
   useRealtimeQueryData<GroupInvitation[]>(
     getGroupPendingInvitationsQueryKey(groupId ?? ""),
-    (onUpdate) => subscribeToGroupInvitations(groupId ?? "", onUpdate),
+    (onUpdate, onError) => subscribeToGroupInvitations(groupId ?? "", onUpdate, onError),
     !!groupId,
   );
 

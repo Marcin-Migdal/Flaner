@@ -13,6 +13,7 @@ export const useDeleteGroupMutation = (
 
 
   return useMutation<void, Error, string>({
+    mutationKey: ["deleteGroup"],
     mutationFn: (groupId: string) => deleteGroup(groupId),
     meta: {
       successMessageKey: "community:toasts.manageGroupSheet.deleteSuccess",

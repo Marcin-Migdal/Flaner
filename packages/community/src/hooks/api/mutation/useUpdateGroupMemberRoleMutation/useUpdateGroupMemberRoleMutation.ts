@@ -10,6 +10,7 @@ export const useUpdateGroupMemberRoleMutation = (
 
 
   return useMutation<void, Error, { groupId: string; userId: string; role: GroupRole }>({
+    mutationKey: ["updateGroupMemberRole"],
     meta: {
       successMessageKey: "community:toasts.manageGroupSheet.roleUpdateSuccess",
       errorMessageKey: "errors.mutationError",

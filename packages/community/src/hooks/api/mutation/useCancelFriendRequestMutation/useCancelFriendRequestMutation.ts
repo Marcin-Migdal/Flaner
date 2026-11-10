@@ -11,6 +11,7 @@ export const useCancelFriendRequestMutation = (options?: UseMutationOptions<void
 
 
   return useMutation<void, Error, string>({
+    mutationKey: ["cancelFriendRequest"],
     mutationFn: async (receiverUid) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       await cancelFriendRequest(user.uid, receiverUid);

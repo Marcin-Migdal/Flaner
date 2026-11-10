@@ -10,6 +10,7 @@ export const useAddLookupMaterialMutation = (
   const invalidateMaterials = useInvalidateGetLookupMaterialsQuery();
 
   return useMutation<string, Error, AddLookupMaterialInput>({
+    mutationKey: ["addLookupMaterial"],
     mutationFn: async (data: AddLookupMaterialInput) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       return await addLookupMaterial(user.uid, data);

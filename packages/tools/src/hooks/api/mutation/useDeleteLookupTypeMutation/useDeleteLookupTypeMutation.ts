@@ -18,6 +18,7 @@ export const useDeleteLookupTypeMutation = (
   const invalidateColors = useInvalidateGetLookupColorsQuery();
 
   return useMutation<void, Error, DeleteLookupTypeVariables>({
+    mutationKey: ["deleteLookupType"],
     mutationFn: async ({ typeId, materialName, typeName }) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       await deleteLookupType(user.uid, typeId, materialName, typeName);

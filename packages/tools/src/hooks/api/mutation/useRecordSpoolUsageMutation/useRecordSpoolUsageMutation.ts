@@ -12,6 +12,7 @@ export const useRecordSpoolUsageMutation = (
   const invalidatePrints = useInvalidateGetSpoolPrintsQuery();
 
   return useMutation<RecordUsageResult, Error, RecordUsageInput>({
+    mutationKey: ["recordSpoolUsage"],
     mutationFn: async (input: RecordUsageInput) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       return await recordSpoolUsage(input.spool, input.usage);

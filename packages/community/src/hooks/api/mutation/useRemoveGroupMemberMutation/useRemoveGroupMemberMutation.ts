@@ -12,6 +12,7 @@ export const useRemoveGroupMemberMutation = (
 
 
   return useMutation<void, Error, { groupId: string; userId: string }>({
+    mutationKey: ["removeGroupMember"],
     meta: {
       successMessageKey: "community:toasts.manageGroupSheet.removeSuccess",
       errorMessageKey: "errors.mutationError",

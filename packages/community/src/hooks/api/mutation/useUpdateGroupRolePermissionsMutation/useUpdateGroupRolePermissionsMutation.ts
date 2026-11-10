@@ -13,6 +13,7 @@ export const useUpdateGroupRolePermissionsMutation = (
   const invalidateGroup = useInvalidateGroupQuery();
 
   return useMutation<void, Error, UpdateGroupRolePermissionsInput>({
+    mutationKey: ["updateGroupRolePermissions"],
     meta: {
       successMessageKey: "community:toasts.manageGroupSheet.permissionsUpdateSuccess",
       errorMessageKey: "community:toasts.manageGroupSheet.permissionsUpdateError",

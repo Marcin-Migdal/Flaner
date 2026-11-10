@@ -1,5 +1,5 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/users.md (keep their Write flows / Queries in sync).
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, writeBatch, getDocs, where, limit, startAfter, type QueryDocumentSnapshot, type DocumentData } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, writeBatch, getDocs, where, limit, startAfter, type QueryDocumentSnapshot, type DocumentData, type FirestoreError } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
 import { firestoreConverter } from "@flaner/shared/utils";
 import type { AppNotification } from "./types";
@@ -17,7 +17,8 @@ const refs = {
  */
 export const subscribeToNotifications = (
   uid: string,
-  onUpdate: (notifications: AppNotification[], added: AppNotification[]) => void
+  onUpdate: (notifications: AppNotification[], added: AppNotification[]) => void,
+  onError: (error: FirestoreError) => void,
 ) => {
   const q = query(
     refs.notifications(uid),
@@ -36,46 +37,34 @@ export const subscribeToNotifications = (
       : [];
     if (!snapshot.metadata.fromCache) synced = true;
     onUpdate(notifications, added);
-  }, (error) => {
-    console.error("Error subscribing to notifications:", error);
-  });
+  }, onError);
 };
 
 /**
  * Marks a single notification as read.
  */
 export const markNotificationAsRead = async (uid: string, notificationId: string): Promise<void> => {
-  try {
-    await updateDoc(refs.notification(uid, notificationId), { read: true });
-  } catch (error) {
-    console.error("Error marking notification as read:", error);
-    throw error;
-  }
+  await updateDoc(refs.notification(uid, notificationId), { read: true });
 };
 
 /**
  * Marks all currently unread notifications as read.
  */
 export const markAllNotificationsAsRead = async (uid: string): Promise<void> => {
-  try {
-    const unreadQuery = query(
-      refs.notifications(uid),
-      where("read", "==", false)
-    );
-    const snapshot = await getDocs(unreadQuery);
-    
-    if (snapshot.empty) return;
+  const unreadQuery = query(
+    refs.notifications(uid),
+    where("read", "==", false)
+  );
+  const snapshot = await getDocs(unreadQuery);
+  
+  if (snapshot.empty) return;
 
-    const batch = writeBatch(fb.firestore);
-    snapshot.docs.forEach((docSnap) => {
-      batch.update(docSnap.ref, { read: true });
-    });
-    
-    await batch.commit();
-  } catch (error) {
-    console.error("Error marking all notifications as read:", error);
-    throw error;
-  }
+  const batch = writeBatch(fb.firestore);
+  snapshot.docs.forEach((docSnap) => {
+    batch.update(docSnap.ref, { read: true });
+  });
+  
+  await batch.commit();
 };
 
 /**

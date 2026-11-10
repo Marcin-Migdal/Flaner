@@ -15,6 +15,7 @@ export const useUpdateGroupMutation = (options?: UseMutationOptions<void, Error,
   const invalidateSearchGlobalGroups = useInvalidateSearchGlobalGroupsQuery();
 
   return useMutation<void, Error, UpdateGroupInput>({
+    mutationKey: ["updateGroup"],
     meta: {
       successMessageKey: "community:toasts.manageGroupSheet.updateSuccess",
       errorMessageKey: "community:toasts.manageGroupSheet.updateError",

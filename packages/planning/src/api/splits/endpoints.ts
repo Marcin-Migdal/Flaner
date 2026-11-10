@@ -20,6 +20,7 @@ import {
   where,
   writeBatch,
   type DocumentReference,
+  type FirestoreError,
   type Transaction,
 } from "firebase/firestore";
 import {
@@ -158,7 +159,11 @@ export const getUserSplitGroups = async (userId: string): Promise<SplitGroup[]> 
   return sortVisibleGroups(snapshot.docs.map((d) => d.data()));
 };
 
-export const subscribeToUserSplitGroups = (userId: string, callback: (groups: SplitGroup[]) => void) => {
+export const subscribeToUserSplitGroups = (
+  userId: string,
+  callback: (groups: SplitGroup[]) => void,
+  onError: (error: FirestoreError) => void,
+) => {
   if (!userId) return () => {};
 
   return onSnapshot(
@@ -166,9 +171,7 @@ export const subscribeToUserSplitGroups = (userId: string, callback: (groups: Sp
     (snapshot) => {
       callback(sortVisibleGroups(snapshot.docs.map((d) => d.data())));
     },
-    (error) => {
-      console.warn("Realtime listener on user split groups failed:", error);
-    },
+    onError,
   );
 };
 

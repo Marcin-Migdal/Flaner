@@ -142,7 +142,7 @@ describe("events endpoints", () => {
   describe("subscribeToUserSchedulerEvents", () => {
     it("returns no-op unsubscribe function when userId is empty", () => {
       const callback = vi.fn();
-      const unsubscribe = subscribeToUserSchedulerEvents("", callback);
+      const unsubscribe = subscribeToUserSchedulerEvents("", callback, vi.fn());
 
       expect(typeof unsubscribe).toBe("function");
       unsubscribe();
@@ -158,25 +158,21 @@ describe("events endpoints", () => {
         return () => {};
       });
 
-      const unsubscribe = subscribeToUserSchedulerEvents("user-1", callback);
+      const unsubscribe = subscribeToUserSchedulerEvents("user-1", callback, vi.fn());
       expect(callback).toHaveBeenCalledWith([{ id: "ev-1", name: "Party", participants: ["user-1"], proposedDates: [] }]);
       expect(typeof unsubscribe).toBe("function");
     });
 
-    it("logs warning when snapshot listener errors", () => {
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-      const callback = vi.fn();
-      mockOnSnapshot.mockImplementation((_query, _onNext, onError) => {
-        onError(new Error("Snapshot error"));
+    it("passes a snapshot listener error to onError", () => {
+      const onError = vi.fn();
+      const error = new Error("Snapshot error");
+      mockOnSnapshot.mockImplementation((_query, _onNext, listenerError) => {
+        listenerError(error);
         return () => {};
       });
 
-      subscribeToUserSchedulerEvents("user-1", callback);
-      expect(warnSpy).toHaveBeenCalledWith(
-        "Realtime listener on user scheduler events failed:",
-        expect.any(Error),
-      );
-      warnSpy.mockRestore();
+      subscribeToUserSchedulerEvents("user-1", vi.fn(), onError);
+      expect(onError).toHaveBeenCalledWith(error);
     });
   });
 

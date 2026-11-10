@@ -593,7 +593,7 @@ describe("community groups endpoints", () => {
         return vi.fn();
       });
 
-      subscribeToUserGroupInvitations("user-2", callback);
+      subscribeToUserGroupInvitations("user-2", callback, vi.fn());
       expect(callback).toHaveBeenCalledWith([inv]);
     });
 
@@ -668,94 +668,35 @@ describe("community groups endpoints", () => {
       expect(emptyRes).toEqual([]);
     });
 
-    it("subscribeToUserGroupInvitations handles empty userId, fallback, and error callback", async () => {
-      const emptyUnsub = subscribeToUserGroupInvitations("", vi.fn());
+    it("subscribeToUserGroupInvitations handles empty userId, empty docs fallback and passes listener errors on", async () => {
+      const emptyUnsub = subscribeToUserGroupInvitations("", vi.fn(), vi.fn());
       expect(typeof emptyUnsub).toBe("function");
 
-      const callback = vi.fn();
-      // Test onError callback with fallback
-      mockOnSnapshot.mockImplementationOnce(
-        (
-          _ref: unknown,
-          _onNext: unknown,
-          onError: (err: Error) => Promise<void>
-        ) => {
-          onError(new Error("Firestore listener error"));
-          return vi.fn();
-        }
-      );
-      mockGetDocs.mockResolvedValueOnce({
-        empty: false,
-        docs: [{ data: () => ({ groupId: "fallback-group" }) }],
-      });
-
-      subscribeToUserGroupInvitations("user-2", callback);
-      await Promise.resolve();
-
-      // Test onNext with empty docs falling back to getUserGroupInvitations
+      // onNext with empty docs falls back to getUserGroupInvitations
       type SnapCallback = (snap: { docs: Array<{ data: () => unknown }> }) => Promise<void>;
-      mockOnSnapshot.mockImplementationOnce(
-        (
-          _ref: unknown,
-          onNext: SnapCallback,
-        ) => {
-          onNext({ docs: [] });
-          return vi.fn();
-        }
-      );
+      mockOnSnapshot.mockImplementationOnce((_ref: unknown, onNext: SnapCallback) => {
+        onNext({ docs: [] });
+        return vi.fn();
+      });
       mockGetDocs.mockResolvedValueOnce({
         empty: false,
         docs: [{ data: () => ({ groupId: "fallback-empty-docs" }) }],
       });
       const callbackEmptyDocs = vi.fn();
-      subscribeToUserGroupInvitations("user-2", callbackEmptyDocs);
-      await Promise.resolve();
-      await Promise.resolve();
-      expect(callbackEmptyDocs).toHaveBeenCalled();
+      subscribeToUserGroupInvitations("user-2", callbackEmptyDocs, vi.fn());
+      await vi.waitFor(() => expect(callbackEmptyDocs).toHaveBeenCalled());
 
-      // Test onError fallback throwing error -> catch block
-      type ErrorCallback = (err: Error) => Promise<void>;
-      mockOnSnapshot.mockImplementationOnce(
-        (
-          _ref: unknown,
-          _onNext: unknown,
-          onError: ErrorCallback
-        ) => {
-          onError(new Error("Initial error"));
-          return vi.fn();
-        }
-      );
-      mockGetDocs
-        .mockRejectedValueOnce(new Error("Fallback error 1"))
-        .mockRejectedValueOnce(new Error("Fallback error 2"));
-      const callbackCatch = vi.fn();
-      subscribeToUserGroupInvitations("user-2", callbackCatch);
-      await vi.waitFor(() => {
-        expect(callbackCatch).toHaveBeenCalledWith([]);
+      // A listener error goes to onError, without a fallback query
+      const error = new Error("permission-denied");
+      mockOnSnapshot.mockImplementationOnce((_ref: unknown, _onNext: unknown, onError: (err: Error) => void) => {
+        onError(error);
+        return vi.fn();
       });
-
-      // Cover line 376 catch block
-      mockOnSnapshot.mockImplementationOnce(
-        (
-          _ref: unknown,
-          _onNext: unknown,
-          onError: ErrorCallback
-        ) => {
-          onError(new Error("Initial error"));
-          return vi.fn();
-        }
-      );
-      mockGetDocs.mockResolvedValueOnce({
-        empty: false,
-        docs: [{ data: () => ({ groupId: "fallback" }) }],
-      });
-      const errorThrowingCallback = vi.fn().mockImplementationOnce(() => {
-        throw new Error("Callback error");
-      });
-      subscribeToUserGroupInvitations("user-2", errorThrowingCallback);
-      await vi.waitFor(() => {
-        expect(errorThrowingCallback).toHaveBeenCalledWith([]);
-      });
+      const onError = vi.fn();
+      const callback = vi.fn();
+      subscribeToUserGroupInvitations("user-2", callback, onError);
+      expect(onError).toHaveBeenCalledWith(error);
+      expect(callback).not.toHaveBeenCalled();
     });
   });
   describe("realtime subscriptions", () => {
@@ -776,20 +717,23 @@ describe("community groups endpoints", () => {
       docs: groupIds.map((id) => ({ ref: { parent: { parent: { id } } } })),
     });
 
-    it("subscribeToGroup reports the group, null when missing and null on a listener error", () => {
+    it("subscribeToGroup reports the group, null when missing and passes a listener error to onError", () => {
       const onUpdate = vi.fn();
-      subscribeToGroup("group-1", onUpdate);
+      const onError = vi.fn();
+      const error = new Error("permission-denied");
+      subscribeToGroup("group-1", onUpdate, onError);
 
       listeners[0].next(groupSnap(mockGroup));
       listeners[0].next(groupSnap(null));
-      listeners[0].error(new Error("permission-denied"));
+      listeners[0].error(error);
 
-      expect(onUpdate.mock.calls).toEqual([[mockGroup], [null], [null]]);
+      expect(onUpdate.mock.calls).toEqual([[mockGroup], [null]]);
+      expect(onError).toHaveBeenCalledWith(error);
     });
 
     it("subscribeToUserGroups emits once every group has loaded and follows membership changes", () => {
       const onUpdate = vi.fn();
-      const unsubscribe = subscribeToUserGroups("user-1", onUpdate);
+      const unsubscribe = subscribeToUserGroups("user-1", onUpdate, vi.fn());
       const [members] = listeners;
       const groupB: Group = { ...mockGroup, id: "group-2", name: "B" };
 
@@ -816,17 +760,20 @@ describe("community groups endpoints", () => {
       expect(groupBListener.unsubscribe).toHaveBeenCalled();
     });
 
-    it("subscribeToUserGroups skips groups that became unreadable and reports [] when the membership query fails", () => {
+    it("subscribeToUserGroups skips groups that became unreadable and passes a membership query error to onError", () => {
       const onUpdate = vi.fn();
-      subscribeToUserGroups("user-1", onUpdate);
+      const onError = vi.fn();
+      const error = new Error("failed");
+      subscribeToUserGroups("user-1", onUpdate, onError);
       const [members] = listeners;
 
       members.next(membersSnap(["group-1"]));
       listeners[1].error(new Error("permission-denied"));
       expect(onUpdate).toHaveBeenLastCalledWith([]);
+      expect(onError).not.toHaveBeenCalled();
 
-      members.error(new Error("failed"));
-      expect(onUpdate).toHaveBeenLastCalledWith([]);
+      members.error(error);
+      expect(onError).toHaveBeenCalledWith(error);
     });
   });
 });

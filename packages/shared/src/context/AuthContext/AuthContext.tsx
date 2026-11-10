@@ -39,9 +39,7 @@ const loadProfile = async (uid: string): Promise<UserProfile | null> => {
 
   const { email, ...profile } = snap.data();
   if (email !== undefined) {
-    await updateDoc(profileRef(uid), { email: deleteField() }).catch((error) =>
-      console.error("Failed to remove the legacy email from the profile", error),
-    );
+    await updateDoc(profileRef(uid), { email: deleteField() }).catch(reportError);
   }
   return profile;
 };
@@ -171,7 +169,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         setUser(toUser(profile, firebaseUser));
       } catch (error) {
-        console.error("Failed to load user profile", error);
+        reportError(error);
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -192,12 +190,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await terminate(fb.firestore);
       // Best effort: a failure here must not block the sign-out.
-      await clearIndexedDbPersistence(fb.firestore).catch((error) =>
-        console.error("Failed to clear the Firestore cache", error),
-      );
+      await clearIndexedDbPersistence(fb.firestore).catch(reportError);
       await firebaseSignOut(fb.auth.auth);
     } catch (error) {
-      console.error("Sign out failed", error);
+      reportError(error);
     } finally {
       window.location.assign("/login");
     }
@@ -214,9 +210,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setUser(toUser(profile, firebaseUser));
-    } catch (error) {
-      console.error("Google Sign In failed", error);
-      throw error;
     } finally {
       isManualAuth.current = false;
     }
@@ -238,9 +231,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("User profile not found in database.");
       }
       setUser(toUser(profile, firebaseUser));
-    } catch (error) {
-      console.error("Email Sign In failed", error);
-      throw error;
     } finally {
       isManualAuth.current = false;
     }
@@ -276,20 +266,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await batch.commit();
       } catch (error) {
         // Never leave an Auth account without a profile (e.g. the username was taken in a race)
-        await deleteUser(firebaseUser).catch((deleteError) =>
-          console.error("Failed to roll back the Auth account", deleteError),
-        );
+        await deleteUser(firebaseUser).catch(reportError);
         throw error;
       }
 
       // The account stays signed in but out of the app; a failed send can be retried from the login page
-      await sendVerificationEmail(firebaseUser, language).catch((error) =>
-        console.error("Failed to send the verification email", error),
-      );
+      await sendVerificationEmail(firebaseUser, language).catch(reportError);
       setUnverifiedEmail(firebaseUser.email);
-    } catch (error) {
-      console.error("Email Sign Up failed", error);
-      throw error;
     } finally {
       isManualAuth.current = false;
     }

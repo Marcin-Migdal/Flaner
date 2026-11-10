@@ -14,6 +14,7 @@ export const useCreateGroupMutation = (options?: UseMutationOptions<string, Erro
 
 
   return useMutation<string, Error, CreateGroupInput>({
+    mutationKey: ["createGroup"],
     mutationFn: async (data) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       return await createGroup(data, user.uid);

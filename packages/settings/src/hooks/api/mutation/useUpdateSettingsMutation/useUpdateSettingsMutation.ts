@@ -9,6 +9,7 @@ export const useUpdateSettingsMutation = (options?: UseMutationOptions<void, Err
 
 
   return useMutation<void, Error, UpdateProfilePayload>({
+    mutationKey: ["updateSettings"],
     mutationFn: async (payload) => {
       if (!user) {
         throw new Error("User must be authenticated to update settings");

@@ -143,7 +143,6 @@ describe("participants endpoints", () => {
     });
 
     it("handles error in private groups fetch gracefully without failing the entire search", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       mockGetDocs
         .mockResolvedValueOnce({ docs: [] }) // users
@@ -152,18 +151,13 @@ describe("participants endpoints", () => {
 
       const results = await searchParticipants("test", "current-user");
       expect(results).toEqual([]);
-      expect(consoleSpy).toHaveBeenCalledWith("Failed to fetch private groups:", expect.any(Error));
-      consoleSpy.mockRestore();
+      expect(reportError).toHaveBeenCalledWith(new Error("Private groups error"));
     });
 
-    it("falls back to empty array and logs on error", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    it("rejects on error, so the query reports it", async () => {
       mockGetDocs.mockRejectedValueOnce(new Error("Firestore connection failure"));
 
-      const results = await searchParticipants("test");
-      expect(results).toEqual([]);
-      expect(consoleSpy).toHaveBeenCalled();
-      consoleSpy.mockRestore();
+      await expect(searchParticipants("test")).rejects.toThrow("Firestore connection failure");
     });
   });
 
@@ -303,14 +297,10 @@ describe("participants endpoints", () => {
       }
     });
 
-    it("handles error gracefully when members query fails", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    it("rejects when the members query fails", async () => {
       mockGetDocs.mockRejectedValueOnce(new Error("Permission denied"));
 
-      const results = await getGroupMembersAsParticipants("group-error", "Group Error");
-      expect(results).toEqual([]);
-      expect(consoleSpy).toHaveBeenCalled();
-      consoleSpy.mockRestore();
+      await expect(getGroupMembersAsParticipants("group-error", "Group Error")).rejects.toThrow("Permission denied");
     });
   });
 

@@ -6,6 +6,7 @@ export const useDeleteSplitGroupMutation = (options?: UseMutationOptions<void, E
   const { user } = useAuth();
 
   return useMutation<void, Error, string>({
+    mutationKey: ["deleteSplitGroup"],
     mutationFn: async (groupId) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
       await deleteSplitGroup(groupId, user.uid);

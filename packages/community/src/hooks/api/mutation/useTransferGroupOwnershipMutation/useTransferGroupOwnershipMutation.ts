@@ -13,6 +13,7 @@ export const useTransferGroupOwnershipMutation = (
 
 
   return useMutation<void, Error, { groupId: string; currentOwnerId: string; newOwnerId: string }>({
+    mutationKey: ["transferGroupOwnership"],
     meta: {
       successMessageKey: "community:toasts.manageGroupSheet.transferSuccess",
       errorMessageKey: "errors.mutationError",

@@ -17,6 +17,7 @@ export const useDeleteTemplateMutation = (
   const invalidateSpools = useInvalidateGetSpoolsQuery();
 
   return useMutation<void, Error, DeleteTemplateVariables>({
+    mutationKey: ["deleteTemplate"],
     mutationFn: async ({ templateId, deleteSpools }) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       await deleteTemplate(templateId, deleteSpools, user.uid);

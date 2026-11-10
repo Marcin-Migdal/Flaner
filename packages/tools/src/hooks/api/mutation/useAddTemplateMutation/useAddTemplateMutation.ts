@@ -10,6 +10,7 @@ export const useAddTemplateMutation = (
   const invalidateTemplates = useInvalidateGetTemplatesQuery();
 
   return useMutation<string, Error, TemplateInput>({
+    mutationKey: ["addTemplate"],
     mutationFn: async (data: TemplateInput) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       return await addTemplate(user.uid, data);

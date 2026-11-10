@@ -3,7 +3,7 @@ import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-
 import { getUserGroups, subscribeToUserGroups } from '../../../../api/groups';
 import type { Group } from '../../../../api/groups';
 import { reactQueryMeta } from "@flaner/shared/constants";
-import { useRealtimeQueryData } from "../../../useRealtimeQueryData";
+import { useRealtimeQueryData } from "@flaner/shared/hooks";
 
 const getUserGroupsQueryKeys = (userId: string) => ["userGroups", userId];
 
@@ -13,7 +13,7 @@ export const useGetUserGroupsQuery = (options?: Omit<UseQueryOptions<Group[], Er
 
   useRealtimeQueryData<Group[]>(
     queryKey,
-    (onUpdate) => subscribeToUserGroups(user?.uid ?? "", onUpdate),
+    (onUpdate, onError) => subscribeToUserGroups(user?.uid ?? "", onUpdate, onError),
     !!user && options?.enabled !== false,
   );
 

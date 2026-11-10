@@ -13,6 +13,7 @@ export const useDeleteSettlementMutation = (options?: UseMutationOptions<void, E
   const invalidateGroupSettlements = useInvalidateGroupSettlementsQuery();
 
   return useMutation<void, Error, DeleteSettlementParams>({
+    mutationKey: ["deleteSettlement"],
     mutationFn: async ({ groupId, settlementId }) => {
       if (!user) throw new Error("planning:errors.userNotAuthenticated");
       await deleteSettlement(groupId, settlementId, user.uid);

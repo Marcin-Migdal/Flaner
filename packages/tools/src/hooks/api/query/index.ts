@@ -7,3 +7,4 @@ export * from "./useGetLookupMaterialsQuery";
 export * from "./useGetLookupTypesQuery";
 export * from "./useGetLookupColorsQuery";
 
+export * from "./useGetAssociatedSpoolsQuery";

@@ -55,7 +55,8 @@ describe("useGetUserGroupInvitationsQuery", () => {
 
     expect(groupsApi.subscribeToUserGroupInvitations).toHaveBeenCalledWith(
       "u-1",
-      expect.any(Function)
+      expect.any(Function),
+      expect.any(Function),
     );
 
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");

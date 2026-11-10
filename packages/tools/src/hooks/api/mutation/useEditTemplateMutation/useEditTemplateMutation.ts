@@ -18,6 +18,7 @@ export const useEditTemplateMutation = (
   const invalidateSpools = useInvalidateGetSpoolsQuery();
 
   return useMutation<void, Error, EditTemplateVariables>({
+    mutationKey: ["editTemplate"],
     mutationFn: async ({ templateId, newData, propagate }) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       await editTemplate(templateId, newData, propagate, user.uid);

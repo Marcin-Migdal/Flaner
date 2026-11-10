@@ -16,6 +16,7 @@ export const useRequestJoinGroupMutation = (
 
 
   return useMutation<void, Error, string>({
+    mutationKey: ["requestJoinGroup"],
     meta: reactQueryMeta.mutate,
     mutationFn: async (groupId) => {
       if (!user) throw new Error("errors.userNotAuthenticated");

@@ -103,7 +103,9 @@ export const useGetItemsQuery = (options?: Omit<UseQueryOptions<Item[], Error>, 
 ## 4. Error Handling in `queryFn`
 
 Do **NOT** wrap API calls in `try/catch` within `queryFn` unless you are explicitly transforming the error to something else or recovering from it gracefully without notifying the user.
-Errors should bubble up natively so that TanStack Query's global `onError` handler (configured in `App.tsx`'s QueryCache/MutationCache) can catch them and display global toast notifications based on `meta.errorMessageKey`.
+Errors should bubble up natively so that TanStack Query's global `onError` handler (configured in core's `utils/createQueryClient`) can catch them and display global toast notifications based on `meta.errorMessageKey`.
+
+Do **NOT** `console.error` in endpoints, hooks or components either: the global handlers log every failed query and mutation once (`logError` from `@flaner/shared/utils`). Realtime listeners go through `useRealtimeQueryData` (`@flaner/shared/hooks`): a `subscribeTo*` endpoint takes `(…, onUpdate, onError)` and passes `onError` straight to `onSnapshot`. A deliberate best-effort call (the flow must not stop) uses `.catch(reportError)`, which reaches the global `window` `error` handler.
 
 If you need to throw an error early (e.g. user is not authenticated), throw an Error with a translation key so the global toast system can translate and display it.
 
@@ -143,6 +145,7 @@ Create a separate hook file under `src/hooks/api/mutations/` for each mutation (
 ### Rules:
 
 - Handle loading and authentication checking within the hook.
+- **Every mutation has a `mutationKey`** named after the endpoint it calls (e.g. `mutationKey: ["addItem"]`). The global `MutationCache.onError` logs it, so a failed mutation can be identified from a PROD console.
 - Call the query's invalidation hook on success.
 - Forward any custom options passed by the caller (like callbacks).
 - **Toast Translations**: Do NOT use `t()` directly in the hooks. Instead, provide translation keys to `meta.successMessageKey` and `meta.errorMessageKey`.
@@ -162,6 +165,7 @@ export const useAddItemMutation = (options?: UseMutationOptions<void, Error, Ite
   const invalidateGetItemsQuery = useInvalidateGetItemsQuery();
 
   return useMutation<void, Error, ItemInput>({
+    mutationKey: ["addItem"],
     mutationFn: async (data) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       await addItem(user.uid, data);

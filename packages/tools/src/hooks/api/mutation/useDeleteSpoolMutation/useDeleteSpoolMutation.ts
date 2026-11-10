@@ -10,6 +10,7 @@ export const useDeleteSpoolMutation = (
   const invalidateSpools = useInvalidateGetSpoolsQuery();
 
   return useMutation<void, Error, string>({
+    mutationKey: ["deleteSpool"],
     mutationFn: async (spoolId: string) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       await deleteSpool(spoolId);

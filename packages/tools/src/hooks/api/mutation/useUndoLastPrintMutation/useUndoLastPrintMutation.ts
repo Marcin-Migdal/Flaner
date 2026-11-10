@@ -12,6 +12,7 @@ export const useUndoLastPrintMutation = (
   const invalidatePrints = useInvalidateGetSpoolPrintsQuery();
 
   return useMutation<void, Error, UndoPrintInput>({
+    mutationKey: ["undoLastPrint"],
     mutationFn: async (input: UndoPrintInput) => {
       if (!user) throw new Error("errors.userNotAuthenticated");
       await undoLastPrint(input.spoolId, input.printId);

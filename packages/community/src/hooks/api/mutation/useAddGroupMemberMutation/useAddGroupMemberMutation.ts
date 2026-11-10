@@ -15,6 +15,7 @@ export const useAddGroupMemberMutation = (
 
 
   return useMutation<void, Error, { groupId: string; userId: string }>({
+    mutationKey: ["addGroupMember"],
     meta: reactQueryMeta.mutate,
     mutationFn: async ({ groupId, userId }) => {
       await addGroupMember(groupId, userId, "member");

@@ -38,6 +38,7 @@ let currentTemplates: FilamentTemplate[] = mockTemplates;
 let currentSpools: FilamentSpool[] = mockSpools;
 
 vi.mock("../../hooks", () => ({
+  useGetAssociatedSpoolsQuery: () => ({ data: [], isLoading: false }),
   useToolsTranslations: () => ({
     t: (key: string, opt?: Record<string, unknown>) => {
       if (opt?.weight) return `${key}:${opt.weight}`;
