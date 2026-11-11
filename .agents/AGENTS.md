@@ -41,7 +41,7 @@ During implementation, you must adhere to project standards. If you don't know t
 - `.agents/rules/03-package-structures.md` (Monorepo package structure, MFE rules)
 
 **WORKFLOWS & FEATURE DEVELOPMENT**
-- For larger tasks and new features, you must use the `create-functionality` skill and conduct a detailed interview with the user, offering 3 design paths.
+- For larger tasks and new features, use the `mattpocock-skills` flow (e.g. `grill-with-docs` → `to-spec` → `to-tickets` → `implement`) to interview the user and plan before writing code.
 - Follow the 3-phase lifecycle (Planner - Executor - Reviewer) defined in `.agents/workflows/01-feature-workflow.md`.
 
 **DEFAULT ACTIVE SKILLS: PONYTAIL & CAVEMAN**
