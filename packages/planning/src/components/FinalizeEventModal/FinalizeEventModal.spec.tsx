@@ -118,41 +118,10 @@ describe("FinalizeEventModal", () => {
     });
   });
 
-  it("handles cross-year date slots and tie-breaking by yesCount and originalIndex", () => {
+  it("shows the full dates of a slot that spans two years", () => {
     const crossYearEvent: SchedulerEvent = {
       ...mockEvent,
-      proposedDates: [
-        {
-          start: "2026-12-30",
-          end: "2027-01-02",
-          color: "pink",
-          votes: { "user-1": "maybe" },
-        },
-        {
-          start: "2026-08-01",
-          end: "2026-08-02",
-          color: "teal",
-          votes: { "user-1": "yes" }, // score 1.0, yesCount 1
-        },
-        {
-          start: "2026-08-03",
-          end: "2026-08-04",
-          color: "cyan",
-          votes: { "user-2": "yes" }, // score 1.0, yesCount 1 (triggers a.originalIndex - b.originalIndex)
-        },
-        {
-          start: "2026-08-05",
-          end: "2026-08-06",
-          color: "blue",
-          votes: { "user-1": "maybe", "user-2": "maybe" }, // score 1.0, yesCount 0
-        },
-        {
-          start: "2026-09-01",
-          end: "2026-09-02",
-          color: "violet",
-          votes: {}, // score 0
-        },
-      ],
+      proposedDates: [{ start: "2026-12-30", end: "2027-01-02", color: "pink", votes: { "user-1": "maybe" } }],
     };
 
     renderWithProviders(

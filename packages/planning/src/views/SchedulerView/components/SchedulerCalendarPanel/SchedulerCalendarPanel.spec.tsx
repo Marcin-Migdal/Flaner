@@ -1,16 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import type { SchedulerEvent } from "../../../../api/events/types";
 import type { ParticipantResult } from "../../../../api/participants";
 import { SchedulerCalendarPanel } from "./SchedulerCalendarPanel";
 
-const mockUser = { uid: "u1", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const signedInUser = createMockUser({ uid: "u1", username: "Alice", email: "alice@flaner.app" });
 
 const mockVoteSlot = vi.fn();
 vi.mock("../../../../hooks/api/mutation", () => ({
@@ -72,6 +68,7 @@ describe("SchedulerCalendarPanel", () => {
   it("renders empty state when activeEvent is null", () => {
     renderWithProviders(
       <SchedulerCalendarPanel activeEvent={null} participants={[]} />,
+      { user: signedInUser },
     );
 
     expect(screen.getByText("hub.noEvents")).toBeInTheDocument();
@@ -82,6 +79,7 @@ describe("SchedulerCalendarPanel", () => {
 
     renderWithProviders(
       <SchedulerCalendarPanel activeEvent={mockEvent} participants={mockParticipants} />,
+      { user: signedInUser },
     );
 
     // Trigger Vote
@@ -119,6 +117,7 @@ describe("SchedulerCalendarPanel", () => {
 
     renderWithProviders(
       <SchedulerCalendarPanel activeEvent={finalizedEvent} participants={mockParticipants} />,
+      { user: signedInUser },
     );
 
     const voteBtn = screen.getByText("Trigger Vote");
@@ -136,6 +135,7 @@ describe("SchedulerCalendarPanel", () => {
 
     renderWithProviders(
       <SchedulerCalendarPanel activeEvent={finalizedEvent} participants={mockParticipants} />,
+      { user: signedInUser },
     );
 
     await user.click(screen.getByText("Trigger Slot Click"));

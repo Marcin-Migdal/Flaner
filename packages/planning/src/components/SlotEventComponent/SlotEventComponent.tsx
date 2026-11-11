@@ -4,6 +4,7 @@ import type { VoteType } from "../../api/events/types";
 import type { CalendarEventComponentProps } from "@flaner/ui-components";
 import { cn } from "@flaner/shared/utils";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
+import { getSlotScore, tallyVotes } from "../../utils/slotRanking";
 import {
   slotSegmentRootVariants,
   slotQuickVoteToolbarStyles,
@@ -92,12 +93,13 @@ export function SlotEventComponent(props: CalendarEventComponentProps<SlotMetaDa
     isWinningSlot,
   } = meta;
 
-  const yesVotes = Object.values(votes).filter((v) => v === "yes").length;
-  const maybeVotes = Object.values(votes).filter((v) => v === "maybe").length;
-  const noVotes = Object.values(votes).filter((v) => v === "no").length;
+  const tally = tallyVotes(votes);
+  const yesVotes = tally.yes.length;
+  const maybeVotes = tally.maybe.length;
+  const noVotes = tally.no.length;
   const totalVotesCast = yesVotes + maybeVotes + noVotes;
 
-  const score = yesVotes + maybeVotes * 0.5;
+  const score = getSlotScore(tally);
   const ratio = score / Math.max(1, totalParticipantsCount);
 
   // Fill strength encodes the score; 25% is the floor for slots without votes or with only "no"
