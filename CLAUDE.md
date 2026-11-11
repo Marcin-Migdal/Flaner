@@ -34,6 +34,8 @@ The single source of truth for AI rules and skills is `.agents/` (shared with Cu
 
 ## Agent skills
 
+Feature work uses the `mattpocock-skills` Claude Code plugin (`grill-with-docs` → `to-spec` → `to-tickets` → `implement`). Install it once per machine: add marketplace `mattpocock` (GitHub `mattpocock/skills`) and enable `mattpocock-skills@mattpocock` in `~/.claude/settings.json` (`extraKnownMarketplaces` / `enabledPlugins`), then restart Claude.
+
 ### Issue tracker
 
 GitHub Issues in `Marcin-Migdal/Flaner` via `gh`. See `docs/agents/issue-tracker.md`.
