@@ -2,19 +2,26 @@ import { describe, expect, it } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "@flaner/test-utils";
 import type { ProposedDateSlot } from "../../../../api/events/types";
-import type { SlotStat } from "../../types";
+import { rankSlots } from "../../../../utils/slotRanking";
 import { AvailabilityGridHeader } from "./AvailabilityGridHeader";
 
 describe("AvailabilityGridHeader", () => {
   const proposedDates: ProposedDateSlot[] = [
-    { start: "2026-06-01T10:00:00Z", end: "2026-06-01T10:00:00Z", color: "blue" },
-    { start: "2026-06-05T10:00:00Z", end: "2026-06-06T10:00:00Z", color: "teal" },
+    {
+      start: "2026-06-01T10:00:00Z",
+      end: "2026-06-01T10:00:00Z",
+      color: "blue",
+      votes: { u1: "yes", u2: "yes", u3: "yes" },
+    },
+    {
+      start: "2026-06-05T10:00:00Z",
+      end: "2026-06-06T10:00:00Z",
+      color: "teal",
+      votes: { u1: "yes", u2: "maybe", u3: "no" },
+    },
   ];
 
-  const slotStats: SlotStat[] = [
-    { score: 3, yesCount: 3, maybeCount: 0, noCount: 0, matchPercentage: 100 },
-    { score: 1, yesCount: 1, maybeCount: 1, noCount: 1, matchPercentage: 33 },
-  ];
+  const { slots: slotStats } = rankSlots({ proposedDates, participants: ["u1", "u2", "u3"] });
 
   it("renders participants count and slot stats", () => {
     renderWithProviders(
@@ -22,7 +29,6 @@ describe("AvailabilityGridHeader", () => {
         proposedDates={proposedDates}
         participantsCount={3}
         slotStats={slotStats}
-        maxScore={3}
         gridTemplateColumns="150px 100px 100px"
       />,
     );

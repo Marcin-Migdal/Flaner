@@ -1,7 +1,7 @@
 import { Trophy } from "lucide-react";
 import type { ProposedDateSlot } from "../../../../api/events/types";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
-import type { SlotStat } from "../../types";
+import type { RankedSlot } from "../../../../utils/slotRanking";
 import {
   gridFooterCellVariants,
   gridFooterFirstColStyles,
@@ -9,8 +9,7 @@ import {
 
 export type AvailabilityGridFooterProps = {
   proposedDates: ProposedDateSlot[];
-  slotStats: SlotStat[];
-  maxScore: number;
+  slotStats: RankedSlot[];
   participantsCount: number;
   gridTemplateColumns: string;
 };
@@ -18,7 +17,6 @@ export type AvailabilityGridFooterProps = {
 export const AvailabilityGridFooter = ({
   proposedDates,
   slotStats,
-  maxScore,
   participantsCount,
   gridTemplateColumns,
 }: AvailabilityGridFooterProps) => {
@@ -40,7 +38,7 @@ export const AvailabilityGridFooter = ({
 
       {proposedDates.map((_, slotIdx) => {
         const stat = slotStats[slotIdx];
-        const isTop = stat && stat.score > 0 && stat.score === maxScore;
+        const isTop = stat.isTop;
 
         return (
           <div
@@ -53,7 +51,7 @@ export const AvailabilityGridFooter = ({
               {stat.matchPercentage}%
             </span>
             <span className="text-3xs text-muted-foreground">
-              {stat.yesCount}/{participantsCount} {t("grid.available")}
+              {stat.tally.yes.length}/{participantsCount} {t("grid.available")}
             </span>
           </div>
         );

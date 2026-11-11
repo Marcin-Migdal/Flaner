@@ -102,7 +102,7 @@ describe("RankedSlotsSheet", () => {
     expect(screen.queryByTitle(/voting\.maybe/i)).not.toBeInTheDocument();
   });
 
-  it("handles tie-breaker sorting and renders rank 2, 3, and 4 badges", () => {
+  it("renders a badge for each rank, shared by tied slots", () => {
     const multiSlotEvent: SchedulerEvent = {
       ...mockEvent,
       participants: ["u1", "u2", "u3", "u4"],
@@ -121,21 +121,21 @@ describe("RankedSlotsSheet", () => {
           color: "blue",
           votes: { u1: "yes", u2: "yes" },
         },
-        // Slot 2: 1 yes vote -> Rank 3 (hits line 179)
+        // Slot 2: 1 yes vote -> Rank 3
         {
           start: "2026-08-03",
           end: "2026-08-03",
           color: "blue",
           votes: { u1: "yes" },
         },
-        // Slot 3: 1 yes vote -> Equal score and yesCount to Slot 2 (hits tie-breaker line 124)
+        // Slot 3: 1 yes vote -> ties with Slot 2, shares Rank 3
         {
           start: "2026-08-04",
           end: "2026-08-04",
           color: "blue",
           votes: { u2: "yes" },
         },
-        // Slot 4: 0 votes -> Rank 4 (hits generic rank #4)
+        // Slot 4: 0 votes -> Rank 5
         {
           start: "2026-08-05",
           end: "2026-08-05",

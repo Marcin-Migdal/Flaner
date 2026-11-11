@@ -2,7 +2,7 @@ import { format, parseISO } from "date-fns";
 import { Trophy, Users } from "lucide-react";
 import type { ProposedDateSlot } from "../../../../api/events/types";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
-import type { SlotStat } from "../../types";
+import { isSameDaySlot, type RankedSlot } from "../../../../utils/slotRanking";
 import {
   gridHeaderCellVariants,
   gridHeaderFirstColStyles,
@@ -11,8 +11,7 @@ import {
 export type AvailabilityGridHeaderProps = {
   proposedDates: ProposedDateSlot[];
   participantsCount: number;
-  slotStats: SlotStat[];
-  maxScore: number;
+  slotStats: RankedSlot[];
   isFinalized?: boolean;
   finalizedSlotIndex?: number;
   gridTemplateColumns: string;
@@ -22,7 +21,6 @@ export const AvailabilityGridHeader = ({
   proposedDates,
   participantsCount,
   slotStats,
-  maxScore,
   isFinalized,
   finalizedSlotIndex,
   gridTemplateColumns,
@@ -49,9 +47,9 @@ export const AvailabilityGridHeader = ({
       {proposedDates.map((slot, slotIdx) => {
         const startDate = parseISO(slot.start);
         const endDate = parseISO(slot.end);
-        const isSameDay = slot.start === slot.end;
+        const isSameDay = isSameDaySlot(slot);
         const stat = slotStats[slotIdx];
-        const isTop = stat && stat.score > 0 && stat.score === maxScore;
+        const isTop = stat.isTop;
         const isWinning = isFinalized && finalizedSlotIndex === slotIdx;
         const highlight = isWinning ? "winning" : isTop ? "top" : "none";
 
@@ -68,8 +66,8 @@ export const AvailabilityGridHeader = ({
 
             <div className="flex items-center justify-center gap-1 text-3xs sm:text-2xs font-semibold text-muted-foreground">
               {isTop && !isFinalized ? <Trophy className="w-3 h-3 text-warning-text shrink-0" /> : null}
-              <span className="text-success-text font-bold">✓{stat.yesCount}</span>
-              {stat.maybeCount > 0 && <span className="text-warning-text">?{stat.maybeCount}</span>}
+              <span className="text-success-text font-bold">✓{stat.tally.yes.length}</span>
+              {stat.tally.maybe.length > 0 && <span className="text-warning-text">?{stat.tally.maybe.length}</span>}
               <span className="text-primary font-bold">({stat.matchPercentage}%)</span>
             </div>
           </div>
