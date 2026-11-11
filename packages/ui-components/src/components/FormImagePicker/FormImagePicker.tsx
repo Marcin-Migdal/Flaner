@@ -1,41 +1,26 @@
-import { useController, type UseControllerProps, type FieldValues, type FieldPath } from "react-hook-form";
-import { ImagePicker, ImagePickerProps } from "../ImagePicker";
+import type { FieldPath, FieldValues } from "react-hook-form";
+import { useFormField, type FormFieldProps } from "../../hooks/useFormField";
+import { ImagePicker, type ImagePickerProps } from "../ImagePicker";
 
 export type FormImagePickerProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
-> = Omit<ImagePickerProps, "value" | "onChange" | "name" | "defaultValue"> &
-  UseControllerProps<TFieldValues, TName>;
+> = FormFieldProps<ImagePickerProps, TFieldValues, TName, "disabled">;
 
 export function FormImagePicker<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
->({
-  name,
-  rules,
-  shouldUnregister,
-  defaultValue,
-  control,
-  disabled,
-  ...props
-}: FormImagePickerProps<TFieldValues, TName>) {
-  const { field, fieldState } = useController({
-    name,
-    rules,
-    shouldUnregister,
-    defaultValue,
-    control,
-    disabled,
-  });
+>(props: FormImagePickerProps<TFieldValues, TName>) {
+  const { field, error, rest } = useFormField(props);
 
   return (
-     
     <ImagePicker
-      {...props}
+      {...rest}
+      ref={field.ref}
       value={field.value}
       onChange={field.onChange}
-      error={fieldState.error?.message}
-      ref={field.ref}
+      disabled={field.disabled}
+      error={error}
     />
   );
 }

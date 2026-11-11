@@ -82,42 +82,23 @@ export function ExampleForm() {
 
 ---
 
-## 3. How "Form" Prefixed Components Work (using `useController`)
+## 3. How "Form" Prefixed Components Work (`useFormField`)
 
-Components prefixed with `Form` are designed to be self-registering. They do not require you to manually pass `register` or `errors` as props because they use `useController` to consume the parent `FormProvider` context.
+Components prefixed with `Form` are self-registering. They do not need `register` or `errors` props: each one binds itself through the shared `useFormField` helper (`packages/ui-components/src/hooks/useFormField/`), which wraps `useController` and therefore reads the parent `FormProvider` context (or an explicit `control` prop).
 
-### Example Implementation of a `FormInput`:
 ```tsx
-import React from 'react';
-import { useController, UseControllerProps } from 'react-hook-form';
-import { Input, Field, FieldLabel, FieldError } from '@flaner/ui-components';
-
-interface FormInputProps extends UseControllerProps {
-  label: string;
-  placeholder?: string;
-  type?: string;
-}
-
-export function FormInput({ name, label, placeholder, type = 'text', control }: FormInputProps) {
-  // useController connects automatically to FormProvider context if control is not passed explicitly
-  const { field, fieldState } = useController({ name, control });
-
-  return (
-    <Field data-invalid={!!fieldState.error}>
-      <FieldLabel htmlFor={name}>{label}</FieldLabel>
-      <Input
-        id={name}
-        type={type}
-        placeholder={placeholder}
-        {...field} // Spreads onChange, onBlur, value, and ref
-      />
-      {fieldState.error?.message && (
-        <FieldError>{fieldState.error.message}</FieldError>
-      )}
-    </Field>
-  );
+export function FormSwitch<TFieldValues extends FieldValues = FieldValues, TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>>(
+  props: FormSwitchProps<TFieldValues, TName>
+) {
+  const { field, error, rest } = useFormField(props); // controller props split off, error → message
+  return <Switch {...rest} {...field} checked={!!field.value} error={error} />;
 }
 ```
+
+- **Numeric fields** (`FormTextField type="number"`, `FormMoneyInput`) store `number | undefined`: an empty field is `undefined`, never `""` or `NaN`. Write the schema as `z.number({ message })` (required) or `z.number().optional()`, never `z.coerce.number()`.
+- **Cleared `FormSelect` / `FormIconTextField`** store `""`; validate with `z.string().min(1, ...)`.
+- **`disabled`** on a Form wrapper also leaves the field out of the submitted data (react-hook-form behaviour); `FormColorPickerField` is the exception and still submits it.
+- To add a new wrapper, follow the `ui-input-components` skill (§2).
 
 ---
 

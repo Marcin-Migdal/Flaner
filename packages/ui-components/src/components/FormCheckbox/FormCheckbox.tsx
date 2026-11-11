@@ -1,40 +1,25 @@
-import { useController, type UseControllerProps, type FieldValues, type FieldPath } from "react-hook-form";
-import { Checkbox, CheckboxProps } from "../Checkbox";
+import type { FieldPath, FieldValues } from "react-hook-form";
+import { useFormField, type FormFieldProps } from "../../hooks/useFormField";
+import { Checkbox, type CheckboxProps } from "../Checkbox";
 
 export type FormCheckboxProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
-> = Omit<CheckboxProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur" | "checked"> &
-  UseControllerProps<TFieldValues, TName>;
+> = FormFieldProps<CheckboxProps, TFieldValues, TName, "checked">;
 
 export function FormCheckbox<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
->({
-  name,
-  rules,
-  shouldUnregister,
-  defaultValue,
-  control,
-  disabled,
-  ...props
-}: FormCheckboxProps<TFieldValues, TName>) {
-  const { field, fieldState } = useController({
-    name,
-    rules,
-    shouldUnregister,
-    defaultValue,
-    control,
-    disabled,
-  });
+>(props: FormCheckboxProps<TFieldValues, TName>) {
+  const { field, error, rest } = useFormField(props);
 
   return (
     <Checkbox
-      {...props}
+      {...rest}
       {...field}
       checked={!!field.value}
       onCheckedChange={(checked) => field.onChange(checked)}
-      error={fieldState.error?.message}
+      error={error}
     />
   );
 }

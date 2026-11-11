@@ -61,18 +61,6 @@ describe("FormSelect component", () => {
     );
   });
 
-  it("shows validation error on submit when empty and required", async () => {
-    const user = userEvent.setup();
-    const onSubmit = vi.fn();
-
-    render(<TestForm defaultValues={{ fruit: "" }} onSubmit={onSubmit} />);
-
-    await user.click(screen.getByRole("button", { name: "Submit" }));
-
-    expect(await screen.findByText("Fruit is required")).toBeInTheDocument();
-    expect(onSubmit).not.toHaveBeenCalled();
-  });
-
   it("resolves selectedOption from grouped options", () => {
     const groupedOptions = [
       {

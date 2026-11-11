@@ -1,50 +1,26 @@
-import { useController, type UseControllerProps, type FieldValues, type FieldPath } from "react-hook-form";
-import { TextField, TextFieldProps } from "../TextField";
+import type { FieldPath, FieldValues } from "react-hook-form";
+import { toNumberOrUndefined, useFormField, type FormFieldProps } from "../../hooks/useFormField";
+import { TextField, type TextFieldProps } from "../TextField";
 
 export type FormTextFieldProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
-> = Omit<TextFieldProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur"> &
-  UseControllerProps<TFieldValues, TName>;
+> = FormFieldProps<TextFieldProps, TFieldValues, TName>;
 
 export function FormTextField<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
->({
-  name,
-  rules,
-  shouldUnregister,
-  defaultValue,
-  control,
-  disabled,
-  ...props
-}: FormTextFieldProps<TFieldValues, TName>) {
-  const { field, fieldState } = useController({
-    name,
-    rules,
-    shouldUnregister,
-    defaultValue,
-    control,
-    disabled,
-  });
+>(props: FormTextFieldProps<TFieldValues, TName>) {
+  const { field, error, rest } = useFormField(props);
 
   return (
     <TextField
-      {...props}
+      {...rest}
       {...field}
       value={field.value ?? ""}
-      onChange={(e) => {
-        if (props.type === "number") {
-          const val = e.target.value;
-          field.onChange(val === "" ? undefined : Number(val));
-        } else {
-          field.onChange(e);
-        }
-      }}
-      onStep={(_, nextVal) => {
-        field.onChange(nextVal);
-      }}
-      error={fieldState.error?.message}
+      onChange={(e) => field.onChange(rest.type === "number" ? toNumberOrUndefined(e.target.value) : e)}
+      onStep={(_, nextVal) => field.onChange(nextVal)}
+      error={error}
     />
   );
 }

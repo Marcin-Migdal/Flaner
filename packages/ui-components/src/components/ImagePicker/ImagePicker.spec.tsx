@@ -249,6 +249,31 @@ describe("ImagePicker component", () => {
     expect(clickSpy).toHaveBeenCalledTimes(3);
   });
 
+  it("ignores click, keyboard and drop, and disables its actions, when disabled", () => {
+    const onChangeMock = vi.fn();
+    const { container } = render(
+      <ImagePicker value="https://res.cloudinary.com/demo/image/upload/sample.jpg" onChange={onChangeMock} disabled />
+    );
+    const input = container.querySelector<HTMLInputElement>('input[type="file"]');
+    if (!input) throw new Error("file input not rendered");
+    const clickSpy = vi.spyOn(input, "click");
+    expect(input).toBeDisabled();
+
+    const dropzone = screen.getByRole("button", { name: /upload/i });
+    expect(dropzone).toHaveAttribute("aria-disabled", "true");
+    expect(dropzone).toHaveAttribute("tabindex", "-1");
+
+    fireEvent.click(dropzone);
+    fireEvent.keyDown(dropzone, { key: "Enter" });
+    fireEvent.drop(dropzone, { dataTransfer: { files: [new File(["img"], "pic.png", { type: "image/png" })] } });
+    expect(clickSpy).not.toHaveBeenCalled();
+    expect(onChangeMock).not.toHaveBeenCalled();
+
+    for (const action of screen.getAllByRole("button").filter((el) => el.tagName === "BUTTON")) {
+      expect(action).toBeDisabled();
+    }
+  });
+
   it("supports ref forwarding with object ref and function ref", () => {
     const objRef = React.createRef<HTMLInputElement>();
     const funcRef = vi.fn();

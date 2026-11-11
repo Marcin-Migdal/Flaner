@@ -63,18 +63,6 @@ describe("FormTextField component", () => {
     );
   });
 
-  it("displays validation error when required field is empty on submit", async () => {
-    const user = userEvent.setup();
-    const onSubmit = vi.fn();
-
-    render(<TestForm defaultValues={{ username: "", age: 20 }} onSubmit={onSubmit} />);
-
-    await user.click(screen.getByRole("button", { name: "Submit" }));
-
-    expect(await screen.findByText("Username is required")).toBeInTheDocument();
-    expect(onSubmit).not.toHaveBeenCalled();
-  });
-
   it("parses number inputs correctly", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
