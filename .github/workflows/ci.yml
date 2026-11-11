@@ -34,6 +34,7 @@ jobs:
       - run: npx nx affected -t typecheck lint test build build-storybook --base=${{ github.event.pull_request.base.sha }} --head=HEAD
 
   rules:
+    # Security rules tests + endpoint specs (`*.emu.spec.ts`) against the Firestore / Auth emulators
     name: Firestore rules tests
     runs-on: ubuntu-latest
     steps:
@@ -50,6 +51,7 @@ jobs:
       - run: npm run rules:check
       - run: npx tsc -p firestore-tests/tsconfig.json --noEmit
       - run: npm run test:rules
+      - run: npm run test:emulator
 
   e2e:
     name: E2E (affected)

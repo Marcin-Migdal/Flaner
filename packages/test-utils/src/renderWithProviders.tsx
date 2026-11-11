@@ -5,6 +5,10 @@ import { MemoryRouter } from "react-router";
 import { I18nextProvider } from "react-i18next";
 import i18n, { type Resource } from "i18next";
 import { initReactI18next } from "react-i18next";
+import { vi } from "vitest";
+import type { UserType } from "@flaner/shared/types";
+// Firebase-free module: providing the context does not load the SDK, and `vi.mock("@flaner/shared/context")` does not replace it
+import { AuthContext, type AuthContextValue } from "@flaner/shared/context/AuthContext/AuthContext.context";
 
 export const createTestQueryClient = (): QueryClient =>
   new QueryClient({
@@ -33,10 +37,29 @@ export const createTestI18n = (resources: Resource = {}) => {
   return instance;
 };
 
+/** Signed-in state for `useAuth()`: every action is a `vi.fn()`, override any field through `overrides`. */
+export const createMockAuth = (user: UserType | null, overrides: Partial<AuthContextValue> = {}): AuthContextValue => ({
+  user,
+  isLoading: false,
+  signOutUser: vi.fn().mockResolvedValue(undefined),
+  signInWithGoogleUser: vi.fn().mockResolvedValue(undefined),
+  signInWithEmailUser: vi.fn().mockResolvedValue(undefined),
+  signUpWithEmailUser: vi.fn().mockResolvedValue(undefined),
+  updateUser: vi.fn(),
+  unverifiedEmail: null,
+  resendVerificationEmail: vi.fn().mockResolvedValue(undefined),
+  confirmEmailVerification: vi.fn().mockResolvedValue(true),
+  ...overrides,
+});
+
 export interface ExtendedRenderOptions extends Omit<RenderOptions, "wrapper"> {
   queryClient?: QueryClient;
   initialEntries?: string[];
   i18nInstance?: typeof i18n;
+  /** Signed-in user for `useAuth()` (`null` = signed out); omit to render without an AuthContext */
+  user?: UserType | null;
+  /** Extra `useAuth()` fields, e.g. `{ updateUser: spy }`; implies a signed-out user when `user` is omitted */
+  auth?: Partial<AuthContextValue>;
 }
 
 export interface RenderWithProvidersResult extends RenderResult {
@@ -51,11 +74,15 @@ export const renderWithProviders = (
     queryClient = createTestQueryClient(),
     initialEntries = ["/"],
     i18nInstance = createTestI18n(),
+    user,
+    auth,
     ...renderOptions
   } = options;
 
+  const authValue = user !== undefined || auth ? createMockAuth(user ?? null, auth) : undefined;
+
   const Wrapper = ({ children }: { children: ReactNode }) => {
-    return (
+    const tree = (
       <QueryClientProvider client={queryClient}>
         <I18nextProvider i18n={i18nInstance}>
           <MemoryRouter initialEntries={initialEntries}>
@@ -64,6 +91,7 @@ export const renderWithProviders = (
         </I18nextProvider>
       </QueryClientProvider>
     );
+    return authValue ? <AuthContext.Provider value={authValue}>{tree}</AuthContext.Provider> : tree;
   };
 
   const renderResult = render(ui, { wrapper: Wrapper, ...renderOptions });

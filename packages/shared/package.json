@@ -12,6 +12,11 @@
       "import": "./src/context/index.ts",
       "default": "./src/context/index.ts"
     },
+    "./context/AuthContext/AuthContext.context": {
+      "types": "./src/context/AuthContext/AuthContext.context.ts",
+      "import": "./src/context/AuthContext/AuthContext.context.ts",
+      "default": "./src/context/AuthContext/AuthContext.context.ts"
+    },
     "./firebase": {
       "types": "./src/firebase/index.ts",
       "import": "./src/firebase/index.ts",

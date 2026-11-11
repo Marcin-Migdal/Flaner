@@ -21,7 +21,8 @@ export default defineConfig({
       "src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
       "packages/*/src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
     ],
-    exclude: ["node_modules", "dist", ".idea", ".git", ".cache", "e2e"],
+    // `*.emu.spec.ts` need the emulators: `npm run test:emulator` (vitest.emulator.config.ts)
+    exclude: ["node_modules", "dist", ".idea", ".git", ".cache", "e2e", "**/*.emu.spec.*"],
     reporters: ["default"],
     coverage: {
       provider: "v8",
