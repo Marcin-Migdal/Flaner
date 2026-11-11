@@ -1,15 +1,8 @@
-import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient, createMockUser } from "@flaner/test-utils";
-import { useAuth } from "@flaner/shared/context";
+import { waitFor } from "@testing-library/react";
+import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
 import * as templatesApi from "../../../../api/templates";
 import { useEditTemplateMutation } from "./useEditTemplateMutation";
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: vi.fn(),
-}));
 
 vi.mock("../../../../api/templates", () => ({
   editTemplate: vi.fn(),
@@ -20,35 +13,13 @@ describe("useEditTemplateMutation", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useAuth).mockReturnValue({
-      user: mockUser,
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      unverifiedEmail: null,
-      resendVerificationEmail: vi.fn(),
-      confirmEmailVerification: vi.fn(),
-      updateUser: vi.fn(),
-    });
   });
-
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
 
   it("calls editTemplate and invalidates templates and spools queries", async () => {
     vi.mocked(templatesApi.editTemplate).mockResolvedValueOnce(undefined);
 
-    const { Wrapper, queryClient } = createWrapper();
+    const { result, queryClient } = renderHookWithProviders(() => useEditTemplateMutation(), { user: mockUser });
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-    const { result } = renderHook(() => useEditTemplateMutation(), { wrapper: Wrapper });
     const payload = {
       templateId: "t1",
       newData: {
@@ -66,15 +37,16 @@ describe("useEditTemplateMutation", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(templatesApi.editTemplate).toHaveBeenCalledWith("t1", payload.newData, true, "user-1");
-    expect(invalidateSpy).toHaveBeenCalled();
+    expect(invalidateSpy.mock.calls).toEqual([
+      [{ queryKey: ["spooler", "templates", "user-1"] }],
+      [{ queryKey: ["spooler", "spools", "user-1"] }],
+    ]);
   });
 
   it("calls options.onSuccess when provided", async () => {
     vi.mocked(templatesApi.editTemplate).mockResolvedValueOnce(undefined);
     const onSuccessMock = vi.fn();
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useEditTemplateMutation({ onSuccess: onSuccessMock }), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useEditTemplateMutation({ onSuccess: onSuccessMock }), { user: mockUser });
     const payload = {
       templateId: "t1",
       newData: {
@@ -93,21 +65,7 @@ describe("useEditTemplateMutation", () => {
   });
 
   it("throws error if user is not authenticated", async () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: null,
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      unverifiedEmail: null,
-      resendVerificationEmail: vi.fn(),
-      confirmEmailVerification: vi.fn(),
-      updateUser: vi.fn(),
-    });
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useEditTemplateMutation(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useEditTemplateMutation(), { user: null });
     const payload = {
       templateId: "t1",
       newData: {

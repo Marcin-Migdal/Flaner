@@ -80,7 +80,11 @@ export const createProvidersWrapper = (options: ProvidersOptions = {}) => {
     auth,
   } = options;
 
-  const authValue = user !== undefined || auth ? createMockAuth(user ?? null, auth) : undefined;
+  let authValue = user !== undefined || auth ? createMockAuth(user ?? null, auth) : undefined;
+  /** Switches the signed-in user; takes effect on the next render (e.g. `rerender()`). Pass `user` up front. */
+  const setUser = (nextUser: UserType | null) => {
+    authValue = createMockAuth(nextUser, auth);
+  };
 
   const Wrapper = ({ children }: { children: ReactNode }) => {
     const tree = (
@@ -95,7 +99,7 @@ export const createProvidersWrapper = (options: ProvidersOptions = {}) => {
     return authValue ? <AuthContext.Provider value={authValue}>{tree}</AuthContext.Provider> : tree;
   };
 
-  return { Wrapper, queryClient };
+  return { Wrapper, queryClient, setUser };
 };
 
 export interface ExtendedRenderOptions extends Omit<RenderOptions, "wrapper">, ProvidersOptions {}
@@ -123,6 +127,8 @@ export type RenderHookWithProvidersOptions<Props> = Omit<RenderHookOptions<Props
 
 export type RenderHookWithProvidersResult<Result, Props> = RenderHookResult<Result, Props> & {
   queryClient: QueryClient;
+  /** Signs another user in (or out with `null`) for the following renders, e.g. `setUser(null); rerender();` */
+  setUser: (user: UserType | null) => void;
 };
 
 /** `renderHook` with the same providers as `renderWithProviders`, e.g. `renderHookWithProviders(() => useX(), { user })`. */
@@ -138,5 +144,6 @@ export const renderHookWithProviders = <Result, Props = undefined>(
   return {
     ...hookResult,
     queryClient: providers.queryClient,
+    setUser: providers.setUser,
   };
 };

@@ -1,32 +1,20 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth } from "@flaner/shared/context";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { deleteLookupColor } from "../../../../api/lookups";
-import { useInvalidateGetLookupColorsQuery } from "../../query/useGetLookupColorsQuery";
+import { spoolerInvalidation } from "../../queryKeys";
 
-export const useDeleteLookupColorMutation = (
-  options?: UseMutationOptions<void, Error, string>,
-) => {
-  const { user } = useAuth();
-  const invalidateColors = useInvalidateGetLookupColorsQuery();
-
-  return useMutation<void, Error, string>({
-    mutationKey: ["deleteLookupColor"],
-    mutationFn: async (colorId: string) => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      await deleteLookupColor(colorId);
+export const useDeleteLookupColorMutation = (options?: UseMutationOptions<void, Error, string>) =>
+  useUserMutation<void, string>(
+    {
+      mutationKey: ["deleteLookupColor"],
+      mutationFn: (colorId) => deleteLookupColor(colorId),
+      invalidates: spoolerInvalidation.deleteLookupColor,
+      meta: {
+        successMessageKey: "tools:toasts.lookups.deleteColorSuccess",
+        errorMessageKey: "tools:toasts.lookups.deleteColorError",
+      },
     },
-    meta: {
-      successMessageKey: "tools:toasts.lookups.deleteColorSuccess",
-      errorMessageKey: "tools:toasts.lookups.deleteColorError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      invalidateColors();
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useDeleteLookupColorMutation;

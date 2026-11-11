@@ -1,7 +1,6 @@
-import { useAuth } from "@flaner/shared/context";
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { confirmSettlement, type Settlement } from "../../../../api/splits";
-import { useInvalidateGroupSettlementsQuery } from "../../query/useGetGroupSettlementsQuery";
 
 export type ConfirmSettlementParams = {
   groupId: string;
@@ -9,30 +8,19 @@ export type ConfirmSettlementParams = {
   expectedVersion?: number;
 };
 
-export const useConfirmSettlementMutation = (
-  options?: UseMutationOptions<Settlement, Error, ConfirmSettlementParams>,
-) => {
-  const { user } = useAuth();
-  const invalidateGroupSettlements = useInvalidateGroupSettlementsQuery();
-
-  return useMutation<Settlement, Error, ConfirmSettlementParams>({
-    mutationKey: ["confirmSettlement"],
-    mutationFn: async ({ groupId, settlementId, expectedVersion }) => {
-      if (!user) throw new Error("planning:errors.userNotAuthenticated");
-      return confirmSettlement(groupId, settlementId, user.uid, expectedVersion);
+export const useConfirmSettlementMutation = (options?: UseMutationOptions<Settlement, Error, ConfirmSettlementParams>) =>
+  useUserMutation<Settlement, ConfirmSettlementParams>(
+    {
+      mutationKey: ["confirmSettlement"],
+      mutationFn: async ({ groupId, settlementId, expectedVersion }, user) => {
+        return confirmSettlement(groupId, settlementId, user.uid, expectedVersion);
+      },
+      meta: {
+        successMessageKey: "planning:toasts.splits.settlementConfirmSuccess",
+        errorMessageKey: "planning:toasts.splits.settlementConfirmError",
+      },
     },
-    meta: {
-      successMessageKey: "planning:toasts.splits.settlementConfirmSuccess",
-      errorMessageKey: "planning:toasts.splits.settlementConfirmError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      await invalidateGroupSettlements(args[1].groupId);
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useConfirmSettlementMutation;

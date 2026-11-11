@@ -14,7 +14,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@flaner/ui-components";
-import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Copy, Loader2, LogOut, MoreHorizontal, Shield, UserCheck, UserPlus, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
@@ -47,7 +46,6 @@ export function GroupDetailsView() {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
@@ -127,10 +125,8 @@ export function GroupDetailsView() {
   const handleJoin = async () => {
     if (!user) return;
     try {
+      // Members and the user's groups are listener-backed: the new membership arrives by itself
       await joinGroup({ groupId: group.id, userId: user.uid });
-
-      queryClient.invalidateQueries({ queryKey: ["groupMembers", group.id] });
-      queryClient.invalidateQueries({ queryKey: ["userGroups", user.uid] });
     } catch {
       // Handled globally
     }
@@ -140,8 +136,6 @@ export function GroupDetailsView() {
     if (!user) return;
     try {
       await requestJoin(group.id);
-
-      queryClient.invalidateQueries({ queryKey: ["groupRequests", group.id] });
     } catch {
       // Handled globally
     }

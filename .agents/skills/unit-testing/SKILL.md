@@ -187,7 +187,7 @@ renderWithProviders(<LoginView />, { user: null }); // signed out
 const { result, queryClient } = renderHookWithProviders(() => useCreateExpenseMutation(), { user: createMockUser() });
 ```
 
-Older specs still mock the context; migrate them when you touch them (each area's issue migrates its own specs).
+Older specs still mock the context; migrate them when you touch them (each area's issue migrates its own specs). To switch the user inside one test (sign out, sign in as someone else), use `setUser` from the result: `setUser(null); rerender();`.
 
 The standard `renderWithProviders` must ensure:
 1. `QueryClient`: configured with `queries: { retry: false, gcTime: 0 }` so failures fail immediately and cache is not leaked between tests.

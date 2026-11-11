@@ -1,38 +1,16 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getUserGroupInvitations, subscribeToUserGroupInvitations } from '../../../../api/groups';
-import type { GroupInvitation } from '../../../../api/groups';
-import { reactQueryMeta } from "@flaner/shared/constants";
-import { useRealtimeQueryData } from "@flaner/shared/hooks";
+import { USER_NOT_AUTHENTICATED, useRealtimeQuery } from "@flaner/shared/hooks";
+import { getUserGroupInvitations, subscribeToUserGroupInvitations, type GroupInvitation } from "../../../../api/groups";
+import { groupKeys } from "../../queryKeys";
 
-
-const getGroupInvitationsQueryKey = (userId: string) => ["groupInvitations", userId];
-
-export const useGetUserGroupInvitationsQuery = (userId: string | undefined) => {
-  const queryKey = getGroupInvitationsQueryKey(userId ?? "");
-
-  useRealtimeQueryData(
-    queryKey,
-    (onUpdate, onError) => subscribeToUserGroupInvitations(userId ?? "", onUpdate, onError),
-    !!userId,
-  );
-
-
-
-  return useQuery<GroupInvitation[], Error>({
-      meta: reactQueryMeta.fetch,
-    queryKey,
+export const useGetUserGroupInvitationsQuery = (userId: string | undefined) =>
+  useRealtimeQuery<GroupInvitation[]>({
+    queryKey: groupKeys.userInvitations(userId ?? ""),
     queryFn: () => {
-      if (!userId) throw new Error("errors.userNotAuthenticated");
+      if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
       return getUserGroupInvitations(userId);
     },
+    subscribe: (onUpdate, onError) => subscribeToUserGroupInvitations(userId ?? "", onUpdate, onError),
     enabled: !!userId,
-    staleTime: Infinity,
   });
-};
-
-export const useInvalidateUserGroupInvitationsQuery = () => {
-  const queryClient = useQueryClient();
-  return (userId: string) => queryClient.invalidateQueries({ queryKey: getGroupInvitationsQueryKey(userId) });
-};
 
 export default useGetUserGroupInvitationsQuery;

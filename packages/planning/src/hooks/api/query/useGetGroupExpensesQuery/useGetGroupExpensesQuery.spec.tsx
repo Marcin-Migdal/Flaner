@@ -1,13 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient } from "@flaner/test-utils";
+import { waitFor } from "@testing-library/react";
+import { renderHookWithProviders } from "@flaner/test-utils";
 import type { Expense } from "../../../../api/splits/types";
-import {
-  useGetGroupExpensesQuery,
-  useInvalidateGroupExpensesQuery,
-  getGroupExpensesQueryKeys,
-} from "./useGetGroupExpensesQuery";
+import { useGetGroupExpensesQuery } from "./useGetGroupExpensesQuery";
 import * as splitsApi from "../../../../api/splits";
 
 vi.mock("../../../../api/splits", () => ({
@@ -15,14 +10,6 @@ vi.mock("../../../../api/splits", () => ({
 }));
 
 describe("useGetGroupExpensesQuery", () => {
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
-
   it("fetches expenses when groupId is provided", async () => {
     const mockExpenses: Expense[] = [
       {
@@ -41,9 +28,7 @@ describe("useGetGroupExpensesQuery", () => {
       },
     ];
     vi.mocked(splitsApi.getGroupExpenses).mockResolvedValueOnce(mockExpenses);
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useGetGroupExpensesQuery("grp-1"), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useGetGroupExpensesQuery("grp-1"));
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -52,32 +37,24 @@ describe("useGetGroupExpensesQuery", () => {
   });
 
   it("does not fetch when groupId is undefined", () => {
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useGetGroupExpensesQuery(undefined), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useGetGroupExpensesQuery(undefined));
 
     expect(result.current.isFetching).toBe(false);
     expect(result.current.data).toBeUndefined();
   });
 
   it("throws error when queryFn executes with undefined groupId", async () => {
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useGetGroupExpensesQuery(undefined, { enabled: true }), {
-      wrapper: Wrapper,
-    });
+    const { result } = renderHookWithProviders(() => useGetGroupExpensesQuery(undefined, { enabled: true }));
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error?.message).toBe("planning:errors.splitGroupMissing");
   });
 
-  it("invalidates group expenses query", () => {
-    const { Wrapper, queryClient } = createWrapper();
-    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+  it("caches under the split group's expenses key (refreshed by useSyncSplitGroupFeed)", async () => {
+    vi.mocked(splitsApi.getGroupExpenses).mockResolvedValueOnce([]);
+    const { result, queryClient } = renderHookWithProviders(() => useGetGroupExpensesQuery("grp-1"));
 
-    const { result } = renderHook(() => useInvalidateGroupExpensesQuery(), { wrapper: Wrapper });
-    result.current("grp-1");
-
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: getGroupExpensesQueryKeys("grp-1"),
-    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(queryClient.getQueryData(["splits", "group", "grp-1", "expenses"])).toEqual([]);
   });
 });

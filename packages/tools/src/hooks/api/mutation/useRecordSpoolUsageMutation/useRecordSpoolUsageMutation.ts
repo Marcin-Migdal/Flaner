@@ -1,35 +1,20 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth } from "@flaner/shared/context";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { recordSpoolUsage, type RecordUsageInput, type RecordUsageResult } from "../../../../api/spools";
-import { useInvalidateGetSpoolsQuery } from "../../query/useGetSpoolsQuery";
-import { useInvalidateGetSpoolPrintsQuery } from "../../query/useGetSpoolPrintsQuery";
+import { spoolerInvalidation } from "../../queryKeys";
 
-export const useRecordSpoolUsageMutation = (
-  options?: UseMutationOptions<RecordUsageResult, Error, RecordUsageInput>,
-) => {
-  const { user } = useAuth();
-  const invalidateSpools = useInvalidateGetSpoolsQuery();
-  const invalidatePrints = useInvalidateGetSpoolPrintsQuery();
-
-  return useMutation<RecordUsageResult, Error, RecordUsageInput>({
-    mutationKey: ["recordSpoolUsage"],
-    mutationFn: async (input: RecordUsageInput) => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      return await recordSpoolUsage(input.spool, input.usage);
+export const useRecordSpoolUsageMutation = (options?: UseMutationOptions<RecordUsageResult, Error, RecordUsageInput>) =>
+  useUserMutation<RecordUsageResult, RecordUsageInput>(
+    {
+      mutationKey: ["recordSpoolUsage"],
+      mutationFn: ({ spool, usage }) => recordSpoolUsage(spool, usage),
+      invalidates: spoolerInvalidation.recordSpoolUsage,
+      meta: {
+        successMessageKey: "tools:toasts.spools.recordUsageSuccess",
+        errorMessageKey: "tools:toasts.spools.recordUsageError",
+      },
     },
-    meta: {
-      successMessageKey: "tools:toasts.spools.recordUsageSuccess",
-      errorMessageKey: "tools:toasts.spools.recordUsageError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      invalidateSpools();
-      invalidatePrints(args[1].spool.id);
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useRecordSpoolUsageMutation;

@@ -1,16 +1,16 @@
 import { reactQueryMeta } from "@flaner/shared/constants";
-import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
+import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { getGroupExpenses, type Expense } from "../../../../api/splits";
+import { splitKeys } from "../../queryKeys";
 
-export const getGroupExpensesQueryKeys = (groupId: string) => ["splitGroups", groupId, "expenses"];
-
+/** Fetched, refreshed by `useSyncSplitGroupFeed` when the realtime group document changes. */
 export const useGetGroupExpensesQuery = (
   groupId: string | undefined,
   options?: Omit<UseQueryOptions<Expense[], Error>, "queryKey" | "queryFn">,
 ) => {
   return useQuery<Expense[], Error>({
     meta: reactQueryMeta.fetch,
-    queryKey: getGroupExpensesQueryKeys(groupId ?? ""),
+    queryKey: splitKeys.expenses(groupId ?? ""),
     queryFn: () => {
       if (!groupId) throw new Error("planning:errors.splitGroupMissing");
       return getGroupExpenses(groupId);
@@ -19,10 +19,3 @@ export const useGetGroupExpensesQuery = (
     ...options,
   });
 };
-
-export const useInvalidateGroupExpensesQuery = () => {
-  const queryClient = useQueryClient();
-  return (groupId: string) => queryClient.invalidateQueries({ queryKey: getGroupExpensesQueryKeys(groupId) });
-};
-
-export default useGetGroupExpensesQuery;

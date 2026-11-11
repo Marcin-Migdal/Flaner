@@ -98,7 +98,6 @@
     }
   },
   "errors": {
-    "userNotAuthenticated": "Użytkownik nie jest uwierzytelniony.",
     "splitGroupMissing": "Nie wybrano rozliczenia.",
     "notAuthorizedToEditExpense": "Tylko osoba, która utworzyła ten wydatek, może go edytować.",
     "notAuthorizedToDeleteExpense": "Tylko osoba, która utworzyła ten wydatek, może go usunąć.",

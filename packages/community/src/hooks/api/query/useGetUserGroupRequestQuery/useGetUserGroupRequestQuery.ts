@@ -1,40 +1,22 @@
 import { useAuth } from "@flaner/shared/context";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getUserGroupRequest, subscribeToUserGroupRequest } from '../../../../api/groups';
-import type { GroupRequest } from '../../../../api/groups';
-import { reactQueryMeta } from "@flaner/shared/constants";
-import { useRealtimeQueryData } from "@flaner/shared/hooks";
-
-
-const getUserGroupRequestQueryKeys = (groupId: string, userId: string) => ["userGroupRequest", groupId, userId];
+import { requireUser, useRealtimeQuery } from "@flaner/shared/hooks";
+import { getUserGroupRequest, subscribeToUserGroupRequest, type GroupRequest } from "../../../../api/groups";
+import { groupKeys } from "../../queryKeys";
 
 export const useGetUserGroupRequestQuery = (groupId: string) => {
   const { user } = useAuth();
+  const uid = user?.uid ?? "";
 
-  useRealtimeQueryData<GroupRequest | null>(
-    getUserGroupRequestQueryKeys(groupId, user?.uid ?? ""),
-    (onUpdate, onError) => subscribeToUserGroupRequest(groupId, user?.uid ?? "", onUpdate, onError),
-    !!groupId && !!user,
-  );
-
-  return useQuery<GroupRequest | null, Error>({
-      meta: reactQueryMeta.fetch,
-    queryKey: getUserGroupRequestQueryKeys(groupId, user?.uid ?? ""),
+  return useRealtimeQuery<GroupRequest | null>({
+    queryKey: groupKeys.userRequest(groupId, uid),
     queryFn: async () => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
+      const { uid: userId } = requireUser(user);
       if (!groupId) throw new Error("errors.fetchError");
-      return getUserGroupRequest(groupId, user.uid);
+      return getUserGroupRequest(groupId, userId);
     },
+    subscribe: (onUpdate, onError) => subscribeToUserGroupRequest(groupId, uid, onUpdate, onError),
     enabled: !!groupId && !!user,
-    staleTime: Infinity, // the listener keeps it fresh
   });
-};
-
-export const useInvalidateUserGroupRequestQuery = () => {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  return (groupId: string) =>
-    queryClient.invalidateQueries({ queryKey: getUserGroupRequestQueryKeys(groupId, user?.uid ?? "") });
 };
 
 export default useGetUserGroupRequestQuery;

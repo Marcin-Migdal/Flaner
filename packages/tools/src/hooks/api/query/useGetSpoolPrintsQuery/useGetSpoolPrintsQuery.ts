@@ -1,8 +1,7 @@
-import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
+import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { reactQueryMeta } from "@flaner/shared/constants";
 import { fetchSpoolPrints, type SpoolPrint } from "../../../../api/spools";
-
-export const getSpoolPrintsQueryKeys = (spoolId: string) => ["spoolPrints", spoolId];
+import { spoolerKeys } from "../../queryKeys";
 
 export const useGetSpoolPrintsQuery = (
   spoolId?: string,
@@ -10,7 +9,7 @@ export const useGetSpoolPrintsQuery = (
 ) => {
   return useQuery<SpoolPrint[], Error>({
     meta: reactQueryMeta.fetch,
-    queryKey: getSpoolPrintsQueryKeys(spoolId ?? ""),
+    queryKey: spoolerKeys.prints(spoolId ?? ""),
     queryFn: async () => {
       if (!spoolId) return [];
       return fetchSpoolPrints(spoolId);
@@ -18,20 +17,6 @@ export const useGetSpoolPrintsQuery = (
     enabled: !!spoolId,
     ...options,
   });
-};
-
-export const useInvalidateGetSpoolPrintsQuery = () => {
-  const queryClient = useQueryClient();
-  return (spoolId?: string) => {
-    if (spoolId) {
-      return queryClient.invalidateQueries({
-        queryKey: getSpoolPrintsQueryKeys(spoolId),
-      });
-    }
-    return queryClient.invalidateQueries({
-      queryKey: ["spoolPrints"],
-    });
-  };
 };
 
 export default useGetSpoolPrintsQuery;

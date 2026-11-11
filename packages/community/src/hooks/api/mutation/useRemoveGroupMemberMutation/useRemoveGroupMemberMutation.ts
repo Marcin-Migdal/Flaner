@@ -1,35 +1,18 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { removeGroupMember } from '../../../../api/groups';
-import { useInvalidateGroupMembersQuery } from "../../query/useGetGroupMembersQuery";
-import { useInvalidateUserGroupsQuery } from "../../query/useGetUserGroupsQuery";
 
-export const useRemoveGroupMemberMutation = (
-  options?: UseMutationOptions<void, Error, { groupId: string; userId: string }>
-) => {
-  const invalidateGroupMembers = useInvalidateGroupMembersQuery();
-  const invalidateUserGroups = useInvalidateUserGroupsQuery();
-
-
-
-  return useMutation<void, Error, { groupId: string; userId: string }>({
-    mutationKey: ["removeGroupMember"],
-    meta: {
-      successMessageKey: "community:toasts.manageGroupSheet.removeSuccess",
-      errorMessageKey: "errors.mutationError",
+export const useRemoveGroupMemberMutation = (options?: UseMutationOptions<void, Error, { groupId: string; userId: string }>) =>
+  useUserMutation<void, { groupId: string; userId: string }>(
+    {
+      mutationKey: ["removeGroupMember"],
+      mutationFn: ({ groupId, userId }) => removeGroupMember(groupId, userId),
+      meta: {
+        successMessageKey: "community:toasts.manageGroupSheet.removeSuccess",
+        errorMessageKey: "errors.mutationError",
+      },
     },
-    mutationFn: ({ groupId, userId }) => removeGroupMember(groupId, userId),
-    ...options,
-    onSuccess: async (...args) => {
-      const [, variables] = args;
-      invalidateGroupMembers(variables.groupId);
-      invalidateUserGroups();
-      
-
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useRemoveGroupMemberMutation;

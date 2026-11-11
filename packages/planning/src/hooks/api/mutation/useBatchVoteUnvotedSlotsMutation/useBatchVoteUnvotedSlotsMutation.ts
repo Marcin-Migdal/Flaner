@@ -1,5 +1,5 @@
-import { useAuth } from "@flaner/shared/context";
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { batchVoteUnvotedSlots, type VoteType } from "../../../../api/events";
 
 export type BatchVoteUnvotedParams = {
@@ -8,27 +8,18 @@ export type BatchVoteUnvotedParams = {
   fallbackVote?: VoteType;
 };
 
-export const useBatchVoteUnvotedSlotsMutation = (
-  options?: UseMutationOptions<void, Error, BatchVoteUnvotedParams>,
-) => {
-  const { user } = useAuth();
-
-  return useMutation<void, Error, BatchVoteUnvotedParams>({
-    mutationKey: ["batchVoteUnvotedSlots"],
-    mutationFn: async ({ eventId, userId, fallbackVote = "no" }) => {
-      if (!user) throw new Error("planning:errors.userNotAuthenticated");
-      await batchVoteUnvotedSlots(eventId, userId, fallbackVote);
+export const useBatchVoteUnvotedSlotsMutation = (options?: UseMutationOptions<void, Error, BatchVoteUnvotedParams>) =>
+  useUserMutation<void, BatchVoteUnvotedParams>(
+    {
+      mutationKey: ["batchVoteUnvotedSlots"],
+      mutationFn: async ({ eventId, userId, fallbackVote = "no" }) => {
+        await batchVoteUnvotedSlots(eventId, userId, fallbackVote);
+      },
+      meta: {
+        errorMessageKey: "planning:toasts.events.voteError",
+      },
     },
-    meta: {
-      errorMessageKey: "planning:toasts.events.voteError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useBatchVoteUnvotedSlotsMutation;

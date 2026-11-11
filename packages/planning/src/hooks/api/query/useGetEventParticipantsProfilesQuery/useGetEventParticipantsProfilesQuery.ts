@@ -1,8 +1,7 @@
 import { reactQueryMeta } from "@flaner/shared/constants";
-import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
+import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { getEventParticipantsProfiles, type ParticipantResult } from "../../../../api/participants";
-
-export const getEventParticipantsProfilesQueryKeys = (userIds: string[]) => ["participants", "profiles", userIds.sort().join(",")];
+import { participantKeys } from "../../queryKeys";
 
 export const useGetEventParticipantsProfilesQuery = <TData = ParticipantResult[]>(
   userIds: string[],
@@ -10,16 +9,9 @@ export const useGetEventParticipantsProfilesQuery = <TData = ParticipantResult[]
 ) => {
   return useQuery<ParticipantResult[], Error, TData>({
     meta: reactQueryMeta.fetch,
-    queryKey: getEventParticipantsProfilesQueryKeys(userIds),
+    queryKey: participantKeys.profiles(userIds),
     queryFn: () => getEventParticipantsProfiles(userIds),
     enabled: userIds && userIds.length > 0,
     ...options,
   });
 };
-
-export const useInvalidateEventParticipantsProfilesQuery = () => {
-  const queryClient = useQueryClient();
-  return (userIds: string[]) => queryClient.invalidateQueries({ queryKey: getEventParticipantsProfilesQueryKeys(userIds) });
-};
-
-export default useGetEventParticipantsProfilesQuery;

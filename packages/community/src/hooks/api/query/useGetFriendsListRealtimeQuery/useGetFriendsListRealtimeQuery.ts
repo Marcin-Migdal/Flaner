@@ -1,38 +1,21 @@
 import { useAuth } from "@flaner/shared/context";
-import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
-import { getFriendsList, subscribeToFriendsList } from '../../../../api/users';
-import type { Friendship } from '../../../../api/users';
-import { reactQueryMeta } from "@flaner/shared/constants";
-import { useRealtimeQueryData } from "@flaner/shared/hooks";
+import { requireUser, useRealtimeQuery, type RealtimeQueryOptions } from "@flaner/shared/hooks";
+import { getFriendsList, subscribeToFriendsList, type Friendship } from "../../../../api/users";
+import { userKeys } from "../../queryKeys";
 
-
-const getFriendsListRealtimeQueryKeys = (userId: string) => ["friendsListRealtime", userId];
-
-export const useGetFriendsListRealtimeQuery = (
-  options?: Omit<UseQueryOptions<Friendship[], Error>, "queryKey" | "queryFn">,
-) => {
+export const useGetFriendsListRealtimeQuery = (options?: RealtimeQueryOptions<Friendship[]>) => {
   const { user } = useAuth();
-  const queryKey = getFriendsListRealtimeQueryKeys(user?.uid ?? "");
+  const uid = user?.uid ?? "";
 
-  useRealtimeQueryData(
-    queryKey,
-    (onUpdate, onError) => subscribeToFriendsList(user?.uid ?? "", onUpdate, onError),
-    !!user?.uid && options?.enabled !== false,
-  );
-
-
-
-  return useQuery<Friendship[], Error>({
-      meta: reactQueryMeta.fetch,
-    queryKey,
-    queryFn: () => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      return getFriendsList(user.uid);
+  return useRealtimeQuery(
+    {
+      queryKey: userKeys.friends(uid),
+      queryFn: () => getFriendsList(requireUser(user).uid),
+      subscribe: (onUpdate, onError) => subscribeToFriendsList(uid, onUpdate, onError),
+      enabled: !!user,
     },
-    enabled: !!user,
-    staleTime: Infinity, // Realtime listener handles updates
-    ...options,
-  });
+    options,
+  );
 };
 
 export default useGetFriendsListRealtimeQuery;

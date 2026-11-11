@@ -1,16 +1,17 @@
+import { useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import type { SplitGroup } from "../../api/splits";
-import { useInvalidateGroupExpensesQuery, useInvalidateGroupSettlementsQuery } from "../api/query";
+import { splitInvalidation } from "../api/queryKeys";
 
 /**
  * The group document is streamed in realtime while expenses/settlements are fetched on demand.
  * Refetches the feed whenever the realtime document changes (counters, currency conversion, edits, confirmations).
+ * This is the only refresh of the feed: split mutations do not invalidate it themselves (see `queryKeys/splits`).
  */
 export const useSyncSplitGroupFeed = (
   group: Pick<SplitGroup, "id" | "expensesCount" | "settlementsCount" | "updatedAt">,
 ) => {
-  const invalidateGroupExpenses = useInvalidateGroupExpensesQuery();
-  const invalidateGroupSettlements = useInvalidateGroupSettlementsQuery();
+  const queryClient = useQueryClient();
   const previous = useRef(group);
 
   useEffect(() => {
@@ -19,13 +20,14 @@ export const useSyncSplitGroupFeed = (
 
     if (prev.id !== group.id) return;
 
+    const invalidate = (keys: QueryKey[]) => keys.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
+
     if (prev.updatedAt !== group.updatedAt) {
-      invalidateGroupExpenses(group.id);
-      invalidateGroupSettlements(group.id);
+      invalidate(splitInvalidation.groupUpdated(group.id));
       return;
     }
 
-    if (prev.expensesCount !== group.expensesCount) invalidateGroupExpenses(group.id);
-    if (prev.settlementsCount !== group.settlementsCount) invalidateGroupSettlements(group.id);
-  }, [group, invalidateGroupExpenses, invalidateGroupSettlements]);
+    if (prev.expensesCount !== group.expensesCount) invalidate(splitInvalidation.expensesCountChanged(group.id));
+    if (prev.settlementsCount !== group.settlementsCount) invalidate(splitInvalidation.settlementsCountChanged(group.id));
+  }, [group, queryClient]);
 };

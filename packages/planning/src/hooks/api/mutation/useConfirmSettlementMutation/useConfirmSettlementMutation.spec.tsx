@@ -1,34 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient } from "@flaner/test-utils";
+import { waitFor, act } from "@testing-library/react";
+import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
 import type { Settlement } from "../../../../api/splits/types";
 import { useConfirmSettlementMutation } from "./useConfirmSettlementMutation";
 import * as splitsApi from "../../../../api/splits";
 
-let mockUser: { uid: string; username: string; email: string } | null = { uid: "user-123", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-123", username: "Alice", email: "alice@flaner.app" });
 
 vi.mock("../../../../api/splits", () => ({
   confirmSettlement: vi.fn(),
 }));
 
-vi.mock("../../query/useGetGroupSettlementsQuery", () => ({
-  useInvalidateGroupSettlementsQuery: () => vi.fn().mockResolvedValue(undefined),
-}));
-
 describe("useConfirmSettlementMutation", () => {
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
-
   it("calls confirmSettlement on mutate and triggers onSuccess", async () => {
     const mockSettlement: Settlement = {
       id: "set-1",
@@ -46,8 +29,8 @@ describe("useConfirmSettlementMutation", () => {
     vi.mocked(splitsApi.confirmSettlement).mockResolvedValueOnce(mockSettlement);
 
     const onSuccessMock = vi.fn();
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useConfirmSettlementMutation({ onSuccess: onSuccessMock }), { wrapper: Wrapper });
+    const { result, queryClient } = renderHookWithProviders(() => useConfirmSettlementMutation({ onSuccess: onSuccessMock }), { user: mockUser });
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     act(() => {
       result.current.mutate({
@@ -58,14 +41,14 @@ describe("useConfirmSettlementMutation", () => {
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    // The group listener + useSyncSplitGroupFeed refresh the feed; invalidating here would fetch it twice
+    expect(invalidateSpy).not.toHaveBeenCalled();
     expect(splitsApi.confirmSettlement).toHaveBeenCalledWith("grp-1", "set-1", "user-123", 1);
     expect(onSuccessMock).toHaveBeenCalled();
   });
 
   it("throws error when user is unauthenticated", async () => {
-    mockUser = null;
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useConfirmSettlementMutation(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useConfirmSettlementMutation(), { user: null });
 
     act(() => {
       result.current.mutate({
@@ -75,14 +58,12 @@ describe("useConfirmSettlementMutation", () => {
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error?.message).toBe("planning:errors.userNotAuthenticated");
-    mockUser = { uid: "user-123", username: "Alice", email: "alice@flaner.app" };
+    expect(result.current.error?.message).toBe("errors.userNotAuthenticated");
   });
 
   it("executes successfully without options", async () => {
     vi.mocked(splitsApi.confirmSettlement).mockResolvedValueOnce({ id: "set-2" } as unknown as Settlement);
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useConfirmSettlementMutation(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useConfirmSettlementMutation(), { user: mockUser });
 
     act(() => {
       result.current.mutate({

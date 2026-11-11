@@ -1,14 +1,10 @@
-import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient } from "@flaner/test-utils";
+import { waitFor } from "@testing-library/react";
+import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
 import { useAcceptJoinRequestMutation } from "./useAcceptJoinRequestMutation";
 import * as groupsApi from "../../../../api/groups";
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: { uid: "staff-1" } }),
-}));
+const mockUser = createMockUser({ uid: "staff-1" });
 
 vi.mock("../../../../api/groups", () => ({
   acceptJoinRequest: vi.fn(),
@@ -19,40 +15,25 @@ describe("useAcceptJoinRequestMutation", () => {
     vi.clearAllMocks();
   });
 
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
-
-  it("calls acceptJoinRequest and invalidates queries", async () => {
+  it("calls acceptJoinRequest without invalidating listener-backed queries", async () => {
     vi.mocked(groupsApi.acceptJoinRequest).mockResolvedValueOnce(undefined);
 
-    const { Wrapper, queryClient } = createWrapper();
+    const { result, queryClient } = renderHookWithProviders(() => useAcceptJoinRequestMutation(), { user: mockUser });
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-    const { result } = renderHook(() => useAcceptJoinRequestMutation(), { wrapper: Wrapper });
 
     result.current.mutate({ groupId: "grp-1", userId: "u-1" });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(groupsApi.acceptJoinRequest).toHaveBeenCalledWith("grp-1", "u-1", "staff-1");
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["groupMembers", "grp-1"] });
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["groupRequests", "grp-1"] });
+    // Every key this write touches is listener-backed: the listeners deliver it, a refetch would be wasted
+    expect(invalidateSpy).not.toHaveBeenCalled();
   });
 
   it("calls options.onSuccess callback when provided", async () => {
     vi.mocked(groupsApi.acceptJoinRequest).mockResolvedValueOnce(undefined);
     const onSuccessMock = vi.fn();
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(
-      () => useAcceptJoinRequestMutation({ onSuccess: onSuccessMock }),
-      { wrapper: Wrapper }
-    );
+    const { result } = renderHookWithProviders(() => useAcceptJoinRequestMutation({ onSuccess: onSuccessMock }), { user: mockUser });
 
     result.current.mutate({ groupId: "grp-1", userId: "u-1" });
 
