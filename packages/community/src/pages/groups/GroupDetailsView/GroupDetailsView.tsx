@@ -19,7 +19,7 @@ import { ArrowLeft, Copy, Loader2, LogOut, MoreHorizontal, Shield, UserCheck, Us
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
-import { hasGroupPermission } from "../../../api/groups";
+import { getGroupAuthorization } from "../../../api/groups";
 import { InviteToGroupModal } from "../../../components/groups/InviteToGroupModal";
 import { ManageGroupSheet } from "../../../components/groups/ManageGroupSheet";
 import { RequestsSheet } from "../../../components/groups/RequestsSheet";
@@ -114,9 +114,10 @@ export function GroupDetailsView() {
     );
   }
 
-  const currentUserRole = members.find((m) => m.userId === user?.uid)?.role;
+  const auth = getGroupAuthorization({ group, members, userId: user?.uid });
+  const currentUserRole = auth.role;
   const hasRequested = !!userRequest;
-  const canInvite = isMember && hasGroupPermission(group, currentUserRole, "inviteMembers");
+  const canInvite = isMember && auth.canInvite;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -270,15 +271,13 @@ export function GroupDetailsView() {
                   <span>{t("manageGroupSheet.inviteFriends")}</span>
                 </Button>
               )}
-              {(currentUserRole === "owner" || hasGroupPermission(group, currentUserRole, "manageRequests")) && (
+              {auth.canManageRequests && (
                 <RequestsSheet groupId={group.id} />
               )}
-              {(currentUserRole === "owner" ||
-                hasGroupPermission(group, currentUserRole, "editGroup") ||
-                hasGroupPermission(group, currentUserRole, "manageMembers")) && (
+              {auth.canOpenManageSheet && (
                 <ManageGroupSheet groupId={group.id} />
               )}
-              {currentUserRole !== "owner" && (
+              {auth.canLeave && (
                 <>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

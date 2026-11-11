@@ -146,9 +146,10 @@ service cloud.firestore {
               getAfter(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
             // Every other way in joins as a plain member
             (request.resource.data.role == 'member' && (
-              hasRolePermission(groupId, 'manageRequests') ||
-              hasRolePermission(groupId, 'manageMembers') ||
-              isAdminOrOwner(groupId) ||
+              // Accepting a pending join request: the batch also deletes it (exists() sees the state before the batch)
+              (hasRolePermission(groupId, 'manageRequests') &&
+                exists(/databases/$(database)/documents/groups/$(groupId)/requests/$(userId)) &&
+                !existsAfter(/databases/$(database)/documents/groups/$(groupId)/requests/$(userId))) ||
               (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.type == 'public' && get(/databases/$(database)/documents/groups/$(groupId)).data.requiresApproval == false) ||
               (userId == request.auth.uid && exists(/databases/$(database)/documents/groups/$(groupId)/invitations/$(request.auth.uid)))
             ))

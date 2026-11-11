@@ -2,13 +2,10 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { renderWithProviders, createMockUser } from "@flaner/test-utils";
 import { InviteToGroupModal } from "./InviteToGroupModal";
 import * as hooks from "../../../hooks";
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: vi.fn(() => ({ user: { uid: "user-123" } })),
-}));
 
 vi.mock("@flaner/shared/hooks", () => ({
   useDebounce: (val: string) => val,
@@ -29,6 +26,8 @@ vi.mock("../../../hooks/useCommunityTranslations", () => ({
     i18n: { language: "en" },
   }),
 }));
+
+const currentUser = createMockUser({ uid: "user-123" });
 
 describe("InviteToGroupModal component", () => {
   const mutateAsyncMock = vi.fn();
@@ -91,7 +90,8 @@ describe("InviteToGroupModal component", () => {
         groupName="Test Group"
         open={true}
         onOpenChange={vi.fn()}
-      />
+      />,
+      { user: currentUser }
     );
 
     expect(screen.getByText("MemberUser")).toBeInTheDocument();
@@ -126,20 +126,6 @@ describe("InviteToGroupModal component", () => {
   });
 
   it("does not invite when user is unauthenticated", async () => {
-    const { useAuth } = await import("@flaner/shared/context");
-    vi.mocked(useAuth).mockReturnValueOnce({
-      user: null,
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      unverifiedEmail: null,
-      resendVerificationEmail: vi.fn(),
-      confirmEmailVerification: vi.fn(),
-      updateUser: vi.fn(),
-    });
-
     const user = userEvent.setup();
     const mockFriends = [
       { uid: "u-fresh", username: "FreshUser", usernameLower: "freshuser" },
@@ -166,7 +152,8 @@ describe("InviteToGroupModal component", () => {
         groupName="Test Group"
         open={true}
         onOpenChange={vi.fn()}
-      />
+      />,
+      { user: null }
     );
 
     const inviteBtn = screen.getByRole("button", { name: "inviteToGroup.inviteBtn" });
@@ -186,7 +173,8 @@ describe("InviteToGroupModal component", () => {
         groupName="Test Group"
         open={true}
         onOpenChange={vi.fn()}
-      />
+      />,
+      { user: currentUser }
     );
 
     expect(screen.getByText("inviteToGroup.loading")).toBeInTheDocument();
@@ -204,7 +192,8 @@ describe("InviteToGroupModal component", () => {
         groupName="Test Group"
         open={true}
         onOpenChange={vi.fn()}
-      />
+      />,
+      { user: currentUser }
     );
 
     expect(screen.getByText("??")).toBeInTheDocument();
