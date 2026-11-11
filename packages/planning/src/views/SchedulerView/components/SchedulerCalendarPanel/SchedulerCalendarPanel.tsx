@@ -5,6 +5,7 @@ import type { ParticipantResult } from "../../../../api/participants";
 import { RankedSlotsSheet } from "../../../../components/RankedSlotsSheet";
 import { SlotVotingModal } from "../../../../components/SlotVotingModal/SlotVotingModal";
 import { useVoteSlotMutation } from "../../../../hooks/api/mutation";
+import { rankSlots } from "../../../../utils/slotRanking";
 import { SchedulerBigCalendar } from "./components/SchedulerBigCalendar";
 import { SchedulerEmptyState } from "./components/SchedulerEmptyState";
 
@@ -24,40 +25,10 @@ export const SchedulerCalendarPanel = ({
   const [votingSlotIndex, setVotingSlotIndex] = useState<number | null>(null);
   const [isRankedSheetOpen, setIsRankedSheetOpen] = useState(false);
 
-  // Calculate all slots tied for #1 top-voted
-  const topVotedSlotIndices = useMemo(() => {
-    if (!activeEvent || activeEvent.proposedDates.length === 0) return new Set<number>();
-    let maxScore = 0;
-    let bestYes = 0;
-
-    activeEvent.proposedDates.forEach((slot) => {
-      const votes = slot.votes || {};
-      const yes = Object.values(votes).filter((v) => v === "yes").length;
-      const maybe = Object.values(votes).filter((v) => v === "maybe").length;
-      const score = yes * 1.0 + maybe * 0.5;
-
-      if (score > maxScore || (score === maxScore && yes > bestYes)) {
-        maxScore = score;
-        bestYes = yes;
-      }
-    });
-
-    if (maxScore === 0) return new Set<number>();
-
-    const topIndices = new Set<number>();
-    activeEvent.proposedDates.forEach((slot, index) => {
-      const votes = slot.votes || {};
-      const yes = Object.values(votes).filter((v) => v === "yes").length;
-      const maybe = Object.values(votes).filter((v) => v === "maybe").length;
-      const score = yes * 1.0 + maybe * 0.5;
-
-      if (score === maxScore && yes === bestYes) {
-        topIndices.add(index);
-      }
-    });
-
-    return topIndices;
-  }, [activeEvent]);
+  const topVotedSlotIndices = useMemo(
+    () => (activeEvent ? rankSlots(activeEvent).topSlotIndices : new Set<number>()),
+    [activeEvent],
+  );
 
   const handleVoteSlot = async (slotIndex: number, newVote: VoteType | null) => {
     const slot = activeEvent?.proposedDates[slotIndex];

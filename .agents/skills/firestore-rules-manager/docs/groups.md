@@ -88,7 +88,7 @@ match /groups/{groupId} {
 ### Invariants
 - **M1** Only members see the member list; every user can list their own memberships across groups (collection group, `_global.md`).
 - **M2** Joining creates `role: 'member'`; `role: 'owner'` is created only by the group creator for themselves (in `createGroup`). Member docs hold only `userId` (== doc id), `role`, `joinedAt`.
-- **M3** Ways to join: owner bootstrap, public group without approval, accepted invitation, join request accepted by staff with `manageRequests` / `manageMembers`.
+- **M3** Ways to join: owner bootstrap, public group without approval, accepted group invitation, join request accepted by someone with `manageRequests`. Nobody adds another user without their pending join request, which is deleted in the same batch; `manageMembers` alone does not let anyone in.
 - **M4** A role can be changed only by someone with `manageMembers` and strictly higher priority than both the target's current and new role; the owner can hand over `owner` (transfer) and downgrade themselves to `admin` in the same transfer.
 - **M5** Everyone except the owner can leave (delete own doc) — the owner transfers ownership first, or deletes the whole group; staff with `manageMembers` can remove lower-priority members.
 - **M6** Updates change only `role`.
@@ -106,7 +106,7 @@ match /groups/{groupId} {
 | Owner bootstrap | `createGroup` | set `members/{owner}` `role: 'owner'` | ✅ batch with the group doc |
 | Join public group | `addGroupMember` (`useAddGroupMemberMutation`) | set `members/{me}` `role: 'member'` | – |
 | Accept invitation | `acceptGroupInvitation` | set `members/{me}`, delete `invitations/{me}`, delete `users/{me}/groupInvitations/{gid}`, notification `group_invitation_accepted` to the inviter, delete own unread `group_invitation_{gid}` notification | ✅ batch (`exists()` sees the invitation from before the batch) |
-| Accept join request | `acceptJoinRequest` | set `members/{user}`, delete `requests/{user}`, notification `group_request_accepted` to the requester | ✅ batch |
+| Accept join request | `acceptJoinRequest` | set `members/{user}`, delete `requests/{user}`, notification `group_request_accepted` to the requester | ✅ batch (required: the member create rule checks the join request with `exists()` before and `existsAfter()` after the batch) |
 | Change role | `updateGroupMemberRole` | update `role` | – |
 | Transfer ownership | `transferGroupOwnership` | see group flows | ✅ batch |
 | Leave / remove | `removeGroupMember` | delete `members/{user}` | – |
@@ -118,15 +118,15 @@ match /groups/{groupId} {
 | `collectionGroup('members')` where `userId == me` | `getUserGroups`, `searchParticipants` | `_global.md` collection-group rule |
 
 ### Access matrix
-| Actor \ operation | read list | create self `member` | create self `owner`/`admin` | create other | update role | delete self | delete other |
+| Actor \ operation | read list | create self `member` | create self `owner`/`admin` | create other (accept join request) | update role | delete self | delete other |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | stranger, public no approval | ❌ | ✅ | ❌ | ❌ | ❌ | – | ❌ |
 | stranger, approval / private | ❌ | ❌ | ❌ | ❌ | ❌ | – | ❌ |
 | invitee | ❌ | ✅ | ❌ | ❌ | ❌ | – | ❌ |
 | member | ✅ | – | – | ❌ | ❌ | ✅ | ❌ |
 | moderator (default perms) | ✅ | – | – | ❌ | ❌ | ✅ | ❌ |
-| admin (default perms) | ✅ | – | – | ✅ `member` only | ✅ below admin | ✅ | ✅ below admin |
-| owner | ✅ | ✅ (bootstrap) | ✅ `owner` (bootstrap only) | ✅ `member` only | ✅ (+ transfer) | ❌ (✅ only with the group in `deleteGroup`) | ✅ |
+| admin (default perms) | ✅ | – | – | ✅ `member` only, with `manageRequests` and a pending join request | ✅ below admin | ✅ | ✅ below admin |
+| owner | ✅ | ✅ (bootstrap) | ✅ `owner` (bootstrap only) | ✅ `member` only, with a pending join request | ✅ (+ transfer) | ❌ (✅ only with the group in `deleteGroup`) | ✅ |
 
 ### Rules
 ```rules
@@ -144,9 +144,10 @@ match /members/{userId} {
         getAfter(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
       // Every other way in joins as a plain member
       (request.resource.data.role == 'member' && (
-        hasRolePermission(groupId, 'manageRequests') ||
-        hasRolePermission(groupId, 'manageMembers') ||
-        isAdminOrOwner(groupId) ||
+        // Accepting a pending join request: the batch also deletes it (exists() sees the state before the batch)
+        (hasRolePermission(groupId, 'manageRequests') &&
+          exists(/databases/$(database)/documents/groups/$(groupId)/requests/$(userId)) &&
+          !existsAfter(/databases/$(database)/documents/groups/$(groupId)/requests/$(userId))) ||
         (userId == request.auth.uid && get(/databases/$(database)/documents/groups/$(groupId)).data.type == 'public' && get(/databases/$(database)/documents/groups/$(groupId)).data.requiresApproval == false) ||
         (userId == request.auth.uid && exists(/databases/$(database)/documents/groups/$(groupId)/invitations/$(request.auth.uid)))
       ))
@@ -171,7 +172,7 @@ match /members/{userId} {
 ```
 
 ### Tests
-- `firestore-tests/groups/membership.spec.ts` — joining (invitation, public, approval, private, unauthenticated, staff).
+- `firestore-tests/groups/membership.spec.ts` — joining (invitation, public, approval, private, unauthenticated, accepting a join request: needs `manageRequests`, a pending request and its deletion in the same batch).
 - `firestore-tests/groups/groups.spec.ts` — role changes, leave / remove, privileged self-join / staff-created owners / owner leaving denied.
 
 ---

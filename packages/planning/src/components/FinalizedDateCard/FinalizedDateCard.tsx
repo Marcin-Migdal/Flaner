@@ -4,6 +4,7 @@ import { CheckCircle, Calendar, Users, RotateCcw } from "lucide-react";
 import { Button } from "@flaner/ui-components";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import type { SchedulerEvent } from "../../api/events/types";
+import { isSameDaySlot, tallyVotes } from "../../utils/slotRanking";
 
 export type FinalizedDateCardProps = {
   event: SchedulerEvent;
@@ -22,14 +23,13 @@ export const FinalizedDateCard = ({ event, isOwner, onReopen }: FinalizedDateCar
 
   const startDate = parseISO(winningSlot.start);
   const endDate = parseISO(winningSlot.end);
-  const isSameDay = winningSlot.start === winningSlot.end;
+  const isSameDay = isSameDaySlot(winningSlot);
 
   const dateDisplay = isSameDay
     ? format(startDate, "d MMMM yyyy (EEEE)", { locale: dateLocale })
     : `${format(startDate, "d MMMM", { locale: dateLocale })} — ${format(endDate, "d MMMM yyyy", { locale: dateLocale })}`;
 
-  const votes = winningSlot.votes || {};
-  const yesVotes = Object.values(votes).filter((v) => v === "yes").length;
+  const yesVotes = tallyVotes(winningSlot.votes).yes.length;
 
   return (
     <div className="w-full relative overflow-hidden rounded-xl border border-success/30 bg-success/10 p-3.5 backdrop-blur-md shadow-md flex flex-col gap-2 transition-all">

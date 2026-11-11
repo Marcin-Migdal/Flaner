@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { format, parseISO, Locale } from "date-fns";
 import { pl, enUS } from "date-fns/locale";
 import { Check, CheckCircle2, Trophy } from "lucide-react";
 import {
@@ -18,6 +17,8 @@ import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import type { SchedulerEvent } from "../../api/events/types";
 import type { ParticipantResult } from "../../api/participants";
 import { useFinalizeEventMutation } from "../../hooks/api/mutation/useFinalizeEventMutation";
+import { formatSlotDate } from "../../utils/formatSlotDate";
+import { rankSlots } from "../../utils/slotRanking";
 
 export type FinalizeEventModalProps = {
   open: boolean;
@@ -25,29 +26,6 @@ export type FinalizeEventModalProps = {
   event: SchedulerEvent;
   participantsProfiles?: ParticipantResult[];
   currentUserId?: string;
-};
-
-const formatFinalizeSlotDate = (
-  startDate: Date,
-  endDate: Date,
-  isSameDay: boolean,
-  locale: Locale
-): string => {
-  const cleanDay = (d: string) => d.replace(/\.$/, "");
-  const startDay = cleanDay(format(startDate, "EEE", { locale }));
-
-  if (isSameDay) {
-    return `${format(startDate, "dd.MM.yyyy")} (${startDay})`;
-  }
-
-  const endDay = cleanDay(format(endDate, "EEE", { locale }));
-  const isSameYear = startDate.getFullYear() === endDate.getFullYear();
-
-  if (isSameYear) {
-    return `${format(startDate, "dd.MM")} (${startDay}) - ${format(endDate, "dd.MM")} (${endDay})`;
-  }
-
-  return `${format(startDate, "dd.MM.yyyy")} (${startDay}) - ${format(endDate, "dd.MM.yyyy")} (${endDay})`;
 };
 
 export const FinalizeEventModal = ({
@@ -59,36 +37,10 @@ export const FinalizeEventModal = ({
   const dateLocale = i18n.language === "pl" ? pl : enUS;
   const { mutateAsync: finalizeEvent, isPending } = useFinalizeEventMutation();
 
-  // Rank slots by votes
-  const slotsWithScores = event.proposedDates.map((slot, originalIndex) => {
-    const votes = slot.votes || {};
-    const yesCount = Object.values(votes).filter((v) => v === "yes").length;
-    const maybeCount = Object.values(votes).filter((v) => v === "maybe").length;
-    const totalParticipants = Math.max(1, event.participants.length);
-    const score = yesCount * 1.0 + maybeCount * 0.5;
-    const matchPercentage = Math.round((yesCount / totalParticipants) * 100);
-
-    return {
-      slot,
-      originalIndex,
-      yesCount,
-      maybeCount,
-      score,
-      matchPercentage,
-    };
-  });
-
-  const sortedSlots = [...slotsWithScores].sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    if (b.yesCount !== a.yesCount) return b.yesCount - a.yesCount;
-    return a.originalIndex - b.originalIndex;
-  });
-
-  const topScore = sortedSlots[0]?.score ?? 0;
-  const topYesCount = sortedSlots[0]?.yesCount ?? 0;
+  const { ranked } = rankSlots(event);
 
   const [selectedSlotIndex, setSelectedSlotIndex] = useState<number>(() => {
-    return sortedSlots[0]?.originalIndex ?? 0;
+    return ranked[0]?.slotIndex ?? 0;
   });
 
   const handleConfirm = async () => {
@@ -116,24 +68,19 @@ export const FinalizeEventModal = ({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-2.5">
-          {sortedSlots.map((item) => {
-            const isSelected = selectedSlotIndex === item.originalIndex;
-            const isTop = item.score > 0 && item.score === topScore && item.yesCount === topYesCount;
-            const startDate = parseISO(item.slot.start);
-            const endDate = parseISO(item.slot.end);
-
-            const isSameDay = item.slot.start === item.slot.end;
-            const dateDisplay = formatFinalizeSlotDate(startDate, endDate, isSameDay, dateLocale);
+          {ranked.map((item) => {
+            const isSelected = selectedSlotIndex === item.slotIndex;
+            const dateDisplay = formatSlotDate(item.slot, dateLocale);
 
             return (
               <button
                 type="button"
-                key={item.originalIndex}
-                onClick={() => setSelectedSlotIndex(item.originalIndex)}
+                key={item.slotIndex}
+                onClick={() => setSelectedSlotIndex(item.slotIndex)}
                 className={finalizeSlotItemVariants({ isSelected })}
               >
                 {/* Left: Trophy icon on the far left across the row height */}
-                {isTop && (
+                {item.isTop && (
                    <div className="shrink-0 self-stretch flex items-center justify-center pr-0.5 text-warning-text">
                     <Trophy className="w-5 h-5 text-warning-text" />
                   </div>
@@ -154,9 +101,9 @@ export const FinalizeEventModal = ({
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       <div className="px-2 py-0.5 rounded-md bg-muted/60 text-xs font-semibold text-foreground flex items-center gap-1">
-                        <span className="text-success-text font-bold">✓ {item.yesCount}</span>
-                        {item.maybeCount > 0 && (
-                          <span className="text-warning-text font-medium">? {item.maybeCount}</span>
+                        <span className="text-success-text font-bold">✓ {item.tally.yes.length}</span>
+                        {item.tally.maybe.length > 0 && (
+                          <span className="text-warning-text font-medium">? {item.tally.maybe.length}</span>
                         )}
                       </div>
                       <span className="text-xs font-bold text-primary">
