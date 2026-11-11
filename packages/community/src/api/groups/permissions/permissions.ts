@@ -8,6 +8,17 @@ import {
 } from "../types";
 
 /**
+ * Role priority (owner > admin > moderator > member): a member manages members, and assigns roles, only below their own.
+ * Server mirror: `getRolePriority` in the rules spec (`.agents/skills/firestore-rules-manager/docs/_global.md`).
+ */
+export const GROUP_ROLE_PRIORITY: Record<GroupRole, number> = {
+  owner: 4,
+  admin: 3,
+  moderator: 2,
+  member: 1,
+};
+
+/**
  * Zwraca informację, czy dana rola w danej grupie posiada określone uprawnienie.
  * Właściciel grupy (owner) zawsze posiada wszystkie uprawnienia.
  */
