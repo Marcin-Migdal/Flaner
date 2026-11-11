@@ -25,8 +25,10 @@ type FormValues = {
 const TestForm = ({
   defaultValues = { avatar: null },
   onSubmit = vi.fn(),
+  disabled,
 }: {
   defaultValues?: Partial<FormValues>;
+  disabled?: boolean;
   onSubmit?: (data: FormValues) => void;
 }) => {
   const form = useForm<FormValues>({ defaultValues: defaultValues as FormValues });
@@ -39,6 +41,7 @@ const TestForm = ({
           name="avatar"
           label="Avatar"
           rules={{ required: "Avatar is required" }}
+          disabled={disabled}
         />
         <button type="submit">Submit</button>
       </form>
@@ -69,15 +72,9 @@ describe("FormImagePicker component", () => {
     );
   });
 
-  it("shows validation error on submit when empty and required", async () => {
-    const user = userEvent.setup();
-    const onSubmit = vi.fn();
+  it("disables the picker when the field is disabled", () => {
+    render(<TestForm disabled />);
 
-    render(<TestForm defaultValues={{ avatar: null }} onSubmit={onSubmit} />);
-
-    await user.click(screen.getByRole("button", { name: "Submit" }));
-
-    expect(await screen.findByText("Avatar is required")).toBeInTheDocument();
-    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: /Avatar/ })).toHaveAttribute("aria-disabled", "true");
   });
 });

@@ -1,12 +1,12 @@
 import React from "react";
 import {
   Controller,
-  useController,
   type Control,
   type FieldPath,
   type FieldValues,
   type RegisterOptions,
 } from "react-hook-form";
+import { toNumberOrUndefined, useFormField } from "../../hooks/useFormField";
 import { MoneyInput, type MoneyInputProps } from "../MoneyInput";
 
 export type FormMoneyInputProps<
@@ -58,7 +58,7 @@ function FormMoneyInputInner<
   disabled,
   ...props
 }: FormMoneyInputInnerProps<TFieldValues, TAmountName>) {
-  const { field: amountField, fieldState: amountFieldState } = useController({
+  const { field: amountField, error: amountError } = useFormField({
     name: amountName,
     control,
     rules,
@@ -66,7 +66,7 @@ function FormMoneyInputInner<
     disabled,
   });
 
-  const displayError = externalError ?? amountFieldState.error?.message ?? currencyError;
+  const displayError = externalError ?? amountError ?? currencyError;
 
   return (
     <MoneyInput
@@ -74,14 +74,9 @@ function FormMoneyInputInner<
       ref={amountField.ref}
       name={amountField.name}
       value={amountField.value ?? ""}
-      onChange={(e) => {
-        const val = e.target.value;
-        amountField.onChange(val === "" ? undefined : Number(val));
-      }}
+      onChange={(e) => amountField.onChange(toNumberOrUndefined(e.target.value))}
       onBlur={amountField.onBlur}
-      onStep={(_, nextVal) => {
-        amountField.onChange(nextVal);
-      }}
+      onStep={(_, nextVal) => amountField.onChange(nextVal)}
       currency={currencyValue}
       onCurrencyChange={onCurrencyChange}
       disabled={disabled}

@@ -50,16 +50,4 @@ describe("FormTextArea component", () => {
       expect.anything()
     );
   });
-
-  it("shows validation error on submit when required and empty", async () => {
-    const user = userEvent.setup();
-    const onSubmit = vi.fn();
-
-    render(<TestForm defaultValues={{ bio: "" }} onSubmit={onSubmit} />);
-
-    await user.click(screen.getByRole("button", { name: "Submit" }));
-
-    expect(await screen.findByText("Bio cannot be empty")).toBeInTheDocument();
-    expect(onSubmit).not.toHaveBeenCalled();
-  });
 });

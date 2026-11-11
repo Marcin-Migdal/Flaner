@@ -56,6 +56,7 @@ export type ImagePickerProps = {
   label?: string;
   description?: string;
   error?: string;
+  disabled?: boolean;
   containerClassName?: string;
   labelClassName?: string;
   labels?: Partial<ImagePickerLabels>;
@@ -182,6 +183,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
       label,
       description,
       error,
+      disabled,
       containerClassName,
       labelClassName,
       labels,
@@ -357,7 +359,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
     };
 
     const handleDragOver = (e: React.DragEvent) => {
-      if (isCompressing) return;
+      if (isCompressing || disabled) return;
       e.preventDefault();
       setIsDragging(true);
     };
@@ -367,7 +369,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
     };
 
     const handleDrop = (e: React.DragEvent) => {
-      if (isCompressing) return;
+      if (isCompressing || disabled) return;
       e.preventDefault();
       setIsDragging(false);
       const file = e.dataTransfer.files?.[0];
@@ -377,7 +379,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
     };
 
     const triggerFileSelect = () => {
-      if (isCompressing) return;
+      if (isCompressing || disabled) return;
       fileInputRef.current?.click();
     };
 
@@ -451,7 +453,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
                               type="button"
                               onClick={isEditable ? handleOpenCropper : undefined}
                               aria-disabled={!isEditable}
-                              disabled={isCompressing}
+                              disabled={isCompressing || disabled}
                               className={cn(
                                 "size-7 rounded-lg transition-colors",
                                 isEditable
@@ -476,7 +478,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
                     size="icon" 
                     type="button"
                     onClick={handleRemove}
-                    disabled={isCompressing}
+                    disabled={isCompressing || disabled}
                     className="hover:bg-destructive/10 hover:text-destructive text-muted-foreground cursor-pointer rounded-lg size-7 transition-colors"
                   >
                     <Trash2 className="size-3.5" />
@@ -499,7 +501,8 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
           {/* Right Column: Dropzone */}
           <div
             role="button"
-            tabIndex={0}
+            tabIndex={disabled ? -1 : 0}
+            aria-disabled={disabled}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -513,7 +516,8 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
             className={cn(
               "flex-1 w-full border-2 border-dashed border-border bg-card/10 hover:bg-card/30 hover:border-accent rounded-xl flex flex-col items-center justify-center p-6 cursor-pointer transition-all duration-200 text-center select-none min-h-[96px]",
               isDragging && "border-brand bg-brand/5 scale-[1.01]",
-              isCompressing && "opacity-70 cursor-wait pointer-events-none"
+              isCompressing && "opacity-70 cursor-wait pointer-events-none",
+              disabled && "opacity-50 cursor-not-allowed pointer-events-none"
             )}
           >
             <input
@@ -526,6 +530,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
               onChange={handleFileChange}
               onClick={(e) => e.stopPropagation()}
               accept="image/*"
+              disabled={disabled}
               className="hidden"
               id={inputId}
             />

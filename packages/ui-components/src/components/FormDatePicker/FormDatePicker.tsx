@@ -1,40 +1,19 @@
-import { useController, UseControllerProps, FieldValues, FieldPath } from "react-hook-form";
-import { DatePicker, DatePickerProps } from "../DatePicker";
+import type { FieldPath, FieldValues } from "react-hook-form";
+import { useFormField, type FormFieldProps } from "../../hooks/useFormField";
+import { DatePicker, type DatePickerProps } from "../DatePicker";
 
 export type FormDatePickerProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
-> = Omit<DatePickerProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur"> &
-  UseControllerProps<TFieldValues, TName>;
+> = FormFieldProps<DatePickerProps, TFieldValues, TName>;
 
 export function FormDatePicker<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
->({
-  name,
-  rules,
-  shouldUnregister,
-  defaultValue,
-  control,
-  disabled,
-  ...props
-}: FormDatePickerProps<TFieldValues, TName>) {
-  const { field, fieldState } = useController({
-    name,
-    rules,
-    shouldUnregister,
-    defaultValue,
-    control,
-    disabled,
-  });
+>(props: FormDatePickerProps<TFieldValues, TName>) {
+  const { field, error, rest } = useFormField(props);
 
-  return (
-    <DatePicker
-      {...props}
-      {...field}
-      error={fieldState.error?.message}
-    />
-  );
+  return <DatePicker {...rest} {...field} error={error} />;
 }
 
 export default FormDatePicker;

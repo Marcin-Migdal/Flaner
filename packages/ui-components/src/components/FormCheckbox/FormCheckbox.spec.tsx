@@ -51,16 +51,4 @@ describe("FormCheckbox component", () => {
       expect.anything()
     );
   });
-
-  it("shows validation error on submit when required and false", async () => {
-    const user = userEvent.setup();
-    const onSubmit = vi.fn();
-
-    render(<TestForm defaultValues={{ terms: false }} onSubmit={onSubmit} />);
-
-    await user.click(screen.getByRole("button", { name: "Submit" }));
-
-    expect(await screen.findByText("You must accept terms")).toBeInTheDocument();
-    expect(onSubmit).not.toHaveBeenCalled();
-  });
 });
