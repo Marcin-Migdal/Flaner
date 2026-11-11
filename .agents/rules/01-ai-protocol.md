@@ -19,7 +19,10 @@ Write the following section at the beginning of your response:
 - **PAUSE FOR APPROVAL:** You MUST wait for explicit user approval of the Action Plan before executing any file modifications or write operations.
 - **NO AUTOMATIC GIT COMMITS / STAGING:** NEVER run `git add`, `git commit`, `git push`, or related git commands on your own initiative. Modifying the git index or commit history is strictly prohibited unless explicitly requested by the user in the prompt or agreed upon in the conversation.
 - **READ BEFORE WRITE:** Do not modify or create files until you have read all relevant skills matching the task.
+<!-- EXPERIMENT (mattpocock-skills): restore when the experiment ends:
 - **NEW FEATURES:** If the task involves a new functionality (new view, page, module, or large component), read and follow the `create-functionality` skill before writing code.
+-->
+- **NEW FEATURES:** If the task involves a new functionality (new view, page, module, or large component), plan it with the `mattpocock-skills` flow (e.g. `grill-with-docs` → `to-spec`) before writing code.
 - **MANDATORY FOOTER:** Every response containing a plan and asking for confirmation must conclude with the exact footer listing all skills and markdown context files read.
 
 ---

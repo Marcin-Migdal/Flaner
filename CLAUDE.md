@@ -32,6 +32,20 @@ The single source of truth for AI rules and skills is `.agents/` (shared with Cu
 - `npm run rules:build` / `npm run rules:check` / `npm run rules:build -- --watch` — compile `firestore.rules` from the spec in `.agents/skills/firestore-rules-manager/docs/` / fail on drift. Never edit `firestore.rules` by hand (see that skill).
 - CI: `.github/workflows/ci.yml` on PRs to `develop`/`master` — design tokens, typecheck, lint, unit, Storybook build, rules (`rules:check` + emulator tests), affected E2E (`scripts/e2e-affected.mjs`). Apps deploy on Vercel; Firestore rules/indexes deploy via `.github/workflows/deploy-firestore.yml` on push to `develop` (DEV) / `master` (PROD); a manual run on a feature branch deploys it to DEV only (final manual test before merge when rules / indexes change — see `AGENTS.md`).
 
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues in `Marcin-Migdal/Flaner` via `gh`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), alongside `area:*`/`type:*`/`priority:*`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: root `GLOSSARY.md` + `docs/adr/`. See `docs/agents/domain.md`.
+
 ## Rules (imported)
 @.agents/AGENTS.md
 @.agents/rules/01-ai-protocol.md
