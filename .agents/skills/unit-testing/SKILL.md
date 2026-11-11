@@ -122,6 +122,29 @@ Always prefer accessible queries that mirror how real users or screen readers in
   ]);
   ```
 
+### A2. Endpoint specs: the Firestore emulator (`*.emu.spec.ts`)
+- **Rule 0:** `endpoints.ts` itself is tested against the real Firestore with the real security rules, never with `vi.mock("firebase/firestore")` / `vi.mock("@flaner/shared/firebase")` or a hand-made transaction / batch fake (#83). Such fakes only prove that Firestore was *called*; a broken transaction or a write the rules reject still passes.
+- Name the spec `endpoints.emu.spec.ts`. `vitest.base.ts` excludes `**/*.emu.spec.*`, so `npm test` stays fast and needs no Java; run them with `npm run test:emulator` (JDK 21, free ports 8080 / 9099, like `npm run test:rules`). CI runs them in the `rules` job.
+- `setupEmulator()` from `@flaner/test-utils/emulator` (not the barrel: it loads Firebase) registers the lifecycle hooks and clears the data and signs out after every test:
+  ```typescript
+  import { setupEmulator } from "@flaner/test-utils/emulator";
+
+  const { signInAs, seed, read, list } = setupEmulator();
+
+  it("createExpense stores the expense and applies it to the group", async () => {
+    await seed({ "split_groups/group-1": group() }); // rules off
+    await signInAs("user-1"); // the app's real `fb.auth`; rules see request.auth.uid == "user-1"
+
+    const created = await createExpense("group-1", expenseInput(), "user-1");
+
+    expect(await read(`split_groups/group-1/expenses/${created.id}`)).toMatchObject({ amount: 40 }); // rules off
+    expect(await read("split_groups/group-1")).toMatchObject({ expensesCount: 1 });
+  });
+  ```
+- Assert the **stored data** (`read` / `list`), not which SDK functions ran. A request the rules deny rejects with `{ code: "permission-denied" }` (e.g. reading a missing split group, before the endpoint's own "does not exist" check).
+- Mock only what leaves the app: HTTP APIs (`vi.mock("../exchangeRates")`). To simulate a concurrent change, write with `seed` inside that mock.
+- Files run one at a time on one emulator (`vitest.emulator.config.ts`, `environment: node`, own project `demo-flaner-unit`, so `dev:emulators` / E2E data is never touched). Pilot: `planning/src/api/splits/endpoints.emu.spec.ts`.
+
 ### B. Typed Mock Factories (Zero `as any`)
 - Always use typed factory functions from `@flaner/test-utils` (or domain-specific test helpers):
   ```typescript
@@ -152,6 +175,19 @@ renderWithProviders(<MyComponent />, {
   // Optional pre-configured QueryClient or overrides
 });
 ```
+
+**Signed-in user:** pass `user` instead of `vi.mock("@flaner/shared/context")`. `useAuth()` then returns that user, `isLoading: false` and `vi.fn()` actions; override any of them with `auth`:
+
+```typescript
+renderWithProviders(<ProfileView />, { user: createMockUser({ uid: "user-1" }) });
+renderWithProviders(<ShellLayout />, { user: createMockUser(), auth: { signOutUser } }); // assert on your own spy
+renderWithProviders(<LoginView />, { user: null }); // signed out
+
+// Hooks: same providers and options, plus `queryClient` in the result
+const { result, queryClient } = renderHookWithProviders(() => useCreateExpenseMutation(), { user: createMockUser() });
+```
+
+Older specs still mock the context; migrate them when you touch them (each area's issue migrates its own specs).
 
 The standard `renderWithProviders` must ensure:
 1. `QueryClient`: configured with `queries: { retry: false, gcTime: 0 }` so failures fail immediately and cache is not leaked between tests.

@@ -27,6 +27,7 @@ The single source of truth for AI rules and skills is `.agents/` (shared with Cu
 - `npm run lint:tokens` — design-token check (no raw colours / arbitrary sizes; `.agents/docs/design-system.md`); tokens live only in `packages/ui-components/src/theme/theme.css`
 - `npx nx run <pkg>:typecheck`, `npm run typecheck`
 - `npm test` / `npx vitest run --project <pkg>` — unit tests (Vitest)
+- `npm run test:emulator` — endpoint specs (`*.emu.spec.ts`, excluded from `npm test`) on the Firestore + Auth emulators with the real rules (`setupEmulator()` from `@flaner/test-utils/emulator`); needs JDK 21 and free ports 8080 / 9099
 - `npm run test:rules` — Firestore security rules tests (`firestore-tests/`) on the emulator; needs JDK 21 (`JAVA_HOME`)
 - `npm run e2e` — Playwright (`e2e/`) against Firebase emulators; starts emulators + `npm run dev` itself, needs JDK 21 and free ports 4200–4205 / 8080 / 9099 (stop your own `npm run dev` / `dev:emulators` first)
 - `npm run rules:build` / `npm run rules:check` / `npm run rules:build -- --watch` — compile `firestore.rules` from the spec in `.agents/skills/firestore-rules-manager/docs/` / fail on drift. Never edit `firestore.rules` by hand (see that skill).

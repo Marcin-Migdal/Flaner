@@ -9,6 +9,11 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./emulator": {
+      "types": "./src/emulator/index.ts",
+      "import": "./src/emulator/index.ts",
+      "default": "./src/emulator/index.ts"
     }
   },
   "peerDependencies": {

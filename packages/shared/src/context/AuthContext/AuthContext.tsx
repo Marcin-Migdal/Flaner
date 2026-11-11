@@ -19,11 +19,15 @@ import {
   updateDoc,
   writeBatch,
 } from "firebase/firestore";
-import { createContext, ReactNode, useContext, useEffect, useState, useRef } from "react";
+import { ReactNode, useEffect, useState, useRef } from "react";
+import { AuthContext } from "./AuthContext.context";
 import { fb } from "../../firebase/firebase";
 import { useTheme } from "../../hooks/useTheme";
 import { LanguageType, UserProfile, UserType } from "../../types";
 import { firestoreConverter } from "../../utils/firestoreConverter";
+
+export { useAuth } from "./AuthContext.context";
+export type { AuthContextValue } from "./AuthContext.context";
 
 // `email` only on profiles created before it moved to Firebase Auth
 const profileRef = (uid: string) =>
@@ -97,31 +101,6 @@ const sendVerificationEmail = async (firebaseUser: User, language: LanguageType)
     if (!(error instanceof FirebaseError) || error.code !== "auth/unauthorized-continue-uri") throw error;
     await sendEmailVerification(firebaseUser);
   }
-};
-
-type AuthContextType = {
-  user: UserType | null;
-  isLoading: boolean;
-  signOutUser: () => Promise<void>;
-  signInWithGoogleUser: (language: LanguageType) => Promise<void>;
-  signInWithEmailUser: (email: string, password: string) => Promise<void>;
-  signUpWithEmailUser: (email: string, password: string, username: string, language: LanguageType) => Promise<void>;
-  updateUser: (updatedUser: Partial<UserType>) => void;
-  /** Email of a signed-in account that is kept out of the app until its email is verified. */
-  unverifiedEmail: string | null;
-  resendVerificationEmail: (language: LanguageType) => Promise<void>;
-  /** Re-reads the account; lets the user in and returns true once the email is verified. */
-  confirmEmailVerification: () => Promise<boolean>;
-};
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
