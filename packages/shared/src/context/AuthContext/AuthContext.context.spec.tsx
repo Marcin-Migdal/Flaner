@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createMockUser, renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderHookWithProviders, renderWithProviders } from "@flaner/test-utils";
 import { useAuth } from "./AuthContext.context";
 
 const Probe = () => {
@@ -27,6 +27,13 @@ describe("useAuth with renderWithProviders", () => {
     await user.click(screen.getByRole("button", { name: "signed out" }));
 
     expect(signOutUser).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives hooks the same signed-in user through renderHookWithProviders", () => {
+    const { result } = renderHookWithProviders(() => useAuth(), { user: createMockUser({ uid: "user-1" }) });
+
+    expect(result.current.user?.uid).toBe("user-1");
+    expect(result.current.isLoading).toBe(false);
   });
 
   it("throws outside an AuthProvider", () => {

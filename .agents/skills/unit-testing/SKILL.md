@@ -182,6 +182,9 @@ renderWithProviders(<MyComponent />, {
 renderWithProviders(<ProfileView />, { user: createMockUser({ uid: "user-1" }) });
 renderWithProviders(<ShellLayout />, { user: createMockUser(), auth: { signOutUser } }); // assert on your own spy
 renderWithProviders(<LoginView />, { user: null }); // signed out
+
+// Hooks: same providers and options, plus `queryClient` in the result
+const { result, queryClient } = renderHookWithProviders(() => useCreateExpenseMutation(), { user: createMockUser() });
 ```
 
 Older specs still mock the context; migrate them when you touch them (each area's issue migrates its own specs).

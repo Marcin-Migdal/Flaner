@@ -1,5 +1,12 @@
 import React, { type ReactElement, type ReactNode } from "react";
-import { render, type RenderOptions, type RenderResult } from "@testing-library/react";
+import {
+  render,
+  renderHook,
+  type RenderHookOptions,
+  type RenderHookResult,
+  type RenderOptions,
+  type RenderResult,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import { I18nextProvider } from "react-i18next";
@@ -52,7 +59,8 @@ export const createMockAuth = (user: UserType | null, overrides: Partial<AuthCon
   ...overrides,
 });
 
-export interface ExtendedRenderOptions extends Omit<RenderOptions, "wrapper"> {
+/** Providers shared by `renderWithProviders` and `renderHookWithProviders`. */
+export type ProvidersOptions = {
   queryClient?: QueryClient;
   initialEntries?: string[];
   i18nInstance?: typeof i18n;
@@ -60,23 +68,16 @@ export interface ExtendedRenderOptions extends Omit<RenderOptions, "wrapper"> {
   user?: UserType | null;
   /** Extra `useAuth()` fields, e.g. `{ updateUser: spy }`; implies a signed-out user when `user` is omitted */
   auth?: Partial<AuthContextValue>;
-}
+};
 
-export interface RenderWithProvidersResult extends RenderResult {
-  queryClient: QueryClient;
-}
-
-export const renderWithProviders = (
-  ui: ReactElement,
-  options: ExtendedRenderOptions = {}
-): RenderWithProvidersResult => {
+/** Query client, i18n, router and (with `user` / `auth`) AuthContext, as one `wrapper` for RTL. */
+export const createProvidersWrapper = (options: ProvidersOptions = {}) => {
   const {
     queryClient = createTestQueryClient(),
     initialEntries = ["/"],
     i18nInstance = createTestI18n(),
     user,
     auth,
-    ...renderOptions
   } = options;
 
   const authValue = user !== undefined || auth ? createMockAuth(user ?? null, auth) : undefined;
@@ -94,10 +95,48 @@ export const renderWithProviders = (
     return authValue ? <AuthContext.Provider value={authValue}>{tree}</AuthContext.Provider> : tree;
   };
 
-  const renderResult = render(ui, { wrapper: Wrapper, ...renderOptions });
+  return { Wrapper, queryClient };
+};
+
+export interface ExtendedRenderOptions extends Omit<RenderOptions, "wrapper">, ProvidersOptions {}
+
+export interface RenderWithProvidersResult extends RenderResult {
+  queryClient: QueryClient;
+}
+
+export const renderWithProviders = (
+  ui: ReactElement,
+  options: ExtendedRenderOptions = {}
+): RenderWithProvidersResult => {
+  const { queryClient, initialEntries, i18nInstance, user, auth, ...renderOptions } = options;
+  const providers = createProvidersWrapper({ queryClient, initialEntries, i18nInstance, user, auth });
+
+  const renderResult = render(ui, { wrapper: providers.Wrapper, ...renderOptions });
 
   return {
     ...renderResult,
-    queryClient,
+    queryClient: providers.queryClient,
+  };
+};
+
+export type RenderHookWithProvidersOptions<Props> = Omit<RenderHookOptions<Props>, "wrapper"> & ProvidersOptions;
+
+export type RenderHookWithProvidersResult<Result, Props> = RenderHookResult<Result, Props> & {
+  queryClient: QueryClient;
+};
+
+/** `renderHook` with the same providers as `renderWithProviders`, e.g. `renderHookWithProviders(() => useX(), { user })`. */
+export const renderHookWithProviders = <Result, Props = undefined>(
+  callback: (props: Props) => Result,
+  options: RenderHookWithProvidersOptions<Props> = {}
+): RenderHookWithProvidersResult<Result, Props> => {
+  const { queryClient, initialEntries, i18nInstance, user, auth, ...hookOptions } = options;
+  const providers = createProvidersWrapper({ queryClient, initialEntries, i18nInstance, user, auth });
+
+  const hookResult = renderHook(callback, { wrapper: providers.Wrapper, ...hookOptions });
+
+  return {
+    ...hookResult,
+    queryClient: providers.queryClient,
   };
 };
