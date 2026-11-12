@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage, FormCheckbox, FormTextField } from "@flaner/ui-components";
+import { Avatar, FormCheckbox, FormTextField } from "@flaner/ui-components";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { SPLIT_TYPES } from "../../../../../../api/splits";
 import type { SplitGroupMember } from "../../../../../../hooks/useSplitGroupMembers";
@@ -83,10 +83,13 @@ export const SplitEditor = ({ membersById }: SplitEditorProps) => {
 
           return (
             <div key={field.id} className={styles.row}>
-              <Avatar className={styles.rowAvatar}>
-                <AvatarImage src={member?.avatarUrl} />
-                <AvatarFallback className={styles.rowAvatarFallback}>{name.charAt(0).toUpperCase()}</AvatarFallback>
-              </Avatar>
+              <Avatar
+                className={styles.rowAvatar}
+                name={name}
+                src={member?.avatarUrl}
+                fallbackClassName={styles.rowAvatarFallback}
+                singleLetterInitial
+              />
 
               {splitType === "equally" ? (
                 <>

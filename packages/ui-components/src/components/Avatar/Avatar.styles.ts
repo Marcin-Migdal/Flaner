@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "@flaner/shared/utils";
 
-/** Styles the fallback (initials) through its slot, so callers keep composing the shadcn parts. */
+/** Styles the fallback (initials) through its slot, for both `name` and composed `AvatarFallback` children. */
 export const avatarVariants = cva("", {
   variants: {
     variant: {

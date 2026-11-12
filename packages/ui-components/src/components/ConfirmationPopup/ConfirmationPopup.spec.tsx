@@ -113,9 +113,16 @@ describe("ConfirmationPopup component", () => {
 
     expect(screen.getByText("Complex description node")).toBeInTheDocument();
 
-    const cancelBtn = screen.getByRole("button", { name: "Cancel" });
+    const cancelBtn = screen.getByRole("button", { name: "cancel" });
     await user.click(cancelBtn);
 
     expect(handleOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("takes default button labels from the ui translations", () => {
+    render(<ConfirmationPopup open={true} onOpenChange={vi.fn()} title="Leave?" onConfirm={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: "confirm" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "cancel" })).toBeInTheDocument();
   });
 });

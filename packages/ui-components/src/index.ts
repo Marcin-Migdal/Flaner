@@ -3,6 +3,7 @@ export * from "./components/Card";
 export * from "./components/ChartContainer";
 export * from "./components/EmptyState";
 export * from "./components/ListItem";
+export * from "./components/SidePanel";
 export * from "./components/PageHeader";
 export * from "./components/Skeleton";
 export * from "./components/Stepper";

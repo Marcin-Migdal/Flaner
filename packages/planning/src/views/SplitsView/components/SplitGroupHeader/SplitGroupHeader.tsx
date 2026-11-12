@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage, Button } from "@flaner/ui-components";
+import { Avatar, Button } from "@flaner/ui-components";
 import { ArrowLeft, HandCoins, Plus } from "lucide-react";
 import { useState } from "react";
 import type { SplitGroup } from "../../../../api/splits";
@@ -73,12 +73,13 @@ export const SplitGroupHeader = ({
                   title={t("splits.members.title", { count: members.length })}
                   aria-label={t("splits.members.title", { count: members.length })}
                 >
-                  <Avatar className={styles.avatar}>
-                    <AvatarImage src={member.avatarUrl} />
-                    <AvatarFallback className={styles.avatarFallback}>
-                      {member.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <Avatar
+                    className={styles.avatar}
+                    name={member.name}
+                    src={member.avatarUrl}
+                    fallbackClassName={styles.avatarFallback}
+                    singleLetterInitial
+                  />
                 </button>
               ))}
             {!isMembersLoading && hiddenCount > 0 && (

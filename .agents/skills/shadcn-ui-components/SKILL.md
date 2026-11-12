@@ -17,7 +17,8 @@ This project uses shadcn/ui with a light and a dark theme driven by the semantic
 | View title | `PageHeader` (`title`, `description`, `icon`, `actions`, `back`, `as`) |
 | Nothing to show | `EmptyState` (`icon`, `title`, `description`, `action`, `variant` `plain` / `card`) |
 | Row in a list | `ListItem` (`leading`, `title`, `description`, `trailing`, `interactive`, `asChild`) |
-| Person | `Avatar` (`variant` `brand` = initials on the brand gradient, `neutral`) + `AvatarImage` / `AvatarFallback` — never a hand-made gradient on the fallback |
+| Person | `Avatar` (`name`, `src`, `variant` `brand` = initials on the brand gradient, `neutral`) — it computes the initials; never `getInitials` in an MFE, never a hand-made gradient on the fallback |
+| Side panel | `SidePanel` (`title`, `description`) inside `Sheet` — never copy the `SheetContent` class string |
 | Loading placeholder | `Skeleton` (same size as the content it replaces) |
 | Status / counter | `Badge` (`variant` `neutral` / `outline` / `brand` / `success` / `warning` / `danger` / `info` / `solid` / `solid-danger`, `shape` `pill` / `tag` / `count`) |
 | Multi-step flow | `Stepper` (`steps`, `currentStep`) |
@@ -25,7 +26,7 @@ This project uses shadcn/ui with a light and a dark theme driven by the semantic
 
 **Catalogue:** every component in `ui-components` has a `<Name>.stories.tsx` next to it (primitives: `components/ui/<name>.stories.tsx`; catalogue-level pages in `src/stories/`). Browse with `npm run storybook`; check both themes (toolbar) and the Accessibility panel before shipping a component. A new component is not done without its story.
 
-Sheet vs. modal: `Sheet` for browsing/managing a collection or secondary context; `Dialog` for a short focused task; destructive confirmation = `ConfirmationPopup`.
+Sheet vs. modal: `Sheet` + `SidePanel` for browsing/managing a collection or secondary context; `Dialog` for a short focused task; destructive confirmation = `ConfirmationPopup`.
 
 ---
 

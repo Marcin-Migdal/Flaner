@@ -2,8 +2,6 @@ import { useAuth } from "@flaner/shared/context";
 import { useDebounce } from "@flaner/shared/hooks";
 import {
   Avatar,
-  AvatarFallback,
-  AvatarImage,
   Button,
   Popover,
   PopoverContent,
@@ -80,10 +78,13 @@ export const QuickAddParticipantPopover = ({ group }: QuickAddParticipantPopover
           onSelect={handleSelect}
           renderResult={(item) => (
             <div className={styles.resultRow}>
-              <Avatar className={styles.resultAvatar}>
-                <AvatarImage src={item.avatarUrl} />
-                <AvatarFallback className={styles.resultAvatarFallback}>{item.name.charAt(0).toUpperCase()}</AvatarFallback>
-              </Avatar>
+              <Avatar
+                className={styles.resultAvatar}
+                name={item.name}
+                src={item.avatarUrl}
+                fallbackClassName={styles.resultAvatarFallback}
+                singleLetterInitial
+              />
               <span className={styles.resultName}>{item.name}</span>
             </div>
           )}

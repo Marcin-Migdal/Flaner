@@ -10,6 +10,7 @@ import {
 import { Button } from "../ui/button";
 import { Loader2 } from "lucide-react";
 import { cn } from "@flaner/shared/utils";
+import { useUiTranslations } from "../../hooks/useUiTranslations";
 
 export interface ConfirmationPopupProps {
   open: boolean;
@@ -30,14 +31,15 @@ export function ConfirmationPopup({
   onOpenChange,
   title,
   description,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
+  confirmLabel,
+  cancelLabel,
   onConfirm,
   onCancel,
   isConfirming = false,
   variant = "primary",
   confirmClassName,
 }: ConfirmationPopupProps) {
+  const { t } = useUiTranslations();
   const handleCancel = () => {
     if (onCancel) onCancel();
     onOpenChange(false);
@@ -74,7 +76,7 @@ export function ConfirmationPopup({
             }}
             disabled={isConfirming}
           >
-            {cancelLabel}
+            {cancelLabel ?? t("cancel")}
           </Button>
           <Button
             type="button"
@@ -91,7 +93,7 @@ export function ConfirmationPopup({
             disabled={isConfirming}
           >
             {isConfirming && <Loader2 className="h-4 w-4 animate-spin" />}
-            {confirmLabel}
+            {confirmLabel ?? t("confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

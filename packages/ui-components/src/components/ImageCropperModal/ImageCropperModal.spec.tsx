@@ -43,18 +43,13 @@ describe("ImageCropperModal component", () => {
         onOpenChange={vi.fn()}
         imageSrc="https://example.com/photo.jpg"
         onCropComplete={vi.fn()}
-        labels={{
-          title: "Adjust Photo",
-          apply: "Save Crop",
-          cancel: "Discard",
-        }}
       />
     );
 
-    expect(screen.getByText("Adjust Photo")).toBeInTheDocument();
+    expect(screen.getByText("imageCropper.title")).toBeInTheDocument();
     expect(screen.getByTestId("mock-cropper")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Save Crop" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Discard" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "imageCropper.apply" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "imageCropper.cancel" })).toBeInTheDocument();
   });
 
   it("calls onCancel when discard/cancel button is clicked", async () => {
@@ -69,13 +64,10 @@ describe("ImageCropperModal component", () => {
         imageSrc="https://example.com/photo.jpg"
         onCropComplete={vi.fn()}
         onCancel={onCancelMock}
-        labels={{
-          cancel: "Cancel Edit",
-        }}
       />
     );
 
-    const cancelBtn = screen.getByRole("button", { name: "Cancel Edit" });
+    const cancelBtn = screen.getByRole("button", { name: "imageCropper.cancel" });
     await user.click(cancelBtn);
 
     expect(onCancelMock).toHaveBeenCalledTimes(1);
@@ -134,9 +126,6 @@ describe("ImageCropperModal component", () => {
         onOpenChange={vi.fn()}
         imageSrc="https://example.com/photo.jpg"
         onCropComplete={vi.fn()}
-        labels={{
-          cropError: "Custom crop failed message",
-        }}
       />
     );
 
@@ -148,7 +137,7 @@ describe("ImageCropperModal component", () => {
     await user.click(applyBtn);
 
     await waitFor(() => {
-      expect(toastSpy).toHaveBeenCalledWith("Custom crop failed message");
+      expect(toastSpy).toHaveBeenCalledWith("imageCropper.cropError");
     });
   });
 

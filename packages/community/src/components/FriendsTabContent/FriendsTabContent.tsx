@@ -1,7 +1,5 @@
 import {
   Avatar,
-  AvatarFallback,
-  AvatarImage,
   Button,
   Card,
   ConfirmationPopup,
@@ -39,11 +37,6 @@ export function FriendsTabContent() {
   });
 
   const deleteFriend = useRemoveFriendMutation();
-
-  const getInitials = (name: string) => {
-    if (!name) return "??";
-    return name.slice(0, 2).toUpperCase();
-  };
 
   const handleConfirmRemove = async () => {
     if (!friendToRemove) return;
@@ -93,10 +86,7 @@ export function FriendsTabContent() {
                 <ListItem
                   className={styles.row}
                   leading={
-                    <Avatar variant="brand" className={styles.avatar}>
-                      {friend.avatarUrl && <AvatarImage src={friend.avatarUrl} alt={friend.username} />}
-                      <AvatarFallback className="text-sm">{getInitials(friend.username)}</AvatarFallback>
-                    </Avatar>
+                    <Avatar variant="brand" name={friend.username} src={friend.avatarUrl} className={styles.avatar} />
                   }
                   title={<span className={cn(friend.isDeleted && styles.deletedName)}>{friend.username}</span>}
                   description={t("friendsList.addedAt", { date: new Date(friend.createdAt).toLocaleDateString() })}

@@ -61,7 +61,7 @@ describe("SchedulerParticipantsList", () => {
     expect(screen.getByText("hub.noParticipants")).toBeInTheDocument();
   });
 
-  it("renders participant with avatar image", () => {
+  it("shows the participant's initial while the avatar image has not loaded", () => {
     renderWithProviders(
       <SchedulerParticipantsList
         participants={[
@@ -72,7 +72,7 @@ describe("SchedulerParticipantsList", () => {
       />,
     );
 
-    const img = screen.getByRole("img", { name: "Alice" });
-    expect(img).toHaveAttribute("src", "https://example.com/alice.jpg");
+    // jsdom never loads images, so the avatar keeps its fallback
+    expect(screen.getByText("A")).toBeInTheDocument();
   });
 });

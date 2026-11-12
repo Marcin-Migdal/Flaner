@@ -2,18 +2,14 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ChevronRight } from "lucide-react";
 import { Avatar } from "../Avatar";
 import { Badge } from "../Badge";
-import { AvatarFallback } from "../ui/avatar";
+import { Button } from "../ui/button";
 import { ListItem } from "./ListItem";
 
 const meta = {
   title: "Components/ListItem",
   component: ListItem,
   args: {
-    leading: (
-      <Avatar>
-        <AvatarFallback>AN</AvatarFallback>
-      </Avatar>
-    ),
+    leading: <Avatar variant="brand" name="Anna Nowak" />,
     title: "Anna Nowak",
     description: "@anna",
     trailing: <Badge variant="success">Friend</Badge>,
@@ -47,4 +43,20 @@ export const List: Story = {
       <ListItem {...args} title="Ola" description="@ola" trailing={undefined} />
     </div>
   ),
+};
+
+/** Row actions go in `trailing`; `Button isBusy` shows the pending state and keeps the label. */
+export const WithActions: Story = {
+  args: {
+    trailing: (
+      <>
+        <Button size="sm" variant="brand" isBusy>
+          Accept
+        </Button>
+        <Button size="sm" variant="destructive" disabled>
+          Reject
+        </Button>
+      </>
+    ),
+  },
 };

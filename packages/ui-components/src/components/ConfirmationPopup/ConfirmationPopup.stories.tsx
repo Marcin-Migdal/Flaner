@@ -12,7 +12,6 @@ const meta = {
     title: "Delete group?",
     description: "Members lose access to its events and splits. This cannot be undone.",
     confirmLabel: "Delete",
-    cancelLabel: "Cancel",
     variant: "destructive",
   },
   argTypes: { variant: { control: "inline-radio", options: ["primary", "destructive", "brand", "warning"] } },

@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@flaner/ui-components";
+import { Avatar } from "@flaner/ui-components";
 import { formatDistanceToNow } from "date-fns";
 import { pl, enUS } from "date-fns/locale";
 import { TFunction } from "i18next";
@@ -91,12 +91,14 @@ export function NotificationContent({ notification }: NotificationContentProps) 
   return (
     <>
       <div className="relative shrink-0">
-        <Avatar className="size-10 border border-border/50 shadow-sm">
-          <AvatarImage src={notification.senderAvatarUrl} alt={notification.senderUsername} />
-          <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-            {notification.senderUsername?.charAt(0)?.toUpperCase() || "?"}
-          </AvatarFallback>
-        </Avatar>
+        <Avatar
+          className="size-10 border border-border/50 shadow-sm"
+          name={notification.senderUsername ?? ""}
+          src={notification.senderAvatarUrl}
+          alt={notification.senderUsername}
+          fallbackClassName="bg-muted text-muted-foreground text-xs"
+          singleLetterInitial
+        />
         <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5 border border-border shadow-sm">
           {getIcon(notification.type)}
         </div>

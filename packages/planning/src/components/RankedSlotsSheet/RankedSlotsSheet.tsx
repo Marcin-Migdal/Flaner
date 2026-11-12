@@ -7,8 +7,6 @@ import {
   SheetTitle,
   SheetDescription,
   Avatar,
-  AvatarImage,
-  AvatarFallback,
 } from "@flaner/ui-components";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import type { SchedulerEvent, VoteType } from "../../api/events/types";
@@ -148,12 +146,11 @@ export const RankedSlotsSheet = ({
                             key={uid}
                             className="w-5 h-5 ring-2 ring-card border-0"
                             tooltip={profile?.name}
-                          >
-                            <AvatarImage src={profile?.avatarUrl} />
-                            <AvatarFallback className="text-4xs">
-                              {profile?.name?.[0]?.toUpperCase() || "?"}
-                            </AvatarFallback>
-                          </Avatar>
+                            name={profile?.name ?? ""}
+                            src={profile?.avatarUrl}
+                            fallbackClassName="text-4xs"
+                            singleLetterInitial
+                          />
                         );
                       })}
                     </div>
@@ -175,12 +172,11 @@ export const RankedSlotsSheet = ({
                               key={uid}
                               className="w-5 h-5 ring-2 ring-card border-0"
                               tooltip={profile?.name}
-                            >
-                              <AvatarImage src={profile?.avatarUrl} />
-                              <AvatarFallback className="text-4xs">
-                                {profile?.name?.[0]?.toUpperCase() || "?"}
-                              </AvatarFallback>
-                            </Avatar>
+                              name={profile?.name ?? ""}
+                              src={profile?.avatarUrl}
+                              fallbackClassName="text-4xs"
+                              singleLetterInitial
+                            />
                           );
                         })}
                       </div>
@@ -203,12 +199,11 @@ export const RankedSlotsSheet = ({
                               key={uid}
                               className="w-5 h-5 ring-2 ring-card border-0"
                               tooltip={profile?.name}
-                            >
-                              <AvatarImage src={profile?.avatarUrl} />
-                              <AvatarFallback className="text-4xs">
-                                {profile?.name?.[0]?.toUpperCase() || "?"}
-                              </AvatarFallback>
-                            </Avatar>
+                              name={profile?.name ?? ""}
+                              src={profile?.avatarUrl}
+                              fallbackClassName="text-4xs"
+                              singleLetterInitial
+                            />
                           );
                         })}
                       </div>

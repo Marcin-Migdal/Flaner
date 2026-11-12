@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Search, User, Users, X } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage, SearchBar } from "@flaner/ui-components";
+import { Avatar, SearchBar } from "@flaner/ui-components";
 import { reactQueryMeta } from "@flaner/shared/constants";
 import { useAuth } from "@flaner/shared/context";
 import { useDebounce } from "@flaner/shared/hooks";
@@ -169,15 +169,18 @@ export const ParticipantSelect = ({
           onSelect={handleSelect}
           renderResult={(item) => (
             <div className={styles.resultRow}>
-              <Avatar className={styles.resultAvatar}>
-                <AvatarImage src={item.avatarUrl} />
-                <AvatarFallback className={styles.resultAvatarFallback}>
-                  {item.type === "group" ? (
-                    <Users className={styles.resultIcon} />
-                  ) : (
-                    item.name?.[0]?.toUpperCase() || <User className={styles.resultIcon} />
-                  )}
-                </AvatarFallback>
+              <Avatar
+                className={styles.resultAvatar}
+                name={item.name ?? ""}
+                src={item.avatarUrl}
+                fallbackClassName={styles.resultAvatarFallback}
+                singleLetterInitial
+              >
+                {item.type === "group" ? (
+                  <Users className={styles.resultIcon} />
+                ) : item.name ? undefined : (
+                  <User className={styles.resultIcon} />
+                )}
               </Avatar>
               <div className={styles.resultText}>
                 <span className={styles.resultName}>{item.name}</span>
@@ -196,11 +199,14 @@ export const ParticipantSelect = ({
 
               return (
                 <div key={p.id} className={styles.chip}>
-                  <Avatar className={styles.chipAvatar}>
-                    <AvatarImage src={p.avatarUrl} />
-                    <AvatarFallback className={styles.chipAvatarFallback}>
-                      {p.type === "group" ? <Users className={styles.chipIcon} /> : p.name?.[0]?.toUpperCase() || "?"}
-                    </AvatarFallback>
+                  <Avatar
+                    className={styles.chipAvatar}
+                    name={p.name ?? ""}
+                    src={p.avatarUrl}
+                    fallbackClassName={styles.chipAvatarFallback}
+                    singleLetterInitial
+                  >
+                    {p.type === "group" ? <Users className={styles.chipIcon} /> : undefined}
                   </Avatar>
                   <div className={styles.chipLabel}>
                     <span>{p.name}</span>

@@ -22,6 +22,6 @@ describe("Profile component", () => {
 
   it("handles fallback initials when username is empty", () => {
     render(<Profile username="" />);
-    expect(screen.getByText("US")).toBeInTheDocument();
+    expect(screen.getByText("??")).toBeInTheDocument();
   });
 });
