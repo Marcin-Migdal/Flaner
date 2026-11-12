@@ -1,8 +1,6 @@
 import { useAuth } from "@flaner/shared/context";
 import {
   Avatar,
-  AvatarFallback,
-  AvatarImage,
   Button,
   ConfirmationPopup,
   DropdownMenu,
@@ -195,13 +193,12 @@ export function GroupDetailsView() {
 
       <div className={groupDetailsViewStyles.headerCard}>
         <div className={groupDetailsViewStyles.groupInfoWrapper}>
-          <div className={groupDetailsViewStyles.avatar}>
-            {group.avatarUrl ? (
-              <img src={group.avatarUrl} alt={group.name} className="size-full object-cover" />
-            ) : (
-              group.name.substring(0, 2).toUpperCase()
-            )}
-          </div>
+          <Avatar
+            name={group.name}
+            src={group.avatarUrl}
+            className={groupDetailsViewStyles.avatar}
+            fallbackClassName={groupDetailsViewStyles.avatarFallback}
+          />
 
           <div className={groupDetailsViewStyles.infoContent}>
             <h1 className={groupDetailsViewStyles.title}>{group.name}</h1>
@@ -326,7 +323,6 @@ export function GroupDetailsView() {
                 {members.map((member) => {
                   const profile = membersProfiles?.find((p) => p.uid === member.userId);
                   const displayName = profile?.username || member.userId;
-                  const initials = displayName.substring(0, 2).toUpperCase();
                   const isCurrentUser = user?.uid === member.userId;
                   const friendStatus = isFriend(member.userId);
                   const sentStatus = hasSentFriendRequest(member.userId);
@@ -342,12 +338,12 @@ export function GroupDetailsView() {
                       className={groupDetailsViewStyles.memberRow}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <Avatar variant="brand" className="size-10 border border-border shrink-0">
-                          {profile?.avatarUrl && <AvatarImage src={profile.avatarUrl} alt={displayName} />}
-                          <AvatarFallback className="text-sm">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
+                        <Avatar
+                          variant="brand"
+                          name={displayName}
+                          src={profile?.avatarUrl}
+                          className="size-10 border border-border shrink-0 text-sm"
+                        />
                         <div className="min-w-0">
                           <span className="font-medium text-sm text-foreground block truncate">{displayName}</span>
                           {isCurrentUser && (

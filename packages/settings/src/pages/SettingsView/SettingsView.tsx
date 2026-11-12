@@ -1,6 +1,7 @@
 import { useAuth } from "@flaner/shared/context";
 import { cn, compressImage, ONE_MB, toast, uploadToCloudinary } from "@flaner/shared/utils";
 import {
+  Avatar,
   Button,
   ConfirmationPopup,
   FormImagePicker,
@@ -94,12 +95,6 @@ export function SettingsView() {
     });
   };
 
-  // Get initials for placeholder avatar
-  const getInitials = () => {
-    if (!user?.username) return "FL";
-    return user.username.slice(0, 2).toUpperCase();
-  };
-
   const languageOptions = [
     { value: "en", label: t("preferences.langs.en") },
     { value: "pl", label: t("preferences.langs.pl") },
@@ -134,24 +129,14 @@ export function SettingsView() {
             <div className={settingsViewStyles.card}>
               {/* Static Avatar Preview Block */}
               <div className={settingsViewStyles.avatarWrapper}>
-                <div className="relative">
-                  {user?.avatarUrl ? (
-                    <img
-                      src={user.avatarUrl}
-                      alt="Avatar Preview"
-                      className={settingsViewStyles.avatarPreview}
-                      onError={(e) => {
-                        // Fallback on broken URL
-                        e.currentTarget.src =
-                          `https://api.dicebear.com/7.x/initials/svg?seed=${user?.username || "User"}`;
-                      }}
-                    />
-                  ) : (
-                    <div className={settingsViewStyles.avatarPlaceholder}>
-                      {getInitials()}
-                    </div>
-                  )}
-                </div>
+                <Avatar
+                  variant="brand"
+                  name={user?.username || "Flaner"}
+                  src={user?.avatarUrl}
+                  alt="Avatar Preview"
+                  className={settingsViewStyles.avatar}
+                  fallbackClassName={settingsViewStyles.avatarFallback}
+                />
                 <div className={settingsViewStyles.profileInfo}>
                   <h3 className={settingsViewStyles.profileUsername}>{user?.username}</h3>
                   <p className={settingsViewStyles.profileEmail}>{user?.email}</p>

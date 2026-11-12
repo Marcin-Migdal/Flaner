@@ -15,17 +15,6 @@ import { toast } from "@flaner/shared/utils";
 import { getCroppedImg } from "../../utils/cropImage";
 import { imageCropperModalStyles } from "./ImageCropperModal.styles";
 
-export type ImageCropperLabels = {
-  title?: string;
-  description?: string;
-  zoom?: string;
-  rotate?: string;
-  cancel?: string;
-  apply?: string;
-  processing?: string;
-  cropError?: string;
-};
-
 export type ImageCropperModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -34,7 +23,6 @@ export type ImageCropperModalProps = {
   aspect?: number;
   outputSize?: { width: number; height: number };
   fileName?: string;
-  labels?: Partial<ImageCropperLabels>;
   onCropComplete: (croppedFile: File) => void;
   onCancel?: () => void;
 };
@@ -45,7 +33,6 @@ type ImageCropperContentProps = {
   aspect: number;
   outputSize: { width: number; height: number };
   fileName: string;
-  labels?: Partial<ImageCropperLabels>;
   onCropComplete: (croppedFile: File) => void;
   onCancel?: () => void;
   onOpenChange: (open: boolean) => void;
@@ -57,7 +44,6 @@ const ImageCropperContent = ({
   aspect,
   outputSize,
   fileName,
-  labels,
   onCropComplete,
   onCancel,
   onOpenChange,
@@ -93,7 +79,7 @@ const ImageCropperContent = ({
       onCropComplete(croppedFile);
       onOpenChange(false);
     } catch {
-      toast.failure(labels?.cropError || t("imageCropper.cropError"));
+      toast.failure(t("imageCropper.cropError"));
     } finally {
       setIsProcessing(false);
     }
@@ -108,10 +94,10 @@ const ImageCropperContent = ({
     <DialogContent className={imageCropperModalStyles.dialogContent}>
       <DialogHeader>
         <DialogTitle>
-          {labels?.title || t("imageCropper.title")}
+          {t("imageCropper.title")}
         </DialogTitle>
         <DialogDescription>
-          {labels?.description || t("imageCropper.description")}
+          {t("imageCropper.description")}
         </DialogDescription>
       </DialogHeader>
 
@@ -141,7 +127,7 @@ const ImageCropperContent = ({
             max={3}
             step={0.05}
             value={zoom}
-            aria-label={labels?.zoom || t("imageCropper.zoom")}
+            aria-label={t("imageCropper.zoom")}
             onChange={(e) => setZoom(Number(e.target.value))}
             className={imageCropperModalStyles.slider}
           />
@@ -158,7 +144,7 @@ const ImageCropperContent = ({
             className="text-xs flex items-center gap-1.5"
           >
             <RotateCw className="size-3.5" />
-            {labels?.rotate || t("imageCropper.rotate")}
+            {t("imageCropper.rotate")}
           </Button>
         </div>
       </div>
@@ -170,7 +156,7 @@ const ImageCropperContent = ({
           onClick={handleCancel}
           disabled={isProcessing}
         >
-          {labels?.cancel || t("imageCropper.cancel")}
+          {t("imageCropper.cancel")}
         </Button>
         <Button
           type="button"
@@ -181,10 +167,10 @@ const ImageCropperContent = ({
           {isProcessing ? (
             <>
               <Loader2 className="size-4 animate-spin mr-2" />
-              {labels?.processing || t("imageCropper.processing")}
+              {t("imageCropper.processing")}
             </>
           ) : (
-            labels?.apply || t("imageCropper.apply")
+            t("imageCropper.apply")
           )}
         </Button>
       </DialogFooter>
@@ -200,7 +186,6 @@ export const ImageCropperModal = ({
   aspect = 1,
   outputSize = { width: 512, height: 512 },
   fileName = "avatar.webp",
-  labels,
   onCropComplete,
   onCancel,
 }: ImageCropperModalProps) => {
@@ -214,7 +199,6 @@ export const ImageCropperModal = ({
           aspect={aspect}
           outputSize={outputSize}
           fileName={fileName}
-          labels={labels}
           onCropComplete={onCropComplete}
           onCancel={onCancel}
           onOpenChange={onOpenChange}

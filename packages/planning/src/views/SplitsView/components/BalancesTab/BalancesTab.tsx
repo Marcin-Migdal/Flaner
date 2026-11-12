@@ -5,8 +5,6 @@ import {
   AccordionItem,
   AccordionTrigger,
   Avatar,
-  AvatarFallback,
-  AvatarImage,
   ConfirmationPopup,
   Switch,
   Tooltip,
@@ -205,10 +203,13 @@ export const BalancesTab = ({
 
                   return (
                     <div key={member.id} className={styles.memberRow}>
-                      <Avatar className={styles.memberAvatar}>
-                        <AvatarImage src={member.avatarUrl} />
-                        <AvatarFallback className={styles.memberAvatarFallback}>{name.charAt(0).toUpperCase()}</AvatarFallback>
-                      </Avatar>
+                      <Avatar
+                        className={styles.memberAvatar}
+                        name={name}
+                        src={member.avatarUrl}
+                        fallbackClassName={styles.memberAvatarFallback}
+                        singleLetterInitial
+                      />
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className={styles.memberName}>{name}</span>

@@ -6,7 +6,7 @@ import { EmptyState } from "../components/EmptyState";
 import { ListItem } from "../components/ListItem";
 import { PageHeader } from "../components/PageHeader";
 import { Skeleton } from "../components/Skeleton";
-import { AvatarFallback, Avatar as ShadcnAvatar } from "../components/ui/avatar";
+import { Avatar } from "../components/Avatar";
 import { Button } from "../components/ui/button";
 
 type State = "content" | "loading" | "empty";
@@ -42,9 +42,7 @@ function PageShell({ state }: { state: State }) {
               key={member.id}
               className="bg-surface-raised shadow-raised"
               leading={
-                <ShadcnAvatar>
-                  <AvatarFallback>{member.name.slice(0, 2).toUpperCase()}</AvatarFallback>
-                </ShadcnAvatar>
+                <Avatar variant="brand" name={member.name} />
               }
               title={member.name}
               description={member.handle}

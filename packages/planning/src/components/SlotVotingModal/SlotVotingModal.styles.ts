@@ -73,6 +73,20 @@ export const slotVotingParticipantPillVariants = cva(
   },
 );
 
+export const slotVotingParticipantAvatarFallbackVariants = cva("text-4xs font-bold", {
+  variants: {
+    vote: {
+      yes: "bg-vote-yes/20 text-vote-yes-text",
+      maybe: "bg-vote-maybe/20 text-vote-maybe-text",
+      no: "bg-vote-no/20 text-vote-no-text",
+      unvoted: "bg-muted-foreground/20",
+    },
+  },
+  defaultVariants: {
+    vote: "unvoted",
+  },
+});
+
 export const slotVotingSectionHeaderVariants = cva(
   "text-xs font-semibold flex items-center justify-between pb-1 border-b border-border/40",
   {

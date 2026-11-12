@@ -221,7 +221,8 @@
     "empty": "No invitations",
     "loading": "Loading...",
     "someone": "Someone",
-    "joining": "Joining..."
+    "joining": "Joining...",
+    "rejecting": "Rejecting..."
   },
   "inviteToGroup": {
     "title": "Invite Users",

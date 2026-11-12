@@ -212,7 +212,8 @@
     "empty": "Brak zaproszeń",
     "loading": "Ładowanie...",
     "someone": "Ktoś",
-    "joining": "Dołączanie..."
+    "joining": "Dołączanie...",
+    "rejecting": "Odrzucanie..."
   },
   "inviteToGroup": {
     "title": "Zaproś użytkowników",

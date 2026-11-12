@@ -245,8 +245,10 @@ describe("InvitationsSheet component", () => {
 
     renderWithProviders(<InvitationsSheet />);
 
-    // Cancel button is disabled and has animate-spin loader
-    expect(screen.queryByText("invitations.cancel")).not.toBeInTheDocument();
+    // Cancel button keeps its label, shows the busy spinner and is disabled
+    const cancelBtn = screen.getByRole("button", { name: "invitations.cancel" });
+    expect(cancelBtn).toHaveAttribute("aria-busy", "true");
+    expect(cancelBtn).toBeDisabled();
   });
 
   it("handles isAccepting and isRejecting states on received request item", () => {
@@ -279,6 +281,8 @@ describe("InvitationsSheet component", () => {
 
     const { unmount } = renderWithProviders(<InvitationsSheet />);
     expect(screen.getByText("Alice")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "invitations.accept" })).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("button", { name: "invitations.reject" })).toBeDisabled();
     unmount();
 
     vi.mocked(hooks.useAcceptFriendRequestMutation).mockReturnValue({
@@ -293,6 +297,8 @@ describe("InvitationsSheet component", () => {
 
     renderWithProviders(<InvitationsSheet />);
     expect(screen.getByText("Alice")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "invitations.reject" })).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("button", { name: "invitations.accept" })).toBeDisabled();
   });
 });
 
