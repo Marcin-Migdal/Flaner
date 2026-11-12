@@ -6,6 +6,16 @@
     "applyChanges": true
   },
   "analytics": false,
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "sharedGlobals": [
+      "{workspaceRoot}/tsconfig.base.json",
+      "{workspaceRoot}/tsconfig.json",
+      "{workspaceRoot}/vitest.base.ts",
+      "{workspaceRoot}/vite.federation.ts",
+      "{workspaceRoot}/.node-version"
+    ]
+  },
   "pluginsConfig": {
     "@nx/js": {
       "projectsAffectedByDependencyUpdates": "auto"
