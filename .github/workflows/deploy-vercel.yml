@@ -1,0 +1,117 @@
+name: Deploy Vercel
+
+# Builds every app on its own runner and uploads it with `vercel deploy --prebuilt` (issue #107).
+# Vercel Hobby allows 1 concurrent build, so Git-triggered builds queued for ~12-15 min; a prebuilt upload holds the slot for seconds.
+# Vercel's own Git deploys are off (`git.deploymentEnabled: false` in packages/*/vercel.json).
+#   PR to develop/master -> Preview of affected apps (URL in the PR as a GitHub deployment)
+#   push to develop      -> all apps to Preview + alias to the DEV domains (flaner-dev / flaner-<app>-dev)
+#   push to master       -> all apps to Production
+#   manual run           -> all apps; master = Production, develop = DEV domains, other branches = Preview only
+# Fallback if this breaks: revert the #107 merge commit; that restores Vercel's Git builds (see vercel-project-setup skill).
+on:
+  pull_request:
+    branches: [develop, master]
+  push:
+    branches: [develop, master]
+  workflow_dispatch:
+
+concurrency:
+  # PR: a new push cancels the old run. develop/master: runs queue, so an older deploy never overwrites a newer alias.
+  group: deploy-vercel-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  deployments: write
+
+env:
+  NX_DAEMON: "false"
+  # VITE_* env vars come from Vercel and are not in the Nx task hash, so a cached build could ship another env.
+  NX_SKIP_NX_CACHE: "true"
+  VERCEL_CLI: vercel@65.14.0
+  VERCEL_ORG_ID: team_2Gq6Pmm2UFj39hFECnl48vHr
+  TARGET: ${{ github.ref_name == 'master' && github.event_name != 'pull_request' && 'production' || 'preview' }}
+
+jobs:
+  plan:
+    name: Pick apps
+    runs-on: ubuntu-latest
+    outputs:
+      apps: ${{ steps.apps.outputs.apps }}
+    steps:
+      - if: github.event_name == 'pull_request'
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - if: github.event_name == 'pull_request'
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - if: github.event_name == 'pull_request'
+        run: npm ci
+      - id: apps
+        env:
+          ALL: '["core","community","planning","settings","shopping","tools"]'
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            apps=$(npx nx show projects --affected --type app --base="$BASE" --head=HEAD --json \
+              | jq -c --argjson all "$ALL" '[.[] | select(. as $p | $all | index($p))]')
+          else
+            apps="$ALL"
+          fi
+          echo "apps=$apps" | tee -a "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy ${{ matrix.app }}
+    needs: plan
+    if: needs.plan.outputs.apps != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(needs.plan.outputs.apps) }}
+    environment:
+      name: ${{ github.event_name != 'pull_request' && github.ref_name == 'master' && 'production' || 'preview' }}-${{ matrix.app }}
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_PROJECT_ID: ${{ fromJSON('{"core":"prj_y3CwC0JVLXuxYPKqMVCqJPw2eJTF","community":"prj_DS0mhcwEjzUsNiXgWlPruQ2Lcm8Y","planning":"prj_gQUxxeorvSYhfPml162k2IpSPb4p","settings":"prj_Uvc6G9GAZDJRuDz6ieMMCEsWcQqE","shopping":"prj_Cn1KLn3gEdtV0n2QwHmAHYYR0acm","tools":"prj_595lW069mZbcS819ygEOrsjEPtBn"}')[matrix.app] }}
+      PROD_FLAG: ${{ github.event_name != 'pull_request' && github.ref_name == 'master' && '--prod' || '' }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      # Project settings (Root Directory packages/<app>) + env vars of the target environment.
+      - run: npx --yes "$VERCEL_CLI" pull --yes --environment="$TARGET" --token="$VERCEL_TOKEN"
+      # Runs buildCommand from packages/<app>/vercel.json (`nx run <app>:build`) into .vercel/output.
+      - run: npx --yes "$VERCEL_CLI" build $PROD_FLAG --token="$VERCEL_TOKEN"
+      - id: deploy
+        run: |
+          url=$(npx --yes "$VERCEL_CLI" deploy --prebuilt $PROD_FLAG --token="$VERCEL_TOKEN")
+          echo "url=$url" | tee -a "$GITHUB_OUTPUT"
+      # CLI deploys carry no Git branch, so Vercel's branch domains don't follow develop: alias them here.
+      - if: github.event_name != 'pull_request' && github.ref_name == 'develop'
+        env:
+          DOMAIN: ${{ matrix.app == 'core' && 'flaner-dev.vercel.app' || format('flaner-{0}-dev.vercel.app', matrix.app) }}
+          URL: ${{ steps.deploy.outputs.url }}
+        run: npx --yes "$VERCEL_CLI" alias set "$URL" "$DOMAIN" --scope="$VERCEL_ORG_ID" --token="$VERCEL_TOKEN"
+
+  # One stable check for branch protection: the matrix jobs exist only for affected apps.
+  result:
+    name: Deploy result
+    needs: [plan, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          PLAN: ${{ needs.plan.result }}
+          DEPLOY: ${{ needs.deploy.result }}
+        run: |
+          echo "plan=$PLAN deploy=$DEPLOY"
+          [ "$PLAN" = success ] && { [ "$DEPLOY" = success ] || [ "$DEPLOY" = skipped ]; }
