@@ -139,13 +139,13 @@ Every view must be verified on mobile viewports (`Pixel 7`, `iPhone 14`) for vis
 
 ## 6. Selective Execution & CI (GitHub Actions)
 
-CI lives in `.github/workflows/ci.yml` (runs on PRs to `develop` / `master`). The `e2e` job runs `scripts/e2e-affected.mjs <PR base sha>`, which combines `nx show projects --affected` with `git diff` to pick Playwright projects (defined per domain in `e2e/playwright.config.ts`):
+CI lives in `.github/workflows/ci.yml` (runs on PRs to `develop` / `master`). The `E2E plan` job runs `scripts/e2e-affected.mjs <PR base sha>`, which combines `nx show projects --affected` with `git diff` to pick Playwright projects (defined per domain in `e2e/playwright.config.ts`):
 
 - `core`, `shared`, `ui-components`, `test-utils` affected, or a change in `e2e/support`, e2e config, root config, lockfile or `.github/` → **full suite**.
 - One MFE affected → that MFE's project + `core` + `mobile`.
 - Change in `e2e/<project>/` → that project.
 - Only `.agents/**` / `*.md` → E2E skipped.
 
-The selection runs in a single `npx playwright test --config=e2e/playwright.config.ts --project=a --project=b` call, so emulators and dev servers start once. On failure `playwright-report/` is uploaded as an artifact. When adding a new MFE / Playwright project, update `MFES` and the `e2e/<project>` regex in `scripts/e2e-affected.mjs`.
+Each selected project gets its own runner (`E2E (<project>)` matrix job: emulators + dev servers + `--project=<project>`, `setup` runs as a dependency), so the wall time is the slowest project (`community`), not the sum. On failure that project uploads `playwright-report-<project>`. The required check is the summary job **E2E (affected)**, because the matrix jobs exist only for affected projects. When adding a new MFE / Playwright project, update `MFES`, `ALL_PROJECTS` and the `e2e/<project>` regex in `scripts/e2e-affected.mjs`.
 
 Locally, single projects: `npx nx run e2e:e2e:<project>` or `npx playwright test --config=e2e/playwright.config.ts --project=<project>`.

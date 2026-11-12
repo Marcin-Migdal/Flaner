@@ -1,11 +1,13 @@
 // Picks the Playwright projects (e2e/playwright.config.ts) affected by a PR.
 // Usage: node scripts/e2e-affected.mjs <base-sha>
-// Writes to $GITHUB_OUTPUT (and stdout): `run` (anything to test), `full` (whole suite)
-// and `projects` (`--project=<name>` flags; empty when full).
+// Writes to $GITHUB_OUTPUT (and stdout) `projects`: a JSON array of Playwright project names
+// (all of them for a full run, `[]` for none); ci.yml runs one E2E job per entry.
 import { execFileSync } from "node:child_process";
 import { appendFileSync } from "node:fs";
 
 const MFES = ["community", "settings", "planning", "shopping", "tools"];
+// Playwright projects in e2e/playwright.config.ts, slowest first so the longest job starts first.
+const ALL_PROJECTS = ["community", "core", "planning", "tools", "settings", "mobile", "shopping"];
 const FULL_SUITE_PACKAGES = ["core", "shared", "ui-components", "test-utils"];
 // Files outside packages/ that cannot affect E2E.
 const IGNORED = [/^\.agents\//, /\.md$/];
@@ -32,8 +34,8 @@ for (const file of changedFiles) {
   else full = true; // e2e/support, e2e config, root config, lockfile, CI
 }
 
-const flags = full ? "" : [...projects].map((p) => `--project=${p}`).join(" ");
-const output = `full=${full}\nprojects=${flags}\nrun=${full || projects.size > 0}\n`;
+const selected = full ? ALL_PROJECTS : ALL_PROJECTS.filter((p) => projects.has(p));
+const output = `projects=${JSON.stringify(selected)}\n`;
 console.log(`nx affected: ${affected.join(", ") || "-"}`);
 console.log(output);
 if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, output);

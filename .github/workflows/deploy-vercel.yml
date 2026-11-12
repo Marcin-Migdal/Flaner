@@ -44,12 +44,7 @@ jobs:
         with:
           fetch-depth: 0
       - if: github.event_name == 'pull_request'
-        uses: actions/setup-node@v5
-        with:
-          node-version-file: .node-version
-          cache: npm
-      - if: github.event_name == 'pull_request'
-        run: npm ci
+        uses: ./.github/actions/setup
       - id: apps
         env:
           ALL: '["core","community","planning","settings","shopping","tools"]'
@@ -82,11 +77,7 @@ jobs:
       PROD_FLAG: ${{ github.event_name != 'pull_request' && github.ref_name == 'master' && '--prod' || '' }}
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version-file: .node-version
-          cache: npm
-      - run: npm ci
+      - uses: ./.github/actions/setup
       # Project settings (Root Directory packages/<app>) + env vars of the target environment.
       - run: npx --yes "$VERCEL_CLI" pull --yes --environment="$TARGET" --token="$VERCEL_TOKEN"
       # Runs buildCommand from packages/<app>/vercel.json (`nx run <app>:build`) into .vercel/output.

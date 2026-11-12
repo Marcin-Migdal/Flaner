@@ -23,6 +23,7 @@
       }
     },
     "typecheck": {
+      "cache": true,
       "executor": "nx:run-commands",
       "options": {
         "command": "tsc -p tsconfig.json --noEmit",

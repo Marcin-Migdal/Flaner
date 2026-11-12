@@ -1,0 +1,20 @@
+name: Setup Node and dependencies
+description: setup-node + node_modules restored from cache; `npm ci` runs only on a cache miss (saves ~50 s per job).
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v5
+      with:
+        node-version-file: .node-version
+    - id: node-modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          node_modules
+          packages/*/node_modules
+        # Lockfile + Node version decide the installed tree; anything else would make a stale cache.
+        key: node-modules-${{ runner.os }}-${{ hashFiles('.node-version', 'package-lock.json') }}
+    - if: steps.node-modules.outputs.cache-hit != 'true'
+      shell: bash
+      run: npm ci
