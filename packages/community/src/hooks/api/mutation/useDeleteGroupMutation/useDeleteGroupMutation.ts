@@ -1,33 +1,20 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { deleteGroup } from '../../../../api/groups';
-import { useInvalidateUserGroupsQuery } from "../../query/useGetUserGroupsQuery";
-import { useInvalidateSearchGlobalGroupsQuery } from "../../query/useSearchGlobalGroupsQuery";
+import { groupInvalidation } from "../../queryKeys";
 
-
-
-export const useDeleteGroupMutation = (
-  options?: UseMutationOptions<void, Error, string>
-) => {
-  const invalidateUserGroups = useInvalidateUserGroupsQuery();
-  const invalidateSearchGlobalGroups = useInvalidateSearchGlobalGroupsQuery();
-
-
-  return useMutation<void, Error, string>({
-    mutationKey: ["deleteGroup"],
-    mutationFn: (groupId: string) => deleteGroup(groupId),
-    meta: {
-      successMessageKey: "community:toasts.manageGroupSheet.deleteSuccess",
-      errorMessageKey: "community:toasts.manageGroupSheet.deleteError",
+export const useDeleteGroupMutation = (options?: UseMutationOptions<void, Error, string>) =>
+  useUserMutation<void, string>(
+    {
+      mutationKey: ["deleteGroup"],
+      mutationFn: (groupId: string) => deleteGroup(groupId),
+      invalidates: groupInvalidation.deleteGroup,
+      meta: {
+        successMessageKey: "community:toasts.manageGroupSheet.deleteSuccess",
+        errorMessageKey: "community:toasts.manageGroupSheet.deleteError",
+      },
     },
-    ...options,
-    onSuccess: async (...args) => {
-      invalidateUserGroups();
-      invalidateSearchGlobalGroups();
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useDeleteGroupMutation;

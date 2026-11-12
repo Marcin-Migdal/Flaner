@@ -1,3 +1,4 @@
+import { Avatar } from "@flaner/ui-components";
 import type { SchedulerEvent } from "../../../../../../api/events/types";
 import type { ParticipantResult } from "../../../../../../api/participants";
 import { usePlanningTranslations } from "../../../../../../hooks/usePlanningTranslations";
@@ -54,22 +55,13 @@ export const SchedulerParticipantsList = ({
                 className={schedulerParticipantCardVariants({ isUnvoted })}
               >
                 <div className="relative shrink-0">
-                  <div
+                  <Avatar
+                    name={p.name}
+                    src={p.avatarUrl}
                     className={schedulerParticipantAvatarRingVariants({ isUnvoted })}
-                  >
-                    {p.avatarUrl ? (
-                      <img
-                        src={p.avatarUrl}
-                        alt={p.name}
-                        className="w-full h-full object-cover"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-brand/10 text-brand-text font-bold text-sm">
-                        {p.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
+                    fallbackClassName="bg-brand/10 text-brand-text font-bold text-sm"
+                    singleLetterInitial
+                  />
                   {isUnvoted && (
                     <span
                       className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-danger ring-2 ring-background animate-pulse"

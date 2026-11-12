@@ -1,112 +1,66 @@
-import { renderHook } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { renderHookWithProviders } from "@flaner/test-utils";
+import type { SplitGroup } from "../../api/splits";
+import { describe, expect, it, vi } from "vitest";
 import { useSyncSplitGroupFeed } from "./useSyncSplitGroupFeed";
 
-const mockInvalidateExpenses = vi.fn();
-const mockInvalidateSettlements = vi.fn();
+type FeedGroup = Pick<SplitGroup, "id" | "expensesCount" | "settlementsCount" | "updatedAt">;
 
-vi.mock("../api/query", () => ({
-  useInvalidateGroupExpensesQuery: () => mockInvalidateExpenses,
-  useInvalidateGroupSettlementsQuery: () => mockInvalidateSettlements,
-}));
+const expensesKey = (groupId: string) => ["splits", "group", groupId, "expenses"];
+const settlementsKey = (groupId: string) => ["splits", "group", groupId, "settlements"];
+
+/** Renders the hook for `group` and returns a spy of the invalidated keys. */
+const renderFeed = (initial: FeedGroup) => {
+  let group = initial;
+  const { rerender, queryClient } = renderHookWithProviders(() => useSyncSplitGroupFeed(group));
+  const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+  const invalidated = () => invalidateSpy.mock.calls.map(([filters]) => filters?.queryKey);
+  const update = (next: FeedGroup) => {
+    group = next;
+    rerender();
+  };
+  return { update, invalidated };
+};
 
 describe("useSyncSplitGroupFeed", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  const base: FeedGroup = { id: "group-1", expensesCount: 5, settlementsCount: 2, updatedAt: 1000 };
+
+  it("does not invalidate on initial render or an identical snapshot", () => {
+    const { update, invalidated } = renderFeed(base);
+
+    update({ ...base });
+
+    expect(invalidated()).toEqual([]);
   });
 
-  it("does not invalidate on initial render", () => {
-    const initialGroup = {
-      id: "group-1",
-      expensesCount: 5,
-      settlementsCount: 2,
-      updatedAt: 1000,
-    };
+  it("refetches the whole feed once when updatedAt changes (every split write bumps it)", () => {
+    const { update, invalidated } = renderFeed(base);
 
-    renderHook(() => useSyncSplitGroupFeed(initialGroup));
+    update({ ...base, expensesCount: 6, updatedAt: 2000 });
 
-    expect(mockInvalidateExpenses).not.toHaveBeenCalled();
-    expect(mockInvalidateSettlements).not.toHaveBeenCalled();
+    expect(invalidated()).toEqual([expensesKey("group-1"), settlementsKey("group-1")]);
   });
 
-  it("invalidates both queries when updatedAt changes", () => {
-    let group = {
-      id: "group-1",
-      expensesCount: 5,
-      settlementsCount: 2,
-      updatedAt: 1000,
-    };
+  it("refetches only expenses when only expensesCount changes", () => {
+    const { update, invalidated } = renderFeed(base);
 
-    const { rerender } = renderHook(() => useSyncSplitGroupFeed(group));
+    update({ ...base, expensesCount: 6 });
 
-    group = {
-      ...group,
-      updatedAt: 2000,
-    };
-    rerender();
-
-    expect(mockInvalidateExpenses).toHaveBeenCalledWith("group-1");
-    expect(mockInvalidateSettlements).toHaveBeenCalledWith("group-1");
+    expect(invalidated()).toEqual([expensesKey("group-1")]);
   });
 
-  it("invalidates expenses when expensesCount changes", () => {
-    let group = {
-      id: "group-1",
-      expensesCount: 5,
-      settlementsCount: 2,
-      updatedAt: 1000,
-    };
+  it("refetches only settlements when only settlementsCount changes", () => {
+    const { update, invalidated } = renderFeed(base);
 
-    const { rerender } = renderHook(() => useSyncSplitGroupFeed(group));
+    update({ ...base, settlementsCount: 3 });
 
-    group = {
-      ...group,
-      expensesCount: 6,
-    };
-    rerender();
-
-    expect(mockInvalidateExpenses).toHaveBeenCalledWith("group-1");
-    expect(mockInvalidateSettlements).not.toHaveBeenCalled();
-  });
-
-  it("invalidates settlements when settlementsCount changes", () => {
-    let group = {
-      id: "group-1",
-      expensesCount: 5,
-      settlementsCount: 2,
-      updatedAt: 1000,
-    };
-
-    const { rerender } = renderHook(() => useSyncSplitGroupFeed(group));
-
-    group = {
-      ...group,
-      settlementsCount: 3,
-    };
-    rerender();
-
-    expect(mockInvalidateSettlements).toHaveBeenCalledWith("group-1");
+    expect(invalidated()).toEqual([settlementsKey("group-1")]);
   });
 
   it("does not invalidate when switching to another group id", () => {
-    let group = {
-      id: "group-1",
-      expensesCount: 5,
-      settlementsCount: 2,
-      updatedAt: 1000,
-    };
+    const { update, invalidated } = renderFeed(base);
 
-    const { rerender } = renderHook(() => useSyncSplitGroupFeed(group));
+    update({ id: "group-2", expensesCount: 10, settlementsCount: 5, updatedAt: 2000 });
 
-    group = {
-      id: "group-2",
-      expensesCount: 10,
-      settlementsCount: 5,
-      updatedAt: 2000,
-    };
-    rerender();
-
-    expect(mockInvalidateExpenses).not.toHaveBeenCalled();
-    expect(mockInvalidateSettlements).not.toHaveBeenCalled();
+    expect(invalidated()).toEqual([]);
   });
 });

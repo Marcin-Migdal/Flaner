@@ -2,13 +2,9 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import { GroupInvitationsSheet } from "./GroupInvitationsSheet";
 import * as hooks from "../../../hooks";
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: vi.fn(() => ({ user: { uid: "user-123" } })),
-}));
 
 vi.mock("@flaner/shared/hooks", () => ({
   useSheet: () => {
@@ -30,6 +26,8 @@ vi.mock("../../../hooks/useCommunityTranslations", () => ({
     i18n: { language: "en" },
   }),
 }));
+
+const signedInUser = createMockUser({ uid: "user-123" });
 
 describe("GroupInvitationsSheet component", () => {
   const acceptMutateAsync = vi.fn();
@@ -59,7 +57,7 @@ describe("GroupInvitationsSheet component", () => {
       isLoading: false,
     } as unknown as ReturnType<typeof hooks.useGetUserGroupInvitationsQuery>);
 
-    const { container } = renderWithProviders(<GroupInvitationsSheet />);
+    const { container } = renderWithProviders(<GroupInvitationsSheet />, { user: signedInUser });
     expect(container).toBeEmptyDOMElement();
   });
 
@@ -82,7 +80,7 @@ describe("GroupInvitationsSheet component", () => {
 
     acceptMutateAsync.mockResolvedValueOnce(undefined);
 
-    renderWithProviders(<GroupInvitationsSheet />);
+    renderWithProviders(<GroupInvitationsSheet />, { user: signedInUser });
 
     expect(screen.getByText("Hikers Club")).toBeInTheDocument();
     expect(screen.getByText("Anna")).toBeInTheDocument();
@@ -111,7 +109,7 @@ describe("GroupInvitationsSheet component", () => {
 
     rejectMutateAsync.mockResolvedValueOnce(undefined);
 
-    renderWithProviders(<GroupInvitationsSheet />);
+    renderWithProviders(<GroupInvitationsSheet />, { user: signedInUser });
 
     const rejectBtn = screen.getByRole("button", { name: "groupInvitations.reject" });
     await user.click(rejectBtn);
@@ -119,20 +117,6 @@ describe("GroupInvitationsSheet component", () => {
   });
 
   it("does not trigger accept or reject when user is null", async () => {
-    const { useAuth } = await import("@flaner/shared/context");
-    vi.mocked(useAuth).mockReturnValueOnce({
-      user: null,
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      unverifiedEmail: null,
-      resendVerificationEmail: vi.fn(),
-      confirmEmailVerification: vi.fn(),
-      updateUser: vi.fn(),
-    });
-
     const user = userEvent.setup();
     const mockInvs = [
       {
@@ -149,7 +133,7 @@ describe("GroupInvitationsSheet component", () => {
       isLoading: false,
     } as unknown as ReturnType<typeof hooks.useGetUserGroupInvitationsQuery>);
 
-    renderWithProviders(<GroupInvitationsSheet />);
+    renderWithProviders(<GroupInvitationsSheet />, { user: null });
 
     const acceptBtn = screen.getByRole("button", { name: "groupInvitations.accept" });
     await user.click(acceptBtn);
@@ -187,7 +171,7 @@ describe("GroupInvitationsSheet component", () => {
 
     acceptMutateAsync.mockResolvedValueOnce(undefined);
 
-    renderWithProviders(<GroupInvitationsSheet />);
+    renderWithProviders(<GroupInvitationsSheet />, { user: signedInUser });
 
     expect(screen.getByText("groupInvitations.someone")).toBeInTheDocument();
     expect(screen.getByText("HI")).toBeInTheDocument();
@@ -211,7 +195,7 @@ describe("GroupInvitationsSheet component", () => {
       isLoading: false,
     } as unknown as ReturnType<typeof hooks.useGetUserGroupInvitationsQuery>);
 
-    renderWithProviders(<GroupInvitationsSheet />);
+    renderWithProviders(<GroupInvitationsSheet />, { user: signedInUser });
 
     expect(screen.getByText("99+")).toBeInTheDocument();
   });
@@ -235,7 +219,7 @@ describe("GroupInvitationsSheet component", () => {
 
     acceptMutateAsync.mockRejectedValueOnce(new Error("Accept failed"));
 
-    renderWithProviders(<GroupInvitationsSheet />);
+    renderWithProviders(<GroupInvitationsSheet />, { user: signedInUser });
 
     const acceptBtn = screen.getByRole("button", { name: "groupInvitations.accept" });
     await user.click(acceptBtn);
@@ -249,7 +233,7 @@ describe("GroupInvitationsSheet component", () => {
       isLoading: true,
     } as unknown as ReturnType<typeof hooks.useGetUserGroupInvitationsQuery>);
 
-    renderWithProviders(<GroupInvitationsSheet />);
+    renderWithProviders(<GroupInvitationsSheet />, { user: signedInUser });
     expect(screen.getByText("groupInvitations.loading")).toBeInTheDocument();
   });
 
@@ -265,11 +249,26 @@ describe("GroupInvitationsSheet component", () => {
     } as unknown as ReturnType<typeof hooks.useGetUserGroupInvitationsQuery>);
     rejectMutateAsync.mockResolvedValueOnce(undefined);
 
-    renderWithProviders(<GroupInvitationsSheet />);
+    renderWithProviders(<GroupInvitationsSheet />, { user: signedInUser });
     const rejectButtons = screen.getAllByRole("button", { name: "groupInvitations.reject" });
     await user.click(rejectButtons[0]);
 
     expect(rejectMutateAsync).toHaveBeenCalledWith({ groupId: "g-1", userId: "user-123" });
   });
-});
 
+  it("keeps the reject label translated and busy while the rejection is pending", async () => {
+    const user = userEvent.setup();
+    vi.mocked(hooks.useGetUserGroupInvitationsQuery).mockReturnValue({
+      data: [{ groupId: "g-1", groupName: "Hikers", userId: "user-123", invitedByUserId: "inv-1", invitedAt: 100 }],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetUserGroupInvitationsQuery>);
+    rejectMutateAsync.mockReturnValueOnce(new Promise(() => {}));
+
+    renderWithProviders(<GroupInvitationsSheet />, { user: signedInUser });
+    await user.click(screen.getByRole("button", { name: "groupInvitations.reject" }));
+
+    const busyBtn = screen.getByRole("button", { name: "groupInvitations.rejecting" });
+    expect(busyBtn).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("button", { name: "groupInvitations.accept" })).toBeDisabled();
+  });
+});

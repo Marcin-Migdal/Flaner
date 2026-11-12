@@ -7,8 +7,6 @@ import {
   AccordionItem,
   AccordionTrigger,
   Avatar,
-  AvatarFallback,
-  AvatarImage,
   Button,
   ConfirmationPopup,
   DropdownMenu,
@@ -371,7 +369,6 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                       {members.map((member: GroupMember) => {
                         const profile = membersProfiles?.find((p) => p.uid === member.userId);
                         const displayName = profile?.username || member.userId;
-                        const initials = displayName.substring(0, 2).toUpperCase();
 
                         const canManage = auth.canManageMember(member);
 
@@ -381,12 +378,12 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                             className={manageGroupSheetStyles.memberItem}
                           >
                             <div className="flex items-center gap-3">
-                              <Avatar variant="brand" className="size-10 border border-border">
-                                {profile?.avatarUrl && <AvatarImage src={profile.avatarUrl} alt={displayName} />}
-                                <AvatarFallback className="text-sm">
-                                  {initials}
-                                </AvatarFallback>
-                              </Avatar>
+                              <Avatar
+                                variant="brand"
+                                name={displayName}
+                                src={profile?.avatarUrl}
+                                className="size-10 border border-border text-sm"
+                              />
                               <div>
                                 <div className="font-medium text-sm flex items-center gap-1.5">
                                   {displayName}

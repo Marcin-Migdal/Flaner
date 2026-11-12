@@ -1,35 +1,21 @@
 import { describe, expect, it, vi } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient } from "@flaner/test-utils";
+import { waitFor, act } from "@testing-library/react";
+import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
 import { useFinalizeEventMutation } from "./useFinalizeEventMutation";
 import * as eventsApi from "../../../../api/events";
 
-let mockUser: { uid: string } | null = { uid: "user-123" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-123" });
 
 vi.mock("../../../../api/events", () => ({
   updateSchedulerEvent: vi.fn(),
 }));
 
 describe("useFinalizeEventMutation", () => {
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
-
   it("calls updateSchedulerEvent on mutate and triggers onSuccess", async () => {
     vi.mocked(eventsApi.updateSchedulerEvent).mockResolvedValueOnce(undefined);
 
     const onSuccessMock = vi.fn();
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useFinalizeEventMutation({ onSuccess: onSuccessMock }), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useFinalizeEventMutation({ onSuccess: onSuccessMock }), { user: mockUser });
 
     act(() => {
       result.current.mutate({ eventId: "evt-1", finalizedSlotIndex: 0 });
@@ -44,23 +30,19 @@ describe("useFinalizeEventMutation", () => {
   });
 
   it("throws error when user is unauthenticated", async () => {
-    mockUser = null;
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useFinalizeEventMutation(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useFinalizeEventMutation(), { user: null });
 
     act(() => {
       result.current.mutate({ eventId: "evt-1", finalizedSlotIndex: 0 });
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error?.message).toBe("planning:errors.userNotAuthenticated");
-    mockUser = { uid: "user-123" };
+    expect(result.current.error?.message).toBe("errors.userNotAuthenticated");
   });
 
   it("executes successfully without options", async () => {
     vi.mocked(eventsApi.updateSchedulerEvent).mockResolvedValueOnce(undefined);
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useFinalizeEventMutation(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useFinalizeEventMutation(), { user: mockUser });
 
     act(() => {
       result.current.mutate({ eventId: "evt-1", finalizedSlotIndex: 1 });

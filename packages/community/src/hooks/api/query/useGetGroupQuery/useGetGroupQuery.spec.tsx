@@ -1,8 +1,6 @@
-import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { act, renderHook, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient, createMockGroup } from "@flaner/test-utils";
+import { act, waitFor } from "@testing-library/react";
+import { createMockGroup, renderHookWithProviders } from "@flaner/test-utils";
 import { useGetGroupQuery } from "./useGetGroupQuery";
 import * as groupsApi from "../../../../api/groups/endpoints";
 import type { Group } from "../../../../api/groups";
@@ -17,14 +15,6 @@ describe("useGetGroupQuery", () => {
     vi.clearAllMocks();
   });
 
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return Wrapper;
-  };
-
   it("fetches group data successfully and populates query cache", async () => {
     const mockGroup = createMockGroup({
       id: "group-456",
@@ -33,9 +23,7 @@ describe("useGetGroupQuery", () => {
 
     vi.mocked(groupsApi.getGroup).mockResolvedValueOnce(mockGroup);
 
-    const { result } = renderHook(() => useGetGroupQuery("group-456"), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHookWithProviders(() => useGetGroupQuery("group-456"));
 
     // Initially loading
     expect(result.current.isLoading).toBe(true);
@@ -52,9 +40,7 @@ describe("useGetGroupQuery", () => {
     const error = new Error("Network error");
     vi.mocked(groupsApi.getGroup).mockRejectedValueOnce(error);
 
-    const { result } = renderHook(() => useGetGroupQuery("group-error"), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHookWithProviders(() => useGetGroupQuery("group-error"));
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
@@ -62,9 +48,7 @@ describe("useGetGroupQuery", () => {
   });
 
   it("does not fetch when groupId is empty string", () => {
-    const { result } = renderHook(() => useGetGroupQuery(""), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHookWithProviders(() => useGetGroupQuery(""));
 
     expect(result.current.fetchStatus).toBe("idle");
     expect(groupsApi.getGroup).not.toHaveBeenCalled();
@@ -78,8 +62,7 @@ describe("useGetGroupQuery", () => {
     });
     const live: Group | null = createMockGroup({ id: "group-456", name: "Renamed live" });
 
-    const Wrapper = createWrapper();
-    const { result } = renderHook(() => useGetGroupQuery("group-456"), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useGetGroupQuery("group-456"));
     await waitFor(() => expect(result.current.data).toBeDefined());
 
     act(() => push(live));

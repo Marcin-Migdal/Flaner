@@ -1,24 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient } from "@flaner/test-utils";
+import { waitFor, act } from "@testing-library/react";
+import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
 import type { SchedulerEvent } from "../../../../api/events/types";
 import { useCreateEventMutation } from "./useCreateEventMutation";
 import * as eventsApi from "../../../../api/events";
 
-let mockUser: {
-  uid: string;
-  username: string;
-  email: string;
-} | null = {
+const mockUser = createMockUser({
   uid: "user-123",
   username: "Alice",
   email: "alice@flaner.app",
-};
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+});
 
 vi.mock("../../../../api/events", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../../api/events")>()),
@@ -26,14 +17,6 @@ vi.mock("../../../../api/events", async (importOriginal) => ({
 }));
 
 describe("useCreateEventMutation", () => {
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
-
   it("calls createSchedulerEvent on mutate with autoVote and triggers onSuccess", async () => {
     const mockCreated: SchedulerEvent = {
       id: "evt-1",
@@ -48,8 +31,7 @@ describe("useCreateEventMutation", () => {
     vi.mocked(eventsApi.createSchedulerEvent).mockResolvedValueOnce(mockCreated);
 
     const onSuccessMock = vi.fn();
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useCreateEventMutation({ onSuccess: onSuccessMock }), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useCreateEventMutation({ onSuccess: onSuccessMock }), { user: mockUser });
 
     act(() => {
       result.current.mutate({
@@ -75,9 +57,7 @@ describe("useCreateEventMutation", () => {
   });
 
   it("throws error when user is unauthenticated", async () => {
-    mockUser = null;
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useCreateEventMutation(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useCreateEventMutation(), { user: null });
 
     act(() => {
       result.current.mutate({
@@ -89,14 +69,12 @@ describe("useCreateEventMutation", () => {
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error?.message).toBe("planning:errors.userNotAuthenticated");
-    mockUser = { uid: "user-123", username: "Alice", email: "alice@flaner.app" };
+    expect(result.current.error?.message).toBe("errors.userNotAuthenticated");
   });
 
   it("executes successfully without autoVote and without options", async () => {
     vi.mocked(eventsApi.createSchedulerEvent).mockResolvedValueOnce({ id: "evt-2" } as unknown as SchedulerEvent);
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useCreateEventMutation(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useCreateEventMutation(), { user: mockUser });
 
     act(() => {
       result.current.mutate({

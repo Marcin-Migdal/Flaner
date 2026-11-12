@@ -1,8 +1,6 @@
 import { useAuth } from "@flaner/shared/context";
 import {
   Avatar,
-  AvatarFallback,
-  AvatarImage,
   Button,
   ConfirmationPopup,
   DropdownMenu,
@@ -14,7 +12,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@flaner/ui-components";
-import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Copy, Loader2, LogOut, MoreHorizontal, Shield, UserCheck, UserPlus, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
@@ -47,7 +44,6 @@ export function GroupDetailsView() {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
@@ -127,10 +123,8 @@ export function GroupDetailsView() {
   const handleJoin = async () => {
     if (!user) return;
     try {
+      // Members and the user's groups are listener-backed: the new membership arrives by itself
       await joinGroup({ groupId: group.id, userId: user.uid });
-
-      queryClient.invalidateQueries({ queryKey: ["groupMembers", group.id] });
-      queryClient.invalidateQueries({ queryKey: ["userGroups", user.uid] });
     } catch {
       // Handled globally
     }
@@ -140,8 +134,6 @@ export function GroupDetailsView() {
     if (!user) return;
     try {
       await requestJoin(group.id);
-
-      queryClient.invalidateQueries({ queryKey: ["groupRequests", group.id] });
     } catch {
       // Handled globally
     }
@@ -201,13 +193,12 @@ export function GroupDetailsView() {
 
       <div className={groupDetailsViewStyles.headerCard}>
         <div className={groupDetailsViewStyles.groupInfoWrapper}>
-          <div className={groupDetailsViewStyles.avatar}>
-            {group.avatarUrl ? (
-              <img src={group.avatarUrl} alt={group.name} className="size-full object-cover" />
-            ) : (
-              group.name.substring(0, 2).toUpperCase()
-            )}
-          </div>
+          <Avatar
+            name={group.name}
+            src={group.avatarUrl}
+            className={groupDetailsViewStyles.avatar}
+            fallbackClassName={groupDetailsViewStyles.avatarFallback}
+          />
 
           <div className={groupDetailsViewStyles.infoContent}>
             <h1 className={groupDetailsViewStyles.title}>{group.name}</h1>
@@ -332,7 +323,6 @@ export function GroupDetailsView() {
                 {members.map((member) => {
                   const profile = membersProfiles?.find((p) => p.uid === member.userId);
                   const displayName = profile?.username || member.userId;
-                  const initials = displayName.substring(0, 2).toUpperCase();
                   const isCurrentUser = user?.uid === member.userId;
                   const friendStatus = isFriend(member.userId);
                   const sentStatus = hasSentFriendRequest(member.userId);
@@ -348,12 +338,12 @@ export function GroupDetailsView() {
                       className={groupDetailsViewStyles.memberRow}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <Avatar variant="brand" className="size-10 border border-border shrink-0">
-                          {profile?.avatarUrl && <AvatarImage src={profile.avatarUrl} alt={displayName} />}
-                          <AvatarFallback className="text-sm">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
+                        <Avatar
+                          variant="brand"
+                          name={displayName}
+                          src={profile?.avatarUrl}
+                          className="size-10 border border-border shrink-0 text-sm"
+                        />
                         <div className="min-w-0">
                           <span className="font-medium text-sm text-foreground block truncate">{displayName}</span>
                           {isCurrentUser && (

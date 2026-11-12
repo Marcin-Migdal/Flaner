@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@flaner/ui-components";
+import { Avatar } from "@flaner/ui-components";
 import { Check, Minus, X } from "lucide-react";
 import type { ProposedDateSlot, VoteType } from "../../../../api/events/types";
 import type { ParticipantResult } from "../../../../api/participants";
@@ -46,12 +46,13 @@ export const AvailabilityGridParticipant = ({
       {/* Participant Info Cell (Sticky) */}
       <div className={gridParticipantFirstColVariants({ isCurrentUser })}>
         <div className="relative z-10 shrink-0">
-          <Avatar className={gridParticipantAvatarVariants({ hasNoVotes })}>
-            <AvatarImage src={profile?.avatarUrl} />
-            <AvatarFallback className="text-xs font-bold">
-              {profile?.name?.[0]?.toUpperCase() || "?"}
-            </AvatarFallback>
-          </Avatar>
+          <Avatar
+            className={gridParticipantAvatarVariants({ hasNoVotes })}
+            name={profile?.name ?? ""}
+            src={profile?.avatarUrl}
+            fallbackClassName="text-xs font-bold"
+            singleLetterInitial
+          />
           {hasNoVotes && (
             <span
               className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-danger ring-2 ring-card"

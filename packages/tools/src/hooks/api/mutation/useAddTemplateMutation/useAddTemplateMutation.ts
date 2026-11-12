@@ -1,32 +1,20 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth } from "@flaner/shared/context";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { addTemplate, type TemplateInput } from "../../../../api/templates";
-import { useInvalidateGetTemplatesQuery } from "../../query/useGetTemplatesQuery";
+import { spoolerInvalidation } from "../../queryKeys";
 
-export const useAddTemplateMutation = (
-  options?: UseMutationOptions<string, Error, TemplateInput>,
-) => {
-  const { user } = useAuth();
-  const invalidateTemplates = useInvalidateGetTemplatesQuery();
-
-  return useMutation<string, Error, TemplateInput>({
-    mutationKey: ["addTemplate"],
-    mutationFn: async (data: TemplateInput) => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      return await addTemplate(user.uid, data);
+export const useAddTemplateMutation = (options?: UseMutationOptions<string, Error, TemplateInput>) =>
+  useUserMutation<string, TemplateInput>(
+    {
+      mutationKey: ["addTemplate"],
+      mutationFn: (data, { uid }) => addTemplate(uid, data),
+      invalidates: spoolerInvalidation.addTemplate,
+      meta: {
+        successMessageKey: "tools:toasts.templates.addSuccess",
+        errorMessageKey: "tools:toasts.templates.addError",
+      },
     },
-    meta: {
-      successMessageKey: "tools:toasts.templates.addSuccess",
-      errorMessageKey: "tools:toasts.templates.addError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      invalidateTemplates();
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useAddTemplateMutation;

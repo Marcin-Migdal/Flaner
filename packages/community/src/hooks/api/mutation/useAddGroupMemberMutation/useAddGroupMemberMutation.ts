@@ -1,39 +1,20 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { addGroupMember } from '../../../../api/groups';
-import { useInvalidateGroupMembersQuery } from "../../query/useGetGroupMembersQuery";
-import { useInvalidateUserGroupsQuery } from "../../query/useGetUserGroupsQuery";
 import { reactQueryMeta } from "@flaner/shared/constants";
+import { groupInvalidation } from "../../queryKeys";
 
-
-export const useAddGroupMemberMutation = (
-  options?: UseMutationOptions<void, Error, { groupId: string; userId: string }>,
-  invalidateUserGroups?: boolean,
-) => {
-  const invalidateMembers = useInvalidateGroupMembersQuery();
-  const invalidateGroups = useInvalidateUserGroupsQuery();
-
-
-
-  return useMutation<void, Error, { groupId: string; userId: string }>({
-    mutationKey: ["addGroupMember"],
-    meta: reactQueryMeta.mutate,
-    mutationFn: async ({ groupId, userId }) => {
-      await addGroupMember(groupId, userId, "member");
+export const useAddGroupMemberMutation = (options?: UseMutationOptions<void, Error, { groupId: string; userId: string }>) =>
+  useUserMutation<void, { groupId: string; userId: string }>(
+    {
+      mutationKey: ["addGroupMember"],
+      mutationFn: async ({ groupId, userId }) => {
+        await addGroupMember(groupId, userId, "member");
+      },
+      invalidates: groupInvalidation.addGroupMember,
+      meta: reactQueryMeta.mutate,
     },
-    ...options,
-    onSuccess: async (...args) => {
-      const [_data, variables] = args;
-      invalidateMembers(variables.groupId);
-
-      if (invalidateUserGroups) {
-        invalidateGroups();
-      }
-
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useAddGroupMemberMutation;

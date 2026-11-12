@@ -1,6 +1,6 @@
 import { useAuth } from "@flaner/shared/context";
 import { useDebounce } from "@flaner/shared/hooks";
-import { Avatar, AvatarFallback, Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Input } from "@flaner/ui-components";
+import { Avatar, Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Input } from "@flaner/ui-components";
 import { Check, Clock, Loader2, Search, UserPlus, X } from "lucide-react";
 import { useState } from "react";
 import { useCommunityTranslations } from "../../../hooks/useCommunityTranslations";
@@ -111,16 +111,15 @@ export function InviteToGroupModal({
               const isMember = members.some((m) => m.userId === targetUser.uid);
               const isInvited = pendingInvitations.some((i) => i.userId === targetUser.uid);
               const isCurrentlyInviting = invitingId === targetUser.uid;
-              const initials = targetUser.username ? targetUser.username.substring(0, 2).toUpperCase() : "??";
 
               return (
                 <div key={targetUser.uid} className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/40 transition-all duration-200 border border-transparent hover:border-border/50 group">
                   <div className="flex items-center gap-3">
-                    <Avatar variant="brand" className="size-10 border border-border/60 shadow-sm">
-                      <AvatarFallback className="text-sm">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
+                    <Avatar
+                      variant="brand"
+                      name={targetUser.username ?? ""}
+                      className="size-10 border border-border/60 shadow-sm text-sm"
+                    />
                     <div className="flex flex-col">
                       <span className="font-semibold text-sm text-foreground group-hover:text-brand-text transition-colors">
                         {targetUser.username}

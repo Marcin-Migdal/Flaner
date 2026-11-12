@@ -156,7 +156,7 @@ describe("SlotVotingModal", () => {
     );
 
     // Verify Bob is in No section with avatar image
-    expect(screen.getByAltText("Bob")).toBeInTheDocument();
+    expect(screen.getByText("Bob")).toBeInTheDocument();
 
     // Click "No" vote button
     const noButton = screen.getByRole("button", { name: /voting\.no/i });
@@ -193,7 +193,7 @@ describe("SlotVotingModal", () => {
     expect(mockVoteSlotMutateAsync).not.toHaveBeenCalled();
   });
 
-  it("renders both avatar and initials fallback for all vote sections and handles slot without votes", () => {
+  it("renders every participant with an avatar in all vote sections and handles slot without votes", () => {
     const eventWithoutVotes: SchedulerEvent = {
       ...mockEvent,
       proposedDates: [
@@ -247,14 +247,16 @@ describe("SlotVotingModal", () => {
       />,
     );
 
-    expect(screen.getByAltText("Yes Img")).toBeInTheDocument();
+    expect(screen.getByText("Yes Img")).toBeInTheDocument();
     expect(screen.getByText("Yes NoImg")).toBeInTheDocument();
-    expect(screen.getByAltText("Maybe Img")).toBeInTheDocument();
+    expect(screen.getByText("Maybe Img")).toBeInTheDocument();
     expect(screen.getByText("Maybe NoImg")).toBeInTheDocument();
-    expect(screen.getByAltText("No Img")).toBeInTheDocument();
+    expect(screen.getByText("No Img")).toBeInTheDocument();
     expect(screen.getByText("No NoImg")).toBeInTheDocument();
-    expect(screen.getByAltText("Unvoted Img")).toBeInTheDocument();
+    expect(screen.getByText("Unvoted Img")).toBeInTheDocument();
     expect(screen.getByText("Unvoted NoImg")).toBeInTheDocument();
+    // jsdom never loads images, so every avatar shows its one-letter fallback
+    expect(screen.getAllByText("Y")).toHaveLength(2);
 
     // Rerender with slot having undefined votes and empty color
     const eventWithoutVotesOrColor: SchedulerEvent = {

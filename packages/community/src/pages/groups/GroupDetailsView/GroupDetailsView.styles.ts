@@ -9,6 +9,7 @@ export const groupDetailsViewStyles = {
   groupInfoWrapper: "flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center flex-1 min-w-0",
   avatar:
     "shrink-0 size-20 sm:size-24 md:size-24 rounded-2xl bg-gradient-to-br from-brand/20 to-brand/5 flex items-center justify-center text-brand-text font-bold text-2xl sm:text-3xl shadow-inner border border-brand/10 overflow-hidden",
+  avatarFallback: "rounded-none bg-transparent",
   infoContent: "flex-1 min-w-0 flex flex-col gap-1.5",
   title: "text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight break-normal [overflow-wrap:anywhere]",
   description: "text-muted-foreground text-xs sm:text-sm leading-relaxed max-w-2xl",

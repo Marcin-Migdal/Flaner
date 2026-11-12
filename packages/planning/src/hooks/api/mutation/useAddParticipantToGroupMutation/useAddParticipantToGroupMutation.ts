@@ -1,5 +1,5 @@
-import { useAuth } from "@flaner/shared/context";
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { addParticipantToGroup } from "../../../../api/splits";
 
 export type AddParticipantToGroupParams = {
@@ -7,23 +7,19 @@ export type AddParticipantToGroupParams = {
   participantId: string;
 };
 
-export const useAddParticipantToGroupMutation = (
-  options?: UseMutationOptions<void, Error, AddParticipantToGroupParams>,
-) => {
-  const { user } = useAuth();
-
-  return useMutation<void, Error, AddParticipantToGroupParams>({
-    mutationKey: ["addParticipantToGroup"],
-    mutationFn: async ({ groupId, participantId }) => {
-      if (!user) throw new Error("planning:errors.userNotAuthenticated");
-      await addParticipantToGroup(groupId, participantId, user);
+export const useAddParticipantToGroupMutation = (options?: UseMutationOptions<void, Error, AddParticipantToGroupParams>) =>
+  useUserMutation<void, AddParticipantToGroupParams>(
+    {
+      mutationKey: ["addParticipantToGroup"],
+      mutationFn: async ({ groupId, participantId }, user) => {
+        await addParticipantToGroup(groupId, participantId, user);
+      },
+      meta: {
+        successMessageKey: "planning:toasts.splits.participantAddSuccess",
+        errorMessageKey: "planning:toasts.splits.participantAddError",
+      },
     },
-    meta: {
-      successMessageKey: "planning:toasts.splits.participantAddSuccess",
-      errorMessageKey: "planning:toasts.splits.participantAddError",
-    },
-    ...options,
-  });
-};
+    options,
+  );
 
 export default useAddParticipantToGroupMutation;

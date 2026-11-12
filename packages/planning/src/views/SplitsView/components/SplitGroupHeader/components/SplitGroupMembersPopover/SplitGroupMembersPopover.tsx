@@ -1,8 +1,6 @@
 import { useAuth } from "@flaner/shared/context";
 import {
   Avatar,
-  AvatarFallback,
-  AvatarImage,
   Button,
   ConfirmationPopup,
   Popover,
@@ -94,12 +92,13 @@ export const SplitGroupMembersPopover = ({
               return (
                 <div key={member.id} className={styles.memberRow}>
                   <div className={styles.memberInfo}>
-                    <Avatar className={styles.avatar}>
-                      <AvatarImage src={member.avatarUrl} />
-                      <AvatarFallback className={styles.avatarFallback}>
-                        {member.name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <Avatar
+                      className={styles.avatar}
+                      name={member.name}
+                      src={member.avatarUrl}
+                      fallbackClassName={styles.avatarFallback}
+                      singleLetterInitial
+                    />
 
                     <div className={styles.nameBlock}>
                       <div className={styles.nameRow}>

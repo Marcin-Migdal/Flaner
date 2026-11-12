@@ -1,7 +1,5 @@
 import {
   Avatar,
-  AvatarFallback,
-  AvatarImage,
   Button,
   Tooltip,
   TooltipContent,
@@ -47,10 +45,13 @@ export const DebtCard = ({
     <div className={styles.root}>
       <div className={styles.participantsRow}>
         <div className={styles.person}>
-          <Avatar className={styles.avatar}>
-            <AvatarImage src={from?.avatarUrl} />
-            <AvatarFallback className={styles.avatarFallback}>{fromName.charAt(0).toUpperCase()}</AvatarFallback>
-          </Avatar>
+          <Avatar
+            className={styles.avatar}
+            name={fromName}
+            src={from?.avatarUrl}
+            fallbackClassName={styles.avatarFallback}
+            singleLetterInitial
+          />
           <Tooltip>
             <TooltipTrigger asChild>
               <span className={styles.name}>{fromName}</span>
@@ -71,10 +72,13 @@ export const DebtCard = ({
         </div>
 
         <div className={styles.personReverse}>
-          <Avatar className={styles.avatar}>
-            <AvatarImage src={to?.avatarUrl} />
-            <AvatarFallback className={styles.avatarFallback}>{toName.charAt(0).toUpperCase()}</AvatarFallback>
-          </Avatar>
+          <Avatar
+            className={styles.avatar}
+            name={toName}
+            src={to?.avatarUrl}
+            fallbackClassName={styles.avatarFallback}
+            singleLetterInitial
+          />
           <Tooltip>
             <TooltipTrigger asChild>
               <span className={styles.name}>{toName}</span>

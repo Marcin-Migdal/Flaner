@@ -1,4 +1,5 @@
 import { useAuth } from "@flaner/shared/context";
+import { requireUser } from "@flaner/shared/hooks";
 import { useMutation } from "@tanstack/react-query";
 import { updateUserPreferences, type UserPreferences } from "../../../../api/users";
 
@@ -7,10 +8,7 @@ export const useUpdateUserPreferencesMutation = () => {
 
   return useMutation<void, Error, UserPreferences>({
     mutationKey: ["updateUserPreferences"],
-    mutationFn: (preferences) => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      return updateUserPreferences(user.uid, preferences);
-    },
+    mutationFn: (preferences) => updateUserPreferences(requireUser(user).uid, preferences),
     onSuccess: (_data, preferences) => updateUser(preferences),
   });
 };

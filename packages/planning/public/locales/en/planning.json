@@ -98,7 +98,6 @@
     }
   },
   "errors": {
-    "userNotAuthenticated": "User is not authenticated.",
     "splitGroupMissing": "No split group selected.",
     "notAuthorizedToEditExpense": "Only the person who created this expense can edit it.",
     "notAuthorizedToDeleteExpense": "Only the person who created this expense can delete it.",

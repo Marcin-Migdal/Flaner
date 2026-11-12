@@ -1,16 +1,11 @@
-import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { act, renderHook, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient, createMockGroup } from "@flaner/test-utils";
-import { useGetUserGroupsQuery, useInvalidateUserGroupsQuery } from "./useGetUserGroupsQuery";
+import { act, waitFor } from "@testing-library/react";
+import { createMockGroup, createMockUser, renderHookWithProviders } from "@flaner/test-utils";
+import { useGetUserGroupsQuery } from "./useGetUserGroupsQuery";
 import * as groupsApi from "../../../../api/groups";
 import type { Group } from "../../../../api/groups";
-import { useAuth } from "@flaner/shared/context";
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: vi.fn(() => ({ user: { uid: "user-123" } })),
-}));
+const mockUser = createMockUser({ uid: "user-123" });
 
 vi.mock("../../../../api/groups", () => ({
   getUserGroups: vi.fn(),
@@ -22,20 +17,10 @@ describe("useGetUserGroupsQuery", () => {
     vi.clearAllMocks();
   });
 
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
-
   it("fetches user groups successfully", async () => {
     const mockGroups: Group[] = [createMockGroup({ id: "g-1" })];
     vi.mocked(groupsApi.getUserGroups).mockResolvedValueOnce(mockGroups);
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useGetUserGroupsQuery(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useGetUserGroupsQuery(), { user: mockUser });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -44,41 +29,13 @@ describe("useGetUserGroupsQuery", () => {
   });
 
   it("handles unauthenticated user", async () => {
-    vi.mocked(useAuth).mockReturnValueOnce({
-      user: null,
-    } as unknown as ReturnType<typeof useAuth>);
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useGetUserGroupsQuery(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useGetUserGroupsQuery(), { user: null });
 
     expect(result.current.fetchStatus).toBe("idle");
     const refetchResult = await result.current.refetch();
     expect(refetchResult.error?.message).toBe("errors.userNotAuthenticated");
   });
 
-  it("invalidates user groups query", () => {
-    const { Wrapper, queryClient } = createWrapper();
-    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-    const { result } = renderHook(() => useInvalidateUserGroupsQuery(), { wrapper: Wrapper });
-    result.current();
-
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["userGroups", "user-123"] });
-  });
-
-  it("invalidates user groups query with empty string when user is null", () => {
-    vi.mocked(useAuth).mockReturnValueOnce({
-      user: null,
-    } as unknown as ReturnType<typeof useAuth>);
-
-    const { Wrapper, queryClient } = createWrapper();
-    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-    const { result } = renderHook(() => useInvalidateUserGroupsQuery(), { wrapper: Wrapper });
-    result.current();
-
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["userGroups", ""] });
-  });
   it("applies live snapshots from the Firestore listener", async () => {
     vi.mocked(groupsApi.getUserGroups).mockResolvedValueOnce([]);
     let push: (data: Group[]) => void = () => {};
@@ -87,14 +44,11 @@ describe("useGetUserGroupsQuery", () => {
       return () => {};
     });
     const live: Group[] = [createMockGroup({ id: "g-live" })];
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useGetUserGroupsQuery(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useGetUserGroupsQuery(), { user: mockUser });
     await waitFor(() => expect(result.current.data).toBeDefined());
 
     act(() => push(live));
     await waitFor(() => expect(result.current.data).toEqual(live));
   });
 });
-
 

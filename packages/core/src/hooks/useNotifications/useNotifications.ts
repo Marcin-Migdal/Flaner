@@ -1,4 +1,5 @@
 import { useState, useEffect, useEffectEvent } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@flaner/shared/context";
 import { 
   AppNotification, 
@@ -8,7 +9,7 @@ import {
   markAllNotificationsAsRead 
 } from "../../api/notifications";
 import { getStaleGroupNotificationIds } from "../../utils/getStaleGroupNotificationIds";
-import { useInvalidateReadNotificationsQuery } from "../api/query/useReadNotifications";
+import { notificationInvalidation } from "../api/queryKeys";
 
 type UseNotificationsOptions = {
   /** Notifications that arrived while the app was open (not the ones already there on load) */
@@ -17,7 +18,9 @@ type UseNotificationsOptions = {
 
 export const useNotifications = ({ onNew }: UseNotificationsOptions = {}) => {
   const { user } = useAuth();
-  const invalidateReadNotifications = useInvalidateReadNotificationsQuery();
+  const queryClient = useQueryClient();
+  const invalidateReadNotifications = (uid: string) =>
+    notificationInvalidation.markAsRead(uid).forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(!user?.uid ? false : true);
   const [prevUid, setPrevUid] = useState(user?.uid);
@@ -70,7 +73,7 @@ export const useNotifications = ({ onNew }: UseNotificationsOptions = {}) => {
     // Best effort: the optimistic update stays, a failure is only reported (global window error handler)
     try {
       await markNotificationAsRead(user.uid, notificationId);
-      invalidateReadNotifications();
+      invalidateReadNotifications(user.uid);
     } catch (error) {
       reportError(error);
     }
@@ -84,7 +87,7 @@ export const useNotifications = ({ onNew }: UseNotificationsOptions = {}) => {
 
     try {
       await markAllNotificationsAsRead(user.uid);
-      invalidateReadNotifications();
+      invalidateReadNotifications(user.uid);
     } catch (error) {
       reportError(error);
     }

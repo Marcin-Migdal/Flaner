@@ -57,17 +57,18 @@ Use these before inventing anything. Names are the real component names.
 |---|---|---|
 | View title | `PageHeader` | `icon` in a `brand-subtle` tile, `title`, optional `description`, `actions` on the right, optional `back` link above |
 | Panel / surface | `Card` (+ `CardHeader`, `CardTitle`, `CardDescription`, `CardAction`, `CardContent`, `CardFooter`) | `variant` default / subtle / interactive; `padding` none / sm / md |
-| Row in a list | `ListItem` | `leading` (avatar / icon), `title`, `description`, `trailing` actions; `variant` card / plain; `interactive` |
+| Row in a list | `ListItem` | `leading` (avatar / icon), `title`, `description`, `trailing` actions (`Button isBusy` for the pending one, the other disabled); `variant` card / plain; `interactive` |
 | Nothing to show | `EmptyState` | `icon`, `title`, `description`, `action`; `variant` plain / card |
 | Loading | `Skeleton` | same size as the content |
 | Status / counter | `Badge` | `variant` neutral / outline / brand / success / warning / danger / info / solid / solid-danger; `shape` pill / tag / count |
 | Actions | `Button` | `variant` brand (main CTA) / primary / outline / secondary / ghost / destructive / link; `size` xs–xl, icon sizes; `isBusy` spinner |
 | Sections of one view | `Tabs` (`TabsList`, `TabsTrigger`, `TabsContent`) | segmented control look, full width on phones |
 | Secondary panel / collection | `Sheet` | members, invitations, filters on mobile |
+| Side panel layout | `SidePanel` | inside `Sheet` (caller keeps `SheetTrigger`): `title`, `description`, scrollable body; invitations, requests |
 | Short focused task | `Dialog` | create, edit, settle up |
 | Destructive confirm | `ConfirmationPopup` | `variant` destructive |
 | Menus | `DropdownMenu`, `Popover`, `Tooltip` | |
-| Person | `Avatar` | photo, else initials (`AvatarFallback`); people use `variant=brand` — initials on the brand gradient (`brand` → `brand-dark`) in `brand-foreground`; `neutral` (default, `muted`) for placeholders |
+| Person | `Avatar` | `name` + `src`: photo, else two-letter initials worked out by the avatar (`??` when empty); people use `variant=brand` — initials on the brand gradient (`brand` → `brand-dark`) in `brand-foreground`; `neutral` (default, `muted`) for placeholders; `children` replace the initials (icon); `singleLetterInitial` for dense avatars (grids, vote stacks) |
 | Search | `SearchBar`, `IconTextField` | leading search icon, clear button |
 | Forms | `TextField`, `TextArea`, `Select`, `DatePicker`, `MoneyInput`, `Switch`, `Checkbox`, `ColorPickerField`, `ImagePicker`, `Field` (+ `Form*` variants bound to react-hook-form) | label above, helper / error below (`Field`, `FieldLabel`, `FieldError`) |
 | Multi-step flow | `Stepper` | `steps`, `currentStep` |
@@ -82,7 +83,7 @@ Use these before inventing anything. Names are the real component names.
 
 - **Page**: `PageHeader` → (optional `Tabs`) → content. Primary action sits in `PageHeader` `actions` (a `brand` button) or as the `EmptyState` action when the list is empty.
 - **List of people / items**: `ListItem` rows inside a `Card`, or a grid of row cards (`grid-cols-1 md:grid-cols-2 gap-4`); filter input above the list; row actions trailing (`outline` / `ghost` small buttons, icon + label).
-- **Sheet vs. dialog**: `Sheet` (slides in from the right, 75% wide on phones, max 384px from `sm`) for browsing or managing a collection; `Dialog` for a short task that is completed or cancelled; `ConfirmationPopup` for anything destructive.
+- **Sheet vs. dialog**: `Sheet` with a `SidePanel` (slides in from the right, 75% wide on phones, max 384px from `sm`) for browsing or managing a collection; `Dialog` for a short task that is completed or cancelled; `ConfirmationPopup` for anything destructive.
 - **Forms**: one column on phones, label above field, helper text below, primary submit bottom-right (full width on phones), cancel as `ghost` / `outline`.
 - **Counts**: a `Badge shape=count variant=solid` on the trigger (e.g. pending invitations on the Invitations button).
 

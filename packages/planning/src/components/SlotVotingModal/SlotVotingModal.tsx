@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, Button } from "@flaner/ui-components";
+import { Avatar, Dialog, DialogContent, DialogHeader, DialogTitle, Button } from "@flaner/ui-components";
 import { useIsMobile } from "@flaner/shared/hooks";
 import { format } from "date-fns";
 import { Check, X, Loader2 } from "lucide-react";
@@ -9,6 +9,7 @@ import { useVoteSlotMutation } from "../../hooks/api/mutation/useVoteSlotMutatio
 import { getSlotColorValue } from "../../utils/slotColors";
 import {
   slotVotingOptionButtonVariants,
+  slotVotingParticipantAvatarFallbackVariants,
   slotVotingParticipantPillVariants,
   slotVotingSectionHeaderVariants,
 } from "./SlotVotingModal.styles";
@@ -180,15 +181,13 @@ export function SlotVotingModal({
                     key={p.id}
                     className={slotVotingParticipantPillVariants({ vote: "yes" })}
                   >
-                    <div className="w-4 h-4 rounded-full bg-vote-yes/20 overflow-hidden shrink-0">
-                      {p.avatarUrl ? (
-                        <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-4xs font-bold text-vote-yes-text">
-                          {p.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
+                    <Avatar
+                      name={p.name}
+                      src={p.avatarUrl}
+                      className="size-4"
+                      fallbackClassName={slotVotingParticipantAvatarFallbackVariants({ vote: "yes" })}
+                      singleLetterInitial
+                    />
                     <span>{p.name}</span>
                   </div>
                 ))}
@@ -209,15 +208,13 @@ export function SlotVotingModal({
                     key={p.id}
                     className={slotVotingParticipantPillVariants({ vote: "maybe" })}
                   >
-                    <div className="w-4 h-4 rounded-full bg-vote-maybe/20 overflow-hidden shrink-0">
-                      {p.avatarUrl ? (
-                        <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-4xs font-bold text-vote-maybe-text">
-                          {p.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
+                    <Avatar
+                      name={p.name}
+                      src={p.avatarUrl}
+                      className="size-4"
+                      fallbackClassName={slotVotingParticipantAvatarFallbackVariants({ vote: "maybe" })}
+                      singleLetterInitial
+                    />
                     <span>{p.name}</span>
                   </div>
                 ))}
@@ -238,15 +235,13 @@ export function SlotVotingModal({
                     key={p.id}
                     className={slotVotingParticipantPillVariants({ vote: "no" })}
                   >
-                    <div className="w-4 h-4 rounded-full bg-vote-no/20 overflow-hidden shrink-0">
-                      {p.avatarUrl ? (
-                        <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-4xs font-bold text-vote-no-text">
-                          {p.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
+                    <Avatar
+                      name={p.name}
+                      src={p.avatarUrl}
+                      className="size-4"
+                      fallbackClassName={slotVotingParticipantAvatarFallbackVariants({ vote: "no" })}
+                      singleLetterInitial
+                    />
                     <span>{p.name}</span>
                   </div>
                 ))}
@@ -266,15 +261,13 @@ export function SlotVotingModal({
                     key={p.id}
                     className={slotVotingParticipantPillVariants({ vote: "unvoted" })}
                   >
-                    <div className="w-4 h-4 rounded-full bg-muted-foreground/20 overflow-hidden shrink-0">
-                      {p.avatarUrl ? (
-                        <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-4xs font-bold">
-                          {p.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
+                    <Avatar
+                      name={p.name}
+                      src={p.avatarUrl}
+                      className="size-4"
+                      fallbackClassName={slotVotingParticipantAvatarFallbackVariants({ vote: "unvoted" })}
+                      singleLetterInitial
+                    />
                     <span>{p.name}</span>
                   </div>
                 ))}

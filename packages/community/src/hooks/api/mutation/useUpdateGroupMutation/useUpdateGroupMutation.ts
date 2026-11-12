@@ -1,39 +1,25 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { updateGroup, type Group } from "../../../../api/groups";
-import { useInvalidateGroupQuery } from "../../query/useGetGroupQuery";
-import { useInvalidateUserGroupsQuery } from "../../query/useGetUserGroupsQuery";
-import { useInvalidateSearchGlobalGroupsQuery } from "../../query/useSearchGlobalGroupsQuery";
+import { groupInvalidation } from "../../queryKeys";
 
 export type UpdateGroupInput = {
   groupId: string;
   data: Partial<Omit<Group, "id" | "createdAt" | "ownerId">>;
 };
 
-export const useUpdateGroupMutation = (options?: UseMutationOptions<void, Error, UpdateGroupInput>) => {
-  const invalidateGroup = useInvalidateGroupQuery();
-  const invalidateUserGroups = useInvalidateUserGroupsQuery();
-  const invalidateSearchGlobalGroups = useInvalidateSearchGlobalGroupsQuery();
-
-  return useMutation<void, Error, UpdateGroupInput>({
-    mutationKey: ["updateGroup"],
-    meta: {
-      successMessageKey: "community:toasts.manageGroupSheet.updateSuccess",
-      errorMessageKey: "community:toasts.manageGroupSheet.updateError",
+export const useUpdateGroupMutation = (options?: UseMutationOptions<void, Error, UpdateGroupInput>) =>
+  useUserMutation<void, UpdateGroupInput>(
+    {
+      mutationKey: ["updateGroup"],
+      mutationFn: ({ groupId, data }) => updateGroup(groupId, data),
+      invalidates: groupInvalidation.updateGroup,
+      meta: {
+        successMessageKey: "community:toasts.manageGroupSheet.updateSuccess",
+        errorMessageKey: "community:toasts.manageGroupSheet.updateError",
+      },
     },
-    mutationFn: ({ groupId, data }) => updateGroup(groupId, data),
-    ...options,
-    onSuccess: async (...args) => {
-      const [, variables] = args;
-      invalidateGroup(variables.groupId);
-      invalidateUserGroups();
-      invalidateSearchGlobalGroups();
-
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useUpdateGroupMutation;
-

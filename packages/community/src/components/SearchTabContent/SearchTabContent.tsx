@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage, Button, Input, TabsContent } from "@flaner/ui-components";
+import { Avatar, Button, Input, TabsContent } from "@flaner/ui-components";
 import { Loader2, Search, UserCheck, UserPlus, X } from "lucide-react";
 import { useState } from "react";
 import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useGetFriendsListRealtimeQuery, useGetReceivedFriendRequestRealtimeQuery, useGetSentFriendRequestRealtimeQuery, useSearchUsersQuery, useSendFriendRequestMutation } from "../../hooks";
@@ -21,11 +21,6 @@ export function SearchTabContent() {
   const sendRequest = useSendFriendRequestMutation();
   const cancelRequest = useCancelFriendRequestMutation();
   const acceptRequest = useAcceptFriendRequestMutation();
-
-  const getInitials = (name: string) => {
-    if (!name) return "??";
-    return name.slice(0, 2).toUpperCase();
-  };
 
   const isFriend = (uid: string) => friends.some((f) => f.uid === uid);
   const hasSentRequest = (uid: string) => sentRequests.some((r) => r.receiverUid === uid);
@@ -78,12 +73,12 @@ export function SearchTabContent() {
                 className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card shadow-sm hover:shadow-md hover:border-brand/30 transition-all gap-4"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <Avatar variant="brand" className="size-11 border border-border shadow-sm">
-                    <AvatarImage src={match.avatarUrl} alt={match.username} />
-                    <AvatarFallback className="text-sm">
-                      {getInitials(match.username)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <Avatar
+                    variant="brand"
+                    name={match.username}
+                    src={match.avatarUrl}
+                    className="size-11 border border-border shadow-sm text-sm"
+                  />
                   <div className="min-w-0">
                     <span className="font-semibold text-sm text-foreground/90 block truncate">{match.username}</span>
                   </div>

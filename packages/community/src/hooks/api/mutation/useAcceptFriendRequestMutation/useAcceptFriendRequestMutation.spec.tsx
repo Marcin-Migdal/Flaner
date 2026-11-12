@@ -1,17 +1,10 @@
-import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient } from "@flaner/test-utils";
+import { waitFor } from "@testing-library/react";
+import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
 import { useAcceptFriendRequestMutation } from "./useAcceptFriendRequestMutation";
 import * as usersApi from "../../../../api/users";
-import { useAuth } from "@flaner/shared/context";
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: vi.fn(() => ({
-    user: { uid: "user-123", username: "currentuser", avatarUrl: "avatar.png" },
-  })),
-}));
+const mockUser = createMockUser({ uid: "user-123", username: "currentuser", avatarUrl: "avatar.png" });
 
 vi.mock("../../../../api/users", () => ({
   acceptFriendRequest: vi.fn(),
@@ -22,21 +15,11 @@ describe("useAcceptFriendRequestMutation", () => {
     vi.clearAllMocks();
   });
 
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
-
-  it("calls acceptFriendRequest and invalidates queries", async () => {
+  it("calls acceptFriendRequest without invalidating listener-backed queries", async () => {
     vi.mocked(usersApi.acceptFriendRequest).mockResolvedValueOnce(undefined);
 
-    const { Wrapper, queryClient } = createWrapper();
+    const { result, queryClient } = renderHookWithProviders(() => useAcceptFriendRequestMutation(), { user: mockUser });
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-    const { result } = renderHook(() => useAcceptFriendRequestMutation(), { wrapper: Wrapper });
 
     result.current.mutate({
       uid: "user-456",
@@ -50,16 +33,12 @@ describe("useAcceptFriendRequestMutation", () => {
       { uid: "user-456", username: "sender", avatarUrl: "sender.png" },
       { uid: "user-123", username: "currentuser", avatarUrl: "avatar.png" }
     );
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["searchUsers"] });
+    // Every key this write touches is listener-backed: the listeners deliver it, a refetch would be wasted
+    expect(invalidateSpy).not.toHaveBeenCalled();
   });
 
   it("throws error when user is not authenticated", async () => {
-    vi.mocked(useAuth).mockReturnValueOnce({
-      user: null,
-    } as unknown as ReturnType<typeof useAuth>);
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useAcceptFriendRequestMutation(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useAcceptFriendRequestMutation(), { user: null });
 
     result.current.mutate({
       uid: "user-456",
@@ -73,12 +52,7 @@ describe("useAcceptFriendRequestMutation", () => {
   it("calls options.onSuccess callback when provided", async () => {
     vi.mocked(usersApi.acceptFriendRequest).mockResolvedValueOnce(undefined);
     const onSuccessMock = vi.fn();
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(
-      () => useAcceptFriendRequestMutation({ onSuccess: onSuccessMock }),
-      { wrapper: Wrapper }
-    );
+    const { result } = renderHookWithProviders(() => useAcceptFriendRequestMutation({ onSuccess: onSuccessMock }), { user: mockUser });
 
     result.current.mutate({
       uid: "user-456",

@@ -1,16 +1,11 @@
-import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient } from "@flaner/test-utils";
+import { waitFor } from "@testing-library/react";
+import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
 import { useGetFriendsListRealtimeQuery } from "./useGetFriendsListRealtimeQuery";
 import * as usersApi from "../../../../api/users";
 import type { Friendship } from "../../../../api/users";
-import { useAuth } from "@flaner/shared/context";
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: vi.fn(() => ({ user: { uid: "user-123" } })),
-}));
+const mockUser = createMockUser({ uid: "user-123" });
 
 vi.mock("../../../../api/users", () => ({
   getFriendsList: vi.fn(),
@@ -22,14 +17,6 @@ describe("useGetFriendsListRealtimeQuery", () => {
     vi.resetAllMocks();
   });
 
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
-
   it("subscribes to realtime updates and sets query data", async () => {
     const mockFriends: Friendship[] = [
       { uid: "f-1", createdAt: 100 },
@@ -40,9 +27,7 @@ describe("useGetFriendsListRealtimeQuery", () => {
       cb(mockFriends);
       return unsubscribeMock;
     });
-
-    const { Wrapper } = createWrapper();
-    const { result, unmount } = renderHook(() => useGetFriendsListRealtimeQuery(), { wrapper: Wrapper });
+    const { result, unmount } = renderHookWithProviders(() => useGetFriendsListRealtimeQuery(), { user: mockUser });
 
     await waitFor(() => expect(result.current.data).toEqual(mockFriends));
 
@@ -53,19 +38,13 @@ describe("useGetFriendsListRealtimeQuery", () => {
   });
 
   it("does not subscribe when enabled is false", () => {
-    const { Wrapper } = createWrapper();
-    renderHook(() => useGetFriendsListRealtimeQuery({ enabled: false }), { wrapper: Wrapper });
+    renderHookWithProviders(() => useGetFriendsListRealtimeQuery({ enabled: false }), { user: mockUser });
 
     expect(usersApi.subscribeToFriendsList).not.toHaveBeenCalled();
   });
 
   it("handles unauthenticated user", async () => {
-    vi.mocked(useAuth).mockReturnValueOnce({
-      user: null,
-    } as unknown as ReturnType<typeof useAuth>);
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useGetFriendsListRealtimeQuery(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useGetFriendsListRealtimeQuery(), { user: null });
 
     expect(usersApi.subscribeToFriendsList).not.toHaveBeenCalled();
     const refetchResult = await result.current.refetch();
@@ -78,9 +57,7 @@ describe("useGetFriendsListRealtimeQuery", () => {
     ];
     vi.mocked(usersApi.getFriendsList).mockResolvedValueOnce(mockFriends);
     vi.mocked(usersApi.subscribeToFriendsList).mockReturnValue(vi.fn());
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useGetFriendsListRealtimeQuery(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useGetFriendsListRealtimeQuery(), { user: mockUser });
 
     const refetchResult = await result.current.refetch();
     expect(refetchResult.data).toEqual(mockFriends);

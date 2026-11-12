@@ -2,7 +2,7 @@ import { QueryCache, QueryClient, QueryClientProvider, useQuery } from "@tanstac
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { useRealtimeQueryData } from "./useRealtimeQueryData";
+import { useRealtimeQuery, useRealtimeQueryData } from "./useRealtimeQueryData";
 
 const setup = (onCacheError = vi.fn()) => {
   const queryClient = new QueryClient({ queryCache: new QueryCache({ onError: onCacheError }) });
@@ -83,5 +83,37 @@ describe("useRealtimeQueryData", () => {
     expect(result.current.error).toBe(error);
     expect(onCacheError).toHaveBeenCalledTimes(1);
     expect(onCacheError).toHaveBeenCalledWith(error, expect.objectContaining({ queryHash: '["items","a"]' }));
+  });
+});
+
+describe("useRealtimeQuery", () => {
+  it("fetches once, then takes every snapshot from the listener without refetching", async () => {
+    const { queryClient, wrapper } = setup();
+    const queryFn = vi.fn().mockResolvedValue(["one"]);
+    let push: (data: string[]) => void = () => {};
+    const subscribe = vi.fn((onUpdate: (data: string[]) => void) => {
+      push = onUpdate;
+      return () => {};
+    });
+
+    const { result } = renderHook(() => useRealtimeQuery({ queryKey: ["items"], queryFn, subscribe, enabled: true }), { wrapper });
+    await waitFor(() => expect(result.current.data).toEqual(["one"]));
+
+    act(() => push(["one", "two"]));
+
+    await waitFor(() => expect(result.current.data).toEqual(["one", "two"]));
+    expect(queryClient.getQueryState(["items"])?.isInvalidated).toBe(false);
+    expect(queryFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("neither fetches nor listens when options disable it", () => {
+    const { wrapper } = setup();
+    const queryFn = vi.fn();
+    const subscribe = vi.fn(() => () => {});
+
+    renderHook(() => useRealtimeQuery({ queryKey: ["items"], queryFn, subscribe, enabled: true }, { enabled: false }), { wrapper });
+
+    expect(queryFn).not.toHaveBeenCalled();
+    expect(subscribe).not.toHaveBeenCalled();
   });
 });

@@ -133,8 +133,8 @@ describe("SettingsView", () => {
     expect(usernameInput).toHaveValue("tester");
     expect(screen.getByText("tester@flaner.app")).toBeInTheDocument();
 
-    const avatarImg = screen.getByAltText("Avatar Preview");
-    expect(avatarImg).toHaveAttribute("src", "https://flaner.app/avatar.png");
+    // jsdom never loads images, so the avatar shows its initials fallback
+    expect(screen.getByText("TE")).toBeInTheDocument();
 
     const saveButton = screen.getByRole("button", { name: "actions.save" });
     expect(saveButton).toBeDisabled();
@@ -183,15 +183,6 @@ describe("SettingsView", () => {
     renderWithProviders(<SettingsView />);
 
     expect(screen.getByText("FL")).toBeInTheDocument();
-  });
-
-  it("falls back to dicebear URL when avatar image errors", () => {
-    renderWithProviders(<SettingsView />);
-
-    const avatarImg = screen.getByAltText("Avatar Preview") as HTMLImageElement;
-    fireEvent.error(avatarImg);
-
-    expect(avatarImg.src).toContain("https://api.dicebear.com/7.x/initials/svg?seed=tester");
   });
 
   it("navigates back to previous route if history has entries", async () => {
@@ -396,13 +387,6 @@ describe("SettingsView", () => {
     expect(mockProceed).toHaveBeenCalledTimes(1);
   });
 
-  it("handles avatar image error by falling back to dicebear URL", () => {
-    renderWithProviders(<SettingsView />);
-    const avatarImg = screen.getByAltText("Avatar Preview");
-    fireEvent.error(avatarImg);
-    expect((avatarImg as HTMLImageElement).src).toContain("api.dicebear.com");
-  });
-
   it("renders FL initials placeholder when user has no avatar and no username", () => {
     vi.mocked(useAuth).mockReturnValue({
       user: createMockUser({ uid: "u-anon", username: "", avatarUrl: "" }),
@@ -518,7 +502,7 @@ describe("SettingsView", () => {
     });
   });
 
-  it("handles dicebear fallback when user has no username and handles popup cancel", () => {
+  it("shows FL initials when the photo cannot load and the user has no username, and handles popup cancel", () => {
     vi.mocked(useAuth).mockReturnValue({
       user: createMockUser({ uid: "u-none", username: "", avatarUrl: "https://bad.url/img.png" }),
       isLoading: false,
@@ -540,9 +524,7 @@ describe("SettingsView", () => {
     });
 
     renderWithProviders(<SettingsView />);
-    const avatarImg = screen.getByAltText("Avatar Preview");
-    fireEvent.error(avatarImg);
-    expect((avatarImg as HTMLImageElement).src).toContain("seed=User");
+    expect(screen.getByText("FL")).toBeInTheDocument();
 
     // Cancel on confirmation popup
     const stayBtn = screen.getByRole("button", { name: "unsavedChanges.stay" });
