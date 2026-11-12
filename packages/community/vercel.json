@@ -1,6 +1,6 @@
 {
   "buildCommand": "cd ../.. && npx nx run community:build",
-  "ignoreCommand": "bash ../../scripts/vercel-ignore.sh community",
+  "git": { "deploymentEnabled": false },
   "outputDirectory": "dist",
   "headers": [
     {
