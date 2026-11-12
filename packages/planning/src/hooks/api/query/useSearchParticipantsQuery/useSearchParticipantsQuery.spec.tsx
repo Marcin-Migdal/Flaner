@@ -1,12 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient } from "@flaner/test-utils";
+import { waitFor } from "@testing-library/react";
+import { renderHookWithProviders } from "@flaner/test-utils";
 import type { ParticipantResult } from "../../../../api/participants";
-import {
-  useSearchParticipantsQuery,
-  useInvalidateSearchParticipantsQuery,
-} from "./useSearchParticipantsQuery";
+import { useSearchParticipantsQuery } from "./useSearchParticipantsQuery";
 import * as participantsApi from "../../../../api/participants";
 
 vi.mock("../../../../api/participants", () => ({
@@ -14,14 +10,6 @@ vi.mock("../../../../api/participants", () => ({
 }));
 
 describe("useSearchParticipantsQuery", () => {
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
-
   it("searches participants when searchQuery is not empty", async () => {
     const mockResults: ParticipantResult[] = [
       {
@@ -34,9 +22,7 @@ describe("useSearchParticipantsQuery", () => {
       },
     ];
     vi.mocked(participantsApi.searchParticipants).mockResolvedValueOnce(mockResults);
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useSearchParticipantsQuery("Ali", "user-1"), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useSearchParticipantsQuery("Ali", "user-1"));
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -45,22 +31,17 @@ describe("useSearchParticipantsQuery", () => {
   });
 
   it("does not execute query when searchQuery is empty", () => {
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useSearchParticipantsQuery(""), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useSearchParticipantsQuery(""));
 
     expect(result.current.isFetching).toBe(false);
     expect(participantsApi.searchParticipants).not.toHaveBeenCalled();
   });
 
-  it("invalidates search participants query", () => {
-    const { Wrapper, queryClient } = createWrapper();
-    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+  it("caches under the participants search key", async () => {
+    vi.mocked(participantsApi.searchParticipants).mockResolvedValueOnce([]);
+    const { result, queryClient } = renderHookWithProviders(() => useSearchParticipantsQuery("Ali", "user-1"));
 
-    const { result } = renderHook(() => useInvalidateSearchParticipantsQuery(), { wrapper: Wrapper });
-    result.current();
-
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: ["participants", "search"],
-    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(queryClient.getQueryData(["participants", "search", "Ali", "user-1"])).toEqual([]);
   });
 });

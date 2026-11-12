@@ -1,16 +1,14 @@
 import { type AppInfiniteQueryOptions, type FirestorePageParam } from "@flaner/shared/types";
-import { keepPreviousData, useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, type InfiniteData } from "@tanstack/react-query";
 import { searchGlobalGroups } from '../../../../api/groups';
 import type { Group } from '../../../../api/groups';
 import { reactQueryMeta } from "@flaner/shared/constants";
-
+import { groupKeys } from "../../queryKeys";
 
 type SearchGroupsResponse = {
   groups: Group[];
   nextCursor?: FirestorePageParam<Group>;
 };
-
-const getSearchGlobalGroupsQueryKeys = (searchQuery: string) => ["searchGlobalGroups", searchQuery];
 
 export const useSearchGlobalGroupsQuery = (
   searchQuery: string,
@@ -25,8 +23,8 @@ export const useSearchGlobalGroupsQuery = (
     string[],
     FirestorePageParam<Group>
   >({
-      meta: reactQueryMeta.fetch,
-    queryKey: getSearchGlobalGroupsQueryKeys(searchQuery),
+    meta: reactQueryMeta.fetch,
+    queryKey: groupKeys.search(searchQuery),
     queryFn: ({ pageParam }) => {
       if (!searchQuery.trim()) return { groups: [], nextCursor: undefined };
       return searchGlobalGroups(searchQuery, pageSize, pageParam);
@@ -38,11 +36,6 @@ export const useSearchGlobalGroupsQuery = (
     placeholderData: keepPreviousData,
     ...options,
   });
-};
-
-export const useInvalidateSearchGlobalGroupsQuery = () => {
-  const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: ["searchGlobalGroups"] });
 };
 
 export default useSearchGlobalGroupsQuery;

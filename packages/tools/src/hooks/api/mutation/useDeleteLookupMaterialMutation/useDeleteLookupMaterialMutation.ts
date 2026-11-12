@@ -1,43 +1,25 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth } from "@flaner/shared/context";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { deleteLookupMaterial } from "../../../../api/lookups";
-import { useInvalidateGetLookupMaterialsQuery } from "../../query/useGetLookupMaterialsQuery";
-import { useInvalidateGetLookupTypesQuery } from "../../query/useGetLookupTypesQuery";
-import { useInvalidateGetLookupColorsQuery } from "../../query/useGetLookupColorsQuery";
+import { spoolerInvalidation } from "../../queryKeys";
 
 export type DeleteLookupMaterialVariables = {
   materialId: string;
   materialName: string;
 };
 
-export const useDeleteLookupMaterialMutation = (
-  options?: UseMutationOptions<void, Error, DeleteLookupMaterialVariables>,
-) => {
-  const { user } = useAuth();
-  const invalidateMaterials = useInvalidateGetLookupMaterialsQuery();
-  const invalidateTypes = useInvalidateGetLookupTypesQuery();
-  const invalidateColors = useInvalidateGetLookupColorsQuery();
-
-  return useMutation<void, Error, DeleteLookupMaterialVariables>({
-    mutationKey: ["deleteLookupMaterial"],
-    mutationFn: async ({ materialId, materialName }) => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      await deleteLookupMaterial(user.uid, materialId, materialName);
+export const useDeleteLookupMaterialMutation = (options?: UseMutationOptions<void, Error, DeleteLookupMaterialVariables>) =>
+  useUserMutation<void, DeleteLookupMaterialVariables>(
+    {
+      mutationKey: ["deleteLookupMaterial"],
+      mutationFn: ({ materialId, materialName }, { uid }) => deleteLookupMaterial(uid, materialId, materialName),
+      invalidates: spoolerInvalidation.deleteLookupMaterial,
+      meta: {
+        successMessageKey: "tools:toasts.lookups.deleteMaterialSuccess",
+        errorMessageKey: "tools:toasts.lookups.deleteMaterialError",
+      },
     },
-    meta: {
-      successMessageKey: "tools:toasts.lookups.deleteMaterialSuccess",
-      errorMessageKey: "tools:toasts.lookups.deleteMaterialError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      invalidateMaterials();
-      invalidateTypes();
-      invalidateColors();
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useDeleteLookupMaterialMutation;

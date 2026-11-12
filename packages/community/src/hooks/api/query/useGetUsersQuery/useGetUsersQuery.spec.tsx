@@ -1,9 +1,7 @@
-import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient } from "@flaner/test-utils";
-import { useGetUsersQuery, useInvalidateUsersQuery } from "./useGetUsersQuery";
+import { waitFor } from "@testing-library/react";
+import { renderHookWithProviders } from "@flaner/test-utils";
+import { useGetUsersQuery } from "./useGetUsersQuery";
 import * as usersApi from "../../../../api/users";
 import { type UserType } from "@flaner/shared/types";
 
@@ -15,14 +13,6 @@ describe("useGetUsersQuery", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
-
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
 
   it("fetches users by uids", async () => {
     const mockUsers: UserType[] = [
@@ -37,9 +27,7 @@ describe("useGetUsersQuery", () => {
       },
     ];
     vi.mocked(usersApi.getUsers).mockResolvedValueOnce(mockUsers);
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useGetUsersQuery(["u-1"]), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useGetUsersQuery(["u-1"]));
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -48,23 +36,12 @@ describe("useGetUsersQuery", () => {
   });
 
   it("returns empty array and does not query when uids is empty", async () => {
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useGetUsersQuery([]), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useGetUsersQuery([]));
 
     expect(result.current.data).toBeUndefined();
     expect(usersApi.getUsers).not.toHaveBeenCalled();
 
     const refetchResult = await result.current.refetch();
     expect(refetchResult.data).toEqual([]);
-  });
-
-  it("invalidates users query", () => {
-    const { Wrapper, queryClient } = createWrapper();
-    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-    const { result } = renderHook(() => useInvalidateUsersQuery(), { wrapper: Wrapper });
-    result.current(["u-1"]);
-
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["users", ["u-1"]] });
   });
 });

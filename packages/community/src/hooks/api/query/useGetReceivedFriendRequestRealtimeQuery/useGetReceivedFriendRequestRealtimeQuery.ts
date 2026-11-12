@@ -1,38 +1,21 @@
 import { useAuth } from "@flaner/shared/context";
-import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
-import { getReceivedFriendRequests, subscribeToReceivedFriendRequests } from '../../../../api/users';
-import type { FriendRequest } from '../../../../api/users';
-import { reactQueryMeta } from "@flaner/shared/constants";
-import { useRealtimeQueryData } from "@flaner/shared/hooks";
+import { requireUser, useRealtimeQuery, type RealtimeQueryOptions } from "@flaner/shared/hooks";
+import { getReceivedFriendRequests, subscribeToReceivedFriendRequests, type FriendRequest } from "../../../../api/users";
+import { userKeys } from "../../queryKeys";
 
-
-const getReceivedFriendRequestsRealtimeQueryKeys = (userId: string) => ["receivedFriendRequestsRealtime", userId];
-
-export const useGetReceivedFriendRequestRealtimeQuery = (
-  options?: Omit<UseQueryOptions<FriendRequest[], Error>, "queryKey" | "queryFn">,
-) => {
+export const useGetReceivedFriendRequestRealtimeQuery = (options?: RealtimeQueryOptions<FriendRequest[]>) => {
   const { user } = useAuth();
-  const queryKey = getReceivedFriendRequestsRealtimeQueryKeys(user?.uid ?? "");
+  const uid = user?.uid ?? "";
 
-  useRealtimeQueryData(
-    queryKey,
-    (onUpdate, onError) => subscribeToReceivedFriendRequests(user?.uid ?? "", onUpdate, onError),
-    !!user?.uid && options?.enabled !== false,
-  );
-
-
-
-  return useQuery<FriendRequest[], Error>({
-      meta: reactQueryMeta.fetch,
-    queryKey,
-    queryFn: () => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      return getReceivedFriendRequests(user.uid);
+  return useRealtimeQuery(
+    {
+      queryKey: userKeys.receivedRequests(uid),
+      queryFn: () => getReceivedFriendRequests(requireUser(user).uid),
+      subscribe: (onUpdate, onError) => subscribeToReceivedFriendRequests(uid, onUpdate, onError),
+      enabled: !!user,
     },
-    enabled: !!user,
-    staleTime: Infinity, // Realtime listener handles updates
-    ...options,
-  });
+    options,
+  );
 };
 
 export default useGetReceivedFriendRequestRealtimeQuery;

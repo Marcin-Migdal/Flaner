@@ -1,9 +1,6 @@
-
-import { useAuth } from "@flaner/shared/context";
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { acceptFriendRequest } from '../../../../api/users';
-
-import { useInvalidateSearchUsersQuery } from "../../query/useSearchUsersQuery";
 
 type SenderInput = {
   uid: string;
@@ -11,29 +8,19 @@ type SenderInput = {
   avatarUrl?: string;
 };
 
-export const useAcceptFriendRequestMutation = (options?: UseMutationOptions<void, Error, SenderInput>) => {
-  const { user } = useAuth();
-  const invalidateSearchUsers = useInvalidateSearchUsersQuery();
-
-
-  return useMutation<void, Error, SenderInput>({
-    mutationKey: ["acceptFriendRequest"],
-    mutationFn: async (sender) => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      await acceptFriendRequest(sender, { uid: user.uid, username: user.username, avatarUrl: user.avatarUrl });
+export const useAcceptFriendRequestMutation = (options?: UseMutationOptions<void, Error, SenderInput>) =>
+  useUserMutation<void, SenderInput>(
+    {
+      mutationKey: ["acceptFriendRequest"],
+      mutationFn: async (sender, user) => {
+        await acceptFriendRequest(sender, { uid: user.uid, username: user.username, avatarUrl: user.avatarUrl });
+      },
+      meta: {
+        successMessageKey: "community:toasts.acceptSuccess",
+        errorMessageKey: "community:toasts.acceptError",
+      },
     },
-    meta: {
-      successMessageKey: "community:toasts.acceptSuccess",
-      errorMessageKey: "community:toasts.acceptError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      invalidateSearchUsers();
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useAcceptFriendRequestMutation;

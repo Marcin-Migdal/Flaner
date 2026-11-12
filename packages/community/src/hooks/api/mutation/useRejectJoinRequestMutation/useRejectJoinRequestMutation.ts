@@ -1,34 +1,18 @@
-import { useAuth } from "@flaner/shared/context";
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { rejectJoinRequest } from '../../../../api/groups';
-import { useInvalidateGroupRequestsQuery } from "../../query/useGetGroupRequestsQuery";
 import { reactQueryMeta } from "@flaner/shared/constants";
 
-
-export const useRejectJoinRequestMutation = (
-  options?: UseMutationOptions<void, Error, { groupId: string; userId: string }>
-) => {
-  const { user } = useAuth();
-  const invalidateRequests = useInvalidateGroupRequestsQuery();
-
-
-
-  return useMutation<void, Error, { groupId: string; userId: string }>({
-    mutationKey: ["rejectJoinRequest"],
-    meta: reactQueryMeta.mutate,
-    mutationFn: async ({ groupId, userId }) => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      await rejectJoinRequest(groupId, userId, user.uid);
+export const useRejectJoinRequestMutation = (options?: UseMutationOptions<void, Error, { groupId: string; userId: string }>) =>
+  useUserMutation<void, { groupId: string; userId: string }>(
+    {
+      mutationKey: ["rejectJoinRequest"],
+      mutationFn: async ({ groupId, userId }, user) => {
+        await rejectJoinRequest(groupId, userId, user.uid);
+      },
+      meta: reactQueryMeta.mutate,
     },
-    ...options,
-    onSuccess: async (...args) => {
-      const [_data, variables] = args;
-      invalidateRequests(variables.groupId);
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useRejectJoinRequestMutation;

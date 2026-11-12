@@ -1,31 +1,13 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getGroupInvitations, subscribeToGroupInvitations } from '../../../../api/groups';
-import type { GroupInvitation } from '../../../../api/groups';
-import { reactQueryMeta } from "@flaner/shared/constants";
-import { useRealtimeQueryData } from "@flaner/shared/hooks";
+import { useRealtimeQuery } from "@flaner/shared/hooks";
+import { getGroupInvitations, subscribeToGroupInvitations, type GroupInvitation } from "../../../../api/groups";
+import { groupKeys } from "../../queryKeys";
 
-
-const getGroupPendingInvitationsQueryKey = (groupId: string) => ["groupPendingInvitations", groupId];
-
-export const useGetGroupPendingInvitationsQuery = (groupId: string | undefined) => {
-  useRealtimeQueryData<GroupInvitation[]>(
-    getGroupPendingInvitationsQueryKey(groupId ?? ""),
-    (onUpdate, onError) => subscribeToGroupInvitations(groupId ?? "", onUpdate, onError),
-    !!groupId,
-  );
-
-  return useQuery<GroupInvitation[], Error>({
-      meta: reactQueryMeta.fetch,
-    queryKey: getGroupPendingInvitationsQueryKey(groupId ?? ""),
+export const useGetGroupPendingInvitationsQuery = (groupId: string | undefined) =>
+  useRealtimeQuery<GroupInvitation[]>({
+    queryKey: groupKeys.pendingInvitations(groupId ?? ""),
     queryFn: () => getGroupInvitations(groupId ?? ""),
+    subscribe: (onUpdate, onError) => subscribeToGroupInvitations(groupId ?? "", onUpdate, onError),
     enabled: !!groupId,
-    staleTime: Infinity, // the listener keeps it fresh
   });
-};
-
-export const useInvalidateGroupPendingInvitationsQuery = () => {
-  const queryClient = useQueryClient();
-  return (groupId: string) => queryClient.invalidateQueries({ queryKey: getGroupPendingInvitationsQueryKey(groupId) });
-};
 
 export default useGetGroupPendingInvitationsQuery;

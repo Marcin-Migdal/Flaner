@@ -1,19 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { act } from "@testing-library/react";
+import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
+import type { UserType } from "@flaner/shared/types";
 import { useNotifications } from "./useNotifications";
 import * as notificationsApi from "../../api/notifications";
 import type { AppNotification } from "../../api/notifications";
 
-const invalidateMock = vi.fn();
-let mockUser: { uid: string } | null = { uid: "user-123" };
+type RenderOptions = Parameters<typeof useNotifications>[0] & { user?: UserType | null };
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
-
-vi.mock("../api/query/useReadNotifications", () => ({
-  useInvalidateReadNotificationsQuery: () => invalidateMock,
-}));
+/** `useNotifications` for `user` (default: signed in as user-123), plus a spy on the query cache invalidation. */
+const renderNotifications = ({ user = createMockUser({ uid: "user-123" }), ...options }: RenderOptions = {}) => {
+  const rendered = renderHookWithProviders(() => useNotifications(options), { user });
+  const invalidateSpy = vi.spyOn(rendered.queryClient, "invalidateQueries");
+  return { ...rendered, invalidateSpy };
+};
 
 vi.mock("../../api/notifications", () => ({
   subscribeToNotifications: vi.fn(),
@@ -48,7 +48,6 @@ describe("useNotifications", () => {
     vi.clearAllMocks();
     vi.mocked(notificationsApi.subscribeToNotifications).mockReset();
     vi.mocked(notificationsApi.subscribeToNotifications).mockReturnValue(vi.fn());
-    mockUser = { uid: "user-123" };
   });
 
   it("subscribes to notifications when user is authenticated", () => {
@@ -60,7 +59,7 @@ describe("useNotifications", () => {
       return unsubscribeMock;
     });
 
-    const { result, unmount } = renderHook(() => useNotifications());
+    const { result, unmount } = renderNotifications();
 
     expect(notificationsApi.subscribeToNotifications).toHaveBeenCalledWith("user-123", expect.any(Function), expect.any(Function));
     expect(result.current.loading).toBe(true);
@@ -78,8 +77,7 @@ describe("useNotifications", () => {
   });
 
   it("handles unauthenticated user cleanly", () => {
-    mockUser = null;
-    const { result } = renderHook(() => useNotifications());
+    const { result } = renderNotifications({ user: null });
 
     expect(result.current.notifications).toEqual([]);
     expect(result.current.unreadCount).toBe(0);
@@ -93,14 +91,14 @@ describe("useNotifications", () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useNotifications());
+    const { result, invalidateSpy } = renderNotifications();
 
     await act(async () => {
       await result.current.markAsRead("notif-1");
     });
 
     expect(notificationsApi.markNotificationAsRead).toHaveBeenCalledWith("user-123", "notif-1");
-    expect(invalidateMock).toHaveBeenCalled();
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["notifications", "read", "user-123"] });
     expect(result.current.unreadCount).toBe(0);
     expect(result.current.notifications[0].read).toBe(true);
   });
@@ -111,38 +109,36 @@ describe("useNotifications", () => {
       return vi.fn();
     });
 
-    const { result } = renderHook(() => useNotifications());
+    const { result, invalidateSpy } = renderNotifications();
 
     await act(async () => {
       await result.current.markAllAsRead();
     });
 
     expect(notificationsApi.markAllNotificationsAsRead).toHaveBeenCalledWith("user-123");
-    expect(invalidateMock).toHaveBeenCalled();
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["notifications", "read", "user-123"] });
     expect(result.current.unreadCount).toBe(0);
     expect(result.current.notifications.every((n) => n.read)).toBe(true);
   });
 
   it("handles user change dynamically (logout and login)", () => {
-    mockUser = { uid: "user-1" };
-    const { result, rerender } = renderHook(() => useNotifications());
+    const { result, rerender, setUser } = renderNotifications({ user: createMockUser({ uid: "user-1" }) });
     expect(result.current.loading).toBe(true);
 
     // Logout
-    mockUser = null;
+    setUser(null);
     rerender();
     expect(result.current.notifications).toEqual([]);
     expect(result.current.loading).toBe(false);
 
     // Login with new user
-    mockUser = { uid: "user-2" };
+    setUser(createMockUser({ uid: "user-2" }));
     rerender();
     expect(result.current.loading).toBe(true);
   });
 
   it("guards against calling markAsRead or markAllAsRead when unauthenticated or unreadCount is 0", async () => {
-    mockUser = null;
-    const { result } = renderHook(() => useNotifications());
+    const { result } = renderNotifications({ user: null });
 
     await act(async () => {
       await result.current.markAsRead("some-id");
@@ -162,7 +158,7 @@ describe("useNotifications", () => {
     vi.mocked(notificationsApi.markNotificationAsRead).mockRejectedValueOnce(new Error("Fail read"));
     vi.mocked(notificationsApi.markAllNotificationsAsRead).mockRejectedValueOnce(new Error("Fail all read"));
 
-    const { result } = renderHook(() => useNotifications());
+    const { result } = renderNotifications();
 
     await act(async () => {
       await result.current.markAsRead("notif-1");
@@ -182,7 +178,7 @@ describe("useNotifications", () => {
     });
     const base = { senderUid: "u2", senderUsername: "U2", senderAvatarUrl: "", read: false, createdAt: 1 };
 
-    renderHook(() => useNotifications());
+    renderNotifications();
     act(() => {
       listenerCallback([
         { ...base, id: "deleted", type: "group_deleted", groupId: "g1" },
@@ -201,7 +197,7 @@ describe("useNotifications", () => {
       return vi.fn();
     });
 
-    renderHook(() => useNotifications());
+    renderNotifications();
     act(() => listenerCallback(mockNotifications, []));
 
     expect(notificationsApi.deleteNotifications).not.toHaveBeenCalled();
@@ -215,7 +211,7 @@ describe("useNotifications", () => {
     });
     const onNew = vi.fn();
 
-    renderHook(() => useNotifications({ onNew }));
+    renderNotifications({ onNew });
     act(() => listenerCallback(mockNotifications, []));
     expect(onNew).not.toHaveBeenCalled();
 

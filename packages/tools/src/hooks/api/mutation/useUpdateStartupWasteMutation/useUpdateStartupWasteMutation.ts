@@ -1,32 +1,20 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth } from "@flaner/shared/context";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { updateStartupWaste } from "../../../../api/settings";
-import { useInvalidateGetStartupWasteQuery } from "../../query/useGetStartupWasteQuery";
+import { spoolerInvalidation } from "../../queryKeys";
 
-export const useUpdateStartupWasteMutation = (
-  options?: UseMutationOptions<void, Error, number>,
-) => {
-  const { user } = useAuth();
-  const invalidateStartupWaste = useInvalidateGetStartupWasteQuery();
-
-  return useMutation<void, Error, number>({
-    mutationKey: ["updateStartupWaste"],
-    mutationFn: async (waste: number) => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      await updateStartupWaste(user.uid, waste);
+export const useUpdateStartupWasteMutation = (options?: UseMutationOptions<void, Error, number>) =>
+  useUserMutation<void, number>(
+    {
+      mutationKey: ["updateStartupWaste"],
+      mutationFn: (waste, { uid }) => updateStartupWaste(uid, waste),
+      invalidates: spoolerInvalidation.updateStartupWaste,
+      meta: {
+        successMessageKey: "tools:toasts.settings.saveSuccess",
+        errorMessageKey: "tools:toasts.settings.saveError",
+      },
     },
-    meta: {
-      successMessageKey: "tools:toasts.settings.saveSuccess",
-      errorMessageKey: "tools:toasts.settings.saveError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      invalidateStartupWaste();
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useUpdateStartupWasteMutation;

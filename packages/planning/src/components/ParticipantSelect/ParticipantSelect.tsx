@@ -9,6 +9,7 @@ import { useDebounce } from "@flaner/shared/hooks";
 import type { UserType } from "@flaner/shared/types";
 import { getGroupMembersAsParticipants, type ParticipantResult } from "../../api/participants";
 import { useGetEventParticipantsProfilesQuery, useSearchParticipantsQuery } from "../../hooks/api/query";
+import { participantKeys } from "../../hooks/api/queryKeys";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { participantSelectStyles as styles } from "./ParticipantSelect.styles";
 
@@ -106,7 +107,7 @@ export const ParticipantSelect = ({
       // A failure is logged and toasted by the global QueryCache handler
       const members = await queryClient
         .fetchQuery({
-          queryKey: ["groupMembersAsParticipants", item.id],
+          queryKey: participantKeys.groupMembers(item.id),
           queryFn: () => getGroupMembersAsParticipants(item.id, item.name),
           meta: reactQueryMeta.fetch,
         })

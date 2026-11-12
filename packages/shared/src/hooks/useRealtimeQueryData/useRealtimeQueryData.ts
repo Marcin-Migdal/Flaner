@@ -1,5 +1,6 @@
-import { useQueryClient, type QueryKey } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type QueryKey, type UseQueryOptions } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { reactQueryMeta } from "../../constants/reactQueryMeta";
 
 type Subscribe<T> = (onUpdate: (data: T) => void, onError: (error: Error) => void) => () => void;
 
@@ -34,4 +35,32 @@ export const useRealtimeQueryData = <T>(queryKey: QueryKey, subscribe: Subscribe
     // keyHash stands for queryKey; subscribe is recreated every render, its inputs are part of the key
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keyHash, enabled, queryClient]);
+};
+
+export type RealtimeQueryConfig<T> = {
+  queryKey: QueryKey;
+  /** First load (and the load after a remount); later changes come from `subscribe`. */
+  queryFn: () => Promise<T>;
+  subscribe: Subscribe<T>;
+  enabled: boolean;
+};
+
+export type RealtimeQueryOptions<T> = Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">;
+
+/**
+ * A listener-backed query: the first fetch plus a Firestore listener that keeps the cache fresh (`staleTime: Infinity`).
+ * Its key must never be invalidated by a mutation — the listener already delivers the write.
+ * `options.enabled: false` also stops the listener.
+ */
+export const useRealtimeQuery = <T>({ queryKey, queryFn, subscribe, enabled }: RealtimeQueryConfig<T>, options?: RealtimeQueryOptions<T>) => {
+  useRealtimeQueryData(queryKey, subscribe, enabled && options?.enabled !== false);
+
+  return useQuery<T, Error>({
+    meta: reactQueryMeta.fetch,
+    queryKey,
+    queryFn,
+    enabled,
+    staleTime: Infinity,
+    ...options,
+  });
 };

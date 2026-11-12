@@ -1,19 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient } from "@flaner/test-utils";
+import { waitFor, act } from "@testing-library/react";
+import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
 import type { SchedulerEvent } from "../../../../api/events/types";
-import {
-  useGetUserSchedulerEventsRealtimeQuery,
-  getUserSchedulerEventsRealtimeQueryKeys,
-} from "./useGetUserSchedulerEventsRealtimeQuery";
+import { useGetUserSchedulerEventsRealtimeQuery } from "./useGetUserSchedulerEventsRealtimeQuery";
+import { eventKeys } from "../../queryKeys";
 import * as eventsApi from "../../../../api/events";
 
-let mockUser: { uid: string } | null = { uid: "user-123" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-123" });
 
 vi.mock("../../../../api/events", () => ({
   getUserSchedulerEvents: vi.fn(),
@@ -22,17 +15,8 @@ vi.mock("../../../../api/events", () => ({
 
 describe("useGetUserSchedulerEventsRealtimeQuery", () => {
   beforeEach(() => {
-    mockUser = { uid: "user-123" };
     vi.clearAllMocks();
   });
-
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
 
   const sampleEvents: SchedulerEvent[] = [
     {
@@ -49,9 +33,7 @@ describe("useGetUserSchedulerEventsRealtimeQuery", () => {
 
   it("fetches user scheduler events when user is authenticated", async () => {
     vi.mocked(eventsApi.getUserSchedulerEvents).mockResolvedValueOnce(sampleEvents);
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useGetUserSchedulerEventsRealtimeQuery(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useGetUserSchedulerEventsRealtimeQuery(), { user: mockUser });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -66,9 +48,7 @@ describe("useGetUserSchedulerEventsRealtimeQuery", () => {
       return vi.fn();
     });
     vi.mocked(eventsApi.getUserSchedulerEvents).mockResolvedValueOnce(sampleEvents);
-
-    const { Wrapper, queryClient } = createWrapper();
-    renderHook(() => useGetUserSchedulerEventsRealtimeQuery(), { wrapper: Wrapper });
+    const { queryClient } = renderHookWithProviders(() => useGetUserSchedulerEventsRealtimeQuery(), { user: mockUser });
 
     expect(capturedCallback).toBeDefined();
 
@@ -90,19 +70,14 @@ describe("useGetUserSchedulerEventsRealtimeQuery", () => {
       capturedCallback?.(updatedEvents);
     });
 
-    expect(queryClient.getQueryData(getUserSchedulerEventsRealtimeQueryKeys("user-123"))).toEqual(updatedEvents);
+    expect(queryClient.getQueryData(eventKeys.userEvents("user-123"))).toEqual(updatedEvents);
   });
 
   it("does not subscribe and throws when user is unauthenticated", async () => {
-    mockUser = null;
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useGetUserSchedulerEventsRealtimeQuery({ enabled: true }), {
-      wrapper: Wrapper,
-    });
+    const { result } = renderHookWithProviders(() => useGetUserSchedulerEventsRealtimeQuery({ enabled: true }), { user: null });
 
     expect(eventsApi.subscribeToUserSchedulerEvents).not.toHaveBeenCalled();
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error?.message).toBe("planning:errors.userNotAuthenticated");
+    expect(result.current.error?.message).toBe("errors.userNotAuthenticated");
   });
 });

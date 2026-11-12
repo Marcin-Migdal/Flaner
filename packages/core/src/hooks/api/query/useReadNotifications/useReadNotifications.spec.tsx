@@ -1,16 +1,10 @@
-import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient } from "@flaner/test-utils";
-import { useReadNotifications, useInvalidateReadNotificationsQuery, getReadNotificationsQueryKeys } from "./useReadNotifications";
+import { waitFor } from "@testing-library/react";
+import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
+import { useReadNotifications } from "./useReadNotifications";
 import * as notificationsApi from "../../../../api/notifications";
 
-let mockUser: { uid: string } | null = { uid: "user-123" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-123" });
 
 vi.mock("../../../../api/notifications", () => ({
   getReadNotificationsPage: vi.fn(),
@@ -19,16 +13,7 @@ vi.mock("../../../../api/notifications", () => ({
 describe("useReadNotifications", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUser = { uid: "user-123" };
   });
-
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
 
   it("fetches read notifications page when authenticated", async () => {
     const mockPage = {
@@ -47,47 +32,19 @@ describe("useReadNotifications", () => {
     };
 
     vi.mocked(notificationsApi.getReadNotificationsPage).mockResolvedValueOnce(mockPage);
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useReadNotifications(), { wrapper: Wrapper });
+    const { result, queryClient } = renderHookWithProviders(() => useReadNotifications(), { user: mockUser });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(notificationsApi.getReadNotificationsPage).toHaveBeenCalledWith("user-123", 15, undefined);
     expect(result.current.data?.pages[0]).toEqual(mockPage);
-  });
-
-  it("invalidates read notifications query", () => {
-    const { Wrapper, queryClient } = createWrapper();
-    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-    const { result } = renderHook(() => useInvalidateReadNotificationsQuery(), { wrapper: Wrapper });
-    result.current();
-
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: getReadNotificationsQueryKeys("user-123"),
-    });
+    expect(queryClient.getQueryState(["notifications", "read", "user-123"])?.status).toBe("success");
   });
 
   it("throws error in queryFn when user is unauthenticated", async () => {
-    mockUser = null;
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useReadNotifications(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useReadNotifications(), { user: null });
 
     const refetchResult = await result.current.refetch();
     expect(refetchResult.error?.message).toBe("errors.userNotAuthenticated");
-  });
-
-  it("invalidates read notifications with empty string key when user is null", () => {
-    mockUser = null;
-    const { Wrapper, queryClient } = createWrapper();
-    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-    const { result } = renderHook(() => useInvalidateReadNotificationsQuery(), { wrapper: Wrapper });
-    result.current();
-
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: getReadNotificationsQueryKeys(""),
-    });
   });
 });
