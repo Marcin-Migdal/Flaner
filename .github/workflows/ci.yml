@@ -20,6 +20,8 @@ jobs:
   checks:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
+    env:
+      NX_CACHE_DIRECTORY: ${{ github.workspace }}/.nx/cache
     strategy:
       fail-fast: false
       matrix:
@@ -36,9 +38,13 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/setup
       # Re-pushes to the same PR reuse unchanged task results; hashes include root config (nx.json namedInputs.sharedGlobals).
+      # Nx 23 keeps its cache in ~/.nx/<hash>/cache unless NX_CACHE_DIRECTORY is set, and a hit also needs
+      # the task records in .nx/workspace-data/*.db, so both are cached.
       - uses: actions/cache@v4
         with:
-          path: .nx/cache
+          path: |
+            .nx/cache
+            .nx/workspace-data/*.db
           key: nx-${{ matrix.cache }}-${{ github.sha }}
           restore-keys: nx-${{ matrix.cache }}-
       # Design tokens: no raw colours / arbitrary sizes outside theme.css (#61).
