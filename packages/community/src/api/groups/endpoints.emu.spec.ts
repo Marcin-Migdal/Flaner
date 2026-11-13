@@ -362,8 +362,8 @@ describe("community groups endpoints", () => {
       await seedGroup("g-1");
       await signInAs(OUTSIDER);
 
-      // The rules deny a non-member reading the members, before the endpoint's own notGroupMember check
-      await expect(inviteUserToGroup("g-1", "Group g-1", MEMBER, OUTSIDER)).rejects.toMatchObject({ code: "permission-denied" });
+      // The rules deny a non-member reading the members; the endpoint reports it as its own error (#99)
+      await expect(inviteUserToGroup("g-1", "Group g-1", MEMBER, OUTSIDER)).rejects.toThrow("community:errors.notGroupMember");
       expect(await list("groups/g-1/invitations")).toEqual({});
     });
 

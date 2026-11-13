@@ -1,4 +1,5 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/groups.md, users.md (keep their Write flows / Queries in sync).
+import { FirebaseError } from "firebase/app";
 import {
   createNotification,
   getNotificationSender,
@@ -334,8 +335,14 @@ export const inviteUserToGroup = async (
   invitedByUserId: string,
   groupAvatarUrl?: string | null,
 ): Promise<void> => {
-  const memberSnap = await getDoc(refs.member(groupId, invitedByUserId));
-  if (!memberSnap.exists()) {
+  // The rules let only members read the members, so a non-member's read is denied rather than empty (#99)
+  let isMember = false;
+  try {
+    isMember = (await getDoc(refs.member(groupId, invitedByUserId))).exists();
+  } catch (error) {
+    if (!(error instanceof FirebaseError && error.code === "permission-denied")) throw error;
+  }
+  if (!isMember) {
     throw new Error("community:errors.notGroupMember");
   }
 
