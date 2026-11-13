@@ -16,6 +16,7 @@ Why: rebuilding the rules from the endpoints on every task produces drift and ho
 | `docs/_relationships.md` | index of cross-collection dependencies (no rules) |
 | `docs/<collection>.md` | one top-level collection + its subcollections |
 | `scripts/firestore-rules.mjs` | compiler (`npm run rules:build`) and drift guard (`npm run rules:check`) |
+| `scripts/firestore-schema-check.mjs` | schema guard (also run by `npm run rules:check`): Schema table == TS type == `hasOnly` list |
 | `firestore.rules` | generated output (committed, deployed) |
 | `firestore-tests/<collection>/*.spec.ts` | emulator tests (`npm run test:rules`) |
 
@@ -24,7 +25,7 @@ Sections, in this order (subcollections repeat them under `## Subcollection: <na
 
 1. **Intro** — what the collection is for, which MFE owns it.
 2. **Invariants** — numbered business rules (`I1`, `M1`…), written as intent, not as a paraphrase of the code. Write these *before* touching the rules.
-3. **Schema** — table: field, type, required, notes (immutable fields, allowed values, units).
+3. **Schema** — table: field, type, required, notes (immutable fields, allowed values, units). Every field name is in backticks in the first column. Below the table one line names the TS type of the stored doc: ``**TS type:** `packages/<pkg>/src/…/types.ts#TypeName` ``, plus `` (derived: `id`) `` for TS fields filled on read and never stored.
 4. **Write flows** — table: flow, endpoint (`file#function`), writes, atomic (batch / transaction / sequential).
 5. **Queries** — table: query shape, endpoint, the rule that allows it. List queries must be provable from their filters.
 6. **Access matrix** — actor × operation. `✅` / `❌` is the **intended** behaviour; `⚠️ Gn` marks a cell where the current rules differ.
@@ -37,15 +38,16 @@ Sections, in this order (subcollections repeat them under `## Subcollection: <na
 - Only ` ```rules ` fenced blocks are compiled; `_global.md` first, then the other files alphabetically.
 - In a collection file the first block must start with `match /<file name>/…`; every further block is a subcollection, inserted at the `{{subcollections}}` line of the first block (in file order).
 - The output starts with a `GENERATED FILE` header. CI runs `npm run rules:check` and fails when `firestore.rules` is not the exact compiled output.
+- `rules:check` then runs the schema guard (`scripts/firestore-schema-check.mjs`, #93). For every (sub)collection section it fails when the Schema table fields differ from the top-level properties of its `TS type` (minus `derived`), when a `request.resource.data.keys().hasOnly([...])` in its rules block differs from the Schema table, or when a Schema table has no `TS type` line. It compares field names only, not types or optionality. `--watch` does not run it.
 
 ## 4. Workflow for a change
 1. **Locate**: find every affected file via the Write flows / Queries tables and `_relationships.md`.
-2. **Intent first**: add or change the invariants; update the schema.
+2. **Intent first**: add or change the invariants; update the schema. A new or renamed field goes into the Schema table, the `hasOnly` list (if the collection has one) and the TS type named under the table; `npm run rules:check` fails until all three match.
 3. **Flows**: update the Write flows / Queries tables to match the endpoint code you are writing (the endpoints carry a `// Firestore rules spec:` header pointing to their files).
 4. **Matrix**: update the access matrix; add a `Gn` for every cell the rules do not satisfy yet.
 5. **Rules**: edit the ` ```rules ` block.
 6. **Tests**: every write flow and query gets an allow test that mirrors the endpoint (same batch / transaction shape and fields); every denied matrix cell that matters gets a deny test. When a gap is fixed, replace its `it.todo` with real tests and delete the `Gn` entry and the `⚠️` markers.
-7. **Build & verify**: `npm run rules:build`, then `npm run test:rules` (emulator, JDK 21). Both must be green.
+7. **Build & verify**: `npm run rules:build`, `npm run rules:check` (schema guard), then `npm run test:rules` (emulator, JDK 21). All must be green.
 8. **Commit together**: spec `.md` + generated `firestore.rules` + tests (+ endpoint changes) in the same commit.
 
 ## 5. Writing rules

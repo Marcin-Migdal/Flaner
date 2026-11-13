@@ -16,6 +16,8 @@ Filament templates (MFE `tools`, Spooler): reusable material / type / colour pre
 | `defaultWeight` | number (g) | ✓ | net filament weight, e.g. 1000 |
 | `createdAt` | number (ms) | ✓ | |
 
+**TS type:** `packages/tools/src/api/templates/types.ts#FilamentTemplate`
+
 ## Write flows
 Endpoints: `packages/tools/src/api/templates/endpoints.ts`.
 

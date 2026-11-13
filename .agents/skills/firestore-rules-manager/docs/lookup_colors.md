@@ -12,6 +12,8 @@ Colour options per material + type. Child of `lookup_types` (by `materialName` +
 | `hex` | string | ✓ | e.g. #7c3aed |
 | `createdAt` | number (ms) | ✓ | |
 
+**TS type:** `packages/tools/src/api/lookups/types.ts#LookupColor`
+
 ## Write flows
 Endpoints: `packages/tools/src/api/lookups/endpoints.ts`.
 

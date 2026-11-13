@@ -10,6 +10,8 @@ Material options created from the Spooler selects (e.g. PLA, PETG). Parent of `l
 | `name` | string | ✓ | e.g. PLA, PETG, ABS, Nylon; unique per user (case-insensitive) |
 | `createdAt` | number (ms) | ✓ | |
 
+**TS type:** `packages/tools/src/api/lookups/types.ts#LookupMaterial`
+
 ## Write flows
 Endpoints: `packages/tools/src/api/lookups/endpoints.ts`.
 

@@ -23,6 +23,8 @@ Community groups (MFE `community`). Public groups are discoverable by name; priv
 | `createdAt` | number (ms) | ✓ | |
 | `updatedAt` | number (ms) | ✓ | |
 
+**TS type:** `packages/community/src/api/groups/types.ts#Group`
+
 ## Write flows
 All endpoints: `packages/community/src/api/groups/endpoints.ts`.
 
@@ -99,6 +101,8 @@ match /groups/{groupId} {
 | `userId` | string | ✓ | == doc id |
 | `role` | `'owner' \| 'admin' \| 'moderator' \| 'member'` | ✓ | |
 | `joinedAt` | number (ms) | ✓ | |
+
+**TS type:** `packages/community/src/api/groups/types.ts#GroupMember`
 
 ### Write flows
 | Flow | Endpoint | Writes | Atomic |
@@ -194,6 +198,8 @@ match /members/{userId} {
 | `invitedByUserId` | string | ✓ |
 | `invitedAt` | number (ms) | ✓ |
 
+**TS type:** `packages/community/src/api/groups/types.ts#GroupInvitation`
+
 ### Write flows
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
@@ -253,6 +259,8 @@ match /invitations/{userId} {
 | --- | --- | --- |
 | `userId` | string (== doc id) | ✓ |
 | `requestedAt` | number (ms) | ✓ |
+
+**TS type:** `packages/community/src/api/groups/types.ts#GroupRequest`
 
 ### Write flows
 | Flow | Endpoint | Writes |

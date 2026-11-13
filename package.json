@@ -24,7 +24,7 @@
     "test:rules": "firebase emulators:exec --only firestore --project demo-flaner \"vitest run --config firestore-tests/vitest.config.ts\"",
     "test:emulator": "firebase emulators:exec --only auth,firestore --project demo-flaner-unit \"vitest run --config vitest.emulator.config.ts\"",
     "rules:build": "node scripts/firestore-rules.mjs",
-    "rules:check": "node scripts/firestore-rules.mjs --check"
+    "rules:check": "node scripts/firestore-rules.mjs --check && node scripts/firestore-schema-check.mjs"
   },
   "private": true,
   "devDependencies": {

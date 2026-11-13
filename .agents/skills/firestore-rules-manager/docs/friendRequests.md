@@ -16,6 +16,8 @@ Pending friend requests (MFE `community`). The doc id is `${senderUid}_${receive
 | `status` | `'pending'` | ✓ | other values are never written |
 | `createdAt` | number (ms) | ✓ | |
 
+**TS type:** `packages/community/src/api/users/types.ts#FriendRequest` (derived: `id`)
+
 ## Write flows
 All endpoints: `packages/community/src/api/users/endpoints.ts`.
 

@@ -26,6 +26,8 @@ Scheduler events (MFE `planning`): the creator proposes date slots, participants
 | `finalizedSlotKey` | string | – | slotKey (`{start}_{end}`) of the winning slot; set when finalized, deleted on reopen. ADR 0001 |
 | `createdAt`, `updatedAt` | number (ms) | ✓ | |
 
+**TS type:** `packages/planning/src/api/events/types.ts#SchedulerEvent`
+
 ## Write flows
 All endpoints: `packages/planning/src/api/events/endpoints.ts`.
 

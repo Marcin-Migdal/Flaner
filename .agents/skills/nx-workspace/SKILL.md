@@ -35,7 +35,7 @@ npx nx run-many -t lint --projects=core,shared --fix
 - **Unit tests**: `npx nx affected -t test`
 - Both restore the Nx cache (`actions/cache`, per job): `NX_CACHE_DIRECTORY=.nx/cache` (Nx 23 defaults to `~/.nx/<hash>/cache`, outside the repo) plus `.nx/workspace-data/*.db` (without the task records a restored cache still misses), so a re-push to the same PR skips unchanged tasks. Task hashes include root config through `nx.json` → `namedInputs.sharedGlobals` (`tsconfig.base.json`, `tsconfig.json`, `vitest.base.ts`, `vite.federation.ts`, `.node-version`): add any new root file that targets read there, or the cache can return a stale result. `typecheck` has `"cache": true` in each `project.json` (`targetDefaults` does not apply it).
 - App builds are not in `ci.yml`: `deploy-vercel.yml` builds every affected app (required check **Deploy result**, `vercel-project-setup` skill).
-- `rules`: `npm run rules:check` (generated `firestore.rules` matches the spec), `tsc -p firestore-tests`, `npm run test:rules` (Firestore emulator, Temurin 21)
+- `rules`: `npm run rules:check` (generated `firestore.rules` matches the spec; schema tables match the TS types), `tsc -p firestore-tests`, `npm run test:rules` (Firestore emulator, Temurin 21)
 - E2E: one runner per affected Playwright project — `scripts/e2e-affected.mjs` (details in `e2e-testing` skill §6)
 - `nx.json` → `defaultBase: "develop"`, so locally `npx nx affected -t typecheck lint test build` compares with `develop`.
 

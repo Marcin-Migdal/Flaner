@@ -20,6 +20,8 @@ Filament spools (MFE `tools`, Spooler). User-owned documents — see `_global.md
 | `createdAt` | number (ms) | ✓ | |
 | `material`, `type`, `colorName`, `colorHex` | string | ✓ | denormalized from the template |
 
+**TS type:** `packages/tools/src/api/spools/types.ts#FilamentSpool`
+
 ## Write flows
 Endpoints: `packages/tools/src/api/spools/endpoints.ts`, `templates/endpoints.ts`.
 
@@ -68,6 +70,8 @@ match /spools/{spoolId} {
 | `id` | string (== doc id) | ✓ |
 | `usedWeight` | number (g), what the print took from this spool (≤ its weight; the carryover is not included) | ✓ |
 | `createdAt` | number (ms) | ✓ |
+
+**TS type:** `packages/tools/src/api/spools/types.ts#SpoolPrint`
 
 ### Queries
 | Query | Endpoint | Allowed by |
