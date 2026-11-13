@@ -1,67 +1,53 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
+import { QueryClient } from "@tanstack/react-query";
+import type { UserType } from "@flaner/shared/types";
+import { describe, expect, it } from "vitest";
 import { QueryCacheReset } from "./QueryCacheReset";
 
-let currentUser: { uid: string } | null = null;
+const userA = createMockUser({ uid: "user-a" });
+const userB = createMockUser({ uid: "user-b" });
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: currentUser }),
-}));
-
-const renderReset = () => {
+const renderReset = (user: UserType | null) => {
+  // Default gcTime: the test client's gcTime 0 could collect the unobserved seed
   const queryClient = new QueryClient();
   queryClient.setQueryData(["spools"], ["previous user's spool"]);
-  const view = render(
-    <QueryClientProvider client={queryClient}>
-      <QueryCacheReset />
-    </QueryClientProvider>,
-  );
-  const rerender = () =>
-    view.rerender(
-      <QueryClientProvider client={queryClient}>
-        <QueryCacheReset />
-      </QueryClientProvider>,
-    );
-  return { queryClient, rerender };
+  const view = renderWithProviders(<QueryCacheReset />, { queryClient, user });
+  const switchUser = (nextUser: UserType | null) => {
+    view.setUser(nextUser);
+    view.rerender(<QueryCacheReset />);
+  };
+  return { queryClient, switchUser };
 };
 
 describe("QueryCacheReset", () => {
   it("keeps the cache while the same user stays signed in", () => {
-    currentUser = { uid: "user-a" };
-    const { queryClient, rerender } = renderReset();
+    const { queryClient, switchUser } = renderReset(userA);
 
-    rerender();
+    switchUser(userA);
 
     expect(queryClient.getQueryData(["spools"])).toEqual(["previous user's spool"]);
   });
 
   it("clears the cache when the user signs out", () => {
-    currentUser = { uid: "user-a" };
-    const { queryClient, rerender } = renderReset();
+    const { queryClient, switchUser } = renderReset(userA);
 
-    currentUser = null;
-    rerender();
+    switchUser(null);
 
     expect(queryClient.getQueryData(["spools"])).toBeUndefined();
   });
 
   it("clears the cache when another user signs in", () => {
-    currentUser = { uid: "user-a" };
-    const { queryClient, rerender } = renderReset();
+    const { queryClient, switchUser } = renderReset(userA);
 
-    currentUser = { uid: "user-b" };
-    rerender();
+    switchUser(userB);
 
     expect(queryClient.getQueryData(["spools"])).toBeUndefined();
   });
 
   it("does not clear the cache on the first sign-in", () => {
-    currentUser = null;
-    const { queryClient, rerender } = renderReset();
+    const { queryClient, switchUser } = renderReset(null);
 
-    currentUser = { uid: "user-a" };
-    rerender();
+    switchUser(userA);
 
     expect(queryClient.getQueryData(["spools"])).toEqual(["previous user's spool"]);
   });

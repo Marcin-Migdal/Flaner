@@ -65,6 +65,33 @@ export default tseslint.config(
     },
   },
   {
+    // Test seam (#83, #101): specs use the emulators (`setupEmulator()`) or `renderWithProviders({ user })`,
+    // never a fake of the Firebase SDK, the app's `firebase` module or the AuthContext (also by relative path).
+    files: ["**/*.spec.ts", "**/*.spec.tsx"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "CallExpression[callee.object.name='vi'][callee.property.name=/^(mock|doMock)$/][arguments.0.value=/^(firebase\\u002F.+|@flaner\\u002Fshared\\u002F(firebase|context)(\\u002F.*)?|\\.{1,2}\\u002F(.*\\u002F)?(firebase|context)(\\u002F.*)?)$/]",
+          message:
+            "Don't mock Firebase or the AuthContext: test endpoints on the emulators (setupEmulator) and pass `user` / `auth` to renderWithProviders (unit-testing skill §6 A2, §7).",
+        },
+      ],
+    },
+  },
+  {
+    // Allowed exceptions (#101): specs of the code that wraps the SDK itself, where jsdom has no emulator
+    files: [
+      "packages/shared/src/firebase/firebase.spec.ts", // how firebase.ts initialises the SDK
+      "packages/shared/src/context/AuthContext/AuthContext.spec.tsx", // AuthProvider over the Auth SDK (Google popup, auth listener); flows run on the emulator in E2E
+      "packages/shared/src/utils/logError/logError.spec.ts", // reads the signed-in uid from fb.auth
+    ],
+    rules: {
+      "no-restricted-syntax": "off",
+    },
+  },
+  {
     files: ["**/*.js", "**/*.cjs"],
     languageOptions: {
       globals: {

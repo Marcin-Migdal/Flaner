@@ -9,14 +9,6 @@ const mockResend = vi.fn();
 const mockConfirm = vi.fn();
 const mockSignOut = vi.fn();
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({
-    resendVerificationEmail: mockResend,
-    confirmEmailVerification: mockConfirm,
-    signOutUser: mockSignOut,
-  }),
-}));
-
 vi.mock("@flaner/shared/utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@flaner/shared/utils")>()),
   toast: { success: vi.fn(), failure: vi.fn() },
@@ -39,7 +31,11 @@ const i18n = createTestI18n({
   },
 });
 
-const renderCard = () => renderWithProviders(<VerifyEmailCard email="late@flaner.app" language="pl" />, { i18nInstance: i18n });
+const renderCard = () => renderWithProviders(<VerifyEmailCard email="late@flaner.app" language="pl" />, {
+    i18nInstance: i18n,
+    user: null,
+    auth: { resendVerificationEmail: mockResend, confirmEmailVerification: mockConfirm, signOutUser: mockSignOut },
+  });
 
 describe("VerifyEmailCard", () => {
   beforeEach(() => {
