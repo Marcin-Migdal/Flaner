@@ -1,6 +1,7 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/friendRequests.md, users.md (keep their Write flows / Queries in sync).
 import type { FriendRequest, Friendship, FriendshipDoc } from "./types";
-import { collection, doc, documentId, getDocs, getDoc, query, where, limit, onSnapshot, writeBatch, type FirestoreError, type QueryDocumentSnapshot } from "firebase/firestore";
+import { collection, doc, getDocs, query, where, onSnapshot, writeBatch, type FirestoreError, type QueryDocumentSnapshot } from "firebase/firestore";
+import { searchUserProfiles, userProfileRef } from "@flaner/shared/api";
 import { fb } from "@flaner/shared/firebase";
 import { type UserProfile } from "@flaner/shared/types";
 import { firestoreConverter, getUnreadNotificationRefs, sourceNotificationRef } from "@flaner/shared/utils";
@@ -9,87 +10,17 @@ import { firestoreConverter, getUnreadNotificationRefs, sourceNotificationRef } 
 const friendRequestNotificationRef = (senderUid: string, receiverUid: string) =>
   sourceNotificationRef(fb.firestore, receiverUid, "friend_request", senderUid);
 
-// Firestore caps `in` filters at 30 values
-const FIRESTORE_IN_LIMIT = 30;
-
 const friendshipsRef = (userUid: string) =>
   collection(fb.firestore, `users/${userUid}/friendships`).withConverter(firestoreConverter<FriendshipDoc>());
 
-const usersRef = () => collection(fb.firestore, "users").withConverter(firestoreConverter<UserProfile>());
 const friendRequestsRef = () =>
   collection(fb.firestore, "friendRequests").withConverter(firestoreConverter<FriendRequest>());
 
 const toFriendship = (d: QueryDocumentSnapshot<FriendshipDoc>): Friendship => ({ uid: d.id, createdAt: d.data().createdAt });
 
-/**
- * Live profiles of `uids` (one `in` listener per 30 ids), emitted once every chunk has answered.
- * A uid missing from the result has no profile: the account was deleted.
- */
-export const subscribeToUsers = (
-  uids: string[],
-  onUpdate: (users: UserProfile[]) => void,
-  onError: (error: FirestoreError) => void,
-) => {
-  const unique = Array.from(new Set(uids));
-  if (unique.length === 0) {
-    onUpdate([]);
-    return () => {};
-  }
-
-  const chunks = Array.from({ length: Math.ceil(unique.length / FIRESTORE_IN_LIMIT) }, (_, i) =>
-    unique.slice(i * FIRESTORE_IN_LIMIT, (i + 1) * FIRESTORE_IN_LIMIT),
-  );
-  const byChunk: (UserProfile[] | undefined)[] = chunks.map(() => undefined);
-
-  const unsubscribes = chunks.map((chunk, index) =>
-    onSnapshot(
-      query(usersRef(), where(documentId(), "in", chunk)),
-      (snapshot) => {
-        byChunk[index] = snapshot.docs.map((d) => ({ ...d.data(), uid: d.id }));
-        if (byChunk.every((users) => users !== undefined)) onUpdate(byChunk.flatMap((users) => users ?? []));
-      },
-      onError,
-    ),
-  );
-
-  return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
-};
-
-// Fetch multiple users by their UIDs
-export const getUsers = async (uids: string[]): Promise<UserProfile[]> => {
-  if (!uids || uids.length === 0) return [];
-  
-  // To avoid hitting Firestore for duplicate IDs, get unique UIDs
-  const uniqueUids = Array.from(new Set(uids));
-
-  // For simplicity and avoiding the 10-item limit of 'in' queries,
-  // we fetch individually. In production with many members, this should be batched.
-  const promises = uniqueUids.map(async (uid) => {
-    const snap = await getDoc(doc(usersRef(), uid));
-    return snap.exists() ? { ...snap.data(), uid: snap.id } : null;
-  });
-
-  const results = await Promise.all(promises);
-  return results.filter((u): u is UserProfile => u !== null);
-};
-
-// 1. Search users by username (prefix match, case-insensitive)
-export const searchUsers = async (searchQuery: string, currentUserUid: string): Promise<UserProfile[]> => {
-  if (!searchQuery.trim()) return [];
-  const qLower = searchQuery.toLowerCase();
-  
-  const q = query(
-    usersRef(),
-    where("usernameLower", ">=", qLower),
-    where("usernameLower", "<=", qLower + "\uf8ff"),
-    limit(20)
-  );
-
-  const snap = await getDocs(q);
-  return snap.docs
-    .map((d) => ({ ...d.data(), uid: d.id }))
-    .filter((u) => u.uid !== currentUserUid);
-};
+/** Users whose username starts with `searchQuery`, without the searching user. */
+export const searchUsers = async (searchQuery: string, currentUserUid: string): Promise<UserProfile[]> =>
+  (await searchUserProfiles(searchQuery, 20)).filter((u) => u.uid !== currentUserUid);
 
 // 2. Send friend request (and write notification to receiver)
 export const sendFriendRequest = async (
@@ -155,14 +86,14 @@ export const acceptFriendRequest = async (
   // Add friendship to receiver (B)'s subcollection
   const friendshipB = doc(fb.firestore, `users/${receiver.uid}/friendships`, sender.uid);
   batch.set(friendshipB, {
-    userRef: doc(fb.firestore, "users", sender.uid),
+    userRef: userProfileRef(sender.uid),
     createdAt: Date.now(),
   });
 
   // Add friendship to sender (A)'s subcollection
   const friendshipA = doc(fb.firestore, `users/${sender.uid}/friendships`, receiver.uid);
   batch.set(friendshipA, {
-    userRef: doc(fb.firestore, "users", receiver.uid),
+    userRef: userProfileRef(receiver.uid),
     createdAt: Date.now(),
   });
 

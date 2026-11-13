@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { waitFor } from "@testing-library/react";
 import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
-import { updateUserProfile } from "../../../../api/users";
+import { updateUserProfile } from "@flaner/shared/api";
 import { useUpdateSettingsMutation } from "./useUpdateSettingsMutation";
 
-vi.mock("../../../../api/users", () => ({
+vi.mock("@flaner/shared/api", () => ({
   updateUserProfile: vi.fn(),
 }));
 

@@ -4,7 +4,6 @@ import { screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { FirebaseError } from "firebase/app";
 import { renderWithProviders, createMockUser } from "@flaner/test-utils";
-import { useAuth } from "@flaner/shared/context";
 import { compressImage, uploadToCloudinary, toast } from "@flaner/shared/utils";
 import { SettingsView } from "./SettingsView";
 import { useUpdateSettingsMutation, useUnsavedChangesWarning } from "../../hooks";
@@ -18,10 +17,6 @@ vi.mock("react-router", async () => {
     useNavigate: () => mockNavigate,
   };
 });
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: vi.fn(),
-}));
 
 const mockChangeLanguage = vi.fn();
 
@@ -76,8 +71,6 @@ vi.mock("@flaner/shared/utils", async () => {
   };
 });
 
-type AuthContextValue = ReturnType<typeof useAuth>;
-
 describe("SettingsView", () => {
   const mockUser = createMockUser({
     uid: "user-123",
@@ -96,19 +89,6 @@ describe("SettingsView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(useAuth).mockReturnValue({
-      user: mockUser,
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      unverifiedEmail: null,
-      resendVerificationEmail: vi.fn(),
-      confirmEmailVerification: vi.fn(),
-      updateUser: vi.fn(),
-    } as AuthContextValue);
-
     vi.mocked(useUpdateSettingsMutation).mockReturnValue({
       mutate: mockMutate,
       isPending: false,
@@ -123,7 +103,7 @@ describe("SettingsView", () => {
   });
 
   it("renders settings view with user data and avatar preview", () => {
-    renderWithProviders(<SettingsView />);
+    renderWithProviders(<SettingsView />, { user: mockUser });
 
     expect(screen.getByRole("heading", { level: 1, name: "title" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 2, name: "profile.sectionTitle" })).toBeInTheDocument();
@@ -141,46 +121,20 @@ describe("SettingsView", () => {
   });
 
   it("renders avatar placeholder initials when user has no avatarUrl", () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: createMockUser({
+    renderWithProviders(<SettingsView />, { user: createMockUser({
         username: "Alex",
         avatarUrl: "",
-      }),
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      unverifiedEmail: null,
-      resendVerificationEmail: vi.fn(),
-      confirmEmailVerification: vi.fn(),
-      updateUser: vi.fn(),
-    } as AuthContextValue);
-
-    renderWithProviders(<SettingsView />);
+      }) });
 
     expect(screen.queryByAltText("Avatar Preview")).not.toBeInTheDocument();
     expect(screen.getByText("AL")).toBeInTheDocument();
   });
 
   it("renders default initials 'FL' when user has no username", () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: createMockUser({
+    renderWithProviders(<SettingsView />, { user: createMockUser({
         username: "",
         avatarUrl: "",
-      }),
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      unverifiedEmail: null,
-      resendVerificationEmail: vi.fn(),
-      confirmEmailVerification: vi.fn(),
-      updateUser: vi.fn(),
-    } as AuthContextValue);
-
-    renderWithProviders(<SettingsView />);
+      }) });
 
     expect(screen.getByText("FL")).toBeInTheDocument();
   });
@@ -194,7 +148,7 @@ describe("SettingsView", () => {
       configurable: true,
     });
 
-    renderWithProviders(<SettingsView />);
+    renderWithProviders(<SettingsView />, { user: mockUser });
 
     const backButton = screen.getByRole("button", { name: "actions.back" });
     await user.click(backButton);
@@ -217,7 +171,7 @@ describe("SettingsView", () => {
       configurable: true,
     });
 
-    renderWithProviders(<SettingsView />);
+    renderWithProviders(<SettingsView />, { user: mockUser });
 
     const backButton = screen.getByRole("button", { name: "actions.back" });
     await user.click(backButton);
@@ -233,7 +187,7 @@ describe("SettingsView", () => {
 
   it("enables save button on edit and calls mutation with updated data on submit", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<SettingsView />);
+    renderWithProviders(<SettingsView />, { user: mockUser });
 
     const usernameInput = screen.getByRole("textbox", { name: "profile.username" });
     await user.clear(usernameInput);
@@ -271,7 +225,7 @@ describe("SettingsView", () => {
     mockMutate.mockImplementationOnce((_payload, { onError }) =>
       onError(new FirebaseError("app/username-already-in-use", "This username is already taken")),
     );
-    renderWithProviders(<SettingsView />);
+    renderWithProviders(<SettingsView />, { user: mockUser });
 
     const usernameInput = screen.getByRole("textbox", { name: "profile.username" });
     await user.clear(usernameInput);
@@ -288,7 +242,7 @@ describe("SettingsView", () => {
     vi.mocked(compressImage).mockResolvedValueOnce(mockCompressedFile);
     vi.mocked(uploadToCloudinary).mockResolvedValueOnce("https://cloudinary.com/new-avatar.jpg");
 
-    renderWithProviders(<SettingsView />);
+    renderWithProviders(<SettingsView />, { user: mockUser });
 
     const fileInput = screen.getByLabelText("profile.avatar");
     const newFile = new File(["image-bytes"], "photo.png", { type: "image/png" });
@@ -313,7 +267,7 @@ describe("SettingsView", () => {
 
   it("handles avatar removal when avatar is set to null", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<SettingsView />);
+    renderWithProviders(<SettingsView />, { user: mockUser });
 
     const removeBtn = screen.getByRole("button", { name: "Remove Avatar" });
     await user.click(removeBtn);
@@ -338,7 +292,7 @@ describe("SettingsView", () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(compressImage).mockRejectedValueOnce(new Error("Compression error"));
 
-    renderWithProviders(<SettingsView />);
+    renderWithProviders(<SettingsView />, { user: mockUser });
 
     const fileInput = screen.getByLabelText("profile.avatar");
     const newFile = new File(["bad-bytes"], "bad.png", { type: "image/png" });
@@ -373,7 +327,7 @@ describe("SettingsView", () => {
       },
     });
 
-    renderWithProviders(<SettingsView />);
+    renderWithProviders(<SettingsView />, { user: mockUser });
 
     expect(screen.getByText("unsavedChanges.title")).toBeInTheDocument();
     expect(screen.getByText("unsavedChanges.description")).toBeInTheDocument();
@@ -388,20 +342,7 @@ describe("SettingsView", () => {
   });
 
   it("renders FL initials placeholder when user has no avatar and no username", () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: createMockUser({ uid: "u-anon", username: "", avatarUrl: "" }),
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      unverifiedEmail: null,
-      resendVerificationEmail: vi.fn(),
-      confirmEmailVerification: vi.fn(),
-      updateUser: vi.fn(),
-    });
-
-    renderWithProviders(<SettingsView />);
+    renderWithProviders(<SettingsView />, { user: createMockUser({ uid: "u-anon", username: "", avatarUrl: "" }) });
     expect(screen.getByText("FL")).toBeInTheDocument();
   });
 
@@ -414,7 +355,7 @@ describe("SettingsView", () => {
       writable: true,
     });
 
-    renderWithProviders(<SettingsView />);
+    renderWithProviders(<SettingsView />, { user: mockUser });
     const backBtn = screen.getByRole("button", { name: "actions.back" });
     await user.click(backBtn);
     expect(mockNavigate).toHaveBeenCalledWith("/");
@@ -433,7 +374,7 @@ describe("SettingsView", () => {
     // Avatar error with empty message fallback
     vi.mocked(compressImage).mockRejectedValueOnce(new Error(""));
 
-    renderWithProviders(<SettingsView />);
+    renderWithProviders(<SettingsView />, { user: mockUser });
 
     const fileInput = screen.getByLabelText("profile.avatar");
     await user.upload(fileInput, new File(["bytes"], "pic.png", { type: "image/png" }));
@@ -463,26 +404,13 @@ describe("SettingsView", () => {
 
   it("handles user without language/darkMode and submits with existing string avatar", async () => {
     const user = userEvent.setup();
-    vi.mocked(useAuth).mockReturnValue({
-      user: createMockUser({
+    renderWithProviders(<SettingsView />, { user: createMockUser({
         uid: "u-partial",
         username: "partial",
         language: undefined as never,
         darkMode: undefined as never,
         avatarUrl: "https://flaner.app/existing.png",
-      }),
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      unverifiedEmail: null,
-      resendVerificationEmail: vi.fn(),
-      confirmEmailVerification: vi.fn(),
-      updateUser: vi.fn(),
-    });
-
-    renderWithProviders(<SettingsView />);
+      }) });
 
     const input = screen.getByPlaceholderText("profile.usernamePlaceholder");
     await user.type(input, "123");
@@ -503,19 +431,6 @@ describe("SettingsView", () => {
   });
 
   it("shows FL initials when the photo cannot load and the user has no username, and handles popup cancel", () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: createMockUser({ uid: "u-none", username: "", avatarUrl: "https://bad.url/img.png" }),
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      unverifiedEmail: null,
-      resendVerificationEmail: vi.fn(),
-      confirmEmailVerification: vi.fn(),
-      updateUser: vi.fn(),
-    });
-
     vi.mocked(useUnsavedChangesWarning).mockReturnValue({
       state: "blocked",
       proceed: mockProceed,
@@ -523,7 +438,7 @@ describe("SettingsView", () => {
       location: { pathname: "/test", search: "", hash: "", state: null, key: "k" },
     });
 
-    renderWithProviders(<SettingsView />);
+    renderWithProviders(<SettingsView />, { user: createMockUser({ uid: "u-none", username: "", avatarUrl: "https://bad.url/img.png" }) });
     expect(screen.getByText("FL")).toBeInTheDocument();
 
     // Cancel on confirmation popup
@@ -533,20 +448,7 @@ describe("SettingsView", () => {
   });
 
   it("renders with null user gracefully", () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: null,
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      unverifiedEmail: null,
-      resendVerificationEmail: vi.fn(),
-      confirmEmailVerification: vi.fn(),
-      updateUser: vi.fn(),
-    });
-
-    renderWithProviders(<SettingsView />);
+    renderWithProviders(<SettingsView />, { user: null });
     expect(screen.getByText("FL")).toBeInTheDocument();
   });
 });

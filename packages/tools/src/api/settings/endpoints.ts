@@ -1,26 +1,10 @@
-// Firestore rules spec: .agents/skills/firestore-rules-manager/docs/users.md (keep their Write flows / Queries in sync).
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { fb } from "@flaner/shared/firebase";
+import { getUserProfile, updateUserProfile } from "@flaner/shared/api";
 
-export const getStartupWaste = async (userId: string): Promise<number> => {
-  try {
-    const userRef = doc(fb.firestore, "users", userId);
-    const snap = await getDoc(userRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      if (typeof data?.startupWaste === "number") {
-        return data.startupWaste;
-      }
-    }
-  } catch {
-    // fallback if permissions or network issue
-  }
-  return 1.5;
-};
+/** Grams wasted at every print start when the user has not set their own value. */
+const DEFAULT_STARTUP_WASTE = 1.5;
 
-export const updateStartupWaste = async (userId: string, startupWaste: number): Promise<void> => {
-  const userRef = doc(fb.firestore, "users", userId);
-  await updateDoc(userRef, {
-    startupWaste,
-  });
-};
+export const getStartupWaste = async (userId: string): Promise<number> =>
+  (await getUserProfile(userId))?.startupWaste ?? DEFAULT_STARTUP_WASTE;
+
+export const updateStartupWaste = (userId: string, startupWaste: number): Promise<void> =>
+  updateUserProfile(userId, { startupWaste });

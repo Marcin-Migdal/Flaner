@@ -1,6 +1,6 @@
 # users/{userId}
 
-User profiles (doc id == Firebase Auth uid). Written by `AuthContext` (shared), Settings, the shell (theme / language) and Spooler settings; read everywhere to resolve names and avatars.
+User profiles (doc id == Firebase Auth uid). Only the profile module `shared/src/api/users` (`@flaner/shared/api`, #84) reads and writes this doc and `usernames`; its callers are `AuthContext` (shared), Settings, the shell (theme / language), Spooler settings, community and planning. Read everywhere to resolve names and avatars.
 
 ## Invariants
 - **I1** Only the user writes their own profile.
@@ -17,25 +17,24 @@ User profiles (doc id == Firebase Auth uid). Written by `AuthContext` (shared), 
 | `language` | `'pl' \| 'en'` | ✓ | |
 | `startupWaste` | number | – | Spooler setting (grams) |
 
-No other fields are accepted. Legacy profiles may still contain `email`: `AuthContext` (`loadProfile`) deletes it on every sign-in, and any write to such a profile must remove it (the whitelist applies to the whole document).
+No other fields are accepted (the whitelist applies to the whole document). Legacy `email` fields were removed from every profile, so the app no longer cleans them up.
 
 ## Write flows
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
-| Sign up (email) | `signUpWithEmailUser` (`shared/src/context/AuthContext`) | set `users/{me}` + set `usernames/{lower}`; on failure the new Auth account is deleted (`deleteUser`) | ✅ batch |
-| Legacy email clean-up | `loadProfile` (AuthContext, every sign-in) | update `email: deleteField()` | – |
-| First Google sign-in | `createProfileWithReservation` via `signInWithGoogleUser`, `onAuthStateChanged` (AuthContext) | set `users/{me}` + set `usernames/{lower}` (display name, random suffix on collision) | ✅ batch |
-| Edit profile | `updateUserProfile` (`settings/src/api/users`) | merge-set `users/{me}`, set new `usernames/*` when free + delete own old one | ✅ batch |
+| Sign up (email) | `createUserProfile` via `signUpWithEmailUser` (AuthContext) | set `users/{me}` + set `usernames/{lower}`; on failure the new Auth account is deleted (`deleteUser`) | ✅ batch |
+| First Google sign-in | `createUserProfileWithFreeUsername` via `signInWithGoogleUser`, `onAuthStateChanged` (AuthContext) | set `users/{me}` + set `usernames/{lower}` (display name, random suffix on collision) | ✅ batch |
+| Edit profile | `updateUserProfile` (Settings) | merge-set `users/{me}`, set new `usernames/*` when free + delete own old one | ✅ batch |
 | Legacy backfill | `scripts/backfill-usernames.mjs` (Admin SDK, bypasses rules) | reserve missing names, rename colliding profiles, delete stale reservations | ✅ batch per user |
-| Theme / language | `updateUserPreferences` (`core/src/api/users`, used by `ShellLayout`) | update `darkMode` / `language` | – |
-| Spooler startup waste | `updateStartupWaste` (`tools/src/api/settings`) | update `startupWaste` | – |
+| Theme / language | `updateUserProfile` (via `useUpdateUserPreferencesMutation`, `ShellLayout`) | merge-set `darkMode` / `language` | – |
+| Spooler startup waste | `updateUserProfile` (via `updateStartupWaste`, `tools/src/api/settings`) | merge-set `startupWaste` | – |
 
 ## Queries
 | Query | Endpoint | Allowed by |
 | --- | --- | --- |
-| `users` where `usernameLower` prefix | `searchUsers` (community), `searchParticipants` (planning) | read: signed in |
-| `users` where `documentId() in [...]` | `getGroupMembersAsParticipants`, `getEventParticipantsProfiles` (planning), `subscribeToUsers` (community, friend profiles live) | read: signed in |
-| `get users/{uid}` | `getUsers` (community), AuthContext, Spooler settings | read: signed in |
+| `users` where `usernameLower` prefix | `searchUserProfiles` (via `searchUsers` community, `searchParticipants` planning) | read: signed in |
+| `users` where `documentId() in [...]` (chunks of 30) | `getUserProfiles`, `subscribeToUserProfiles` (community profiles, planning participants) | read: signed in |
+| `get users/{uid}` | `getUserProfile` (AuthContext, group notifications sender, Spooler settings) | read: signed in |
 
 ## Access matrix
 | Actor \ operation | read | create / update (whitelisted fields) | write any other field (e.g. `email`) | delete |
@@ -79,7 +78,8 @@ match /users/{userId} {
 ```
 
 ## Tests
-- `firestore-tests/users/users.spec.ts` — profile reads, own writes, search queries, sign-up, Google and profile-edit batches, profiles / renames without a reservation denied, private / unknown fields denied, legacy email clean-up.
+- `firestore-tests/users/users.spec.ts` — profile reads, own writes, search queries, sign-up, Google and profile-edit batches, profiles / renames without a reservation denied, private / unknown fields denied.
+- `packages/shared/src/api/users/endpoints.emu.spec.ts` (`npm run test:emulator`) — the profile module against the real rules: reservation on sign-up / Google / rename, batch lookup, prefix search.
 
 ---
 

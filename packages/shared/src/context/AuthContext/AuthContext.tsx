@@ -1,4 +1,3 @@
-// Firestore rules spec: .agents/skills/firestore-rules-manager/docs/users.md, usernames.md (keep their Write flows / Queries in sync).
 import {
   createUserWithEmailAndPassword,
   deleteUser,
@@ -10,80 +9,23 @@ import {
   User,
 } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
-import {
-  clearIndexedDbPersistence,
-  deleteField,
-  doc,
-  getDoc,
-  terminate,
-  updateDoc,
-  writeBatch,
-} from "firebase/firestore";
+import { clearIndexedDbPersistence, terminate } from "firebase/firestore";
 import { ReactNode, useEffect, useState, useRef } from "react";
 import { AuthContext } from "./AuthContext.context";
+import { createUserProfile, createUserProfileWithFreeUsername, getUserProfile, getUsernameOwner, usernameTakenError } from "../../api";
 import { fb } from "../../firebase/firebase";
 import { useTheme } from "../../hooks/useTheme";
 import { LanguageType, UserProfile, UserType } from "../../types";
-import { firestoreConverter } from "../../utils/firestoreConverter";
 
 export { useAuth } from "./AuthContext.context";
 export type { AuthContextValue } from "./AuthContext.context";
 
-// `email` only on profiles created before it moved to Firebase Auth
-const profileRef = (uid: string) =>
-  doc(fb.firestore, "users", uid).withConverter(firestoreConverter<UserProfile & { email?: string }>());
-
-/**
- * Reads the public profile. Older profiles also stored `email`, which every signed-in user could read:
- * it now lives only in Firebase Auth, so the field is dropped here and removed from Firestore.
- */
-const loadProfile = async (uid: string): Promise<UserProfile | null> => {
-  const snap = await getDoc(profileRef(uid));
-  if (!snap.exists()) return null;
-
-  const { email, ...profile } = snap.data();
-  if (email !== undefined) {
-    await updateDoc(profileRef(uid), { email: deleteField() }).catch(reportError);
-  }
-  return profile;
-};
-
-const usernameRef = (usernameLower: string) => doc(fb.firestore, "usernames", usernameLower);
-
-const USERNAME_ATTEMPTS = 5;
-
-/**
- * First Google sign-in: creates the profile together with a free `usernames` reservation.
- * The display name is tried first, then the name with a random 4-digit suffix.
- */
-const createProfileWithReservation = async (firebaseUser: User, language: LanguageType): Promise<UserProfile> => {
-  // "/" is not allowed in a doc id; the settings form requires at least 3 characters
-  const displayName = (firebaseUser.displayName ?? "").replace(/\//g, "").trim();
-  const base = displayName.length >= 3 ? displayName : "User";
-
-  for (let attempt = 0; attempt < USERNAME_ATTEMPTS; attempt++) {
-    const username = attempt === 0 ? base : `${base}${Math.floor(1000 + Math.random() * 9000)}`;
-    const usernameLower = username.toLowerCase();
-    const reservation = await getDoc(usernameRef(usernameLower));
-    if (reservation.exists() && reservation.data().uid !== firebaseUser.uid) continue;
-
-    const profile: UserProfile = {
-      uid: firebaseUser.uid,
-      username,
-      usernameLower,
-      avatarUrl: firebaseUser.photoURL || "",
-      darkMode: true,
-      language,
-    };
-    const batch = writeBatch(fb.firestore);
-    batch.set(profileRef(firebaseUser.uid), profile);
-    batch.set(usernameRef(usernameLower), { uid: firebaseUser.uid });
-    await batch.commit();
-    return profile;
-  }
-
-  throw new FirebaseError("app/username-already-in-use", "No free username found");
-};
+/** First Google sign-in: a profile under the display name (random suffix when it is taken). */
+const createGoogleProfile = (firebaseUser: User, language: LanguageType) =>
+  createUserProfileWithFreeUsername(
+    { uid: firebaseUser.uid, avatarUrl: firebaseUser.photoURL || "", darkMode: true, language },
+    firebaseUser.displayName ?? "",
+  );
 
 const toUser = (profile: UserProfile, firebaseUser: User): UserType => ({
   ...profile,
@@ -140,12 +82,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        let profile = await loadProfile(firebaseUser.uid);
-
-        if (!profile) {
-          // If the profile document doesn't exist, create it (e.g. after Google redirect login)
-          profile = await createProfileWithReservation(firebaseUser, "pl");
-        }
+        // No profile yet: create it (e.g. after a Google redirect login)
+        const profile = (await getUserProfile(firebaseUser.uid)) ?? (await createGoogleProfile(firebaseUser, "pl"));
         setUser(toUser(profile, firebaseUser));
       } catch (error) {
         reportError(error);
@@ -182,12 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isManualAuth.current = true;
     try {
       const { user: firebaseUser } = await signInWithPopup(fb.auth.auth, fb.auth.provider);
-      let profile = await loadProfile(firebaseUser.uid);
-
-      if (!profile) {
-        profile = await createProfileWithReservation(firebaseUser, language);
-      }
-
+      const profile = (await getUserProfile(firebaseUser.uid)) ?? (await createGoogleProfile(firebaseUser, language));
       setUser(toUser(profile, firebaseUser));
     } finally {
       isManualAuth.current = false;
@@ -204,7 +137,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const profile = await loadProfile(firebaseUser.uid);
+      const profile = await getUserProfile(firebaseUser.uid);
 
       if (!profile) {
         throw new Error("User profile not found in database.");
@@ -218,31 +151,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUpWithEmailUser = async (email: string, password: string, username: string, language: LanguageType) => {
     isManualAuth.current = true;
     try {
-      const usernameLower = username.toLowerCase();
-
-      const usernameDocRef = usernameRef(usernameLower);
-      const usernameDocSnap = await getDoc(usernameDocRef);
-
-      if (usernameDocSnap.exists()) {
-        throw new FirebaseError("app/username-already-in-use", "This username is already taken");
-      }
+      if (await getUsernameOwner(username)) throw usernameTakenError();
 
       const { user: firebaseUser } = await createUserWithEmailAndPassword(fb.auth.auth, email, password);
-      const userProfile: UserProfile = {
-        uid: firebaseUser.uid,
-        username,
-        usernameLower,
-        avatarUrl: "",
-        darkMode: true,
-        language,
-      };
-
-      const batch = writeBatch(fb.firestore);
-      batch.set(profileRef(firebaseUser.uid), userProfile);
-      batch.set(usernameDocRef, { uid: firebaseUser.uid });
-
       try {
-        await batch.commit();
+        await createUserProfile({ uid: firebaseUser.uid, username, avatarUrl: "", darkMode: true, language });
       } catch (error) {
         // Never leave an Auth account without a profile (e.g. the username was taken in a race)
         await deleteUser(firebaseUser).catch(reportError);
@@ -270,7 +183,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await firebaseUser.reload();
     if (!firebaseUser.emailVerified) return false;
 
-    const profile = await loadProfile(firebaseUser.uid);
+    const profile = await getUserProfile(firebaseUser.uid);
     if (!profile) throw new Error("User profile not found in database.");
 
     setUser(toUser(profile, firebaseUser));
