@@ -1,16 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen, fireEvent, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import type { SplitGroup } from "../../../../../../api/splits";
 import type { SplitGroupMember } from "../../../../../../hooks/useSplitGroupMembers";
 import { SplitGroupMembersPopover } from "./SplitGroupMembersPopover";
 
-const mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-1", username: "Alice", email: "alice@flaner.app" });
 
 const mockGroup: SplitGroup = {
   id: "grp-1",
@@ -59,7 +55,7 @@ describe("SplitGroupMembersPopover", () => {
         onOpenChange={vi.fn()}
       >
         <button type="button">Trigger</button>
-      </SplitGroupMembersPopover>
+      </SplitGroupMembersPopover>, { user: mockUser }
     );
 
     expect(screen.getByText("Alice")).toBeInTheDocument();
@@ -79,7 +75,7 @@ describe("SplitGroupMembersPopover", () => {
         onOpenChange={vi.fn()}
       >
         <button type="button">Trigger</button>
-      </SplitGroupMembersPopover>
+      </SplitGroupMembersPopover>, { user: mockUser }
     );
 
     const removeBtn = screen.getByRole("button", { name: "splits.members.remove" });
@@ -112,7 +108,7 @@ describe("SplitGroupMembersPopover", () => {
         onOpenChange={vi.fn()}
       >
         <button type="button">Trigger</button>
-      </SplitGroupMembersPopover>
+      </SplitGroupMembersPopover>, { user: mockUser }
     );
 
     const leaveBtn = screen.getByRole("button", { name: "splits.members.leave" });
@@ -142,7 +138,7 @@ describe("SplitGroupMembersPopover", () => {
         onOpenChange={vi.fn()}
       >
         <button type="button">Trigger</button>
-      </SplitGroupMembersPopover>
+      </SplitGroupMembersPopover>, { user: mockUser }
     );
 
     const removeBtn = screen.getByRole("button", { name: "splits.members.remove" });
@@ -177,7 +173,7 @@ describe("SplitGroupMembersPopover", () => {
         onOpenChange={vi.fn()}
       >
         <button type="button">Trigger</button>
-      </SplitGroupMembersPopover>
+      </SplitGroupMembersPopover>, { user: mockUser }
     );
 
     const removeBtn = screen.getByRole("button", { name: "splits.members.remove" });
@@ -199,7 +195,8 @@ describe("SplitGroupMembersPopover", () => {
         members={mockMembers}
         open={true}
         onOpenChange={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     const leaveBtn = screen.getByRole("button", { name: "splits.members.leave" });
@@ -207,7 +204,7 @@ describe("SplitGroupMembersPopover", () => {
   });
 
   it("handles uncontrolled mode and unauthenticated user", () => {
-    renderWithProviders(<SplitGroupMembersPopover group={mockGroup} members={mockMembers} />);
+    renderWithProviders(<SplitGroupMembersPopover group={mockGroup} members={mockMembers} />, { user: mockUser });
     expect(screen.queryByText("Alice")).not.toBeInTheDocument();
   });
 });
