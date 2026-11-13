@@ -6,6 +6,7 @@ export const sharedFederationConfig = {
   '@tanstack/react-query': { singleton: true },
   'react-i18next': { singleton: true },
   i18next: { singleton: true },
+  '@flaner/shared/api': { singleton: true },
   '@flaner/shared/constants': { singleton: true },
   '@flaner/shared/context': { singleton: true },
   '@flaner/shared/firebase': { singleton: true },

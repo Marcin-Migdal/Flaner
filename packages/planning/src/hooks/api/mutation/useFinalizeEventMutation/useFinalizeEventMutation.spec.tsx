@@ -7,25 +7,22 @@ import * as eventsApi from "../../../../api/events";
 const mockUser = createMockUser({ uid: "user-123" });
 
 vi.mock("../../../../api/events", () => ({
-  updateSchedulerEvent: vi.fn(),
+  finalizeSchedulerEvent: vi.fn(),
 }));
 
 describe("useFinalizeEventMutation", () => {
-  it("calls updateSchedulerEvent on mutate and triggers onSuccess", async () => {
-    vi.mocked(eventsApi.updateSchedulerEvent).mockResolvedValueOnce(undefined);
+  it("calls finalizeSchedulerEvent on mutate and triggers onSuccess", async () => {
+    vi.mocked(eventsApi.finalizeSchedulerEvent).mockResolvedValueOnce(undefined);
 
     const onSuccessMock = vi.fn();
     const { result } = renderHookWithProviders(() => useFinalizeEventMutation({ onSuccess: onSuccessMock }), { user: mockUser });
 
     act(() => {
-      result.current.mutate({ eventId: "evt-1", finalizedSlotIndex: 0 });
+      result.current.mutate({ eventId: "evt-1", slotKey: "2026-06-01_2026-06-01" });
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(eventsApi.updateSchedulerEvent).toHaveBeenCalledWith("evt-1", {
-      isFinalized: true,
-      finalizedSlotIndex: 0,
-    });
+    expect(eventsApi.finalizeSchedulerEvent).toHaveBeenCalledWith("evt-1", "2026-06-01_2026-06-01");
     expect(onSuccessMock).toHaveBeenCalled();
   });
 
@@ -33,7 +30,7 @@ describe("useFinalizeEventMutation", () => {
     const { result } = renderHookWithProviders(() => useFinalizeEventMutation(), { user: null });
 
     act(() => {
-      result.current.mutate({ eventId: "evt-1", finalizedSlotIndex: 0 });
+      result.current.mutate({ eventId: "evt-1", slotKey: "2026-06-01_2026-06-01" });
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
@@ -41,11 +38,11 @@ describe("useFinalizeEventMutation", () => {
   });
 
   it("executes successfully without options", async () => {
-    vi.mocked(eventsApi.updateSchedulerEvent).mockResolvedValueOnce(undefined);
+    vi.mocked(eventsApi.finalizeSchedulerEvent).mockResolvedValueOnce(undefined);
     const { result } = renderHookWithProviders(() => useFinalizeEventMutation(), { user: mockUser });
 
     act(() => {
-      result.current.mutate({ eventId: "evt-1", finalizedSlotIndex: 1 });
+      result.current.mutate({ eventId: "evt-1", slotKey: "2026-06-02_2026-06-02" });
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));

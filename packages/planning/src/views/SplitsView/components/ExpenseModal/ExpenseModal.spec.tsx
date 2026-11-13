@@ -1,17 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import type { Expense, SplitGroup } from "../../../../api/splits";
 import type { SplitGroupMember } from "../../../../hooks/useSplitGroupMembers";
 import { ExpenseModal } from "./ExpenseModal";
 import { toast } from "@flaner/shared/utils";
 
-const mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-1", username: "Alice", email: "alice@flaner.app" });
 
 vi.mock("@flaner/shared/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@flaner/shared/utils")>();
@@ -108,6 +104,7 @@ describe("ExpenseModal", () => {
         members={mockMembers}
         expenseToEdit={null}
       />,
+      { user: mockUser },
     );
 
     const titleInput = screen.getByLabelText("splits.fields.title");
@@ -145,6 +142,7 @@ describe("ExpenseModal", () => {
         members={mockMembers}
         expenseToEdit={mockExpense}
       />,
+      { user: mockUser },
     );
 
     const titleInput = screen.getByLabelText("splits.fields.title");
@@ -185,6 +183,7 @@ describe("ExpenseModal", () => {
         members={mockMembers}
         expenseToEdit={unauthorizedExpense}
       />,
+      { user: mockUser },
     );
 
     const saveBtn = screen.getByRole("button", { name: "splits.actions.save" });
@@ -206,6 +205,7 @@ describe("ExpenseModal", () => {
         group={mockGroup}
         members={mockMembers}
       />,
+      { user: mockUser },
     );
 
     const cancelBtn = screen.getByRole("button", { name: "splits.actions.cancel" });
@@ -226,6 +226,7 @@ describe("ExpenseModal", () => {
         members={mockMembers}
         expenseToEdit={null}
       />,
+      { user: mockUser },
     );
 
     const titleInput = screen.getByLabelText("splits.fields.title");
@@ -271,6 +272,7 @@ describe("ExpenseModal", () => {
         members={mockMembers}
         expenseToEdit={null}
       />,
+      { user: mockUser },
     );
 
     const closeBtn = screen.getByRole("button", { name: /close/i });
@@ -291,6 +293,7 @@ describe("ExpenseModal", () => {
         members={mockMembers}
         expenseToEdit={null}
       />,
+      { user: mockUser },
     );
 
     const submitBtn = screen.getByRole("button", { name: "splits.actions.addExpense" });
@@ -312,6 +315,7 @@ describe("ExpenseModal", () => {
         members={mockMembers}
         expenseToEdit={null}
       />,
+      { user: mockUser },
     );
 
     const titleInput = screen.getByLabelText("splits.fields.title");
@@ -357,6 +361,7 @@ describe("ExpenseModal", () => {
         members={mockMembers}
         expenseToEdit={expenseWithEmptyCreator}
       />,
+      { user: mockUser },
     );
 
     const submitBtn = screen.getByRole("button", { name: "splits.actions.save" });
@@ -377,6 +382,7 @@ describe("ExpenseModal", () => {
         members={mockMembers}
         expenseToEdit={null}
       />,
+      { user: mockUser },
     );
 
     const titleInput = screen.getByLabelText("splits.fields.title");

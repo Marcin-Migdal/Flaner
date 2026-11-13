@@ -1,4 +1,5 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/groups.md, users.md (keep their Write flows / Queries in sync).
+import { getUserProfile } from "@flaner/shared/api";
 import { fb } from "@flaner/shared/firebase";
 import { deleteInBatches, firestoreConverter, getUnreadNotificationRefs, sourceNotificationRef } from "@flaner/shared/utils";
 import {
@@ -117,7 +118,7 @@ type GroupNotificationType =
 type NotificationSender = { senderUid: string; senderUsername: string; senderAvatarUrl: string };
 
 const getNotificationSender = async (uid: string): Promise<NotificationSender> => {
-  const profile = (await getDoc(doc(fb.firestore, `users/${uid}`))).data();
+  const profile = await getUserProfile(uid);
   return { senderUid: uid, senderUsername: profile?.username || "", senderAvatarUrl: profile?.avatarUrl || "" };
 };
 

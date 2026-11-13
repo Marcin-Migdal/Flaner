@@ -1,5 +1,5 @@
 import { CheckCircle } from "lucide-react";
-import type { ProposedDateSlot } from "../../../../api/events/types";
+import { getSlotKey, type ProposedDateSlot } from "../../../../api/events/types";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import {
   gridWinnerCellVariants,
@@ -8,13 +8,13 @@ import {
 
 export type AvailabilityGridWinnerHeaderProps = {
   proposedDates: ProposedDateSlot[];
-  finalizedSlotIndex?: number;
+  finalizedSlotKey?: string;
   gridTemplateColumns: string;
 };
 
 export const AvailabilityGridWinnerHeader = ({
   proposedDates,
-  finalizedSlotIndex,
+  finalizedSlotKey,
   gridTemplateColumns,
 }: AvailabilityGridWinnerHeaderProps) => {
   const { t } = usePlanningTranslations();
@@ -31,8 +31,8 @@ export const AvailabilityGridWinnerHeader = ({
           <span>{t("grid.status")}</span>
         </div>
       </div>
-      {proposedDates.map((_, slotIdx) => {
-        const isWinning = finalizedSlotIndex === slotIdx;
+      {proposedDates.map((slot, slotIdx) => {
+        const isWinning = finalizedSlotKey === getSlotKey(slot);
         return (
           <div
             key={slotIdx}

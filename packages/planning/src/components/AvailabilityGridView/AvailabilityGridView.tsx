@@ -72,7 +72,7 @@ export const AvailabilityGridView = ({
             {event.isFinalized && (
               <AvailabilityGridWinnerHeader
                 proposedDates={event.proposedDates}
-                finalizedSlotIndex={event.finalizedSlotIndex}
+                finalizedSlotKey={event.finalizedSlotKey}
                 gridTemplateColumns={gridTemplateColumns}
               />
             )}
@@ -83,7 +83,7 @@ export const AvailabilityGridView = ({
               participantsCount={event.participants.length}
               slotStats={slotStats}
               isFinalized={event.isFinalized}
-              finalizedSlotIndex={event.finalizedSlotIndex}
+              finalizedSlotKey={event.finalizedSlotKey}
               gridTemplateColumns={gridTemplateColumns}
             />
 

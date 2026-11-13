@@ -2,19 +2,22 @@ import * as z from "zod";
 import { isSameDay, startOfDay } from "date-fns";
 import { SLOT_COLOR_KEYS } from "../../slotColors";
 
-export const getCreateSchedulerSchema = (t: (key: string, options?: Record<string, unknown>) => string) =>
+const slotsSchema = z.array(z.object({ start: z.date(), end: z.date(), color: z.enum(SLOT_COLOR_KEYS) }));
+
+export const getCreateSchedulerSchema = (
+  t: (key: string, options?: Record<string, unknown>) => string,
+  /** Editing a finalized event: only name and description change, so the other (hidden, possibly past) fields are not checked */
+  isFinalized = false,
+) =>
   z.object({
     name: z.string().min(1, t("validation.nameRequired")),
     description: z.string().max(300, t("validation.descriptionMax")).optional(),
-    endDate: z.date({
-      message: t("validation.endDateRequired")
-    }),
+    endDate: isFinalized ? z.date().optional() : z.date({ message: t("validation.endDateRequired") }),
     participants: z.array(z.string()),
-    proposedDates: z
-      .array(z.object({ start: z.date(), end: z.date(), color: z.enum(SLOT_COLOR_KEYS) }))
-      .min(1, t("validation.datesRequired")),
+    proposedDates: isFinalized ? slotsSchema : slotsSchema.min(1, t("validation.datesRequired")),
     autoVoteProposedDates: z.boolean().optional(),
   }).superRefine((data, ctx) => {
+    if (isFinalized) return;
     const today = startOfDay(new Date());
 
     if (data.endDate && startOfDay(data.endDate) < today) {

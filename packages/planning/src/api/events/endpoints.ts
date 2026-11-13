@@ -17,7 +17,13 @@ import {
   writeBatch,
   type FirestoreError,
 } from "firebase/firestore";
-import { getSlotKey, type ProposedDateSlot, type SchedulerEvent, type VoteType } from "./types";
+import {
+  getSlotKey,
+  type ProposedDateSlot,
+  type SchedulerEvent,
+  type SchedulerEventEdit,
+  type VoteType,
+} from "./types";
 
 const refs = {
   events: () => collection(fb.firestore, "events").withConverter(firestoreConverter<SchedulerEvent>()),
@@ -27,6 +33,36 @@ const refs = {
     sourceNotificationRef(fb.firestore, userId, "event_invitation", eventId),
   reopenedNotification: (userId: string, eventId: string) =>
     sourceNotificationRef(fb.firestore, userId, "event_reopened", eventId),
+};
+
+// A notification to a participant from `sender` about the event
+const eventNotification = (
+  ref: ReturnType<typeof refs.invitationNotification>,
+  type: "event_invitation" | "event_reopened",
+  sender: UserType,
+  event: Pick<SchedulerEvent, "id" | "name">,
+) => ({
+  id: ref.id,
+  type,
+  senderUid: sender.uid,
+  senderUsername: sender.username,
+  senderAvatarUrl: sender.avatarUrl || "",
+  eventId: event.id,
+  eventName: event.name,
+  createdAt: Date.now(),
+  read: false,
+});
+
+// Field-path deletes of every stored vote whose slot is not in `slots` (votes live in `votes.{uid}.{slotKey}`)
+const votesOfRemovedSlots = (votes: SchedulerEvent["votes"] = {}, slots: ProposedDateSlot[]) => {
+  const keys = new Set(slots.map(getSlotKey));
+  return Object.fromEntries(
+    Object.entries(votes).flatMap(([uid, userVotes]) =>
+      Object.keys(userVotes)
+        .filter((key) => !keys.has(key))
+        .map((key) => [`votes.${uid}.${key}`, deleteField()]),
+    ),
+  );
 };
 
 // The unread event notifications of these participants (read ones stay)
@@ -56,17 +92,7 @@ export const createSchedulerEvent = async (
   const otherParticipants = data.participants.filter((uid) => uid !== user.uid);
   for (const participantUid of otherParticipants) {
     const notifRef = refs.invitationNotification(participantUid, newEvent.id);
-    batch.set(notifRef, {
-      id: notifRef.id,
-      type: "event_invitation",
-      senderUid: user.uid,
-      senderUsername: user.username,
-      senderAvatarUrl: user.avatarUrl || "",
-      eventId: newEvent.id,
-      eventName: newEvent.name,
-      createdAt: Date.now(),
-      read: false,
-    });
+    batch.set(notifRef, eventNotification(notifRef, "event_invitation", user, newEvent));
   }
 
   await batch.commit();
@@ -134,29 +160,49 @@ export const deleteSchedulerEvent = async (eventId: string): Promise<void> => {
   await batch.commit();
 };
 
-export const updateSchedulerEvent = async (
-  eventId: string,
-  data: Partial<Omit<SchedulerEvent, "id" | "createdAt" | "updatedAt">>,
-): Promise<void> => {
-  const cleanData = Object.fromEntries(
+// Fields a finalized event still takes in an edit (its slots, participants and deadline are settled)
+const FINALIZED_EDITABLE_FIELDS = new Set(["name", "description"]);
+
+/**
+ * Edits the event. Votes of slots the edit removes are deleted; participants removed lose their unread event notifications.
+ * A finalized event takes only `name` and `description`, so its winning slot can never disappear.
+ */
+export const updateSchedulerEvent = async (eventId: string, data: SchedulerEventEdit): Promise<void> => {
+  const changes = Object.fromEntries(
     Object.entries({ ...data, proposedDates: data.proposedDates && withoutSlotVotes(data.proposedDates) }).filter(
       ([_, v]) => v !== undefined,
     ),
   );
 
-  // Participants removed in this edit lose their unread event notifications
-  let staleNotifications: Awaited<ReturnType<typeof getUnreadEventNotifications>> = [];
-  if (data.participants) {
-    const nextParticipants = data.participants;
-    const previous = (await getDoc(refs.event(eventId))).data()?.participants ?? [];
-    const removed = previous.filter((uid) => !nextParticipants.includes(uid));
-    if (removed.length > 0) staleNotifications = await getUnreadEventNotifications(eventId, removed);
+  const event = (await getDoc(refs.event(eventId))).data();
+  if (!event) throw new Error("Event does not exist");
+  if (event.isFinalized && Object.keys(changes).some((field) => !FINALIZED_EDITABLE_FIELDS.has(field))) {
+    throw new Error("A finalized event takes only a new name and description");
   }
 
+  const nextParticipants = data.participants;
+  const removedParticipants = nextParticipants ? event.participants.filter((uid) => !nextParticipants.includes(uid)) : [];
+  const staleNotifications =
+    removedParticipants.length > 0 ? await getUnreadEventNotifications(eventId, removedParticipants) : [];
+
   const batch = writeBatch(fb.firestore);
-  batch.update(refs.event(eventId), { ...cleanData, updatedAt: Date.now() });
+  batch.update(refs.event(eventId), {
+    ...changes,
+    ...(data.proposedDates && votesOfRemovedSlots(event.votes, data.proposedDates)),
+    updatedAt: Date.now(),
+  });
   staleNotifications.forEach((ref) => batch.delete(ref));
   await batch.commit();
+};
+
+/** Picks the winning slot by its key; voting stops */
+export const finalizeSchedulerEvent = async (eventId: string, slotKey: string): Promise<void> => {
+  const event = (await getDoc(refs.event(eventId))).data();
+  if (!event) throw new Error("Event does not exist");
+  if (event.isFinalized) throw new Error("Event is already finalized");
+  if (!event.proposedDates.some((slot) => getSlotKey(slot) === slotKey)) throw new Error("Slot is not part of the event");
+
+  await updateDoc(refs.event(eventId), { isFinalized: true, finalizedSlotKey: slotKey, updatedAt: Date.now() });
 };
 
 /** Sets (or clears, with `null`) only the voter's own entry: the rules reject any other change (#33) */
@@ -206,29 +252,23 @@ export const unfinalizeSchedulerEvent = async (
     }
   });
 
+  const nextSlots = activeProposedDates.length > 0 ? activeProposedDates : event.proposedDates;
+
   const batch = writeBatch(fb.firestore);
 
+  // Votes stay, except those of the past slots removed here
   batch.update(eventRef, {
     isFinalized: false,
-    finalizedSlotIndex: deleteField(),
-    proposedDates: withoutSlotVotes(activeProposedDates.length > 0 ? activeProposedDates : event.proposedDates),
+    finalizedSlotKey: deleteField(),
+    proposedDates: withoutSlotVotes(nextSlots),
+    ...votesOfRemovedSlots(event.votes, nextSlots),
     updatedAt: Date.now(),
   });
 
   const otherParticipants = event.participants.filter((uid) => uid !== user.uid);
   for (const participantUid of otherParticipants) {
     const notifRef = refs.reopenedNotification(participantUid, event.id);
-    batch.set(notifRef, {
-      id: notifRef.id,
-      type: "event_reopened",
-      senderUid: user.uid,
-      senderUsername: user.username,
-      senderAvatarUrl: user.avatarUrl || "",
-      eventId: event.id,
-      eventName: event.name,
-      createdAt: Date.now(),
-      read: false,
-    });
+    batch.set(notifRef, eventNotification(notifRef, "event_reopened", user, event));
   }
 
   await batch.commit();

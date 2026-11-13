@@ -4,11 +4,7 @@ import { Pencil, Trash2, Wallet } from "lucide-react";
 import type { SplitGroup } from "../../../../../../api/splits";
 import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { usePlanningTranslations } from "../../../../../../hooks/usePlanningTranslations";
-import {
-  getPairwiseDebts,
-  getSimplifiedDebts,
-  summarizeUserDebts,
-} from "../../../../../../utils/splitBalances";
+import { getDebtSummary } from "../../../../../../utils/splitLedger";
 import {
   splitGroupBalanceVariants,
   splitGroupCardStyles as styles,
@@ -29,10 +25,7 @@ export const SplitGroupCard = ({ group, isActive, onSelect, onEdit, onDelete }: 
   const { formatList } = useMoneyFormatter();
 
   const isOwner = user?.uid === group.createdBy;
-  const activeDebts = group.simplifyDebts
-    ? getSimplifiedDebts(group.balances)
-    : getPairwiseDebts(group.pairBalances);
-  const debtSummary = user ? summarizeUserDebts(activeDebts, user.uid) : null;
+  const debtSummary = user ? getDebtSummary(group, user.uid) : null;
   const owedToYou = debtSummary?.owedToYou ?? {};
   const youOwe = debtSummary?.youOwe ?? {};
   const isSettled = Object.keys(owedToYou).length === 0 && Object.keys(youOwe).length === 0;

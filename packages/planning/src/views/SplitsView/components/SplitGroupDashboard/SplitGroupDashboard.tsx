@@ -7,12 +7,7 @@ import { useSplitGroupMembers } from "../../../../hooks/useSplitGroupMembers";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { useSyncSplitGroupFeed } from "../../../../hooks/useSyncSplitGroupFeed";
 import type { Debt } from "../../../../utils/debtSimplification";
-import {
-  getPairwiseDebts,
-  getSimplifiedDebts,
-  getUserBalances,
-  summarizeUserDebts,
-} from "../../../../utils/splitBalances";
+import { getActiveDebts, getDebtSummary, getMaxSettleAmount, getUserBalances } from "../../../../utils/splitLedger";
 import { ActivityFeed } from "../ActivityFeed/ActivityFeed";
 import { BalancesTab } from "../BalancesTab/BalancesTab";
 import { CurrencyConversionBanner } from "../CurrencyConversionBanner/CurrencyConversionBanner";
@@ -42,14 +37,8 @@ export const SplitGroupDashboard = ({ group, onBack }: SplitGroupDashboardProps)
   const { data: settlements = [], isLoading: isSettlementsLoading } = useGetGroupSettlementsQuery(group.id);
   useSyncSplitGroupFeed(group);
 
-  const pairwiseDebts = useMemo(() => getPairwiseDebts(group.pairBalances), [group.pairBalances]);
-  const simplifiedDebts = useMemo(() => getSimplifiedDebts(group.balances), [group.balances]);
-  const isSimplified = group.simplifyDebts ?? false;
-  const activeDebts = useMemo(
-    () => (isSimplified ? simplifiedDebts : pairwiseDebts),
-    [isSimplified, simplifiedDebts, pairwiseDebts],
-  );
-  const debtSummary = useMemo(() => summarizeUserDebts(activeDebts, currentUserId), [activeDebts, currentUserId]);
+  const activeDebts = useMemo(() => getActiveDebts(group), [group]);
+  const debtSummary = useMemo(() => getDebtSummary(group, currentUserId), [group, currentUserId]);
   const netBalances = useMemo(() => getUserBalances(group, currentUserId), [group, currentUserId]);
 
   const handleOpenSettleUp = () => {
@@ -61,7 +50,8 @@ export const SplitGroupDashboard = ({ group, onBack }: SplitGroupDashboardProps)
   };
 
   const handleSettleDebt = (debt: Debt) => {
-    setSettleUpDraft({ payerId: debt.from, receiverId: debt.to, amount: debt.amount, currency: debt.currency });
+    const pair = { payerId: debt.from, receiverId: debt.to, currency: debt.currency };
+    setSettleUpDraft({ ...pair, amount: getMaxSettleAmount(group, settlements, pair) });
   };
 
   return (
@@ -112,8 +102,7 @@ export const SplitGroupDashboard = ({ group, onBack }: SplitGroupDashboardProps)
               group={group}
               members={members}
               settlements={settlements}
-              pairwiseDebts={pairwiseDebts}
-              simplifiedDebts={simplifiedDebts}
+              debts={activeDebts}
               getMember={getMember}
               getMemberName={getMemberName}
               onSettleDebt={handleSettleDebt}
@@ -132,7 +121,7 @@ export const SplitGroupDashboard = ({ group, onBack }: SplitGroupDashboardProps)
         expenseToEdit={expenseModal?.mode === "edit" ? expenseModal.expense : null}
       />
 
-      <SettleUpModal draft={settleUpDraft} onClose={() => setSettleUpDraft(null)} group={group} members={members} />
+      <SettleUpModal draft={settleUpDraft} onClose={() => setSettleUpDraft(null)} group={group} members={members} settlements={settlements} />
     </div>
   );
 };

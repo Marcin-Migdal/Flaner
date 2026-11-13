@@ -31,7 +31,7 @@ vi.mock("@flaner/shared/context", () => ({
 
 let mockIsMobile = false;
 let mockIsDark = false;
-const mockUpdateDoc = vi.fn().mockResolvedValue(undefined);
+const mockUpdateUserProfile = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@flaner/shared/hooks", async () => {
   const actual = await vi.importActual("@flaner/shared/hooks");
@@ -45,15 +45,8 @@ vi.mock("@flaner/shared/hooks", async () => {
   };
 });
 
-vi.mock("@flaner/shared/firebase", () => ({
-  fb: {
-    firestore: {},
-  },
-}));
-
-vi.mock("firebase/firestore", () => ({
-  doc: vi.fn(),
-  updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
+vi.mock("@flaner/shared/api", () => ({
+  updateUserProfile: (...args: unknown[]) => mockUpdateUserProfile(...args),
 }));
 
 vi.mock("react-router", async () => {
@@ -156,10 +149,10 @@ describe("ShellLayout", () => {
     await waitFor(() => {
       expect(mockUpdateUser).toHaveBeenCalledWith({ language: "en" });
     });
-    expect(mockUpdateDoc).toHaveBeenCalled();
+    expect(mockUpdateUserProfile).toHaveBeenCalled();
 
     // A failed write leaves the profile in the context untouched
-    mockUpdateDoc.mockRejectedValueOnce(new Error("Firestore write error"));
+    mockUpdateUserProfile.mockRejectedValueOnce(new Error("Firestore write error"));
 
     await user.click(profileButton);
     const langSubTrigger2 = await screen.findByText("Język");
@@ -167,7 +160,7 @@ describe("ShellLayout", () => {
     const plOption = await screen.findByText("Polski");
     fireEvent.click(plOption);
 
-    await waitFor(() => expect(mockUpdateDoc).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(mockUpdateUserProfile).toHaveBeenCalledTimes(2));
     expect(mockUpdateUser).not.toHaveBeenCalledWith({ language: "pl" });
 
     // Test without user uid (unauthenticated / missing uid)
@@ -199,7 +192,7 @@ describe("ShellLayout", () => {
     });
 
     // A failed write leaves the profile in the context untouched
-    mockUpdateDoc.mockRejectedValueOnce(new Error("Theme write error"));
+    mockUpdateUserProfile.mockRejectedValueOnce(new Error("Theme write error"));
 
     await user.click(profileButton);
     const themeSubTrigger2 = await screen.findByText("Motyw");
@@ -208,7 +201,7 @@ describe("ShellLayout", () => {
     fireEvent.click(lightOption);
 
     expect(mockSetTheme).toHaveBeenCalledWith("light");
-    await waitFor(() => expect(mockUpdateDoc).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(mockUpdateUserProfile).toHaveBeenCalledTimes(2));
     expect(mockUpdateUser).not.toHaveBeenCalledWith({ darkMode: false });
 
     // Test without user uid
@@ -292,7 +285,7 @@ describe("ShellLayout", () => {
     fireEvent.click(darkOption);
 
     expect(mockSetTheme).toHaveBeenCalledWith("dark");
-    await waitFor(() => expect(mockUpdateDoc).toHaveBeenCalled());
+    await waitFor(() => expect(mockUpdateUserProfile).toHaveBeenCalled());
 
     mockIsDark = false;
   });

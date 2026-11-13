@@ -7,7 +7,7 @@ import type { SplitGroup } from "../../api/splits";
 import { useDeleteSplitGroupMutation } from "../../hooks/api/mutation";
 import { useGetUserSplitGroupsRealtimeQuery } from "../../hooks/api/query";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
-import { isGroupSettled } from "../../utils/splitBalances";
+import { isGroupSettled } from "../../utils/splitLedger";
 import { SplitGroupDashboard } from "./components/SplitGroupDashboard/SplitGroupDashboard";
 import { SplitGroupModal } from "./components/SplitGroupModal/SplitGroupModal";
 import { SplitGroupsList } from "./components/SplitGroupsList/SplitGroupsList";

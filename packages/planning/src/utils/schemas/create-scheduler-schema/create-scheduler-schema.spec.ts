@@ -77,4 +77,18 @@ describe("getCreateSchedulerSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("checks only the name and description when editing a finalized event", () => {
+    const pastEvent = {
+      ...validEvent,
+      endDate: addDays(now, -5),
+      proposedDates: [{ start: addDays(now, -3), end: addDays(now, -2), color: "pink" }],
+    };
+
+    expect(schema.safeParse(pastEvent).success).toBe(false);
+    expect(getCreateSchedulerSchema(t, true).safeParse(pastEvent).success).toBe(true);
+    expect(getCreateSchedulerSchema(t, true).safeParse({ ...pastEvent, endDate: undefined, proposedDates: [] }).success).toBe(
+      true,
+    );
+  });
 });

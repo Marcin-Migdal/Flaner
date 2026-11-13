@@ -14,7 +14,7 @@ import {
   finalizeCheckRadioVariants,
 } from "./FinalizeEventModal.styles";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
-import type { SchedulerEvent } from "../../api/events/types";
+import { getSlotKey, type SchedulerEvent } from "../../api/events/types";
 import type { ParticipantResult } from "../../api/participants";
 import { useFinalizeEventMutation } from "../../hooks/api/mutation/useFinalizeEventMutation";
 import { formatSlotDate } from "../../utils/formatSlotDate";
@@ -39,15 +39,11 @@ export const FinalizeEventModal = ({
 
   const { ranked } = rankSlots(event);
 
-  const [selectedSlotIndex, setSelectedSlotIndex] = useState<number>(() => {
-    return ranked[0]?.slotIndex ?? 0;
-  });
+  const [selectedSlotKey, setSelectedSlotKey] = useState(() => (ranked[0] ? getSlotKey(ranked[0].slot) : undefined));
 
   const handleConfirm = async () => {
-    await finalizeEvent({
-      eventId: event.id,
-      finalizedSlotIndex: selectedSlotIndex,
-    });
+    if (!selectedSlotKey) return;
+    await finalizeEvent({ eventId: event.id, slotKey: selectedSlotKey });
     onOpenChange(false);
   };
 
@@ -69,14 +65,15 @@ export const FinalizeEventModal = ({
 
         <div className="flex-1 overflow-y-auto p-5 space-y-2.5">
           {ranked.map((item) => {
-            const isSelected = selectedSlotIndex === item.slotIndex;
+            const slotKey = getSlotKey(item.slot);
+            const isSelected = selectedSlotKey === slotKey;
             const dateDisplay = formatSlotDate(item.slot, dateLocale);
 
             return (
               <button
                 type="button"
-                key={item.slotIndex}
-                onClick={() => setSelectedSlotIndex(item.slotIndex)}
+                key={slotKey}
+                onClick={() => setSelectedSlotKey(slotKey)}
                 className={finalizeSlotItemVariants({ isSelected })}
               >
                 {/* Left: Trophy icon on the far left across the row height */}
@@ -140,7 +137,7 @@ export const FinalizeEventModal = ({
             variant="primary"
             size="md"
             onClick={handleConfirm}
-            disabled={isPending || selectedSlotIndex === null}
+            disabled={isPending || !selectedSlotKey}
             isBusy={isPending}
             className="gap-1.5 font-semibold"
           >

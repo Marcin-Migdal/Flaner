@@ -5,7 +5,7 @@ import { cn } from "@flaner/shared/utils";
 import type { AmountsByCurrency } from "../../../../api/splits";
 import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
-import type { UserDebtSummary } from "../../../../utils/splitBalances";
+import type { UserDebtSummary } from "../../../../utils/splitLedger";
 import {
   heroMetricAmountVariants,
   heroMetricCardVariants,

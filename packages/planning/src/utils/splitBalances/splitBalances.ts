@@ -190,7 +190,7 @@ export const convertSplits = (splits: ExpenseSplit[], rate: number, convertedTot
  * Checks the active debt mode (simplified vs pairwise) to ensure users cannot overpay.
  */
 export const getOutstandingDebtAmount = (
-  group: SplitGroup,
+  group: GroupBalanceState,
   payerId: string,
   receiverId: string,
   currency: string,

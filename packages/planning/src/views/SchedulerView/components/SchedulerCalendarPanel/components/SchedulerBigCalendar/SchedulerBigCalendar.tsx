@@ -3,7 +3,7 @@ import { parseISO } from "date-fns";
 import { ListSortDescending } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useIsMobile } from "@flaner/shared/hooks";
-import type { SchedulerEvent, VoteType } from "../../../../../../api/events/types";
+import { getSlotKey, type SchedulerEvent, type VoteType } from "../../../../../../api/events/types";
 import type { ParticipantResult } from "../../../../../../api/participants";
 import { AvailabilityGridView } from "../../../../../../components/AvailabilityGridView";
 import { SlotEventComponent } from "../../../../../../components/SlotEventComponent";
@@ -99,7 +99,7 @@ export const SchedulerBigCalendar = ({
           currentUserId,
           isTopVoted: topVotedSlotIndices.has(index),
           isFinalized: activeEvent.isFinalized,
-          isWinningSlot: activeEvent.isFinalized && activeEvent.finalizedSlotIndex === index,
+          isWinningSlot: activeEvent.isFinalized && activeEvent.finalizedSlotKey === getSlotKey(d),
           onQuickVote: async (newVote: VoteType | null) => {
             await onVoteSlot(index, newVote);
           },
