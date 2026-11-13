@@ -1,7 +1,7 @@
 // Runs against the Firestore + Auth emulators with the real security rules: `npm run test:emulator`.
 import type { UserProfile } from "@flaner/shared/types";
 import { createMockGroup } from "@flaner/test-utils";
-import { setupEmulator } from "@flaner/test-utils/emulator";
+import { setupEmulator, trackBatchWrites } from "@flaner/test-utils/emulator";
 import type { DocumentData } from "firebase/firestore";
 import {
   acceptGroupInvitation,
@@ -180,6 +180,20 @@ describe("community groups endpoints", () => {
         groupName: "Group g-1",
       });
     });
+
+    it("deleteGroup with more members than one batch takes deletes everything and notifies all, never over 500 writes per batch (#99)", async () => {
+      const members = Array.from({ length: 520 }, (_, i) => `m-${i}`);
+      await seedGroup("g-1", Object.fromEntries(members.map((uid) => [uid, "member" satisfies GroupRole])));
+      await signInAs(OWNER);
+      const batches = trackBatchWrites();
+
+      await deleteGroup("g-1");
+
+      expect(await read("groups/g-1")).toBeUndefined();
+      expect(await list("groups/g-1/members")).toEqual({});
+      expect(await inbox("m-519")).toEqual([expect.objectContaining({ type: "group_deleted", groupId: "g-1" })]);
+      expect(batches.maxWritesPerBatch()).toBeLessThanOrEqual(500);
+    }, 60000);
   });
 
   describe("reading groups", () => {

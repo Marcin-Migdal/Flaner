@@ -34,7 +34,7 @@ All endpoints: `packages/community/src/api/groups/endpoints.ts`.
 | Edit group | `updateGroup` | update `groups/{id}` (+ `nameLower`, `updatedAt`) | – |
 | Edit role permissions | `updateGroupRolePermissions` | update `rolePermissions`, `updatedAt` | – |
 | Transfer ownership | `transferGroupOwnership` | update `ownerId`; `members/{old}.role = 'admin'`; `members/{new}.role = 'owner'`; notification `group_ownership_transferred` to the new owner | ✅ batch |
-| Delete group | `deleteGroup` | delete the other `members`, `requests`, `invitations`, every `users/{invitee}/groupInvitations/{id}`; then the owner's member doc + the group + a `group_deleted` notification per other member + pending invitees' unread `group_invitation_{gid}` notifications | ❌ sequential batches of ≤450 (`deleteInBatches`); the last batch holds the owner's member doc + the group (required: the owner may delete their member doc only together with the group) |
+| Delete group | `deleteGroup` | delete the other `members`, `requests`, `invitations`, every `users/{invitee}/groupInvitations/{id}` and pending invitees' unread `group_invitation_{gid}` notifications (while the owner is still a member); then the owner's member doc + the group; then a `group_deleted` notification per other member | ❌ sequential batches of ≤450 (`deleteInBatches`); the owner's member doc + the group go in one batch (required: the owner may delete their member doc only together with the group) |
 
 ## Queries
 | Query | Endpoint | Allowed by |
