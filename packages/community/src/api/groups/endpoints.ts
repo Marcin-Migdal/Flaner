@@ -1,4 +1,5 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/groups.md, users.md (keep their Write flows / Queries in sync).
+import { FirebaseError } from "firebase/app";
 import {
   createNotification,
   getNotificationSender,
@@ -8,7 +9,7 @@ import {
   type NotificationSender,
 } from "@flaner/shared/api";
 import { fb } from "@flaner/shared/firebase";
-import { deleteInBatches, firestoreConverter } from "@flaner/shared/utils";
+import { BATCH_LIMIT, deleteInBatches, firestoreConverter } from "@flaner/shared/utils";
 import {
   collection,
   collectionGroup,
@@ -144,31 +145,37 @@ export const deleteGroup = async (groupId: string): Promise<void> => {
     return recipientUserId ? [d.ref, refs.userInvitation(recipientUserId, groupId)] : [d.ref];
   });
 
+  // Pending invitees' unread "group_invitation" notifications (read ones stay); the owner may delete them while still a member
+  const ownerId = ownerMemberDocs[0]?.data().userId;
+  const [staleNotifications, sender] = await Promise.all([
+    getUnreadNotificationRefs(
+      invitationsSnap.docs.map((d) => refs.invitationNotification(d.data().userId || d.id, groupId)),
+    ),
+    ownerId ? getNotificationSender(ownerId) : undefined,
+  ]);
+
   await deleteInBatches(fb.firestore, [
     ...otherMemberDocs.map((d) => d.ref),
     ...requestsSnap.docs.map((d) => d.ref),
     ...invitationRefs,
+    ...staleNotifications,
   ]);
-
-  // Pending invitees' unread "group_invitation" notifications (read ones stay); the owner may delete them while still a member
-  const staleNotifications = await getUnreadNotificationRefs(
-    invitationsSnap.docs.map((d) => refs.invitationNotification(d.data().userId || d.id, groupId)),
-  );
 
   const batch = writeBatch(fb.firestore);
   ownerMemberDocs.forEach((d) => batch.delete(d.ref));
   batch.delete(refs.group(groupId));
-  staleNotifications.forEach((ref) => batch.delete(ref));
-
-  // shortcut: one notification per member in the final batch, so >~495 members overflow the 500-write limit; chunk if groups get that big
-  const ownerId = ownerMemberDocs[0]?.data().userId;
-  if (ownerId) {
-    const sender = await getNotificationSender(ownerId);
-    const group = { id: groupId, name: groupSnap.data()?.name ?? "" };
-    otherMemberDocs.forEach((d) => addGroupNotification(batch, d.data().userId, "group_deleted", sender, group));
-  }
-
   await batch.commit();
+
+  // One "group_deleted" notification per other member, sent once the group is gone, in batches (#99)
+  if (!sender) return;
+  const group = { id: groupId, name: groupSnap.data()?.name ?? "" };
+  for (let index = 0; index < otherMemberDocs.length; index += BATCH_LIMIT) {
+    const notificationBatch = writeBatch(fb.firestore);
+    otherMemberDocs
+      .slice(index, index + BATCH_LIMIT)
+      .forEach((d) => addGroupNotification(notificationBatch, d.data().userId, "group_deleted", sender, group));
+    await notificationBatch.commit();
+  }
 };
 
 // Get Group Details
@@ -334,8 +341,14 @@ export const inviteUserToGroup = async (
   invitedByUserId: string,
   groupAvatarUrl?: string | null,
 ): Promise<void> => {
-  const memberSnap = await getDoc(refs.member(groupId, invitedByUserId));
-  if (!memberSnap.exists()) {
+  // The rules let only members read the members, so a non-member's read is denied rather than empty (#99)
+  let isMember = false;
+  try {
+    isMember = (await getDoc(refs.member(groupId, invitedByUserId))).exists();
+  } catch (error) {
+    if (!(error instanceof FirebaseError && error.code === "permission-denied")) throw error;
+  }
+  if (!isMember) {
     throw new Error("community:errors.notGroupMember");
   }
 
