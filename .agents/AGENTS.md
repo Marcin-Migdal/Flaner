@@ -10,7 +10,10 @@
 
 **CRITICAL BEHAVIORAL RULE: PRE-MERGE MANUAL TEST**
 - Day-to-day work on a feature branch runs against the emulators (`npm run dev:emulators`) — no deploys.
-- BEFORE you open a PR to `develop`, and again before it is merged, you MUST remind the user to do a final manual test of the feature, and wait for their confirmation. Where it runs depends on the branch:
+- The manual test runs AFTER the PR is opened and BEFORE it is merged — do not hold the PR back for it. The implementing agent writes the steps in the PR body (section below):
+  - **Agent worked locally:** walk through the steps yourself in the browser and report the result on the PR.
+  - **Agent worked in the cloud:** stop at the PR; a local session later runs the steps from the PR body in the browser.
+- Where the manual test runs depends on the branch:
   - **`firestore.rules` / `firestore.indexes.json` unchanged:** a local manual test (`npm run dev:emulators` or `npm run dev`) counts as the final test. The emulators load the same rules and indexes that DEV runs, so a test on the Vercel Preview is not required. Exception: if the branch adds or changes a Firestore query, also test it on DEV — the emulator does not enforce composite indexes, so a missing entry in `firestore.indexes.json` fails only there.
   - **Changed:** GitHub → Actions → *Deploy Firestore* → *Run workflow* on the feature branch (deploys to DEV only), then test on the branch's Vercel Preview or with `npm run dev` (local `.env` → DEV).
 - Every PR body has a section exactly titled `## Manual test (for the local session, before merge)`:

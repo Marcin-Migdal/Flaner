@@ -37,6 +37,26 @@ export class ToolsPage {
     await this.page.getByRole("dialog").getByRole("button", { name: /undo last print|cofnij ostatni wydruk/i }).click();
   }
 
+  /** A spool in the "finished" list (its name is struck through, no card). */
+  finishedSpool(name: string): Locator {
+    return this.page.getByRole("heading", { level: 4, name });
+  }
+
+  /** The prompt after a print empties a spool: accept it to open the next spool's form, prefilled. */
+  async acceptRunOutClone(): Promise<Locator> {
+    const prompt = this.page.getByRole("dialog").filter({ hasText: /spool is finished|szpula się skończyła/i });
+    await prompt.getByRole("button", { name: /^(add new spool|dodaj nową szpulę)$/i }).click();
+    return this.page.getByRole("dialog").filter({ has: this.page.getByRole("heading", { name: /^(add spool|dodaj szpulę)$/i }) });
+  }
+
+  spoolFormCurrentWeight(form: Locator): Locator {
+    return form.getByLabel(/current weight|aktualna waga/i);
+  }
+
+  async submitSpoolForm(form: Locator) {
+    await form.getByRole("button", { name: /^(add spool|dodaj szpulę)$/i }).click();
+  }
+
   /** Opens the add-template form from the Templates tab and returns its dialog. */
   async openAddTemplate(): Promise<Locator> {
     await this.templatesTab.click();

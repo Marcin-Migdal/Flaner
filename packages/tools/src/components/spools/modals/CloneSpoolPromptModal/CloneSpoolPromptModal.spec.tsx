@@ -3,48 +3,18 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CloneSpoolPromptModal } from "./CloneSpoolPromptModal";
-import type { FilamentSpool } from "../../../../api/spools";
-
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string) => key,
   }),
 }));
 
-const mockSpool: FilamentSpool = {
-  id: "spool-1",
-  userId: "user-1",
-  templateId: null,
-  name: "Spool 1",
-  material: "PLA",
-  type: "Basic",
-  colorName: "White",
-  colorHex: "#ffffff",
-  initialWeight: 1000,
-  currentWeight: 0,
-  isFinished: true,
-};
-
 describe("CloneSpoolPromptModal", () => {
-  it("renders nothing if spool is null", () => {
-    const { container } = render(
-      <CloneSpoolPromptModal
-        isOpen={true}
-        onClose={vi.fn()}
-        spool={null}
-        onConfirm={vi.fn()}
-      />
-    );
-
-    expect(container.firstChild).toBeNull();
-  });
-
-  it("renders confirmation popup when open and spool provided", () => {
+  it("renders confirmation popup when open", () => {
     render(
       <CloneSpoolPromptModal
         isOpen={true}
         onClose={vi.fn()}
-        spool={mockSpool}
         onConfirm={vi.fn()}
       />
     );
@@ -61,7 +31,6 @@ describe("CloneSpoolPromptModal", () => {
       <CloneSpoolPromptModal
         isOpen={true}
         onClose={onClose}
-        spool={mockSpool}
         onConfirm={onConfirm}
       />
     );
@@ -69,7 +38,7 @@ describe("CloneSpoolPromptModal", () => {
     const confirmBtn = screen.getByRole("button", { name: "spooler.spools.cloneConfirm" });
     await user.click(confirmBtn);
 
-    expect(onConfirm).toHaveBeenCalledWith(mockSpool);
+    expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalled();
   });
 
@@ -81,7 +50,6 @@ describe("CloneSpoolPromptModal", () => {
       <CloneSpoolPromptModal
         isOpen={true}
         onClose={onClose}
-        spool={mockSpool}
         onConfirm={vi.fn()}
       />
     );
