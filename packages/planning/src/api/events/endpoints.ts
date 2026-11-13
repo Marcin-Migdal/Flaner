@@ -1,7 +1,8 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/events.md (keep their Write flows / Queries in sync).
 import { fb } from "@flaner/shared/firebase";
 import type { UserType } from "@flaner/shared/types";
-import { firestoreConverter, getUnreadNotificationRefs, sourceNotificationRef } from "@flaner/shared/utils";
+import { createNotification, getUnreadNotificationRefs, sourceNotificationRef } from "@flaner/shared/api";
+import { firestoreConverter } from "@flaner/shared/utils";
 import { isBefore, parseISO, startOfDay } from "date-fns";
 import {
   collection,
@@ -29,29 +30,17 @@ const refs = {
   events: () => collection(fb.firestore, "events").withConverter(firestoreConverter<SchedulerEvent>()),
   event: (id: string) => doc(fb.firestore, "events", id).withConverter(firestoreConverter<SchedulerEvent>()),
   // Participant notifications about the event (deterministic ids, removed when the event goes away for them)
-  invitationNotification: (userId: string, eventId: string) =>
-    sourceNotificationRef(fb.firestore, userId, "event_invitation", eventId),
-  reopenedNotification: (userId: string, eventId: string) =>
-    sourceNotificationRef(fb.firestore, userId, "event_reopened", eventId),
+  invitationNotification: (userId: string, eventId: string) => sourceNotificationRef(userId, "event_invitation", eventId),
+  reopenedNotification: (userId: string, eventId: string) => sourceNotificationRef(userId, "event_reopened", eventId),
 };
 
 // A notification to a participant from `sender` about the event
 const eventNotification = (
-  ref: ReturnType<typeof refs.invitationNotification>,
+  recipientId: string,
   type: "event_invitation" | "event_reopened",
   sender: UserType,
   event: Pick<SchedulerEvent, "id" | "name">,
-) => ({
-  id: ref.id,
-  type,
-  senderUid: sender.uid,
-  senderUsername: sender.username,
-  senderAvatarUrl: sender.avatarUrl || "",
-  eventId: event.id,
-  eventName: event.name,
-  createdAt: Date.now(),
-  read: false,
-});
+) => createNotification(recipientId, sender, { type, sourceId: event.id, eventId: event.id, eventName: event.name });
 
 // Field-path deletes of every stored vote whose slot is not in `slots` (votes live in `votes.{uid}.{slotKey}`)
 const votesOfRemovedSlots = (votes: SchedulerEvent["votes"] = {}, slots: ProposedDateSlot[]) => {
@@ -91,8 +80,8 @@ export const createSchedulerEvent = async (
 
   const otherParticipants = data.participants.filter((uid) => uid !== user.uid);
   for (const participantUid of otherParticipants) {
-    const notifRef = refs.invitationNotification(participantUid, newEvent.id);
-    batch.set(notifRef, eventNotification(notifRef, "event_invitation", user, newEvent));
+    const notification = eventNotification(participantUid, "event_invitation", user, newEvent);
+    batch.set(notification.ref, notification.data);
   }
 
   await batch.commit();
@@ -267,8 +256,8 @@ export const unfinalizeSchedulerEvent = async (
 
   const otherParticipants = event.participants.filter((uid) => uid !== user.uid);
   for (const participantUid of otherParticipants) {
-    const notifRef = refs.reopenedNotification(participantUid, event.id);
-    batch.set(notifRef, eventNotification(notifRef, "event_reopened", user, event));
+    const notification = eventNotification(participantUid, "event_reopened", user, event);
+    batch.set(notification.ref, notification.data);
   }
 
   await batch.commit();

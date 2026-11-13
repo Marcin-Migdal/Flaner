@@ -2,7 +2,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "@flaner/test-utils";
-import { AppNotification } from "../../../api/notifications";
+import type { AppNotification } from "@flaner/shared/api";
 import { NotificationToast } from "./NotificationToast";
 
 const notification: AppNotification = {

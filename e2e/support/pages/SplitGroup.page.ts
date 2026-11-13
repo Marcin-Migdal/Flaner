@@ -50,6 +50,22 @@ export class SplitGroupPage {
     return this.balancesPanel.getByText(formattedAmount, { exact: true }).filter({ visible: true });
   }
 
+  /** Records a payment through the header "Settle up" dialog; `payer` / `receiver` are member names ("You" for oneself). */
+  async recordPayment({ payer, receiver, amount }: { payer?: string; receiver: string; amount: string }) {
+    await this.page.getByRole("button", { name: /^settle up$/i }).click();
+    if (payer) await this.chooseMember(/^who pays$/i, payer);
+    await this.chooseMember(/^to whom$/i, receiver);
+    await this.dialog.getByRole("spinbutton", { name: /^amount$/i }).fill(amount);
+    await this.dialog.getByRole("button", { name: /^save$/i }).click();
+  }
+
+  private async chooseMember(label: RegExp, name: string) {
+    // react-select's input is not clickable; focus it and open the menu with the keyboard
+    await this.dialog.getByLabel(label).focus();
+    await this.page.keyboard.press("ArrowDown");
+    await this.page.getByRole("option", { name, exact: true }).click();
+  }
+
   async confirmPendingPayment() {
     await this.markAsPaidButton.click();
     await this.dialog.getByRole("button", { name: /^confirm receipt$/i }).click();

@@ -1,8 +1,8 @@
 import { useState, useEffect, useEffectEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@flaner/shared/context";
-import { 
-  AppNotification, 
+import type { AppNotification } from "@flaner/shared/api";
+import {
   deleteNotifications,
   subscribeToNotifications, 
   markNotificationAsRead, 

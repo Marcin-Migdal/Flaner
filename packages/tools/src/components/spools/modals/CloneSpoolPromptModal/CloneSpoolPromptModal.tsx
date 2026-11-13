@@ -1,31 +1,26 @@
 import React from "react";
 import { ConfirmationPopup } from "@flaner/ui-components";
-import type { FilamentSpool } from "../../../../api/spools";
 import { useToolsTranslations } from "../../../../hooks/useToolsTranslations";
 
 type CloneSpoolPromptModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  spool: FilamentSpool | null;
-  onConfirm: (spool: FilamentSpool) => void;
+  onConfirm: () => void;
 };
 
 export const CloneSpoolPromptModal: React.FC<CloneSpoolPromptModalProps> = ({
   isOpen,
   onClose,
-  spool,
   onConfirm,
 }) => {
   const { t } = useToolsTranslations();
-
-  if (!spool) return null;
 
   return (
     <ConfirmationPopup
       open={isOpen}
       onOpenChange={(open) => !open && onClose()}
       onConfirm={() => {
-        onConfirm(spool);
+        onConfirm();
         onClose();
       }}
       title={t("spooler.spools.emptyTriggerTitle")}

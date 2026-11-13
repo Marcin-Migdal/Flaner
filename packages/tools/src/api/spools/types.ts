@@ -28,15 +28,14 @@ export type SpoolPrint = {
 };
 
 export type RecordUsageInput = {
-  spool: FilamentSpool;
+  spoolId: string;
   usage: number;
 };
 
+/** Read from the transaction: the spool after the print and what it could not cover (goes onto the next spool). */
 export type RecordUsageResult = {
-  isFinished: boolean;
-  wentBelowZero: boolean;
-  spoolId: string;
-  newWeight: number;
+  spool: FilamentSpool;
+  carryover: number;
 };
 
 export type UndoPrintInput = {

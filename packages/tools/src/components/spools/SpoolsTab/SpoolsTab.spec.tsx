@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { TooltipProvider } from "@flaner/ui-components";
 import { SpoolsTab } from "./SpoolsTab";
 import type { FilamentTemplate } from "../../../api/templates";
-import type { FilamentSpool } from "../../../api/spools";
+import type { FilamentSpool, RecordUsageResult } from "../../../api/spools";
 
 const mockSpools: FilamentSpool[] = [
   {
@@ -82,14 +82,13 @@ vi.mock("../../../hooks", () => ({
   useAddSpoolMutation: () => ({ mutate: addSpoolMutateMock, isPending: false }),
   useEditSpoolMutation: () => ({ mutate: editSpoolMutateMock, isPending: false }),
   useGetStartupWasteQuery: () => ({ data: 1.5, isLoading: false }),
-  useRecordSpoolUsageMutation: (opts?: {
-    onSuccess?: (result: { isFinished: boolean; spoolId: string }, vars: unknown) => void;
-  }) => ({
-    mutate: (vars: unknown) => {
-      opts?.onSuccess?.(
-        { isFinished: mockRecordUsageSuccessIsFinished, spoolId: "spool-1" },
-        vars,
-      );
+  useRecordSpoolUsageMutation: (opts?: { onSuccess?: (result: RecordUsageResult) => void }) => ({
+    mutate: () => {
+      // The transaction read 380 g (another device printed meanwhile), not the 750 g the list shows
+      opts?.onSuccess?.({
+        spool: { ...mockSpools[0], currentWeight: mockRecordUsageSuccessIsFinished ? 0 : 248.5, isFinished: mockRecordUsageSuccessIsFinished },
+        carryover: mockRecordUsageSuccessIsFinished ? 121.5 : 0,
+      });
     },
     isPending: false,
   }),
@@ -329,6 +328,7 @@ describe("SpoolsTab", () => {
     const cloneBtn = screen.getByText("spooler.spools.clone");
     await user.click(cloneBtn);
     expect(screen.getByRole("heading", { name: "spooler.spools.addSpool" })).toBeInTheDocument();
+    expect(screen.getByLabelText("spooler.spools.currentWeight")).toHaveValue(1000);
 
     // Close form
     const cancelBtn = screen.getByRole("button", { name: "spooler.common.cancel" });
@@ -435,8 +435,10 @@ describe("SpoolsTab", () => {
     const cloneConfirmBtn = screen.getByRole("button", { name: "spooler.spools.cloneConfirm" });
     await user.click(cloneConfirmBtn);
 
-    // SpoolFormModal should now be open in clone mode
+    // SpoolFormModal is open in clone mode, prefilled with the carryover from the transaction result
     expect(screen.getByRole("heading", { name: "spooler.spools.addSpool" })).toBeInTheDocument();
+    expect(screen.getByLabelText("spooler.spools.spoolName")).toHaveValue("Spool Alpha");
+    expect(screen.getByLabelText("spooler.spools.currentWeight")).toHaveValue(878.5);
 
     const cancelFormBtn = screen.getByRole("button", { name: "spooler.common.cancel" });
     await user.click(cancelFormBtn);

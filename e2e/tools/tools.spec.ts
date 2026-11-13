@@ -65,6 +65,78 @@ test.describe("Tools Module E2E", () => {
       await expect(tools.undoButton(spoolName)).toBeDisabled();
     });
 
+    test("a print that empties a spool offers the next spool with the carryover already taken", async ({ page }) => {
+      const spoolName = "E2E Run-out Spool";
+      await seedDocument(`templates/tpl-${userId}`, {
+        id: `tpl-${userId}`,
+        userId,
+        material: "PLA",
+        type: "Basic",
+        colorName: "Black",
+        colorHex: "#000000",
+        defaultWeight: 1000,
+        createdAt: 1,
+      });
+      await seedDocument(`spools/spool-${userId}`, {
+        id: `spool-${userId}`,
+        userId,
+        templateId: `tpl-${userId}`,
+        name: spoolName,
+        initialWeight: 1000,
+        currentWeight: 10,
+        isFinished: false,
+        finishedAt: null,
+        createdAt: 1,
+        material: "PLA",
+        type: "Basic",
+        colorName: "Black",
+        colorHex: "#000000",
+      });
+      const tools = new ToolsPage(page);
+      await tools.goto();
+
+      // 20 g + 1.5 g startup waste on a 10 g spool: 11.5 g runs over to the next spool
+      await tools.recordPrint(spoolName, 20);
+      const form = await tools.acceptRunOutClone();
+      await expect(tools.spoolFormCurrentWeight(form)).toHaveValue("988.5");
+      await tools.submitSpoolForm(form);
+
+      await expect(tools.spoolCard(spoolName)).toContainText("988.5g");
+      await expect(tools.finishedSpool(spoolName)).toBeVisible();
+    });
+
+    test("a deleted custom material stays deleted after a reload, even when a template uses it", async ({ page }) => {
+      const material = "E2E Nylon";
+      await seedDocument(`templates/tpl-${userId}`, {
+        id: `tpl-${userId}`,
+        userId,
+        material,
+        type: "CF",
+        colorName: "Snow",
+        colorHex: "#ffffff",
+        defaultWeight: 750,
+        createdAt: 1,
+      });
+      await seedDocument(`lookup_materials/mat-${userId}`, { id: `mat-${userId}`, userId, name: material, createdAt: 1 });
+      const tools = new ToolsPage(page);
+      await tools.goto();
+
+      const dialog = await tools.openAddTemplate();
+      await tools.openMaterialSelect(dialog);
+      await tools.deleteCustomMaterial(material);
+      // The list refreshes once the delete is stored
+      await tools.openMaterialSelect(dialog);
+      await expect(tools.materialOption("PLA")).toBeVisible();
+      await expect(tools.materialOption(material)).toHaveCount(0);
+
+      // A fresh page load: the template form used to re-create lookups from templates on every mount
+      await tools.goto();
+      const reopened = await tools.openAddTemplate();
+      await tools.openMaterialSelect(reopened);
+      await expect(tools.materialOption("PLA")).toBeVisible();
+      await expect(tools.materialOption(material)).toHaveCount(0);
+    });
+
     test("renders spooler view with tabs and header", async ({ page }) => {
       const tools = new ToolsPage(page);
       await tools.goto();

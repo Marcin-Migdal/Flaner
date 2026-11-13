@@ -1,4 +1,4 @@
-import type { AppNotification } from "../../api/notifications";
+import type { AppNotification } from "@flaner/shared/api";
 
 /**
  * When a group is deleted, its "group_deleted" notification is the only one worth keeping: the ids of the

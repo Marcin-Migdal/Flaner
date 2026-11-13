@@ -1,15 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import type { SplitGroup } from "../../../../api/splits";
 import { SplitGroupsList } from "./SplitGroupsList";
 
-const mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-1", username: "Alice", email: "alice@flaner.app" });
 
 const mockGroups: SplitGroup[] = [
   {
@@ -62,7 +58,8 @@ describe("SplitGroupsList", () => {
         onCreateGroup={vi.fn()}
         onEditGroup={vi.fn()}
         onDeleteGroup={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     expect(screen.getByText("splits.list.emptyTitle")).toBeInTheDocument();
@@ -82,7 +79,8 @@ describe("SplitGroupsList", () => {
         onCreateGroup={onCreateGroupMock}
         onEditGroup={vi.fn()}
         onDeleteGroup={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     expect(screen.getByText("Ski Trip Alps")).toBeInTheDocument();
@@ -104,7 +102,8 @@ describe("SplitGroupsList", () => {
         onCreateGroup={vi.fn()}
         onEditGroup={vi.fn()}
         onDeleteGroup={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     const searchInput = screen.getByPlaceholderText("splits.list.searchPlaceholder");
@@ -136,7 +135,8 @@ describe("SplitGroupsList", () => {
         onCreateGroup={vi.fn()}
         onEditGroup={vi.fn()}
         onDeleteGroup={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     const skeletons = container.querySelectorAll(".animate-pulse");
@@ -158,7 +158,8 @@ describe("SplitGroupsList", () => {
         onCreateGroup={vi.fn()}
         onEditGroup={onEditGroupMock}
         onDeleteGroup={onDeleteGroupMock}
-      />
+      />,
+      { user: mockUser },
     );
 
     // Select group (click card name button)

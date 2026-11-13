@@ -1,12 +1,20 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders, createTestI18n } from "@flaner/test-utils";
-import { AppNotification } from "../../../api/notifications";
+import type { AppNotification } from "@flaner/shared/api";
 import { NotificationCard } from "./NotificationCard";
 
 const { mockNavigate } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
+}));
+
+// Targets come from the MFEs at runtime; here a stand-in for the community ones
+vi.mock("../../../utils/loadNotificationTargets", () => ({
+  loadNotificationTargets: async () => ({
+    friend_request: () => "/community/friends#friend-requests",
+    friend_request_accepted: () => "/community/friends",
+  }),
 }));
 
 vi.mock("react-router", async () => {
@@ -60,7 +68,7 @@ describe("NotificationCard", () => {
     await user.click(screen.getByRole("button"));
 
     expect(onRead).toHaveBeenCalledWith("notif-1");
-    expect(mockNavigate).toHaveBeenCalledWith("/community/friends#friend-requests");
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/community/friends#friend-requests"));
     expect(onClosePopover).toHaveBeenCalled();
   });
 
@@ -80,85 +88,32 @@ describe("NotificationCard", () => {
     await user.click(screen.getByRole("button"));
 
     expect(onRead).not.toHaveBeenCalled();
-    expect(mockNavigate).toHaveBeenCalledWith("/community/friends");
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/community/friends"));
     expect(onClosePopover).toHaveBeenCalled();
   });
 
-  it("navigates correctly for group_invitation", async () => {
+  it("does not navigate when no MFE declares a target for the type", async () => {
     const user = userEvent.setup();
-    const onRead = vi.fn();
+    mockNavigate.mockClear();
     const onClosePopover = vi.fn();
 
     renderWithProviders(
       <NotificationCard
-        notification={{ ...baseNotification, type: "group_invitation" }}
-        onRead={onRead}
+        notification={{ ...baseNotification, type: "group_deleted", groupName: "Hikers" }}
+        onRead={vi.fn()}
         onClosePopover={onClosePopover}
       />
     );
 
     await user.click(screen.getByRole("button"));
-    expect(mockNavigate).toHaveBeenCalledWith("/community/groups#group-invitations");
-  });
-
-  it("navigates correctly for event_invitation and event_reopened", async () => {
-    const user = userEvent.setup();
-    const onRead = vi.fn();
-    const onClosePopover = vi.fn();
-
-    const { unmount } = renderWithProviders(
-      <NotificationCard
-        notification={{ ...baseNotification, type: "event_invitation", eventId: "evt-1" }}
-        onRead={onRead}
-        onClosePopover={onClosePopover}
-      />
-    );
-
-    await user.click(screen.getByRole("button"));
-    expect(mockNavigate).toHaveBeenCalledWith({ pathname: "/planning/scheduling", hash: "evt-1" });
-    unmount();
-
-    renderWithProviders(
-      <NotificationCard
-        notification={{ ...baseNotification, type: "event_reopened", eventId: "evt-2" }}
-        onRead={onRead}
-        onClosePopover={onClosePopover}
-      />
-    );
-
-    await user.click(screen.getByRole("button"));
-    expect(mockNavigate).toHaveBeenLastCalledWith({ pathname: "/planning/scheduling", hash: "evt-2" });
-  });
-
-  it("navigates correctly for split_group_invitation with splitGroupId", async () => {
-    const user = userEvent.setup();
-    const onRead = vi.fn();
-    const onClosePopover = vi.fn();
-
-    renderWithProviders(
-      <NotificationCard
-        notification={{
-          ...baseNotification,
-          type: "split_group_invitation",
-          splitGroupId: "split-123",
-        }}
-        onRead={onRead}
-        onClosePopover={onClosePopover}
-      />
-    );
-
-    await user.click(screen.getByRole("button"));
-    expect(mockNavigate).toHaveBeenCalledWith({
-      pathname: "/planning/splits",
-      hash: "split-123",
-    });
+    await waitFor(() => expect(onClosePopover).toHaveBeenCalled());
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it("renders different icon types correctly", () => {
     const types: AppNotification["type"][] = [
       "friend_request_rejected",
       "split_settlement_pending",
-      "system_alert",
       "event_reopened",
     ];
 
@@ -174,27 +129,15 @@ describe("NotificationCard", () => {
     });
   });
 
-  it("navigates correctly for split_settlement_pending without splitGroupId and renders ? fallback", async () => {
-    const user = userEvent.setup();
+  it("renders ? when the sender has no username", () => {
     renderWithProviders(
       <NotificationCard
-        notification={{
-          ...baseNotification,
-          type: "split_settlement_pending",
-          splitGroupId: undefined,
-          senderUsername: "",
-        }}
+        notification={{ ...baseNotification, type: "split_settlement_pending", senderUsername: "" }}
         onRead={vi.fn()}
         onClosePopover={vi.fn()}
       />
     );
     expect(screen.getByText("?")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button"));
-    expect(mockNavigate).toHaveBeenCalledWith({
-      pathname: "/planning/splits",
-      hash: "",
-    });
   });
 
   it("uses enUS locale when language is not Polish", () => {
@@ -208,7 +151,7 @@ describe("NotificationCard", () => {
           senderUid: "u-en",
           senderUsername: "EnUser",
           senderAvatarUrl: "https://example.com/avatar-en.jpg",
-          type: "system_alert",
+          type: "friend_request_accepted",
           read: true,
           createdAt: Date.now() - 100000,
         }}
@@ -220,16 +163,13 @@ describe("NotificationCard", () => {
     expect(screen.getByText("EnUser")).toBeInTheDocument();
   });
   it.each([
-    ["group_invitation_accepted", "notifications.groupInvitationAccepted", "/community/groups/grp-1"],
-    ["group_request_accepted", "notifications.groupRequestAccepted", "/community/groups/grp-1"],
-    ["group_ownership_transferred", "notifications.groupOwnershipTransferred", "/community/groups/grp-1"],
-    ["group_invitation_rejected", "notifications.groupInvitationRejected", "/community/groups"],
-    ["group_request_rejected", "notifications.groupRequestRejected", "/community/groups"],
-    ["group_deleted", "notifications.groupDeleted", "/community/groups"],
-  ] as const)("renders %s and navigates to %s", async (type, textKey, path) => {
-    const user = userEvent.setup();
-    mockNavigate.mockClear();
-
+    ["group_invitation_accepted", "notifications.groupInvitationAccepted"],
+    ["group_request_accepted", "notifications.groupRequestAccepted"],
+    ["group_ownership_transferred", "notifications.groupOwnershipTransferred"],
+    ["group_invitation_rejected", "notifications.groupInvitationRejected"],
+    ["group_request_rejected", "notifications.groupRequestRejected"],
+    ["group_deleted", "notifications.groupDeleted"],
+  ] as const)("renders the %s text", (type, textKey) => {
     renderWithProviders(
       <NotificationCard
         notification={{ ...baseNotification, type, groupId: "grp-1", groupName: "Hikers" }}
@@ -239,8 +179,6 @@ describe("NotificationCard", () => {
     );
 
     expect(screen.getByText(textKey)).toBeInTheDocument();
-    await user.click(screen.getByRole("button"));
-    expect(mockNavigate).toHaveBeenCalledWith(path);
   });
 });
 

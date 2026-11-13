@@ -1,7 +1,14 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/groups.md, users.md (keep their Write flows / Queries in sync).
-import { getUserProfile } from "@flaner/shared/api";
+import {
+  createNotification,
+  getNotificationSender,
+  getUnreadNotificationRefs,
+  sourceNotificationRef,
+  type NotificationContent,
+  type NotificationSender,
+} from "@flaner/shared/api";
 import { fb } from "@flaner/shared/firebase";
-import { deleteInBatches, firestoreConverter, getUnreadNotificationRefs, sourceNotificationRef } from "@flaner/shared/utils";
+import { deleteInBatches, firestoreConverter } from "@flaner/shared/utils";
 import {
   collection,
   collectionGroup,
@@ -45,10 +52,8 @@ const refs = {
     doc(fb.firestore, `users/${userId}/groupInvitations`, groupId).withConverter(firestoreConverter<GroupInvitation>()),
   invitationsGroup: () =>
     collectionGroup(fb.firestore, "invitations").withConverter(firestoreConverter<GroupInvitation>()),
-  userNotification: (userId: string) => doc(collection(fb.firestore, `users/${userId}/notifications`)),
   // The invitee's "group_invitation" notification (deterministic id, removed when the invitation resolves)
-  invitationNotification: (userId: string, groupId: string) =>
-    sourceNotificationRef(fb.firestore, userId, "group_invitation", groupId),
+  invitationNotification: (userId: string, groupId: string) => sourceNotificationRef(userId, "group_invitation", groupId),
 };
 
 // Create Group
@@ -106,40 +111,17 @@ export const updateGroupRolePermissions = async (
 // GROUP NOTIFICATIONS (written in the same batch as the action)
 // ==========================================
 
-type GroupNotificationType =
-  | "group_invitation"
-  | "group_invitation_accepted"
-  | "group_invitation_rejected"
-  | "group_request_accepted"
-  | "group_request_rejected"
-  | "group_ownership_transferred"
-  | "group_deleted";
-
-type NotificationSender = { senderUid: string; senderUsername: string; senderAvatarUrl: string };
-
-const getNotificationSender = async (uid: string): Promise<NotificationSender> => {
-  const profile = await getUserProfile(uid);
-  return { senderUid: uid, senderUsername: profile?.username || "", senderAvatarUrl: profile?.avatarUrl || "" };
-};
+type GroupOutcomeType = Exclude<Extract<NotificationContent, { groupId: string }>["type"], "group_invitation">;
 
 const addGroupNotification = (
   batch: WriteBatch,
   recipientId: string,
-  type: GroupNotificationType,
+  type: GroupOutcomeType,
   sender: NotificationSender,
   group: { id: string; name: string },
 ) => {
-  const notifRef =
-    type === "group_invitation" ? refs.invitationNotification(recipientId, group.id) : refs.userNotification(recipientId);
-  batch.set(notifRef, {
-    id: notifRef.id,
-    type,
-    ...sender,
-    groupId: group.id,
-    groupName: group.name,
-    createdAt: Date.now(),
-    read: false,
-  });
+  const notification = createNotification(recipientId, sender, { type, groupId: group.id, groupName: group.name });
+  batch.set(notification.ref, notification.data);
 };
 
 // Delete Group (Cascading delete of subcollections)
@@ -371,7 +353,13 @@ export const inviteUserToGroup = async (
   const batch = writeBatch(fb.firestore);
   batch.set(refs.invitation(groupId, userId), invitationData);
   batch.set(refs.userInvitation(userId, groupId), invitationData);
-  addGroupNotification(batch, userId, "group_invitation", sender, { id: groupId, name: groupName });
+  const notification = createNotification(userId, sender, {
+    type: "group_invitation",
+    sourceId: groupId,
+    groupId,
+    groupName,
+  });
+  batch.set(notification.ref, notification.data);
   await batch.commit();
 };
 

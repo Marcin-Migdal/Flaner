@@ -44,4 +44,23 @@ test.describe("Notification toasts", () => {
     await expect(toast).toHaveCount(0);
     await expect(shell.notificationsButton).toContainText("2");
   });
+
+  // #86: targets come from the MFE that owns the type (`./notificationTargets`), not from core
+  test("a toast of another MFE opens that MFE's page", async ({ page }) => {
+    await seedNotification(user, "event_invitation_e-1", { type: "event_invitation", sender, eventId: "e-1" });
+
+    await shell.toasts.filter({ hasText: sender.username }).getByText(sender.username).click();
+
+    await expect(page).toHaveURL(/\/planning\/scheduling#e-1$/);
+  });
+
+  test("a rejected friend request in the popover opens the friends page", async ({ page }) => {
+    await seedNotification(user, "rejected", { type: "friend_request_rejected", sender });
+    await expect(shell.notificationsButton).toContainText("2");
+
+    await shell.notificationsButton.click();
+    await page.getByRole("dialog").getByRole("button").filter({ hasText: /declined your friend request|odrzucił\(a\) twoje zaproszenie/i }).click();
+
+    await expect(page).toHaveURL(/\/community\/friends$/);
+  });
 });

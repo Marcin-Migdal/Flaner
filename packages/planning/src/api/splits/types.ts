@@ -104,7 +104,6 @@ export type CreateSettlementInput = Pick<
   Settlement,
   "payerId" | "receiverId" | "amount" | "currency" | "date" | "note"
 > & {
-  status?: SettlementStatus;
   expectedVersion?: number;
 };
 

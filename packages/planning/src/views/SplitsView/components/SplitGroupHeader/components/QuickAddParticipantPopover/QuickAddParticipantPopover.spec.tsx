@@ -1,16 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import type { SplitGroup } from "../../../../../../api/splits";
 import type { UserParticipant } from "../../../../../../api/participants";
 import { QuickAddParticipantPopover } from "./QuickAddParticipantPopover";
 
-const mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-1", username: "Alice", email: "alice@flaner.app" });
 
 vi.mock("@flaner/shared/hooks", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@flaner/shared/hooks")>();
@@ -66,7 +62,7 @@ describe("QuickAddParticipantPopover", () => {
   it("renders trigger button and opens popover on click", async () => {
     const user = userEvent.setup();
 
-    renderWithProviders(<QuickAddParticipantPopover group={mockGroup} />);
+    renderWithProviders(<QuickAddParticipantPopover group={mockGroup} />, { user: mockUser });
 
     const trigger = screen.getByRole("button", { name: "splits.dashboard.addParticipant" });
     expect(trigger).toBeInTheDocument();
@@ -79,7 +75,7 @@ describe("QuickAddParticipantPopover", () => {
   it("adds participant on selecting a search result", async () => {
     const user = userEvent.setup();
 
-    renderWithProviders(<QuickAddParticipantPopover group={mockGroup} />);
+    renderWithProviders(<QuickAddParticipantPopover group={mockGroup} />, { user: mockUser });
 
     const trigger = screen.getByRole("button", { name: "splits.dashboard.addParticipant" });
     await user.click(trigger);
