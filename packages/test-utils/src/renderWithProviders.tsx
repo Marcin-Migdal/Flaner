@@ -13,6 +13,7 @@ import { I18nextProvider } from "react-i18next";
 import i18n, { type Resource } from "i18next";
 import { initReactI18next } from "react-i18next";
 import { vi } from "vitest";
+import { MFE_NAMES } from "@flaner/shared/constants";
 import type { UserType } from "@flaner/shared/types";
 // Firebase-free module: providing the context does not load the SDK, and `vi.mock("@flaner/shared/context")` does not replace it
 import { AuthContext, type AuthContextValue } from "@flaner/shared/context/AuthContext/AuthContext.context";
@@ -35,7 +36,7 @@ export const createTestI18n = (resources: Resource = {}) => {
   void instance.use(initReactI18next).init({
     lng: "en",
     fallbackLng: "en",
-    ns: ["common", "auth", "ui", "community", "settings"],
+    ns: ["common", "auth", "ui", ...Object.values(MFE_NAMES)],
     defaultNS: "common",
     resources,
     interpolation: { escapeValue: false },

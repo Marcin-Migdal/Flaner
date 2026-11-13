@@ -39,55 +39,27 @@ apps/core/public/locales/
 To load the remote translation files correctly at runtime (both in development on different ports, and in production), configure `i18next-http-backend` in the Core host with a dynamic `loadPath` function.
 
 ### Implementation:
-Create/update `apps/core/src/i18n/i18n.ts`:
+`packages/core/src/i18n/i18n.ts` loads the host namespaces eagerly and each MFE namespace (= MFE name) lazily from that MFE's URL. The URL comes from the MFE registry `packages/core/src/mfeRegistry` (`VITE_MFE_*_URL` on Vercel, `http://<host>:420x` locally) — the only place in core that lists MFEs; never add a second URL table.
 ```typescript
-import i18n from 'i18n';
-import Backend from 'i18next-http-backend';
-import LanguageDetector from 'i18next-browser-languagedetector';
-import { initReactI18next } from 'react-i18next';
+import { getMfeUrl } from '../mfeRegistry';
 
-const getDevHost = () => {
-  if (typeof window !== 'undefined' && window.location.hostname) {
-    return window.location.hostname;
-  }
-  return '127.0.0.1';
-};
-
-const devHost = getDevHost();
-
-// Dynamic URLs for MFEs from env variables or devHost
-const MFE_URLS: Record<string, string> = {
-  settings: import.meta.env.VITE_MFE_SETTINGS_URL || `http://${devHost}:4201`,
-  community: import.meta.env.VITE_MFE_COMMUNITY_URL || `http://${devHost}:4202`,
-  shopping: import.meta.env.VITE_MFE_SHOPPING_URL || `http://${devHost}:4203`,
-  planning: import.meta.env.VITE_MFE_PLANNING_URL || `http://${devHost}:4204`,
-};
-
-i18n
-  .use(Backend)
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    fallbackLng: 'en',
-    defaultNS: 'common',
-    ns: ['common', 'settings', 'community', 'shopping', 'scheduling'],
-    interpolation: { escapeValue: false },
-    backend: {
-      loadPath: (lngs: string[], namespaces: string[]) => {
-        const ns = namespaces[0];
-        const mfeUrl = MFE_URLS[ns];
-        if (mfeUrl) {
-          // Fetch from MFE host
-          return `${mfeUrl}/locales/{{lng}}/{{ns}}.json`;
-        }
-        // Fallback to Core common locales
-        return '/locales/{{lng}}/{{ns}}.json';
-      },
+i18n.use(Backend).use(LanguageDetector).use(initReactI18next).init({
+  fallbackLng: 'en',
+  defaultNS: 'common',
+  ns: ['common', 'auth', 'ui'], // MFE namespaces load on demand
+  partialBundledLanguages: true,
+  backend: {
+    loadPath: (lngs: string[], namespaces: string[]) => {
+      const [lng] = lngs;
+      const [ns] = namespaces;
+      const mfeUrl = getMfeUrl(ns);
+      return mfeUrl ? `${mfeUrl}/locales/${lng}/${ns}.json` : `/locales/${lng}/${ns}.json`;
     },
-  });
-
-export default i18n;
+  },
+});
 ```
+
+A new MFE = a new `MFE_NAMES` entry (`@flaner/shared/constants`) + its entry in the registry; the test i18n (`createTestI18n` in `@flaner/test-utils`) picks the namespace up from `MFE_NAMES`.
 
 ---
 
