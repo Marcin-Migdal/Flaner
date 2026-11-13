@@ -32,7 +32,7 @@ Endpoints: `packages/tools/src/api/spools/endpoints.ts`, `templates/endpoints.ts
 | Record print | `recordSpoolUsage` | read spool, update `currentWeight` / `isFinished` / `finishedAt`, set `prints/{id}`; returns the spool + carryover from that read | ✅ transaction |
 | Undo print | `undoLastPrint` | read print, update weight, delete `prints/{id}` | ✅ transaction (print re-read inside) |
 | Mark finished | `markSpoolAsFinished` | read spool, update to 0 g (the rest is discarded) | ✅ transaction |
-| Delete | `deleteSpool` | delete all `prints`, delete spool | ✅ batch |
+| Delete | `deleteSpool` | delete all `prints`, then the spool (last: the `prints` rules read it) | ❌ sequential batches of ≤450 (`deleteInBatches`) |
 | Template edited / deleted | `editTemplate` (propagate), `deleteTemplate` | update denormalized fields / `templateId: null`, or delete spools with their `prints` | ✅ batch / ❌ sequential batches (delete) |
 
 ## Queries

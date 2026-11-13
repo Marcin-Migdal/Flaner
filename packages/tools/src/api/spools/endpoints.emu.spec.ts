@@ -1,5 +1,5 @@
 // Runs against the Firestore + Auth emulators with the real security rules: `npm run test:emulator`.
-import { setupEmulator } from "@flaner/test-utils/emulator";
+import { setupEmulator, trackBatchWrites } from "@flaner/test-utils/emulator";
 import type { FilamentTemplate } from "../templates/types";
 import type { FilamentSpool, SpoolPrint } from "./types";
 import {
@@ -326,5 +326,21 @@ describe("tools spools endpoints", () => {
       expect(await read("spools/spool-1")).toBeUndefined();
       expect(await list("spools/spool-1/prints")).toEqual({});
     });
+
+    it("deletes a spool with more prints than one batch takes, never over 500 writes per batch (#99)", async () => {
+      await seed({
+        "spools/spool-1": spool(),
+        ...Object.fromEntries(Array.from({ length: 600 }, (_, i) => [`spools/spool-1/prints/p${i}`, print(`p${i}`, 1, i)])),
+      });
+      await signInAs("user-1");
+      const batches = trackBatchWrites();
+
+      await deleteSpool("spool-1");
+
+      expect(await read("spools/spool-1")).toBeUndefined();
+      expect(await list("spools/spool-1/prints")).toEqual({});
+      expect(batches.maxWritesPerBatch()).toBeLessThanOrEqual(500);
+      expect(batches.batchCount()).toBeGreaterThan(1);
+    }, 60000);
   });
 });
