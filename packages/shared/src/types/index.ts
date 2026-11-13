@@ -8,20 +8,13 @@ export type UserProfile = {
   usernameLower: string;
   darkMode: boolean;
   uid: string;
+  /** Spooler setting (grams of filament wasted at every print start); unset until the user saves it. */
+  startupWaste?: number;
 };
 
 /** The signed-in user: their profile plus private data that only Firebase Auth holds. */
 export type UserType = UserProfile & {
   email: string;
-};
-
-export type EditUserRequest = {
-  currentUserUid: string | undefined;
-  darkMode?: boolean;
-  language?: LanguageType;
-  username?: string;
-  usernameLower?: string;
-  avatarUrl?: string;
 };
 
 export type SearchedUserType = UserProfile & { invited: boolean; isFriend: boolean };

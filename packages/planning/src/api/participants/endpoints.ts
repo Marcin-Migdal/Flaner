@@ -1,27 +1,28 @@
-// Firestore rules spec: .agents/skills/firestore-rules-manager/docs/users.md, groups.md (keep their Write flows / Queries in sync).
-import { collection, collectionGroup, doc, documentId, getDoc, getDocs, limit, query, where } from "firebase/firestore";
+// Firestore rules spec: .agents/skills/firestore-rules-manager/docs/groups.md (keep its Write flows / Queries in sync); profiles via `@flaner/shared/api` (users.md).
+import { collection, collectionGroup, doc, getDoc, getDocs, limit, query, where } from "firebase/firestore";
+import { getUserProfiles, searchUserProfiles } from "@flaner/shared/api";
 import { fb } from "@flaner/shared/firebase";
+import type { UserProfile } from "@flaner/shared/types";
 import { firestoreConverter } from "@flaner/shared/utils";
 import type { ParticipantResult, UserParticipant, GroupParticipant } from "./types";
 
 const refs = {
-  // Lightweight types for search to avoid importing full domain models from other MFEs
-  users: () => collection(fb.firestore, "users").withConverter(firestoreConverter<UserParticipant>()),
+  // Lightweight type for search to avoid importing full domain models from other MFEs
   groups: () => collection(fb.firestore, "groups").withConverter(firestoreConverter<GroupParticipant>()),
 };
 
-const FIRESTORE_IN_LIMIT = 30;
+const toUserParticipant = ({ uid, username, usernameLower, avatarUrl }: UserProfile): UserParticipant => ({
+  type: "user",
+  id: uid,
+  name: username,
+  username,
+  usernameLower,
+  avatarUrl,
+});
 
 export const searchParticipants = async (searchStr: string, currentUserId?: string): Promise<ParticipantResult[]> => {
   if (!searchStr.trim()) return [];
   const qLower = searchStr.toLowerCase();
-  
-  const usersQ = query(
-    refs.users(),
-    where("usernameLower", ">=", qLower),
-    where("usernameLower", "<=", qLower + "\uf8ff"),
-    limit(5)
-  );
   
   const publicGroupsQ = query(
     refs.groups(),
@@ -31,20 +32,9 @@ export const searchParticipants = async (searchStr: string, currentUserId?: stri
     limit(5)
   );
 
-  const [usersSnap, publicGroupsSnap] = await Promise.all([getDocs(usersQ), getDocs(publicGroupsQ)]);
-  
-  const users: ParticipantResult[] = usersSnap.docs.map(d => {
-    const data = d.data();
-    const username = data.username || data.name || d.id;
-    return { 
-      type: "user", 
-      id: d.id, 
-      name: username, 
-      avatarUrl: data.avatarUrl, 
-      username: username,
-      usernameLower: data.usernameLower || username.toLowerCase()
-    };
-  });
+  const [profiles, publicGroupsSnap] = await Promise.all([searchUserProfiles(searchStr, 5), getDocs(publicGroupsQ)]);
+
+  const users: ParticipantResult[] = profiles.map(toUserParticipant);
 
   const publicGroups: ParticipantResult[] = publicGroupsSnap.docs.map(d => {
     const data = d.data();
@@ -106,63 +96,9 @@ export const getGroupMembersAsParticipants = async (groupId: string, groupName: 
   const membersSnap = await getDocs(collection(fb.firestore, `groups/${groupId}/members`));
   const userIds = membersSnap.docs.map(d => d.data().userId || d.id);
   
-  if (userIds.length === 0) return [];
-  
-  const chunks: string[][] = [];
-  for (let i = 0; i < userIds.length; i += FIRESTORE_IN_LIMIT) {
-    chunks.push(userIds.slice(i, i + FIRESTORE_IN_LIMIT));
-  }
-  
-  const snaps = await Promise.all(
-    chunks.map(chunk => getDocs(query(collection(fb.firestore, "users"), where(documentId(), "in", chunk))))
-  );
-
-  const results: ParticipantResult[] = [];
-  snaps.forEach(snap => {
-    snap.docs.forEach(d => {
-      const data = d.data();
-      const username = data?.username || data?.name || d.id;
-      results.push({
-        type: "user",
-        id: d.id,
-        name: username,
-        username: username,
-        usernameLower: data?.usernameLower || username.toLowerCase(),
-        avatarUrl: data?.avatarUrl,
-        groupName: groupName,
-      });
-    });
-  });
-  
-  return results;
+  const profiles = await getUserProfiles(userIds);
+  return profiles.map((profile) => ({ ...toUserParticipant(profile), groupName }));
 };
 
-export const getEventParticipantsProfiles = async (userIds: string[]): Promise<ParticipantResult[]> => {
-  if (!userIds || userIds.length === 0) return [];
-  
-  const chunks: string[][] = [];
-  for (let i = 0; i < userIds.length; i += FIRESTORE_IN_LIMIT) {
-    chunks.push(userIds.slice(i, i + FIRESTORE_IN_LIMIT));
-  }
-  
-  const snaps = await Promise.all(
-    chunks.map(chunk => getDocs(query(collection(fb.firestore, "users"), where(documentId(), "in", chunk))))
-  );
-
-  const results: ParticipantResult[] = [];
-  snaps.forEach(snap => {
-    snap.docs.forEach(d => {
-      const data = d.data();
-      results.push({
-        type: "user",
-        id: d.id,
-        name: data.username,
-        username: data.username,
-        usernameLower: data.usernameLower,
-        avatarUrl: data.avatarUrl,
-      });
-    });
-  });
-  
-  return results;
-};
+export const getEventParticipantsProfiles = async (userIds: string[]): Promise<ParticipantResult[]> =>
+  (await getUserProfiles(userIds)).map(toUserParticipant);

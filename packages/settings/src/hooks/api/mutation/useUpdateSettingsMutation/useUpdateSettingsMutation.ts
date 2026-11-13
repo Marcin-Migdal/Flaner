@@ -1,13 +1,13 @@
 import { useAuth } from "@flaner/shared/context";
 import { requireUser } from "@flaner/shared/hooks";
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { updateUserProfile, type UpdateProfilePayload } from "../../../../api/users";
+import { updateUserProfile, type UserProfileUpdate } from "@flaner/shared/api";
 
 // The profile lives in AuthContext, not in the query cache: nothing to invalidate, `updateUser` syncs it.
-export const useUpdateSettingsMutation = (options?: UseMutationOptions<void, Error, UpdateProfilePayload>) => {
+export const useUpdateSettingsMutation = (options?: UseMutationOptions<void, Error, UserProfileUpdate>) => {
   const { user, updateUser } = useAuth();
 
-  return useMutation<void, Error, UpdateProfilePayload>({
+  return useMutation<void, Error, UserProfileUpdate>({
     mutationKey: ["updateSettings"],
     mutationFn: async (payload) => {
       const { uid, usernameLower } = requireUser(user);
