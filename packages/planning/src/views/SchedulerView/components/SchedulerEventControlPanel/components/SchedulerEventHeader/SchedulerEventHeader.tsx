@@ -73,6 +73,7 @@ export const SchedulerEventHeader = ({
                           <button
                             type="button"
                             onClick={(e) => rawEvent && onEditEvent(rawEvent, e)}
+                            title={t("actions.edit")}
                             className="hover:bg-surface-hover hover:text-foreground text-muted-foreground p-1 rounded-lg transition-colors"
                           >
                             <Pencil className="h-3.5 w-3.5" />
@@ -86,6 +87,7 @@ export const SchedulerEventHeader = ({
                                 onDeleteEvent({ id: rawEvent.id, name: rawEvent.name });
                               }
                             }}
+                            title={t("actions.delete")}
                             className="hover:bg-destructive/20 hover:text-destructive text-muted-foreground p-1 rounded-lg transition-colors"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
