@@ -107,6 +107,8 @@ export interface ExtendedRenderOptions extends Omit<RenderOptions, "wrapper">, P
 
 export interface RenderWithProvidersResult extends RenderResult {
   queryClient: QueryClient;
+  /** Signs another user in (or out with `null`) for the following renders, e.g. `setUser(null); rerender(ui);` */
+  setUser: (user: UserType | null) => void;
 }
 
 export const renderWithProviders = (
@@ -121,6 +123,7 @@ export const renderWithProviders = (
   return {
     ...renderResult,
     queryClient: providers.queryClient,
+    setUser: providers.setUser,
   };
 };
 

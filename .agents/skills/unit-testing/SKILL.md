@@ -187,7 +187,9 @@ renderWithProviders(<LoginView />, { user: null }); // signed out
 const { result, queryClient } = renderHookWithProviders(() => useCreateExpenseMutation(), { user: createMockUser() });
 ```
 
-Older specs still mock the context; migrate them when you touch them (each area's issue migrates its own specs). To switch the user inside one test (sign out, sign in as someone else), use `setUser` from the result: `setUser(null); rerender();`.
+To switch the user inside one test (sign out, sign in as someone else), use `setUser` from the result: `setUser(null); rerender(ui);` (`renderHookWithProviders`: `rerender()`).
+
+**Enforced by lint (#101):** `no-restricted-syntax` in `eslint.config.mjs` fails any `*.spec.*` that calls `vi.mock` / `vi.doMock` on `firebase/*`, `@flaner/shared/firebase`, `@flaner/shared/context` or a relative path to `firebase` / `context`. The only exceptions (listed there with the reason) are the specs of the code that wraps the SDK itself: `firebase.spec.ts`, `AuthContext.spec.tsx`, `logError.spec.ts`.
 
 The standard `renderWithProviders` must ensure:
 1. `QueryClient`: configured with `queries: { retry: false, gcTime: 0 }` so failures fail immediately and cache is not leaked between tests.

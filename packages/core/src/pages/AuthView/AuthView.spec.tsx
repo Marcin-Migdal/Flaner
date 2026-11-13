@@ -9,19 +9,12 @@ import { AuthView } from "./AuthView";
 const mockSignInWithGoogleUser = vi.fn();
 const mockSignInWithEmailUser = vi.fn();
 const mockSignUpWithEmailUser = vi.fn();
-let mockUnverifiedEmail: string | null = null;
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({
-    signInWithGoogleUser: mockSignInWithGoogleUser,
-    signInWithEmailUser: mockSignInWithEmailUser,
-    signUpWithEmailUser: mockSignUpWithEmailUser,
-    unverifiedEmail: mockUnverifiedEmail,
-    resendVerificationEmail: vi.fn(),
-    confirmEmailVerification: vi.fn(),
-    signOutUser: vi.fn(),
-  }),
-}));
+const auth = {
+  signInWithGoogleUser: mockSignInWithGoogleUser,
+  signInWithEmailUser: mockSignInWithEmailUser,
+  signUpWithEmailUser: mockSignUpWithEmailUser,
+};
 
 vi.mock("@flaner/shared/utils", async () => {
   const actual = await vi.importActual("@flaner/shared/utils");
@@ -75,7 +68,7 @@ describe("AuthView", () => {
 
   it("renders login view with Google sign in button and email/password fields", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<AuthView />, { i18nInstance: i18n });
+    renderWithProviders(<AuthView />, { i18nInstance: i18n, user: null, auth });
 
     expect(screen.getByText("FLANER")).toBeInTheDocument();
     expect(screen.getByText("Zaloguj się, aby kontynuować")).toBeInTheDocument();
@@ -90,7 +83,7 @@ describe("AuthView", () => {
     const user = userEvent.setup();
     mockSignInWithEmailUser.mockResolvedValueOnce(undefined);
 
-    renderWithProviders(<AuthView />, { i18nInstance: i18n });
+    renderWithProviders(<AuthView />, { i18nInstance: i18n, user: null, auth });
 
     const emailInput = screen.getByLabelText(/adres e-mail/i);
     const passwordInput = screen.getByLabelText(/hasło/i);
@@ -111,7 +104,7 @@ describe("AuthView", () => {
     const error = new FirebaseError("auth/invalid-credential", "Invalid credentials");
     mockSignInWithEmailUser.mockRejectedValueOnce(error);
 
-    renderWithProviders(<AuthView />, { i18nInstance: i18n });
+    renderWithProviders(<AuthView />, { i18nInstance: i18n, user: null, auth });
 
     await user.type(screen.getByLabelText(/adres e-mail/i), "wrong@flaner.app");
     await user.type(screen.getByLabelText(/hasło/i), "wrongpass");
@@ -127,7 +120,7 @@ describe("AuthView", () => {
     const user = userEvent.setup();
     mockSignUpWithEmailUser.mockResolvedValueOnce(undefined);
 
-    renderWithProviders(<AuthView />, { i18nInstance: i18n });
+    renderWithProviders(<AuthView />, { i18nInstance: i18n, user: null, auth });
 
     const toggleBtn = screen.getByRole("button", { name: "Zarejestruj się" });
     await user.click(toggleBtn);
@@ -156,7 +149,7 @@ describe("AuthView", () => {
     const error = new FirebaseError("app/username-already-in-use", "Username taken");
     mockSignUpWithEmailUser.mockRejectedValueOnce(error);
 
-    renderWithProviders(<AuthView />, { i18nInstance: i18n });
+    renderWithProviders(<AuthView />, { i18nInstance: i18n, user: null, auth });
 
     await user.click(screen.getByRole("button", { name: "Zarejestruj się" }));
 
@@ -176,7 +169,7 @@ describe("AuthView", () => {
     const user = userEvent.setup();
     mockSignInWithGoogleUser.mockRejectedValueOnce(new Error("Popup closed"));
 
-    renderWithProviders(<AuthView />, { i18nInstance: i18n });
+    renderWithProviders(<AuthView />, { i18nInstance: i18n, user: null, auth });
 
     await user.click(screen.getByRole("button", { name: /kontynuuj z google/i }));
 
@@ -191,7 +184,7 @@ describe("AuthView", () => {
 
     // Non-Firebase error
     mockSignInWithEmailUser.mockRejectedValueOnce(new Error("Generic network error"));
-    renderWithProviders(<AuthView />, { i18nInstance: i18n });
+    renderWithProviders(<AuthView />, { i18nInstance: i18n, user: null, auth });
 
     await user.type(screen.getByLabelText(/adres e-mail/i), "user@flaner.app");
     await user.type(screen.getByLabelText(/hasło/i), "secret123");
@@ -226,7 +219,7 @@ describe("AuthView", () => {
     const user = userEvent.setup();
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    renderWithProviders(<AuthView />, { i18nInstance: i18n });
+    renderWithProviders(<AuthView />, { i18nInstance: i18n, user: null, auth });
     await user.click(screen.getByRole("button", { name: "Zarejestruj się" }));
 
     const usernameInput = screen.getByLabelText(/nazwa użytkownika/i);
@@ -285,12 +278,10 @@ describe("AuthView", () => {
   });
 
   it("shows the verification card instead of the forms for an unverified account", () => {
-    mockUnverifiedEmail = "late@flaner.app";
-    renderWithProviders(<AuthView />, { i18nInstance: i18n });
+    renderWithProviders(<AuthView />, { i18nInstance: i18n, user: null, auth: { ...auth, unverifiedEmail: "late@flaner.app" } });
 
     expect(screen.getByRole("alert")).toHaveTextContent("verifyEmail.title");
     expect(screen.queryByRole("button", { name: /kontynuuj z google/i })).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/hasło/i)).not.toBeInTheDocument();
-    mockUnverifiedEmail = null;
   });
 });

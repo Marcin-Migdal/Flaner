@@ -1,17 +1,16 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { screen } from "@testing-library/react";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
+import type { UserType } from "@flaner/shared/types";
+import type { ReactElement } from "react";
+import { describe, expect, it } from "vitest";
+import { Route, Routes } from "react-router";
 import { ProtectedRoute, PublicRoute } from "./guards";
 
-let mockUser: { uid: string } | null = null;
+let mockUser: UserType | null = null;
 let mockIsLoading = false;
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({
-    user: mockUser,
-    isLoading: mockIsLoading,
-  }),
-}));
+const renderRoutes = (ui: ReactElement, initialEntries: string[]) =>
+  renderWithProviders(ui, { initialEntries, user: mockUser, auth: { isLoading: mockIsLoading } });
 
 describe("guards", () => {
   describe("ProtectedRoute", () => {
@@ -19,14 +18,13 @@ describe("guards", () => {
       mockUser = null;
       mockIsLoading = true;
 
-      const { container } = render(
-        <MemoryRouter initialEntries={["/dashboard"]}>
-          <Routes>
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<div>Protected Content</div>} />
-            </Route>
-          </Routes>
-        </MemoryRouter>
+      const { container } = renderRoutes(
+        <Routes>
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<div>Protected Content</div>} />
+          </Route>
+        </Routes>,
+        ["/dashboard"],
       );
 
       expect(screen.queryByText("Protected Content")).not.toBeInTheDocument();
@@ -37,15 +35,14 @@ describe("guards", () => {
       mockUser = null;
       mockIsLoading = false;
 
-      render(
-        <MemoryRouter initialEntries={["/dashboard"]}>
-          <Routes>
-            <Route path="/login" element={<div>Login Page</div>} />
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<div>Protected Content</div>} />
-            </Route>
-          </Routes>
-        </MemoryRouter>
+      renderRoutes(
+        <Routes>
+          <Route path="/login" element={<div>Login Page</div>} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<div>Protected Content</div>} />
+          </Route>
+        </Routes>,
+        ["/dashboard"],
       );
 
       expect(screen.getByText("Login Page")).toBeInTheDocument();
@@ -53,17 +50,16 @@ describe("guards", () => {
     });
 
     it("renders outlet child route when user is authenticated", () => {
-      mockUser = { uid: "user-123" };
+      mockUser = createMockUser({ uid: "user-123" });
       mockIsLoading = false;
 
-      render(
-        <MemoryRouter initialEntries={["/dashboard"]}>
-          <Routes>
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<div>Protected Content</div>} />
-            </Route>
-          </Routes>
-        </MemoryRouter>
+      renderRoutes(
+        <Routes>
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<div>Protected Content</div>} />
+          </Route>
+        </Routes>,
+        ["/dashboard"],
       );
 
       expect(screen.getByText("Protected Content")).toBeInTheDocument();
@@ -75,14 +71,13 @@ describe("guards", () => {
       mockUser = null;
       mockIsLoading = true;
 
-      const { container } = render(
-        <MemoryRouter initialEntries={["/login"]}>
-          <Routes>
-            <Route element={<PublicRoute />}>
-              <Route path="/login" element={<div>Public Content</div>} />
-            </Route>
-          </Routes>
-        </MemoryRouter>
+      const { container } = renderRoutes(
+        <Routes>
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<div>Public Content</div>} />
+          </Route>
+        </Routes>,
+        ["/login"],
       );
 
       expect(screen.queryByText("Public Content")).not.toBeInTheDocument();
@@ -90,18 +85,17 @@ describe("guards", () => {
     });
 
     it("redirects to / when user is already authenticated", () => {
-      mockUser = { uid: "user-123" };
+      mockUser = createMockUser({ uid: "user-123" });
       mockIsLoading = false;
 
-      render(
-        <MemoryRouter initialEntries={["/login"]}>
-          <Routes>
-            <Route path="/" element={<div>Home Page</div>} />
-            <Route element={<PublicRoute />}>
-              <Route path="/login" element={<div>Public Content</div>} />
-            </Route>
-          </Routes>
-        </MemoryRouter>
+      renderRoutes(
+        <Routes>
+          <Route path="/" element={<div>Home Page</div>} />
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<div>Public Content</div>} />
+          </Route>
+        </Routes>,
+        ["/login"],
       );
 
       expect(screen.getByText("Home Page")).toBeInTheDocument();
@@ -112,14 +106,13 @@ describe("guards", () => {
       mockUser = null;
       mockIsLoading = false;
 
-      render(
-        <MemoryRouter initialEntries={["/login"]}>
-          <Routes>
-            <Route element={<PublicRoute />}>
-              <Route path="/login" element={<div>Public Content</div>} />
-            </Route>
-          </Routes>
-        </MemoryRouter>
+      renderRoutes(
+        <Routes>
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<div>Public Content</div>} />
+          </Route>
+        </Routes>,
+        ["/login"],
       );
 
       expect(screen.getByText("Public Content")).toBeInTheDocument();
