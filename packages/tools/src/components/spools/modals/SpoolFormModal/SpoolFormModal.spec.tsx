@@ -103,10 +103,7 @@ describe("SpoolFormModal", () => {
         isOpen={true}
         onClose={onClose}
         templates={mockTemplates}
-        initialData={mockInitialSpool}
-        isCloneMode={true}
-        cloneCarryoverUsage={120}
-        clonePrevCurrentWeight={20}
+        clonePrefill={{ templateId: "tpl-1", name: "Existing Spool", initialWeight: 1000, currentWeight: 900 }}
       />
     );
 
@@ -117,7 +114,7 @@ describe("SpoolFormModal", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           initialWeight: 1000,
-          currentWeight: 900, // 1000 - (120 - 20)
+          currentWeight: 900,
         }),
       })
     );
@@ -186,8 +183,6 @@ describe("SpoolFormModal", () => {
         isOpen={true}
         onClose={vi.fn()}
         templates={mockTemplates}
-        initialData={mockInitialSpool}
-        isCloneMode={false}
       />
     );
 
@@ -196,8 +191,7 @@ describe("SpoolFormModal", () => {
         isOpen={true}
         onClose={vi.fn()}
         templates={mockTemplates}
-        initialData={mockInitialSpool}
-        isCloneMode={true}
+        clonePrefill={{ templateId: "tpl-1", name: "Existing Spool", initialWeight: 1000, currentWeight: 1000 }}
       />
     );
 

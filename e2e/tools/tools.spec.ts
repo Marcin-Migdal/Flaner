@@ -65,6 +65,46 @@ test.describe("Tools Module E2E", () => {
       await expect(tools.undoButton(spoolName)).toBeDisabled();
     });
 
+    test("a print that empties a spool offers the next spool with the carryover already taken", async ({ page }) => {
+      const spoolName = "E2E Run-out Spool";
+      await seedDocument(`templates/tpl-${userId}`, {
+        id: `tpl-${userId}`,
+        userId,
+        material: "PLA",
+        type: "Basic",
+        colorName: "Black",
+        colorHex: "#000000",
+        defaultWeight: 1000,
+        createdAt: 1,
+      });
+      await seedDocument(`spools/spool-${userId}`, {
+        id: `spool-${userId}`,
+        userId,
+        templateId: `tpl-${userId}`,
+        name: spoolName,
+        initialWeight: 1000,
+        currentWeight: 10,
+        isFinished: false,
+        finishedAt: null,
+        createdAt: 1,
+        material: "PLA",
+        type: "Basic",
+        colorName: "Black",
+        colorHex: "#000000",
+      });
+      const tools = new ToolsPage(page);
+      await tools.goto();
+
+      // 20 g + 1.5 g startup waste on a 10 g spool: 11.5 g runs over to the next spool
+      await tools.recordPrint(spoolName, 20);
+      const form = await tools.acceptRunOutClone();
+      await expect(tools.spoolFormCurrentWeight(form)).toHaveValue("988.5");
+      await tools.submitSpoolForm(form);
+
+      await expect(tools.spoolCard(spoolName)).toContainText("988.5g");
+      await expect(tools.finishedSpool(spoolName)).toBeVisible();
+    });
+
     test("renders spooler view with tabs and header", async ({ page }) => {
       const tools = new ToolsPage(page);
       await tools.goto();

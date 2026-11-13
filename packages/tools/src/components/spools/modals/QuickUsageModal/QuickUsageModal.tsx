@@ -13,7 +13,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@flaner/ui-components";
-import type { FilamentSpool } from "../../../../api/spools";
+import type { FilamentSpool, RecordUsageResult } from "../../../../api/spools";
 import { getQuickUsageSchema, type QuickUsageFormData } from "../../../../utils/schemas";
 import {
   useRecordSpoolUsageMutation,
@@ -25,24 +25,23 @@ type QuickUsageModalProps = {
   isOpen: boolean;
   onClose: () => void;
   spool: FilamentSpool;
-  onFinished?: (spool: FilamentSpool, usage: number) => void;
+  /** The print emptied the spool: the result read in the transaction (spool after the print, carryover). */
+  onRunOut?: (result: RecordUsageResult) => void;
 };
 
 export const QuickUsageModal: React.FC<QuickUsageModalProps> = ({
   isOpen,
   onClose,
   spool,
-  onFinished,
+  onRunOut,
 }) => {
   const { t } = useToolsTranslations();
   const { data: startupWaste = 1.5 } = useGetStartupWasteQuery();
 
   const recordUsageMutation = useRecordSpoolUsageMutation({
-    onSuccess: (result, variables) => {
+    onSuccess: (result) => {
       onClose();
-      if (result.isFinished && onFinished) {
-        onFinished(variables.spool, variables.usage);
-      }
+      if (result.spool.isFinished) onRunOut?.(result);
     },
   });
 
@@ -71,7 +70,7 @@ export const QuickUsageModal: React.FC<QuickUsageModalProps> = ({
 
   const onFormSubmit = (data: QuickUsageFormData) => {
     const totalUsage = data.modelWeight + startupWaste;
-    recordUsageMutation.mutate({ spool, usage: totalUsage });
+    recordUsageMutation.mutate({ spoolId: spool.id, usage: totalUsage });
     handleClose();
   };
 

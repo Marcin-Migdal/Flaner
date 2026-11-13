@@ -23,7 +23,7 @@ export const spoolerInvalidation = {
   editSpool: ({ uid }: UserType) => [spoolerKeys.spools(uid)],
   deleteSpool: ({ uid }: UserType) => [spoolerKeys.spools(uid)],
   markSpoolAsFinished: ({ uid }: UserType) => [spoolerKeys.spools(uid)],
-  recordSpoolUsage: ({ uid }: UserType, { spool }: RecordUsageInput) => [spoolerKeys.spools(uid), spoolerKeys.prints(spool.id)],
+  recordSpoolUsage: ({ uid }: UserType, { spoolId }: RecordUsageInput) => [spoolerKeys.spools(uid), spoolerKeys.prints(spoolId)],
   undoLastPrint: ({ uid }: UserType, { spoolId }: UndoPrintInput) => [spoolerKeys.spools(uid), spoolerKeys.prints(spoolId)],
   addTemplate: ({ uid }: UserType) => [spoolerKeys.templates(uid)],
   // Editing / deleting a template can rewrite or delete its spools
