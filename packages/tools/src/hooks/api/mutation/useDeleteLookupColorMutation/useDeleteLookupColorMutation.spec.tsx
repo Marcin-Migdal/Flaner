@@ -20,11 +20,11 @@ describe("useDeleteLookupColorMutation", () => {
 
     const { result, queryClient } = renderHookWithProviders(() => useDeleteLookupColorMutation(), { user: mockUser });
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-    result.current.mutate("color-id-1");
+    result.current.mutate({ materialName: "PLA", typeName: "Basic", name: "Red" });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(lookupsApi.deleteLookupColor).toHaveBeenCalledWith("color-id-1");
+    expect(lookupsApi.deleteLookupColor).toHaveBeenCalledWith("user-1", "PLA", "Basic", "Red");
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["spooler", "lookupColors", "user-1"] });
   });
 
@@ -33,7 +33,7 @@ describe("useDeleteLookupColorMutation", () => {
     const onSuccessMock = vi.fn();
     const { result } = renderHookWithProviders(() => useDeleteLookupColorMutation({ onSuccess: onSuccessMock }), { user: mockUser });
 
-    result.current.mutate("color-id-1");
+    result.current.mutate({ materialName: "PLA", typeName: "Basic", name: "Red" });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(onSuccessMock).toHaveBeenCalled();
@@ -42,7 +42,7 @@ describe("useDeleteLookupColorMutation", () => {
   it("throws error if user is not authenticated", async () => {
     const { result } = renderHookWithProviders(() => useDeleteLookupColorMutation(), { user: null });
 
-    result.current.mutate("color-id-1");
+    result.current.mutate({ materialName: "PLA", typeName: "Basic", name: "Red" });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error?.message).toBe("errors.userNotAuthenticated");

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { Edit2, MoreVertical, Trash2 } from "lucide-react";
 import {
   Button,
@@ -9,7 +9,7 @@ import {
 } from "@flaner/ui-components";
 import type { FilamentTemplate } from "../../../api/templates";
 import { useToolsTranslations } from "../../../hooks";
-import { bambuFilaments } from "../../../utils/bambuFilaments";
+import { resolveColorHex } from "../../../utils/filamentCatalog";
 
 type TemplateItemProps = {
   template: FilamentTemplate;
@@ -24,21 +24,7 @@ export const TemplateItem: React.FC<TemplateItemProps> = ({
 }) => {
   const { t } = useToolsTranslations();
 
-  const displayHex = useMemo(() => {
-    if (template.colorHex && template.colorHex.toLowerCase() !== "#ffffff") {
-      return template.colorHex;
-    }
-    const mat = bambuFilaments.find(
-      (m) => m.name.toLowerCase() === template.material?.toLowerCase(),
-    );
-    const typ = mat?.types.find(
-      (t) => t.name.toLowerCase() === template.type?.toLowerCase(),
-    );
-    const col = typ?.colors.find(
-      (c) => c.name.toLowerCase() === template.colorName?.toLowerCase(),
-    );
-    return col?.hex || template.colorHex || "#ffffff";
-  }, [template.colorHex, template.material, template.type, template.colorName]);
+  const displayHex = resolveColorHex(template);
 
   return (
     <div

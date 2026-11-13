@@ -105,6 +105,38 @@ test.describe("Tools Module E2E", () => {
       await expect(tools.finishedSpool(spoolName)).toBeVisible();
     });
 
+    test("a deleted custom material stays deleted after a reload, even when a template uses it", async ({ page }) => {
+      const material = "E2E Nylon";
+      await seedDocument(`templates/tpl-${userId}`, {
+        id: `tpl-${userId}`,
+        userId,
+        material,
+        type: "CF",
+        colorName: "Snow",
+        colorHex: "#ffffff",
+        defaultWeight: 750,
+        createdAt: 1,
+      });
+      await seedDocument(`lookup_materials/mat-${userId}`, { id: `mat-${userId}`, userId, name: material, createdAt: 1 });
+      const tools = new ToolsPage(page);
+      await tools.goto();
+
+      const dialog = await tools.openAddTemplate();
+      await tools.openMaterialSelect(dialog);
+      await tools.deleteCustomMaterial(material);
+      // The list refreshes once the delete is stored
+      await tools.openMaterialSelect(dialog);
+      await expect(tools.materialOption("PLA")).toBeVisible();
+      await expect(tools.materialOption(material)).toHaveCount(0);
+
+      // A fresh page load: the template form used to re-create lookups from templates on every mount
+      await tools.goto();
+      const reopened = await tools.openAddTemplate();
+      await tools.openMaterialSelect(reopened);
+      await expect(tools.materialOption("PLA")).toBeVisible();
+      await expect(tools.materialOption(material)).toHaveCount(0);
+    });
+
     test("renders spooler view with tabs and header", async ({ page }) => {
       const tools = new ToolsPage(page);
       await tools.goto();

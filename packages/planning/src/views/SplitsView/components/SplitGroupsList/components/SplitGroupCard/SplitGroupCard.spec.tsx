@@ -1,15 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import type { SplitGroup } from "../../../../../../api/splits";
 import { SplitGroupCard } from "./SplitGroupCard";
 
-let mockUser: { uid: string; username: string; email: string } | null = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-1", username: "Alice", email: "alice@flaner.app" });
 
 const mockGroup: SplitGroup = {
   id: "grp-1",
@@ -40,7 +36,8 @@ describe("SplitGroupCard", () => {
         onSelect={vi.fn()}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     expect(screen.getByText("Eurotrip 2026")).toBeInTheDocument();
@@ -58,7 +55,8 @@ describe("SplitGroupCard", () => {
         onSelect={onSelectMock}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     await user.click(screen.getByRole("button", { name: /Eurotrip 2026/i }));
@@ -77,7 +75,8 @@ describe("SplitGroupCard", () => {
         onSelect={vi.fn()}
         onEdit={onEditMock}
         onDelete={onDeleteMock}
-      />
+      />,
+      { user: mockUser },
     );
 
     const editBtn = screen.getByRole("button", { name: "splits.actions.edit" });
@@ -101,7 +100,8 @@ describe("SplitGroupCard", () => {
         onSelect={vi.fn()}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     expect(screen.queryByRole("button", { name: "splits.actions.edit" })).not.toBeInTheDocument();
@@ -122,7 +122,8 @@ describe("SplitGroupCard", () => {
         onSelect={vi.fn()}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     expect(screen.getByText(/splits\.list\.youAreOwed/)).toBeInTheDocument();
@@ -142,14 +143,14 @@ describe("SplitGroupCard", () => {
         onSelect={vi.fn()}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     expect(screen.getByText(/splits\.list\.youOwe/)).toBeInTheDocument();
   });
 
   it("renders correctly when user is unauthenticated", () => {
-    mockUser = null;
 
     renderWithProviders(
       <SplitGroupCard
@@ -158,11 +159,11 @@ describe("SplitGroupCard", () => {
         onSelect={vi.fn()}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
-      />
+      />,
+      { user: null },
     );
 
     expect(screen.getByText("Eurotrip 2026")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "splits.actions.edit" })).not.toBeInTheDocument();
-    mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
   });
 });

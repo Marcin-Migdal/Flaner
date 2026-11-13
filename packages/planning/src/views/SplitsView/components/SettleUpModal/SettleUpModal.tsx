@@ -15,9 +15,8 @@ import { format } from "date-fns";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, type DefaultValues } from "react-hook-form";
-import { useAuth } from "@flaner/shared/context";
 import { toast } from "@flaner/shared/utils";
-import type { SettlementStatus, SplitGroup } from "../../../../api/splits";
+import type { Settlement, SplitGroup } from "../../../../api/splits";
 import { useCreateSettlementMutation } from "../../../../hooks/api/mutation";
 import { useCurrencyOptions } from "@flaner/shared/hooks";
 import { DEFAULT_CURRENCY } from "@flaner/shared/constants";
@@ -25,7 +24,7 @@ import { fromMinorUnits, toMinorUnits } from "@flaner/shared/utils";
 import type { SplitGroupMember } from "../../../../hooks/useSplitGroupMembers";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { getCreateSettlementSchema, type CreateSettlementFormData } from "../../../../utils/schemas";
-import { getOutstandingDebtAmount } from "../../../../utils/splitBalances";
+import { getMaxSettleAmount, getSettlementAmountError } from "../../../../utils/splitLedger";
 import { settleUpModalStyles as styles } from "./SettleUpModal.styles";
 
 export type SettleUpDraft = {
@@ -34,7 +33,6 @@ export type SettleUpDraft = {
   /** Suggested amount in minor units. */
   amount?: number;
   currency?: string;
-  status?: SettlementStatus;
 };
 
 const buildDefaultValues = (draft: SettleUpDraft | null, defaultCurrency: string): DefaultValues<CreateSettlementFormData> => ({
@@ -51,10 +49,11 @@ export type SettleUpModalProps = {
   onClose: () => void;
   group: SplitGroup;
   members: SplitGroupMember[];
+  /** The group's settlements: pending ones count against the debt. */
+  settlements: Settlement[];
 };
 
-export const SettleUpModal = ({ draft, onClose, group, members }: SettleUpModalProps) => {
-  const { user } = useAuth();
+export const SettleUpModal = ({ draft, onClose, group, members, settlements }: SettleUpModalProps) => {
   const { t } = usePlanningTranslations();
   const currencyOptions = useCurrencyOptions();
   const defaultCurrency = group.lastUsedCurrency || group.defaultCurrency || DEFAULT_CURRENCY;
@@ -92,8 +91,12 @@ export const SettleUpModal = ({ draft, onClose, group, members }: SettleUpModalP
 
   const currentMaxDebt = useMemo(() => {
     if (!watchedPayerId || !watchedReceiverId || !watchedCurrency) return 0;
-    return getOutstandingDebtAmount(group, watchedPayerId, watchedReceiverId, watchedCurrency);
-  }, [group, watchedPayerId, watchedReceiverId, watchedCurrency]);
+    return getMaxSettleAmount(group, settlements, {
+      payerId: watchedPayerId,
+      receiverId: watchedReceiverId,
+      currency: watchedCurrency,
+    });
+  }, [group, settlements, watchedPayerId, watchedReceiverId, watchedCurrency]);
 
   const handleRefreshAmount = () => {
     if (currentMaxDebt > 0) {
@@ -113,22 +116,20 @@ export const SettleUpModal = ({ draft, onClose, group, members }: SettleUpModalP
 
   const onSubmit = async (data: CreateSettlementFormData) => {
     const minorAmount = toMinorUnits(data.amount);
-    const maxDebt = getOutstandingDebtAmount(group, data.payerId, data.receiverId, data.currency);
-    if (maxDebt <= 0) {
-      toast.attention(t("planning:errors.noOutstandingDebtToSettle"));
+    const amountError = getSettlementAmountError(group, settlements, {
+      payerId: data.payerId,
+      receiverId: data.receiverId,
+      currency: data.currency,
+      amount: minorAmount,
+    });
+    if (amountError === "planning:errors.settlementAmountExceedsDebt") {
+      methods.setError("amount", { type: "manual", message: t(amountError) });
       return;
     }
-    if (minorAmount > maxDebt) {
-      methods.setError("amount", {
-        type: "manual",
-        message: t("planning:errors.settlementAmountExceedsDebt"),
-      });
+    if (amountError) {
+      toast.attention(t(amountError));
       return;
     }
-
-    const status: SettlementStatus =
-      draft?.status ??
-      (data.payerId === user?.uid && data.receiverId !== user?.uid ? "pending" : "confirmed");
 
     await createSettlement(
       {
@@ -140,7 +141,6 @@ export const SettleUpModal = ({ draft, onClose, group, members }: SettleUpModalP
           currency: data.currency,
           date: format(data.date, "yyyy-MM-dd"),
           note: data.note.trim(),
-          status,
           expectedVersion: openedVersion ?? undefined,
         },
       },
