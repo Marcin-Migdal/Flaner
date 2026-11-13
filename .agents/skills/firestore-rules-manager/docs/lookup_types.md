@@ -11,6 +11,8 @@ Type options per material (e.g. Silk, Matte). Child of `lookup_materials` (by `m
 | `name` | string | ✓ | e.g. Silk, Matte, Galaxy; unique per user + material (case-insensitive) |
 | `createdAt` | number (ms) | ✓ | |
 
+**TS type:** `packages/tools/src/api/lookups/types.ts#LookupType`
+
 ## Write flows
 Endpoints: `packages/tools/src/api/lookups/endpoints.ts`.
 

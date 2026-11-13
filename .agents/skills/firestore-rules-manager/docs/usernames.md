@@ -13,6 +13,8 @@ Username reservations: the doc id is the lower-cased username, the doc points at
 | --- | --- | --- |
 | `uid` | string (owner) | ✓ |
 
+**TS type:** `packages/shared/src/api/users/types.ts#UsernameReservation`
+
 ## Write flows
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |

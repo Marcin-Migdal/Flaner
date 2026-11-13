@@ -51,7 +51,7 @@ jobs:
       - if: matrix.targets != 'test'
         run: npm run lint:tokens
       - if: matrix.targets != 'test'
-        run: node --test scripts/check-design-tokens.test.mjs scripts/design-system-export.test.mjs
+        run: node --test scripts/check-design-tokens.test.mjs scripts/design-system-export.test.mjs scripts/firestore-schema-check.test.mjs
       # Only projects affected by the PR; build-storybook keeps the ui-components catalogue compiling.
       - run: npx nx affected -t ${{ matrix.targets }} --base=$BASE --head=HEAD
 

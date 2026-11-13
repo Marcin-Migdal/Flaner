@@ -35,6 +35,8 @@ Expense-splitting groups (MFE `planning`, Splits). All amounts are integers in m
 | `status` | `'active' \| 'deleting'` | ✓ | owner-only |
 | `createdAt`, `updatedAt` | number (ms) | ✓ | |
 
+**TS type:** `packages/planning/src/api/splits/types.ts#SplitGroup`
+
 ## Write flows
 All endpoints: `packages/planning/src/api/splits/endpoints.ts`; every group-doc change they write is computed by the ledger `packages/planning/src/utils/splitLedger/`.
 
@@ -166,6 +168,8 @@ match /split_groups/{groupId} {
 | `updatedAt` | number (ms) | – | |
 | `conversion` | { `originalCurrency`, `originalAmount`, `originalSplits`, `rate`, `rateDate`, `convertedAt` } | – | set by currency conversion (rate of the expense day, Frankfurter API) |
 
+**TS type:** `packages/planning/src/api/splits/types.ts#Expense`
+
 ### Write flows
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
@@ -233,6 +237,8 @@ match /expenses/{expenseId} {
 | `status` | `'pending' \| 'confirmed'` | – | `confirmed` on create only when the receiver records it (I12); `pending` does not affect balances until confirmed |
 | `createdBy`, `createdAt` | string, number (ms) | ✓ | immutable |
 | `conversion` | { `originalCurrency`, `originalAmount`, `rate`, `rateDate`, `convertedAt` } | – | |
+
+**TS type:** `packages/planning/src/api/splits/types.ts#Settlement`
 
 ### Write flows
 | Flow | Endpoint | Writes | Atomic |

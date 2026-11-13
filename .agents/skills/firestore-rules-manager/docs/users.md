@@ -17,6 +17,8 @@ User profiles (doc id == Firebase Auth uid). Only the profile module `shared/src
 | `language` | `'pl' \| 'en'` | ✓ | |
 | `startupWaste` | number | – | Spooler setting (grams) |
 
+**TS type:** `packages/shared/src/types/index.ts#UserProfile`
+
 No other fields are accepted (the whitelist applies to the whole document). Legacy `email` fields were removed from every profile, so the app no longer cleans them up.
 
 ## Write flows
@@ -99,6 +101,8 @@ match /users/{userId} {
 | `userRef` | DocumentReference (`users/{friendId}`) | ✓ | |
 | `createdAt` | number (ms) | ✓ | |
 
+**TS type:** `packages/community/src/api/users/types.ts#FriendshipDoc`
+
 Docs created before #26 may still carry `username` / `usernameLower` / `avatarUrl`; the app ignores them.
 
 ### Write flows
@@ -167,6 +171,8 @@ match /friendships/{friendId} {
 | `eventId`, `eventName` | string | – | `event_*` types |
 | `splitGroupId`, `splitGroupName` | string | – | `split_*` types |
 | `groupId`, `groupName` | string | – | `group_*` types |
+
+**TS type:** `packages/shared/src/api/notifications/types.ts#AppNotification`
 
 `type`: `friend_request`, `friend_request_accepted`, `friend_request_rejected`, `group_invitation`, `group_invitation_accepted`, `group_invitation_rejected`, `group_request_accepted`, `group_request_rejected`, `group_ownership_transferred`, `group_deleted`, `event_invitation`, `event_reopened`, `split_group_invitation`, `split_settlement_pending` (`shared/src/api/notifications/types.ts`).
 
