@@ -17,8 +17,13 @@ import {
 import type { FilamentTemplate, TemplateInput } from "../../../../api/templates";
 import { fetchAssociatedSpools } from "../../../../api/templates";
 import { getTemplateSchema, type TemplateFormData } from "../../../../utils/schemas";
-import { mergeFilamentOptions } from "../../../../utils/mergeFilamentOptions";
-import { bambuFilaments } from "../../../../utils/bambuFilaments";
+import {
+  buildFilamentOptions,
+  findCatalogColor,
+  findCustomColorHex,
+  isSameName,
+  resolveColorHex,
+} from "../../../../utils/filamentCatalog";
 import {
   useAddLookupColorMutation,
   useAddLookupMaterialMutation,
@@ -37,8 +42,6 @@ import {
 import { useAuth } from "@flaner/shared/context";
 import { HEX_COLOR_REGEX } from "./TemplateFormModal.constants";
 import type { DeleteLookupTarget, TemplateFormModalProps } from "./TemplateFormModal.types";
-import { useTemplateCustomColors } from "../hooks/useTemplateCustomColors";
-import { useSyncLookups } from "../hooks/useSyncLookups";
 import {
   ColorOptionLabel,
   MaterialOptionLabel,
@@ -73,9 +76,6 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   const deleteLookupTypeMutation = useDeleteLookupTypeMutation();
   const addLookupColorMutation = useAddLookupColorMutation();
   const deleteLookupColorMutation = useDeleteLookupColorMutation();
-
-  // One-time sync: migrate any custom filaments from existing templates to lookup collections
-  useSyncLookups(user, userTemplates);
 
   const defaultValues: TemplateFormData = useMemo(
     () => ({
@@ -154,26 +154,11 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
     setSubmitError(null);
     if (isOpen) {
       if (initialData) {
-        let initialHex = initialData.colorHex;
-        if (!initialHex || initialHex === "#ffffff") {
-          const mat = bambuFilaments.find(
-            (m) => m.name.toLowerCase() === initialData.material?.toLowerCase(),
-          );
-          const typ = mat?.types.find(
-            (t) => t.name.toLowerCase() === initialData.type?.toLowerCase(),
-          );
-          const col = typ?.colors.find(
-            (c) => c.name.toLowerCase() === initialData.colorName?.toLowerCase(),
-          );
-          if (col?.hex) {
-            initialHex = col.hex;
-          }
-        }
         reset({
           material: initialData.material,
           type: initialData.type,
           colorName: initialData.colorName,
-          colorHex: initialHex || "#ffffff",
+          colorHex: resolveColorHex(initialData),
           defaultWeight: initialData.defaultWeight || 975,
         });
         prevMaterialRef.current = initialData.material;
@@ -223,7 +208,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   }, [watchType, isOpen, setValue, clearErrors]);
 
   const mergedFilaments = useMemo(() => {
-    return mergeFilamentOptions(lookupMaterials, lookupTypes, lookupColors);
+    return buildFilamentOptions(lookupMaterials, lookupTypes, lookupColors);
   }, [lookupMaterials, lookupTypes, lookupColors]);
 
   const getTranslatedOption = useCallback(
@@ -245,9 +230,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   }, [mergedFilaments, getTranslatedOption]);
 
   const availableTypes = useMemo(() => {
-    const selected = mergedFilaments.find(
-      (m) => m.name.toLowerCase() === watchMaterial?.toLowerCase(),
-    );
+    const selected = mergedFilaments.find((m) => isSameName(m.name, watchMaterial));
     return selected ? selected.types : [];
   }, [mergedFilaments, watchMaterial]);
 
@@ -264,9 +247,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   // Custom types only offer colors specifically assigned to that material and type
   const availableColors = useMemo(() => {
     if (!watchMaterial || !watchType) return [];
-    const selected = availableTypes.find(
-      (typ) => typ.name.toLowerCase() === watchType.toLowerCase(),
-    );
+    const selected = availableTypes.find((typ) => isSameName(typ.name, watchType));
     return selected ? selected.colors : [];
   }, [availableTypes, watchMaterial, watchType]);
 
@@ -282,42 +263,26 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
     }));
   }, [availableColors, getTranslatedOption, watchMaterial, watchType]);
 
-  // Determine if the currently selected or entered color is a custom color
-  const isCustomColor = useMemo(() => {
-    if (!watchColorName) return false;
-    const lower = watchColorName.trim().toLowerCase();
+  // Any colour that is not in the catalog for this material + type is custom (its hex is editable)
+  const isCustomColor =
+    Boolean(watchColorName) &&
+    !findCatalogColor({ material: watchMaterial, type: watchType, colorName: watchColorName });
 
-    const inAvailable = availableColors.find((c) => c.name.toLowerCase() === lower);
-    if (inAvailable) {
-      return !!inAvailable.isCustom;
+  const saveCustomColorHex = (newHex: string) => {
+    const rawVal = newHex.trim();
+    const formattedVal = rawVal.startsWith("#") ? rawVal : `#${rawVal}`;
+    if (!HEX_COLOR_REGEX.test(formattedVal)) return;
+
+    setValue("colorHex", formattedVal);
+    if (isCustomColor && watchMaterial && watchType) {
+      addLookupColorMutation.mutate({
+        materialName: watchMaterial,
+        typeName: watchType,
+        name: watchColorName,
+        hex: formattedVal,
+      });
     }
-
-    const isOfficialBambu = bambuFilaments.some(
-      (m) =>
-        m.name.toLowerCase() === watchMaterial?.toLowerCase() &&
-        m.types.some(
-          (typ) =>
-            typ.name.toLowerCase() === watchType?.toLowerCase() &&
-            typ.colors.some((col) => col.name.toLowerCase() === lower),
-        ),
-    );
-    if (isOfficialBambu) {
-      return false;
-    }
-
-    return true;
-  }, [watchColorName, availableColors, watchMaterial, watchType]);
-
-  const { customHexMap, saveCustomColorHex } = useTemplateCustomColors({
-    userTemplates,
-    lookupColors,
-    isCustomColor,
-    watchColorName,
-    watchMaterial,
-    watchType,
-    onColorHexChange: (hex) => setValue("colorHex", hex),
-    onSaveLookupColor: (data) => addLookupColorMutation.mutate(data),
-  });
+  };
 
   // Sync colorHex when watchColorName changes
   useEffect(() => {
@@ -332,40 +297,13 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
         return;
       }
 
-      const lower = watchColorName.trim().toLowerCase();
-
-      // Check available colors first (both Bambu and custom colors in availableColors have hex)
-      const matchingColor = availableColors.find(
-        (c) => c.name.toLowerCase() === lower,
+      const filament = { material: watchMaterial, type: watchType, colorName: watchColorName };
+      setValue(
+        "colorHex",
+        findCatalogColor(filament)?.hex ?? findCustomColorHex(filament, lookupColors, userTemplates) ?? "",
       );
-      if (matchingColor && matchingColor.hex) {
-        setValue("colorHex", matchingColor.hex);
-        return;
-      }
-
-      // Check official Bambu catalog for predefined hex under current material & type
-      const currentBambuMat = bambuFilaments.find(
-        (m) => m.name.toLowerCase() === watchMaterial?.toLowerCase(),
-      );
-      const currentBambuType = currentBambuMat?.types.find(
-        (typ) => typ.name.toLowerCase() === watchType?.toLowerCase(),
-      );
-      const official = currentBambuType?.colors.find(
-        (c) => c.name.toLowerCase() === lower,
-      );
-      if (official) {
-        setValue("colorHex", official.hex);
-        return;
-      }
-
-      // If custom color, load saved custom hex if available, otherwise clear it
-      if (customHexMap[lower]) {
-        setValue("colorHex", customHexMap[lower]);
-      } else {
-        setValue("colorHex", "");
-      }
     }
-  }, [watchColorName, availableColors, isOpen, setValue, customHexMap, clearErrors, watchMaterial, watchType]);
+  }, [watchColorName, isOpen, setValue, clearErrors, watchMaterial, watchType, lookupColors, userTemplates]);
 
   const handleColorHexBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     saveCustomColorHex(e.target.value);
@@ -403,50 +341,42 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   const handleCreateColor = (inputValue: string) => {
     const trimmed = inputValue.trim();
     if (!trimmed || !watchMaterial || !watchType) return;
+    // The colour lookup is saved with its hex: when a hex is picked, or on submit
     setValue("colorName", trimmed, { shouldValidate: true });
     setValue("colorHex", "");
-    addLookupColorMutation.mutate({
-      materialName: watchMaterial,
-      typeName: watchType,
-      name: trimmed,
-      hex: "#ffffff",
-    });
   };
 
   const handleConfirmDeleteLookup = () => {
     if (!deleteTarget) return;
 
     if (deleteTarget.kind === "material") {
-      if (watchMaterial.toLowerCase() === deleteTarget.name.toLowerCase()) {
+      if (isSameName(watchMaterial, deleteTarget.name)) {
         setValue("material", "");
         setValue("type", "");
         setValue("colorName", "");
         setValue("colorHex", "");
         clearErrors(["material", "type", "colorName", "colorHex"]);
       }
-      deleteLookupMaterialMutation.mutate({
-        materialId: deleteTarget.id,
-        materialName: deleteTarget.name,
-      });
+      deleteLookupMaterialMutation.mutate({ materialName: deleteTarget.name });
     } else if (deleteTarget.kind === "type") {
-      if (watchType.toLowerCase() === deleteTarget.name.toLowerCase()) {
+      if (isSameName(watchType, deleteTarget.name)) {
         setValue("type", "");
         setValue("colorName", "");
         setValue("colorHex", "");
         clearErrors(["type", "colorName", "colorHex"]);
       }
-      deleteLookupTypeMutation.mutate({
-        typeId: deleteTarget.id,
-        materialName: deleteTarget.materialName,
-        typeName: deleteTarget.name,
-      });
+      deleteLookupTypeMutation.mutate({ materialName: deleteTarget.materialName, typeName: deleteTarget.name });
     } else if (deleteTarget.kind === "color") {
-      if (watchColorName.toLowerCase() === deleteTarget.name.toLowerCase()) {
+      if (isSameName(watchColorName, deleteTarget.name)) {
         setValue("colorName", "");
         setValue("colorHex", "");
         clearErrors(["colorName", "colorHex"]);
       }
-      deleteLookupColorMutation.mutate(deleteTarget.id);
+      deleteLookupColorMutation.mutate({
+        materialName: deleteTarget.materialName,
+        typeName: deleteTarget.typeName,
+        name: deleteTarget.name,
+      });
     }
 
     handleCloseDeleteTarget();
@@ -457,9 +387,9 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
     const isDuplicate = userTemplates.some((tpl) => {
       if (initialData && tpl.id === initialData.id) return false;
       return (
-        tpl.material.trim().toLowerCase() === data.material.trim().toLowerCase() &&
-        tpl.type.trim().toLowerCase() === data.type.trim().toLowerCase() &&
-        tpl.colorName.trim().toLowerCase() === data.colorName.trim().toLowerCase()
+        isSameName(tpl.material, data.material) &&
+        isSameName(tpl.type, data.type) &&
+        isSameName(tpl.colorName, data.colorName)
       );
     });
 
@@ -469,43 +399,11 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
     }
     setSubmitError(null);
 
-    const lower = data.colorName.trim().toLowerCase();
-
-    // Find color from availableColors or official Bambu catalog
-    const matchingColor = availableColors.find(
-      (c) => c.name.toLowerCase() === lower,
-    );
-
-    let resolvedHex = data.colorHex?.trim() || "";
-
-    if (!isCustomColor) {
-      // Official Bambu color: ALWAYS resolve from matchingColor or official Bambu catalog
-      if (matchingColor?.hex) {
-        resolvedHex = matchingColor.hex;
-      } else {
-        const currentBambuMat = bambuFilaments.find(
-          (m) => m.name.toLowerCase() === data.material?.toLowerCase(),
-        );
-        const currentBambuType = currentBambuMat?.types.find(
-          (typ) => typ.name.toLowerCase() === data.type?.toLowerCase(),
-        );
-        const official = currentBambuType?.colors.find(
-          (c) => c.name.toLowerCase() === lower,
-        );
-        if (official?.hex) {
-          resolvedHex = official.hex;
-        }
-      }
-    } else {
-      // Custom color: prioritize entered hex if valid, otherwise lookup in customHexMap, matchingColor, or fallback
-      if (!HEX_COLOR_REGEX.test(resolvedHex)) {
-        resolvedHex = customHexMap[lower] || matchingColor?.hex || "#ffffff";
-      }
-    }
-
-    if (!resolvedHex || !HEX_COLOR_REGEX.test(resolvedHex)) {
-      resolvedHex = "#ffffff";
-    }
+    // Catalog colours always store the catalog hex; a custom colour keeps the entered hex (white included)
+    const resolvedHex =
+      findCatalogColor(data)?.hex ??
+      (HEX_COLOR_REGEX.test(data.colorHex) ? data.colorHex : findCustomColorHex(data, lookupColors, userTemplates)) ??
+      "#ffffff";
 
     const templateInput: TemplateInput = {
       material: data.material,
@@ -515,7 +413,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       defaultWeight: data.defaultWeight,
     };
 
-    if (isCustomColor && data.colorName) {
+    if (isCustomColor) {
       saveCustomColorHex(resolvedHex);
     }
 
@@ -617,13 +515,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                   <MaterialOptionLabel
                     option={option}
                     meta={meta}
-                    onDelete={(id, name) =>
-                      setDeleteTarget({
-                        kind: "material",
-                        id,
-                        name,
-                      })
-                    }
+                    onDelete={(_id, name) => setDeleteTarget({ kind: "material", name })}
                   />
                 )}
                 onKeyDown={handleSelectKeyDown}
@@ -642,14 +534,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                     option={option}
                     meta={meta}
                     materialName={watchMaterial}
-                    onDelete={(id, materialName, name) =>
-                      setDeleteTarget({
-                        kind: "type",
-                        id,
-                        materialName,
-                        name,
-                      })
-                    }
+                    onDelete={(_id, materialName, name) => setDeleteTarget({ kind: "type", materialName, name })}
                   />
                 )}
                 onKeyDown={handleSelectKeyDown}
@@ -669,12 +554,8 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                     meta={meta}
                     activeColorName={watchColorName}
                     activeColorHex={watchColorHex}
-                    onDelete={(id, name) =>
-                      setDeleteTarget({
-                        kind: "color",
-                        id,
-                        name,
-                      })
+                    onDelete={(_id, name) =>
+                      setDeleteTarget({ kind: "color", materialName: watchMaterial, typeName: watchType, name })
                     }
                   />
                 )}

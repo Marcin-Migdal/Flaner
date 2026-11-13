@@ -4,7 +4,7 @@ import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
 import type { UserType } from "@flaner/shared/types";
 import { useNotifications } from "./useNotifications";
 import * as notificationsApi from "../../api/notifications";
-import type { AppNotification } from "../../api/notifications";
+import type { AppNotification } from "@flaner/shared/api";
 
 type RenderOptions = Parameters<typeof useNotifications>[0] & { user?: UserType | null };
 

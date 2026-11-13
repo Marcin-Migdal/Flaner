@@ -5,6 +5,7 @@ Filament spools (MFE `tools`, Spooler). User-owned documents — see `_global.md
 ## Invariants
 - **I1** A spool and its prints are visible and editable only by the spool's owner.
 - **I2** Recording a print and changing `currentWeight` happen in one transaction; undoing a print reverts both.
+- **I3** One lifecycle rule (`packages/tools/src/utils/spoolLifecycle`): a spool is finished at 0 g; `finishedAt` is stamped on the transition, kept while it stays finished and cleared when it gets weight back. A print takes at most what the spool has; the rest (carryover) is returned to the caller for the next spool.
 
 ## Schema
 | Field | Type | Required | Notes |
@@ -14,8 +15,8 @@ Filament spools (MFE `tools`, Spooler). User-owned documents — see `_global.md
 | `templateId` | string \| null | ✓ | `null` after the template is deleted |
 | `name` | string | ✓ | |
 | `initialWeight`, `currentWeight` | number (g) | ✓ | |
-| `isFinished` | boolean | ✓ | `currentWeight <= 0` |
-| `finishedAt` | number (ms) \| null | ✓ | set when the spool becomes finished |
+| `isFinished` | boolean | ✓ | `currentWeight <= 0` (I3) |
+| `finishedAt` | number (ms) \| null | ✓ | set when the spool becomes finished (I3) |
 | `createdAt` | number (ms) | ✓ | |
 | `material`, `type`, `colorName`, `colorHex` | string | ✓ | denormalized from the template |
 
@@ -26,9 +27,9 @@ Endpoints: `packages/tools/src/api/spools/endpoints.ts`, `templates/endpoints.ts
 | --- | --- | --- | --- |
 | Add | `addSpool` | set spool | – |
 | Edit | `editSpool` | read spool, update spool (`finishedAt` kept while still finished) | ✅ transaction |
-| Record print | `recordSpoolUsage` | update `currentWeight` / `isFinished` / `finishedAt`, set `prints/{id}` | ✅ transaction |
+| Record print | `recordSpoolUsage` | read spool, update `currentWeight` / `isFinished` / `finishedAt`, set `prints/{id}`; returns the spool + carryover from that read | ✅ transaction |
 | Undo print | `undoLastPrint` | read print, update weight, delete `prints/{id}` | ✅ transaction (print re-read inside) |
-| Mark finished | `markSpoolAsFinished` | update | – |
+| Mark finished | `markSpoolAsFinished` | read spool, update to 0 g (the rest is discarded) | ✅ transaction |
 | Delete | `deleteSpool` | delete all `prints`, delete spool | ✅ batch |
 | Template edited / deleted | `updateTemplate` (propagate), `deleteTemplate` | update denormalized fields / `templateId: null`, or delete spools with their `prints` | ✅ batch / ❌ sequential batches (delete) |
 
@@ -65,7 +66,7 @@ match /spools/{spoolId} {
 | Field | Type | Required |
 | --- | --- | --- |
 | `id` | string (== doc id) | ✓ |
-| `usedWeight` | number (g) | ✓ |
+| `usedWeight` | number (g), what the print took from this spool (≤ its weight; the carryover is not included) | ✓ |
 | `createdAt` | number (ms) | ✓ |
 
 ### Queries

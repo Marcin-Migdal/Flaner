@@ -1,15 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { screen, fireEvent, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import type { SplitGroup } from "../../api/splits";
 import { SplitsView } from "./SplitsView";
 
-const mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-1", username: "Alice", email: "alice@flaner.app" });
 
 const mockGroups: SplitGroup[] = [
   {
@@ -130,7 +126,7 @@ describe("SplitsView", () => {
   it("renders loader when isLoading is true", () => {
     queryLoading = true;
 
-    const { container } = renderWithProviders(<SplitsView />);
+    const { container } = renderWithProviders(<SplitsView />, { user: mockUser });
 
     expect(container.querySelector("[class*='loader']")).toBeInTheDocument();
   });
@@ -138,7 +134,7 @@ describe("SplitsView", () => {
   it("renders empty state when there are no split groups", () => {
     queryGroupsData = [];
 
-    renderWithProviders(<SplitsView />);
+    renderWithProviders(<SplitsView />, { user: mockUser });
 
     expect(screen.getByText("splits.dashboard.emptyTitle")).toBeInTheDocument();
   });
@@ -147,7 +143,7 @@ describe("SplitsView", () => {
     const user = userEvent.setup();
     queryGroupsData = mockGroups;
 
-    renderWithProviders(<SplitsView />);
+    renderWithProviders(<SplitsView />, { user: mockUser });
 
     expect(screen.getAllByText("Summer Roadtrip")[0]).toBeInTheDocument();
 
@@ -160,6 +156,7 @@ describe("SplitsView", () => {
     queryGroupsData = mockGroups;
 
     renderWithProviders(<SplitsView />, {
+      user: mockUser,
       initialEntries: ["/#grp-2"],
     });
 
@@ -175,6 +172,7 @@ describe("SplitsView", () => {
     queryGroupsData = mockGroups;
 
     renderWithProviders(<SplitsView />, {
+      user: mockUser,
       initialEntries: ["/#grp-1"],
     });
 
@@ -205,7 +203,7 @@ describe("SplitsView", () => {
     };
     queryGroupsData = [unsettledGroup];
 
-    renderWithProviders(<SplitsView />);
+    renderWithProviders(<SplitsView />, { user: mockUser });
 
     const deleteBtn = screen.getByRole("button", { name: "splits.actions.delete" });
     await user.click(deleteBtn);
@@ -217,7 +215,7 @@ describe("SplitsView", () => {
     const user = userEvent.setup();
     queryGroupsData = mockGroups;
 
-    renderWithProviders(<SplitsView />);
+    renderWithProviders(<SplitsView />, { user: mockUser });
 
     // Create group
     const newGroupBtn = screen.getByRole("button", { name: "splits.list.newGroup" });
@@ -244,7 +242,7 @@ describe("SplitsView", () => {
     deleteGroupMock.mockRejectedValueOnce(new Error("Fail"));
     queryGroupsData = mockGroups;
 
-    renderWithProviders(<SplitsView />);
+    renderWithProviders(<SplitsView />, { user: mockUser });
 
     const deleteBtn = screen.getAllByRole("button", { name: "splits.actions.delete" })[0];
     await user.click(deleteBtn);
@@ -261,6 +259,7 @@ describe("SplitsView", () => {
     queryGroupsData = mockGroups;
 
     renderWithProviders(<SplitsView />, {
+      user: mockUser,
       initialEntries: ["/#grp-2"],
     });
 

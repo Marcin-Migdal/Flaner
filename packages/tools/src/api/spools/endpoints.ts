@@ -5,7 +5,6 @@ import {
   query,
   where,
   setDoc,
-  updateDoc,
   doc,
   orderBy,
   limit,
@@ -14,8 +13,9 @@ import {
 } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
 import { firestoreConverter } from "@flaner/shared/utils";
-import type { FilamentSpool, SpoolInput, SpoolPrint } from "./types";
+import type { FilamentSpool, RecordUsageResult, SpoolInput, SpoolPrint } from "./types";
 import type { FilamentTemplate } from "../templates/types";
+import { applyPrint, finishState } from "../../utils/spoolLifecycle";
 
 export const spoolRefs = {
   spools: () => collection(fb.firestore, "spools").withConverter(firestoreConverter<FilamentSpool>()),
@@ -24,12 +24,6 @@ export const spoolRefs = {
     collection(fb.firestore, `spools/${spoolId}/prints`).withConverter(firestoreConverter<SpoolPrint>()),
   print: (spoolId: string, printId: string) =>
     doc(fb.firestore, `spools/${spoolId}/prints`, printId).withConverter(firestoreConverter<SpoolPrint>()),
-};
-
-// Keep the original finish date while the spool stays finished; stamp it only on the transition.
-const resolveFinishedAt = (current: FilamentSpool, isFinished: boolean): number | null => {
-  if (!isFinished) return null;
-  return current.isFinished && current.finishedAt ? current.finishedAt : Date.now();
 };
 
 export const fetchSpools = async (userId: string): Promise<FilamentSpool[]> => {
@@ -55,9 +49,7 @@ export const addSpool = async (
     templateId: data.templateId,
     name: data.name,
     initialWeight: data.initialWeight,
-    currentWeight: data.currentWeight,
-    isFinished: data.currentWeight <= 0,
-    finishedAt: data.currentWeight <= 0 ? Date.now() : null,
+    ...finishState(null, data.currentWeight),
     createdAt: Date.now(),
     material: selectedTemplate?.material ?? "Unknown",
     type: selectedTemplate?.type ?? "Custom",
@@ -79,14 +71,11 @@ export const editSpool = async (
       throw new Error("Spool not found");
     }
 
-    const isFinished = data.currentWeight <= 0;
     transaction.update(spoolRef, {
       templateId: data.templateId,
       name: data.name,
       initialWeight: data.initialWeight,
-      currentWeight: data.currentWeight,
-      isFinished,
-      finishedAt: resolveFinishedAt(snap.data(), isFinished),
+      ...finishState(snap.data(), data.currentWeight),
       material: selectedTemplate?.material ?? "Unknown",
       type: selectedTemplate?.type ?? "Custom",
       colorName: selectedTemplate?.colorName ?? "Default",
@@ -95,41 +84,27 @@ export const editSpool = async (
   });
 };
 
-export const recordSpoolUsage = async (
-  spool: FilamentSpool,
-  usage: number,
-): Promise<{ isFinished: boolean; wentBelowZero: boolean; spoolId: string; newWeight: number }> => {
+// Applies the print to the spool as stored now (not to the caller's snapshot) and returns the carryover from that read.
+export const recordSpoolUsage = async (spoolId: string, usage: number): Promise<RecordUsageResult> => {
   return runTransaction(fb.firestore, async (transaction) => {
-    const spoolRef = spoolRefs.spool(spool.id);
+    const spoolRef = spoolRefs.spool(spoolId);
     const snap = await transaction.get(spoolRef);
     if (!snap.exists()) {
       throw new Error("Spool not found");
     }
 
-    const currentSpool = snap.data();
-    const newWeight = Math.max(0, parseFloat((currentSpool.currentWeight - usage).toFixed(2)));
-    const isFinished = newWeight <= 0;
+    const current = snap.data();
+    const { state, consumed, carryover } = applyPrint(current, usage);
+    transaction.update(spoolRef, state);
 
-    transaction.update(spoolRef, {
-      currentWeight: newWeight,
-      isFinished,
-      finishedAt: resolveFinishedAt(currentSpool, isFinished),
-    });
-
-    const printsColRef = collection(fb.firestore, `spools/${spool.id}/prints`);
-    const newPrintRef = doc(printsColRef);
+    const newPrintRef = doc(spoolRefs.prints(spoolId));
     transaction.set(newPrintRef, {
       id: newPrintRef.id,
-      usedWeight: parseFloat(usage.toFixed(2)),
+      usedWeight: consumed,
       createdAt: Date.now(),
     });
 
-    return {
-      isFinished,
-      wentBelowZero: currentSpool.currentWeight - usage < 0,
-      spoolId: spool.id,
-      newWeight,
-    };
+    return { spool: { ...current, ...state, id: spoolId }, carryover };
   });
 };
 
@@ -164,12 +139,7 @@ export const undoLastPrint = async (spoolId: string, printId?: string): Promise<
     const snap = await transaction.get(spoolRef);
     if (snap.exists()) {
       const current = snap.data();
-      const updatedWeight = parseFloat((current.currentWeight + printSnap.data().usedWeight).toFixed(2));
-      transaction.update(spoolRef, {
-        currentWeight: updatedWeight,
-        isFinished: updatedWeight <= 0,
-        finishedAt: updatedWeight <= 0 ? current.finishedAt : null,
-      });
+      transaction.update(spoolRef, finishState(current, current.currentWeight + printSnap.data().usedWeight));
     }
     transaction.delete(printRef);
   });
@@ -183,11 +153,14 @@ export const deleteSpool = async (spoolId: string): Promise<void> => {
   await batch.commit();
 };
 
+// Manual finish: whatever is left on the spool is discarded (undoing a print later restores only that print).
 export const markSpoolAsFinished = async (spoolId: string): Promise<void> => {
-  const spoolRef = doc(fb.firestore, "spools", spoolId);
-  await updateDoc(spoolRef, {
-    currentWeight: 0,
-    isFinished: true,
-    finishedAt: Date.now(),
+  await runTransaction(fb.firestore, async (transaction) => {
+    const spoolRef = spoolRefs.spool(spoolId);
+    const snap = await transaction.get(spoolRef);
+    if (!snap.exists()) {
+      throw new Error("Spool not found");
+    }
+    transaction.update(spoolRef, finishState(snap.data(), 0));
   });
 };

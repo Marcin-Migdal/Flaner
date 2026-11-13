@@ -7,7 +7,7 @@ export const useRecordSpoolUsageMutation = (options?: UseMutationOptions<RecordU
   useUserMutation<RecordUsageResult, RecordUsageInput>(
     {
       mutationKey: ["recordSpoolUsage"],
-      mutationFn: ({ spool, usage }) => recordSpoolUsage(spool, usage),
+      mutationFn: ({ spoolId, usage }) => recordSpoolUsage(spoolId, usage),
       invalidates: spoolerInvalidation.recordSpoolUsage,
       meta: {
         successMessageKey: "tools:toasts.spools.recordUsageSuccess",

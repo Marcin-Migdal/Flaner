@@ -1,6 +1,8 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { screen, fireEvent } from "@testing-library/react";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
+import type { UserType } from "@flaner/shared/types";
 import userEvent from "@testing-library/user-event";
 import { TemplateFormModal } from "./TemplateFormModal";
 import type { FilamentTemplate } from "../../../../api/templates";
@@ -14,18 +16,13 @@ const addLookupTypeMock = vi.fn();
 const deleteLookupTypeMock = vi.fn();
 const addLookupColorMock = vi.fn();
 const deleteLookupColorMock = vi.fn();
-const saveCustomColorHexMock = vi.fn();
 
 let mockUserTemplates: FilamentTemplate[] = [];
 let mockIsPending = false;
 
-let mockAuthUser: { uid: string } | null = { uid: "user-123" };
+let mockAuthUser: UserType | null = createMockUser({ uid: "user-123" });
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({
-    user: mockAuthUser,
-  }),
-}));
+const render = (ui: React.ReactElement) => renderWithProviders(ui, { user: mockAuthUser });
 
 vi.mock("../../../../api/templates", () => ({
   fetchAssociatedSpools: (...args: unknown[]) => fetchAssociatedSpoolsMock(...args),
@@ -94,35 +91,6 @@ vi.mock("../../../../hooks", () => ({
       opts?.onSuccess?.();
     },
     isPending: false,
-  }),
-}));
-
-vi.mock("../hooks/useSyncLookups", () => ({
-  useSyncLookups: vi.fn(),
-}));
-
-vi.mock("../hooks/useTemplateCustomColors", () => ({
-  useTemplateCustomColors: (props: {
-    onColorHexChange?: (hex: string) => void;
-    onSaveLookupColor?: (data: {
-      materialName: string;
-      typeName: string;
-      name: string;
-      hex: string;
-    }) => void;
-  }) => ({
-    customHexMap: { customcolor: "#ff00ff" },
-    saveCustomColorHex: (...args: unknown[]) => {
-      saveCustomColorHexMock(...args);
-      const hex = typeof args[0] === "string" ? args[0] : "#ff00ff";
-      props.onColorHexChange?.(hex);
-      props.onSaveLookupColor?.({
-        materialName: "CustomMat",
-        typeName: "CustomType",
-        name: "CustomColor",
-        hex,
-      });
-    },
   }),
 }));
 
@@ -302,10 +270,7 @@ describe("TemplateFormModal", () => {
     const confirmBtn = screen.getByRole("button", { name: "spooler.common.delete" });
     await user.click(confirmBtn);
 
-    expect(deleteLookupMaterialMock).toHaveBeenCalledWith({
-      materialId: "mat-1",
-      materialName: "CustomMat",
-    });
+    expect(deleteLookupMaterialMock).toHaveBeenCalledWith({ materialName: "CustomMat" });
   });
 
   it("allows deleting custom lookup type and custom lookup color", async () => {
@@ -333,7 +298,6 @@ describe("TemplateFormModal", () => {
     await user.click(confirmTypeDelete);
 
     expect(deleteLookupTypeMock).toHaveBeenCalledWith({
-      typeId: "type-1",
       materialName: "CustomMat",
       typeName: "CustomType",
     });
@@ -352,7 +316,11 @@ describe("TemplateFormModal", () => {
     const confirmColorDelete = screen.getByRole("button", { name: "spooler.common.delete" });
     await user.click(confirmColorDelete);
 
-    expect(deleteLookupColorMock).toHaveBeenCalledWith("color-1");
+    expect(deleteLookupColorMock).toHaveBeenCalledWith({
+      materialName: "CustomMat",
+      typeName: "CustomType",
+      name: "CustomColor",
+    });
   });
 
   it("cancels delete lookup confirmation dialog", async () => {
@@ -456,16 +424,12 @@ describe("TemplateFormModal", () => {
       await user.type(colorInput, "BrandNewColor");
       const createColorOption = await screen.findByText(/create "brandnewcolor"/i);
       await user.click(createColorOption);
-      expect(addLookupColorMock).toHaveBeenCalledWith({
-        materialName: "BrandNewMat",
-        typeName: "BrandNewType",
-        name: "BrandNewColor",
-        hex: "#ffffff",
-      });
+      // The colour lookup is written with its real hex (on pick / submit), never with a placeholder
+      expect(addLookupColorMock).not.toHaveBeenCalled();
     }
   });
 
-  it("resolves Bambu official color hex on initialData when colorHex is #ffffff", () => {
+  it("shows the catalog hex for a catalog colour on initialData", () => {
     render(
       <TemplateFormModal
         isOpen={true}
@@ -484,6 +448,34 @@ describe("TemplateFormModal", () => {
 
     expect(screen.getByRole("heading", { name: "spooler.templates.editTemplate" })).toBeInTheDocument();
     expect(screen.getByDisplayValue("1000")).toBeInTheDocument();
+    expect(screen.getByLabelText("spooler.templates.colorHex")).toHaveValue("#f9f6f0");
+  });
+
+  it("keeps a custom white colour on initialData", () => {
+    const snow: FilamentTemplate = { ...mockTemplate, colorName: "Snow", colorHex: "#ffffff" };
+    mockUserTemplates = [snow];
+    render(<TemplateFormModal isOpen={true} onClose={vi.fn()} initialData={snow} />);
+
+    expect(screen.getByLabelText("spooler.templates.colorHex")).toHaveValue("#ffffff");
+  });
+
+  it("does not take the hex of a same-name colour from another material", async () => {
+    // "NewColor" with a hex exists only under PLA / Basic; creating "NewColor" under CustomMat / CustomType must not reuse it
+    mockUserTemplates = [{ ...mockTemplate, id: "tmpl-other", colorName: "NewColor", colorHex: "#0000ff" }];
+    const user = userEvent.setup();
+    render(<TemplateFormModal isOpen={true} onClose={vi.fn()} />);
+
+    const controls = document.body.querySelectorAll(".react-select__control");
+    await user.click(controls[0]);
+    await user.click(await screen.findByText("CustomMat"));
+    await user.click(controls[1]);
+    await user.click(await screen.findByText("CustomType"));
+    const colorInput = controls[2].querySelector("input");
+    if (!colorInput) throw new Error("colour input not found");
+    await user.type(colorInput, "NewColor");
+    await user.click(await screen.findByText(/create "newcolor"/i));
+
+    expect(screen.getByLabelText("spooler.templates.colorHex")).toHaveValue("");
   });
 
   it("resets type and color when material changes", async () => {
@@ -667,7 +659,12 @@ describe("TemplateFormModal", () => {
     await user.type(hexInput, "#123456");
     fireEvent.blur(hexInput);
 
-    expect(saveCustomColorHexMock).toHaveBeenCalledWith("#123456");
+    expect(addLookupColorMock).toHaveBeenCalledWith({
+      materialName: "CustomMat",
+      typeName: "CustomType",
+      name: "CustomColor",
+      hex: "#123456",
+    });
   });
 
   it("closes modal on Escape key when no subdialog is open", () => {
@@ -710,7 +707,7 @@ describe("TemplateFormModal", () => {
     expect(editMutationMock).toHaveBeenCalled();
   });
 
-  it("resolves custom color hex from customHexMap when color is in map", async () => {
+  it("submits the saved hex of a custom colour lookup", async () => {
     const user = userEvent.setup();
     render(<TemplateFormModal isOpen={true} onClose={vi.fn()} />);
 
@@ -760,7 +757,7 @@ describe("TemplateFormModal", () => {
     const presetBtn = await screen.findByRole("button", { name: "Color #ef4444" });
     await user.click(presetBtn);
 
-    expect(saveCustomColorHexMock).toHaveBeenCalledWith("#ef4444");
+    expect(addLookupColorMock).toHaveBeenCalledWith(expect.objectContaining({ name: "CustomColor", hex: "#ef4444" }));
   });
 
   it("renders saving state when mutation is pending", () => {
@@ -790,7 +787,7 @@ describe("TemplateFormModal", () => {
     expect(screen.getByDisplayValue("975")).toBeInTheDocument();
   });
 
-  it("falls back to #ffffff or customHexMap when custom color has invalid hex on submit", async () => {
+  it("falls back to the saved hex of the custom colour when the entered hex is invalid", async () => {
     const user = userEvent.setup();
     render(<TemplateFormModal isOpen={true} onClose={vi.fn()} />);
 
@@ -887,6 +884,6 @@ describe("TemplateFormModal", () => {
       propagate: false,
     });
 
-    mockAuthUser = { uid: "user-123" };
+    mockAuthUser = createMockUser({ uid: "user-123" });
   });
 });

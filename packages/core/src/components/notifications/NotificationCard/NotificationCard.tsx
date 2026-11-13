@@ -1,6 +1,5 @@
-import { useNavigate } from "react-router";
-import { AppNotification } from "../../../api/notifications";
-import { getNotificationTarget } from "../../../utils/getNotificationTarget";
+import type { AppNotification } from "@flaner/shared/api";
+import { useOpenNotification } from "../../../hooks/useOpenNotification";
 import { NotificationContent } from "../NotificationContent";
 
 interface NotificationCardProps {
@@ -10,17 +9,15 @@ interface NotificationCardProps {
 }
 
 export function NotificationCard({ notification, onRead, onClosePopover }: NotificationCardProps) {
-  const navigate = useNavigate();
+  const openNotification = useOpenNotification();
 
   const handleCardClick = () => {
     if (!notification.read) {
       onRead(notification.id);
     }
 
-    const target = getNotificationTarget(notification);
-    if (target) navigate(target);
-
     onClosePopover();
+    void openNotification(notification);
   };
 
   return (

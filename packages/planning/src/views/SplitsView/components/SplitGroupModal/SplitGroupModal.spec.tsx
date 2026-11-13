@@ -1,16 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import * as reactHookForm from "react-hook-form";
 import type { SplitGroup } from "../../../../api/splits";
 import { SplitGroupModal } from "./SplitGroupModal";
 
-const mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-1", username: "Alice", email: "alice@flaner.app" });
 
 const createGroupMock = vi.fn().mockImplementation(async (data, options) => {
   options?.onSuccess?.({ id: "new-grp-id", ...data });
@@ -85,7 +81,8 @@ describe("SplitGroupModal", () => {
         open={true}
         onOpenChange={onOpenChangeMock}
         onSuccess={onSuccessMock}
-      />
+      />,
+      { user: mockUser },
     );
 
     expect(screen.getByText("splits.groupModal.title")).toBeInTheDocument();
@@ -120,7 +117,8 @@ describe("SplitGroupModal", () => {
         onOpenChange={onOpenChangeMock}
         groupToEdit={mockGroup}
         onSuccess={onSuccessMock}
-      />
+      />,
+      { user: mockUser },
     );
 
     expect(screen.getByText("splits.groupModal.editTitle")).toBeInTheDocument();
@@ -154,7 +152,8 @@ describe("SplitGroupModal", () => {
       <SplitGroupModal
         open={true}
         onOpenChange={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     const nameInput = screen.getByPlaceholderText("splits.fields.name");
@@ -177,7 +176,8 @@ describe("SplitGroupModal", () => {
       <SplitGroupModal
         open={true}
         onOpenChange={onOpenChangeMock}
-      />
+      />,
+      { user: mockUser },
     );
 
     const cancelBtn = screen.getByRole("button", { name: "splits.actions.cancel" });
@@ -193,7 +193,8 @@ describe("SplitGroupModal", () => {
       <SplitGroupModal
         open={true}
         onOpenChange={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     const clearBtn = screen.getByRole("button", { name: "Clear Participants" });

@@ -1,6 +1,7 @@
 import React from "react";
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import userEvent from "@testing-library/user-event";
 import { TemplatesTab } from "./TemplatesTab";
 import type { FilamentTemplate } from "../../../api/templates";
@@ -46,9 +47,7 @@ vi.mock("../../../hooks", () => ({
   useDeleteTemplateMutation: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: { uid: "user-1" } }),
-}));
+const render = (ui: React.ReactElement) => renderWithProviders(ui, { user: createMockUser({ uid: "user-1" }) });
 
 describe("TemplatesTab", () => {
   it("renders templates list", () => {

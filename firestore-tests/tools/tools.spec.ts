@@ -173,12 +173,10 @@ describe("lookup_materials / lookup_types / lookup_colors", () => {
   const type = { id: "t1", userId: OWNER, materialName: "PLA", name: "Silk", createdAt: 1 };
   const color = { id: "c1", userId: OWNER, materialName: "PLA", typeName: "Silk", name: "Gold", hex: "#ffd700", createdAt: 1 };
 
-  it("accepts the idempotent add flows (query by name, then set)", async () => {
+  it("accepts the idempotent add flows (read the owner's lookups, then set)", async () => {
     const db = as(OWNER);
 
-    await assertSucceeds(
-      getDocs(query(collection(db, "lookup_materials"), where("userId", "==", OWNER), where("name", "==", "PLA"), limit(1))),
-    );
+    await assertSucceeds(getDocs(query(collection(db, "lookup_materials"), where("userId", "==", OWNER))));
     await assertSucceeds(setDoc(doc(db, "lookup_materials", "m1"), { ...material, createdAt: Date.now() }));
     await assertSucceeds(setDoc(doc(db, "lookup_types", "t1"), { ...type, createdAt: Date.now() }));
     await assertSucceeds(setDoc(doc(db, "lookup_colors", "c1"), { ...color, createdAt: Date.now() }));

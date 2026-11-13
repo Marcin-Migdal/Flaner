@@ -1,15 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import type { SplitGroup } from "../../../../api/splits";
 import { SplitGroupDashboard } from "./SplitGroupDashboard";
 
-let mockUser: { uid: string; username: string; email: string } | null = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-1", username: "Alice", email: "alice@flaner.app" });
 
 vi.mock("../../../../hooks/useSyncSplitGroupFeed", () => ({
   useSyncSplitGroupFeed: vi.fn(),
@@ -86,7 +82,7 @@ const mockGroup: SplitGroup = {
 
 describe("SplitGroupDashboard", () => {
   it("renders group header, metrics, and default activity tab", () => {
-    renderWithProviders(<SplitGroupDashboard group={mockGroup} onBack={vi.fn()} />);
+    renderWithProviders(<SplitGroupDashboard group={mockGroup} onBack={vi.fn()} />, { user: mockUser });
 
     expect(screen.getByText("Hiking Trip")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "splits.tabs.activity" })).toBeInTheDocument();
@@ -96,7 +92,7 @@ describe("SplitGroupDashboard", () => {
   it("switches to balances tab when clicked and handles settle debt", async () => {
     const user = userEvent.setup();
 
-    renderWithProviders(<SplitGroupDashboard group={mockGroup} onBack={vi.fn()} />);
+    renderWithProviders(<SplitGroupDashboard group={mockGroup} onBack={vi.fn()} />, { user: mockUser });
 
     const balancesTab = screen.getByRole("tab", { name: "splits.tabs.balances" });
     await user.click(balancesTab);
@@ -116,7 +112,7 @@ describe("SplitGroupDashboard", () => {
   it("opens ExpenseModal on Add Expense click and closes it", async () => {
     const user = userEvent.setup();
 
-    renderWithProviders(<SplitGroupDashboard group={mockGroup} onBack={vi.fn()} />);
+    renderWithProviders(<SplitGroupDashboard group={mockGroup} onBack={vi.fn()} />, { user: mockUser });
 
     const addExpenseBtn = screen.getByRole("button", { name: "splits.actions.addExpense" });
     await user.click(addExpenseBtn);
@@ -131,7 +127,7 @@ describe("SplitGroupDashboard", () => {
   it("opens ExpenseModal in edit mode from activity feed", async () => {
     const user = userEvent.setup();
 
-    renderWithProviders(<SplitGroupDashboard group={mockGroup} onBack={vi.fn()} />);
+    renderWithProviders(<SplitGroupDashboard group={mockGroup} onBack={vi.fn()} />, { user: mockUser });
 
     const editBtn = screen.getByRole("button", { name: "splits.actions.edit" });
     await user.click(editBtn);
@@ -143,7 +139,7 @@ describe("SplitGroupDashboard", () => {
     const user = userEvent.setup();
     const onBackMock = vi.fn();
 
-    renderWithProviders(<SplitGroupDashboard group={mockGroup} onBack={onBackMock} />);
+    renderWithProviders(<SplitGroupDashboard group={mockGroup} onBack={onBackMock} />, { user: mockUser });
 
     const backButton = screen.getByRole("button", { name: "splits.dashboard.back" });
     await user.click(backButton);
@@ -159,7 +155,7 @@ describe("SplitGroupDashboard", () => {
       lastUsedCurrency: "",
     };
 
-    renderWithProviders(<SplitGroupDashboard group={groupWithDefaults} onBack={vi.fn()} />);
+    renderWithProviders(<SplitGroupDashboard group={groupWithDefaults} onBack={vi.fn()} />, { user: mockUser });
 
     const settleUpBtn = screen.getByRole("button", { name: "splits.actions.settleUp" });
     await user.click(settleUpBtn);
@@ -168,13 +164,11 @@ describe("SplitGroupDashboard", () => {
   });
 
   it("handles unauthenticated user and undefined simplifyDebts gracefully", () => {
-    mockUser = null;
     const groupWithoutSimplify: SplitGroup = {
       ...mockGroup,
       simplifyDebts: undefined as unknown as boolean,
     };
-    renderWithProviders(<SplitGroupDashboard group={groupWithoutSimplify} onBack={vi.fn()} />);
+    renderWithProviders(<SplitGroupDashboard group={groupWithoutSimplify} onBack={vi.fn()} />, { user: null });
     expect(screen.getByText("Hiking Trip")).toBeInTheDocument();
-    mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
   });
 });

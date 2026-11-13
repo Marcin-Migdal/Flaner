@@ -20,7 +20,7 @@ import { useMoneyFormatter } from "@flaner/shared/hooks";
 import type { SplitGroupMember } from "../../../../hooks/useSplitGroupMembers";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import type { Debt } from "../../../../utils/debtSimplification";
-import { getUserBalances } from "../../../../utils/splitBalances";
+import { getUserBalances } from "../../../../utils/splitLedger";
 import { balancesTabStyles as styles, memberBalanceVariants } from "./BalancesTab.styles";
 import { DebtCard, type DebtActionType } from "./components/DebtCard";
 
@@ -28,8 +28,8 @@ export type BalancesTabProps = {
   group: SplitGroup;
   members: SplitGroupMember[];
   settlements?: Settlement[];
-  pairwiseDebts: Debt[];
-  simplifiedDebts: Debt[];
+  /** Debts in the group's active mode (simplified or pairwise). */
+  debts: Debt[];
   getMember: (userId: string) => SplitGroupMember;
   getMemberName: (userId: string) => string;
   onSettleDebt: (debt: Debt) => void;
@@ -45,8 +45,7 @@ export const BalancesTab = ({
   group,
   members,
   settlements = [],
-  pairwiseDebts,
-  simplifiedDebts,
+  debts: activeDebts,
   getMember,
   getMemberName,
   onSettleDebt,
@@ -97,7 +96,7 @@ export const BalancesTab = ({
 
   const debts = useMemo(
     () =>
-      [...(isSimplified ? simplifiedDebts : pairwiseDebts)].sort((a, b) => {
+      [...activeDebts].sort((a, b) => {
         const priorityDiff = getDebtPriority(a, currentUserId) - getDebtPriority(b, currentUserId);
         if (priorityDiff !== 0) return priorityDiff;
 
@@ -107,7 +106,7 @@ export const BalancesTab = ({
           b.amount - a.amount
         );
       }),
-    [isSimplified, simplifiedDebts, pairwiseDebts, currentUserId, primaryCurrency],
+    [activeDebts, currentUserId, primaryCurrency],
   );
 
   return (

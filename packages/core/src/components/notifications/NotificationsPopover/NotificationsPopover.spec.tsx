@@ -1,10 +1,10 @@
-import { act, screen } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import type { ReactElement } from "react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders, createTestI18n } from "@flaner/test-utils";
 import { SidebarProvider } from "@flaner/ui-components";
-import type { AppNotification } from "../../../api/notifications";
+import type { AppNotification } from "@flaner/shared/api";
 import { NotificationsPopover } from "./NotificationsPopover";
 
 const { mockNavigate, mockToastCustom, mockToastDismiss } = vi.hoisted(() => ({
@@ -16,6 +16,10 @@ const { mockNavigate, mockToastCustom, mockToastDismiss } = vi.hoisted(() => ({
 vi.mock("react-router", async () => ({
   ...(await vi.importActual("react-router")),
   useNavigate: () => mockNavigate,
+}));
+
+vi.mock("../../../utils/loadNotificationTargets", () => ({
+  loadNotificationTargets: async () => ({ friend_request: () => "/community/friends#friend-requests" }),
 }));
 
 vi.mock("@flaner/shared/utils", async () => ({
@@ -311,7 +315,7 @@ describe("NotificationsPopover", () => {
       await user.click(screen.getByText("notifications.friendRequest"));
 
       expect(mockMarkAsRead).toHaveBeenCalledWith("n1");
-      expect(mockNavigate).toHaveBeenCalledWith("/community/friends#friend-requests");
+      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/community/friends#friend-requests"));
       expect(mockToastDismiss).toHaveBeenCalledWith("toast-1");
     });
 
