@@ -1,7 +1,7 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import userEvent from "@testing-library/user-event";
 import { DeleteTemplateModal } from "./DeleteTemplateModal";
 import type { FilamentTemplate } from "../../../../api/templates";
@@ -11,13 +11,7 @@ const { deleteMutationMock, fetchAssociatedSpoolsMock } = vi.hoisted(() => ({
   fetchAssociatedSpoolsMock: vi.fn(),
 }));
 
-const mockUser = { uid: "user-123" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({
-    user: mockUser,
-  }),
-}));
+const mockUser = createMockUser({ uid: "user-123" });
 
 vi.mock("../../../../api/templates", () => ({
   fetchAssociatedSpools: (...args: unknown[]) => fetchAssociatedSpoolsMock(...args),
@@ -54,6 +48,8 @@ const mockTemplate: FilamentTemplate = {
   defaultWeight: 1000,
 };
 
+const render = (ui: React.ReactElement) => renderWithProviders(ui, { user: mockUser });
+
 describe("DeleteTemplateModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -61,7 +57,7 @@ describe("DeleteTemplateModal", () => {
   });
 
   it("renders null if template is null", () => {
-    const { container } = renderWithProviders(
+    const { container } = render(
       <DeleteTemplateModal
         isOpen={true}
         onClose={vi.fn()}
@@ -77,7 +73,7 @@ describe("DeleteTemplateModal", () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
 
-    renderWithProviders(
+    render(
       <DeleteTemplateModal
         isOpen={true}
         onClose={onClose}
@@ -100,7 +96,7 @@ describe("DeleteTemplateModal", () => {
     fetchAssociatedSpoolsMock.mockResolvedValue([{ id: "spool-1" }]);
     const user = userEvent.setup();
 
-    renderWithProviders(
+    render(
       <DeleteTemplateModal
         isOpen={true}
         onClose={vi.fn()}
@@ -123,7 +119,7 @@ describe("DeleteTemplateModal", () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
 
-    renderWithProviders(
+    render(
       <DeleteTemplateModal
         isOpen={true}
         onClose={onClose}
@@ -146,7 +142,7 @@ describe("DeleteTemplateModal", () => {
   it("falls back to the simple confirmation when fetchAssociatedSpools rejects", async () => {
     fetchAssociatedSpoolsMock.mockRejectedValueOnce(new Error("Network fail"));
 
-    renderWithProviders(
+    render(
       <DeleteTemplateModal
         isOpen={true}
         onClose={vi.fn()}
@@ -163,7 +159,7 @@ describe("DeleteTemplateModal", () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
 
-    renderWithProviders(
+    render(
       <DeleteTemplateModal
         isOpen={true}
         onClose={onClose}
@@ -181,7 +177,7 @@ describe("DeleteTemplateModal", () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
 
-    renderWithProviders(
+    render(
       <DeleteTemplateModal
         isOpen={true}
         onClose={onClose}
@@ -198,7 +194,7 @@ describe("DeleteTemplateModal", () => {
     fetchAssociatedSpoolsMock.mockResolvedValue([{ id: "spool-1" }]);
     mockDeleteIsPending = true;
 
-    renderWithProviders(
+    render(
       <DeleteTemplateModal
         isOpen={true}
         onClose={vi.fn()}

@@ -20,11 +20,11 @@ describe("useDeleteLookupMaterialMutation", () => {
 
     const { result, queryClient } = renderHookWithProviders(() => useDeleteLookupMaterialMutation(), { user: mockUser });
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-    result.current.mutate({ materialId: "mat-1", materialName: "PLA" });
+    result.current.mutate({ materialName: "PLA" });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(lookupsApi.deleteLookupMaterial).toHaveBeenCalledWith("user-1", "mat-1", "PLA");
+    expect(lookupsApi.deleteLookupMaterial).toHaveBeenCalledWith("user-1", "PLA");
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["spooler", "lookupMaterials", "user-1"] });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["spooler", "lookupTypes", "user-1"] });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["spooler", "lookupColors", "user-1"] });
@@ -35,7 +35,7 @@ describe("useDeleteLookupMaterialMutation", () => {
     const onSuccessMock = vi.fn();
     const { result } = renderHookWithProviders(() => useDeleteLookupMaterialMutation({ onSuccess: onSuccessMock }), { user: mockUser });
 
-    result.current.mutate({ materialId: "mat-1", materialName: "PLA" });
+    result.current.mutate({ materialName: "PLA" });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(onSuccessMock).toHaveBeenCalled();
@@ -44,7 +44,7 @@ describe("useDeleteLookupMaterialMutation", () => {
   it("throws error if user is not authenticated", async () => {
     const { result } = renderHookWithProviders(() => useDeleteLookupMaterialMutation(), { user: null });
 
-    result.current.mutate({ materialId: "mat-1", materialName: "PLA" });
+    result.current.mutate({ materialName: "PLA" });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error?.message).toBe("errors.userNotAuthenticated");
