@@ -1,20 +1,14 @@
-import { MFE_NAMES } from "@flaner/shared/constants";
 import { LoadingFallback } from "@flaner/ui-components";
 import React, { Suspense } from "react";
-import { createBrowserRouter, Navigate, Outlet } from "react-router";
+import { createBrowserRouter, Navigate, Outlet, type RouteObject } from "react-router";
 import { MfeRouteErrorBoundary } from "../../components/MfeRouteErrorBoundary";
 import { ShellLayout } from "../../components/ShellLayout";
 import { lazyMfeRoutes, lazyProvider } from "../../mf";
+import { MFE_REGISTRY } from "../../mfeRegistry";
 import { AuthView } from "../../pages/AuthView";
 import { HomeView } from "../../pages/HomeView";
 import { PageTilesView } from "../../pages/PageTilesView";
 import { ProtectedRoute, PublicRoute } from "../guards";
-
-// Lazy loaded MFE components
-const SettingsMFE = lazyProvider(MFE_NAMES.SETTINGS, "App");
-const ShoppingMFE = lazyProvider(MFE_NAMES.SHOPPING, "App");
-const PlanningMFE = lazyProvider(MFE_NAMES.PLANNING, "App");
-const ToolsMFE = lazyProvider(MFE_NAMES.TOOLS, "App");
 
 // Helper to wrap component in Suspense container to show loader immediately during transition
 const withSuspense = (Component: React.ComponentType) => {
@@ -28,6 +22,14 @@ const withSuspense = (Component: React.ComponentType) => {
 
   return <Wrapped />;
 };
+
+// `/<mfe>` tiles page (if any) + `/<mfe>/*` mounted as the registry says
+const mfeRoutes: RouteObject[] = MFE_REGISTRY.flatMap(({ name, mount, tiles }) => [
+  ...(tiles ? [{ path: `/${name}`, element: <PageTilesView mfe={name} /> }] : []),
+  mount === "routes"
+    ? { path: `/${name}/*`, lazy: lazyMfeRoutes(name) }
+    : { path: `/${name}/*`, element: withSuspense(lazyProvider(name, "App")) },
+]);
 
 export const router = createBrowserRouter([
   // Public routes — only accessible when logged out
@@ -54,44 +56,7 @@ export const router = createBrowserRouter([
           {
             element: <Outlet />,
             ErrorBoundary: MfeRouteErrorBoundary,
-            children: [
-              {
-                path: `/${MFE_NAMES.COMMUNITY}`,
-                element: <PageTilesView mfe={MFE_NAMES.COMMUNITY} />,
-              },
-              {
-                path: `/${MFE_NAMES.COMMUNITY}/*`,
-                lazy: lazyMfeRoutes(MFE_NAMES.COMMUNITY),
-              },
-              {
-                path: `/${MFE_NAMES.SHOPPING}`,
-                element: <PageTilesView mfe={MFE_NAMES.SHOPPING} />,
-              },
-              {
-                path: `/${MFE_NAMES.SHOPPING}/*`,
-                element: withSuspense(ShoppingMFE),
-              },
-              {
-                path: `/${MFE_NAMES.PLANNING}`,
-                element: <PageTilesView mfe={MFE_NAMES.PLANNING} />,
-              },
-              {
-                path: `/${MFE_NAMES.PLANNING}/*`,
-                element: withSuspense(PlanningMFE),
-              },
-              {
-                path: `/${MFE_NAMES.SETTINGS}/*`,
-                element: withSuspense(SettingsMFE),
-              },
-              {
-                path: `/${MFE_NAMES.TOOLS}`,
-                element: <PageTilesView mfe={MFE_NAMES.TOOLS} />,
-              },
-              {
-                path: `/${MFE_NAMES.TOOLS}/*`,
-                element: withSuspense(ToolsMFE),
-              },
-            ],
+            children: mfeRoutes,
           },
         ],
       },
