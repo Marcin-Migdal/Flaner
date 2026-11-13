@@ -142,6 +142,35 @@ describe("community users endpoints", () => {
       ]);
     });
 
+    it("acceptFriendRequest also resolves the reverse request and its unread notification (#99)", async () => {
+      await seed({
+        "friendRequests/user-1_user-2": pendingRequest,
+        "friendRequests/user-2_user-1": {
+          ...pendingRequest,
+          senderUid: "user-2",
+          receiverUid: "user-1",
+          senderUsername: "Bob",
+          senderAvatarUrl: "",
+          receiverUsername: "Alice",
+          receiverAvatarUrl: "alice.png",
+        },
+        "users/user-1/notifications/friend_request_user-2": {
+          ...friendRequestNotification,
+          id: "friend_request_user-2",
+          senderUid: "user-2",
+          senderUsername: "Bob",
+          senderAvatarUrl: "",
+        },
+      });
+      await signInAs("user-2");
+
+      await acceptFriendRequest(alice, bob);
+
+      expect(await read("friendRequests/user-2_user-1")).toBeUndefined();
+      expect(await read("users/user-1/notifications/friend_request_user-2")).toBeUndefined();
+      expect(await read("users/user-1/friendships/user-2")).toBeDefined();
+    });
+
     it("acceptFriendRequest is denied without a pending request", async () => {
       await signInAs("user-2");
 
