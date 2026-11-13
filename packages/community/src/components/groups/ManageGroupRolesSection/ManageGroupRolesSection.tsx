@@ -23,8 +23,8 @@ const ROLES: {
   icon: React.ComponentType<{ className?: string }>;
   iconColor: string;
 }[] = [
-  { key: "admin", labelKey: "manageGroupSheet.role_admin", icon: ShieldCheck, iconColor: "text-blue-500" },
-  { key: "moderator", labelKey: "manageGroupSheet.role_moderator", icon: ShieldAlert, iconColor: "text-orange-500" },
+  { key: "admin", labelKey: "manageGroupSheet.role_admin", icon: ShieldCheck, iconColor: "text-info-text" },
+  { key: "moderator", labelKey: "manageGroupSheet.role_moderator", icon: ShieldAlert, iconColor: "text-warning-text" },
   { key: "member", labelKey: "manageGroupSheet.role_member", icon: Shield, iconColor: "text-muted-foreground" },
 ];
 
@@ -90,7 +90,10 @@ export function ManageGroupRolesSection({ groupId, group }: ManageGroupRolesSect
       {/* Zakładki ról */}
       <Tabs
         value={activeRole}
-        onValueChange={(val) => setActiveRole(val as ConfigurableGroupRole)}
+        onValueChange={(val) => {
+          const role = ROLES.find((r) => r.key === val)?.key;
+          if (role) setActiveRole(role);
+        }}
         className="w-full"
       >
         <TabsList className={manageGroupRolesSectionStyles.tabsList}>

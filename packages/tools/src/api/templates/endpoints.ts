@@ -1,5 +1,5 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/templates.md, spools.md (keep their Write flows / Queries in sync).
-import { collection, getDocs, query, where, setDoc, updateDoc, deleteDoc, doc, serverTimestamp, writeBatch } from "firebase/firestore";
+import { collection, getDocs, query, where, setDoc, updateDoc, deleteDoc, doc, writeBatch } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
 import { deleteInBatches, firestoreConverter } from "@flaner/shared/utils";
 import type { FilamentTemplate, TemplateInput } from "./types";
@@ -17,9 +17,7 @@ export const fetchTemplates = async (userId: string): Promise<FilamentTemplate[]
   const snap = await getDocs(q);
   const items = snap.docs.map((d) => ({ ...d.data(), id: d.id }));
   return items.sort((a, b) => {
-    const aSec = a.createdAt?.seconds ?? 0;
-    const bSec = b.createdAt?.seconds ?? 0;
-    return bSec - aSec;
+    return (b.createdAt ?? 0) - (a.createdAt ?? 0);
   });
 };
 
@@ -30,7 +28,7 @@ export const addTemplate = async (userId: string, data: TemplateInput): Promise<
     ...data,
     id: newDocRef.id,
     userId,
-    createdAt: serverTimestamp(),
+    createdAt: Date.now(),
   });
   return newDocRef.id;
 };

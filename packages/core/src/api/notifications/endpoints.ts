@@ -1,23 +1,24 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/users.md (keep their Write flows / Queries in sync).
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, writeBatch, getDocs, where, limit, startAfter, type QueryDocumentSnapshot, type DocumentData } from "firebase/firestore";
+// The inbox (read side); notifications are built and removed by `@flaner/shared/api` (#86).
+import { query, orderBy, onSnapshot, doc, updateDoc, writeBatch, getDocs, where, limit, startAfter, type QueryDocumentSnapshot, type DocumentData, type FirestoreError } from "firebase/firestore";
+import { notificationsRef, type AppNotification } from "@flaner/shared/api";
 import { fb } from "@flaner/shared/firebase";
-import { firestoreConverter } from "@flaner/shared/utils";
-import type { AppNotification } from "./types";
 
 const refs = {
-  notifications: (uid: string) => collection(fb.firestore, `users/${uid}/notifications`).withConverter(firestoreConverter<AppNotification>()),
-  notification: (uid: string, notificationId: string) => doc(fb.firestore, `users/${uid}/notifications`, notificationId).withConverter(firestoreConverter<AppNotification>()),
+  notifications: notificationsRef,
+  notification: (uid: string, notificationId: string) => doc(notificationsRef(uid), notificationId),
 };
 
 /**
  * Subscribes to real-time updates for a user's NEW (unread) notifications.
  * @param uid The user's UID
- * @param onUpdate Callback fired when notifications change
+ * @param onUpdate Callback fired when notifications change, with the ones that arrived while subscribed (`added`)
  * @returns Unsubscribe function
  */
 export const subscribeToNotifications = (
   uid: string,
-  onUpdate: (notifications: AppNotification[]) => void
+  onUpdate: (notifications: AppNotification[], added: AppNotification[]) => void,
+  onError: (error: FirestoreError) => void,
 ) => {
   const q = query(
     refs.notifications(uid),
@@ -25,49 +26,54 @@ export const subscribeToNotifications = (
     orderBy("createdAt", "desc")
   );
 
-  return onSnapshot(q, (snapshot) => {
+  // Until the first server snapshot everything is "already there": the persistent cache answers first,
+  // then the server adds what came while the app was closed. Only later additions are new (#37).
+  let synced = false;
+
+  return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
     const notifications = snapshot.docs.map((doc) => doc.data());
-    onUpdate(notifications);
-  }, (error) => {
-    console.error("Error subscribing to notifications:", error);
-  });
+    const added = synced
+      ? snapshot.docChanges().flatMap((change) => (change.type === "added" ? [change.doc.data()] : []))
+      : [];
+    if (!snapshot.metadata.fromCache) synced = true;
+    onUpdate(notifications, added);
+  }, onError);
 };
 
 /**
  * Marks a single notification as read.
  */
 export const markNotificationAsRead = async (uid: string, notificationId: string): Promise<void> => {
-  try {
-    await updateDoc(refs.notification(uid, notificationId), { read: true });
-  } catch (error) {
-    console.error("Error marking notification as read:", error);
-    throw error;
-  }
+  await updateDoc(refs.notification(uid, notificationId), { read: true });
 };
 
 /**
  * Marks all currently unread notifications as read.
  */
 export const markAllNotificationsAsRead = async (uid: string): Promise<void> => {
-  try {
-    const unreadQuery = query(
-      refs.notifications(uid),
-      where("read", "==", false)
-    );
-    const snapshot = await getDocs(unreadQuery);
-    
-    if (snapshot.empty) return;
+  const unreadQuery = query(
+    refs.notifications(uid),
+    where("read", "==", false)
+  );
+  const snapshot = await getDocs(unreadQuery);
+  
+  if (snapshot.empty) return;
 
-    const batch = writeBatch(fb.firestore);
-    snapshot.docs.forEach((docSnap) => {
-      batch.update(docSnap.ref, { read: true });
-    });
-    
-    await batch.commit();
-  } catch (error) {
-    console.error("Error marking all notifications as read:", error);
-    throw error;
-  }
+  const batch = writeBatch(fb.firestore);
+  snapshot.docs.forEach((docSnap) => {
+    batch.update(docSnap.ref, { read: true });
+  });
+  
+  await batch.commit();
+};
+
+/**
+ * Deletes some of the user's own notifications (stale ones, see getStaleGroupNotificationIds).
+ */
+export const deleteNotifications = async (uid: string, notificationIds: string[]): Promise<void> => {
+  const batch = writeBatch(fb.firestore);
+  notificationIds.forEach((id) => batch.delete(refs.notification(uid, id)));
+  await batch.commit();
 };
 
 /**

@@ -1,28 +1,16 @@
-import { useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
-import { getGroup } from '../../../../api/groups';
-import type { Group } from '../../../../api/groups';
-import { reactQueryMeta } from "@flaner/shared/constants";
+import { useRealtimeQuery, type RealtimeQueryOptions } from "@flaner/shared/hooks";
+import { getGroup, subscribeToGroup, type Group } from "../../../../api/groups";
+import { groupKeys } from "../../queryKeys";
 
-
-const getGroupQueryKeys = (groupId: string) => ["group", groupId];
-
-export const useGetGroupQuery = (
-  groupId: string,
-  options?: Omit<UseQueryOptions<Group | null, Error>, "queryKey" | "queryFn">,
-) => {
-
-  return useQuery<Group | null, Error>({
-      meta: reactQueryMeta.fetch,
-    queryKey: getGroupQueryKeys(groupId),
-    queryFn: () => getGroup(groupId),
-    enabled: !!groupId,
-    ...options,
-  });
-};
-
-export const useInvalidateGroupQuery = () => {
-  const queryClient = useQueryClient();
-  return (groupId: string) => queryClient.invalidateQueries({ queryKey: getGroupQueryKeys(groupId) });
-};
+export const useGetGroupQuery = (groupId: string, options?: RealtimeQueryOptions<Group | null>) =>
+  useRealtimeQuery<Group | null>(
+    {
+      queryKey: groupKeys.group(groupId),
+      queryFn: () => getGroup(groupId),
+      subscribe: (onUpdate, onError) => subscribeToGroup(groupId, onUpdate, onError),
+      enabled: !!groupId,
+    },
+    options,
+  );
 
 export default useGetGroupQuery;

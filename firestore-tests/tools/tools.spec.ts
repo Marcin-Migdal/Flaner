@@ -9,7 +9,6 @@ import {
   orderBy,
   query,
   runTransaction,
-  serverTimestamp,
   setDoc,
   updateDoc,
   where,
@@ -53,11 +52,11 @@ describe("spools/{spoolId}", () => {
   it("lets the owner add, query, edit and finish spools", async () => {
     const db = as(OWNER);
 
-    await assertSucceeds(setDoc(doc(db, "spools", "spool-1"), { ...spool(OWNER), createdAt: serverTimestamp() }));
+    await assertSucceeds(setDoc(doc(db, "spools", "spool-1"), { ...spool(OWNER), createdAt: Date.now() }));
     await assertSucceeds(getDocs(query(collection(db, "spools"), where("userId", "==", OWNER))));
     await assertSucceeds(updateDoc(doc(db, "spools", "spool-1"), { name: "Renamed" }));
     await assertSucceeds(
-      updateDoc(doc(db, "spools", "spool-1"), { currentWeight: 0, isFinished: true, finishedAt: serverTimestamp() }),
+      updateDoc(doc(db, "spools", "spool-1"), { currentWeight: 0, isFinished: true, finishedAt: Date.now() }),
     );
   });
 
@@ -81,7 +80,7 @@ describe("spools/{spoolId}", () => {
       runTransaction(db, async (transaction) => {
         await transaction.get(spoolRef);
         transaction.update(spoolRef, { currentWeight: 980, isFinished: false, finishedAt: null });
-        transaction.set(printRef, { id: "print-1", usedWeight: 20, createdAt: serverTimestamp() });
+        transaction.set(printRef, { id: "print-1", usedWeight: 20, createdAt: Date.now() });
       }),
     );
     await assertSucceeds(getDocs(query(collection(db, "spools/spool-1/prints"), orderBy("createdAt", "desc"), limit(1))));
@@ -138,7 +137,7 @@ describe("templates/{templateId}", () => {
     await seed({ "spools/spool-1": spool(OWNER) });
     const db = as(OWNER);
 
-    await assertSucceeds(setDoc(doc(db, "templates", "template-1"), { ...template(OWNER), createdAt: serverTimestamp() }));
+    await assertSucceeds(setDoc(doc(db, "templates", "template-1"), { ...template(OWNER), createdAt: Date.now() }));
     await assertSucceeds(getDocs(query(collection(db, "templates"), where("userId", "==", OWNER))));
     await assertSucceeds(updateDoc(doc(db, "templates", "template-1"), { colorName: "White", colorHex: "#ffffff" }));
     await assertSucceeds(
@@ -174,15 +173,13 @@ describe("lookup_materials / lookup_types / lookup_colors", () => {
   const type = { id: "t1", userId: OWNER, materialName: "PLA", name: "Silk", createdAt: 1 };
   const color = { id: "c1", userId: OWNER, materialName: "PLA", typeName: "Silk", name: "Gold", hex: "#ffd700", createdAt: 1 };
 
-  it("accepts the idempotent add flows (query by name, then set)", async () => {
+  it("accepts the idempotent add flows (read the owner's lookups, then set)", async () => {
     const db = as(OWNER);
 
-    await assertSucceeds(
-      getDocs(query(collection(db, "lookup_materials"), where("userId", "==", OWNER), where("name", "==", "PLA"), limit(1))),
-    );
-    await assertSucceeds(setDoc(doc(db, "lookup_materials", "m1"), { ...material, createdAt: serverTimestamp() }));
-    await assertSucceeds(setDoc(doc(db, "lookup_types", "t1"), { ...type, createdAt: serverTimestamp() }));
-    await assertSucceeds(setDoc(doc(db, "lookup_colors", "c1"), { ...color, createdAt: serverTimestamp() }));
+    await assertSucceeds(getDocs(query(collection(db, "lookup_materials"), where("userId", "==", OWNER))));
+    await assertSucceeds(setDoc(doc(db, "lookup_materials", "m1"), { ...material, createdAt: Date.now() }));
+    await assertSucceeds(setDoc(doc(db, "lookup_types", "t1"), { ...type, createdAt: Date.now() }));
+    await assertSucceeds(setDoc(doc(db, "lookup_colors", "c1"), { ...color, createdAt: Date.now() }));
     await assertSucceeds(updateDoc(doc(db, "lookup_colors", "c1"), { hex: "#000000" }));
   });
 

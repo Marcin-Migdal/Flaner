@@ -1,6 +1,7 @@
 import { useAuth } from "@flaner/shared/context";
 import { cn, compressImage, ONE_MB, toast, uploadToCloudinary } from "@flaner/shared/utils";
 import {
+  Avatar,
   Button,
   ConfirmationPopup,
   FormImagePicker,
@@ -42,7 +43,7 @@ export function SettingsView() {
   const {
     handleSubmit,
     reset,
-    formState: { isDirty },
+    formState: { isDirty, isSubmitting },
   } = settingsForm;
 
   const blocker = useUnsavedChangesWarning(isDirty);
@@ -65,7 +66,7 @@ export function SettingsView() {
         // Upload to Cloudinary
         avatarUrl = await uploadToCloudinary(compressed);
       } catch (err) {
-        console.error(err);
+        reportError(err);
         toast.failure(t("notifications.avatarError"));
         return;
       }
@@ -74,31 +75,24 @@ export function SettingsView() {
     }
 
     const payload = {
-      username: data.username as string,
-      language: data.language as "pl" | "en",
-      darkMode: data.darkMode as boolean,
+      username: data.username,
+      language: data.language,
+      darkMode: data.darkMode,
       avatarUrl,
     };
 
     mutation.mutate(payload, {
       onSuccess: () => {
         // Sync global app translation language immediately
-        i18n.changeLanguage(data.language as string);
+        i18n.changeLanguage(data.language);
         reset(data);
       },
       onError: (err) => {
-        console.error(err);
         if (err instanceof FirebaseError && err.code === "app/username-already-in-use") {
           settingsForm.setError("username", { type: "manual", message: t("validation.usernameInUse") });
         }
       },
     });
-  };
-
-  // Get initials for placeholder avatar
-  const getInitials = () => {
-    if (!user?.username) return "FL";
-    return user.username.slice(0, 2).toUpperCase();
   };
 
   const languageOptions = [
@@ -135,24 +129,14 @@ export function SettingsView() {
             <div className={settingsViewStyles.card}>
               {/* Static Avatar Preview Block */}
               <div className={settingsViewStyles.avatarWrapper}>
-                <div className="relative">
-                  {user?.avatarUrl ? (
-                    <img
-                      src={user.avatarUrl}
-                      alt="Avatar Preview"
-                      className={settingsViewStyles.avatarPreview}
-                      onError={(e) => {
-                        // Fallback on broken URL
-                        (e.target as HTMLImageElement).src =
-                          `https://api.dicebear.com/7.x/initials/svg?seed=${user?.username || "User"}`;
-                      }}
-                    />
-                  ) : (
-                    <div className={settingsViewStyles.avatarPlaceholder}>
-                      {getInitials()}
-                    </div>
-                  )}
-                </div>
+                <Avatar
+                  variant="brand"
+                  name={user?.username || "Flaner"}
+                  src={user?.avatarUrl}
+                  alt="Avatar Preview"
+                  className={settingsViewStyles.avatar}
+                  fallbackClassName={settingsViewStyles.avatarFallback}
+                />
                 <div className={settingsViewStyles.profileInfo}>
                   <h3 className={settingsViewStyles.profileUsername}>{user?.username}</h3>
                   <p className={settingsViewStyles.profileEmail}>{user?.email}</p>
@@ -209,7 +193,7 @@ export function SettingsView() {
               type="submit"
               variant="brand"
               disabled={!isDirty}
-              isBusy={mutation.isPending}
+              isBusy={mutation.isPending || isSubmitting}
               className={settingsViewStyles.submitButton}
             >
               {t("actions.save")}

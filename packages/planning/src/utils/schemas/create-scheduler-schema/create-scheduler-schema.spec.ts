@@ -13,13 +13,21 @@ describe("getCreateSchedulerSchema", () => {
     endDate: addDays(now, 5),
     participants: ["u1", "u2"],
     proposedDates: [
-      { start: addDays(now, 10), end: addDays(now, 12), color: "#ff0000" },
+      { start: addDays(now, 10), end: addDays(now, 12), color: "pink" },
     ],
   };
 
   it("validates valid scheduler event", () => {
     const result = schema.safeParse(validEvent);
     expect(result.success).toBe(true);
+  });
+
+  it("rejects a slot colour that is not a palette key", () => {
+    const result = schema.safeParse({
+      ...validEvent,
+      proposedDates: [{ ...validEvent.proposedDates[0], color: "#ff0000" }],
+    });
+    expect(result.success).toBe(false);
   });
 
   it("fails if name is missing", () => {
@@ -44,14 +52,14 @@ describe("getCreateSchedulerSchema", () => {
     const result = schema.safeParse({
       ...validEvent,
       proposedDates: [
-        { start: addDays(now, -1), end: addDays(now, 2), color: "#ff0000" },
+        { start: addDays(now, -1), end: addDays(now, 2), color: "pink" },
       ],
     });
     expect(result.success).toBe(false);
   });
 
   it("fails if proposed dates have duplicates", () => {
-    const dateSlot = { start: addDays(now, 10), end: addDays(now, 12), color: "#ff0000" };
+    const dateSlot = { start: addDays(now, 10), end: addDays(now, 12), color: "pink" };
     const result = schema.safeParse({
       ...validEvent,
       proposedDates: [dateSlot, { ...dateSlot }],
@@ -64,9 +72,23 @@ describe("getCreateSchedulerSchema", () => {
       ...validEvent,
       endDate: addDays(now, 15),
       proposedDates: [
-        { start: addDays(now, 10), end: addDays(now, 12), color: "#ff0000" },
+        { start: addDays(now, 10), end: addDays(now, 12), color: "pink" },
       ],
     });
     expect(result.success).toBe(false);
+  });
+
+  it("checks only the name and description when editing a finalized event", () => {
+    const pastEvent = {
+      ...validEvent,
+      endDate: addDays(now, -5),
+      proposedDates: [{ start: addDays(now, -3), end: addDays(now, -2), color: "pink" }],
+    };
+
+    expect(schema.safeParse(pastEvent).success).toBe(false);
+    expect(getCreateSchedulerSchema(t, true).safeParse(pastEvent).success).toBe(true);
+    expect(getCreateSchedulerSchema(t, true).safeParse({ ...pastEvent, endDate: undefined, proposedDates: [] }).success).toBe(
+      true,
+    );
   });
 });

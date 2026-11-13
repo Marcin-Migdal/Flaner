@@ -26,7 +26,7 @@ describe("SlotEventComponent", () => {
     title: "Slot 1",
     start: new Date(2026, 6, 10),
     end: new Date(2026, 6, 12),
-    color: "#3b82f6",
+    color: "blue",
     metaData: baseMetaData,
   };
 

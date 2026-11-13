@@ -10,9 +10,17 @@
 
 **CRITICAL BEHAVIORAL RULE: PRE-MERGE MANUAL TEST**
 - Day-to-day work on a feature branch runs against the emulators (`npm run dev:emulators`) — no deploys.
-- BEFORE you open a PR to `develop`, and again before it is merged, you MUST remind the user to do a final manual test of the feature, and wait for their confirmation. Where it runs depends on the branch:
+- The manual test runs AFTER the PR is opened and BEFORE it is merged — do not hold the PR back for it. The implementing agent writes the steps in the PR body (section below):
+  - **Agent worked locally:** walk through the steps yourself in the browser and report the result on the PR.
+  - **Agent worked in the cloud:** stop at the PR; a local session later runs the steps from the PR body in the browser.
+- Where the manual test runs depends on the branch:
   - **`firestore.rules` / `firestore.indexes.json` unchanged:** a local manual test (`npm run dev:emulators` or `npm run dev`) counts as the final test. The emulators load the same rules and indexes that DEV runs, so a test on the Vercel Preview is not required. Exception: if the branch adds or changes a Firestore query, also test it on DEV — the emulator does not enforce composite indexes, so a missing entry in `firestore.indexes.json` fails only there.
   - **Changed:** GitHub → Actions → *Deploy Firestore* → *Run workflow* on the feature branch (deploys to DEV only), then test on the branch's Vercel Preview or with `npm run dev` (local `.env` → DEV).
+- Every PR body has a section exactly titled `## Manual test (for the local session, before merge)`:
+  - Point 1 says where to test (see above). Then the run commands, then numbered browser steps, each with the expected result.
+  - **At most ~8 steps, chosen by risk:** the paths the change actually touches, one representative write per affected area, and any place the PR calls out as fragile or fixed. Not a tour of the whole app; no "repeat N times".
+  - Long or repetitive scenarios (cross-window / multi-user sync, many CRUD variants) belong in E2E (`e2e/`, `e2e-testing` skill), not in the manual test.
+  - Before writing this section, the implementing agent checks whether a scenario it wants tested by hand should instead be a new E2E spec or a change to an existing one. Covered by E2E → add or update the spec in the same PR, and leave the scenario out of the manual test.
 - Details: `.agents/workflows/01-feature-workflow.md` (Phase 3) and the `firestore-rules-manager` skill, section 6.
 
 **BACKLOG: GITHUB ISSUES**
@@ -41,7 +49,7 @@ During implementation, you must adhere to project standards. If you don't know t
 - `.agents/rules/03-package-structures.md` (Monorepo package structure, MFE rules)
 
 **WORKFLOWS & FEATURE DEVELOPMENT**
-- For larger tasks and new features, you must use the `create-functionality` skill and conduct a detailed interview with the user, offering 3 design paths.
+- For larger tasks and new features, use the `mattpocock-skills` flow (e.g. `grill-with-docs` → `to-spec` → `to-tickets` → `implement`) to interview the user and plan before writing code.
 - Follow the 3-phase lifecycle (Planner - Executor - Reviewer) defined in `.agents/workflows/01-feature-workflow.md`.
 
 **DEFAULT ACTIVE SKILLS: PONYTAIL & CAVEMAN**

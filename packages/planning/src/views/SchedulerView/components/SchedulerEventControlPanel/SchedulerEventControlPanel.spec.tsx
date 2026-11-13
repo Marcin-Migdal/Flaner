@@ -1,16 +1,12 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import type { SchedulerEvent } from "../../../../api/events/types";
 import type { ParticipantResult } from "../../../../api/participants";
 import { SchedulerEventControlPanel } from "./SchedulerEventControlPanel";
 
-const mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-1", username: "Alice" });
 
 const mockNavigate = vi.fn();
 vi.mock("react-router", async (importOriginal) => {
@@ -69,7 +65,7 @@ const mockEvent: SchedulerEvent = {
     {
       start: "2026-08-01",
       end: "2026-08-01",
-      color: "#3b82f6",
+      color: "blue",
       votes: {
         "user-1": "yes",
       },
@@ -148,6 +144,7 @@ describe("SchedulerEventControlPanel", () => {
         participants={mockParticipants}
         isParticipantsLoading={false}
       />,
+      { user: mockUser },
     );
 
     expect(screen.getByText("Product Kickoff")).toBeInTheDocument();
@@ -166,6 +163,7 @@ describe("SchedulerEventControlPanel", () => {
         participants={mockParticipants}
         isParticipantsLoading={false}
       />,
+      { user: mockUser },
     );
 
     const createBtn = screen.getByTitle("hub.addEvent");
@@ -196,6 +194,7 @@ describe("SchedulerEventControlPanel", () => {
         participants={mockParticipants}
         isParticipantsLoading={false}
       />,
+      { user: mockUser },
     );
 
     const editBtn = screen.getByTitle("actions.edit");
@@ -215,6 +214,7 @@ describe("SchedulerEventControlPanel", () => {
         participants={mockParticipants}
         isParticipantsLoading={false}
       />,
+      { user: mockUser },
     );
 
     const combobox = screen.getByRole("combobox");
@@ -235,6 +235,7 @@ describe("SchedulerEventControlPanel", () => {
         participants={mockParticipants}
         isParticipantsLoading={false}
       />,
+      { user: mockUser },
     );
 
     // Delete with remaining events
@@ -278,7 +279,7 @@ describe("SchedulerEventControlPanel", () => {
     const finalizedEvent: SchedulerEvent = {
       ...mockEvent,
       isFinalized: true,
-      finalizedSlotIndex: 0,
+      finalizedSlotKey: "2026-08-01_2026-08-01",
     };
 
     renderWithProviders(
@@ -289,6 +290,7 @@ describe("SchedulerEventControlPanel", () => {
         participants={mockParticipants}
         isParticipantsLoading={false}
       />,
+      { user: mockUser },
     );
 
     const reopenBtn = screen.getByRole("button", { name: /actions\.reopenVoting/i });
@@ -310,7 +312,7 @@ describe("SchedulerEventControlPanel", () => {
         {
           start: "2026-08-01",
           end: "2026-08-01",
-          color: "#3b82f6",
+          color: "blue",
           votes: {},
         },
       ],
@@ -324,6 +326,7 @@ describe("SchedulerEventControlPanel", () => {
         participants={mockParticipants}
         isParticipantsLoading={false}
       />,
+      { user: mockUser },
     );
 
     const rejectBtn = screen.getByTitle("actions.rejectUnvotedFull");
@@ -356,6 +359,7 @@ describe("SchedulerEventControlPanel", () => {
         participants={mockParticipants}
         isParticipantsLoading={false}
       />,
+      { user: mockUser },
     );
 
     const finalizeBtn = screen.getByTitle("actions.finalizeEvent");
@@ -379,6 +383,7 @@ describe("SchedulerEventControlPanel", () => {
         isParticipantsLoading={false}
         activeEvent={mockEvent}
       />,
+      { user: mockUser },
     );
 
     const createBtn = screen.getByTitle("hub.addEvent");
@@ -402,6 +407,7 @@ describe("SchedulerEventControlPanel", () => {
         activeEvent={mockEvent}
         participants={mockParticipants}
       />,
+      { user: mockUser },
     );
 
     const deleteBtn = screen.getByTitle("actions.delete");

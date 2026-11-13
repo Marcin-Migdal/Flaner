@@ -1,4 +1,12 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/groups.md, users.md (keep their Write flows / Queries in sync).
+import {
+  createNotification,
+  getNotificationSender,
+  getUnreadNotificationRefs,
+  sourceNotificationRef,
+  type NotificationContent,
+  type NotificationSender,
+} from "@flaner/shared/api";
 import { fb } from "@flaner/shared/firebase";
 import { deleteInBatches, firestoreConverter } from "@flaner/shared/utils";
 import {
@@ -11,13 +19,14 @@ import {
   limit,
   onSnapshot,
   query,
-  serverTimestamp,
   setDoc,
   startAfter,
   updateDoc,
   where,
   writeBatch,
+  type FirestoreError,
   type QueryDocumentSnapshot,
+  type WriteBatch,
 } from "firebase/firestore";
 import type { Group, GroupInvitation, GroupMember, GroupRequest, GroupRole, RolePermissionsMap } from "./types";
 
@@ -43,7 +52,8 @@ const refs = {
     doc(fb.firestore, `users/${userId}/groupInvitations`, groupId).withConverter(firestoreConverter<GroupInvitation>()),
   invitationsGroup: () =>
     collectionGroup(fb.firestore, "invitations").withConverter(firestoreConverter<GroupInvitation>()),
-  userNotification: (userId: string) => doc(collection(fb.firestore, `users/${userId}/notifications`)),
+  // The invitee's "group_invitation" notification (deterministic id, removed when the invitation resolves)
+  invitationNotification: (userId: string, groupId: string) => sourceNotificationRef(userId, "group_invitation", groupId),
 };
 
 // Create Group
@@ -65,14 +75,11 @@ export const createGroup = async (
     updatedAt: now,
   };
 
-  await setDoc(newGroupRef, groupDoc);
-
-  // Add owner as a member
-  await setDoc(refs.member(groupId, ownerUid), {
-    userId: ownerUid,
-    role: "owner",
-    joinedAt: now,
-  });
+  // One batch: the owner bootstrap rule reads the group with getAfter()
+  const batch = writeBatch(fb.firestore);
+  batch.set(newGroupRef, groupDoc);
+  batch.set(refs.member(groupId, ownerUid), { userId: ownerUid, role: "owner", joinedAt: now });
+  await batch.commit();
 
   return groupId;
 };
@@ -82,7 +89,7 @@ export const updateGroup = async (
   groupId: string,
   updates: Partial<Omit<Group, "id" | "createdAt" | "ownerId">>,
 ): Promise<void> => {
-  const dataToUpdate: Partial<Group> = { ...updates, updatedAt: serverTimestamp() };
+  const dataToUpdate: Partial<Group> = { ...updates, updatedAt: Date.now() };
   if (updates.name) {
     dataToUpdate.nameLower = updates.name.toLowerCase();
   }
@@ -96,13 +103,31 @@ export const updateGroupRolePermissions = async (
 ): Promise<void> => {
   await updateDoc(refs.group(groupId), {
     rolePermissions,
-    updatedAt: serverTimestamp(),
+    updatedAt: Date.now(),
   });
+};
+
+// ==========================================
+// GROUP NOTIFICATIONS (written in the same batch as the action)
+// ==========================================
+
+type GroupOutcomeType = Exclude<Extract<NotificationContent, { groupId: string }>["type"], "group_invitation">;
+
+const addGroupNotification = (
+  batch: WriteBatch,
+  recipientId: string,
+  type: GroupOutcomeType,
+  sender: NotificationSender,
+  group: { id: string; name: string },
+) => {
+  const notification = createNotification(recipientId, sender, { type, groupId: group.id, groupName: group.name });
+  batch.set(notification.ref, notification.data);
 };
 
 // Delete Group (Cascading delete of subcollections)
 export const deleteGroup = async (groupId: string): Promise<void> => {
-  const [membersSnap, requestsSnap, invitationsSnap] = await Promise.all([
+  const [groupSnap, membersSnap, requestsSnap, invitationsSnap] = await Promise.all([
+    getDoc(refs.group(groupId)),
     getDocs(refs.members(groupId)),
     getDocs(refs.requests(groupId)),
     getDocs(refs.invitations(groupId)),
@@ -125,9 +150,24 @@ export const deleteGroup = async (groupId: string): Promise<void> => {
     ...invitationRefs,
   ]);
 
+  // Pending invitees' unread "group_invitation" notifications (read ones stay); the owner may delete them while still a member
+  const staleNotifications = await getUnreadNotificationRefs(
+    invitationsSnap.docs.map((d) => refs.invitationNotification(d.data().userId || d.id, groupId)),
+  );
+
   const batch = writeBatch(fb.firestore);
   ownerMemberDocs.forEach((d) => batch.delete(d.ref));
   batch.delete(refs.group(groupId));
+  staleNotifications.forEach((ref) => batch.delete(ref));
+
+  // shortcut: one notification per member in the final batch, so >~495 members overflow the 500-write limit; chunk if groups get that big
+  const ownerId = ownerMemberDocs[0]?.data().userId;
+  if (ownerId) {
+    const sender = await getNotificationSender(ownerId);
+    const group = { id: groupId, name: groupSnap.data()?.name ?? "" };
+    otherMemberDocs.forEach((d) => addGroupNotification(batch, d.data().userId, "group_deleted", sender, group));
+  }
+
   await batch.commit();
 };
 
@@ -179,17 +219,10 @@ export const getUserGroups = async (userId: string): Promise<Group[]> => {
   const q = query(refs.membersGroup(), where("userId", "==", userId));
 
   const membersSnap = await getDocs(q);
-  const groupIds = membersSnap.docs.map((d) => d.ref.parent.parent?.id).filter(Boolean) as string[];
+  const groupIds = membersSnap.docs.flatMap((d) => d.ref.parent.parent?.id ?? []);
 
-  if (groupIds.length === 0) return [];
-
-  const groups: Group[] = [];
-  for (const id of groupIds) {
-    const g = await getGroup(id);
-    if (g) groups.push(g);
-  }
-
-  return groups;
+  const groups = await Promise.all(groupIds.map(getGroup));
+  return groups.filter((g): g is Group => g !== null);
 };
 
 // Add / Join Member
@@ -217,11 +250,16 @@ export const transferGroupOwnership = async (
   currentOwnerId: string,
   newOwnerId: string,
 ): Promise<void> => {
+  const [groupSnap, sender] = await Promise.all([getDoc(refs.group(groupId)), getNotificationSender(currentOwnerId)]);
   const batch = writeBatch(fb.firestore);
 
-  batch.update(refs.group(groupId), { ownerId: newOwnerId, updatedAt: serverTimestamp() });
+  batch.update(refs.group(groupId), { ownerId: newOwnerId, updatedAt: Date.now() });
   batch.update(refs.member(groupId, currentOwnerId), { role: "admin" });
   batch.update(refs.member(groupId, newOwnerId), { role: "owner" });
+  addGroupNotification(batch, newOwnerId, "group_ownership_transferred", sender, {
+    id: groupId,
+    name: groupSnap.data()?.name ?? "",
+  });
 
   await batch.commit();
 };
@@ -234,16 +272,24 @@ export const requestJoinGroup = async (groupId: string, userId: string): Promise
   });
 };
 
-// Accept Join Request
-export const acceptJoinRequest = async (groupId: string, userId: string): Promise<void> => {
-  await addGroupMember(groupId, userId, "member");
-  await deleteDoc(refs.request(groupId, userId));
+// Accept / reject a join request; actorId is the staff member resolving it (the notification sender)
+const resolveJoinRequest = async (groupId: string, userId: string, actorId: string, accept: boolean) => {
+  const [groupSnap, sender] = await Promise.all([getDoc(refs.group(groupId)), getNotificationSender(actorId)]);
+  const batch = writeBatch(fb.firestore);
+  if (accept) batch.set(refs.member(groupId, userId), { userId, role: "member", joinedAt: Date.now() });
+  batch.delete(refs.request(groupId, userId));
+  addGroupNotification(batch, userId, accept ? "group_request_accepted" : "group_request_rejected", sender, {
+    id: groupId,
+    name: groupSnap.data()?.name ?? "",
+  });
+  await batch.commit();
 };
 
-// Reject Join Request
-export const rejectJoinRequest = async (groupId: string, userId: string): Promise<void> => {
-  await deleteDoc(refs.request(groupId, userId));
-};
+export const acceptJoinRequest = (groupId: string, userId: string, actorId: string): Promise<void> =>
+  resolveJoinRequest(groupId, userId, actorId, true);
+
+export const rejectJoinRequest = (groupId: string, userId: string, actorId: string): Promise<void> =>
+  resolveJoinRequest(groupId, userId, actorId, false);
 
 // Get Group Members
 export const getGroupMembers = async (groupId: string): Promise<GroupMember[]> => {
@@ -302,38 +348,54 @@ export const inviteUserToGroup = async (
     invitedAt: Date.now(),
   };
 
-  await setDoc(refs.invitation(groupId, userId), invitationData);
-  await setDoc(refs.userInvitation(userId, groupId), invitationData);
+  const sender = await getNotificationSender(invitedByUserId);
 
-  try {
-    const invitorDoc = await getDoc(doc(fb.firestore, `users/${invitedByUserId}`));
-    const invitorData = invitorDoc.data();
+  const batch = writeBatch(fb.firestore);
+  batch.set(refs.invitation(groupId, userId), invitationData);
+  batch.set(refs.userInvitation(userId, groupId), invitationData);
+  const notification = createNotification(userId, sender, {
+    type: "group_invitation",
+    sourceId: groupId,
+    groupId,
+    groupName,
+  });
+  batch.set(notification.ref, notification.data);
+  await batch.commit();
+};
 
-    const notifRef = refs.userNotification(userId);
-    await setDoc(notifRef, {
-      id: notifRef.id,
-      type: "group_invitation",
-      senderUid: invitedByUserId,
-      senderUsername: invitorData?.username || "",
-      senderAvatarUrl: invitorData?.avatarUrl || "",
-      createdAt: Date.now(),
-      read: false,
-    });
-  } catch (_e) {
-    console.error("Failed to create notification for group invitation:", _e);
+// The invitee answers; the inviter (from the invitation doc) gets an accepted / rejected notification.
+const answerGroupInvitation = async (groupId: string, userId: string, accept: boolean) => {
+  const [invitationSnap, sender, staleNotifications] = await Promise.all([
+    getDoc(refs.invitation(groupId, userId)),
+    getNotificationSender(userId),
+    getUnreadNotificationRefs([refs.invitationNotification(userId, groupId)]),
+  ]);
+  const invitation = invitationSnap.data();
+
+  const batch = writeBatch(fb.firestore);
+  // The member create rule checks the invitation with exists(), which sees the state before the batch,
+  // so deleting the invitation in the same batch is allowed.
+  if (accept) batch.set(refs.member(groupId, userId), { userId, role: "member", joinedAt: Date.now() });
+  batch.delete(refs.invitation(groupId, userId));
+  batch.delete(refs.userInvitation(userId, groupId));
+  staleNotifications.forEach((ref) => batch.delete(ref));
+  if (invitation && invitation.invitedByUserId !== userId) {
+    addGroupNotification(
+      batch,
+      invitation.invitedByUserId,
+      accept ? "group_invitation_accepted" : "group_invitation_rejected",
+      sender,
+      { id: groupId, name: invitation.groupName },
+    );
   }
+  await batch.commit();
 };
 
-export const acceptGroupInvitation = async (groupId: string, userId: string): Promise<void> => {
-  await addGroupMember(groupId, userId, "member");
-  await deleteDoc(refs.invitation(groupId, userId)).catch(() => {});
-  await deleteDoc(refs.userInvitation(userId, groupId)).catch(() => {});
-};
+export const acceptGroupInvitation = (groupId: string, userId: string): Promise<void> =>
+  answerGroupInvitation(groupId, userId, true);
 
-export const rejectGroupInvitation = async (groupId: string, userId: string): Promise<void> => {
-  await deleteDoc(refs.invitation(groupId, userId)).catch(() => {});
-  await deleteDoc(refs.userInvitation(userId, groupId)).catch(() => {});
-};
+export const rejectGroupInvitation = (groupId: string, userId: string): Promise<void> =>
+  answerGroupInvitation(groupId, userId, false);
 
 export const getUserGroupInvitations = async (userId: string): Promise<GroupInvitation[]> => {
   if (!userId) return [];
@@ -356,7 +418,11 @@ export const getUserGroupInvitations = async (userId: string): Promise<GroupInvi
   }
 };
 
-export const subscribeToUserGroupInvitations = (userId: string, callback: (invitations: GroupInvitation[]) => void) => {
+export const subscribeToUserGroupInvitations = (
+  userId: string,
+  callback: (invitations: GroupInvitation[]) => void,
+  onError: (error: FirestoreError) => void,
+) => {
   if (!userId) return () => {};
   return onSnapshot(
     refs.userInvitations(userId),
@@ -367,19 +433,123 @@ export const subscribeToUserGroupInvitations = (userId: string, callback: (invit
       }
       callback(items);
     },
-    async (error) => {
-      console.warn("Realtime listener on user groupInvitations failed, falling back to query:", error);
-      try {
-        const fallbackItems = await getUserGroupInvitations(userId);
-        callback(fallbackItems);
-      } catch {
-        callback([]);
-      }
-    },
+    onError,
   );
 };
 
 export const getGroupInvitations = async (groupId: string): Promise<GroupInvitation[]> => {
   const snap = await getDocs(refs.invitations(groupId));
   return snap.docs.map((d) => d.data());
+};
+
+// ==========================================
+// REALTIME SUBSCRIPTIONS
+// A listener error (usually permission-denied after losing access, e.g. removed from a private group) goes to
+// onError: useRealtimeQueryData puts the query in the error state, the views treat isError as "no access".
+// ==========================================
+
+type Unsubscribe = () => void;
+type OnError = (error: FirestoreError) => void;
+
+export const subscribeToGroup = (groupId: string, onUpdate: (group: Group | null) => void, onError: OnError): Unsubscribe =>
+  onSnapshot(
+    refs.group(groupId),
+    (snap) => onUpdate(snap.exists() ? snap.data() : null),
+    onError,
+  );
+
+export const subscribeToGroupMembers = (groupId: string, onUpdate: (members: GroupMember[]) => void, onError: OnError): Unsubscribe =>
+  onSnapshot(
+    refs.members(groupId),
+    (snap) => onUpdate(snap.docs.map((d) => d.data())),
+    onError,
+  );
+
+export const subscribeToGroupRequests = (groupId: string, onUpdate: (requests: GroupRequest[]) => void, onError: OnError): Unsubscribe =>
+  onSnapshot(
+    refs.requests(groupId),
+    (snap) => onUpdate(snap.docs.map((d) => d.data())),
+    onError,
+  );
+
+export const subscribeToGroupInvitations = (
+  groupId: string,
+  onUpdate: (invitations: GroupInvitation[]) => void,
+  onError: OnError,
+): Unsubscribe =>
+  onSnapshot(
+    refs.invitations(groupId),
+    (snap) => onUpdate(snap.docs.map((d) => d.data())),
+    onError,
+  );
+
+export const subscribeToUserGroupRequest = (
+  groupId: string,
+  userId: string,
+  onUpdate: (request: GroupRequest | null) => void,
+  onError: OnError,
+): Unsubscribe =>
+  onSnapshot(
+    refs.request(groupId, userId),
+    (snap) => onUpdate(snap.exists() ? snap.data() : null),
+    onError,
+  );
+
+// Memberships come from one collection-group listener; each group doc gets its own listener so renames,
+// type changes etc. show up live. Emits only once every current group has loaded, to avoid a partial list.
+// A group listener error means the user just lost access to it (removed), which the memberships listener
+// reports next, so that group is dropped instead of failing the whole list.
+export const subscribeToUserGroups = (
+  userId: string,
+  onUpdate: (groups: Group[]) => void,
+  onError: OnError,
+): Unsubscribe => {
+  const groupListeners = new Map<string, Unsubscribe>();
+  const groups = new Map<string, Group | null>();
+  let groupIds: string[] = [];
+
+  const emit = () => {
+    if (groupIds.some((id) => !groups.has(id))) return;
+    onUpdate(groupIds.flatMap((id) => groups.get(id) ?? []));
+  };
+
+  const unsubscribeMembers = onSnapshot(
+    query(refs.membersGroup(), where("userId", "==", userId)),
+    (snap) => {
+      groupIds = snap.docs.flatMap((d) => d.ref.parent.parent?.id ?? []);
+
+      groupListeners.forEach((unsubscribe, id) => {
+        if (groupIds.includes(id)) return;
+        unsubscribe();
+        groupListeners.delete(id);
+        groups.delete(id);
+      });
+
+      groupIds.forEach((id) => {
+        if (groupListeners.has(id)) return;
+        groupListeners.set(
+          id,
+          subscribeToGroup(
+            id,
+            (group) => {
+              groups.set(id, group);
+              emit();
+            },
+            () => {
+              groups.set(id, null);
+              emit();
+            },
+          ),
+        );
+      });
+
+      emit();
+    },
+    onError,
+  );
+
+  return () => {
+    unsubscribeMembers();
+    groupListeners.forEach((unsubscribe) => unsubscribe());
+  };
 };

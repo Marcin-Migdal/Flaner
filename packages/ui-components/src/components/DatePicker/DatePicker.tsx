@@ -92,7 +92,7 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
               data-invalid={!!error}
               aria-invalid={!!error}
               className={cn(
-                "h-10 w-full justify-start rounded-lg border-input bg-transparent px-3 py-2 text-sm font-normal text-foreground shadow-none transition-colors hover:border-accent hover:bg-accent/10 dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50",
+                "h-10 w-full justify-start rounded-lg border-input-border bg-transparent px-3 py-2 text-sm font-normal text-foreground shadow-none transition-colors hover:border-accent hover:bg-accent/10 dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50",
                 !value && "text-muted-foreground",
                 buttonClassName
               )}

@@ -1,24 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
+import type { UserType } from "@flaner/shared/types";
+import type { ReactElement } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import type { ParticipantResult } from "../../api/participants";
 import { ParticipantSelect } from "./ParticipantSelect";
 
-const mockUser = {
+const mockUser = createMockUser({
   uid: "creator-1",
   username: "Creator Alice",
   usernameLower: "creator alice",
   email: "alice@flaner.app",
   avatarUrl: "https://example.com/alice.png",
-};
+});
 
-let currentMockUser: typeof mockUser | null = mockUser;
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: currentMockUser }),
-}));
+const renderAs = (ui: ReactElement, user: UserType | null = mockUser) => renderWithProviders(ui, { user });
 
 const mockSearchResults: ParticipantResult[] = [
   {
@@ -105,7 +103,7 @@ describe("ParticipantSelect", () => {
   };
 
   it("renders creator chip with creator role label", () => {
-    renderWithProviders(
+    renderAs(
       <TestFormWrapper>
         <ParticipantSelect creatorId="creator-1" />
       </TestFormWrapper>,
@@ -118,7 +116,7 @@ describe("ParticipantSelect", () => {
   it("allows selecting a participant from search results", async () => {
     const user = userEvent.setup();
 
-    renderWithProviders(
+    renderAs(
       <TestFormWrapper>
         <ParticipantSelect creatorId="creator-1" />
       </TestFormWrapper>,
@@ -136,7 +134,7 @@ describe("ParticipantSelect", () => {
   it("allows removing a non-creator participant", async () => {
     const user = userEvent.setup();
 
-    renderWithProviders(
+    renderAs(
       <TestFormWrapper initialParticipants={["creator-1"]}>
         <ParticipantSelect creatorId="creator-1" />
       </TestFormWrapper>,
@@ -157,7 +155,7 @@ describe("ParticipantSelect", () => {
   it("handles selecting a group and adding its members, and ignores duplicates", async () => {
     const user = userEvent.setup();
 
-    renderWithProviders(
+    renderAs(
       <TestFormWrapper initialParticipants={["creator-1"]}>
         <ParticipantSelect creatorId="creator-1" />
       </TestFormWrapper>,
@@ -183,7 +181,7 @@ describe("ParticipantSelect", () => {
   });
 
   it("renders with custom label and searchPlaceholder", () => {
-    renderWithProviders(
+    renderAs(
       <TestFormWrapper>
         <ParticipantSelect label="Custom Participants" searchPlaceholder="Find buddy" />
       </TestFormWrapper>,
@@ -193,7 +191,7 @@ describe("ParticipantSelect", () => {
   });
 
   it("renders chips for group participants, missing names, and user group tags", () => {
-    renderWithProviders(
+    renderAs(
       <TestFormWrapper initialParticipants={["creator-1", "fetched-1", "fetched-group", "fetched-noname"]}>
         <ParticipantSelect creatorId="creator-1" />
       </TestFormWrapper>,
@@ -205,7 +203,7 @@ describe("ParticipantSelect", () => {
 
   it("handles removing a fetched participant not present in addedProfilesMap", async () => {
     const user = userEvent.setup();
-    renderWithProviders(
+    renderAs(
       <TestFormWrapper initialParticipants={["creator-1", "fetched-1"]}>
         <ParticipantSelect creatorId="creator-1" />
       </TestFormWrapper>,
@@ -218,28 +216,24 @@ describe("ParticipantSelect", () => {
   });
 
   it("handles null user, default props, and undefined form participants value", async () => {
-    currentMockUser = null;
-    try {
-      const EmptyWrapper = ({ children }: { children: React.ReactNode }) => {
-        const methods = useForm({ defaultValues: {} });
-        return <FormProvider {...methods}>{children}</FormProvider>;
-      };
+    const EmptyWrapper = ({ children }: { children: React.ReactNode }) => {
+      const methods = useForm({ defaultValues: {} });
+      return <FormProvider {...methods}>{children}</FormProvider>;
+    };
 
-      const user = userEvent.setup();
-      renderWithProviders(
-        <EmptyWrapper>
-          <ParticipantSelect />
-        </EmptyWrapper>,
-      );
+    const user = userEvent.setup();
+    renderAs(
+      <EmptyWrapper>
+        <ParticipantSelect />
+      </EmptyWrapper>,
+      null,
+    );
 
-      // Search for noname user to trigger fallback character
-      const input = screen.getByPlaceholderText(/create\.searchFriends/i);
-      await user.type(input, "Bob");
+    // Search for noname user to trigger fallback character
+    const input = screen.getByPlaceholderText(/create\.searchFriends/i);
+    await user.type(input, "Bob");
 
-      const bobResult = screen.getByText("Bob Builder");
-      await user.click(bobResult);
-    } finally {
-      currentMockUser = mockUser;
-    }
+    const bobResult = screen.getByText("Bob Builder");
+    await user.click(bobResult);
   });
 });

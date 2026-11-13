@@ -1,5 +1,5 @@
 import { CheckCircle } from "lucide-react";
-import type { ProposedDateSlot } from "../../../../api/events/types";
+import { getSlotKey, type ProposedDateSlot } from "../../../../api/events/types";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import {
   gridWinnerCellVariants,
@@ -8,38 +8,38 @@ import {
 
 export type AvailabilityGridWinnerHeaderProps = {
   proposedDates: ProposedDateSlot[];
-  finalizedSlotIndex?: number;
+  finalizedSlotKey?: string;
   gridTemplateColumns: string;
 };
 
 export const AvailabilityGridWinnerHeader = ({
   proposedDates,
-  finalizedSlotIndex,
+  finalizedSlotKey,
   gridTemplateColumns,
 }: AvailabilityGridWinnerHeaderProps) => {
   const { t } = usePlanningTranslations();
 
   return (
     <div
-      className="grid border-b border-border/60 bg-emerald-500/10"
+      className="grid border-b border-border/60 bg-success/10"
       style={{ gridTemplateColumns }}
     >
       <div className={gridWinnerFirstColStyles}>
-        <div className="absolute inset-0 bg-emerald-500/10 pointer-events-none" />
+        <div className="absolute inset-0 bg-success/10 pointer-events-none" />
         <div className="relative z-10 flex items-center gap-1.5">
-          <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+          <CheckCircle className="w-3.5 h-3.5 text-success-text shrink-0" />
           <span>{t("grid.status")}</span>
         </div>
       </div>
-      {proposedDates.map((_, slotIdx) => {
-        const isWinning = finalizedSlotIndex === slotIdx;
+      {proposedDates.map((slot, slotIdx) => {
+        const isWinning = finalizedSlotKey === getSlotKey(slot);
         return (
           <div
             key={slotIdx}
             className={gridWinnerCellVariants({ isWinning })}
           >
             {isWinning ? (
-              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500 text-emerald-950 uppercase tracking-wide leading-none shadow-sm">
+              <span className="px-2 py-0.5 rounded-full text-4xs font-bold bg-success text-success-foreground uppercase tracking-wide leading-none shadow-sm">
                 {t("grid.winner")}
               </span>
             ) : null}

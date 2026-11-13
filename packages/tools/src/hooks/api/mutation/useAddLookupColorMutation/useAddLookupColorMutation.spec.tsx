@@ -1,15 +1,8 @@
-import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient, createMockUser } from "@flaner/test-utils";
-import { useAuth } from "@flaner/shared/context";
+import { waitFor } from "@testing-library/react";
+import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
 import * as lookupsApi from "../../../../api/lookups";
 import { useAddLookupColorMutation } from "./useAddLookupColorMutation";
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: vi.fn(),
-}));
 
 vi.mock("../../../../api/lookups", () => ({
   addLookupColor: vi.fn(),
@@ -20,34 +13,14 @@ describe("useAddLookupColorMutation", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useAuth).mockReturnValue({
-      user: mockUser,
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      updateUser: vi.fn(),
-    });
   });
 
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
   it("calls addLookupColor and invalidates lookup colors on success", async () => {
     vi.mocked(lookupsApi.addLookupColor).mockResolvedValueOnce("c1");
-
-    const { Wrapper, queryClient } = createWrapper();
-    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
     const onSuccessMock = vi.fn();
 
-    const { result } = renderHook(() => useAddLookupColorMutation({ onSuccess: onSuccessMock }), {
-      wrapper: Wrapper,
-    });
+    const { result, queryClient } = renderHookWithProviders(() => useAddLookupColorMutation({ onSuccess: onSuccessMock }), { user: mockUser });
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     result.current.mutate({ materialName: "PLA", typeName: "Basic", name: "Cyan", hex: "#00ffff" });
 
@@ -59,23 +32,12 @@ describe("useAddLookupColorMutation", () => {
       name: "Cyan",
       hex: "#00ffff",
     });
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["lookup_colors", "user-1"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["spooler", "lookupColors", "user-1"] });
     expect(onSuccessMock).toHaveBeenCalled();
   });
 
   it("throws error when user is not authenticated", async () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: null,
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      updateUser: vi.fn(),
-    });
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useAddLookupColorMutation(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useAddLookupColorMutation(), { user: null });
 
     result.current.mutate({ materialName: "PLA", typeName: "Basic", name: "Cyan", hex: "#00ffff" });
 
@@ -86,9 +48,7 @@ describe("useAddLookupColorMutation", () => {
 
   it("works without options provided", async () => {
     vi.mocked(lookupsApi.addLookupColor).mockResolvedValueOnce("c1");
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useAddLookupColorMutation(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useAddLookupColorMutation(), { user: mockUser });
 
     result.current.mutate({ materialName: "PLA", typeName: "Basic", name: "Cyan", hex: "#00ffff" });
 

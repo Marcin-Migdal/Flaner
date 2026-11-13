@@ -2,20 +2,18 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { renderWithProviders, createMockUser } from "@flaner/test-utils";
 import { InviteToGroupModal } from "./InviteToGroupModal";
 import * as hooks from "../../../hooks";
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: vi.fn(() => ({ user: { uid: "user-123" } })),
-}));
 
 vi.mock("@flaner/shared/hooks", () => ({
   useDebounce: (val: string) => val,
 }));
 
 vi.mock("../../../hooks", () => ({
-  useGetFriendsListQuery: vi.fn(),
+  useGetFriendsListRealtimeQuery: vi.fn(),
+  useGetUsersRealtimeQuery: vi.fn(),
   useSearchUsersQuery: vi.fn(),
   useGetGroupMembersQuery: vi.fn(),
   useGetGroupPendingInvitationsQuery: vi.fn(),
@@ -29,6 +27,8 @@ vi.mock("../../../hooks/useCommunityTranslations", () => ({
   }),
 }));
 
+const currentUser = createMockUser({ uid: "user-123" });
+
 describe("InviteToGroupModal component", () => {
   const mutateAsyncMock = vi.fn();
 
@@ -39,9 +39,14 @@ describe("InviteToGroupModal component", () => {
       isPending: false,
     } as unknown as ReturnType<typeof hooks.useInviteUserToGroupMutation>);
 
+    vi.mocked(hooks.useGetFriendsListRealtimeQuery).mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as unknown as ReturnType<typeof hooks.useGetFriendsListRealtimeQuery>);
+
     vi.mocked(hooks.useSearchUsersQuery).mockReturnValue({
       data: [],
-      isFetching: false,
+      isLoading: false,
     } as unknown as ReturnType<typeof hooks.useSearchUsersQuery>);
   });
 
@@ -49,15 +54,15 @@ describe("InviteToGroupModal component", () => {
     const user = userEvent.setup();
 
     const mockFriends = [
-      { uid: "u-member", username: "MemberUser", createdAt: 1, userRef: {} as never, usernameLower: "memberuser" },
-      { uid: "u-invited", username: "InvitedUser", createdAt: 1, userRef: {} as never, usernameLower: "inviteduser" },
-      { uid: "u-fresh", username: "FreshUser", createdAt: 1, userRef: {} as never, usernameLower: "freshuser" },
+      { uid: "u-member", username: "MemberUser", usernameLower: "memberuser" },
+      { uid: "u-invited", username: "InvitedUser", usernameLower: "inviteduser" },
+      { uid: "u-fresh", username: "FreshUser", usernameLower: "freshuser" },
     ];
 
-    vi.mocked(hooks.useGetFriendsListQuery).mockReturnValue({
+    vi.mocked(hooks.useGetUsersRealtimeQuery).mockReturnValue({
       data: mockFriends,
       isLoading: false,
-    } as unknown as ReturnType<typeof hooks.useGetFriendsListQuery>);
+    } as unknown as ReturnType<typeof hooks.useGetUsersRealtimeQuery>);
 
     vi.mocked(hooks.useGetGroupMembersQuery).mockReturnValue({
       data: [{ userId: "u-member", role: "member", joinedAt: 100 }],
@@ -85,7 +90,8 @@ describe("InviteToGroupModal component", () => {
         groupName="Test Group"
         open={true}
         onOpenChange={vi.fn()}
-      />
+      />,
+      { user: currentUser }
     );
 
     expect(screen.getByText("MemberUser")).toBeInTheDocument();
@@ -120,26 +126,15 @@ describe("InviteToGroupModal component", () => {
   });
 
   it("does not invite when user is unauthenticated", async () => {
-    const { useAuth } = await import("@flaner/shared/context");
-    vi.mocked(useAuth).mockReturnValueOnce({
-      user: null,
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      updateUser: vi.fn(),
-    });
-
     const user = userEvent.setup();
     const mockFriends = [
-      { uid: "u-fresh", username: "FreshUser", createdAt: 1, userRef: {} as never, usernameLower: "freshuser" },
+      { uid: "u-fresh", username: "FreshUser", usernameLower: "freshuser" },
     ];
 
-    vi.mocked(hooks.useGetFriendsListQuery).mockReturnValue({
+    vi.mocked(hooks.useGetUsersRealtimeQuery).mockReturnValue({
       data: mockFriends,
       isLoading: false,
-    } as unknown as ReturnType<typeof hooks.useGetFriendsListQuery>);
+    } as unknown as ReturnType<typeof hooks.useGetUsersRealtimeQuery>);
 
     vi.mocked(hooks.useGetGroupMembersQuery).mockReturnValue({
       data: [],
@@ -157,7 +152,8 @@ describe("InviteToGroupModal component", () => {
         groupName="Test Group"
         open={true}
         onOpenChange={vi.fn()}
-      />
+      />,
+      { user: null }
     );
 
     const inviteBtn = screen.getByRole("button", { name: "inviteToGroup.inviteBtn" });
@@ -166,10 +162,10 @@ describe("InviteToGroupModal component", () => {
   });
 
   it("renders loading indicator when friends are loading", () => {
-    vi.mocked(hooks.useGetFriendsListQuery).mockReturnValue({
+    vi.mocked(hooks.useGetUsersRealtimeQuery).mockReturnValue({
       data: [],
       isLoading: true,
-    } as unknown as ReturnType<typeof hooks.useGetFriendsListQuery>);
+    } as unknown as ReturnType<typeof hooks.useGetUsersRealtimeQuery>);
 
     renderWithProviders(
       <InviteToGroupModal
@@ -177,17 +173,18 @@ describe("InviteToGroupModal component", () => {
         groupName="Test Group"
         open={true}
         onOpenChange={vi.fn()}
-      />
+      />,
+      { user: currentUser }
     );
 
     expect(screen.getByText("inviteToGroup.loading")).toBeInTheDocument();
   });
 
   it("handles user without username and displays ?? initials", () => {
-    vi.mocked(hooks.useGetFriendsListQuery).mockReturnValue({
-      data: [{ uid: "u-anon", username: "", createdAt: 1, userRef: {} as never, usernameLower: "" }],
+    vi.mocked(hooks.useGetUsersRealtimeQuery).mockReturnValue({
+      data: [{ uid: "u-anon", username: "", usernameLower: "" }],
       isLoading: false,
-    } as unknown as ReturnType<typeof hooks.useGetFriendsListQuery>);
+    } as unknown as ReturnType<typeof hooks.useGetUsersRealtimeQuery>);
 
     renderWithProviders(
       <InviteToGroupModal
@@ -195,7 +192,8 @@ describe("InviteToGroupModal component", () => {
         groupName="Test Group"
         open={true}
         onOpenChange={vi.fn()}
-      />
+      />,
+      { user: currentUser }
     );
 
     expect(screen.getByText("??")).toBeInTheDocument();

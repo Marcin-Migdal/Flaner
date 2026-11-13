@@ -5,10 +5,7 @@ import { createUser, type E2EUser } from "./emulator";
 
 /** Signs an existing emulator user in through the real email/password login form. */
 export async function signIn(page: Page, user: E2EUser): Promise<void> {
-  const loginPage = new LoginPage(page);
-  await loginPage.goto();
-  await loginPage.fillCredentials(user.email, user.password);
-  await loginPage.submit();
+  await new LoginPage(page).signIn(user.email, user.password);
   await expect(page).not.toHaveURL(/\/login/);
 }
 

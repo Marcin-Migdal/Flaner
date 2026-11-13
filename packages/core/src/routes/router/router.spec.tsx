@@ -26,6 +26,25 @@ describe("router", () => {
     expect(catchAllRoute.path).toBe("*");
   });
 
+  it("mounts every MFE from the registry: tiles page (except settings) and splat route", () => {
+    const mfeGroup = router.routes[1].children?.[0].children?.[1];
+    expect(mfeGroup?.errorElement).toBeDefined();
+    expect(mfeGroup?.children?.map((r) => r.path)).toEqual([
+      "/settings/*",
+      "/community",
+      "/community/*",
+      "/shopping",
+      "/shopping/*",
+      "/planning",
+      "/planning/*",
+      "/tools",
+      "/tools/*",
+    ]);
+    // community mounts `./routes` via `lazy`, the rest render `./App` as an element
+    const splats = mfeGroup?.children?.filter((r) => r.path?.endsWith("/*"));
+    expect(splats?.filter((r) => !r.element).map((r) => r.path)).toEqual(["/community/*"]);
+  });
+
   it("renders withSuspense wrapped MFE components", () => {
     type RouteItem = { path?: string; element?: React.ReactNode; children?: RouteItem[] };
     const findSuspenseRoute = (routes: RouteItem[]): RouteItem | undefined => {

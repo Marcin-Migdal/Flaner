@@ -1,16 +1,26 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useEffectEvent } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@flaner/shared/context";
-import { 
-  AppNotification, 
+import type { AppNotification } from "@flaner/shared/api";
+import {
+  deleteNotifications,
   subscribeToNotifications, 
   markNotificationAsRead, 
   markAllNotificationsAsRead 
 } from "../../api/notifications";
-import { useInvalidateReadNotificationsQuery } from "../api/query/useReadNotifications";
+import { getStaleGroupNotificationIds } from "../../utils/getStaleGroupNotificationIds";
+import { notificationInvalidation } from "../api/queryKeys";
 
-export const useNotifications = () => {
+type UseNotificationsOptions = {
+  /** Notifications that arrived while the app was open (not the ones already there on load) */
+  onNew?: (notifications: AppNotification[]) => void;
+};
+
+export const useNotifications = ({ onNew }: UseNotificationsOptions = {}) => {
   const { user } = useAuth();
-  const invalidateReadNotifications = useInvalidateReadNotificationsQuery();
+  const queryClient = useQueryClient();
+  const invalidateReadNotifications = (uid: string) =>
+    notificationInvalidation.markAsRead(uid).forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(!user?.uid ? false : true);
   const [prevUid, setPrevUid] = useState(user?.uid);
@@ -25,14 +35,26 @@ export const useNotifications = () => {
     }
   }
 
+  const handleNew = useEffectEvent((added: AppNotification[]) => onNew?.(added));
+
   useEffect(() => {
     if (!user?.uid) {
       return;
     }
 
-    const unsubscribe = subscribeToNotifications(user.uid, (newNotifications) => {
+    const unsubscribe = subscribeToNotifications(user.uid, (newNotifications, added) => {
       setNotifications(newNotifications);
       setLoading(false);
+      if (added.length > 0) handleNew(added);
+
+      // A deleted group leaves only its "group_deleted" notification; the listener then drops the rest
+      const staleIds = getStaleGroupNotificationIds(newNotifications);
+      if (staleIds.length > 0) {
+        deleteNotifications(user.uid, staleIds).catch(reportError);
+      }
+    }, (error) => {
+      setLoading(false);
+      reportError(error);
     });
 
     return () => unsubscribe();
@@ -48,12 +70,12 @@ export const useNotifications = () => {
       prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
     );
     
+    // Best effort: the optimistic update stays, a failure is only reported (global window error handler)
     try {
       await markNotificationAsRead(user.uid, notificationId);
-      invalidateReadNotifications();
+      invalidateReadNotifications(user.uid);
     } catch (error) {
-      // Revert on error could be implemented here if needed
-      console.error("Failed to mark as read", error);
+      reportError(error);
     }
   };
 
@@ -65,9 +87,9 @@ export const useNotifications = () => {
 
     try {
       await markAllNotificationsAsRead(user.uid);
-      invalidateReadNotifications();
+      invalidateReadNotifications(user.uid);
     } catch (error) {
-      console.error("Failed to mark all as read", error);
+      reportError(error);
     }
   };
 

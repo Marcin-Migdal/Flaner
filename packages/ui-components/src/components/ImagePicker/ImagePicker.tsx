@@ -17,33 +17,13 @@ import {
   AttachmentAction,
 } from "../ui/attachment";
 import { useUiTranslations } from "../../hooks/useUiTranslations";
-import { ImageCropperModal, type ImageCropperLabels } from "../ImageCropperModal";
+import { ImageCropperModal } from "../ImageCropperModal";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
-
-export type ImagePickerLabels = {
-  invalidFileType?: string;
-  fileTooSmall?: string;
-  fileTooLarge?: string;
-  resolutionTooSmall?: string;
-  resolutionTooLarge?: string;
-  dimensionReadError?: string;
-  fileLoadError?: string;
-  networkImageDefaultName?: string;
-  cloudImageDesc?: string;
-  noImageSelectedTitle?: string;
-  noImageSelectedDesc?: string;
-  dropzoneActiveText?: string;
-  dropzoneIdleText?: string;
-  acceptedFormatsDesc?: string;
-  compressingText?: string;
-  editCropTooltip?: string;
-  externalAvatarCropDisabledTooltip?: string;
-}
 
 export type ImagePickerProps = {
   id?: string;
@@ -56,14 +36,13 @@ export type ImagePickerProps = {
   label?: string;
   description?: string;
   error?: string;
+  disabled?: boolean;
   containerClassName?: string;
   labelClassName?: string;
-  labels?: Partial<ImagePickerLabels>;
   enableCrop?: boolean;
   cropShape?: "round" | "rect";
   cropAspect?: number;
   cropOutputSize?: { width: number; height: number };
-  cropLabels?: Partial<ImageCropperLabels>;
 }
 
 const formatSize = (bytes: number): string => {
@@ -182,14 +161,13 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
       label,
       description,
       error,
+      disabled,
       containerClassName,
       labelClassName,
-      labels,
       enableCrop,
       cropShape,
       cropAspect,
       cropOutputSize,
-      cropLabels,
     },
     ref
   ) => {
@@ -241,13 +219,13 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
 
       // 1. File Type check
       if (!file.type.startsWith("image/")) {
-        setLocalError(labels?.invalidFileType || t("imagePicker.invalidFileType"));
+        setLocalError(t("imagePicker.invalidFileType"));
         return;
       }
 
       // 2. Min Size check
       if (minSize !== undefined && file.size < minSize) {
-        setLocalError(labels?.fileTooSmall || t("imagePicker.fileTooSmall", { size: formatSize(minSize) }));
+        setLocalError(t("imagePicker.fileTooSmall", { size: formatSize(minSize) }));
         return;
       }
 
@@ -261,7 +239,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
           setIsCompressing(false);
         }
         if (processedFile.size > maxSize) {
-          setLocalError(labels?.fileTooLarge || t("imagePicker.fileTooLarge", { size: formatSize(maxSize) }));
+          setLocalError(t("imagePicker.fileTooLarge", { size: formatSize(maxSize) }));
           return;
         }
       }
@@ -277,7 +255,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
                 if (minResolution) {
                   if (img.naturalWidth < minResolution.width || img.naturalHeight < minResolution.height) {
                     resolve(
-                      labels?.resolutionTooSmall || t("imagePicker.resolutionTooSmall", { res: `${minResolution.width}x${minResolution.height}px` })
+                      t("imagePicker.resolutionTooSmall", { res: `${minResolution.width}x${minResolution.height}px` })
                     );
                     return;
                   }
@@ -285,7 +263,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
                 if (maxResolution) {
                   if (img.naturalWidth > maxResolution.width || img.naturalHeight > maxResolution.height) {
                     resolve(
-                      labels?.resolutionTooLarge || t("imagePicker.resolutionTooLarge", { res: `${maxResolution.width}x${maxResolution.height}px` })
+                      t("imagePicker.resolutionTooLarge", { res: `${maxResolution.width}x${maxResolution.height}px` })
                     );
                     return;
                   }
@@ -293,12 +271,12 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
                 resolve(null);
               };
               img.onerror = () => {
-                resolve(labels?.dimensionReadError || t("imagePicker.dimensionReadError"));
+                resolve(t("imagePicker.dimensionReadError"));
               };
-              img.src = e.target?.result as string;
+              if (typeof e.target?.result === "string") img.src = e.target.result;
             };
             reader.onerror = () => {
-              resolve(labels?.fileLoadError || t("imagePicker.fileLoadError"));
+              resolve(t("imagePicker.fileLoadError"));
             };
             reader.readAsDataURL(processedFile);
           });
@@ -322,7 +300,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
 
       // 1. File Type check
       if (!file.type.startsWith("image/")) {
-        setLocalError(labels?.invalidFileType || t("imagePicker.invalidFileType"));
+        setLocalError(t("imagePicker.invalidFileType"));
         return;
       }
 
@@ -350,14 +328,14 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
+      const file = e.target.files?.[0];
       if (file) {
         handleSelectedFile(file);
       }
     };
 
     const handleDragOver = (e: React.DragEvent) => {
-      if (isCompressing) return;
+      if (isCompressing || disabled) return;
       e.preventDefault();
       setIsDragging(true);
     };
@@ -367,7 +345,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
     };
 
     const handleDrop = (e: React.DragEvent) => {
-      if (isCompressing) return;
+      if (isCompressing || disabled) return;
       e.preventDefault();
       setIsDragging(false);
       const file = e.dataTransfer.files?.[0];
@@ -377,7 +355,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
     };
 
     const triggerFileSelect = () => {
-      if (isCompressing) return;
+      if (isCompressing || disabled) return;
       fileInputRef.current?.click();
     };
 
@@ -403,15 +381,15 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
         };
       }
       if (typeof value === "string") {
-        const cleanName = value.split("/").pop()?.split("?")[0] || (labels?.networkImageDefaultName || t("imagePicker.networkImageDefaultName"));
+        const cleanName = value.split("/").pop()?.split("?")[0] || t("imagePicker.networkImageDefaultName");
         return {
           title: cleanName,
-          desc: labels?.cloudImageDesc || t("imagePicker.cloudImageDesc"),
+          desc: t("imagePicker.cloudImageDesc"),
         };
       }
       return {
-        title: labels?.noImageSelectedTitle || t("imagePicker.noImageSelectedTitle"),
-        desc: labels?.noImageSelectedDesc || t("imagePicker.noImageSelectedDesc"),
+        title: t("imagePicker.noImageSelectedTitle"),
+        desc: t("imagePicker.noImageSelectedDesc"),
       };
     };
 
@@ -451,7 +429,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
                               type="button"
                               onClick={isEditable ? handleOpenCropper : undefined}
                               aria-disabled={!isEditable}
-                              disabled={isCompressing}
+                              disabled={isCompressing || disabled}
                               className={cn(
                                 "size-7 rounded-lg transition-colors",
                                 isEditable
@@ -464,8 +442,8 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
                           </TooltipTrigger>
                           <TooltipContent className="max-w-[240px] text-center text-xs">
                             {isEditable
-                              ? (labels?.editCropTooltip || t("imagePicker.editCropTooltip"))
-                              : (labels?.externalAvatarCropDisabledTooltip || t("imagePicker.externalAvatarCropDisabledTooltip"))}
+                              ? t("imagePicker.editCropTooltip")
+                              : t("imagePicker.externalAvatarCropDisabledTooltip")}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -476,7 +454,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
                     size="icon" 
                     type="button"
                     onClick={handleRemove}
-                    disabled={isCompressing}
+                    disabled={isCompressing || disabled}
                     className="hover:bg-destructive/10 hover:text-destructive text-muted-foreground cursor-pointer rounded-lg size-7 transition-colors"
                   >
                     <Trash2 className="size-3.5" />
@@ -489,7 +467,7 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
                   <ImageIcon className="size-4" />
                 </AttachmentMedia>
                 <AttachmentContent className="ml-1 select-none">
-                  <AttachmentTitle className="text-muted-foreground/60">{meta.title}</AttachmentTitle>
+                  <AttachmentTitle className="text-muted-foreground">{meta.title}</AttachmentTitle>
                   <AttachmentDescription>{meta.desc}</AttachmentDescription>
                 </AttachmentContent>
               </Attachment>
@@ -499,7 +477,8 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
           {/* Right Column: Dropzone */}
           <div
             role="button"
-            tabIndex={0}
+            tabIndex={disabled ? -1 : 0}
+            aria-disabled={disabled}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -513,7 +492,8 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
             className={cn(
               "flex-1 w-full border-2 border-dashed border-border bg-card/10 hover:bg-card/30 hover:border-accent rounded-xl flex flex-col items-center justify-center p-6 cursor-pointer transition-all duration-200 text-center select-none min-h-[96px]",
               isDragging && "border-brand bg-brand/5 scale-[1.01]",
-              isCompressing && "opacity-70 cursor-wait pointer-events-none"
+              isCompressing && "opacity-70 cursor-wait pointer-events-none",
+              disabled && "opacity-50 cursor-not-allowed pointer-events-none"
             )}
           >
             <input
@@ -526,24 +506,25 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
               onChange={handleFileChange}
               onClick={(e) => e.stopPropagation()}
               accept="image/*"
+              disabled={disabled}
               className="hidden"
               id={inputId}
             />
             {isCompressing ? (
               <>
-                <Loader2 className="size-6 text-brand animate-spin mb-2" />
+                <Loader2 className="size-6 text-brand-text animate-spin mb-2" />
                 <span className="text-xs font-semibold text-foreground/80">
-                  {labels?.compressingText || t("imagePicker.compressing")}
+                  {t("imagePicker.compressing")}
                 </span>
               </>
             ) : (
               <>
-                <UploadCloud className={cn("size-6 text-muted-foreground mb-2 transition-colors", isDragging && "text-brand")} />
+                <UploadCloud className={cn("size-6 text-muted-foreground mb-2 transition-colors", isDragging && "text-brand-text")} />
                 <span className="text-xs font-semibold text-foreground/80">
-                  {isDragging ? (labels?.dropzoneActiveText || t("imagePicker.dropzoneActiveText")) : (labels?.dropzoneIdleText || t("imagePicker.dropzoneIdleText"))}
+                  {isDragging ? t("imagePicker.dropzoneActiveText") : t("imagePicker.dropzoneIdleText")}
                 </span>
-                <span className="text-[10px] text-muted-foreground mt-0.5">
-                  {labels?.acceptedFormatsDesc || t("imagePicker.acceptedFormatsDesc")}
+                <span className="text-3xs text-muted-foreground mt-0.5">
+                  {t("imagePicker.acceptedFormatsDesc")}
                 </span>
               </>
             )}
@@ -561,7 +542,6 @@ export const ImagePicker = React.forwardRef<HTMLInputElement, ImagePickerProps>(
             cropShape={cropShape ?? "round"}
             aspect={cropAspect ?? 1}
             outputSize={cropOutputSize}
-            labels={cropLabels}
             onCropComplete={handleCropComplete}
             onCancel={() => {
               if (!value && fileInputRef.current) {

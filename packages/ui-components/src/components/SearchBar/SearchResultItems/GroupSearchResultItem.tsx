@@ -16,7 +16,7 @@ export function GroupSearchResultItem({
   avatarUrl,
   name,
   requiresApproval,
-  membersCount = 1,
+  membersCount,
   privateGroupText,
   publicGroupText,
   membersCountText,
@@ -39,15 +39,20 @@ export function GroupSearchResultItem({
         <span className="text-sm font-semibold truncate text-foreground">{name}</span>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
           {requiresApproval ? (
-            <Lock className="size-3 text-amber-500" />
+            <Lock className="size-3 text-warning-text" />
           ) : (
             <Globe className="size-3" />
           )}
           <span className="truncate">
             {requiresApproval ? defaultPrivateGroupText : defaultPublicGroupText}
           </span>
-          <span className="opacity-50">&bull;</span>
-          <span>{membersCount} {defaultMembersCountText}</span>
+          {/* Shown only when the caller knows the real count (no default: a guess would be wrong) */}
+          {membersCount !== undefined && (
+            <>
+              <span className="opacity-50">&bull;</span>
+              <span>{membersCount} {defaultMembersCountText}</span>
+            </>
+          )}
         </div>
       </div>
     </div>

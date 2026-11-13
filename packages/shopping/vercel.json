@@ -1,6 +1,6 @@
 {
   "buildCommand": "cd ../.. && npx nx run shopping:build",
-  "ignoreCommand": "bash ../../scripts/vercel-ignore.sh shopping",
+  "git": { "deploymentEnabled": false },
   "outputDirectory": "dist",
   "headers": [
     {

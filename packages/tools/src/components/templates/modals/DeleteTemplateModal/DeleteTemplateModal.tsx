@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import {
   Button,
@@ -10,9 +10,7 @@ import {
   DialogTitle,
 } from "@flaner/ui-components";
 import type { FilamentTemplate } from "../../../../api/templates";
-import { fetchAssociatedSpools } from "../../../../api/templates";
-import { useDeleteTemplateMutation, useToolsTranslations } from "../../../../hooks";
-import { useAuth } from "@flaner/shared/context";
+import { useDeleteTemplateMutation, useGetAssociatedSpoolsQuery, useToolsTranslations } from "../../../../hooks";
 
 type DeleteTemplateModalProps = {
   isOpen: boolean;
@@ -26,32 +24,17 @@ export const DeleteTemplateModal: React.FC<DeleteTemplateModalProps> = ({
   template,
 }) => {
   const { t } = useToolsTranslations();
-  const { user } = useAuth();
-  const [hasSpools, setHasSpools] = useState(false);
-  const [isLoadingSpools, setIsLoadingSpools] = useState(false);
+  const { data: associatedSpools = [], isLoading: isLoadingSpools } = useGetAssociatedSpoolsQuery(
+    template?.id ?? "",
+    isOpen,
+  );
+  const hasSpools = associatedSpools.length > 0;
 
   const deleteMutation = useDeleteTemplateMutation({
     onSuccess: () => {
       onClose();
     },
   });
-
-  useEffect(() => {
-    const checkSpools = async () => {
-      if (isOpen && template && user) {
-        setIsLoadingSpools(true);
-        try {
-          const spools = await fetchAssociatedSpools(user.uid, template.id);
-          setHasSpools(spools.length > 0);
-        } catch (error) {
-          console.error("Error fetching associated spools:", error);
-        } finally {
-          setIsLoadingSpools(false);
-        }
-      }
-    };
-    checkSpools();
-  }, [isOpen, template, user]);
 
   if (!template) return null;
 

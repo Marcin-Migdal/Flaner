@@ -5,7 +5,7 @@ This workflow defines the lifecycle for implementing complex features. By breaki
 ## Phase 1: Planning (The Planner)
 Before any code is written:
 1. **Analyze Requirements:** Review the user's request, identify the scope, and clarify any ambiguities.
-2. **Read Relevant Skills:** Identify and read the required skills from `.agents/skills/` (e.g., `create-functionality`, `react-hook-form`, `api-query-layer`).
+2. **Read Relevant Skills:** Identify and read the required skills from `.agents/skills/` (e.g., `react-hook-form`, `api-query-layer`).
 3. **Generate Implementation Plan:** Draft a detailed plan (in chat, plan mode, or an artifact provided by the agent environment) outlining the architecture, the specific files to touch, and the technical approach.
 4. **Get Approval:** Wait for the user to explicitly approve the implementation plan.
 
@@ -21,7 +21,8 @@ After implementation is complete:
 1. **Linting:** Ensure `nx lint` has been run dynamically on the modified packages (e.g., `npx nx run <package-name>:lint`).
 2. **Skill Verification:** Double-check the modified/created code against the core skills used in Phase 1 (e.g., verify that `react-hook-form` inputs use `FormProvider`).
 3. **Walkthrough:** Summarize the changes in a `walkthrough.md` artifact so the user knows exactly what was built and how to test it.
-4. **Pre-merge manual test (mandatory prompt):** Before opening the PR to `develop` (and before it is merged), ask the user to test the feature manually, and wait for their confirmation. Include in the walkthrough the exact scenarios to click through.
+4. **Pre-merge manual test:** Open the PR to `develop` without waiting for a manual test. Its body lists the exact scenarios to click through; the test runs after the PR is opened and before merge — by the implementing agent if it worked locally, otherwise by a local session from the PR body (see `AGENTS.md` → pre-merge manual test).
    - If the branch does not change `firestore.rules` / `firestore.indexes.json`: a local test (`npm run dev:emulators` or `npm run dev`) is enough — the emulators run the same rules and indexes as DEV. Exception: a new or changed Firestore query must also be tested on DEV, because the emulator does not enforce composite indexes.
    - If it does: GitHub → Actions → *Deploy Firestore* → *Run workflow* on the feature branch (DEV only), then test on the branch's Vercel Preview or with `npm run dev` (local `.env` → DEV).
    - If the branch is abandoned after a DEV deploy, run the workflow on `develop` to restore DEV.
+   - The Vercel Preview of `core` loads every MFE from its DEV alias (`flaner-<mfe>-dev.vercel.app`, `VITE_MFE_*_URL`), not from the same branch. Changes inside an MFE are therefore invisible on the host Preview: test them locally (`npm run dev:emulators` / `npm run dev`). A branch that changes only `core` / `shared` can be tested on the Preview (#54).

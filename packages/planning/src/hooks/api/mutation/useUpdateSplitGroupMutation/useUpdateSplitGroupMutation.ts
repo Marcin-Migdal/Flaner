@@ -1,5 +1,5 @@
-import { useAuth } from "@flaner/shared/context";
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { updateSplitGroup, type UpdateSplitGroupInput } from "../../../../api/splits";
 
 export type UpdateSplitGroupParams = {
@@ -7,20 +7,19 @@ export type UpdateSplitGroupParams = {
   data: UpdateSplitGroupInput;
 };
 
-export const useUpdateSplitGroupMutation = (options?: UseMutationOptions<void, Error, UpdateSplitGroupParams>) => {
-  const { user } = useAuth();
-
-  return useMutation<void, Error, UpdateSplitGroupParams>({
-    mutationFn: async ({ groupId, data }) => {
-      if (!user) throw new Error("planning:errors.userNotAuthenticated");
-      await updateSplitGroup(groupId, data);
+export const useUpdateSplitGroupMutation = (options?: UseMutationOptions<void, Error, UpdateSplitGroupParams>) =>
+  useUserMutation<void, UpdateSplitGroupParams>(
+    {
+      mutationKey: ["updateSplitGroup"],
+      mutationFn: async ({ groupId, data }) => {
+        await updateSplitGroup(groupId, data);
+      },
+      meta: {
+        successMessageKey: "planning:toasts.splits.groupUpdateSuccess",
+        errorMessageKey: "planning:toasts.splits.groupUpdateError",
+      },
     },
-    meta: {
-      successMessageKey: "planning:toasts.splits.groupUpdateSuccess",
-      errorMessageKey: "planning:toasts.splits.groupUpdateError",
-    },
-    ...options,
-  });
-};
+    options,
+  );
 
 export default useUpdateSplitGroupMutation;

@@ -17,5 +17,5 @@ export const manageGroupSheetStyles = {
     "flex items-center justify-between p-3 rounded-xl bg-card border border-border/60 hover:border-border shadow-2xs transition-all",
   dangerZone: "p-6 pt-4 border-t border-border/60 shrink-0 bg-card/95 backdrop-blur-xs mt-auto",
   deleteButton:
-    "w-full text-destructive border-destructive/30 hover:bg-destructive hover:text-white rounded-xl h-10 font-medium flex items-center justify-center gap-2 transition-colors cursor-pointer",
+    "w-full text-destructive border-destructive/30 hover:bg-destructive hover:text-destructive-foreground rounded-xl h-10 font-medium flex items-center justify-center gap-2 transition-colors cursor-pointer",
 };

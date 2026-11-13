@@ -1,6 +1,5 @@
 import { MFE_NAMES } from "@flaner/shared/constants";
 import { useAuth } from "@flaner/shared/context";
-import { fb } from "@flaner/shared/firebase";
 import { useTheme } from "@flaner/shared/hooks";
 import { type NavigationItem } from "@flaner/shared/types";
 import { cn } from "@flaner/shared/utils";
@@ -31,7 +30,6 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@flaner/ui-components";
-import { doc, updateDoc } from "firebase/firestore";
 import { ChevronRight, ChevronsUpDown, Globe, LogOut, Settings, SunMoon } from "lucide-react";
 import { NavIcon } from "../NavIcon";
 import { Suspense, useEffect, useState } from "react";
@@ -39,6 +37,7 @@ import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useLocation, useNavigation } from "react-router";
 import { loadMfeNavigation } from "../../mf";
 import { NotificationsPopover } from "../notifications/NotificationsPopover";
+import { useUpdateUserPreferencesMutation } from "../../hooks";
 
 const HOME_NAV_ITEM: NavigationItem = { path: "/", labelKey: "nav.home", icon: "home" };
 
@@ -52,7 +51,8 @@ export function ShellLayout() {
 
 function ShellLayoutContent() {
   const { isMobile, setOpenMobile } = useSidebar();
-  const { user, signOutUser, updateUser } = useAuth();
+  const { user, signOutUser } = useAuth();
+  const updatePreferences = useUpdateUserPreferencesMutation();
   const { t, i18n } = useTranslation("common");
   const { isDark, setTheme } = useTheme();
   const navigation = useNavigation();
@@ -116,33 +116,14 @@ function ShellLayoutContent() {
     }
   };
 
-  // Writes users/{uid} (Firestore rules spec: .agents/skills/firestore-rules-manager/docs/users.md)
-  const handleLanguageChange = async (nextLang: "pl" | "en") => {
+  const handleLanguageChange = (nextLang: "pl" | "en") => {
     i18n.changeLanguage(nextLang);
-    if (user?.uid) {
-      try {
-        await updateDoc(doc(fb.firestore, "users", user.uid), {
-          language: nextLang,
-        });
-        updateUser({ language: nextLang });
-      } catch (err) {
-        console.error("Failed to persist language change", err);
-      }
-    }
+    if (user) updatePreferences.mutate({ language: nextLang });
   };
 
-  const handleThemeChange = async (nextTheme: "light" | "dark") => {
+  const handleThemeChange = (nextTheme: "light" | "dark") => {
     setTheme(nextTheme);
-    if (user?.uid) {
-      try {
-        await updateDoc(doc(fb.firestore, "users", user.uid), {
-          darkMode: nextTheme === "dark",
-        });
-        updateUser({ darkMode: nextTheme === "dark" });
-      } catch (err) {
-        console.error("Failed to persist theme change", err);
-      }
-    }
+    if (user) updatePreferences.mutate({ darkMode: nextTheme === "dark" });
   };
 
   return (
@@ -156,10 +137,8 @@ function ShellLayoutContent() {
             onClick={() => isMobile && setOpenMobile(false)}
             className="flex items-center gap-2.5 w-full focus:outline-none overflow-hidden"
           >
-            <div className="size-[39px] rounded-md bg-brand flex items-center justify-center font-black text-zinc-950 text-xl shadow-md shadow-brand/15 shrink-0 select-none">
-              F
-            </div>
-            <span className="text-2xl font-black tracking-wider text-brand truncate select-none">FLANER</span>
+            <img src="/flaner-icon.svg" alt="" className="size-10 shrink-0 select-none rounded-lg shadow-md shadow-brand/15" />
+            <span className="text-2xl font-black tracking-wider text-brand-text truncate select-none">FLANER</span>
           </NavLink>
         </SidebarHeader>
 
@@ -261,13 +240,13 @@ function ShellLayoutContent() {
                     <DropdownMenuSubContent sideOffset={isMobile ? -130 : 4}>
                       <DropdownMenuItem
                         onClick={() => handleLanguageChange("pl")}
-                        className={cn(i18n.language === "pl" && "text-brand font-semibold")}
+                        className={cn(i18n.language === "pl" && "text-brand-text font-semibold")}
                       >
                         {t("nav.langPl")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleLanguageChange("en")}
-                        className={cn(i18n.language === "en" && "text-brand font-semibold")}
+                        className={cn(i18n.language === "en" && "text-brand-text font-semibold")}
                       >
                         {t("nav.langEn")}
                       </DropdownMenuItem>
@@ -281,13 +260,13 @@ function ShellLayoutContent() {
                     <DropdownMenuSubContent sideOffset={isMobile ? -130 : 4}>
                       <DropdownMenuItem
                         onClick={() => handleThemeChange("light")}
-                        className={cn(!isDark && "text-brand font-semibold")}
+                        className={cn(!isDark && "text-brand-text font-semibold")}
                       >
                         {t("nav.themeLight")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleThemeChange("dark")}
-                        className={cn(isDark && "text-brand font-semibold")}
+                        className={cn(isDark && "text-brand-text font-semibold")}
                       >
                         {t("nav.themeDark")}
                       </DropdownMenuItem>
@@ -329,7 +308,8 @@ function ShellLayoutContent() {
               onClick={() => isMobile && setOpenMobile(false)}
               className="flex items-center gap-2 focus:outline-none select-none"
             >
-              <span className="text-lg font-black tracking-wider text-brand">FLANER</span>
+              <img src="/flaner-icon.svg" alt="" className="size-8 shrink-0 rounded-md" />
+              <span className="text-lg font-black tracking-wider text-brand-text">FLANER</span>
             </NavLink>
           </div>
         </header>

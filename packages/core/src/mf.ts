@@ -1,48 +1,12 @@
-import { MFE_NAMES } from "@flaner/shared/constants";
 import { NavigationItem } from "@flaner/shared/types";
 import { loadRemote, registerRemotes } from "@module-federation/runtime";
 import React, { lazy, type ComponentType } from "react";
 import { type RouteObject } from "react-router";
+import { MFE_REGISTRY } from "./mfeRegistry";
 
-const getDevHost = () => {
-  if (typeof window !== "undefined" && window.location.hostname) {
-    return window.location.hostname;
-  }
-  /* v8 ignore next */
-  return "127.0.0.1";
-};
-
-const devHost = getDevHost();
-
-const PROVIDERS: Array<{ alias: string; name: string; entry: string }> = [
-  {
-    alias: MFE_NAMES.SETTINGS,
-    name: MFE_NAMES.SETTINGS,
-    entry: `${import.meta.env.VITE_MFE_SETTINGS_URL || `http://${devHost}:4201`}/remoteEntry.js`,
-  },
-  {
-    alias: MFE_NAMES.COMMUNITY,
-    name: MFE_NAMES.COMMUNITY,
-    entry: `${import.meta.env.VITE_MFE_COMMUNITY_URL || `http://${devHost}:4202`}/remoteEntry.js`,
-  },
-  {
-    alias: MFE_NAMES.SHOPPING,
-    name: MFE_NAMES.SHOPPING,
-    entry: `${import.meta.env.VITE_MFE_SHOPPING_URL || `http://${devHost}:4203`}/remoteEntry.js`,
-  },
-  {
-    alias: MFE_NAMES.PLANNING,
-    name: MFE_NAMES.PLANNING,
-    entry: `${import.meta.env.VITE_MFE_PLANNING_URL || `http://${devHost}:4204`}/remoteEntry.js`,
-  },
-  {
-    alias: MFE_NAMES.TOOLS,
-    name: MFE_NAMES.TOOLS,
-    entry: `${import.meta.env.VITE_MFE_TOOLS_URL || `http://${devHost}:4205`}/remoteEntry.js`,
-  },
-];
-
-registerRemotes(PROVIDERS.map((remote) => ({ ...remote, type: "module" })));
+registerRemotes(
+  MFE_REGISTRY.map(({ name, url }) => ({ name, alias: name, entry: `${url}/remoteEntry.js`, type: "module" })),
+);
 
 export function lazyProvider<Props = unknown>(alias: string, exposeName: string) {
   return lazy(async () => {

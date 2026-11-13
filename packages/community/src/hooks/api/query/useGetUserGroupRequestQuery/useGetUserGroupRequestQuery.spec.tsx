@@ -1,22 +1,15 @@
-import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient } from "@flaner/test-utils";
-import {
-  useGetUserGroupRequestQuery,
-  useInvalidateUserGroupRequestQuery,
-} from "./useGetUserGroupRequestQuery";
+import { act, waitFor } from "@testing-library/react";
+import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
+import { useGetUserGroupRequestQuery } from "./useGetUserGroupRequestQuery";
 import * as groupsApi from "../../../../api/groups";
 import type { GroupRequest } from "../../../../api/groups";
-import { useAuth } from "@flaner/shared/context";
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: vi.fn(() => ({ user: { uid: "user-123" } })),
-}));
+const mockUser = createMockUser({ uid: "user-123" });
 
 vi.mock("../../../../api/groups", () => ({
   getUserGroupRequest: vi.fn(),
+  subscribeToUserGroupRequest: vi.fn(() => () => {}),
 }));
 
 describe("useGetUserGroupRequestQuery", () => {
@@ -24,25 +17,13 @@ describe("useGetUserGroupRequestQuery", () => {
     vi.clearAllMocks();
   });
 
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
-
   it("fetches user's join request for a group", async () => {
     const mockRequest: GroupRequest = {
       userId: "user-123",
       requestedAt: 500,
     };
     vi.mocked(groupsApi.getUserGroupRequest).mockResolvedValueOnce(mockRequest);
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useGetUserGroupRequestQuery("grp-1"), {
-      wrapper: Wrapper,
-    });
+    const { result } = renderHookWithProviders(() => useGetUserGroupRequestQuery("grp-1"), { user: mockUser });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -50,45 +31,8 @@ describe("useGetUserGroupRequestQuery", () => {
     expect(groupsApi.getUserGroupRequest).toHaveBeenCalledWith("grp-1", "user-123");
   });
 
-  it("invalidates user group request query", () => {
-    const { Wrapper, queryClient } = createWrapper();
-    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-    const { result } = renderHook(() => useInvalidateUserGroupRequestQuery(), {
-      wrapper: Wrapper,
-    });
-    result.current("grp-1");
-
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: ["userGroupRequest", "grp-1", "user-123"],
-    });
-  });
-
-  it("invalidates user group request query with fallback empty string when user is null", () => {
-    vi.mocked(useAuth).mockReturnValueOnce({
-      user: null,
-    } as unknown as ReturnType<typeof useAuth>);
-
-    const { Wrapper, queryClient } = createWrapper();
-    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-    const { result } = renderHook(() => useInvalidateUserGroupRequestQuery(), {
-      wrapper: Wrapper,
-    });
-    result.current("grp-1");
-
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: ["userGroupRequest", "grp-1", ""],
-    });
-  });
-
   it("handles unauthenticated user", async () => {
-    vi.mocked(useAuth).mockReturnValueOnce({
-      user: null,
-    } as unknown as ReturnType<typeof useAuth>);
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useGetUserGroupRequestQuery("grp-1"), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useGetUserGroupRequestQuery("grp-1"), { user: null });
 
     expect(result.current.fetchStatus).toBe("idle");
     const refetchResult = await result.current.refetch();
@@ -96,12 +40,25 @@ describe("useGetUserGroupRequestQuery", () => {
   });
 
   it("handles empty groupId", async () => {
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useGetUserGroupRequestQuery(""), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useGetUserGroupRequestQuery(""), { user: mockUser });
 
     expect(result.current.fetchStatus).toBe("idle");
     const refetchResult = await result.current.refetch();
     expect(refetchResult.error?.message).toBe("errors.fetchError");
+  });
+  it("applies live snapshots from the Firestore listener", async () => {
+    vi.mocked(groupsApi.getUserGroupRequest).mockResolvedValueOnce(null);
+    let push: (data: GroupRequest | null) => void = () => {};
+    vi.mocked(groupsApi.subscribeToUserGroupRequest).mockImplementationOnce((_groupId, _userId, onUpdate) => {
+      push = onUpdate;
+      return () => {};
+    });
+    const live: GroupRequest | null = { userId: "user-123", requestedAt: 5 };
+    const { result } = renderHookWithProviders(() => useGetUserGroupRequestQuery("grp-1"), { user: mockUser });
+    await waitFor(() => expect(result.current.data).toBeDefined());
+
+    act(() => push(live));
+    await waitFor(() => expect(result.current.data).toEqual(live));
   });
 });
 

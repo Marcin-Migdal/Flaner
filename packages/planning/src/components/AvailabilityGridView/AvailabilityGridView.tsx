@@ -8,8 +8,8 @@ import {
   AvailabilityGridParticipant,
   AvailabilityGridWinnerHeader,
 } from "./components";
+import { rankSlots } from "../../utils/slotRanking";
 import { gridFrameVariants } from "./AvailabilityGridView.styles";
-import type { SlotStat } from "./types";
 
 export type AvailabilityGridViewProps = {
   event: SchedulerEvent;
@@ -51,37 +51,7 @@ export const AvailabilityGridView = ({
     return map;
   }, [participantsProfiles]);
 
-  // Pre-calculate statistics for each slot
-  const slotStats: SlotStat[] = useMemo(() => {
-    return event.proposedDates.map((slot) => {
-      const votes = slot.votes || {};
-      let yesCount = 0;
-      let maybeCount = 0;
-      let noCount = 0;
-
-      Object.values(votes).forEach((vote) => {
-        if (vote === "yes") yesCount++;
-        else if (vote === "maybe") maybeCount++;
-        else if (vote === "no") noCount++;
-      });
-
-      const totalParticipants = Math.max(1, event.participants.length);
-      const score = yesCount * 2 + maybeCount;
-      const matchPercentage = Math.round((yesCount / totalParticipants) * 100);
-
-      return {
-        yesCount,
-        maybeCount,
-        noCount,
-        score,
-        matchPercentage,
-      };
-    });
-  }, [event.proposedDates, event.participants.length]);
-
-  const maxScore = useMemo(() => {
-    return Math.max(0, ...slotStats.map((s) => s.score));
-  }, [slotStats]);
+  const { slots: slotStats } = useMemo(() => rankSlots(event), [event]);
 
   const userColWidth = isMobile ? "150px" : "200px";
   const gridTemplateColumns = `${userColWidth} repeat(${event.proposedDates.length}, minmax(105px, 1fr))`;
@@ -102,7 +72,7 @@ export const AvailabilityGridView = ({
             {event.isFinalized && (
               <AvailabilityGridWinnerHeader
                 proposedDates={event.proposedDates}
-                finalizedSlotIndex={event.finalizedSlotIndex}
+                finalizedSlotKey={event.finalizedSlotKey}
                 gridTemplateColumns={gridTemplateColumns}
               />
             )}
@@ -112,9 +82,8 @@ export const AvailabilityGridView = ({
               proposedDates={event.proposedDates}
               participantsCount={event.participants.length}
               slotStats={slotStats}
-              maxScore={maxScore}
               isFinalized={event.isFinalized}
-              finalizedSlotIndex={event.finalizedSlotIndex}
+              finalizedSlotKey={event.finalizedSlotKey}
               gridTemplateColumns={gridTemplateColumns}
             />
 
@@ -139,7 +108,6 @@ export const AvailabilityGridView = ({
             <AvailabilityGridFooter
               proposedDates={event.proposedDates}
               slotStats={slotStats}
-              maxScore={maxScore}
               participantsCount={event.participants.length}
               gridTemplateColumns={gridTemplateColumns}
             />

@@ -15,6 +15,7 @@ Each base package has a different responsibility and structure:
 ### `shared`
 - Logic that is stateless from the perspective of a specific business domain and will be used by all MFEs and the host.
 - Contents:
+  - `api` (Firestore access shared by every package: `api/users` is the only module that touches `users/{uid}` and `usernames/{lower}`, #84)
   - `constants` (global constants)
   - `context` (e.g., AuthContext)
   - `firebase` (database configuration and initialization)

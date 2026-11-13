@@ -24,10 +24,10 @@ type SpoolFormModalProps = {
   isOpen: boolean;
   onClose: () => void;
   templates: FilamentTemplate[];
+  /** Edit this spool. */
   initialData?: FilamentSpool | null;
-  isCloneMode?: boolean;
-  cloneCarryoverUsage?: number;
-  clonePrevCurrentWeight?: number;
+  /** Add a spool that replaces a finished one (`nextSpoolPrefill`): its values come in ready, carryover included. */
+  clonePrefill?: SpoolInput | null;
 };
 
 export const SpoolFormModal: React.FC<SpoolFormModalProps> = ({
@@ -35,12 +35,11 @@ export const SpoolFormModal: React.FC<SpoolFormModalProps> = ({
   onClose,
   templates,
   initialData,
-  isCloneMode = false,
-  cloneCarryoverUsage = 0,
-  clonePrevCurrentWeight = 0,
+  clonePrefill,
 }) => {
   const { t } = useToolsTranslations();
   const submitButtonRef = useRef<HTMLButtonElement>(null);
+  const isCloneMode = !!clonePrefill;
 
   const defaultValues: SpoolFormData = useMemo(
     () => ({
@@ -109,23 +108,17 @@ export const SpoolFormModal: React.FC<SpoolFormModalProps> = ({
   // Sync initialData when editing or cloning, and reset cleanly on open/close
   useEffect(() => {
     if (isOpen) {
-      if (initialData) {
-        const carryover = isCloneMode
-          ? Math.max(0, cloneCarryoverUsage - clonePrevCurrentWeight)
-          : 0;
-        const initialWeight = initialData.initialWeight;
-        const currentWeight = isCloneMode
-          ? parseFloat(Math.max(0, initialData.initialWeight - carryover).toFixed(2))
-          : initialData.currentWeight;
-
-        reset({
+      const values = clonePrefill
+        ?? (initialData && {
           templateId: initialData.templateId ?? "",
           name: initialData.name,
-          initialWeight,
-          currentWeight,
+          initialWeight: initialData.initialWeight,
+          currentWeight: initialData.currentWeight,
         });
-        prevTemplateIdRef.current = initialData.templateId ?? "";
-        prevInitialWeightRef.current = initialWeight;
+      if (values) {
+        reset(values);
+        prevTemplateIdRef.current = values.templateId;
+        prevInitialWeightRef.current = values.initialWeight;
       } else {
         reset(defaultValues);
         prevTemplateIdRef.current = "";
@@ -135,11 +128,11 @@ export const SpoolFormModal: React.FC<SpoolFormModalProps> = ({
       reset(defaultValues);
       prevTemplateIdRef.current = "";
     }
-  }, [initialData, reset, isOpen, isCloneMode, cloneCarryoverUsage, clonePrevCurrentWeight, defaultValues]);
+  }, [initialData, clonePrefill, reset, isOpen, defaultValues]);
 
   // Auto-fill template values ONLY when choosing or changing template on new spool
   useEffect(() => {
-    if (isOpen && !initialData && watchTemplateId && watchTemplateId !== prevTemplateIdRef.current) {
+    if (isOpen && !initialData && !isCloneMode && watchTemplateId && watchTemplateId !== prevTemplateIdRef.current) {
       prevTemplateIdRef.current = watchTemplateId;
       const selected = templates.find((tmpl) => tmpl.id === watchTemplateId);
       if (selected) {
@@ -149,7 +142,7 @@ export const SpoolFormModal: React.FC<SpoolFormModalProps> = ({
         prevInitialWeightRef.current = selected.defaultWeight;
       }
     }
-  }, [watchTemplateId, setValue, templates, initialData, isOpen]);
+  }, [watchTemplateId, setValue, templates, initialData, isCloneMode, isOpen]);
 
   const onFormSubmit = (data: SpoolFormData) => {
     const selectedTemplate = templates.find((tmpl) => tmpl.id === data.templateId);
@@ -160,7 +153,7 @@ export const SpoolFormModal: React.FC<SpoolFormModalProps> = ({
       currentWeight: data.currentWeight,
     };
 
-    if (initialData && !isCloneMode) {
+    if (initialData) {
       editSpoolMutation.mutate({
         spoolId: initialData.id,
         data: inputPayload,
@@ -191,11 +184,7 @@ export const SpoolFormModal: React.FC<SpoolFormModalProps> = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isCloneMode
-              ? t("spooler.spools.addSpool")
-              : initialData
-                ? t("spooler.spools.editSpool")
-                : t("spooler.spools.addSpool")}
+            {initialData ? t("spooler.spools.editSpool") : t("spooler.spools.addSpool")}
           </DialogTitle>
         </DialogHeader>
 
@@ -241,7 +230,7 @@ export const SpoolFormModal: React.FC<SpoolFormModalProps> = ({
               >
                 {isPending
                   ? t("spooler.common.saving")
-                  : initialData && !isCloneMode
+                  : initialData
                   ? t("spooler.spools.editSpool")
                   : t("spooler.spools.addSpool")}
               </Button>

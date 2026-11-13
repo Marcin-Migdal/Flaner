@@ -1,31 +1,20 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth } from "@flaner/shared/context";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { deleteSpool } from "../../../../api/spools";
-import { useInvalidateGetSpoolsQuery } from "../../query/useGetSpoolsQuery";
+import { spoolerInvalidation } from "../../queryKeys";
 
-export const useDeleteSpoolMutation = (
-  options?: UseMutationOptions<void, Error, string>,
-) => {
-  const { user } = useAuth();
-  const invalidateSpools = useInvalidateGetSpoolsQuery();
-
-  return useMutation<void, Error, string>({
-    mutationFn: async (spoolId: string) => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      await deleteSpool(spoolId);
+export const useDeleteSpoolMutation = (options?: UseMutationOptions<void, Error, string>) =>
+  useUserMutation<void, string>(
+    {
+      mutationKey: ["deleteSpool"],
+      mutationFn: (spoolId) => deleteSpool(spoolId),
+      invalidates: spoolerInvalidation.deleteSpool,
+      meta: {
+        successMessageKey: "tools:toasts.spools.deleteSuccess",
+        errorMessageKey: "tools:toasts.spools.deleteError",
+      },
     },
-    meta: {
-      successMessageKey: "tools:toasts.spools.deleteSuccess",
-      errorMessageKey: "tools:toasts.spools.deleteError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      invalidateSpools();
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useDeleteSpoolMutation;

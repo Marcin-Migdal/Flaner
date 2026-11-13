@@ -6,7 +6,8 @@ export type TemplateFormModalProps = {
   initialData?: FilamentTemplate | null;
 };
 
+/** A lookup is identified by its names (see `utils/filamentCatalog`), not by a document id. */
 export type DeleteLookupTarget =
-  | { kind: "material"; id: string; name: string }
-  | { kind: "type"; id: string; materialName: string; name: string }
-  | { kind: "color"; id: string; name: string };
+  | { kind: "material"; name: string }
+  | { kind: "type"; materialName: string; name: string }
+  | { kind: "color"; materialName: string; typeName: string; name: string };

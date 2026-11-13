@@ -28,6 +28,11 @@ if (typeof globalThis.ResizeObserver === "undefined") {
   };
 }
 
+// JSDOM has no window.reportError (best-effort failures go there); a mock lets specs assert on it
+if (typeof globalThis.reportError === "undefined") {
+  globalThis.reportError = vi.fn();
+}
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();

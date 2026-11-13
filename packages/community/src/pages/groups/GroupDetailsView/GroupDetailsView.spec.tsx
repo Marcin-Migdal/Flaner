@@ -2,11 +2,11 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders, createMockGroup } from "@flaner/test-utils";
+import { renderWithProviders, createMockGroup, createMockUser } from "@flaner/test-utils";
 import { GroupDetailsView } from "./GroupDetailsView";
 import * as hooks from "../../../hooks";
 import type { Group } from "../../../api/groups";
-import { useAuth } from "@flaner/shared/context";
+import type { FriendStatus } from "../../../hooks";
 
 const mockNavigate = vi.fn();
 
@@ -21,9 +21,6 @@ vi.mock("react-router", async () => {
   };
 });
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: vi.fn(() => ({ user: { uid: "user-123", username: "currentuser" } })),
-}));
 
 vi.mock("../../../components/groups/InviteToGroupModal", () => ({
   InviteToGroupModal: () => <div data-testid="invite-modal" />,
@@ -43,9 +40,7 @@ vi.mock("../../../hooks", () => ({
   useGetGroupMembersQuery: vi.fn(),
   useGetUsersQuery: vi.fn(),
   useGetUserGroupRequestQuery: vi.fn(),
-  useGetFriendsListRealtimeQuery: vi.fn(),
-  useGetSentFriendRequestRealtimeQuery: vi.fn(),
-  useGetReceivedFriendRequestRealtimeQuery: vi.fn(),
+  useFriendStatus: vi.fn(),
   useAddGroupMemberMutation: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
   useRequestJoinGroupMutation: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
   useRemoveGroupMemberMutation: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
@@ -64,6 +59,11 @@ vi.mock("../../../hooks/useCommunityTranslations", () => ({
   }),
 }));
 
+const currentUser = createMockUser({ uid: "user-123", username: "currentuser" });
+
+const mockFriendStatuses = (statuses: Record<string, FriendStatus>) =>
+  vi.mocked(hooks.useFriendStatus).mockReturnValue((uid) => (uid === currentUser.uid ? "self" : (statuses[uid] ?? "none")));
+
 describe("GroupDetailsView page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -72,17 +72,7 @@ describe("GroupDetailsView page", () => {
       data: null,
     } as unknown as ReturnType<typeof hooks.useGetUserGroupRequestQuery>);
 
-    vi.mocked(hooks.useGetFriendsListRealtimeQuery).mockReturnValue({
-      data: [],
-    } as unknown as ReturnType<typeof hooks.useGetFriendsListRealtimeQuery>);
-
-    vi.mocked(hooks.useGetSentFriendRequestRealtimeQuery).mockReturnValue({
-      data: [],
-    } as unknown as ReturnType<typeof hooks.useGetSentFriendRequestRealtimeQuery>);
-
-    vi.mocked(hooks.useGetReceivedFriendRequestRealtimeQuery).mockReturnValue({
-      data: [],
-    } as unknown as ReturnType<typeof hooks.useGetReceivedFriendRequestRealtimeQuery>);
+    mockFriendStatuses({});
 
     vi.mocked(hooks.useGetGroupMembersQuery).mockReturnValue({
       data: [],
@@ -105,7 +95,7 @@ describe("GroupDetailsView page", () => {
       isLoading: true,
     } as unknown as ReturnType<typeof hooks.useGetGroupQuery>);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
 
     expect(screen.getByText("groupDetails.loading")).toBeInTheDocument();
   });
@@ -120,7 +110,7 @@ describe("GroupDetailsView page", () => {
       isLoading: false,
     } as unknown as ReturnType<typeof hooks.useGetGroupQuery>);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
 
     expect(screen.getByText("groupDetails.notFound")).toBeInTheDocument();
   });
@@ -152,12 +142,13 @@ describe("GroupDetailsView page", () => {
       isLoading: false,
     } as unknown as ReturnType<typeof hooks.useGetUsersQuery>);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
 
     expect(screen.getByText("Mountain Hikers")).toBeInTheDocument();
     expect(screen.getByText("Hikes and trails")).toBeInTheDocument();
     expect(screen.getByText("ClimberOwner")).toBeInTheDocument();
     expect(screen.getByTestId("manage-group-sheet")).toBeInTheDocument();
+    expect(screen.getByText(/groupDetails\.membersCount/)).toBeInTheDocument();
   });
 
   it("renders access denied for non-member in private group", async () => {
@@ -166,10 +157,35 @@ describe("GroupDetailsView page", () => {
     vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: [] } as never);
     vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false } as never);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
     expect(screen.getByText("groupDetails.accessDenied")).toBeInTheDocument();
     const backBtn = screen.getByRole("button");
     await user.click(backBtn);
+  });
+
+  it("renders access denied when the group listener loses access while the group is shown", () => {
+    const mockGroup: Group = createMockGroup({ id: "grp-1", type: "private" });
+    vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: [mockGroup] } as never);
+    vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false, isError: true } as never);
+
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
+
+    expect(screen.getByText("groupDetails.accessDenied")).toBeInTheDocument();
+  });
+
+  it("treats a failing member list as removed from the group before the memberships update", () => {
+    const mockGroup: Group = createMockGroup({ id: "grp-1", type: "private" });
+    vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: [mockGroup] } as never);
+    vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false } as never);
+    vi.mocked(hooks.useGetGroupMembersQuery).mockReturnValue({
+      data: [{ userId: "user-123", role: "member", joinedAt: 100 }],
+      isLoading: false,
+      isError: true,
+    } as never);
+
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
+
+    expect(screen.getByText("groupDetails.accessDenied")).toBeInTheDocument();
   });
 
   it("shows the loader instead of access denied while the user's groups are loading", () => {
@@ -177,7 +193,7 @@ describe("GroupDetailsView page", () => {
     vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: undefined, isPending: true, isLoading: false } as never);
     vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false } as never);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
 
     expect(screen.getByText("groupDetails.loading")).toBeInTheDocument();
     expect(screen.queryByText("groupDetails.accessDenied")).not.toBeInTheDocument();
@@ -195,7 +211,9 @@ describe("GroupDetailsView page", () => {
     vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: [] } as never);
     vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false } as never);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
+    // Outsiders cannot read the member list, so no (always 0) member count
+    expect(screen.queryByText(/groupDetails\.membersCount/)).not.toBeInTheDocument();
     const joinBtn = screen.getByRole("button", { name: "groupDetails.joinGroup" });
     await user.click(joinBtn);
     expect(joinGroupMock).toHaveBeenCalledWith({ groupId: "grp-1", userId: "user-123" });
@@ -214,7 +232,7 @@ describe("GroupDetailsView page", () => {
     vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false } as never);
     vi.mocked(hooks.useGetUserGroupRequestQuery).mockReturnValue({ data: null } as never);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
     const reqBtn = screen.getByRole("button", { name: "groupDetails.requestToJoin" });
     await user.click(reqBtn);
     expect(requestJoinMock).toHaveBeenCalledWith("grp-1");
@@ -228,7 +246,7 @@ describe("GroupDetailsView page", () => {
       data: { userId: "user-123", requestedAt: 100 },
     } as never);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
     expect(screen.getByText("groupDetails.requestPending")).toBeInTheDocument();
   });
 
@@ -251,7 +269,7 @@ describe("GroupDetailsView page", () => {
       isLoading: false,
     } as never);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
     // Open more options dropdown
     const moreBtn = screen.getByRole("button", { name: "groupDetails.moreOptions" });
     await user.click(moreBtn);
@@ -278,7 +296,7 @@ describe("GroupDetailsView page", () => {
     vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: [mockGroup] } as never);
     vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false } as never);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
     const copyBtn = screen.getByRole("button", { name: "groupDetails.copyLinkBtn" });
     await user.click(copyBtn);
     expect(writeTextMock).toHaveBeenCalled();
@@ -326,15 +344,9 @@ describe("GroupDetailsView page", () => {
       isLoading: false,
     } as never);
 
-    vi.mocked(hooks.useGetSentFriendRequestRealtimeQuery).mockReturnValue({
-      data: [{ receiverUid: "user-sent" } as never],
-    } as never);
+    mockFriendStatuses({ "user-sent": "outgoing", "user-recv": "incoming" });
 
-    vi.mocked(hooks.useGetReceivedFriendRequestRealtimeQuery).mockReturnValue({
-      data: [{ senderUid: "user-recv" } as never],
-    } as never);
-
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
 
     // Add friend
     const addFriendBtn = screen.getByRole("button", { name: "groupDetails.addFriend" });
@@ -361,9 +373,7 @@ describe("GroupDetailsView page", () => {
     const mockGroup: Group = createMockGroup({ id: "grp-1", ownerId: "user-123" });
     vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: [mockGroup] } as never);
     vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false } as never);
-    vi.mocked(hooks.useGetFriendsListRealtimeQuery).mockReturnValue({
-      data: [{ uid: "user-already-friend" } as never],
-    } as never);
+    mockFriendStatuses({ "user-already-friend": "friend" });
     vi.mocked(hooks.useGetGroupMembersQuery).mockReturnValue({
       data: [
         { userId: "user-123", role: "owner", joinedAt: 100 },
@@ -379,7 +389,7 @@ describe("GroupDetailsView page", () => {
       isLoading: false,
     } as never);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
 
     // Check back button navigates to /community/groups
     const backBtn = screen.getByText("groupDetails.backToList").closest("div")?.querySelector("button");
@@ -397,9 +407,6 @@ describe("GroupDetailsView page", () => {
 
   it("handles unauthenticated user attempting to join or leave", async () => {
     const user = userEvent.setup();
-    vi.mocked(useAuth).mockReturnValueOnce({
-      user: null,
-    } as unknown as ReturnType<typeof useAuth>);
 
     const joinMutationMock = vi.fn();
     vi.mocked(hooks.useAddGroupMemberMutation).mockReturnValue({
@@ -412,16 +419,13 @@ describe("GroupDetailsView page", () => {
     vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false } as never);
     vi.mocked(hooks.useGetGroupMembersQuery).mockReturnValue({ data: [], isLoading: false } as never);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: null });
 
     const joinBtn = screen.getByRole("button", { name: "groupDetails.joinGroup" });
     await user.click(joinBtn);
     expect(joinMutationMock).not.toHaveBeenCalled();
 
     // Test unauthenticated request to join
-    vi.mocked(useAuth).mockReturnValueOnce({
-      user: null,
-    } as unknown as ReturnType<typeof useAuth>);
     const requestJoinMutationMock = vi.fn();
     vi.mocked(hooks.useRequestJoinGroupMutation).mockReturnValue({
       mutateAsync: requestJoinMutationMock,
@@ -430,15 +434,12 @@ describe("GroupDetailsView page", () => {
     const approvalGroup = createMockGroup({ id: "grp-1", type: "public", requiresApproval: true });
     vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: approvalGroup, isLoading: false } as never);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: null });
     const requestBtn = screen.getByRole("button", { name: "groupDetails.requestToJoin" });
     await user.click(requestBtn);
     expect(requestJoinMutationMock).not.toHaveBeenCalled();
 
     // Test unauthenticated leave group
-    vi.mocked(useAuth).mockReturnValue({
-      user: null,
-    } as unknown as ReturnType<typeof useAuth>);
     const leaveMutationMock = vi.fn();
     vi.mocked(hooks.useRemoveGroupMemberMutation).mockReturnValue({
       mutateAsync: leaveMutationMock,
@@ -450,7 +451,7 @@ describe("GroupDetailsView page", () => {
       isLoading: false,
     } as never);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: null });
     const moreBtn = screen.getByLabelText("groupDetails.moreOptions");
     await user.click(moreBtn);
     const leaveItem = screen.getByText("groupDetails.leaveGroup");
@@ -458,8 +459,6 @@ describe("GroupDetailsView page", () => {
     const confirmLeaveBtn = screen.getByRole("button", { name: "groupDetails.confirmLeaveBtn" });
     await user.click(confirmLeaveBtn);
     expect(leaveMutationMock).not.toHaveBeenCalled();
-
-    vi.mocked(useAuth).mockReturnValue({ user: { uid: "user-123", username: "currentuser" } } as never);
   });
 
   it("handles missing groupId parameter gracefully", () => {
@@ -467,7 +466,7 @@ describe("GroupDetailsView page", () => {
     vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: undefined, isLoading: true } as never);
     vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: [] } as never);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
 
     expect(screen.getByText("groupDetails.loading")).toBeInTheDocument();
     mockGroupId = "grp-1";
@@ -496,12 +495,7 @@ describe("GroupDetailsView page", () => {
       isLoading: false,
     } as never);
 
-    vi.mocked(hooks.useGetSentFriendRequestRealtimeQuery).mockReturnValue({
-      data: [{ receiverUid: "user-sent" } as never],
-    } as never);
-    vi.mocked(hooks.useGetReceivedFriendRequestRealtimeQuery).mockReturnValue({
-      data: [{ senderUid: "user-recv" } as never],
-    } as never);
+    mockFriendStatuses({ "user-sent": "outgoing", "user-recv": "incoming" });
 
     vi.mocked(hooks.useCancelFriendRequestMutation).mockReturnValue({
       mutate: vi.fn(),
@@ -521,7 +515,7 @@ describe("GroupDetailsView page", () => {
       variables: { uid: "user-add" },
     } as never);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
 
     const loaders = document.querySelectorAll(".animate-spin");
     expect(loaders.length).toBeGreaterThanOrEqual(3);
@@ -548,7 +542,7 @@ describe("GroupDetailsView page", () => {
       isLoading: true,
     } as never);
 
-    const { unmount } = renderWithProviders(<GroupDetailsView />);
+    const { unmount } = renderWithProviders(<GroupDetailsView />, { user: currentUser });
     expect(screen.getByText("groupDetails.loadingMembers")).toBeInTheDocument();
     unmount();
 
@@ -562,7 +556,7 @@ describe("GroupDetailsView page", () => {
       isLoading: false,
     } as never);
 
-    renderWithProviders(<GroupDetailsView />);
+    renderWithProviders(<GroupDetailsView />, { user: currentUser });
     expect(screen.getByText("ElderSage")).toBeInTheDocument();
   });
 });

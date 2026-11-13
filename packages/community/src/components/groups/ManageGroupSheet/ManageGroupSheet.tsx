@@ -7,8 +7,6 @@ import {
   AccordionItem,
   AccordionTrigger,
   Avatar,
-  AvatarFallback,
-  AvatarImage,
   Button,
   ConfirmationPopup,
   DropdownMenu,
@@ -32,7 +30,7 @@ import { Crown, MoreVertical, Settings, Shield, ShieldAlert, ShieldCheck, Trash2
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router";
-import { hasGroupPermission, type GroupMember, type GroupRole } from "../../../api/groups";
+import { getGroupAuthorization, isRolePromotion, type GroupMember, type GroupRole } from "../../../api/groups";
 import {
   useDeleteGroupMutation,
   useGetGroupMembersQuery,
@@ -44,7 +42,7 @@ import {
   useUpdateGroupMutation,
 } from "../../../hooks";
 import { useCommunityTranslations } from "../../../hooks/useCommunityTranslations";
-import { updateGroupSchema, type UpdateGroupSchema } from "../../../utils/schemas/groups";
+import { getGroupSchema, type GroupSchema } from "../../../utils/schemas/groups";
 import { ManageGroupRolesSection } from "../ManageGroupRolesSection";
 import { manageGroupSheetStyles } from "./ManageGroupSheet.styles";
 
@@ -75,11 +73,11 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
   const [isUploading, setIsUploading] = useState(false);
 
   const isUpdatingGroup = updateGroupMutation.isPending || isUploading;
-  const currentUserRole = members.find((m) => m.userId === user?.uid)?.role;
-  const canEditGroup = currentUserRole === "owner" || hasGroupPermission(group, currentUserRole, "editGroup");
+  const auth = getGroupAuthorization({ group, members, userId: user?.uid });
+  const { canEditGroup } = auth;
 
-  const methods = useForm<UpdateGroupSchema>({
-    resolver: zodResolver(updateGroupSchema),
+  const methods = useForm<GroupSchema>({
+    resolver: zodResolver(getGroupSchema(t)),
     defaultValues: {
       name: group?.name || "",
       description: group?.description || "",
@@ -93,7 +91,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
     handleSubmit,
     reset,
     control,
-    formState: { isDirty },
+    formState: { isDirty, isSubmitting },
   } = methods;
   const groupType = useWatch({ control, name: "type" });
 
@@ -109,7 +107,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
     }
   }, [group, isOpen, reset]);
 
-  const onSaveGroup = async (data: UpdateGroupSchema) => {
+  const onSaveGroup = async (data: GroupSchema) => {
     try {
       setIsUploading(true);
       let finalAvatarUrl: string | null = group?.avatarUrl || null;
@@ -142,42 +140,28 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
         avatarUrl: payload.avatarUrl || "",
       });
     } catch (error) {
-      console.error("Failed to update group", error);
+      // Reports a failed upload; a failed mutation is already logged and toasted globally (logError skips the repeat)
+      reportError(error);
     } finally {
       setIsUploading(false);
     }
   };
 
   // Helpers
-  const ROLE_PRIORITY: Record<GroupRole, number> = {
-    owner: 4,
-    admin: 3,
-    moderator: 2,
-    member: 1,
-  };
-
-  const currentPriority = currentUserRole ? ROLE_PRIORITY[currentUserRole] : 0;
-
-  const canManageMember = (targetRole: GroupRole) => {
-    if (!currentUserRole) return false;
-    const hasPermission = currentUserRole === "owner" || hasGroupPermission(group, currentUserRole, "manageMembers");
-    return hasPermission && currentPriority > ROLE_PRIORITY[targetRole];
-  };
-
   const getRoleOption = (targetMember: GroupMember, roleToAssign: GroupRole) => {
-    const isPromotion = ROLE_PRIORITY[roleToAssign] > ROLE_PRIORITY[targetMember.role];
+    const isPromotion = isRolePromotion(targetMember.role, roleToAssign);
 
     if (roleToAssign === "admin") {
       return {
         label: t("manageGroupSheet.promoteToAdmin"),
-        icon: <ShieldCheck className="size-4 mr-2 text-blue-500" />,
+        icon: <ShieldCheck className="size-4 mr-2 text-info-text" />,
       };
     }
 
     if (roleToAssign === "moderator") {
       return {
         label: isPromotion ? t("manageGroupSheet.promoteToModerator") : t("manageGroupSheet.demoteToModerator"),
-        icon: <ShieldAlert className="size-4 mr-2 text-orange-500" />,
+        icon: <ShieldAlert className="size-4 mr-2 text-warning-text" />,
       };
     }
 
@@ -239,11 +223,11 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
   const getRoleIcon = (role: GroupRole) => {
     switch (role) {
       case "owner":
-        return <Crown className="size-4 text-yellow-500" />;
+        return <Crown className="size-4 text-brand-text" />;
       case "admin":
-        return <ShieldCheck className="size-4 text-blue-500" />;
+        return <ShieldCheck className="size-4 text-info-text" />;
       case "moderator":
-        return <ShieldAlert className="size-4 text-orange-500" />;
+        return <ShieldAlert className="size-4 text-warning-text" />;
       default:
         return <Shield className="size-4 text-muted-foreground" />;
     }
@@ -339,8 +323,8 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                         <Button
                           type="submit"
                           variant="brand"
-                          isBusy={isUpdatingGroup}
-                          disabled={!isDirty || isUpdatingGroup}
+                          isBusy={isUpdatingGroup || isSubmitting}
+                          disabled={!isDirty}
                           className="w-full rounded-xl h-10 font-semibold"
                         >
                           {t("manageGroupSheet.saveChanges")}
@@ -352,14 +336,14 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
               )}
 
               {/* Roles Section - Owner only */}
-              {currentUserRole === "owner" && (
+              {auth.canManageRolePermissions && (
                 <AccordionItem value="roles" className={manageGroupSheetStyles.accordionItem}>
                   <AccordionTrigger className={manageGroupSheetStyles.accordionTrigger}>
                     <span>{t("manageGroupSheet.rolesSection")}</span>
                   </AccordionTrigger>
                   <AccordionContent className={manageGroupSheetStyles.accordionContent}>
                     <ManageGroupRolesSection
-                      key={`${groupId}-${group?.updatedAt ? (typeof group.updatedAt === "object" && "toMillis" in group.updatedAt ? group.updatedAt.toMillis() : group.updatedAt) : 0}`}
+                      key={`${groupId}-${group?.updatedAt ?? 0}`}
                       groupId={groupId}
                       group={group}
                     />
@@ -372,7 +356,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                 <AccordionTrigger className={manageGroupSheetStyles.accordionTrigger}>
                   <div className="flex items-center gap-1.5">
                     <span>{t("manageGroupSheet.membersSection")}</span>
-                    <span className="text-[11px] font-normal lowercase">({members.length})</span>
+                    <span className="text-2xs font-normal lowercase">({members.length})</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className={manageGroupSheetStyles.accordionContent}>
@@ -385,9 +369,8 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                       {members.map((member: GroupMember) => {
                         const profile = membersProfiles?.find((p) => p.uid === member.userId);
                         const displayName = profile?.username || member.userId;
-                        const initials = displayName.substring(0, 2).toUpperCase();
 
-                        const canManage = canManageMember(member.role) && member.userId !== user?.uid;
+                        const canManage = auth.canManageMember(member);
 
                         return (
                           <div
@@ -395,17 +378,17 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                             className={manageGroupSheetStyles.memberItem}
                           >
                             <div className="flex items-center gap-3">
-                              <Avatar className="size-10 border border-border">
-                                {profile?.avatarUrl && <AvatarImage src={profile.avatarUrl} alt={displayName} />}
-                                <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-bold text-sm">
-                                  {initials}
-                                </AvatarFallback>
-                              </Avatar>
+                              <Avatar
+                                variant="brand"
+                                name={displayName}
+                                src={profile?.avatarUrl}
+                                className="size-10 border border-border text-sm"
+                              />
                               <div>
                                 <div className="font-medium text-sm flex items-center gap-1.5">
                                   {displayName}
                                   {member.userId === user?.uid && (
-                                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm ml-1">
+                                    <span className="text-3xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm ml-1">
                                       {t("manageGroupSheet.you")}
                                     </span>
                                   )}
@@ -425,10 +408,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-48">
-                                  {(["admin", "moderator", "member"] as GroupRole[]).map((roleToAssign) => {
-                                    if (currentPriority <= ROLE_PRIORITY[roleToAssign] || roleToAssign === member.role) {
-                                      return null;
-                                    }
+                                  {auth.getAssignableRoles(member).map((roleToAssign) => {
                                     const option = getRoleOption(member, roleToAssign);
                                     /* v8 ignore next */
                                     if (!option) return null;
@@ -444,9 +424,9 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
                                     );
                                   })}
 
-                                  {currentUserRole === "owner" && (
+                                  {auth.canTransferOwnership(member) && (
                                     <DropdownMenuItem
-                                      className="text-yellow-600 focus:text-yellow-700"
+                                      className="text-warning-text focus:text-warning-text"
                                       onClick={() => setConfirmTransferUserId(member.userId)}
                                     >
                                       <Crown className="size-4 mr-2" />
@@ -475,7 +455,7 @@ export function ManageGroupSheet({ groupId }: ManageGroupSheetProps) {
           </div>
 
           {/* Footer - Danger Zone (always visible) */}
-          {currentUserRole === "owner" && (
+          {auth.canDeleteGroup && (
             <div className={manageGroupSheetStyles.dangerZone}>
               <h4 className="text-xs font-bold uppercase tracking-wider text-destructive mb-2 px-0.5">
                 {t("manageGroupSheet.dangerZoneTitle")}

@@ -16,7 +16,7 @@ describe("FinalizedDateCard", () => {
       {
         start: "2026-07-10",
         end: "2026-07-15",
-        color: "#10b981",
+        color: "teal",
         votes: {
           "user-1": "yes",
           "user-2": "yes",
@@ -24,7 +24,7 @@ describe("FinalizedDateCard", () => {
       },
     ],
     isFinalized: true,
-    finalizedSlotIndex: 0,
+    finalizedSlotKey: "2026-07-10_2026-07-15",
     createdAt: 1700000000000,
     updatedAt: 1700000000000,
   };
@@ -68,18 +68,18 @@ describe("FinalizedDateCard", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
-  it("handles same-day event, Polish locale, undefined finalizedSlotIndex, and missing votes", () => {
+  it("handles same-day event, Polish locale and missing votes", () => {
     const plI18n = createTestI18n();
     plI18n.changeLanguage("pl");
 
     const singleDayEvent: SchedulerEvent = {
       ...baseEvent,
-      finalizedSlotIndex: undefined,
+      finalizedSlotKey: "2026-07-10_2026-07-10",
       proposedDates: [
         {
           start: "2026-07-10",
           end: "2026-07-10",
-          color: "#10b981",
+          color: "teal",
           votes: undefined,
         },
       ],
@@ -91,5 +91,12 @@ describe("FinalizedDateCard", () => {
 
     expect(screen.getByText("0/2")).toBeInTheDocument();
     expect(screen.getByText(/10 lipca 2026/i)).toBeInTheDocument();
+  });
+
+  it("renders nothing when no slot matches the winning slot key", () => {
+    const { container } = renderWithProviders(
+      <FinalizedDateCard event={{ ...baseEvent, finalizedSlotKey: "2026-01-01_2026-01-01" }} />,
+    );
+    expect(container).toBeEmptyDOMElement();
   });
 });

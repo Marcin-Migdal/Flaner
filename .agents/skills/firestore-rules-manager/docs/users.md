@@ -1,6 +1,6 @@
 # users/{userId}
 
-User profiles (doc id == Firebase Auth uid). Written by `AuthContext` (shared), Settings, the shell (theme / language) and Spooler settings; read everywhere to resolve names and avatars.
+User profiles (doc id == Firebase Auth uid). Only the profile module `shared/src/api/users` (`@flaner/shared/api`, #84) reads and writes this doc and `usernames`; its callers are `AuthContext` (shared), Settings, the shell (theme / language), Spooler settings, community and planning. Read everywhere to resolve names and avatars.
 
 ## Invariants
 - **I1** Only the user writes their own profile.
@@ -17,25 +17,26 @@ User profiles (doc id == Firebase Auth uid). Written by `AuthContext` (shared), 
 | `language` | `'pl' \| 'en'` | ✓ | |
 | `startupWaste` | number | – | Spooler setting (grams) |
 
-No other fields are accepted. Legacy profiles may still contain `email`: `AuthContext` (`loadProfile`) deletes it on every sign-in, and any write to such a profile must remove it (the whitelist applies to the whole document).
+**TS type:** `packages/shared/src/types/index.ts#UserProfile`
+
+No other fields are accepted (the whitelist applies to the whole document). Legacy `email` fields were removed from every profile, so the app no longer cleans them up.
 
 ## Write flows
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
-| Sign up (email) | `signUpWithEmailUser` (`shared/src/context/AuthContext`) | set `users/{me}` + set `usernames/{lower}`; on failure the new Auth account is deleted (`deleteUser`) | ✅ batch |
-| Legacy email clean-up | `loadProfile` (AuthContext, every sign-in) | update `email: deleteField()` | – |
-| First Google sign-in | `createProfileWithReservation` via `signInWithGoogleUser`, `onAuthStateChanged` (AuthContext) | set `users/{me}` + set `usernames/{lower}` (display name, random suffix on collision) | ✅ batch |
-| Edit profile | `updateUserProfile` (`settings/src/api/users`) | merge-set `users/{me}`, set new `usernames/*` when free + delete own old one | ✅ batch |
+| Sign up (email) | `createUserProfile` via `signUpWithEmailUser` (AuthContext) | set `users/{me}` + set `usernames/{lower}`; on failure the new Auth account is deleted (`deleteUser`) | ✅ batch |
+| First Google sign-in | `createUserProfileWithFreeUsername` via `signInWithGoogleUser`, `onAuthStateChanged` (AuthContext) | set `users/{me}` + set `usernames/{lower}` (display name, random suffix on collision) | ✅ batch |
+| Edit profile | `updateUserProfile` (Settings) | merge-set `users/{me}`, set new `usernames/*` when free + delete own old one | ✅ batch |
 | Legacy backfill | `scripts/backfill-usernames.mjs` (Admin SDK, bypasses rules) | reserve missing names, rename colliding profiles, delete stale reservations | ✅ batch per user |
-| Theme / language | `ShellLayout` (`core/src/components/ShellLayout`) | update `darkMode` / `language` | – |
-| Spooler startup waste | `updateStartupWaste` (`tools/src/api/settings`) | update `startupWaste` | – |
+| Theme / language | `updateUserProfile` (via `useUpdateUserPreferencesMutation`, `ShellLayout`) | merge-set `darkMode` / `language` | – |
+| Spooler startup waste | `updateUserProfile` (via `updateStartupWaste`, `tools/src/api/settings`) | merge-set `startupWaste` | – |
 
 ## Queries
 | Query | Endpoint | Allowed by |
 | --- | --- | --- |
-| `users` where `usernameLower` prefix | `searchUsers` (community), `searchParticipants` (planning) | read: signed in |
-| `users` where `documentId() in [...]` | `getGroupMembersAsParticipants`, `getEventParticipantsProfiles` (planning) | read: signed in |
-| `get users/{uid}` | `getUsers` (community), AuthContext, Spooler settings | read: signed in |
+| `users` where `usernameLower` prefix | `searchUserProfiles` (via `searchUsers` community, `searchParticipants` planning) | read: signed in |
+| `users` where `documentId() in [...]` (chunks of 30) | `getUserProfiles`, `subscribeToUserProfiles` (community profiles, planning participants) | read: signed in |
+| `get users/{uid}` | `getUserProfile` (AuthContext, group notifications sender, Spooler settings) | read: signed in |
 
 ## Access matrix
 | Actor \ operation | read | create / update (whitelisted fields) | write any other field (e.g. `email`) | delete |
@@ -79,7 +80,8 @@ match /users/{userId} {
 ```
 
 ## Tests
-- `firestore-tests/users/users.spec.ts` — profile reads, own writes, search queries, sign-up, Google and profile-edit batches, profiles / renames without a reservation denied, private / unknown fields denied, legacy email clean-up.
+- `firestore-tests/users/users.spec.ts` — profile reads, own writes, search queries, sign-up, Google and profile-edit batches, profiles / renames without a reservation denied, private / unknown fields denied.
+- `packages/shared/src/api/users/endpoints.emu.spec.ts` (`npm run test:emulator`) — the profile module against the real rules: reservation on sign-up / Google / rename, batch lookup, prefix search.
 
 ---
 
@@ -91,15 +93,17 @@ match /users/{userId} {
 - **F1** A friendship is created only by the receiver of a pending friend request (`friendRequests/{other}_{me}`), in both lists, in the same batch that deletes the request.
 - **F2** Only the owner of the list reads it.
 - **F3** Either side can end the friendship (deletes both docs).
-- **F4** Friendship docs are not edited (denormalized `username` / `avatarUrl` updates will need an explicit rule).
+- **F4** Friendship docs are not edited. They hold no copy of the friend's profile: lists read `users/{friendId}` live (#26), so a renamed / re-avatared friend shows up everywhere without a fan-out; a missing profile means the account was deleted.
 
 ### Schema
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `userRef` | DocumentReference (`users/{friendId}`) | ✓ | |
-| `username` / `usernameLower` | string | ✓ | denormalized from the friend's profile |
-| `avatarUrl` | string | ✓ | denormalized |
 | `createdAt` | number (ms) | ✓ | |
+
+**TS type:** `packages/community/src/api/users/types.ts#FriendshipDoc`
+
+Docs created before #26 may still carry `username` / `usernameLower` / `avatarUrl`; the app ignores them.
 
 ### Write flows
 All endpoints: `packages/community/src/api/users/endpoints.ts`.
@@ -132,7 +136,7 @@ match /friendships/{friendId} {
 
   allow read: if isAuthenticated() && request.auth.uid == userId;
   allow create: if isAuthenticated() &&
-    request.resource.data.keys().hasOnly(['userRef', 'username', 'usernameLower', 'avatarUrl', 'createdAt']) && (
+    request.resource.data.keys().hasOnly(['userRef', 'createdAt']) && (
       (request.auth.uid == userId && hasPendingRequestFrom(friendId)) ||
       (request.auth.uid == friendId && hasPendingRequestFrom(userId))
     );
@@ -141,7 +145,7 @@ match /friendships/{friendId} {
 ```
 
 ### Tests
-- `firestore-tests/users/friendships.spec.ts` — accept and remove batches, list reads, friendships without a request / edits denied.
+- `firestore-tests/users/friendships.spec.ts` — accept and remove batches, list reads, friendships without a request / with profile copies or extra fields / edits denied.
 
 ---
 
@@ -150,9 +154,11 @@ match /friendships/{friendId} {
 **Path:** `/users/{userId}/notifications/{notifId}` — inbox shown in the shell (`core`).
 
 ### Invariants
-- **N1** Only the recipient reads, marks as read and deletes notifications.
-- **N2** Any signed-in user can notify another user, but only in their own name (`senderUid == me`), unread, with a known client `type` and only the schema fields. `system_alert` is written only by admin tooling (bypasses rules).
-- **N3** The recipient can only flip `read`; the content is immutable.
+- **N1** Only the recipient lists their inbox, marks notifications as read and deletes any of them.
+- **N4** Notifications with a source (invitation, friend request, event, split group, settlement) have a deterministic id `{type}_{sourceId}` (outcome notifications — accepted / rejected / transferred / deleted — get a random id, so a repeated outcome by someone else never hits N5) so whoever resolves the source can find them. A **resolver** — the sender, an admin / owner of the notification's `groupId`, the owner of its `splitGroupId` — may `get` that one doc and delete it **only while it is unread** (read notifications stay). Deleting / reading a doc that does not exist is allowed (a resolving batch must not fail because the recipient already deleted it).
+- **N5** A valid new notification (own name, unread) may overwrite one with the same id when it is the caller's own (e.g. an event reopened twice) or already read (e.g. a re-added split participant invited by someone else); an unread notification from someone else is never replaced.
+- **N2** Any signed-in user can notify another user, but only in their own name (`senderUid == me`), unread, with a known client `type` and only the schema fields.
+- **N3** The recipient can only flip `read`; the content is immutable except for N5.
 
 ### Schema
 | Field | Type | Required | Notes |
@@ -164,20 +170,28 @@ match /friendships/{friendId} {
 | `read` | boolean | ✓ | `false` on create |
 | `eventId`, `eventName` | string | – | `event_*` types |
 | `splitGroupId`, `splitGroupName` | string | – | `split_*` types |
+| `groupId`, `groupName` | string | – | `group_*` types |
 
-`type`: `friend_request`, `friend_request_accepted`, `friend_request_rejected`, `group_invitation`, `system_alert`, `event_invitation`, `event_reopened`, `split_group_invitation`, `split_settlement_pending` (`core/src/api/notifications/types.ts`).
+**TS type:** `packages/shared/src/api/notifications/types.ts#AppNotification`
+
+`type`: `friend_request`, `friend_request_accepted`, `friend_request_rejected`, `group_invitation`, `group_invitation_accepted`, `group_invitation_rejected`, `group_request_accepted`, `group_request_rejected`, `group_ownership_transferred`, `group_deleted`, `event_invitation`, `event_reopened`, `split_group_invitation`, `split_settlement_pending` (`shared/src/api/notifications/types.ts`).
 
 ### Write flows
 | Flow | Endpoint | Writes |
 | --- | --- | --- |
 | Friend request sent / accepted / rejected | `sendFriendRequest`, `acceptFriendRequest`, `rejectFriendRequest` (community) | create in the other user's inbox |
-| Group invitation | `inviteUserToGroup` (community) | create in invitee's inbox |
+| Group invitation | `inviteUserToGroup` (community) | create in invitee's inbox, in the invitation batch |
+| Group invitation accepted / rejected | `acceptGroupInvitation`, `rejectGroupInvitation` (community) | create in the inviter's inbox, in the answer batch |
+| Join request accepted / rejected | `acceptJoinRequest`, `rejectJoinRequest` (community) | create in the requester's inbox, in the resolve batch |
+| Ownership transferred | `transferGroupOwnership` (community) | create in the new owner's inbox, in the transfer batch |
+| Group deleted | `deleteGroup` (community) | create per member (not the owner), in the final delete batch |
 | Event invitation / reopened | `createSchedulerEvent`, `unfinalizeSchedulerEvent` (planning) | create per participant, in the event batch |
 | Split group invitation | `createSplitGroup`, `addParticipantToGroup` (planning) | create per new participant, in the group batch / transaction |
 | Pending settlement | `createSettlement` (planning) | create in receiver's inbox, in the transaction |
 | Mark as read | `markNotificationAsRead`, `markAllNotificationsAsRead` (core) | update `read: true` (single / batch) |
+| Source resolved (N4) | group / friend / event / split flows (see their files) | `get` the deterministic-id notification, delete it in the resolving batch only while unread |
 
-Every writer sets `id` to the doc id.
+Every writer builds the doc with `createNotification` (`shared/src/api/notifications`), which sets `id` to the doc id and the sender fields from the sender's profile; source removal uses `getUnreadNotificationRefs` (batch) / `deleteIfUnread` (transaction) from the same module.
 
 ### Queries
 | Query | Endpoint | Allowed by |
@@ -189,28 +203,57 @@ Every writer sets `id` to the doc id.
 | Actor \ operation | read | create (own name, valid) | create (fake sender / unknown type / extra fields / `read: true`) | update `read` | update other fields | delete |
 | --- | --- | --- | --- | --- | --- | --- |
 | recipient | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ |
-| other signed-in user | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| sender | ✅ get only | ✅ | ❌ | ❌ | ✅ overwrite with a valid one | ✅ unread only |
+| any signed-in user | – | – | – | – | ✅ overwrite a **read** one with a valid one (N5) | – |
+| admin / owner of `groupId`, owner of `splitGroupId` | ✅ get only | – | – | ❌ | ❌ | ✅ unread only |
+| other signed-in user | ❌ (get of a missing doc ✅) | ✅ | ❌ | ❌ | ❌ | ❌ (missing doc ✅) |
 | unauthenticated | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ### Rules
 ```rules
 // Subkolekcja powiadomień (notifications)
 match /notifications/{notifId} {
-  allow read, delete: if isAuthenticated() && request.auth.uid == userId;
-  allow update: if isAuthenticated() && request.auth.uid == userId &&
-    onlyChanges(['read']);
-  allow create: if isAuthenticated() &&
-    request.resource.data.keys().hasOnly([
+  // Who resolves the source of this notification (N4): sender, staff of its group, owner of its split group
+  function isNotificationResolver() {
+    let data = resource.data;
+    let splitGroup = data.get('splitGroupId', null) != null
+      ? get(/databases/$(database)/documents/split_groups/$(data.splitGroupId))
+      : null;
+    return data.senderUid == request.auth.uid ||
+      (data.get('groupId', null) != null && isAdminOrOwner(data.groupId)) ||
+      (splitGroup != null && splitGroup.data.createdBy == request.auth.uid);
+  }
+
+  function isValidNotification() {
+    return request.resource.data.keys().hasOnly([
       'id', 'type', 'senderUid', 'senderUsername', 'senderAvatarUrl', 'createdAt', 'read',
-      'eventId', 'eventName', 'splitGroupId', 'splitGroupName'
+      'eventId', 'eventName', 'splitGroupId', 'splitGroupName', 'groupId', 'groupName'
     ]) &&
     request.resource.data.id == notifId &&
     request.resource.data.senderUid == request.auth.uid &&
     request.resource.data.read == false &&
     request.resource.data.type in [
       'friend_request', 'friend_request_accepted', 'friend_request_rejected', 'group_invitation',
+      'group_invitation_accepted', 'group_invitation_rejected', 'group_request_accepted', 'group_request_rejected',
+      'group_ownership_transferred', 'group_deleted',
       'event_invitation', 'event_reopened', 'split_group_invitation', 'split_settlement_pending'
     ];
+  }
+
+  allow list: if isAuthenticated() && request.auth.uid == userId;
+  allow get: if isAuthenticated() && (
+    request.auth.uid == userId || resource == null || isNotificationResolver()
+  );
+  allow create: if isAuthenticated() && isValidNotification();
+  allow update: if isAuthenticated() && (
+    (request.auth.uid == userId && onlyChanges(['read'])) ||
+    ((resource.data.senderUid == request.auth.uid || resource.data.read == true) && isValidNotification())
+  );
+  allow delete: if isAuthenticated() && (
+    request.auth.uid == userId ||
+    resource == null ||
+    (resource.data.read == false && isNotificationResolver())
+  );
 }
 ```
 
@@ -230,8 +273,8 @@ match /notifications/{notifId} {
 ### Write flows
 | Flow | Endpoint (community `groups/endpoints.ts`) | Writes |
 | --- | --- | --- |
-| Invite | `inviteUserToGroup` | set (after the group-side doc) |
-| Accept / reject | `acceptGroupInvitation`, `rejectGroupInvitation` | delete |
+| Invite | `inviteUserToGroup` | set (batch with the group-side doc and the notification) |
+| Accept / reject | `acceptGroupInvitation`, `rejectGroupInvitation` | delete (batch with the group-side doc; accept also creates the member doc) |
 | Delete group | `deleteGroup` | delete (by the owner) |
 
 ### Queries

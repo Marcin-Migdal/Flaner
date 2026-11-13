@@ -1,6 +1,7 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import userEvent from "@testing-library/user-event";
 import { DeleteTemplateModal } from "./DeleteTemplateModal";
 import type { FilamentTemplate } from "../../../../api/templates";
@@ -10,13 +11,7 @@ const { deleteMutationMock, fetchAssociatedSpoolsMock } = vi.hoisted(() => ({
   fetchAssociatedSpoolsMock: vi.fn(),
 }));
 
-const mockUser = { uid: "user-123" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({
-    user: mockUser,
-  }),
-}));
+const mockUser = createMockUser({ uid: "user-123" });
 
 vi.mock("../../../../api/templates", () => ({
   fetchAssociatedSpools: (...args: unknown[]) => fetchAssociatedSpoolsMock(...args),
@@ -24,7 +19,13 @@ vi.mock("../../../../api/templates", () => ({
 
 let mockDeleteIsPending = false;
 
-vi.mock("../../../../hooks", () => ({
+vi.mock("../../../../hooks", async () => ({
+  // The real query hook, over the mocked endpoint
+  useGetAssociatedSpoolsQuery: (
+    await vi.importActual<typeof import("../../../../hooks/api/query/useGetAssociatedSpoolsQuery")>(
+      "../../../../hooks/api/query/useGetAssociatedSpoolsQuery",
+    )
+  ).useGetAssociatedSpoolsQuery,
   useToolsTranslations: () => ({
     t: (key: string) => key,
   }),
@@ -46,6 +47,8 @@ const mockTemplate: FilamentTemplate = {
   colorHex: "#ffffff",
   defaultWeight: 1000,
 };
+
+const render = (ui: React.ReactElement) => renderWithProviders(ui, { user: mockUser });
 
 describe("DeleteTemplateModal", () => {
   beforeEach(() => {
@@ -136,8 +139,7 @@ describe("DeleteTemplateModal", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("handles error when fetchAssociatedSpools rejects", async () => {
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  it("falls back to the simple confirmation when fetchAssociatedSpools rejects", async () => {
     fetchAssociatedSpoolsMock.mockRejectedValueOnce(new Error("Network fail"));
 
     render(
@@ -148,10 +150,8 @@ describe("DeleteTemplateModal", () => {
       />
     );
 
-    await waitFor(() => {
-      expect(errorSpy).toHaveBeenCalled();
-    });
-    errorSpy.mockRestore();
+    await waitFor(() => expect(fetchAssociatedSpoolsMock).toHaveBeenCalledWith("user-123", "tmpl-1"));
+    expect(await screen.findByText("spooler.templates.deletePromptTitle")).toBeInTheDocument();
   });
 
   it("calls onClose when simple dialog is dismissed via Escape key", async () => {
@@ -167,6 +167,7 @@ describe("DeleteTemplateModal", () => {
       />
     );
 
+    await waitFor(() => expect(fetchAssociatedSpoolsMock).toHaveBeenCalled());
     await user.keyboard("{Escape}");
     expect(onClose).toHaveBeenCalled();
   });

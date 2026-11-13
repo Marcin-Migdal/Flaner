@@ -1,31 +1,20 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth } from "@flaner/shared/context";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { addLookupMaterial, type AddLookupMaterialInput } from "../../../../api/lookups";
-import { useInvalidateGetLookupMaterialsQuery } from "../../query/useGetLookupMaterialsQuery";
+import { spoolerInvalidation } from "../../queryKeys";
 
-export const useAddLookupMaterialMutation = (
-  options?: UseMutationOptions<string, Error, AddLookupMaterialInput>,
-) => {
-  const { user } = useAuth();
-  const invalidateMaterials = useInvalidateGetLookupMaterialsQuery();
-
-  return useMutation<string, Error, AddLookupMaterialInput>({
-    mutationFn: async (data: AddLookupMaterialInput) => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      return await addLookupMaterial(user.uid, data);
+export const useAddLookupMaterialMutation = (options?: UseMutationOptions<string, Error, AddLookupMaterialInput>) =>
+  useUserMutation<string, AddLookupMaterialInput>(
+    {
+      mutationKey: ["addLookupMaterial"],
+      mutationFn: (data, { uid }) => addLookupMaterial(uid, data),
+      invalidates: spoolerInvalidation.addLookupMaterial,
+      meta: {
+        successMessageKey: "tools:toasts.lookups.addMaterialSuccess",
+        errorMessageKey: "tools:toasts.lookups.addMaterialError",
+      },
     },
-    meta: {
-      successMessageKey: "tools:toasts.lookups.addMaterialSuccess",
-      errorMessageKey: "tools:toasts.lookups.addMaterialError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      invalidateMaterials();
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useAddLookupMaterialMutation;

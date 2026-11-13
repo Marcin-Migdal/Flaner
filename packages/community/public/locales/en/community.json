@@ -52,6 +52,7 @@
     "cancel": "Cancel"
   },
   "friendsList": {
+    "deletedAccount": "Deleted account",
     "placeholder": "Filter friends by username...",
     "empty": "You have no friends yet.",
     "remove": "Remove",
@@ -172,7 +173,8 @@
     "loading": "Loading...",
     "notFound": "Group not found.",
     "backToList": "Back to groups list",
-    "membersCount": "{{count}} members",
+    "membersCount_one": "{{count}} member",
+    "membersCount_other": "{{count}} members",
     "private": "Private",
     "public": "Public",
     "copyLinkBtn": "Copy link",
@@ -219,7 +221,8 @@
     "empty": "No invitations",
     "loading": "Loading...",
     "someone": "Someone",
-    "joining": "Joining..."
+    "joining": "Joining...",
+    "rejecting": "Rejecting..."
   },
   "inviteToGroup": {
     "title": "Invite Users",
@@ -296,5 +299,11 @@
   },
   "errors": {
     "notGroupMember": "You are not a member of this group, so you cannot send invitations."
+  },
+  "validation": {
+    "groupNameMin": "Group name must be at least 3 characters.",
+    "groupNameMax": "Group name can be at most 50 characters.",
+    "descriptionMax": "Description can be at most 255 characters.",
+    "avatarFile": "Choose an image file."
   }
 }

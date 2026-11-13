@@ -1,32 +1,16 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { rejectGroupInvitation } from '../../../../api/groups';
-import { useInvalidateUserGroupInvitationsQuery } from "../../query/useGetUserGroupInvitationsQuery";
-import { useInvalidateGroupPendingInvitationsQuery } from "../../query/useGetGroupPendingInvitationsQuery";
 import { reactQueryMeta } from "@flaner/shared/constants";
 
-
-export const useRejectGroupInvitationMutation = (
-  options?: UseMutationOptions<void, Error, { groupId: string; userId: string }>
-) => {
-  const invalidateUserGroupInvitations = useInvalidateUserGroupInvitationsQuery();
-  const invalidateGroupPendingInvitations = useInvalidateGroupPendingInvitationsQuery();
-
-
-
-  return useMutation<void, Error, { groupId: string; userId: string }>({
-    meta: reactQueryMeta.mutate,
-    mutationFn: ({ groupId, userId }) => rejectGroupInvitation(groupId, userId),
-    ...options,
-    onSuccess: async (...args) => {
-      const [, variables] = args;
-      invalidateUserGroupInvitations(variables.userId);
-      invalidateGroupPendingInvitations(variables.groupId);
-      
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
+export const useRejectGroupInvitationMutation = (options?: UseMutationOptions<void, Error, { groupId: string; userId: string }>) =>
+  useUserMutation<void, { groupId: string; userId: string }>(
+    {
+      mutationKey: ["rejectGroupInvitation"],
+      mutationFn: ({ groupId, userId }) => rejectGroupInvitation(groupId, userId),
+      meta: reactQueryMeta.mutate,
     },
-  });
-};
+    options,
+  );
 
 export default useRejectGroupInvitationMutation;

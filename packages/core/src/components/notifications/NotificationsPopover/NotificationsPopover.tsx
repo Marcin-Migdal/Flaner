@@ -10,18 +10,52 @@ import {
   TabsList,
   TabsTrigger,
   useSidebar,
+  Badge,
 } from "@flaner/ui-components";
 import { Bell, Check, Inbox, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "@flaner/shared/utils";
+import type { AppNotification } from "@flaner/shared/api";
 import { useNotifications } from "../../../hooks/useNotifications";
 import { useReadNotifications } from "../../../hooks";
+import { useOpenNotification } from "../../../hooks/useOpenNotification";
 import { NotificationCard } from "../NotificationCard";
+import { NotificationToast } from "../NotificationToast";
+
+const TOAST_DURATION_MS = 8000;
+// More at once (e.g. after reconnecting) would flood the screen; the rest wait in the popover
+const MAX_TOASTS = 3;
 
 export function NotificationsPopover() {
   const { isMobile } = useSidebar();
   const { t } = useTranslation("common");
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const openNotification = useOpenNotification();
+  const [open, setOpen] = useState(false);
+
+  const showToasts = (added: AppNotification[]) => {
+    // The open popover already lists them
+    if (open) return;
+
+    added.slice(0, MAX_TOASTS).forEach((notification) => {
+      toast.custom(
+        (toastId) => (
+          <NotificationToast
+            notification={notification}
+            onOpen={() => {
+              markAsRead(notification.id);
+              toast.dismiss(toastId);
+              void openNotification(notification);
+            }}
+            onClose={() => toast.dismiss(toastId)}
+          />
+        ),
+        { id: notification.id, duration: TOAST_DURATION_MS },
+      );
+    });
+  };
+
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications({ onNew: showToasts });
   const {
     data: readData,
     fetchNextPage,
@@ -29,7 +63,6 @@ export function NotificationsPopover() {
     isFetchingNextPage,
     isLoading: readLoading,
   } = useReadNotifications();
-  const [open, setOpen] = useState(false);
 
   const unreadNotifications = notifications.filter((n) => !n.read);
   const readNotifications = readData?.pages.flatMap((page) => page.notifications) || [];
@@ -45,9 +78,9 @@ export function NotificationsPopover() {
             </div>
             <span>{t("nav.notifications")}</span>
             {unreadCount > 0 && (
-              <span className="ml-auto bg-brand text-brand-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+              <Badge variant="solid" size="sm" className="ml-auto">
                 {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
+              </Badge>
             )}
           </SidebarMenuButton>
         </PopoverTrigger>
@@ -63,7 +96,7 @@ export function NotificationsPopover() {
                 <TabsTrigger value="new" className="text-xs">
                   {t("notifications.tabs.new")}
                   {unreadCount > 0 && (
-                    <span className="ml-1.5 bg-brand/20 text-brand px-1.5 py-0.5 rounded-full text-[10px] font-bold">
+                    <span className="ml-1.5 bg-brand/20 text-brand-text px-1.5 py-0.5 rounded-full text-3xs font-bold">
                       {unreadCount}
                     </span>
                   )}
@@ -77,7 +110,7 @@ export function NotificationsPopover() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 text-xs text-brand bg-brand/10 hover:bg-brand/20 border border-brand/20 rounded-lg shrink-0 px-2.5 flex items-center gap-1.5 font-semibold transition-all shadow-sm"
+                  className="h-8 text-xs text-brand-text bg-brand/10 hover:bg-brand/20 border border-brand/20 rounded-lg shrink-0 px-2.5 flex items-center gap-1.5 font-semibold transition-all shadow-sm"
                   onClick={() => markAllAsRead()}
                   title={t("notifications.markAllRead")}
                   aria-label={t("notifications.markAllRead")}

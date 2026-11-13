@@ -143,7 +143,7 @@ export const SplitGroupModal = ({ open, onOpenChange, groupToEdit = null, onSucc
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
                 {t("splits.actions.cancel")}
               </Button>
-              <Button type="submit" variant="brand" isBusy={isPending}>
+              <Button type="submit" variant="brand" isBusy={isPending || methods.formState.isSubmitting}>
                 {isEdit ? t("splits.actions.save") : t("splits.actions.createGroup")}
               </Button>
             </div>

@@ -5,8 +5,8 @@ export const rankedSlotCardVariants = cva(
   {
     variants: {
       status: {
-        winning: "bg-emerald-500/10 border-emerald-500 ring-2 ring-emerald-500/30",
-        top: "bg-card border-yellow-500/40 shadow-sm",
+        winning: "bg-success/10 border-success ring-2 ring-success/30",
+        top: "bg-card border-warning/40 shadow-sm",
         normal: "bg-card/70 border-border/60",
       },
     },
@@ -19,8 +19,8 @@ export const rankedSlotCardVariants = cva(
 export const rankedSlotProgressVariants = cva("h-full rounded-full transition-all duration-300", {
   variants: {
     status: {
-      top: "bg-amber-500",
-      normal: "bg-emerald-500",
+      top: "bg-warning",
+      normal: "bg-success",
     },
   },
   defaultVariants: {
@@ -41,7 +41,7 @@ export const rankedVoteButtonVariants = cva(
         no: "",
       },
       active: {
-        true: "text-white shadow-sm scale-105",
+        true: "shadow-sm scale-105",
         false: "hover:scale-105",
       },
     },
@@ -49,35 +49,35 @@ export const rankedVoteButtonVariants = cva(
       {
         vote: "yes",
         active: true,
-        class: "bg-vote-yes hover:bg-vote-yes-hover border-vote-yes-border/60",
+        class: "bg-vote-yes text-vote-yes-foreground hover:bg-vote-yes/90 border-vote-yes-border/60",
       },
       {
         vote: "yes",
         active: false,
         class:
-          "bg-vote-yes-tint text-vote-yes-text hover:bg-vote-yes/30 border-vote-yes-border/20 hover:border-vote-yes-border/50",
+          "bg-vote-yes-subtle text-vote-yes-text hover:bg-vote-yes/30 border-vote-yes-border/20 hover:border-vote-yes-border/50",
       },
       {
         vote: "maybe",
         active: true,
-        class: "bg-vote-maybe hover:bg-vote-maybe-hover border-vote-maybe-border/60",
+        class: "bg-vote-maybe text-vote-maybe-foreground hover:bg-vote-maybe/90 border-vote-maybe-border/60",
       },
       {
         vote: "maybe",
         active: false,
         class:
-          "bg-vote-maybe-tint text-vote-maybe-text hover:bg-vote-maybe/30 border-vote-maybe-border/20 hover:border-vote-maybe-border/50",
+          "bg-vote-maybe-subtle text-vote-maybe-text hover:bg-vote-maybe/30 border-vote-maybe-border/20 hover:border-vote-maybe-border/50",
       },
       {
         vote: "no",
         active: true,
-        class: "bg-vote-no hover:bg-vote-no-hover border-vote-no-border/60",
+        class: "bg-vote-no text-vote-no-foreground hover:bg-vote-no/90 border-vote-no-border/60",
       },
       {
         vote: "no",
         active: false,
         class:
-          "bg-vote-no-tint text-vote-no-text hover:bg-vote-no/30 border-vote-no-border/20 hover:border-vote-no-border/50",
+          "bg-vote-no-subtle text-vote-no-text hover:bg-vote-no/30 border-vote-no-border/20 hover:border-vote-no-border/50",
       },
     ],
     defaultVariants: {

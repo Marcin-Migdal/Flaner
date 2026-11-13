@@ -2,6 +2,7 @@
   "hub": {
     "event": "Event",
     "selectEvent": "Select event",
+    "addEvent": "Add event",
     "noEvents": "No events found",
     "participants": "Participants",
     "status": {
@@ -21,6 +22,9 @@
   "calendar": {
     "more": "more"
   },
+  "ranking": {
+    "title": "Ranked slots"
+  },
   "create": {
     "title": "Create new event",
     "participants": "Invite participants",
@@ -31,7 +35,8 @@
     "resultUser": "Friend"
   },
   "edit": {
-    "title": "Edit event"
+    "title": "Edit event",
+    "finalizedNotice": "This event is finalized: only its name and description can be changed. Reopen voting to change the rest."
   },
   "deleteModal": {
     "title": "Delete event",
@@ -94,7 +99,6 @@
     }
   },
   "errors": {
-    "userNotAuthenticated": "User is not authenticated.",
     "splitGroupMissing": "No split group selected.",
     "notAuthorizedToEditExpense": "Only the person who created this expense can edit it.",
     "notAuthorizedToDeleteExpense": "Only the person who created this expense can delete it.",
@@ -102,7 +106,8 @@
     "notAuthorizedToConfirmSettlement": "Only the receiver of this payment can confirm it.",
     "settlementVersionConflict": "Group balances changed while submitting the settlement. Please refresh and try again.",
     "settlementAmountExceedsDebt": "Settlement amount cannot exceed the current outstanding debt.",
-    "noOutstandingDebtToSettle": "No outstanding debt to settle between these members."
+    "noOutstandingDebtToSettle": "No outstanding debt to settle between these members.",
+    "settlementAlreadyPending": "A payment for this debt is already waiting for confirmation."
   },
   "splits": {
     "you": "You",
@@ -323,6 +328,7 @@
     "saving": "Saving...",
     "cancel": "Cancel",
     "delete": "Delete",
+    "edit": "Edit",
     "finalizeEvent": "Finalize Event Date",
     "finalizeShort": "Finalize",
     "rejectUnvoted": "Reject rest ({{count}})",

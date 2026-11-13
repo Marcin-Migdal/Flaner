@@ -1,16 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import type { SplitGroup } from "../../../../api/splits";
 import type { SplitGroupMember } from "../../../../hooks/useSplitGroupMembers";
 import { SplitGroupHeader } from "./SplitGroupHeader";
 
-const mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-1", username: "Alice", email: "alice@flaner.app" });
 
 vi.mock("../../../../hooks/api/query", () => ({
   useSearchParticipantsQuery: () => ({ data: [], isLoading: false }),
@@ -56,7 +52,8 @@ describe("SplitGroupHeader", () => {
         onBack={vi.fn()}
         onAddExpense={vi.fn()}
         onSettleUp={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     expect(screen.getByText("Camping Trip")).toBeInTheDocument();
@@ -76,7 +73,8 @@ describe("SplitGroupHeader", () => {
         onBack={vi.fn()}
         onAddExpense={onAddExpenseMock}
         onSettleUp={onSettleUpMock}
-      />
+      />,
+      { user: mockUser },
     );
 
     const addExpenseBtn = screen.getByRole("button", { name: "splits.actions.addExpense" });
@@ -101,7 +99,8 @@ describe("SplitGroupHeader", () => {
         onBack={onBackMock}
         onAddExpense={vi.fn()}
         onSettleUp={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     const backBtn = screen.getByRole("button", { name: "splits.dashboard.back" });
@@ -119,6 +118,7 @@ describe("SplitGroupHeader", () => {
         onAddExpense={vi.fn()}
         onSettleUp={vi.fn()}
       />,
+      { user: mockUser },
     );
 
     expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
@@ -140,6 +140,7 @@ describe("SplitGroupHeader", () => {
         onAddExpense={vi.fn()}
         onSettleUp={vi.fn()}
       />,
+      { user: mockUser },
     );
 
     const avatarButtons = screen.getAllByRole("button", { name: "splits.members.title" });
@@ -173,6 +174,7 @@ describe("SplitGroupHeader", () => {
         onAddExpense={vi.fn()}
         onSettleUp={vi.fn()}
       />,
+      { user: mockUser },
     );
 
     const overflowBtn = screen.getByText("+2");

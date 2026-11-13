@@ -14,7 +14,7 @@ Emitted first in `firestore.rules`, before any collection. Helpers defined here 
 | `moderator` | 2 | `inviteMembers` |
 | `member` | 1 | none |
 
-`editGroup` is `false` for every role except `owner` unless explicitly granted in `rolePermissions`. Client mirror: `DEFAULT_ROLE_PERMISSIONS` in `packages/community/src/api/groups/types.ts` — keep both in sync.
+`editGroup` is `false` for every role except `owner` unless explicitly granted in `rolePermissions`. Client mirror: `DEFAULT_ROLE_PERMISSIONS` in `packages/community/src/api/groups/types.ts` and `GROUP_ROLE_PRIORITY` in `packages/community/src/api/groups/permissions/permissions.ts` — keep both sides in sync. Every UI permission decision comes from `getGroupAuthorization` (same folder).
 
 ## Pattern: user-owned documents
 Used by the Spooler collections (`spools`, `templates`, `lookup_materials`, `lookup_types`, `lookup_colors`): every doc has a `userId` and is private to that user.

@@ -45,13 +45,13 @@ export const SchedulerEventHeader = ({
 
   return (
     <div className="px-4 pt-4 pb-2 flex flex-col">
-      <h3 className="text-[11px] font-bold text-muted-foreground/50 uppercase tracking-widest mb-3 px-1">
+      <h3 className="text-2xs font-bold text-muted-foreground/50 uppercase tracking-widest mb-3 px-1">
         {t("hub.event")}
       </h3>
       <div className="flex gap-1.5 md:gap-3 items-center">
         <div className="flex-1 min-w-0">
           {isEventsLoading ? (
-            <div className="h-9 md:h-10 bg-white/5 rounded-xl animate-pulse" />
+            <div className="h-9 md:h-10 bg-surface-subtle rounded-xl animate-pulse" />
           ) : events && events.length > 0 ? (
             <Select
               variant="glass"
@@ -73,7 +73,7 @@ export const SchedulerEventHeader = ({
                           <button
                             type="button"
                             onClick={(e) => rawEvent && onEditEvent(rawEvent, e)}
-                            className="hover:bg-white/10 hover:text-foreground text-muted-foreground p-1 rounded-lg transition-colors"
+                            className="hover:bg-surface-hover hover:text-foreground text-muted-foreground p-1 rounded-lg transition-colors"
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
@@ -99,7 +99,7 @@ export const SchedulerEventHeader = ({
               }}
             />
           ) : (
-            <div className="h-9 md:h-10 flex items-center px-4 text-sm text-muted-foreground bg-white/5 border border-white/5 rounded-xl">
+            <div className="h-9 md:h-10 flex items-center px-4 text-sm text-muted-foreground bg-surface-subtle border border-border-subtle rounded-xl">
               {t("hub.noEvents")}
             </div>
           )}
@@ -112,7 +112,7 @@ export const SchedulerEventHeader = ({
               variant="ghost"
               size="icon"
               onClick={(e) => onEditEvent(activeEvent, e)}
-              className="md:hidden shrink-0 size-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all text-muted-foreground hover:text-foreground active:scale-95 flex items-center justify-center"
+              className="md:hidden shrink-0 size-9 rounded-xl bg-surface-subtle hover:bg-surface-hover border border-border-subtle transition-all text-muted-foreground hover:text-foreground active:scale-95 flex items-center justify-center"
               title={t("actions.edit")}
             >
               <Pencil className="size-3.5" />
@@ -123,7 +123,7 @@ export const SchedulerEventHeader = ({
               variant="ghost"
               size="icon"
               onClick={() => onDeleteEvent({ id: activeEvent.id, name: activeEvent.name })}
-              className="md:hidden shrink-0 size-9 rounded-xl bg-white/5 hover:bg-destructive/20 border border-white/5 transition-all text-muted-foreground hover:text-destructive active:scale-95 flex items-center justify-center"
+              className="md:hidden shrink-0 size-9 rounded-xl bg-surface-subtle hover:bg-destructive/20 border border-border-subtle transition-all text-muted-foreground hover:text-destructive active:scale-95 flex items-center justify-center"
               title={t("actions.delete")}
             >
               <Trash2 className="size-3.5" />
@@ -168,7 +168,7 @@ export const SchedulerEventHeader = ({
                   onClick={onFinalizeClick}
                   title={t("actions.finalizeEvent")}
                 >
-                  <CheckCircle className="w-4 h-4 text-brand shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-brand-text shrink-0" />
                   <span className="truncate">
                     {unvotedCount > 0 ? t("actions.finalizeShort") : t("actions.finalizeEvent")}
                   </span>

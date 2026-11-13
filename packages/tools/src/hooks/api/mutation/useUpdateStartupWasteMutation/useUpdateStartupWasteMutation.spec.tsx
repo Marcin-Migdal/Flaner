@@ -1,15 +1,8 @@
-import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient, createMockUser } from "@flaner/test-utils";
-import { useAuth } from "@flaner/shared/context";
+import { waitFor } from "@testing-library/react";
+import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
 import * as settingsApi from "../../../../api/settings";
 import { useUpdateStartupWasteMutation } from "./useUpdateStartupWasteMutation";
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: vi.fn(),
-}));
 
 vi.mock("../../../../api/settings", () => ({
   updateStartupWaste: vi.fn(),
@@ -20,46 +13,25 @@ describe("useUpdateStartupWasteMutation", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useAuth).mockReturnValue({
-      user: mockUser,
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      updateUser: vi.fn(),
-    });
   });
-
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
 
   it("calls updateStartupWaste and invalidates startupWaste query", async () => {
     vi.mocked(settingsApi.updateStartupWaste).mockResolvedValueOnce(undefined);
 
-    const { Wrapper, queryClient } = createWrapper();
+    const { result, queryClient } = renderHookWithProviders(() => useUpdateStartupWasteMutation(), { user: mockUser });
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-    const { result } = renderHook(() => useUpdateStartupWasteMutation(), { wrapper: Wrapper });
     result.current.mutate(25);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(settingsApi.updateStartupWaste).toHaveBeenCalledWith("user-1", 25);
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["startupWaste", "user-1"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["spooler", "startupWaste", "user-1"] });
   });
 
   it("calls options.onSuccess when provided", async () => {
     vi.mocked(settingsApi.updateStartupWaste).mockResolvedValueOnce(undefined);
     const onSuccessMock = vi.fn();
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useUpdateStartupWasteMutation({ onSuccess: onSuccessMock }), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useUpdateStartupWasteMutation({ onSuccess: onSuccessMock }), { user: mockUser });
 
     result.current.mutate(25);
 
@@ -68,18 +40,7 @@ describe("useUpdateStartupWasteMutation", () => {
   });
 
   it("throws error if user is not authenticated", async () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: null,
-      isLoading: false,
-      signOutUser: vi.fn(),
-      signInWithGoogleUser: vi.fn(),
-      signInWithEmailUser: vi.fn(),
-      signUpWithEmailUser: vi.fn(),
-      updateUser: vi.fn(),
-    });
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useUpdateStartupWasteMutation(), { wrapper: Wrapper });
+    const { result } = renderHookWithProviders(() => useUpdateStartupWasteMutation(), { user: null });
 
     result.current.mutate(25);
 

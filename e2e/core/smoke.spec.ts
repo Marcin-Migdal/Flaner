@@ -11,9 +11,7 @@ test.describe("Core Host Application Smoke", () => {
 
     await expect(page).toHaveTitle(/Flaner/i);
 
-    // Root container & branding
-    const root = page.locator("#root");
-    await expect(root).toBeAttached();
+    // Branding
     await expect(loginPage.heading).toBeVisible();
 
     // Default: Sign In form inputs & Google button

@@ -1,40 +1,19 @@
-import { useController, type UseControllerProps, type FieldValues, type FieldPath } from "react-hook-form";
-import { TextArea, TextAreaProps } from "../TextArea";
+import type { FieldPath, FieldValues } from "react-hook-form";
+import { useFormField, type FormFieldProps } from "../../hooks/useFormField";
+import { TextArea, type TextAreaProps } from "../TextArea";
 
 export type FormTextAreaProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
-> = Omit<TextAreaProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur"> &
-  UseControllerProps<TFieldValues, TName>;
+> = FormFieldProps<TextAreaProps, TFieldValues, TName>;
 
 export function FormTextArea<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
->({
-  name,
-  rules,
-  shouldUnregister,
-  defaultValue,
-  control,
-  disabled,
-  ...props
-}: FormTextAreaProps<TFieldValues, TName>) {
-  const { field, fieldState } = useController({
-    name,
-    rules,
-    shouldUnregister,
-    defaultValue,
-    control,
-    disabled,
-  });
+>(props: FormTextAreaProps<TFieldValues, TName>) {
+  const { field, error, rest } = useFormField(props);
 
-  return (
-    <TextArea
-      {...props}
-      {...field}
-      error={fieldState.error?.message}
-    />
-  );
+  return <TextArea {...rest} {...field} error={error} />;
 }
 
 export default FormTextArea;

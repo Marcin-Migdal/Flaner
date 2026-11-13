@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Archive, Ban, Loader2, Plus, ShoppingBag } from "lucide-react";
 import { Button, ConfirmationPopup } from "@flaner/ui-components";
-import type { FilamentSpool } from "../../../api/spools";
+import type { FilamentSpool, RecordUsageResult, SpoolInput } from "../../../api/spools";
 import type { FilamentTemplate } from "../../../api/templates";
 import {
   useGetSpoolsQuery,
@@ -10,12 +10,15 @@ import {
   useDeleteSpoolMutation,
   useToolsTranslations,
 } from "../../../hooks";
+import { nextSpoolPrefill } from "../../../utils/spoolLifecycle";
 import { SpoolItem } from "../SpoolItem";
 import { FinishedSpoolItem } from "../FinishedSpoolItem";
 import { SpoolFormModal } from "../modals/SpoolFormModal";
 import { QuickUsageModal } from "../modals/QuickUsageModal";
 import { SpoolHistoryModal } from "../modals/SpoolHistoryModal";
 import { CloneSpoolPromptModal } from "../modals/CloneSpoolPromptModal";
+
+type SpoolForm = { mode: "add" } | { mode: "edit"; spool: FilamentSpool } | { mode: "clone"; prefill: SpoolInput };
 
 type SpoolsTabProps = {
   templates: FilamentTemplate[];
@@ -28,10 +31,7 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
 }) => {
   const { t } = useToolsTranslations();
 
-  // Modal / Form States
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isCloneMode, setIsCloneMode] = useState(false);
-  const [editingSpool, setEditingSpool] = useState<FilamentSpool | null>(null);
+  const [spoolForm, setSpoolForm] = useState<SpoolForm | null>(null);
   const [deletingSpool, setDeletingSpool] = useState<FilamentSpool | null>(null);
 
   // Quick Usage States
@@ -46,10 +46,8 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
   // Manual finish confirm State
   const [manualFinishSpool, setManualFinishSpool] = useState<FilamentSpool | null>(null);
 
-  // Clone Trigger States (when spool goes <= 0)
-  const [clonePromptSpool, setClonePromptSpool] = useState<FilamentSpool | null>(null);
-  const [cloneCarryoverUsage, setCloneCarryoverUsage] = useState<number>(0);
-  const [clonePrevCurrentWeight, setClonePrevCurrentWeight] = useState<number>(0);
+  // A print emptied a spool: the transaction result, offered as the next spool
+  const [runOut, setRunOut] = useState<RecordUsageResult | null>(null);
 
   // Fetch Spools
   const { data: spools = [], isLoading } = useGetSpoolsQuery();
@@ -70,19 +68,8 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
   const activeSpools = spools.filter((s) => !s.isFinished);
   const finishedSpools = spools.filter((s) => s.isFinished);
 
-  const handleOpenAdd = () => {
-    setEditingSpool(null);
-    setIsCloneMode(false);
-    setIsFormOpen(true);
-  };
-
-  const handleCloneSpool = (spool: FilamentSpool, carryover: number = 0) => {
-    setEditingSpool(spool);
-    setIsCloneMode(true);
-    setCloneCarryoverUsage(carryover);
-    setClonePrevCurrentWeight(spool.currentWeight);
-    setIsFormOpen(true);
-  };
+  const openClone = (spool: FilamentSpool, carryover: number) =>
+    setSpoolForm({ mode: "clone", prefill: nextSpoolPrefill(spool, carryover) });
 
   return (
     <div className="w-full space-y-8">
@@ -90,7 +77,7 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="text-left">
           <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <ShoppingBag className="size-5 text-brand" />
+            <ShoppingBag className="size-5 text-brand-text" />
             {t("spooler.spools.activeSpools")} ({activeSpools.length})
           </h2>
         </div>
@@ -103,7 +90,7 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
             </Button>
           </div>
         ) : (
-          <Button onClick={handleOpenAdd} className="flex items-center gap-2 self-start sm:self-auto">
+          <Button onClick={() => setSpoolForm({ mode: "add" })} className="flex items-center gap-2 self-start sm:self-auto">
             <Plus className="size-4" />
             <span>{t("spooler.spools.addSpool")}</span>
           </Button>
@@ -113,7 +100,7 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
       {/* Active Spools Section */}
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="size-8 text-brand animate-spin" />
+          <Loader2 className="size-8 text-brand-text animate-spin" />
         </div>
       ) : activeSpools.length === 0 ? (
         <div className="w-full bg-card/40 border border-dashed border-border rounded-2xl py-12 px-4 text-center">
@@ -127,11 +114,7 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
               key={spool.id}
               spool={spool}
               onRecordPrint={() => setUsageSpool(spool)}
-              onEdit={() => {
-                setEditingSpool(spool);
-                setIsCloneMode(false);
-                setIsFormOpen(true);
-              }}
+              onEdit={() => setSpoolForm({ mode: "edit", spool })}
               onMarkFinished={() => setManualFinishSpool(spool)}
               onDelete={() => setDeletingSpool(spool)}
               onViewHistory={() => setHistorySpool(spool)}
@@ -156,7 +139,7 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
               <FinishedSpoolItem
                 key={spool.id}
                 spool={spool}
-                onClone={() => handleCloneSpool(spool)}
+                onClone={() => openClone(spool, 0)}
                 onDelete={() => setDeletingSpool(spool)}
                 onViewHistory={() => setHistorySpool(spool)}
               />
@@ -167,17 +150,11 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
 
       {/* Spool Form Modal */}
       <SpoolFormModal
-        isOpen={isFormOpen}
-        onClose={() => {
-          setIsFormOpen(false);
-          setIsCloneMode(false);
-          setEditingSpool(null);
-        }}
+        isOpen={!!spoolForm}
+        onClose={() => setSpoolForm(null)}
         templates={templates}
-        initialData={editingSpool}
-        isCloneMode={isCloneMode}
-        cloneCarryoverUsage={cloneCarryoverUsage}
-        clonePrevCurrentWeight={clonePrevCurrentWeight}
+        initialData={spoolForm?.mode === "edit" ? spoolForm.spool : null}
+        clonePrefill={spoolForm?.mode === "clone" ? spoolForm.prefill : null}
       />
 
       {/* Quick Usage Modal */}
@@ -186,11 +163,7 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
           isOpen={!!usageSpool}
           onClose={() => setUsageSpool(null)}
           spool={usageSpool}
-          onFinished={(finishedSpool, usage) => {
-            setClonePromptSpool(finishedSpool);
-            setCloneCarryoverUsage(usage);
-            setClonePrevCurrentWeight(finishedSpool.currentWeight);
-          }}
+          onRunOut={setRunOut}
         />
       )}
 
@@ -205,10 +178,9 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
 
       {/* Clone Spool Prompt Modal */}
       <CloneSpoolPromptModal
-        isOpen={!!clonePromptSpool}
-        onClose={() => setClonePromptSpool(null)}
-        spool={clonePromptSpool}
-        onConfirm={(spool) => handleCloneSpool(spool, cloneCarryoverUsage)}
+        isOpen={!!runOut}
+        onClose={() => setRunOut(null)}
+        onConfirm={() => runOut && openClone(runOut.spool, runOut.carryover)}
       />
 
       {/* Delete Spool Confirmation */}

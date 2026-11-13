@@ -27,7 +27,7 @@ export function LoadingFallback({ className, text, ...props }: LoadingFallbackPr
         <div className="animate-spin rounded-full h-10 w-10 border-2 border-transparent border-t-brand border-r-brand" />
       </div>
       {renderedText !== false && (
-        <p className="text-sm text-muted-foreground animate-pulse font-medium">
+        <p className="text-sm text-muted-foreground font-medium">
           {renderedText}
         </p>
       )}

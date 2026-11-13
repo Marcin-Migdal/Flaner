@@ -1,14 +1,10 @@
-import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createTestQueryClient } from "@flaner/test-utils";
+import { waitFor } from "@testing-library/react";
+import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
 import { useUpdateGroupMutation } from "./useUpdateGroupMutation";
 import * as groupsApi from "../../../../api/groups";
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: vi.fn(() => ({ user: { uid: "user-123" } })),
-}));
+const mockUser = createMockUser({ uid: "user-123" });
 
 vi.mock("../../../../api/groups", () => ({
   updateGroup: vi.fn(),
@@ -19,21 +15,11 @@ describe("useUpdateGroupMutation", () => {
     vi.clearAllMocks();
   });
 
-  const createWrapper = () => {
-    const queryClient = createTestQueryClient();
-    const Wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    return { Wrapper, queryClient };
-  };
-
-  it("calls updateGroup and invalidates relevant queries", async () => {
+  it("calls updateGroup and refreshes only the global group search", async () => {
     vi.mocked(groupsApi.updateGroup).mockResolvedValueOnce(undefined);
 
-    const { Wrapper, queryClient } = createWrapper();
+    const { result, queryClient } = renderHookWithProviders(() => useUpdateGroupMutation(), { user: mockUser });
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-    const { result } = renderHook(() => useUpdateGroupMutation(), { wrapper: Wrapper });
 
     result.current.mutate({
       groupId: "grp-1",
@@ -43,19 +29,14 @@ describe("useUpdateGroupMutation", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(groupsApi.updateGroup).toHaveBeenCalledWith("grp-1", { name: "Updated Name" });
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["group", "grp-1"] });
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["userGroups", "user-123"] });
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["searchGlobalGroups"] });
+    // Only the fetched global search is stale; the group and the user's groups are listener-backed
+    expect(invalidateSpy.mock.calls).toEqual([[{ queryKey: ["groups", "search"] }]]);
   });
 
   it("calls custom onSuccess when provided in options", async () => {
     vi.mocked(groupsApi.updateGroup).mockResolvedValueOnce(undefined);
     const onSuccessMock = vi.fn();
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useUpdateGroupMutation({ onSuccess: onSuccessMock }), {
-      wrapper: Wrapper,
-    });
+    const { result } = renderHookWithProviders(() => useUpdateGroupMutation({ onSuccess: onSuccessMock }), { user: mockUser });
 
     result.current.mutate({
       groupId: "grp-1",

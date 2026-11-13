@@ -28,7 +28,7 @@ describe("FinalizeEventModal", () => {
       {
         start: "2026-07-01",
         end: "2026-07-01",
-        color: "#3b82f6",
+        color: "blue",
         votes: {
           "user-1": "yes",
           "user-2": "maybe",
@@ -37,7 +37,7 @@ describe("FinalizeEventModal", () => {
       {
         start: "2026-07-05",
         end: "2026-07-06",
-        color: "#10b981",
+        color: "teal",
         votes: {
           "user-1": "yes",
           "user-2": "yes",
@@ -73,7 +73,7 @@ describe("FinalizeEventModal", () => {
 
     expect(mockFinalizeMutateAsync).toHaveBeenCalledWith({
       eventId: "evt-123",
-      finalizedSlotIndex: 1, // slot with 100% score is index 1
+      slotKey: "2026-07-05_2026-07-06", // the slot with a 100% score
     });
     expect(handleOpenChange).toHaveBeenCalledWith(false);
   });
@@ -114,45 +114,14 @@ describe("FinalizeEventModal", () => {
 
     expect(mockFinalizeMutateAsync).toHaveBeenCalledWith({
       eventId: "evt-123",
-      finalizedSlotIndex: 0,
+      slotKey: "2026-07-01_2026-07-01",
     });
   });
 
-  it("handles cross-year date slots and tie-breaking by yesCount and originalIndex", () => {
+  it("shows the full dates of a slot that spans two years", () => {
     const crossYearEvent: SchedulerEvent = {
       ...mockEvent,
-      proposedDates: [
-        {
-          start: "2026-12-30",
-          end: "2027-01-02",
-          color: "#ef4444",
-          votes: { "user-1": "maybe" },
-        },
-        {
-          start: "2026-08-01",
-          end: "2026-08-02",
-          color: "#10b981",
-          votes: { "user-1": "yes" }, // score 1.0, yesCount 1
-        },
-        {
-          start: "2026-08-03",
-          end: "2026-08-04",
-          color: "#06b6d4",
-          votes: { "user-2": "yes" }, // score 1.0, yesCount 1 (triggers a.originalIndex - b.originalIndex)
-        },
-        {
-          start: "2026-08-05",
-          end: "2026-08-06",
-          color: "#3b82f6",
-          votes: { "user-1": "maybe", "user-2": "maybe" }, // score 1.0, yesCount 0
-        },
-        {
-          start: "2026-09-01",
-          end: "2026-09-02",
-          color: "#8b5cf6",
-          votes: {}, // score 0
-        },
-      ],
+      proposedDates: [{ start: "2026-12-30", end: "2027-01-02", color: "pink", votes: { "user-1": "maybe" } }],
     };
 
     renderWithProviders(
@@ -188,7 +157,7 @@ describe("FinalizeEventModal", () => {
         {
           start: "2026-07-01",
           end: "2026-07-01",
-          color: "#3b82f6",
+          color: "blue",
           votes: undefined,
         },
       ],

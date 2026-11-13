@@ -4,6 +4,7 @@ import React, { useId, useRef, useState } from "react";
 import { Button } from "../ui/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "../ui/field";
 import { Input } from "../ui/input";
+import { useUiTranslations } from "../../hooks/useUiTranslations";
 
 export interface IconTextFieldProps extends Omit<React.ComponentPropsWithoutRef<"input">, "id" | "type" | "size"> {
   id?: string;
@@ -42,6 +43,8 @@ export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldPro
     },
     ref,
   ) => {
+    const { t } = useUiTranslations();
+    const accessibleName = label ?? props.placeholder;
     const defaultId = useId();
     const inputId = customId || defaultId;
     const [isExpandedState, setIsExpandedState] = useState(false);
@@ -128,24 +131,11 @@ export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldPro
         {label && <FieldLabel htmlFor={inputId}>{label}</FieldLabel>}
 
         <div
-          role={!isExpanded ? "button" : undefined}
-          tabIndex={!isExpanded ? 0 : undefined}
-          onClick={!isExpanded ? handleToggleExpand : undefined}
-          onKeyDown={
-            !isExpanded
-              ? (e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    handleToggleExpand();
-                  }
-                }
-              : undefined
-          }
           className={cn(
             "relative flex w-full items-center overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] rounded-lg border",
             containerHeight,
             isExpanded
-              ? "border-input bg-transparent dark:bg-input/30 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/50"
+              ? "border-input-border bg-transparent dark:bg-input/30 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/50"
               : "border-border bg-card hover:bg-accent cursor-pointer text-foreground hover:text-accent-foreground shadow-sm",
             error && isExpanded
               ? "border-destructive focus-within:border-destructive focus-within:ring-destructive/20 dark:border-destructive/50 dark:focus-within:ring-destructive/40"
@@ -159,14 +149,18 @@ export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldPro
             type="button"
             variant="ghost"
             size="icon"
-            onClick={isExpanded ? handleToggleExpand : undefined}
+            onClick={handleToggleExpand}
             disabled={props.disabled}
-            tabIndex={isExpanded ? 0 : -1}
+            // Collapsed: the button is the trigger. Expanded: it collapses the field. alwaysOpen: decorative (click focuses the input).
+            tabIndex={alwaysOpen ? -1 : 0}
+            aria-hidden={alwaysOpen || undefined}
+            aria-label={alwaysOpen ? undefined : isExpanded ? t("collapse") : accessibleName}
+            aria-expanded={alwaysOpen ? undefined : isExpanded}
             className={cn(
               "shrink-0 !h-full !p-0 rounded-none transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex items-center justify-center !w-full !border-y-0 !border-l-0",
               expandedButtonMaxWidth,
               !isExpanded
-                ? "pointer-events-none bg-transparent text-inherit !border-r-0"
+                ? "bg-transparent hover:bg-transparent text-inherit !border-r-0"
                 : "text-muted-foreground hover:text-foreground !border-r border-border/30 dark:border-border/40",
             )}
           >
@@ -192,6 +186,7 @@ export const IconTextField = React.forwardRef<HTMLInputElement, IconTextFieldPro
               variant="ghost"
               size="icon-xs"
               onClick={handleClearClick}
+              aria-label={t("clear")}
               disabled={props.disabled || !isExpanded}
               tabIndex={!isExpanded ? -1 : 0}
               className={cn(

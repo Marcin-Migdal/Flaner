@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { CheckCircle2, Edit2, History, MoreVertical, Printer, RotateCcw, Trash2 } from "lucide-react";
 import {
   Button,
@@ -9,7 +9,7 @@ import {
 } from "@flaner/ui-components";
 import type { FilamentSpool } from "../../../api/spools";
 import { useGetLastSpoolPrintQuery, useToolsTranslations } from "../../../hooks";
-import { bambuFilaments } from "../../../utils/bambuFilaments";
+import { resolveColorHex } from "../../../utils/filamentCatalog";
 
 type SpoolItemProps = {
   spool: FilamentSpool;
@@ -34,21 +34,7 @@ export const SpoolItem: React.FC<SpoolItemProps> = ({
   const { data: lastPrint } = useGetLastSpoolPrintQuery(spool.id);
   const percentage = Math.max(0, Math.min(100, (spool.currentWeight / spool.initialWeight) * 100));
 
-  const displayHex = useMemo(() => {
-    if (spool.colorHex && spool.colorHex.toLowerCase() !== "#ffffff") {
-      return spool.colorHex;
-    }
-    const mat = bambuFilaments.find(
-      (m) => m.name.toLowerCase() === spool.material?.toLowerCase(),
-    );
-    const typ = mat?.types.find(
-      (t) => t.name.toLowerCase() === spool.type?.toLowerCase(),
-    );
-    const col = typ?.colors.find(
-      (c) => c.name.toLowerCase() === spool.colorName?.toLowerCase(),
-    );
-    return col?.hex || spool.colorHex || "#ffffff";
-  }, [spool.colorHex, spool.material, spool.type, spool.colorName]);
+  const displayHex = resolveColorHex(spool);
 
   return (
     <article
@@ -113,7 +99,7 @@ export const SpoolItem: React.FC<SpoolItemProps> = ({
                 <span>{t("spooler.spools.editSpool")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onMarkFinished}>
-                <CheckCircle2 className="size-4 mr-2 text-emerald-500" />
+                <CheckCircle2 className="size-4 mr-2 text-success-text" />
                 <span>{t("spooler.spools.markFinished")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
@@ -131,7 +117,7 @@ export const SpoolItem: React.FC<SpoolItemProps> = ({
           <span>{t("spooler.spools.remainingWeight")}:</span>
           <span className="font-bold text-sm text-foreground">
             {spool.currentWeight}g{" "}
-            <span className="text-[11px] text-muted-foreground font-normal">/ {spool.initialWeight}g</span>
+            <span className="text-2xs text-muted-foreground font-normal">/ {spool.initialWeight}g</span>
           </span>
         </div>
 

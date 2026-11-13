@@ -2,6 +2,7 @@
   "hub": {
     "event": "Wydarzenie",
     "selectEvent": "Wybierz wydarzenie",
+    "addEvent": "Dodaj wydarzenie",
     "noEvents": "Brak wydarzeń",
     "participants": "Uczestnicy",
     "status": {
@@ -21,6 +22,9 @@
   "calendar": {
     "more": "więcej"
   },
+  "ranking": {
+    "title": "Ranking terminów"
+  },
   "create": {
     "title": "Utwórz nowe wydarzenie",
     "participants": "Zaproś uczestników",
@@ -31,7 +35,8 @@
     "resultUser": "Znajomy"
   },
   "edit": {
-    "title": "Edytuj wydarzenie"
+    "title": "Edytuj wydarzenie",
+    "finalizedNotice": "Wydarzenie jest sfinalizowane: możesz zmienić tylko nazwę i opis. Aby zmienić resztę, wznów głosowanie."
   },
   "deleteModal": {
     "title": "Usuń wydarzenie",
@@ -94,7 +99,6 @@
     }
   },
   "errors": {
-    "userNotAuthenticated": "Użytkownik nie jest uwierzytelniony.",
     "splitGroupMissing": "Nie wybrano rozliczenia.",
     "notAuthorizedToEditExpense": "Tylko osoba, która utworzyła ten wydatek, może go edytować.",
     "notAuthorizedToDeleteExpense": "Tylko osoba, która utworzyła ten wydatek, może go usunąć.",
@@ -102,7 +106,8 @@
     "notAuthorizedToConfirmSettlement": "Tylko odbiorca tej spłaty może ją potwierdzić.",
     "settlementVersionConflict": "Salda w grupie uległy zmianie w trakcie rejestrowania spłaty. Odśwież dane i spróbuj ponownie.",
     "settlementAmountExceedsDebt": "Kwota spłaty nie może być wyższa niż aktualne zadłużenie.",
-    "noOutstandingDebtToSettle": "Brak zaległego zadłużenia do spłaty między tymi uczestnikami."
+    "noOutstandingDebtToSettle": "Brak zaległego zadłużenia do spłaty między tymi uczestnikami.",
+    "settlementAlreadyPending": "Spłata tego długu czeka już na potwierdzenie."
   },
   "splits": {
     "you": "Ty",
@@ -329,6 +334,7 @@
     "saving": "Zapisywanie...",
     "cancel": "Anuluj",
     "delete": "Usuń",
+    "edit": "Edytuj",
     "finalizeEvent": "Zatwierdź ostateczny termin",
     "finalizeShort": "Sfinalizuj",
     "rejectUnvoted": "Odrzuć resztę ({{count}})",

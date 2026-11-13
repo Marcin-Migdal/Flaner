@@ -1,5 +1,7 @@
 {
   "loading": "Loading...",
+  "confirm": "Confirm",
+  "cancel": "Cancel",
   "imagePicker": {
     "invalidFileType": "Selected file must be an image (JPEG, PNG, etc.).",
     "fileTooSmall": "File is too small (minimum {{size}}).",
@@ -57,9 +59,14 @@
       "fri": "Friday",
       "sat": "Saturday",
       "sun": "Sunday"
-    }
+    },
+    "previous": "Previous",
+    "next": "Next",
+    "remove": "Remove"
   },
   "datePicker": {
     "selectDate": "Select date"
-  }
+  },
+  "clear": "Clear",
+  "collapse": "Collapse"
 }

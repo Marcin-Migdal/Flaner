@@ -16,15 +16,17 @@ Pending friend requests (MFE `community`). The doc id is `${senderUid}_${receive
 | `status` | `'pending'` | ✓ | other values are never written |
 | `createdAt` | number (ms) | ✓ | |
 
+**TS type:** `packages/community/src/api/users/types.ts#FriendRequest` (derived: `id`)
+
 ## Write flows
 All endpoints: `packages/community/src/api/users/endpoints.ts`.
 
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
 | Send | `sendFriendRequest` | set request, create `users/{receiver}/notifications/*` | ✅ batch |
-| Cancel (sender) | `cancelFriendRequest` | delete request | – |
-| Accept (receiver) | `acceptFriendRequest` | delete request + friendships + notification (see `users.md`) | ✅ batch |
-| Reject (receiver) | `rejectFriendRequest` | delete request, create `users/{sender}/notifications/*` | ✅ batch |
+| Cancel (sender) | `cancelFriendRequest` | delete request + the receiver's unread `friend_request_{sender}` notification | ✅ batch |
+| Accept (receiver) | `acceptFriendRequest` | delete request + own unread `friend_request_{sender}` notification + friendships + notification (see `users.md`) | ✅ batch |
+| Reject (receiver) | `rejectFriendRequest` | delete request + own unread `friend_request_{sender}` notification, create `users/{sender}/notifications/*` | ✅ batch |
 
 ## Queries
 | Query | Endpoint | Allowed by |

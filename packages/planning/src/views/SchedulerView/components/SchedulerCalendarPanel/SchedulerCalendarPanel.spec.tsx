@@ -1,16 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import type { SchedulerEvent } from "../../../../api/events/types";
 import type { ParticipantResult } from "../../../../api/participants";
 import { SchedulerCalendarPanel } from "./SchedulerCalendarPanel";
 
-const mockUser = { uid: "u1", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const signedInUser = createMockUser({ uid: "u1", username: "Alice", email: "alice@flaner.app" });
 
 const mockVoteSlot = vi.fn();
 vi.mock("../../../../hooks/api/mutation", () => ({
@@ -53,7 +49,7 @@ describe("SchedulerCalendarPanel", () => {
       {
         start: "2026-08-10",
         end: "2026-08-11",
-        color: "#3b82f6",
+        color: "blue",
         votes: {
           u1: "yes",
           u2: "maybe",
@@ -72,6 +68,7 @@ describe("SchedulerCalendarPanel", () => {
   it("renders empty state when activeEvent is null", () => {
     renderWithProviders(
       <SchedulerCalendarPanel activeEvent={null} participants={[]} />,
+      { user: signedInUser },
     );
 
     expect(screen.getByText("hub.noEvents")).toBeInTheDocument();
@@ -82,6 +79,7 @@ describe("SchedulerCalendarPanel", () => {
 
     renderWithProviders(
       <SchedulerCalendarPanel activeEvent={mockEvent} participants={mockParticipants} />,
+      { user: signedInUser },
     );
 
     // Trigger Vote
@@ -89,7 +87,7 @@ describe("SchedulerCalendarPanel", () => {
     await user.click(voteBtn);
     expect(mockVoteSlot).toHaveBeenCalledWith({
       eventId: "evt-cal",
-      slotIndex: 0,
+      slotKey: "2026-08-10_2026-08-11",
       userId: "u1",
       vote: "yes",
     });
@@ -114,11 +112,12 @@ describe("SchedulerCalendarPanel", () => {
     const finalizedEvent: SchedulerEvent = {
       ...mockEvent,
       isFinalized: true,
-      finalizedSlotIndex: 0,
+      finalizedSlotKey: "2026-08-10_2026-08-11",
     };
 
     renderWithProviders(
       <SchedulerCalendarPanel activeEvent={finalizedEvent} participants={mockParticipants} />,
+      { user: signedInUser },
     );
 
     const voteBtn = screen.getByText("Trigger Vote");
@@ -131,11 +130,12 @@ describe("SchedulerCalendarPanel", () => {
     const finalizedEvent: SchedulerEvent = {
       ...mockEvent,
       isFinalized: true,
-      finalizedSlotIndex: 0,
+      finalizedSlotKey: "2026-08-10_2026-08-11",
     };
 
     renderWithProviders(
       <SchedulerCalendarPanel activeEvent={finalizedEvent} participants={mockParticipants} />,
+      { user: signedInUser },
     );
 
     await user.click(screen.getByText("Trigger Slot Click"));

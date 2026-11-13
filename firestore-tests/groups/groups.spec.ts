@@ -12,6 +12,7 @@ import {
   updateDoc,
   where,
   writeBatch,
+  type WriteBatch,
 } from "firebase/firestore";
 import { useTestEnv } from "../support/testEnv";
 
@@ -52,6 +53,22 @@ const invitation = (userId: string, invitedByUserId: string) => ({
   invitedAt: 1,
 });
 
+// Group notification the endpoints add to their batches (`addGroupNotification`)
+const addGroupNotification = (batch: WriteBatch, db: ReturnType<typeof as>, recipient: string, type: string, sender: string) => {
+  const ref = doc(collection(db, `users/${recipient}/notifications`));
+  batch.set(ref, {
+    id: ref.id,
+    type,
+    senderUid: sender,
+    senderUsername: sender,
+    senderAvatarUrl: "",
+    groupId: GROUP_ID,
+    groupName: "Test group",
+    createdAt: Date.now(),
+    read: false,
+  });
+};
+
 const seedGroup = (overrides: Record<string, unknown> = {}) =>
   seed({
     [GROUP]: group(overrides),
@@ -62,11 +79,20 @@ const seedGroup = (overrides: Record<string, unknown> = {}) =>
   });
 
 describe("groups/{groupId}", () => {
-  it("accepts createGroup: group doc, then the owner's member doc", async () => {
+  it("accepts the createGroup batch: group doc + the owner's member doc", async () => {
     const db = as(OWNER);
+    const batch = writeBatch(db);
+    batch.set(doc(db, GROUP), group());
+    batch.set(doc(db, `${GROUP}/members`, OWNER), member(OWNER, "owner"));
 
-    await assertSucceeds(setDoc(doc(db, GROUP), group()));
-    await assertSucceeds(setDoc(doc(db, `${GROUP}/members`, OWNER), member(OWNER, "owner")));
+    await assertSucceeds(batch.commit());
+  });
+
+  it("blocks the owner bootstrap without the group doc, or on someone else's group", async () => {
+    await assertFails(setDoc(doc(as(OWNER), `${GROUP}/members`, OWNER), member(OWNER, "owner")));
+
+    await seedGroup();
+    await assertFails(setDoc(doc(as(STRANGER), `${GROUP}/members`, STRANGER), member(STRANGER, "owner")));
   });
 
   it("blocks creating a group owned by someone else", async () => {
@@ -136,6 +162,7 @@ describe("groups/{groupId}", () => {
     batch.update(doc(db, GROUP), { ownerId: ADMIN, updatedAt: 2 });
     batch.update(doc(db, `${GROUP}/members`, OWNER), { role: "admin" });
     batch.update(doc(db, `${GROUP}/members`, ADMIN), { role: "owner" });
+    addGroupNotification(batch, db, ADMIN, "group_ownership_transferred", OWNER);
 
     await assertSucceeds(batch.commit());
   });
@@ -154,6 +181,7 @@ describe("groups/{groupId}", () => {
     const lastBatch = writeBatch(db);
     lastBatch.delete(doc(db, `${GROUP}/members`, OWNER));
     lastBatch.delete(doc(db, GROUP));
+    [ADMIN, MODERATOR, MEMBER].forEach((uid) => addGroupNotification(lastBatch, db, uid, "group_deleted", OWNER));
     await assertSucceeds(lastBatch.commit());
   });
 
@@ -163,11 +191,23 @@ describe("groups/{groupId}", () => {
     await assertFails(deleteDoc(doc(as(ADMIN), GROUP)));
   });
 
-  it("accepts the delete batch with pending invitations (invitee mirrors included)", async () => {
+  it("accepts the delete batch with pending invitations (invitee mirrors + their unread notification sent by an admin)", async () => {
     await seedGroup();
+    const notificationPath = `users/${INVITEE}/notifications/group_invitation_${GROUP_ID}`;
     await seed({
-      [`${GROUP}/invitations/${INVITEE}`]: invitation(INVITEE, OWNER),
-      [`users/${INVITEE}/groupInvitations/${GROUP_ID}`]: invitation(INVITEE, OWNER),
+      [`${GROUP}/invitations/${INVITEE}`]: invitation(INVITEE, ADMIN),
+      [`users/${INVITEE}/groupInvitations/${GROUP_ID}`]: invitation(INVITEE, ADMIN),
+      [notificationPath]: {
+        id: `group_invitation_${GROUP_ID}`,
+        type: "group_invitation",
+        senderUid: ADMIN,
+        senderUsername: "Admin",
+        senderAvatarUrl: "",
+        groupId: GROUP_ID,
+        groupName: "Test group",
+        createdAt: 1,
+        read: false,
+      },
     });
     const db = as(OWNER);
     const batch = writeBatch(db);
@@ -176,9 +216,12 @@ describe("groups/{groupId}", () => {
     batch.delete(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID));
     await assertSucceeds(batch.commit());
 
+    // The owner (not the sender) finds the invitee's notification and removes it while unread
+    await assertSucceeds(getDoc(doc(db, notificationPath)));
     const lastBatch = writeBatch(db);
     lastBatch.delete(doc(db, `${GROUP}/members`, OWNER));
     lastBatch.delete(doc(db, GROUP));
+    lastBatch.delete(doc(db, notificationPath));
     await assertSucceeds(lastBatch.commit());
   });
 });
@@ -253,21 +296,21 @@ describe("groups/{groupId}/invitations/{userId}", () => {
   it("accepts inviteUserToGroup from a moderator: both invitation docs + notification", async () => {
     await seedGroup();
     const db = as(MODERATOR);
-
-    await assertSucceeds(setDoc(doc(db, `${GROUP}/invitations`, INVITEE), invitation(INVITEE, MODERATOR)));
-    await assertSucceeds(setDoc(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID), invitation(INVITEE, MODERATOR)));
     const notifRef = doc(collection(db, `users/${INVITEE}/notifications`));
-    await assertSucceeds(
-      setDoc(notifRef, {
-        id: notifRef.id,
-        type: "group_invitation",
-        senderUid: MODERATOR,
-        senderUsername: "Moderator",
-        senderAvatarUrl: "",
-        createdAt: Date.now(),
-        read: false,
-      }),
-    );
+    const batch = writeBatch(db);
+    batch.set(doc(db, `${GROUP}/invitations`, INVITEE), invitation(INVITEE, MODERATOR));
+    batch.set(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID), invitation(INVITEE, MODERATOR));
+    batch.set(notifRef, {
+      id: notifRef.id,
+      type: "group_invitation",
+      senderUid: MODERATOR,
+      senderUsername: "Moderator",
+      senderAvatarUrl: "",
+      createdAt: Date.now(),
+      read: false,
+    });
+
+    await assertSucceeds(batch.commit());
   });
 
   it("blocks invitations from members without inviteMembers", async () => {
@@ -287,8 +330,11 @@ describe("groups/{groupId}/invitations/{userId}", () => {
     const db = as(INVITEE);
 
     await assertSucceeds(getDocs(collection(db, `users/${INVITEE}/groupInvitations`)));
-    await assertSucceeds(deleteDoc(doc(db, `${GROUP}/invitations`, INVITEE)));
-    await assertSucceeds(deleteDoc(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID)));
+    const batch = writeBatch(db);
+    batch.delete(doc(db, `${GROUP}/invitations`, INVITEE));
+    batch.delete(doc(db, `users/${INVITEE}/groupInvitations`, GROUP_ID));
+    addGroupNotification(batch, db, OWNER, "group_invitation_rejected", INVITEE);
+    await assertSucceeds(batch.commit());
   });
 
   it("lets members list the group's invitations and staff revoke the group-side doc", async () => {
@@ -334,7 +380,22 @@ describe("groups/{groupId}/requests/{userId}", () => {
 
     await assertFails(getDocs(collection(as(MEMBER), `${GROUP}/requests`)));
     await assertSucceeds(getDocs(collection(db, `${GROUP}/requests`)));
-    await assertSucceeds(setDoc(doc(db, `${GROUP}/members`, REQUESTER), member(REQUESTER, "member")));
-    await assertSucceeds(deleteDoc(doc(db, `${GROUP}/requests`, REQUESTER)));
+    // acceptJoinRequest batch
+    const batch = writeBatch(db);
+    batch.set(doc(db, `${GROUP}/members`, REQUESTER), member(REQUESTER, "member"));
+    batch.delete(doc(db, `${GROUP}/requests`, REQUESTER));
+    addGroupNotification(batch, db, REQUESTER, "group_request_accepted", ADMIN);
+    await assertSucceeds(batch.commit());
+  });
+
+  it("accepts the rejectJoinRequest batch: delete the request + notify the requester", async () => {
+    await seedGroup({ type: "public" });
+    await seed({ [`${GROUP}/requests/${REQUESTER}`]: { userId: REQUESTER, requestedAt: 1 } });
+    const db = as(ADMIN);
+    const batch = writeBatch(db);
+    batch.delete(doc(db, `${GROUP}/requests`, REQUESTER));
+    addGroupNotification(batch, db, REQUESTER, "group_request_rejected", ADMIN);
+
+    await assertSucceeds(batch.commit());
   });
 });

@@ -19,7 +19,6 @@ import { FormProvider, useForm, type DefaultValues } from "react-hook-form";
 import {
   EXPENSE_CATEGORIES,
   type Expense,
-  type ExpenseCategory,
   type ExpenseInput,
   type SplitGroup,
 } from "../../../../api/splits";
@@ -72,7 +71,7 @@ const buildDefaultValues = (
 
   return {
     title: "",
-    amount: undefined as unknown as number,
+    amount: undefined,
     currency: group.lastUsedCurrency || group.defaultCurrency || DEFAULT_CURRENCY,
     category: "general",
     date: new Date(),
@@ -224,7 +223,8 @@ export const ExpenseModal = ({ open, onOpenChange, group, members, expenseToEdit
                   label={t("splits.fields.category")}
                   options={categoryOptions}
                   formatOptionLabel={(option: SelectOption) => {
-                    const Icon = EXPENSE_CATEGORY_ICONS[option.value as ExpenseCategory];
+                    const category = EXPENSE_CATEGORIES.find((c) => c === option.value);
+                    const Icon = category && EXPENSE_CATEGORY_ICONS[category];
                     return (
                       <div className="flex items-center gap-2">
                         {Icon && <Icon className="size-4 shrink-0 text-muted-foreground" />}
@@ -250,7 +250,7 @@ export const ExpenseModal = ({ open, onOpenChange, group, members, expenseToEdit
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
                 {t("splits.actions.cancel")}
               </Button>
-              <Button type="submit" variant="brand" isBusy={isPending}>
+              <Button type="submit" variant="brand" isBusy={isPending || methods.formState.isSubmitting}>
                 {isEdit ? t("splits.actions.save") : t("splits.actions.addExpense")}
               </Button>
             </div>

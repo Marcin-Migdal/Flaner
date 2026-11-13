@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useCreateGroupMutation } from "../../hooks";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
-import { createGroupSchema, type CreateGroupSchema } from "../../utils/schemas/groups";
+import { getGroupSchema, type GroupSchema } from "../../utils/schemas/groups";
 
 export interface CreateGroupModalProps {
   open: boolean;
@@ -29,8 +29,8 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
   const [isUploading, setIsUploading] = useState(false);
   const isPending = isCreating || isUploading;
 
-  const methods = useForm<CreateGroupSchema>({
-    resolver: zodResolver(createGroupSchema),
+  const methods = useForm<GroupSchema>({
+    resolver: zodResolver(getGroupSchema(t)),
     defaultValues: {
       name: "",
       description: "",
@@ -40,7 +40,12 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
     },
   });
 
-  const { handleSubmit, reset, control } = methods;
+  const {
+    handleSubmit,
+    reset,
+    control,
+    formState: { isSubmitting },
+  } = methods;
   const groupType = useWatch({ control, name: "type" });
 
   useEffect(() => {
@@ -55,7 +60,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
     }
   }, [open, reset]);
 
-  const onSubmit = async (data: CreateGroupSchema) => {
+  const onSubmit = async (data: GroupSchema) => {
     try {
       setIsUploading(true);
       let finalAvatarUrl: string | null = null;
@@ -76,8 +81,8 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
       await createGroup(payload);
       onOpenChange(false);
     } catch (error) {
-      console.error("Failed to create group", error);
-      
+      // Reports a failed upload; a failed mutation is already logged and toasted globally (logError skips the repeat)
+      reportError(error);
     } finally {
       setIsUploading(false);
     }
@@ -144,7 +149,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
                 {t("groupsView.createModal.cancel")}
               </Button>
-              <Button type="submit" isBusy={isPending}>
+              <Button type="submit" isBusy={isPending || isSubmitting}>
                 {t("groupsView.createModal.submit")}
               </Button>
             </div>

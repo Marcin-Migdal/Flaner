@@ -1,30 +1,45 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/split_groups.md (keep their Write flows / Queries in sync).
 import { fb } from "@flaner/shared/firebase";
 import type { UserType } from "@flaner/shared/types";
+import { createNotification, deleteIfUnread, getUnreadNotificationRefs, sourceNotificationRef } from "@flaner/shared/api";
 import { BATCH_LIMIT, deleteInBatches, firestoreConverter } from "@flaner/shared/utils";
 import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   query,
   runTransaction,
   where,
   writeBatch,
-  type DocumentReference,
+  type FirestoreError,
 } from "firebase/firestore";
 import {
-  addToCurrencyTotals,
-  applyExpenseToBalances,
-  applySettlementToBalances,
-  convertAmount,
-  convertSplits,
-  getOutstandingDebtAmount,
+  addExpenseToGroup,
+  addSettlementToGroup,
+  assertCanConfirmSettlement,
+  assertCanDeleteExpense,
+  assertCanDeleteSettlement,
+  assertCanEditExpense,
+  assertExpectedVersion,
+  assertValidExpense,
+  assertValidSettlement,
+  changeGroupSettings,
+  confirmSettlementInGroup,
+  convertGroupCurrency,
+  editExpenseInGroup,
+  getNewSettlementStatus,
+  getRateKey,
+  getRequiredRates,
   hasOutstandingBalance,
   isGroupSettled,
-  type GroupBalanceState,
-} from "../../utils/splitBalances";
+  removeExpenseFromGroup,
+  removeSettlementFromGroup,
+  type ExchangeRates,
+  type RateSource,
+} from "../../utils/splitLedger";
 import { getExchangeRate } from "../exchangeRates";
 import type {
   CreateSettlementInput,
@@ -36,18 +51,6 @@ import type {
   SplitGroup,
   UpdateSplitGroupInput,
 } from "./types";
-
-type SplitGroupNotification = {
-  id: string;
-  type: "split_group_invitation" | "split_settlement_pending";
-  senderUid: string;
-  senderUsername: string;
-  senderAvatarUrl: string;
-  splitGroupId: string;
-  splitGroupName: string;
-  createdAt: number;
-  read: boolean;
-};
 
 const refs = {
   groups: () => collection(fb.firestore, "split_groups").withConverter(firestoreConverter<SplitGroup>()),
@@ -63,69 +66,39 @@ const refs = {
     doc(fb.firestore, `split_groups/${groupId}/settlements`, settlementId).withConverter(
       firestoreConverter<Settlement>(),
     ),
-  notifications: (userId: string) =>
-    collection(fb.firestore, `users/${userId}/notifications`).withConverter(
-      firestoreConverter<SplitGroupNotification>(),
-    ),
+  // Deterministic ids (see sourceNotificationRef), so resolving flows can remove them while unread
+  invitationNotification: (userId: string, groupId: string) =>
+    sourceNotificationRef(userId, "split_group_invitation", groupId),
+  settlementNotification: (userId: string, settlementId: string) =>
+    sourceNotificationRef(userId, "split_settlement_pending", settlementId),
 };
 
-const buildInvitationNotification = (
-  recipientId: string,
-  sender: UserType,
-  group: Pick<SplitGroup, "id" | "name">,
-) => {
-  const notificationRef = doc(refs.notifications(recipientId));
-  const notification: SplitGroupNotification = {
-    id: notificationRef.id,
+const buildInvitationNotification = (recipientId: string, sender: UserType, group: Pick<SplitGroup, "id" | "name">) =>
+  createNotification(recipientId, sender, {
     type: "split_group_invitation",
-    senderUid: sender.uid,
-    senderUsername: sender.username,
-    senderAvatarUrl: sender.avatarUrl || "",
+    sourceId: group.id,
     splitGroupId: group.id,
     splitGroupName: group.name,
-    createdAt: Date.now(),
-    read: false,
-  };
-  return { notificationRef, notification };
-};
+  });
 
 const buildSettlementNotification = (
   recipientId: string,
   sender: UserType,
   group: Pick<SplitGroup, "id" | "name">,
-) => {
-  const notificationRef = doc(refs.notifications(recipientId));
-  const notification: SplitGroupNotification = {
-    id: notificationRef.id,
+  settlementId: string,
+) =>
+  createNotification(recipientId, sender, {
     type: "split_settlement_pending",
-    senderUid: sender.uid,
-    senderUsername: sender.username,
-    senderAvatarUrl: sender.avatarUrl || "",
+    sourceId: settlementId,
     splitGroupId: group.id,
     splitGroupName: group.name,
-    createdAt: Date.now(),
-    read: false,
-  };
-  return { notificationRef, notification };
-};
+  });
 
 const sortByDateDesc = <T extends { date: string; createdAt: number }>(items: T[]): T[] =>
   [...items].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
 
 const sortVisibleGroups = (groups: SplitGroup[]): SplitGroup[] =>
   groups.filter((group) => group.status !== "deleting").sort((a, b) => b.updatedAt - a.updatedAt);
-
-const assertValidExpense = (group: SplitGroup, data: ExpenseInput) => {
-  const involvedUsers = [data.paidBy, ...data.splits.map((split) => split.userId)];
-  if (!involvedUsers.every((uid) => group.participants.includes(uid))) {
-    throw new Error("Expense references users outside of the group");
-  }
-
-  const splitsTotal = data.splits.reduce((sum, split) => sum + split.amount, 0);
-  if (data.amount <= 0 || splitsTotal !== data.amount) {
-    throw new Error("Expense splits do not add up to the total amount");
-  }
-};
 
 // ---------------------------------------------------------------------------
 // Groups
@@ -136,7 +109,11 @@ export const getUserSplitGroups = async (userId: string): Promise<SplitGroup[]> 
   return sortVisibleGroups(snapshot.docs.map((d) => d.data()));
 };
 
-export const subscribeToUserSplitGroups = (userId: string, callback: (groups: SplitGroup[]) => void) => {
+export const subscribeToUserSplitGroups = (
+  userId: string,
+  callback: (groups: SplitGroup[]) => void,
+  onError: (error: FirestoreError) => void,
+) => {
   if (!userId) return () => {};
 
   return onSnapshot(
@@ -144,9 +121,7 @@ export const subscribeToUserSplitGroups = (userId: string, callback: (groups: Sp
     (snapshot) => {
       callback(sortVisibleGroups(snapshot.docs.map((d) => d.data())));
     },
-    (error) => {
-      console.warn("Realtime listener on user split groups failed:", error);
-    },
+    onError,
   );
 };
 
@@ -180,7 +155,7 @@ export const createSplitGroup = async (data: CreateSplitGroupInput, user: UserTy
   participants
     .filter((uid) => uid !== user.uid)
     .forEach((uid) => {
-      const { notificationRef, notification } = buildInvitationNotification(uid, user, newGroup);
+      const { ref: notificationRef, data: notification } = buildInvitationNotification(uid, user, newGroup);
       batch.set(notificationRef, notification);
     });
 
@@ -194,7 +169,7 @@ export const updateSplitGroup = async (groupId: string, data: UpdateSplitGroupIn
     const groupSnap = await transaction.get(groupRef);
     if (!groupSnap.exists()) throw new Error("Split group does not exist");
 
-    transaction.update(groupRef, { ...data, updatedAt: Date.now() });
+    transaction.update(groupRef, changeGroupSettings(groupSnap.data(), data, Date.now()));
   });
 };
 
@@ -220,9 +195,20 @@ export const deleteSplitGroup = async (groupId: string, userId: string): Promise
     getDocs(refs.expenses(groupId)),
     getDocs(refs.settlements(groupId)),
   ]);
+  // Unread invitations of the other participants and unread pending-settlement notifications go too;
+  // the owner may remove them while the group (status 'deleting') still exists
+  const group = (await getDoc(groupRef)).data();
+  const staleNotifications = await getUnreadNotificationRefs([
+    ...(group?.participants ?? []).filter((uid) => uid !== userId).map((uid) => refs.invitationNotification(uid, groupId)),
+    ...settlementsSnap.docs
+      .map((d) => d.data())
+      .filter((settlement) => settlement.status === "pending")
+      .map((settlement) => refs.settlementNotification(settlement.receiverId, settlement.id)),
+  ]);
   await deleteInBatches(fb.firestore, [
     ...expensesSnap.docs.map((d) => d.ref),
     ...settlementsSnap.docs.map((d) => d.ref),
+    ...staleNotifications,
   ]);
   await deleteDoc(groupRef);
 };
@@ -243,7 +229,7 @@ export const addParticipantToGroup = async (groupId: string, participantId: stri
       updatedAt: Date.now(),
     });
 
-    const { notificationRef, notification } = buildInvitationNotification(participantId, user, group);
+    const { ref: notificationRef, data: notification } = buildInvitationNotification(participantId, user, group);
     transaction.set(notificationRef, notification);
   });
 };
@@ -257,6 +243,7 @@ export const removeParticipantFromGroup = async (groupId: string, participantId:
   await runTransaction(fb.firestore, async (transaction) => {
     const groupSnap = await transaction.get(groupRef);
     if (!groupSnap.exists()) throw new Error("Split group does not exist");
+    const removeInvitation = await deleteIfUnread(transaction, refs.invitationNotification(participantId, groupId));
 
     const group = groupSnap.data();
     if (group.createdBy === participantId) throw new Error("The owner cannot leave the group");
@@ -268,12 +255,14 @@ export const removeParticipantFromGroup = async (groupId: string, participantId:
       formerParticipants: Array.from(new Set([...group.formerParticipants, participantId])),
       updatedAt: Date.now(),
     });
+    removeInvitation();
   });
 };
 
 // ---------------------------------------------------------------------------
 // Expenses
 // ---------------------------------------------------------------------------
+
 
 export const getGroupExpenses = async (groupId: string): Promise<Expense[]> => {
   const snapshot = await getDocs(refs.expenses(groupId));
@@ -291,24 +280,11 @@ export const createExpense = async (groupId: string, data: ExpenseInput, userId:
     const group = groupSnap.data();
     assertValidExpense(group, data);
 
-    const expense: Expense = {
-      ...data,
-      id: expenseRef.id,
-      groupId,
-      createdBy: userId,
-      createdAt: Date.now(),
-    };
+    const now = Date.now();
+    const expense: Expense = { ...data, id: expenseRef.id, groupId, createdBy: userId, createdAt: now };
 
     transaction.set(expenseRef, expense);
-    transaction.update(groupRef, {
-      ...applyExpenseToBalances(group, expense, 1),
-      totalSpent: addToCurrencyTotals(group.totalSpent, expense.currency, expense.amount),
-      expensesCount: group.expensesCount + 1,
-      version: (group.version ?? 0) + 1,
-      lastUsedCurrency: expense.currency,
-      updatedAt: Date.now(),
-    });
-
+    transaction.update(groupRef, addExpenseToGroup(group, expense, now));
     return expense;
   });
 };
@@ -321,7 +297,7 @@ export const updateExpense = async (
   groupId: string,
   expenseId: string,
   data: ExpenseInput,
-  userId?: string,
+  userId: string,
 ): Promise<Expense> => {
   const groupRef = refs.group(groupId);
   const expenseRef = refs.expense(groupId, expenseId);
@@ -334,42 +310,25 @@ export const updateExpense = async (
     const group = groupSnap.data();
     const previous = expenseSnap.data();
     assertValidExpense(group, data);
+    assertCanEditExpense(previous, userId);
 
-    const creatorId = previous.createdBy || previous.paidBy;
-    if (userId && creatorId && creatorId !== userId) {
-      throw new Error("planning:errors.notAuthorizedToEditExpense");
-    }
-
+    const now = Date.now();
     const updated: Expense = {
       ...data,
       id: previous.id,
       groupId: previous.groupId,
       createdBy: previous.createdBy,
       createdAt: previous.createdAt,
-      updatedAt: Date.now(),
+      updatedAt: now,
     };
 
-    const reverted = applyExpenseToBalances(group, previous, -1);
-    const totals = addToCurrencyTotals(
-      addToCurrencyTotals(group.totalSpent, previous.currency, -previous.amount),
-      updated.currency,
-      updated.amount,
-    );
-
     transaction.set(expenseRef, updated);
-    transaction.update(groupRef, {
-      ...applyExpenseToBalances(reverted, updated, 1),
-      totalSpent: totals,
-      version: (group.version ?? 0) + 1,
-      lastUsedCurrency: updated.currency,
-      updatedAt: Date.now(),
-    });
-
+    transaction.update(groupRef, editExpenseInGroup(group, previous, updated, now));
     return updated;
   });
 };
 
-export const deleteExpense = async (groupId: string, expenseId: string, userId?: string): Promise<void> => {
+export const deleteExpense = async (groupId: string, expenseId: string, userId: string): Promise<void> => {
   const groupRef = refs.group(groupId);
   const expenseRef = refs.expense(groupId, expenseId);
 
@@ -378,22 +337,11 @@ export const deleteExpense = async (groupId: string, expenseId: string, userId?:
     if (!groupSnap.exists()) throw new Error("Split group does not exist");
     if (!expenseSnap.exists()) throw new Error("Expense does not exist");
 
-    const group = groupSnap.data();
     const expense = expenseSnap.data();
-
-    const creatorId = expense.createdBy || expense.paidBy;
-    if (userId && creatorId && creatorId !== userId) {
-      throw new Error("planning:errors.notAuthorizedToDeleteExpense");
-    }
+    assertCanDeleteExpense(expense, userId);
 
     transaction.delete(expenseRef);
-    transaction.update(groupRef, {
-      ...applyExpenseToBalances(group, expense, -1),
-      totalSpent: addToCurrencyTotals(group.totalSpent, expense.currency, -expense.amount),
-      expensesCount: group.expensesCount - 1,
-      version: (group.version ?? 0) + 1,
-      updatedAt: Date.now(),
-    });
+    transaction.update(groupRef, removeExpenseFromGroup(groupSnap.data(), expense, Date.now()));
   });
 };
 
@@ -406,6 +354,10 @@ export const getGroupSettlements = async (groupId: string): Promise<Settlement[]
   return sortByDateDesc(snapshot.docs.map((d) => d.data()));
 };
 
+/**
+ * Records a settlement: confirmed when the receiver records it, otherwise pending (the receiver is notified
+ * and confirms it). Pending settlements count against the debt, so the same debt cannot be settled twice.
+ */
 export const createSettlement = async (
   groupId: string,
   data: CreateSettlementInput,
@@ -414,72 +366,43 @@ export const createSettlement = async (
   const groupRef = refs.group(groupId);
   const settlementRef = doc(refs.settlements(groupId));
   const senderUid = typeof user === "string" ? user : user.uid;
-  const isPending = data.status === "pending";
+
+  // A transaction cannot query, so the settlements are read first; every settlement write bumps the group
+  // `version`, so an unchanged version inside the transaction proves no settlement slipped in meanwhile.
+  const versionBefore = (await getDoc(groupRef)).data()?.version ?? 0;
+  const settlements = await getGroupSettlements(groupId);
 
   return runTransaction(fb.firestore, async (transaction) => {
     const groupSnap = await transaction.get(groupRef);
     if (!groupSnap.exists()) throw new Error("Split group does not exist");
 
     const group = groupSnap.data();
-
-    // 1. OCC Version check
-    const currentVersion = group.version ?? 0;
-    if (data.expectedVersion !== undefined && currentVersion !== data.expectedVersion) {
-      throw new Error("planning:errors.settlementVersionConflict");
-    }
-
-    if (!group.participants.includes(data.payerId) || !group.participants.includes(data.receiverId)) {
-      throw new Error("Settlement references users outside of the group");
-    }
-    if (data.amount <= 0 || data.payerId === data.receiverId) {
-      throw new Error("Invalid settlement");
-    }
-
-    // 2. Debt boundary check: amount cannot exceed current outstanding debt
-    const maxDebt = getOutstandingDebtAmount(group, data.payerId, data.receiverId, data.currency);
-    if (maxDebt <= 0) {
-      throw new Error("planning:errors.noOutstandingDebtToSettle");
-    }
-    if (data.amount > maxDebt) {
-      throw new Error("planning:errors.settlementAmountExceedsDebt");
-    }
+    assertExpectedVersion(group, data.expectedVersion);
+    assertExpectedVersion(group, versionBefore);
+    assertValidSettlement(group, settlements, data);
 
     const { expectedVersion: _expectedVersion, ...settlementData } = data;
+    const now = Date.now();
     const settlement: Settlement = {
       ...settlementData,
       id: settlementRef.id,
       groupId,
-      status: data.status || "confirmed",
+      status: getNewSettlementStatus(data, senderUid),
       createdBy: senderUid,
-      createdAt: Date.now(),
+      createdAt: now,
     };
 
     transaction.set(settlementRef, settlement);
+    transaction.update(groupRef, addSettlementToGroup(group, settlement, now));
 
-    if (isPending) {
-      transaction.update(groupRef, {
-        settlementsCount: group.settlementsCount + 1,
-        version: currentVersion + 1,
-        lastUsedCurrency: settlement.currency,
-        updatedAt: Date.now(),
-      });
-
-      if (typeof user !== "string") {
-        const { notificationRef, notification } = buildSettlementNotification(
-          data.receiverId,
-          user,
-          group,
-        );
-        transaction.set(notificationRef, notification);
-      }
-    } else {
-      transaction.update(groupRef, {
-        ...applySettlementToBalances(group, settlement, 1),
-        settlementsCount: group.settlementsCount + 1,
-        version: currentVersion + 1,
-        lastUsedCurrency: settlement.currency,
-        updatedAt: Date.now(),
-      });
+    if (settlement.status === "pending" && typeof user !== "string") {
+      const { ref: notificationRef, data: notification } = buildSettlementNotification(
+        data.receiverId,
+        user,
+        group,
+        settlement.id,
+      );
+      transaction.set(notificationRef, notification);
     }
 
     return settlement;
@@ -504,43 +427,26 @@ export const confirmSettlement = async (
     if (!settlementSnap.exists()) throw new Error("Settlement does not exist");
 
     const group = groupSnap.data();
-    const settlement = settlementSnap.data();
+    const current = settlementSnap.data();
+    assertCanConfirmSettlement(current, userId);
+    if (current.status === "confirmed") return current;
 
-    if (settlement.receiverId !== userId) {
-      throw new Error("planning:errors.notAuthorizedToConfirmSettlement");
-    }
+    const removePendingNotification = await deleteIfUnread(
+      transaction,
+      refs.settlementNotification(current.receiverId, current.id),
+    );
+    assertExpectedVersion(group, expectedVersion);
 
-    if (settlement.status === "confirmed") {
-      return settlement;
-    }
+    const { settlement, patch } = confirmSettlementInGroup(group, current, Date.now());
+    transaction.set(settlementRef, settlement);
+    transaction.update(groupRef, patch);
+    removePendingNotification();
 
-    const currentVersion = group.version ?? 0;
-    if (expectedVersion !== undefined && currentVersion !== expectedVersion) {
-      throw new Error("planning:errors.settlementVersionConflict");
-    }
-
-    const maxDebt = getOutstandingDebtAmount(group, settlement.payerId, settlement.receiverId, settlement.currency);
-    if (settlement.amount > maxDebt) {
-      throw new Error("planning:errors.settlementAmountExceedsDebt");
-    }
-
-    const updatedSettlement: Settlement = {
-      ...settlement,
-      status: "confirmed",
-    };
-
-    transaction.set(settlementRef, updatedSettlement);
-    transaction.update(groupRef, {
-      ...applySettlementToBalances(group, updatedSettlement, 1),
-      version: currentVersion + 1,
-      updatedAt: Date.now(),
-    });
-
-    return updatedSettlement;
+    return settlement;
   });
 };
 
-export const deleteSettlement = async (groupId: string, settlementId: string, userId?: string): Promise<void> => {
+export const deleteSettlement = async (groupId: string, settlementId: string, userId: string): Promise<void> => {
   const groupRef = refs.group(groupId);
   const settlementRef = refs.settlement(groupId, settlementId);
 
@@ -552,31 +458,17 @@ export const deleteSettlement = async (groupId: string, settlementId: string, us
     if (!groupSnap.exists()) throw new Error("Split group does not exist");
     if (!settlementSnap.exists()) throw new Error("Settlement does not exist");
 
-    const group = groupSnap.data();
     const settlement = settlementSnap.data();
+    assertCanDeleteSettlement(settlement, userId);
 
-    if (userId && settlement.payerId !== userId && settlement.receiverId !== userId) {
-      throw new Error("planning:errors.notAuthorizedToDeleteSettlement");
-    }
+    const removePendingNotification =
+      settlement.status === "pending"
+        ? await deleteIfUnread(transaction, refs.settlementNotification(settlement.receiverId, settlement.id))
+        : () => {};
 
     transaction.delete(settlementRef);
-
-    const nextVersion = (group.version ?? 0) + 1;
-    const isPending = settlement.status === "pending";
-    if (isPending) {
-      transaction.update(groupRef, {
-        settlementsCount: Math.max(0, group.settlementsCount - 1),
-        version: nextVersion,
-        updatedAt: Date.now(),
-      });
-    } else {
-      transaction.update(groupRef, {
-        ...applySettlementToBalances(group, settlement, -1),
-        settlementsCount: Math.max(0, group.settlementsCount - 1),
-        version: nextVersion,
-        updatedAt: Date.now(),
-      });
-    }
+    removePendingNotification();
+    transaction.update(groupRef, removeSettlementFromGroup(groupSnap.data(), settlement, Date.now()));
   });
 };
 
@@ -584,101 +476,17 @@ export const deleteSettlement = async (groupId: string, settlementId: string, us
 // Currency conversion
 // ---------------------------------------------------------------------------
 
-const getRateKey = (currency: string, date: string) => `${currency}|${date}`;
-
-type ConvertibleSource = { currency: string; amount: number; date: string };
-
-/** The value an entry had before any conversion, so repeated conversions never compound rounding. */
-const getExpenseSource = (expense: Expense) =>
-  expense.conversion
-    ? {
-        currency: expense.conversion.originalCurrency,
-        amount: expense.conversion.originalAmount,
-        splits: expense.conversion.originalSplits,
-      }
-    : { currency: expense.currency, amount: expense.amount, splits: expense.splits };
-
-const getSettlementSource = (settlement: Settlement) =>
-  settlement.conversion
-    ? { currency: settlement.conversion.originalCurrency, amount: settlement.conversion.originalAmount }
-    : { currency: settlement.currency, amount: settlement.amount };
-
-const convertExpense = (expense: Expense, targetCurrency: string, rates: Map<string, ExchangeRate>): Expense => {
-  const source = getExpenseSource(expense);
-  const { conversion: _conversion, ...base } = expense;
-
-  if (source.currency === targetCurrency) {
-    return { ...base, currency: targetCurrency, amount: source.amount, splits: source.splits };
-  }
-
-  const exchangeRate = rates.get(getRateKey(source.currency, expense.date));
-  if (!exchangeRate) throw new Error(`Missing exchange rate for ${source.currency} on ${expense.date}`);
-
-  const amount = convertAmount(source.amount, exchangeRate.rate);
-  return {
-    ...base,
-    currency: targetCurrency,
-    amount,
-    splits: convertSplits(source.splits, exchangeRate.rate, amount),
-    conversion: {
-      originalCurrency: source.currency,
-      originalAmount: source.amount,
-      originalSplits: source.splits,
-      rate: exchangeRate.rate,
-      rateDate: exchangeRate.date,
-      convertedAt: Date.now(),
-    },
-  };
-};
-
-const convertSettlement = (
-  settlement: Settlement,
-  targetCurrency: string,
-  rates: Map<string, ExchangeRate>,
-): Settlement => {
-  const source = getSettlementSource(settlement);
-  const { conversion: _conversion, ...base } = settlement;
-
-  if (source.currency === targetCurrency) {
-    return { ...base, currency: targetCurrency, amount: source.amount };
-  }
-
-  const exchangeRate = rates.get(getRateKey(source.currency, settlement.date));
-  if (!exchangeRate) throw new Error(`Missing exchange rate for ${source.currency} on ${settlement.date}`);
-
-  return {
-    ...base,
-    currency: targetCurrency,
-    amount: convertAmount(source.amount, exchangeRate.rate),
-    conversion: {
-      originalCurrency: source.currency,
-      originalAmount: source.amount,
-      rate: exchangeRate.rate,
-      rateDate: exchangeRate.date,
-      convertedAt: Date.now(),
-    },
-  };
-};
-
 const CONCURRENCY_LIMIT = 5;
 
 const chunkArray = <T>(arr: T[], size: number): T[][] =>
   Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
 
-const fetchRates = async (sources: ConvertibleSource[], targetCurrency: string) => {
-  const uniqueKeys = Array.from(
-    new Map(
-      sources
-        .filter((source) => source.currency !== targetCurrency)
-        .map((source) => [getRateKey(source.currency, source.date), source]),
-    ).values(),
-  );
-
+const fetchRates = async (sources: RateSource[], targetCurrency: string): Promise<ExchangeRates> => {
   const entries: [string, ExchangeRate][] = [];
-  for (const chunk of chunkArray(uniqueKeys, CONCURRENCY_LIMIT)) {
+  for (const chunk of chunkArray(sources, CONCURRENCY_LIMIT)) {
     const results = await Promise.all(
       chunk.map(async (source): Promise<[string, ExchangeRate]> => [
-        getRateKey(source.currency, source.date),
+        getRateKey(source),
         await getExchangeRate(source.currency, targetCurrency, source.date),
       ]),
     );
@@ -702,14 +510,7 @@ export const convertSplitGroupCurrency = async (groupId: string, targetCurrency:
   if (total === 0) return 0;
   if (total > BATCH_LIMIT) throw new Error("Too many entries to convert at once");
 
-  const rates = await fetchRates(
-    [
-      ...expensesToConvert.map((expense) => ({ ...getExpenseSource(expense), date: expense.date })),
-      ...settlementsToConvert.map((settlement) => ({ ...getSettlementSource(settlement), date: settlement.date })),
-    ],
-    targetCurrency,
-  );
-
+  const rates = await fetchRates(getRequiredRates(expensesToConvert, settlementsToConvert, targetCurrency), targetCurrency);
   const groupRef = refs.group(groupId);
 
   return runTransaction(fb.firestore, async (transaction) => {
@@ -723,59 +524,22 @@ export const convertSplitGroupCurrency = async (groupId: string, targetCurrency:
       settlementsToConvert.map((settlement) => transaction.get(refs.settlement(groupId, settlement.id))),
     );
 
-    const group = groupSnap.data();
-    let state: GroupBalanceState = { balances: group.balances, pairBalances: group.pairBalances };
-    let totals = group.totalSpent;
-    let converted = 0;
+    // Entries deleted or already converted meanwhile are skipped
+    const result = convertGroupCurrency(
+      groupSnap.data(),
+      {
+        expenses: expenseSnaps.flatMap((snap) => (snap.exists() ? [snap.data()] : [])),
+        settlements: settlementSnaps.flatMap((snap) => (snap.exists() ? [snap.data()] : [])),
+      },
+      targetCurrency,
+      rates,
+      Date.now(),
+    );
 
-    expenseSnaps.forEach((snap) => {
-      if (!snap.exists()) return;
-      const current = snap.data();
-      if (current.currency === targetCurrency) return;
+    result.expenses.forEach((expense) => transaction.set(refs.expense(groupId, expense.id), expense));
+    result.settlements.forEach((settlement) => transaction.set(refs.settlement(groupId, settlement.id), settlement));
+    transaction.update(groupRef, result.patch);
 
-      const next = convertExpense(current, targetCurrency, rates);
-      state = applyExpenseToBalances(applyExpenseToBalances(state, current, -1), next, 1);
-      totals = addToCurrencyTotals(addToCurrencyTotals(totals, current.currency, -current.amount), next.currency, next.amount);
-      transaction.set(snap.ref, next);
-      converted++;
-    });
-
-    const pendingSettlements: { ref: DocumentReference<Settlement>; current: Settlement; next: Settlement }[] = [];
-
-    settlementSnaps.forEach((snap) => {
-      if (!snap.exists()) return;
-      const current = snap.data();
-      if (current.currency === targetCurrency) return;
-
-      const next = convertSettlement(current, targetCurrency, rates);
-      converted++;
-      // Pending settlements were never applied to balances, so they must not be reverted from them
-      if (current.status === "pending") {
-        pendingSettlements.push({ ref: snap.ref, current, next });
-        return;
-      }
-      state = applySettlementToBalances(applySettlementToBalances(state, current, -1), next, 1);
-      transaction.set(snap.ref, next);
-    });
-
-    // Per-entry rounding can push a pending amount a few minor units above the converted debt, which
-    // would block its confirmation; cap it, but only if it fitted the debt before the conversion.
-    const convertedGroup: SplitGroup = { ...group, ...state };
-    pendingSettlements.forEach(({ ref, current, next }) => {
-      const debtBefore = getOutstandingDebtAmount(group, current.payerId, current.receiverId, current.currency);
-      const debtAfter = getOutstandingDebtAmount(convertedGroup, current.payerId, current.receiverId, targetCurrency);
-      const fitsDebt = current.amount <= debtBefore && debtAfter > 0;
-      transaction.set(ref, fitsDebt ? { ...next, amount: Math.min(next.amount, debtAfter) } : next);
-    });
-
-    transaction.update(groupRef, {
-      ...state,
-      totalSpent: totals,
-      version: (group.version ?? 0) + 1,
-      lastUsedCurrency: targetCurrency,
-      updatedAt: Date.now(),
-    });
-
-    return converted;
+    return result.expenses.length + result.settlements.length;
   });
 };

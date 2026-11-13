@@ -1,16 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen, fireEvent, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import type { Expense, Settlement, SplitGroup } from "../../../../api/splits";
 import type { SplitGroupMember } from "../../../../hooks/useSplitGroupMembers";
 import { ActivityFeed } from "./ActivityFeed";
 
-const mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-1", username: "Alice", email: "alice@flaner.app" });
 
 const deleteExpenseMock = vi.fn().mockResolvedValue(undefined);
 const deleteSettlementMock = vi.fn().mockResolvedValue(undefined);
@@ -117,7 +113,8 @@ describe("ActivityFeed", () => {
         isLoading={false}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onEditExpense={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     expect(screen.getByText("splits.feed.emptyExpensesTitle")).toBeInTheDocument();
@@ -135,7 +132,8 @@ describe("ActivityFeed", () => {
         isLoading={false}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onEditExpense={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     expect(screen.getByText("Gelato in Florence")).toBeInTheDocument();
@@ -156,7 +154,8 @@ describe("ActivityFeed", () => {
         isLoading={true}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onEditExpense={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     expect(container.querySelectorAll(".animate-pulse").length).toBe(3);
@@ -178,7 +177,8 @@ describe("ActivityFeed", () => {
         isLoading={false}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onEditExpense={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     const deleteBtn = screen.getByRole("button", { name: "splits.actions.delete" });
@@ -219,7 +219,8 @@ describe("ActivityFeed", () => {
         isLoading={false}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onEditExpense={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     const settlementsTrigger = screen.getByRole("button", { name: "splits.feed.settlements" });
@@ -252,7 +253,8 @@ describe("ActivityFeed", () => {
         isLoading={false}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onEditExpense={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     // Open filter popover
@@ -289,7 +291,8 @@ describe("ActivityFeed", () => {
         isLoading={false}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onEditExpense={onEditMock}
-      />
+      />,
+      { user: mockUser },
     );
     const editBtn = screen.getAllByRole("button", { name: "splits.actions.edit" })[0];
     await user.click(editBtn);
@@ -322,7 +325,8 @@ describe("ActivityFeed", () => {
         isLoading={false}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onEditExpense={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     const settlementsTrigger = screen.getByRole("button", { name: /splits\.feed\.settlements/ });
@@ -350,7 +354,8 @@ describe("ActivityFeed", () => {
         isLoading={false}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onEditExpense={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     // Open filter popover
@@ -402,7 +407,8 @@ describe("ActivityFeed", () => {
         isLoading={false}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onEditExpense={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     const filterBtn = screen.getByRole("button", { name: "splits.filters.title" });
@@ -436,7 +442,8 @@ describe("ActivityFeed", () => {
         isLoading={false}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onEditExpense={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     const filterBtn = screen.getByRole("button", { name: "splits.filters.title" });
@@ -470,7 +477,8 @@ describe("ActivityFeed", () => {
         isLoading={false}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onEditExpense={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     const filterBtn = screen.getByRole("button", { name: "splits.filters.title" });
@@ -518,7 +526,8 @@ describe("ActivityFeed", () => {
         isLoading={false}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onEditExpense={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     // Expand settlements accordion
@@ -572,7 +581,8 @@ describe("ActivityFeed", () => {
         isLoading={false}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onEditExpense={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     // Expand settlements accordion

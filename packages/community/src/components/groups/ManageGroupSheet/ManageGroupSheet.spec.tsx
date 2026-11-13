@@ -2,13 +2,12 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders, createMockGroup } from "@flaner/test-utils";
+import { renderWithProviders, createMockGroup, createMockUser } from "@flaner/test-utils";
 import { ManageGroupSheet } from "./ManageGroupSheet";
 import * as hooks from "../../../hooks";
 import type { Group } from "../../../api/groups";
 
 import { useFormContext } from "react-hook-form";
-import { useAuth } from "@flaner/shared/context";
 
 const mockCompressImage = vi.fn(async (file: File) => file);
 const mockUploadToCloudinary = vi.fn(async (_file?: unknown) => "https://cloudinary.com/uploaded.png");
@@ -47,9 +46,6 @@ vi.mock("@flaner/ui-components", async (importOriginal) => {
   };
 });
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: vi.fn(() => ({ user: { uid: "user-owner" } })),
-}));
 
 vi.mock("@flaner/shared/hooks", () => ({
   useSheet: () => {
@@ -75,6 +71,8 @@ vi.mock("../../../hooks/useCommunityTranslations", () => ({
     i18n: { language: "en" },
   }),
 }));
+
+const currentUser = createMockUser({ uid: "user-owner" });
 
 describe("ManageGroupSheet component", () => {
   const updateGroupMutateAsync = vi.fn();
@@ -144,7 +142,7 @@ describe("ManageGroupSheet component", () => {
     const user = userEvent.setup();
     updateGroupMutateAsync.mockResolvedValueOnce(undefined);
 
-    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />, { user: currentUser });
 
     expect(screen.getByText("manageGroupSheet.title")).toBeInTheDocument();
 
@@ -169,7 +167,7 @@ describe("ManageGroupSheet component", () => {
     const user = userEvent.setup();
     deleteGroupMutateAsync.mockResolvedValueOnce(undefined);
 
-    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />, { user: currentUser });
 
     const deleteBtn = screen.getByRole("button", { name: "manageGroupSheet.deleteGroupBtn" });
     await user.click(deleteBtn);
@@ -208,7 +206,7 @@ describe("ManageGroupSheet component", () => {
       isLoading: false,
     } as unknown as ReturnType<typeof hooks.useGetUsersQuery>);
 
-    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />, { user: currentUser });
 
     // Open members accordion
     const membersTrigger = screen.getByRole("button", { name: /manageGroupSheet\.membersSection/i });
@@ -264,7 +262,7 @@ describe("ManageGroupSheet component", () => {
     const user = userEvent.setup();
     updateGroupMutateAsync.mockResolvedValueOnce(undefined);
 
-    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />, { user: currentUser });
 
     await user.click(screen.getByTestId("set-manage-avatar-file"));
     const saveBtn = screen.getByRole("button", { name: "manageGroupSheet.saveChanges" });
@@ -285,7 +283,7 @@ describe("ManageGroupSheet component", () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     updateGroupMutateAsync.mockRejectedValueOnce(new Error("Save failed"));
 
-    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />, { user: currentUser });
 
     const nameInput = screen.getByLabelText("manageGroupSheet.nameLabel");
     await user.clear(nameInput);
@@ -294,13 +292,13 @@ describe("ManageGroupSheet component", () => {
     const saveBtn = screen.getByRole("button", { name: "manageGroupSheet.saveChanges" });
     await user.click(saveBtn);
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to update group", expect.any(Error));
+    expect(reportError).toHaveBeenCalledWith(expect.any(Error));
     consoleErrorSpy.mockRestore();
   });
 
   it("cancels transfer ownership and remove member confirmation dialogs", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />, { user: currentUser });
 
     const membersTrigger = screen.getByRole("button", { name: /manageGroupSheet\.membersSection/i });
     await user.click(membersTrigger);
@@ -328,11 +326,9 @@ describe("ManageGroupSheet component", () => {
   });
 
   it("handles role operations when user is not a member of the group", async () => {
-    vi.mocked(useAuth).mockReturnValueOnce({
-      user: { uid: "non-member-stranger" },
-    } as unknown as ReturnType<typeof useAuth>);
-
-    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />, {
+      user: createMockUser({ uid: "non-member-stranger" }),
+    });
 
     expect(screen.getByText("manageGroupSheet.title")).toBeInTheDocument();
   });
@@ -341,7 +337,7 @@ describe("ManageGroupSheet component", () => {
     const user = userEvent.setup();
     updateRoleMutateAsync.mockRejectedValueOnce(new Error("Update role failed"));
 
-    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />, { user: currentUser });
 
     const membersTrigger = screen.getByRole("button", { name: /manageGroupSheet\.membersSection/i });
     await user.click(membersTrigger);
@@ -357,7 +353,7 @@ describe("ManageGroupSheet component", () => {
     const user = userEvent.setup();
     transferOwnershipMutateAsync.mockRejectedValueOnce(new Error("Transfer failed"));
 
-    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />, { user: currentUser });
 
     const membersTrigger = screen.getByRole("button", { name: /manageGroupSheet\.membersSection/i });
     await user.click(membersTrigger);
@@ -374,7 +370,7 @@ describe("ManageGroupSheet component", () => {
     const user = userEvent.setup();
     removeMemberMutateAsync.mockRejectedValueOnce(new Error("Remove failed"));
 
-    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />, { user: currentUser });
 
     const membersTrigger = screen.getByRole("button", { name: /manageGroupSheet\.membersSection/i });
     await user.click(membersTrigger);
@@ -394,7 +390,7 @@ describe("ManageGroupSheet component", () => {
       isLoading: true,
     } as unknown as ReturnType<typeof hooks.useGetUsersQuery>);
 
-    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />, { user: currentUser });
 
     const membersTrigger = screen.getByRole("button", { name: /manageGroupSheet\.membersSection/i });
     await user.click(membersTrigger);
@@ -422,7 +418,7 @@ describe("ManageGroupSheet component", () => {
       isLoading: false,
     } as unknown as ReturnType<typeof hooks.useGetUsersQuery>);
 
-    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />, { user: currentUser });
 
     const membersTrigger = screen.getByRole("button", { name: /manageGroupSheet\.membersSection/i });
     await user.click(membersTrigger);
@@ -437,7 +433,7 @@ describe("ManageGroupSheet component", () => {
       isLoading: false,
     } as unknown as ReturnType<typeof hooks.useGetUsersQuery>);
 
-    renderWithProviders(<ManageGroupSheet groupId="grp-1" />);
+    renderWithProviders(<ManageGroupSheet groupId="grp-1" />, { user: currentUser });
 
     const membersTrigger = screen.getByRole("button", { name: /manageGroupSheet\.membersSection/i });
     await user.click(membersTrigger);

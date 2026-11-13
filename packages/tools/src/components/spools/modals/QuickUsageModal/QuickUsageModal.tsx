@@ -13,7 +13,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@flaner/ui-components";
-import type { FilamentSpool } from "../../../../api/spools";
+import type { FilamentSpool, RecordUsageResult } from "../../../../api/spools";
 import { getQuickUsageSchema, type QuickUsageFormData } from "../../../../utils/schemas";
 import {
   useRecordSpoolUsageMutation,
@@ -25,24 +25,23 @@ type QuickUsageModalProps = {
   isOpen: boolean;
   onClose: () => void;
   spool: FilamentSpool;
-  onFinished?: (spool: FilamentSpool, usage: number) => void;
+  /** The print emptied the spool: the result read in the transaction (spool after the print, carryover). */
+  onRunOut?: (result: RecordUsageResult) => void;
 };
 
 export const QuickUsageModal: React.FC<QuickUsageModalProps> = ({
   isOpen,
   onClose,
   spool,
-  onFinished,
+  onRunOut,
 }) => {
   const { t } = useToolsTranslations();
   const { data: startupWaste = 1.5 } = useGetStartupWasteQuery();
 
   const recordUsageMutation = useRecordSpoolUsageMutation({
-    onSuccess: (result, variables) => {
+    onSuccess: (result) => {
       onClose();
-      if (result.isFinished && onFinished) {
-        onFinished(variables.spool, variables.usage);
-      }
+      if (result.spool.isFinished) onRunOut?.(result);
     },
   });
 
@@ -71,7 +70,7 @@ export const QuickUsageModal: React.FC<QuickUsageModalProps> = ({
 
   const onFormSubmit = (data: QuickUsageFormData) => {
     const totalUsage = data.modelWeight + startupWaste;
-    recordUsageMutation.mutate({ spool, usage: totalUsage });
+    recordUsageMutation.mutate({ spoolId: spool.id, usage: totalUsage });
     handleClose();
   };
 
@@ -101,9 +100,9 @@ export const QuickUsageModal: React.FC<QuickUsageModalProps> = ({
                   step="any"
                   {...register("modelWeight", { valueAsNumber: true })}
                   placeholder={t("spooler.spools.modelWeightPlaceholder")}
-                  className="w-full h-10 rounded-xl border border-input bg-background pl-4 pr-36 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-full h-10 rounded-xl border border-input-border bg-background pl-4 pr-36 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-brand select-none pointer-events-none">
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-brand-text select-none pointer-events-none">
                   {t("spooler.spools.startWasteBadge", { weight: startupWaste })}
                 </div>
               </div>
@@ -141,7 +140,7 @@ export const QuickUsageModal: React.FC<QuickUsageModalProps> = ({
               <div className="h-px bg-border my-1" />
               <div className="flex justify-between font-semibold text-foreground">
                 <span>{t("spooler.spools.totalSubtracted")}:</span>
-                <span className="text-brand font-bold">{totalWeight} g</span>
+                <span className="text-brand-text font-bold">{totalWeight} g</span>
               </div>
             </div>
           )}

@@ -2,7 +2,6 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Timestamp } from "firebase/firestore";
 import { SpoolHistoryModal } from "./SpoolHistoryModal";
 import type { FilamentSpool, SpoolPrint } from "../../../../api/spools";
 
@@ -12,7 +11,7 @@ const mockPrints: SpoolPrint[] = [
   {
     id: "print-1",
     usedWeight: 45,
-    createdAt: Timestamp.fromMillis(1711800000000),
+    createdAt: 1711800000000,
   },
   {
     id: "print-2",
@@ -223,13 +222,13 @@ describe("SpoolHistoryModal", () => {
     expect(screen.queryByText("Spool 1")).not.toBeInTheDocument();
   });
 
-  it("handles prints with non-number seconds gracefully", () => {
+  it("handles prints without a date gracefully", () => {
     queryState = {
       data: [
         {
           id: "print-invalid",
           usedWeight: 15,
-          createdAt: { seconds: undefined } as unknown as Timestamp,
+          createdAt: null,
         },
       ],
       isLoading: false,

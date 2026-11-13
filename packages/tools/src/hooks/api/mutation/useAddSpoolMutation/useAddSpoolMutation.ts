@@ -1,37 +1,26 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth } from "@flaner/shared/context";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { addSpool, type SpoolInput } from "../../../../api/spools";
 import type { FilamentTemplate } from "../../../../api/templates";
-import { useInvalidateGetSpoolsQuery } from "../../query/useGetSpoolsQuery";
+import { spoolerInvalidation } from "../../queryKeys";
 
 export type AddSpoolVariables = {
   data: SpoolInput;
   selectedTemplate?: FilamentTemplate;
 };
 
-export const useAddSpoolMutation = (
-  options?: UseMutationOptions<string, Error, AddSpoolVariables>,
-) => {
-  const { user } = useAuth();
-  const invalidateSpools = useInvalidateGetSpoolsQuery();
-
-  return useMutation<string, Error, AddSpoolVariables>({
-    mutationFn: async ({ data, selectedTemplate }) => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      return await addSpool(user.uid, data, selectedTemplate);
+export const useAddSpoolMutation = (options?: UseMutationOptions<string, Error, AddSpoolVariables>) =>
+  useUserMutation<string, AddSpoolVariables>(
+    {
+      mutationKey: ["addSpool"],
+      mutationFn: ({ data, selectedTemplate }, { uid }) => addSpool(uid, data, selectedTemplate),
+      invalidates: spoolerInvalidation.addSpool,
+      meta: {
+        successMessageKey: "tools:toasts.spools.addSuccess",
+        errorMessageKey: "tools:toasts.spools.addError",
+      },
     },
-    meta: {
-      successMessageKey: "tools:toasts.spools.addSuccess",
-      errorMessageKey: "tools:toasts.spools.addError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      invalidateSpools();
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useAddSpoolMutation;

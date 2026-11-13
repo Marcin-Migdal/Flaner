@@ -1,21 +1,20 @@
-import { useAuth } from "@flaner/shared/context";
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { deleteSplitGroup } from "../../../../api/splits";
 
-export const useDeleteSplitGroupMutation = (options?: UseMutationOptions<void, Error, string>) => {
-  const { user } = useAuth();
-
-  return useMutation<void, Error, string>({
-    mutationFn: async (groupId) => {
-      if (!user) throw new Error("planning:errors.userNotAuthenticated");
-      await deleteSplitGroup(groupId, user.uid);
+export const useDeleteSplitGroupMutation = (options?: UseMutationOptions<void, Error, string>) =>
+  useUserMutation<void, string>(
+    {
+      mutationKey: ["deleteSplitGroup"],
+      mutationFn: async (groupId, user) => {
+        await deleteSplitGroup(groupId, user.uid);
+      },
+      meta: {
+        successMessageKey: "planning:toasts.splits.groupDeleteSuccess",
+        errorMessageKey: "planning:toasts.splits.groupDeleteError",
+      },
     },
-    meta: {
-      successMessageKey: "planning:toasts.splits.groupDeleteSuccess",
-      errorMessageKey: "planning:toasts.splits.groupDeleteError",
-    },
-    ...options,
-  });
-};
+    options,
+  );
 
 export default useDeleteSplitGroupMutation;

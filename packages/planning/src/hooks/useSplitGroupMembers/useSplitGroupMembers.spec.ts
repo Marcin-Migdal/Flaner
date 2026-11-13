@@ -1,13 +1,9 @@
-import { renderHook } from "@testing-library/react";
+import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
 import { describe, expect, it, vi } from "vitest";
 import { useSplitGroupMembers } from "./useSplitGroupMembers";
 import type { SplitGroup } from "../../api/splits";
 
-const mockUser = { uid: "user-1" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-1" });
 
 vi.mock("../usePlanningTranslations", () => ({
   usePlanningTranslations: () => ({
@@ -47,7 +43,7 @@ describe("useSplitGroupMembers", () => {
   };
 
   it("resolves active members and gets member names", () => {
-    const { result } = renderHook(() => useSplitGroupMembers(mockGroup));
+    const { result } = renderHookWithProviders(() => useSplitGroupMembers(mockGroup), { user: mockUser });
 
     expect(result.current.members).toHaveLength(2);
     expect(result.current.members[0].isCurrentUser).toBe(true);
@@ -66,7 +62,7 @@ describe("useSplitGroupMembers", () => {
   });
 
   it("handles null group cleanly", () => {
-    const { result } = renderHook(() => useSplitGroupMembers(null));
+    const { result } = renderHookWithProviders(() => useSplitGroupMembers(null), { user: mockUser });
     expect(result.current.members).toHaveLength(0);
   });
 });

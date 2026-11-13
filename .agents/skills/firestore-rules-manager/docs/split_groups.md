@@ -11,6 +11,7 @@ Expense-splitting groups (MFE `planning`, Splits). All amounts are integers in m
 - **I6** Every financial change (expense / settlement create, edit, delete, currency conversion) writes the entry **and** the group doc (balances, totals, counters, `version`, `updatedAt`) in one atomic write. Enforced through `get()` vs `getAfter()` on the counters / `updatedAt`.
 - **I7** `balances`, `pairBalances` and `totalSpent` always equal the sum of the entries — computed by the client (see Accepted risks).
 - **I8** Only the author edits / deletes an expense; only the payer or receiver deletes a settlement; only the receiver confirms a pending settlement.
+- **I12** A settlement is recorded as `confirmed` only by its receiver; one recorded by anyone else (the payer or a third participant) is `pending` until the receiver confirms it.
 - **I9** Any participant may convert the whole group to `defaultCurrency` (`convertSplitGroupCurrency`): it rewrites only the money fields (`currency`, `amount`, `splits`, `conversion`) of every entry, so all participants keep the same state.
 - **I10** Any participant may toggle `simplifyDebts` (Balances tab).
 - **I11** A group is deleted only by the owner and only when it is settled — `pairBalances` empty (with `simplifyDebts`: `balances` empty; zero entries are always removed): `status → 'deleting'`, entries deleted in batches, then the group doc.
@@ -30,20 +31,22 @@ Expense-splitting groups (MFE `planning`, Splits). All amounts are integers in m
 | `totalSpent` | map<currency, number> | ✓ | |
 | `expensesCount`, `settlementsCount` | number | ✓ | maintained in the same write as the entries |
 | `simplifyDebts` | boolean | – | default `false` |
-| `version` | number | – | OCC counter, +1 on every financial change |
+| `version` | number | – | OCC counter, +1 on every financial change and on a `simplifyDebts` toggle |
 | `status` | `'active' \| 'deleting'` | ✓ | owner-only |
 | `createdAt`, `updatedAt` | number (ms) | ✓ | |
 
+**TS type:** `packages/planning/src/api/splits/types.ts#SplitGroup`
+
 ## Write flows
-All endpoints: `packages/planning/src/api/splits/endpoints.ts`.
+All endpoints: `packages/planning/src/api/splits/endpoints.ts`; every group-doc change they write is computed by the ledger `packages/planning/src/utils/splitLedger/`.
 
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
-| Create | `createSplitGroup` | set group, `split_group_invitation` notification per other participant | ✅ batch |
-| Edit settings | `updateSplitGroup` | update `name` / `description` / `defaultCurrency` / `simplifyDebts`, `updatedAt` | ✅ transaction |
-| Add participant | `addParticipantToGroup` | update `participants`, `formerParticipants`, `updatedAt`; notification | ✅ transaction |
-| Remove / leave | `removeParticipantFromGroup` | update `participants`, `formerParticipants`, `updatedAt` | ✅ transaction |
-| Delete | `deleteSplitGroup` | update `status: 'deleting'` → delete entries in batches → delete group | ✅ per step |
+| Create | `createSplitGroup` | set group, `split_group_invitation_{groupId}` notification per other participant | ✅ batch |
+| Edit settings | `updateSplitGroup` | update `name` / `description` / `defaultCurrency` / `simplifyDebts`, `updatedAt`; `version + 1` when `simplifyDebts` changes | ✅ transaction |
+| Add participant | `addParticipantToGroup` | update `participants`, `formerParticipants`, `updatedAt`; `split_group_invitation_{groupId}` notification (replaces a read one, users.md N5) | ✅ transaction |
+| Remove / leave | `removeParticipantFromGroup` | update `participants`, `formerParticipants`, `updatedAt`; delete the removed user's unread invitation notification | ✅ transaction |
+| Delete | `deleteSplitGroup` | update `status: 'deleting'` → delete entries + unread invitation / pending-settlement notifications in batches → delete group | ✅ per step |
 
 ## Queries
 | Query | Endpoint | Allowed by |
@@ -165,6 +168,8 @@ match /split_groups/{groupId} {
 | `updatedAt` | number (ms) | – | |
 | `conversion` | { `originalCurrency`, `originalAmount`, `originalSplits`, `rate`, `rateDate`, `convertedAt` } | – | set by currency conversion (rate of the expense day, Frankfurter API) |
 
+**TS type:** `packages/planning/src/api/splits/types.ts#Expense`
+
 ### Write flows
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
@@ -225,21 +230,23 @@ match /expenses/{expenseId} {
 | --- | --- | --- | --- |
 | `id`, `groupId` | string | ✓ | |
 | `payerId`, `receiverId` | string | ✓ | participants, different |
-| `amount` | number (minor units) | ✓ | > 0, ≤ outstanding debt |
+| `amount` | number (minor units) | ✓ | > 0, ≤ outstanding debt minus the pending settlements of the same payer → receiver / currency |
 | `currency` | string | ✓ | |
 | `date` | string (YYYY-MM-DD) | ✓ | |
 | `note` | string | ✓ | |
-| `status` | `'pending' \| 'confirmed'` | – | `pending` does not affect balances until confirmed |
+| `status` | `'pending' \| 'confirmed'` | – | `confirmed` on create only when the receiver records it (I12); `pending` does not affect balances until confirmed |
 | `createdBy`, `createdAt` | string, number (ms) | ✓ | immutable |
 | `conversion` | { `originalCurrency`, `originalAmount`, `rate`, `rateDate`, `convertedAt` } | – | |
+
+**TS type:** `packages/planning/src/api/splits/types.ts#Settlement`
 
 ### Write flows
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
-| Record (confirmed) | `createSettlement` | set settlement; group: balances, `settlementsCount + 1`, `version + 1`, `updatedAt` | ✅ transaction |
-| Request (pending) | `createSettlement` (`status: 'pending'`) | set settlement; group: `settlementsCount + 1`, `version + 1`, `updatedAt`; `split_settlement_pending` notification | ✅ transaction |
-| Confirm (receiver) | `confirmSettlement` | set `status: 'confirmed'`; group: balances, `version + 1`, `updatedAt` | ✅ transaction |
-| Delete | `deleteSettlement` | delete; group: balances (if confirmed), `settlementsCount - 1`, `version + 1`, `updatedAt` | ✅ transaction |
+| Record (confirmed, by the receiver) | `createSettlement` | set settlement; group: balances, `settlementsCount + 1`, `version + 1`, `updatedAt` | ✅ transaction |
+| Request (pending, by the payer or a third participant) | `createSettlement` | set settlement; group: `settlementsCount + 1`, `version + 1`, `updatedAt`; `split_settlement_pending_{settlementId}` notification | ✅ transaction |
+| Confirm (receiver) | `confirmSettlement` | set `status: 'confirmed'`; group: balances, `version + 1`, `updatedAt`; delete own unread pending notification | ✅ transaction |
+| Delete | `deleteSettlement` | delete; group: balances (if confirmed), `settlementsCount - 1`, `version + 1`, `updatedAt`; if pending, the receiver's unread notification | ✅ transaction |
 | Convert currency | `convertSplitGroupCurrency` | see expenses; `pending` ones are converted without touching balances, `amount` capped at the converted debt if rounding pushes it above | ✅ transaction |
 
 ### Queries
@@ -248,10 +255,10 @@ match /expenses/{expenseId} {
 | list `settlements` | `getGroupSettlements` | read: participant |
 
 ### Access matrix
-| Actor \ operation | read | create (with group update) | confirm | delete (payer / receiver) | update / delete (third participant) |
-| --- | --- | --- | --- | --- | --- |
-| non-participant | ❌ | ❌ | ❌ | ❌ | ❌ |
-| participant | ✅ | ✅ | ✅ receiver only | ✅ | ❌ (✅ currency conversion only) |
+| Actor \ operation | read | create pending (with group update) | create confirmed (with group update) | confirm | delete (payer / receiver) | update / delete (third participant) |
+| --- | --- | --- | --- | --- | --- | --- |
+| non-participant | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| participant | ✅ | ✅ | ✅ receiver only | ✅ receiver only | ✅ | ❌ (✅ currency conversion only) |
 
 ### Rules
 ```rules
@@ -263,6 +270,9 @@ match /settlements/{settlementId} {
   allow create: if isAuthenticated() && isSplitGroupParticipant() &&
     request.resource.data.createdBy == request.auth.uid &&
     request.resource.data.groupId == groupId &&
+    // Only the receiver records a confirmed settlement; anyone else's waits for the receiver (I12)
+    (request.resource.data.get('status', 'confirmed') == 'pending' ||
+      request.resource.data.receiverId == request.auth.uid) &&
     splitGroupCounterChangedBy('settlementsCount', 1);
   allow update: if isAuthenticated() && isSplitGroupParticipant() &&
     request.resource.data.createdBy == resource.data.createdBy &&
@@ -286,4 +296,4 @@ match /settlements/{settlementId} {
 ```
 
 ### Tests
-- `firestore-tests/split_groups/split_groups.spec.ts` — record, request + confirm, delete, confirmation by a non-receiver / deletion by a third participant denied, conversion allowed.
+- `firestore-tests/split_groups/split_groups.spec.ts` — record by the receiver, request + confirm, delete, confirmed record by the payer / a third participant denied, confirmation by a non-receiver / deletion by a third participant denied, conversion allowed.

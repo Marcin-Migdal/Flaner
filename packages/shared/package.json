@@ -2,6 +2,11 @@
   "name": "@flaner/shared",
   "version": "0.0.1",
   "exports": {
+    "./api": {
+      "types": "./src/api/index.ts",
+      "import": "./src/api/index.ts",
+      "default": "./src/api/index.ts"
+    },
     "./constants": {
       "types": "./src/constants/index.ts",
       "import": "./src/constants/index.ts",
@@ -11,6 +16,11 @@
       "types": "./src/context/index.ts",
       "import": "./src/context/index.ts",
       "default": "./src/context/index.ts"
+    },
+    "./context/AuthContext/AuthContext.context": {
+      "types": "./src/context/AuthContext/AuthContext.context.ts",
+      "import": "./src/context/AuthContext/AuthContext.context.ts",
+      "default": "./src/context/AuthContext/AuthContext.context.ts"
     },
     "./firebase": {
       "types": "./src/firebase/index.ts",

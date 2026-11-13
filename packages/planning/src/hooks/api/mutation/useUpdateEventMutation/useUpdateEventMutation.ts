@@ -1,33 +1,25 @@
-import { useAuth } from "@flaner/shared/context";
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { updateSchedulerEvent, type SchedulerEvent } from "../../../../api/events";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
+import { updateSchedulerEvent, type SchedulerEventEdit } from "../../../../api/events";
 
 export type UpdateEventParams = {
   eventId: string;
-  data: Partial<Omit<SchedulerEvent, "id" | "createdAt" | "updatedAt">>;
+  data: SchedulerEventEdit;
 };
 
-export const useUpdateEventMutation = (
-  options?: UseMutationOptions<void, Error, UpdateEventParams>,
-) => {
-  const { user } = useAuth();
-
-  return useMutation<void, Error, UpdateEventParams>({
-    mutationFn: async ({ eventId, data }) => {
-      if (!user) throw new Error("planning:errors.userNotAuthenticated");
-      await updateSchedulerEvent(eventId, data);
+export const useUpdateEventMutation = (options?: UseMutationOptions<void, Error, UpdateEventParams>) =>
+  useUserMutation<void, UpdateEventParams>(
+    {
+      mutationKey: ["updateEvent"],
+      mutationFn: async ({ eventId, data }) => {
+        await updateSchedulerEvent(eventId, data);
+      },
+      meta: {
+        successMessageKey: "planning:toasts.events.updateSuccess",
+        errorMessageKey: "planning:toasts.events.updateError",
+      },
     },
-    meta: {
-      successMessageKey: "planning:toasts.events.updateSuccess",
-      errorMessageKey: "planning:toasts.events.updateError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useUpdateEventMutation;

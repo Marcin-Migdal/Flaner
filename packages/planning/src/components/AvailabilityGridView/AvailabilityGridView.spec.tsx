@@ -29,7 +29,7 @@ describe("AvailabilityGridView", () => {
       {
         start: "2026-07-10",
         end: "2026-07-10",
-        color: "#3b82f6",
+        color: "blue",
         votes: {
           "user-1": "yes",
           "user-2": "maybe",
@@ -39,7 +39,7 @@ describe("AvailabilityGridView", () => {
       {
         start: "2026-07-15",
         end: "2026-07-15",
-        color: "#10b981",
+        color: "teal",
         // votes undefined to test votes || {} fallback
       },
     ],
@@ -67,11 +67,11 @@ describe("AvailabilityGridView", () => {
     expect(screen.getByText("user-3")).toBeInTheDocument();
   });
 
-  it("renders winner header when event is finalized and handles undefined finalizedSlotIndex", () => {
+  it("renders winner header when event is finalized and handles undefined finalizedSlotKey", () => {
     const finalizedEvent: SchedulerEvent = {
       ...mockEvent,
       isFinalized: true,
-      finalizedSlotIndex: 0,
+      finalizedSlotKey: "2026-07-10_2026-07-10",
     };
 
     const { rerender } = renderWithProviders(
@@ -86,7 +86,7 @@ describe("AvailabilityGridView", () => {
 
     rerender(
       <AvailabilityGridView
-        event={{ ...finalizedEvent, finalizedSlotIndex: undefined }}
+        event={{ ...finalizedEvent, finalizedSlotKey: undefined }}
         participantsProfiles={mockProfiles}
         currentUserId="user-1"
       />,
@@ -138,35 +138,15 @@ describe("AvailabilityGridView", () => {
     expect(mockVoteSlot).toHaveBeenCalledWith(0, null);
   });
 
-  it("calculates score with maybe votes and handles missing onVoteSlot", async () => {
+  it("does nothing when a vote button is clicked without onVoteSlot", async () => {
     const user = userEvent.setup();
-    const eventWithMaybe: SchedulerEvent = {
-      ...mockEvent,
-      proposedDates: [
-        {
-          start: "2026-07-10",
-          end: "2026-07-10",
-          color: "#3b82f6",
-          votes: {
-            "user-1": "maybe",
-            "user-2": "unknown" as unknown as "yes" | "no" | "maybe",
-          },
-        },
-      ],
-    };
-
     renderWithProviders(
-      <AvailabilityGridView
-        event={eventWithMaybe}
-        participantsProfiles={mockProfiles}
-        currentUserId="user-1"
-      />,
+      <AvailabilityGridView event={mockEvent} participantsProfiles={mockProfiles} currentUserId="user-1" />,
     );
 
+    await user.click(screen.getAllByRole("button", { name: "?" })[0]);
+
     expect(screen.getByText("Alice")).toBeInTheDocument();
-    // Clicking vote button without onVoteSlot provided
-    const maybeBtns = screen.getAllByRole("button", { name: "?" });
-    await user.click(maybeBtns[0]);
   });
 
   it("renders non-interactive grid when currentUserId is not provided", () => {

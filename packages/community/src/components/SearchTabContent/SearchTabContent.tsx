@@ -1,7 +1,7 @@
-import { Avatar, AvatarFallback, AvatarImage, Button, Input, TabsContent } from "@flaner/ui-components";
+import { Avatar, Button, Input, TabsContent } from "@flaner/ui-components";
 import { Loader2, Search, UserCheck, UserPlus, X } from "lucide-react";
 import { useState } from "react";
-import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useGetFriendsListRealtimeQuery, useGetReceivedFriendRequestRealtimeQuery, useGetSentFriendRequestRealtimeQuery, useSearchUsersQuery, useSendFriendRequestMutation } from "../../hooks";
+import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useFriendStatus, useSearchUsersQuery, useSendFriendRequestMutation } from "../../hooks";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
 
 import { useDebounce } from "@flaner/shared/hooks";
@@ -12,24 +12,13 @@ export function SearchTabContent() {
   const debouncedSearch = useDebounce(searchText, 300);
 
   // Queries
-  const { data: friends = [] } = useGetFriendsListRealtimeQuery();
-  const { data: sentRequests = [] } = useGetSentFriendRequestRealtimeQuery();
-  const { data: receivedRequests = [] } = useGetReceivedFriendRequestRealtimeQuery();
-  const { data: searchResults = [], isFetching: searchingUsers } = useSearchUsersQuery(debouncedSearch);
+  const getFriendStatus = useFriendStatus();
+  const { data: searchResults = [], isLoading: searchingUsers } = useSearchUsersQuery(debouncedSearch);
 
   // Mutations
   const sendRequest = useSendFriendRequestMutation();
   const cancelRequest = useCancelFriendRequestMutation();
   const acceptRequest = useAcceptFriendRequestMutation();
-
-  const getInitials = (name: string) => {
-    if (!name) return "??";
-    return name.slice(0, 2).toUpperCase();
-  };
-
-  const isFriend = (uid: string) => friends.some((f) => f.uid === uid);
-  const hasSentRequest = (uid: string) => sentRequests.some((r) => r.receiverUid === uid);
-  const hasReceivedRequest = (uid: string) => receivedRequests.some((r) => r.senderUid === uid);
 
   return (
     <TabsContent value="search" className="space-y-3 outline-none">
@@ -54,7 +43,7 @@ export function SearchTabContent() {
 
       {searchingUsers ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="size-8 animate-spin text-brand" />
+          <Loader2 className="size-8 animate-spin text-brand-text" />
         </div>
       ) : debouncedSearch && searchResults.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border bg-card/50 rounded-2xl p-6 shadow-sm">
@@ -64,9 +53,7 @@ export function SearchTabContent() {
       ) : debouncedSearch ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {searchResults.map((match) => {
-            const friendStatus = isFriend(match.uid);
-            const sentStatus = hasSentRequest(match.uid);
-            const receivedStatus = hasReceivedRequest(match.uid);
+            const status = getFriendStatus(match.uid);
 
             const isSending = sendRequest.isPending && sendRequest.variables?.uid === match.uid;
             const isCanceling = cancelRequest.isPending && cancelRequest.variables === match.uid;
@@ -78,24 +65,24 @@ export function SearchTabContent() {
                 className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card shadow-sm hover:shadow-md hover:border-brand/30 transition-all gap-4"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <Avatar className="size-11 border border-border shadow-sm">
-                    <AvatarImage src={match.avatarUrl} alt={match.username} />
-                    <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-bold text-sm">
-                      {getInitials(match.username)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <Avatar
+                    variant="brand"
+                    name={match.username}
+                    src={match.avatarUrl}
+                    className="size-11 border border-border shadow-sm text-sm"
+                  />
                   <div className="min-w-0">
                     <span className="font-semibold text-sm text-foreground/90 block truncate">{match.username}</span>
                   </div>
                 </div>
 
                 <div className="shrink-0">
-                  {friendStatus ? (
-                    <div className="flex items-center gap-1 text-emerald-500 font-medium text-xs px-3 py-1.5 bg-emerald-500/10 rounded-lg">
+                  {status === "friend" ? (
+                    <div className="flex items-center gap-1 text-success-text font-medium text-xs px-3 py-1.5 bg-success-subtle rounded-lg">
                       <UserCheck className="size-3.5" />
                       <span>{t("searchTab.isFriend")}</span>
                     </div>
-                  ) : sentStatus ? (
+                  ) : status === "outgoing" ? (
                     <Button
                       size="sm"
                       variant="outline"
@@ -112,7 +99,7 @@ export function SearchTabContent() {
                         </>
                       )}
                     </Button>
-                  ) : receivedStatus ? (
+                  ) : status === "incoming" ? (
                     <Button
                       size="sm"
                       variant="brand"
@@ -147,7 +134,7 @@ export function SearchTabContent() {
                           avatarUrl: match.avatarUrl,
                         })
                       }
-                      className="h-9 px-3 rounded-lg border-border text-xs gap-1.5 hover:bg-brand/10 hover:border-brand/30 hover:text-brand"
+                      className="h-9 px-3 rounded-lg border-border text-xs gap-1.5 hover:bg-brand/10 hover:border-brand/30 hover:text-brand-text"
                     >
                       {isSending ? (
                         <Loader2 className="size-3.5 animate-spin" />

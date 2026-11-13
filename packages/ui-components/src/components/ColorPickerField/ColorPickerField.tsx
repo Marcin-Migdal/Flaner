@@ -125,7 +125,7 @@ export const ColorPickerField = React.forwardRef<HTMLInputElement, ColorPickerFi
                 onChange={(e) => handleColorChange(e.target.value)}
                 placeholder="#000000"
                 className={cn(
-                  "w-full h-10 rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 transition-colors",
+                  "w-full h-10 rounded-xl border border-input-border bg-background px-3 py-2 text-sm text-foreground font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 transition-colors",
                   error && "border-destructive focus-visible:ring-destructive",
                   className,
                 )}

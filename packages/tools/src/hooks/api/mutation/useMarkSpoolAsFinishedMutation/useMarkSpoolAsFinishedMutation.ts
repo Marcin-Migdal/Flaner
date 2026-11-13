@@ -1,31 +1,20 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth } from "@flaner/shared/context";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { markSpoolAsFinished } from "../../../../api/spools";
-import { useInvalidateGetSpoolsQuery } from "../../query/useGetSpoolsQuery";
+import { spoolerInvalidation } from "../../queryKeys";
 
-export const useMarkSpoolAsFinishedMutation = (
-  options?: UseMutationOptions<void, Error, string>,
-) => {
-  const { user } = useAuth();
-  const invalidateSpools = useInvalidateGetSpoolsQuery();
-
-  return useMutation<void, Error, string>({
-    mutationFn: async (spoolId: string) => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      await markSpoolAsFinished(spoolId);
+export const useMarkSpoolAsFinishedMutation = (options?: UseMutationOptions<void, Error, string>) =>
+  useUserMutation<void, string>(
+    {
+      mutationKey: ["markSpoolAsFinished"],
+      mutationFn: (spoolId) => markSpoolAsFinished(spoolId),
+      invalidates: spoolerInvalidation.markSpoolAsFinished,
+      meta: {
+        successMessageKey: "tools:toasts.spools.markFinishedSuccess",
+        errorMessageKey: "tools:toasts.spools.markFinishedError",
+      },
     },
-    meta: {
-      successMessageKey: "tools:toasts.spools.markFinishedSuccess",
-      errorMessageKey: "tools:toasts.spools.markFinishedError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      invalidateSpools();
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useMarkSpoolAsFinishedMutation;

@@ -62,6 +62,7 @@ export const BigCalendarHeader = ({
     }
   };
 
+  // shortcut: `view` may be a custom view key, shown as the only button; widen the views type if custom views need more
   const resolvedViews = views ?? (onViewChange ? VIEWS : [view as BigCalendarView]);
 
   const availableViews: { id: string; label: string }[] = [
@@ -76,13 +77,13 @@ export const BigCalendarHeader = ({
     <div className="flex flex-row items-center justify-between p-2 sm:p-4 gap-1.5 sm:gap-4 border-b bg-card">
       {/* Left: Navigation */}
       <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-        <Button type="button" variant="outline" size="icon" className="h-7 w-7 sm:h-9 sm:w-9" onClick={onPrev}>
+        <Button type="button" variant="outline" size="icon" className="h-7 w-7 sm:h-9 sm:w-9" onClick={onPrev} aria-label={t("calendar.previous")}>
           <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </Button>
-        <Button type="button" variant="outline" size="sm" className="h-7 sm:h-9 px-1.5 sm:px-3 text-[11px] sm:text-sm" onClick={onToday}>
+        <Button type="button" variant="outline" size="sm" className="h-7 sm:h-9 px-1.5 sm:px-3 text-2xs sm:text-sm" onClick={onToday}>
           {t("calendar.today")}
         </Button>
-        <Button type="button" variant="outline" size="icon" className="h-7 w-7 sm:h-9 sm:w-9" onClick={onNext}>
+        <Button type="button" variant="outline" size="icon" className="h-7 w-7 sm:h-9 sm:w-9" onClick={onNext} aria-label={t("calendar.next")}>
           <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </Button>
         {headerButtonContent}

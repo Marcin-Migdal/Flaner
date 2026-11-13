@@ -30,10 +30,14 @@ npx nx run-many -t lint --projects=core,shared --fix
 ```
 
 ## 4. CI (GitHub Actions)
-`.github/workflows/ci.yml` runs on every PR to `develop` / `master` (app deploys stay on Vercel). Parallel jobs:
-- `checks`: `npx nx affected -t typecheck lint test build --base=<PR base sha>` (`fetch-depth: 0`) — only projects touched by the PR, incl. their build; `nx.json` → `defaultBase: "develop"`, so locally `npx nx affected -t typecheck lint test build` compares with `develop`
-- `rules`: `npm run rules:check` (generated `firestore.rules` matches the spec), `tsc -p firestore-tests`, `npm run test:rules` (Firestore emulator, Temurin 21)
-- `e2e`: Playwright only for affected projects — `scripts/e2e-affected.mjs` (Nx affected vs the PR base; details in `e2e-testing` skill §6)
+`.github/workflows/ci.yml` runs on every PR to `develop` / `master`. Every job installs through `.github/actions/setup` (`node_modules` cached on `.node-version` + `package-lock.json`; `npm ci` only on a miss). Parallel jobs:
+- **Typecheck, lint**: `npm run lint:tokens`, then `npx nx affected -t typecheck lint build-storybook --base=<PR base sha>` (`fetch-depth: 0`)
+- **Unit tests**: `npx nx affected -t test`
+- Both restore the Nx cache (`actions/cache`, per job): `NX_CACHE_DIRECTORY=.nx/cache` (Nx 23 defaults to `~/.nx/<hash>/cache`, outside the repo) plus `.nx/workspace-data/*.db` (without the task records a restored cache still misses), so a re-push to the same PR skips unchanged tasks. Task hashes include root config through `nx.json` → `namedInputs.sharedGlobals` (`tsconfig.base.json`, `tsconfig.json`, `vitest.base.ts`, `vite.federation.ts`, `.node-version`): add any new root file that targets read there, or the cache can return a stale result. `typecheck` has `"cache": true` in each `project.json` (`targetDefaults` does not apply it).
+- App builds are not in `ci.yml`: `deploy-vercel.yml` builds every affected app (required check **Deploy result**, `vercel-project-setup` skill).
+- `rules`: `npm run rules:check` (generated `firestore.rules` matches the spec; schema tables match the TS types), `tsc -p firestore-tests`, `npm run test:rules` (Firestore emulator, Temurin 21)
+- E2E: one runner per affected Playwright project — `scripts/e2e-affected.mjs` (details in `e2e-testing` skill §6)
+- `nx.json` → `defaultBase: "develop"`, so locally `npx nx affected -t typecheck lint test build` compares with `develop`.
 
 `.github/workflows/deploy-firestore.yml` deploys Firestore rules and indexes on push to `develop` (DEV) / `master` (PROD), and on a manual run of a feature branch (DEV only) — see the `firestore-rules-manager` skill, sections 6–7.
 

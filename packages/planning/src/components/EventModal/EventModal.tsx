@@ -25,6 +25,7 @@ import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { CreateSchedulerFormData, getCreateSchedulerSchema } from "../../utils/schemas/create-scheduler-schema";
 import { ParticipantSelect } from "../ParticipantSelect";
 import { getRandomSlotColor } from "./utils";
+import { getSlotColorValue, type SlotColorKey } from "../../utils/slotColors";
 import { CustomDateSlotsPopover, type CustomSlotsConfig } from "../CustomDateSlotsPopover/CustomDateSlotsPopover";
 import { generateCustomDateSlots } from "../../utils/generateCustomDateSlots";
 
@@ -45,6 +46,7 @@ export const EventModal = ({
 }: EventModalProps) => {
   const { t } = usePlanningTranslations();
   const { user } = useAuth();
+  const isFinalizedEdit = !!eventToEdit?.isFinalized;
 
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isControlled = typeof externalIsOpen === "boolean";
@@ -54,7 +56,7 @@ export const EventModal = ({
   const [selectedRange, setSelectedRange] = useState<[Date, Date?] | null>(null);
 
   const methods = useForm<CreateSchedulerFormData>({
-    resolver: zodResolver(getCreateSchedulerSchema(t)),
+    resolver: zodResolver(getCreateSchedulerSchema(t, isFinalizedEdit)),
     defaultValues: {
       name: "",
       description: "",
@@ -114,44 +116,28 @@ export const EventModal = ({
     const formattedDates = sortedProposedDates.map((d) => {
       const startStr = format(d.start, "yyyy-MM-dd");
       const endStr = format(d.end, "yyyy-MM-dd");
-      const existingSlot = eventToEdit?.proposedDates.find(
-        (orig) => orig.start === startStr && orig.end === endStr,
-      );
+      // Votes stay on the event keyed by slot dates, so an edit does not carry them
       return {
         start: startStr,
         end: endStr,
         color: d.color,
-        ...(existingSlot?.votes ? { votes: existingSlot.votes } : {}),
       };
     });
 
     if (eventToEdit) {
-      let newFinalizedSlotIndex = eventToEdit.finalizedSlotIndex;
-      if (eventToEdit.isFinalized && typeof eventToEdit.finalizedSlotIndex === "number") {
-        const winningSlot = eventToEdit.proposedDates[eventToEdit.finalizedSlotIndex];
-        if (winningSlot) {
-          const foundIndex = formattedDates.findIndex(
-            (d) => d.start === winningSlot.start && d.end === winningSlot.end,
-          );
-          if (foundIndex !== -1) {
-            newFinalizedSlotIndex = foundIndex;
-          }
-        }
-      }
-
       await updateEvent(
         {
           eventId: eventToEdit.id,
-          data: {
-            name: data.name,
-            description: data.description || "",
-            endDate: data.endDate ? format(data.endDate, "yyyy-MM-dd") : undefined,
-            participants: data.participants,
-            proposedDates: formattedDates,
-            ...(typeof newFinalizedSlotIndex === "number"
-              ? { finalizedSlotIndex: newFinalizedSlotIndex }
-              : {}),
-          },
+          // A finalized event takes only a new name and description
+          data: isFinalizedEdit
+            ? { name: data.name, description: data.description || "" }
+            : {
+                name: data.name,
+                description: data.description || "",
+                endDate: data.endDate ? format(data.endDate, "yyyy-MM-dd") : undefined,
+                participants: data.participants,
+                proposedDates: formattedDates,
+              },
         },
         {
           onSuccess: () => {
@@ -224,7 +210,7 @@ export const EventModal = ({
     }
   };
 
-  const handleEventClick = (event: CalendarEvent, e: React.MouseEvent) => {
+  const handleEventClick = (event: CalendarEvent, e: React.SyntheticEvent) => {
     e.stopPropagation();
     const currentDates = methods.getValues("proposedDates") || [];
     const indexToRemove = typeof event.id === "string" ? parseInt(event.id, 10) : event.id;
@@ -239,7 +225,7 @@ export const EventModal = ({
     }
 
     const currentDates = methods.getValues("proposedDates") || [];
-    const newUniqueSlots: { start: Date; end: Date; color: string }[] = [];
+    const newUniqueSlots: { start: Date; end: Date; color: SlotColorKey }[] = [];
 
     for (const slot of generatedSlots) {
       const isDuplicate = currentDates.some(
@@ -280,7 +266,7 @@ export const EventModal = ({
       title: `${format(d.start, "MMM dd")} - ${format(d.end, "MMM dd")}`,
       start: d.start,
       end: d.end,
-      color: d.color,
+      color: getSlotColorValue(d.color),
     }));
   }, [rawProposedDates]);
 
@@ -294,7 +280,14 @@ export const EventModal = ({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="w-[calc(100vw-0.5rem)] max-w-[calc(100vw-0.5rem)] max-md:h-[calc(100dvh-0.5rem)] max-md:max-h-[calc(100dvh-0.5rem)] sm:max-w-[1000px] md:max-w-[1200px] lg:max-w-[1640px] md:w-[95vw] p-0 gap-0 overflow-hidden bg-background">
+      <DialogContent
+        className={cn(
+          "p-0 gap-0 overflow-hidden bg-background",
+          isFinalizedEdit
+            ? "sm:max-w-lg"
+            : "w-[calc(100vw-0.5rem)] max-w-[calc(100vw-0.5rem)] max-md:h-[calc(100dvh-0.5rem)] max-md:max-h-[calc(100dvh-0.5rem)] sm:max-w-[1000px] md:max-w-[1200px] lg:max-w-[1640px] md:w-[95vw]",
+        )}
+      >
         <DialogHeader className="px-4 py-4 md:px-6 md:pt-6 md:pb-4 border-b">
           <DialogTitle>{eventToEdit ? t("edit.title") : t("create.title")}</DialogTitle>
         </DialogHeader>
@@ -302,11 +295,16 @@ export const EventModal = ({
         <FormProvider {...methods}>
           <form
             onSubmit={methods.handleSubmit(onSubmit)}
-            className="grid grid-cols-1 md:grid-cols-[360px_1fr] lg:grid-cols-[420px_1fr] md:h-[850px] lg:h-[950px] max-md:h-[calc(100dvh-5rem)] max-h-[95vh]"
+            className={cn(
+              "grid grid-cols-1",
+              !isFinalizedEdit &&
+                "md:grid-cols-[360px_1fr] lg:grid-cols-[420px_1fr] md:h-[850px] lg:h-[950px] max-md:h-[calc(100dvh-5rem)] max-h-[95vh]",
+            )}
           >
             <div
               className={cn(
-                "p-3 md:p-6 border-r overflow-y-auto flex-col gap-6",
+                "p-3 md:p-6 overflow-y-auto flex-col gap-6",
+                !isFinalizedEdit && "border-r",
                 showMobileCalendar ? "hidden md:flex" : "flex",
               )}
             >
@@ -318,7 +316,11 @@ export const EventModal = ({
                   placeholder={t("fields.description")}
                   style={{ resize: "none" }}
                 />
-                <FormDatePicker name="endDate" label={t("fields.endDate")} />
+                {isFinalizedEdit ? (
+                  <p className="text-sm text-muted-foreground">{t("edit.finalizedNotice")}</p>
+                ) : (
+                  <FormDatePicker name="endDate" label={t("fields.endDate")} />
+                )}
                 {!eventToEdit && (
                   <FormCheckbox
                     name="autoVoteProposedDates"
@@ -327,13 +329,15 @@ export const EventModal = ({
                 )}
               </div>
 
-              <ParticipantSelect
-                creatorId={eventToEdit ? eventToEdit.creatorId : user?.uid}
-                initialParticipantIds={eventToEdit?.participants}
-              />
+              {!isFinalizedEdit && (
+                <ParticipantSelect
+                  creatorId={eventToEdit ? eventToEdit.creatorId : user?.uid}
+                  initialParticipantIds={eventToEdit?.participants}
+                />
+              )}
 
               <div className="mt-auto pt-6 flex flex-col gap-4">
-                {!showMobileCalendar && (
+                {!showMobileCalendar && !isFinalizedEdit && (
                   <Button
                     type="button"
                     variant="outline"
@@ -351,7 +355,7 @@ export const EventModal = ({
                     </p>
                   )}
                   <div className="flex justify-end">
-                    <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
+                    <Button type="submit" disabled={isSaving || methods.formState.isSubmitting} className="w-full sm:w-auto">
                       {isSaving ? t("actions.saving") : eventToEdit ? t("actions.save") : t("actions.add")}
                     </Button>
                   </div>
@@ -359,54 +363,56 @@ export const EventModal = ({
               </div>
             </div>
 
-            <div
-              className={cn(
-                "bg-muted/10 flex-col p-3.5 md:p-6 overflow-hidden w-full flex-1 min-h-0",
-                showMobileCalendar ? "flex" : "hidden md:flex",
-              )}
-            >
-              <div className="md:hidden flex items-center mb-4">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowMobileCalendar(false)}
-                  className="mr-2 -ml-2"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <h3 className="font-semibold text-sm">{t("create.proposeDates")}</h3>
-              </div>
-              <h3 className="font-semibold mb-4 text-sm hidden md:block">{t("create.proposeDates")}</h3>
-              <div className="h-full bg-background rounded-xl border shadow-sm flex flex-col overflow-auto">
-                <BigCalendar
-                  fitContainer
-                  view="month"
-                  views={["month"]}
-                  maxEventsPerDay={2}
-                  selectionMode="range"
-                  selectedDate={selectedRange}
-                  events={calendarEvents}
-                  disabledDates={{ before: startOfToday() }}
-                  onDateChange={handleDateChange}
-                  onEventClick={handleEventClick}
-                  headerButtonContent={<CustomDateSlotsPopover onApply={handleApplyCustomSlots} />}
-                />
-              </div>
-
-              <div className="mt-6 flex md:hidden flex-col gap-2">
-                {methods.formState.errors.proposedDates && (
-                  <p className="text-sm font-medium text-destructive text-right">
-                    {methods.formState.errors.proposedDates.message}
-                  </p>
+            {!isFinalizedEdit && (
+              <div
+                className={cn(
+                  "bg-muted/10 flex-col p-3.5 md:p-6 overflow-hidden w-full flex-1 min-h-0",
+                  showMobileCalendar ? "flex" : "hidden md:flex",
                 )}
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
-                    {isSaving ? t("actions.saving") : eventToEdit ? t("actions.save") : t("actions.add")}
+              >
+                <div className="md:hidden flex items-center mb-4">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowMobileCalendar(false)}
+                    className="mr-2 -ml-2"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
                   </Button>
+                  <h3 className="font-semibold text-sm">{t("create.proposeDates")}</h3>
+                </div>
+                <h3 className="font-semibold mb-4 text-sm hidden md:block">{t("create.proposeDates")}</h3>
+                <div className="h-full bg-background rounded-xl border shadow-sm flex flex-col overflow-auto">
+                  <BigCalendar
+                    fitContainer
+                    view="month"
+                    views={["month"]}
+                    maxEventsPerDay={2}
+                    selectionMode="range"
+                    selectedDate={selectedRange}
+                    events={calendarEvents}
+                    disabledDates={{ before: startOfToday() }}
+                    onDateChange={handleDateChange}
+                    onEventClick={handleEventClick}
+                    headerButtonContent={<CustomDateSlotsPopover onApply={handleApplyCustomSlots} />}
+                  />
+                </div>
+
+                <div className="mt-6 flex md:hidden flex-col gap-2">
+                  {methods.formState.errors.proposedDates && (
+                    <p className="text-sm font-medium text-destructive text-right">
+                      {methods.formState.errors.proposedDates.message}
+                    </p>
+                  )}
+                  <div className="flex justify-end">
+                    <Button type="submit" disabled={isSaving || methods.formState.isSubmitting} className="w-full sm:w-auto">
+                      {isSaving ? t("actions.saving") : eventToEdit ? t("actions.save") : t("actions.add")}
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </form>
         </FormProvider>
       </DialogContent>

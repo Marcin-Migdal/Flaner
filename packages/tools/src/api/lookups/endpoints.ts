@@ -1,19 +1,8 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/lookup_materials.md, lookup_types.md, lookup_colors.md (keep their Write flows / Queries in sync).
-import {
-  collection,
-  doc,
-  getDocs,
-  limit,
-  query,
-  where,
-  setDoc,
-  deleteDoc,
-  updateDoc,
-  serverTimestamp,
-  writeBatch,
-} from "firebase/firestore";
+import { collection, doc, getDocs, query, setDoc, updateDoc, where, writeBatch } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
 import { firestoreConverter } from "@flaner/shared/utils";
+import { isSameName } from "../../utils/filamentCatalog";
 import type {
   AddLookupColorInput,
   AddLookupMaterialInput,
@@ -56,176 +45,103 @@ export const fetchLookupColors = async (userId: string): Promise<LookupColor[]> 
   return snap.docs.map((d) => ({ ...d.data(), id: d.id }));
 };
 
-export const addLookupMaterial = async (
-  userId: string,
-  input: AddLookupMaterialInput,
-): Promise<string> => {
-  const trimmedName = input.name.trim();
-  const q = query(
-    lookupRefs.materials(),
-    where("userId", "==", userId),
-    where("name", "==", trimmedName),
-    limit(1),
-  );
-  const snap = await getDocs(q);
-  if (!snap.empty) {
-    return snap.docs[0].id;
-  }
+// Lookup identity (`isSameName`): names compare trimmed and case-insensitive, a type within its material,
+// a colour within its material + type. Adds match it in JS over the user's docs (a lookup list is small) and
+// deletes remove every matching doc, so case-duplicates written before this rule never survive a delete.
 
-  const newDocRef = doc(collection(fb.firestore, "lookup_materials"));
-  await setDoc(newDocRef, {
-    id: newDocRef.id,
-    userId,
-    name: trimmedName,
-    createdAt: serverTimestamp(),
-  });
+const isMaterialOf = (data: { materialName: string }, materialName: string) =>
+  isSameName(data.materialName, materialName);
+
+const isTypeOf = (data: { materialName: string; typeName: string }, materialName: string, typeName: string) =>
+  isMaterialOf(data, materialName) && isSameName(data.typeName, typeName);
+
+export const addLookupMaterial = async (userId: string, input: AddLookupMaterialInput): Promise<string> => {
+  const name = input.name.trim();
+  const existing = (await getDocs(query(lookupRefs.materials(), where("userId", "==", userId)))).docs.find((d) =>
+    isSameName(d.data().name, name),
+  );
+  if (existing) return existing.id;
+
+  const newDocRef = doc(lookupRefs.materials());
+  await setDoc(newDocRef, { id: newDocRef.id, userId, name, createdAt: Date.now() });
   return newDocRef.id;
 };
 
-export const addLookupType = async (
-  userId: string,
-  input: AddLookupTypeInput,
-): Promise<string> => {
-  const trimmedMaterial = input.materialName.trim();
-  const trimmedName = input.name.trim();
-
-  const q = query(
-    lookupRefs.types(),
-    where("userId", "==", userId),
-    where("materialName", "==", trimmedMaterial),
-    where("name", "==", trimmedName),
-    limit(1),
+export const addLookupType = async (userId: string, input: AddLookupTypeInput): Promise<string> => {
+  const materialName = input.materialName.trim();
+  const name = input.name.trim();
+  const existing = (await getDocs(query(lookupRefs.types(), where("userId", "==", userId)))).docs.find(
+    (d) => isMaterialOf(d.data(), materialName) && isSameName(d.data().name, name),
   );
-  const snap = await getDocs(q);
-  if (!snap.empty) {
-    return snap.docs[0].id;
-  }
+  if (existing) return existing.id;
 
-  const newDocRef = doc(collection(fb.firestore, "lookup_types"));
-  await setDoc(newDocRef, {
-    id: newDocRef.id,
-    userId,
-    materialName: trimmedMaterial,
-    name: trimmedName,
-    createdAt: serverTimestamp(),
-  });
+  const newDocRef = doc(lookupRefs.types());
+  await setDoc(newDocRef, { id: newDocRef.id, userId, materialName, name, createdAt: Date.now() });
   return newDocRef.id;
 };
 
-export const addLookupColor = async (
-  userId: string,
-  input: AddLookupColorInput,
-): Promise<string> => {
-  const trimmedMaterial = input.materialName.trim();
-  const trimmedType = input.typeName.trim();
-  const trimmedName = input.name.trim();
+/** Adds a colour, or updates the hex of the existing one. */
+export const addLookupColor = async (userId: string, input: AddLookupColorInput): Promise<string> => {
+  const materialName = input.materialName.trim();
+  const typeName = input.typeName.trim();
+  const name = input.name.trim();
   const hex = input.hex.trim();
-
-  const q = query(
-    lookupRefs.colors(),
-    where("userId", "==", userId),
-    where("materialName", "==", trimmedMaterial),
-    where("typeName", "==", trimmedType),
-    where("name", "==", trimmedName),
-    limit(1),
+  const existing = (await getDocs(query(lookupRefs.colors(), where("userId", "==", userId)))).docs.find(
+    (d) => isTypeOf(d.data(), materialName, typeName) && isSameName(d.data().name, name),
   );
-  const snap = await getDocs(q);
-  if (!snap.empty) {
-    const existingDoc = snap.docs[0];
-    const data = existingDoc.data();
-    if (data.hex !== hex) {
-      await updateDoc(doc(fb.firestore, "lookup_colors", existingDoc.id), { hex });
+  if (existing) {
+    if (existing.data().hex !== hex) {
+      await updateDoc(lookupRefs.color(existing.id), { hex });
     }
-    return existingDoc.id;
+    return existing.id;
   }
 
-  const newDocRef = doc(collection(fb.firestore, "lookup_colors"));
-  await setDoc(newDocRef, {
-    id: newDocRef.id,
-    userId,
-    materialName: trimmedMaterial,
-    typeName: trimmedType,
-    name: trimmedName,
-    hex,
-    createdAt: serverTimestamp(),
-  });
+  const newDocRef = doc(lookupRefs.colors());
+  await setDoc(newDocRef, { id: newDocRef.id, userId, materialName, typeName, name, hex, createdAt: Date.now() });
   return newDocRef.id;
 };
 
-export const updateLookupColorHex = async (
-  colorId: string,
-  hex: string,
-): Promise<void> => {
-  await updateDoc(doc(fb.firestore, "lookup_colors", colorId), {
-    hex: hex.trim(),
-  });
+/** Deletes the material and its types and colours (atomic batch). */
+export const deleteLookupMaterial = async (userId: string, materialName: string): Promise<void> => {
+  const [materialsSnap, typesSnap, colorsSnap] = await Promise.all([
+    getDocs(query(lookupRefs.materials(), where("userId", "==", userId))),
+    getDocs(query(lookupRefs.types(), where("userId", "==", userId))),
+    getDocs(query(lookupRefs.colors(), where("userId", "==", userId))),
+  ]);
+
+  const batch = writeBatch(fb.firestore);
+  materialsSnap.docs.filter((d) => isSameName(d.data().name, materialName)).forEach((d) => batch.delete(d.ref));
+  typesSnap.docs.filter((d) => isMaterialOf(d.data(), materialName)).forEach((d) => batch.delete(d.ref));
+  colorsSnap.docs.filter((d) => isMaterialOf(d.data(), materialName)).forEach((d) => batch.delete(d.ref));
+  await batch.commit();
 };
 
-export const deleteLookupMaterial = async (
-  userId: string,
-  materialId: string,
-  materialName: string,
-): Promise<void> => {
-  const lowerMat = materialName.trim().toLowerCase();
-
-  // Find associated types and colors for this user and cascade delete them atomically
+/** Deletes the type and its colours (atomic batch). */
+export const deleteLookupType = async (userId: string, materialName: string, typeName: string): Promise<void> => {
   const [typesSnap, colorsSnap] = await Promise.all([
     getDocs(query(lookupRefs.types(), where("userId", "==", userId))),
     getDocs(query(lookupRefs.colors(), where("userId", "==", userId))),
   ]);
 
   const batch = writeBatch(fb.firestore);
-
-  // Delete the material doc itself
-  batch.delete(doc(fb.firestore, "lookup_materials", materialId));
-
-  // Cascade delete matching child types
-  typesSnap.docs.forEach((d) => {
-    if (d.data().materialName.toLowerCase() === lowerMat) {
-      batch.delete(d.ref);
-    }
-  });
-
-  // Cascade delete matching child colors
-  colorsSnap.docs.forEach((d) => {
-    if (d.data().materialName.toLowerCase() === lowerMat) {
-      batch.delete(d.ref);
-    }
-  });
-
+  typesSnap.docs
+    .filter((d) => isMaterialOf(d.data(), materialName) && isSameName(d.data().name, typeName))
+    .forEach((d) => batch.delete(d.ref));
+  colorsSnap.docs.filter((d) => isTypeOf(d.data(), materialName, typeName)).forEach((d) => batch.delete(d.ref));
   await batch.commit();
 };
 
-export const deleteLookupType = async (
+export const deleteLookupColor = async (
   userId: string,
-  typeId: string,
   materialName: string,
   typeName: string,
+  name: string,
 ): Promise<void> => {
-  const lowerMat = materialName.trim().toLowerCase();
-  const lowerType = typeName.trim().toLowerCase();
-
   const colorsSnap = await getDocs(query(lookupRefs.colors(), where("userId", "==", userId)));
 
   const batch = writeBatch(fb.firestore);
-
-  // Delete the type doc itself
-  batch.delete(doc(fb.firestore, "lookup_types", typeId));
-
-  // Cascade delete matching child colors
-  colorsSnap.docs.forEach((d) => {
-    const data = d.data();
-    if (
-      data.materialName.toLowerCase() === lowerMat &&
-      data.typeName.toLowerCase() === lowerType
-    ) {
-      batch.delete(d.ref);
-    }
-  });
-
+  colorsSnap.docs
+    .filter((d) => isTypeOf(d.data(), materialName, typeName) && isSameName(d.data().name, name))
+    .forEach((d) => batch.delete(d.ref));
   await batch.commit();
-};
-
-export const deleteLookupColor = async (colorId: string): Promise<void> => {
-  await deleteDoc(doc(fb.firestore, "lookup_colors", colorId));
 };

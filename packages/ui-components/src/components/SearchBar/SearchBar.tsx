@@ -20,14 +20,18 @@ export interface SearchBarProps<T> extends Omit<IconTextFieldProps, "onChange" |
   showMoreText?: string;
 }
 
-const DEFAULT_RESULTS: unknown[] = [];
+// never[] fits any T[] without a cast; one shared instance keeps the default stable between renders
+const DEFAULT_RESULTS: never[] = [];
 
 export function SearchBar<T>({
-  results = DEFAULT_RESULTS as T[],
+  results = DEFAULT_RESULTS,
   isLoading = false,
   onSelect,
   renderResult,
-  keyExtractor = (item: T) => ((item as Record<string, unknown>).id as string | number) || String(item),
+  keyExtractor = (item: T) =>
+    typeof item === "object" && item !== null && "id" in item && (typeof item.id === "string" || typeof item.id === "number")
+      ? item.id
+      : String(item),
   emptyStateText = "searchBar.emptySearch",
   onChange,
   value,
@@ -118,7 +122,7 @@ export function SearchBar<T>({
   // Scroll into view on keyboard navigation
   useEffect(() => {
     if (selectedIndex >= 0 && listRef.current) {
-      const selectedEl = listRef.current.children[selectedIndex] as HTMLElement;
+      const selectedEl = listRef.current.children[selectedIndex];
       if (selectedEl) {
         selectedEl.scrollIntoView?.({ block: "nearest" });
       }
@@ -167,7 +171,7 @@ export function SearchBar<T>({
       >
         {isLoading && results.length === 0 ? (
           <div className="flex items-center justify-center py-6 text-muted-foreground">
-            <Loader2 className="size-6 animate-spin text-brand" />
+            <Loader2 className="size-6 animate-spin text-brand-text" />
           </div>
         ) : results.length > 0 ? (
           <ul
@@ -207,8 +211,8 @@ export function SearchBar<T>({
                     onShowMore?.();
                   }}
                   className={cn(
-                    "w-full cursor-pointer px-4 py-2 text-center text-sm font-medium text-brand transition-colors rounded-lg",
-                    selectedIndex === results.length ? "bg-accent text-brand" : "hover:bg-accent/50",
+                    "w-full cursor-pointer px-4 py-2 text-center text-sm font-medium text-brand-text transition-colors rounded-lg",
+                    selectedIndex === results.length ? "bg-accent text-brand-text" : "hover:bg-accent/50",
                   )}
                 >
                   {isFetchingNextPage ? <Loader2 className="size-4 animate-spin mx-auto" /> : t(showMoreText)}

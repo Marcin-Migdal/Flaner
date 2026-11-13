@@ -1,31 +1,20 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth } from "@flaner/shared/context";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { addLookupType, type AddLookupTypeInput } from "../../../../api/lookups";
-import { useInvalidateGetLookupTypesQuery } from "../../query/useGetLookupTypesQuery";
+import { spoolerInvalidation } from "../../queryKeys";
 
-export const useAddLookupTypeMutation = (
-  options?: UseMutationOptions<string, Error, AddLookupTypeInput>,
-) => {
-  const { user } = useAuth();
-  const invalidateTypes = useInvalidateGetLookupTypesQuery();
-
-  return useMutation<string, Error, AddLookupTypeInput>({
-    mutationFn: async (data: AddLookupTypeInput) => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      return await addLookupType(user.uid, data);
+export const useAddLookupTypeMutation = (options?: UseMutationOptions<string, Error, AddLookupTypeInput>) =>
+  useUserMutation<string, AddLookupTypeInput>(
+    {
+      mutationKey: ["addLookupType"],
+      mutationFn: (data, { uid }) => addLookupType(uid, data),
+      invalidates: spoolerInvalidation.addLookupType,
+      meta: {
+        successMessageKey: "tools:toasts.lookups.addTypeSuccess",
+        errorMessageKey: "tools:toasts.lookups.addTypeError",
+      },
     },
-    meta: {
-      successMessageKey: "tools:toasts.lookups.addTypeSuccess",
-      errorMessageKey: "tools:toasts.lookups.addTypeError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      invalidateTypes();
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useAddLookupTypeMutation;

@@ -1,15 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import type { SchedulerEvent } from "../../api/events/types";
 import type { ParticipantResult } from "../../api/participants";
 import { SchedulerView } from "./SchedulerView";
 
-const mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const signedInUser = createMockUser({ uid: "user-1", username: "Alice", email: "alice@flaner.app" });
 
 const mockEvents: SchedulerEvent[] = [
   {
@@ -22,7 +18,7 @@ const mockEvents: SchedulerEvent[] = [
       {
         start: "2026-08-01",
         end: "2026-08-01",
-        color: "#3b82f6",
+        color: "blue",
         votes: {
           "user-1": "yes",
         },
@@ -41,7 +37,7 @@ const mockEvents: SchedulerEvent[] = [
       {
         start: "2026-08-15",
         end: "2026-08-15",
-        color: "#10b981",
+        color: "teal",
         votes: {},
       },
     ],
@@ -84,7 +80,7 @@ describe("SchedulerView", () => {
   it("renders empty state when there are no events", () => {
     queryEventsData = [];
 
-    renderWithProviders(<SchedulerView />);
+    renderWithProviders(<SchedulerView />, { user: signedInUser });
 
     expect(screen.getAllByText("hub.noEvents")[0]).toBeInTheDocument();
   });
@@ -92,7 +88,7 @@ describe("SchedulerView", () => {
   it("renders first event by default when events exist without hash", () => {
     queryEventsData = mockEvents;
 
-    renderWithProviders(<SchedulerView />);
+    renderWithProviders(<SchedulerView />, { user: signedInUser });
 
     expect(screen.getByText("Sprint 42 Planning")).toBeInTheDocument();
   });
@@ -101,6 +97,7 @@ describe("SchedulerView", () => {
     queryEventsData = mockEvents;
 
     renderWithProviders(<SchedulerView />, {
+      user: signedInUser,
       initialEntries: ["/#evt-2"],
     });
 

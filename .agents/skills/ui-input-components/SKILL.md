@@ -29,9 +29,9 @@ Every input type must have these files in `packages/ui-components/src/components
 
 2. **Form Wrapper (e.g. `FormMyInput.tsx`)**
    - A form-aware wrapper connected to `react-hook-form`.
-   - Uses `useController` internally to register the field.
-   - Extends the base component's props and `UseControllerProps` (specifically requiring `name`).
-   - Automatically maps `fieldState.error?.message` to the base component's `error` prop.
+   - Binds the field through the shared `useFormField` helper (`src/hooks/useFormField/`) — never call `useController` directly in a wrapper.
+   - Props: `FormFieldProps<BaseProps, TFieldValues, TName, ExtraOmit?>` = the base props minus the bound ones (`name`, `value`, `defaultValue`, `onChange`, `onBlur`) plus `UseControllerProps`.
+   - Holds only what is specific to the input (e.g. `checked={!!field.value}`, option lookup); the binding and the error mapping live in the helper.
 
 ---
 
@@ -82,46 +82,41 @@ export default MyInput;
 
 ## 2. Creating the Form Wrapper Component
 
+`useFormField(props)` splits off the controller props (`name`, `rules`, `shouldUnregister`, `defaultValue`, `control`, `disabled`, `exact`), calls `useController` and returns:
+- `field` — spread onto the input (`value`, `onChange`, `onBlur`, `name`, `ref`, `disabled`)
+- `error` — `fieldState.error?.message`
+- `rest` — every other prop, for the base input
+
 ### Template:
 ```tsx
-import React from "react";
-import { useController, UseControllerProps } from "react-hook-form";
-import { MyInput, MyInputProps } from "./MyInput";
+import type { FieldPath, FieldValues } from "react-hook-form";
+import { useFormField, type FormFieldProps } from "../../hooks/useFormField";
+import { MyInput, type MyInputProps } from "../MyInput";
 
-export interface FormMyInputProps
-  extends Omit<MyInputProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur">,
-    UseControllerProps {}
+export type FormMyInputProps<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+> = FormFieldProps<MyInputProps, TFieldValues, TName>;
 
-export function FormMyInput({
-  name,
-  rules,
-  shouldUnregister,
-  defaultValue,
-  control,
-  disabled,
-  ...props
-}: FormMyInputProps) {
-  // Hook into react-hook-form context
-  const { field, fieldState } = useController({
-    name,
-    rules,
-    shouldUnregister,
-    defaultValue,
-    control,
-    disabled,
-  });
+export function FormMyInput<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+>(props: FormMyInputProps<TFieldValues, TName>) {
+  const { field, error, rest } = useFormField(props);
 
-  return (
-    <MyInput
-      {...props}
-      {...field}
-      error={fieldState.error?.message}
-    />
-  );
+  return <MyInput {...rest} {...field} error={error} />;
 }
 
 export default FormMyInput;
 ```
+
+### Value conversion
+- **Numbers:** a numeric input stores `toNumberOrUndefined(e.target.value)` (from the same helper): an empty field is `undefined` (so zod's "required" message shows), anything else a `number`. Used by `FormTextField` (`type="number"`) and `FormMoneyInput`. Never re-implement it in a wrapper.
+- **Cleared text / select:** writes `""` (`FormSelect`, `FormIconTextField`), which the `z.string().min(1)` schemas rely on.
+- **`disabled`:** passing it to the helper hands it to react-hook-form, which also **drops the field from the submit data**. If a disabled field must still be submitted, keep `disabled` out of the helper and pass it to the input only (see `FormColorPickerField`).
+
+### Tests
+The binding, the error mapping and the number conversion are tested once in `useFormField.spec.tsx`. A wrapper spec keeps one smoke test plus tests for its own logic only.
 
 ---
 

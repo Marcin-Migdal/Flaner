@@ -1,8 +1,6 @@
 import { useAuth } from "@flaner/shared/context";
 import {
   Avatar,
-  AvatarFallback,
-  AvatarImage,
   Button,
   ConfirmationPopup,
   DropdownMenu,
@@ -14,12 +12,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@flaner/ui-components";
-import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Copy, Loader2, LogOut, MoreHorizontal, Shield, UserCheck, UserPlus, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
-import { hasGroupPermission } from "../../../api/groups";
+import { getGroupAuthorization } from "../../../api/groups";
 import { InviteToGroupModal } from "../../../components/groups/InviteToGroupModal";
 import { ManageGroupSheet } from "../../../components/groups/ManageGroupSheet";
 import { RequestsSheet } from "../../../components/groups/RequestsSheet";
@@ -27,11 +24,9 @@ import {
   useAcceptFriendRequestMutation,
   useAddGroupMemberMutation,
   useCancelFriendRequestMutation,
-  useGetFriendsListRealtimeQuery,
+  useFriendStatus,
   useGetGroupMembersQuery,
   useGetGroupQuery,
-  useGetReceivedFriendRequestRealtimeQuery,
-  useGetSentFriendRequestRealtimeQuery,
   useGetUserGroupRequestQuery,
   useGetUserGroupsQuery,
   useGetUsersQuery,
@@ -47,18 +42,22 @@ export function GroupDetailsView() {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   // isPending, not isLoading: the query is disabled until auth restores the user, and a disabled query reports isLoading=false.
   const { data: userGroups = [], isPending: userGroupsLoading } = useGetUserGroupsQuery();
-  const isMember = userGroups.some((g) => g.id === groupId);
+  const isMemberOfGroup = userGroups.some((g) => g.id === groupId);
 
-  const { data: group, isLoading: groupLoading } = useGetGroupQuery(groupId || "");
-  const { data: members = [], isLoading: membersLoading } = useGetGroupMembersQuery(groupId || "", {
-    enabled: isMember,
-  });
+  // isError comes from the realtime listener (permission-denied after losing access, e.g. removed from a private group)
+  const { data: group, isLoading: groupLoading, isError: groupAccessLost } = useGetGroupQuery(groupId || "");
+  // Only members can read the member list (rules M1): its listener failing means the user was just removed,
+  // usually before the memberships listener reports it.
+  const { data: members = [], isLoading: membersLoading, isError: membersAccessLost } = useGetGroupMembersQuery(
+    groupId || "",
+    { enabled: isMemberOfGroup },
+  );
+  const isMember = isMemberOfGroup && !membersAccessLost;
 
   const memberUserIds = members.map((m) => m.userId);
   const { data: membersProfiles, isLoading: profilesLoading } = useGetUsersQuery(memberUserIds);
@@ -67,17 +66,11 @@ export function GroupDetailsView() {
   const { data: userRequest } = useGetUserGroupRequestQuery(groupId || "");
 
   // Friends data for member actions - only enabled for members
-  const { data: friends = [] } = useGetFriendsListRealtimeQuery({ enabled: isMember });
-  const { data: sentFriendRequests = [] } = useGetSentFriendRequestRealtimeQuery({ enabled: isMember });
-  const { data: receivedFriendRequests = [] } = useGetReceivedFriendRequestRealtimeQuery({ enabled: isMember });
+  const getFriendStatus = useFriendStatus({ enabled: isMember });
 
   const sendFriendRequest = useSendFriendRequestMutation();
   const cancelFriendRequest = useCancelFriendRequestMutation();
   const acceptFriendRequest = useAcceptFriendRequestMutation();
-
-  const isFriend = (uid: string) => friends.some((f) => f.uid === uid);
-  const hasSentFriendRequest = (uid: string) => sentFriendRequests.some((r) => r.receiverUid === uid);
-  const hasReceivedFriendRequest = (uid: string) => receivedFriendRequests.some((r) => r.senderUid === uid);
 
   const { mutateAsync: joinGroup, isPending: isJoining } = useAddGroupMemberMutation();
   const { mutateAsync: requestJoin, isPending: isRequesting } = useRequestJoinGroupMutation();
@@ -90,14 +83,10 @@ export function GroupDetailsView() {
 
   // Membership unknown until the user's groups load; deciding earlier flashes "Access Denied" for members.
   if (groupLoading || userGroupsLoading || (isMember && membersLoading)) return <div className="p-8 text-center">{t("groupDetails.loading")}</div>;
-  if (!group) return <div className="p-8 text-center text-destructive">{t("groupDetails.notFound")}</div>;
+  if (!group && !groupAccessLost) return <div className="p-8 text-center text-destructive">{t("groupDetails.notFound")}</div>;
 
-  const currentUserRole = members.find((m) => m.userId === user?.uid)?.role;
-  const hasRequested = !!userRequest;
-  const canInvite = isMember && hasGroupPermission(group, currentUserRole, "inviteMembers");
-
-  // State 2.3: Edge case - navigating to a private group without being a member
-  if (!isMember && group.type === "private") {
+  // State 2.3: Edge case - navigating to a private group without being a member, or losing access while on it
+  if (!group || groupAccessLost || (!isMember && group.type === "private")) {
     return (
       <div className={groupDetailsViewStyles.root}>
         <div className={groupDetailsViewStyles.backButtonContainer}>
@@ -113,6 +102,11 @@ export function GroupDetailsView() {
     );
   }
 
+  const auth = getGroupAuthorization({ group, members, userId: user?.uid });
+  const currentUserRole = auth.role;
+  const hasRequested = !!userRequest;
+  const canInvite = isMember && auth.canInvite;
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.success(t("toasts.groupDetails.copySuccess"));
@@ -121,10 +115,8 @@ export function GroupDetailsView() {
   const handleJoin = async () => {
     if (!user) return;
     try {
+      // Members and the user's groups are listener-backed: the new membership arrives by itself
       await joinGroup({ groupId: group.id, userId: user.uid });
-
-      queryClient.invalidateQueries({ queryKey: ["groupMembers", group.id] });
-      queryClient.invalidateQueries({ queryKey: ["userGroups", user.uid] });
     } catch {
       // Handled globally
     }
@@ -134,8 +126,6 @@ export function GroupDetailsView() {
     if (!user) return;
     try {
       await requestJoin(group.id);
-
-      queryClient.invalidateQueries({ queryKey: ["groupRequests", group.id] });
     } catch {
       // Handled globally
     }
@@ -195,13 +185,12 @@ export function GroupDetailsView() {
 
       <div className={groupDetailsViewStyles.headerCard}>
         <div className={groupDetailsViewStyles.groupInfoWrapper}>
-          <div className={groupDetailsViewStyles.avatar}>
-            {group.avatarUrl ? (
-              <img src={group.avatarUrl} alt={group.name} className="size-full object-cover" />
-            ) : (
-              group.name.substring(0, 2).toUpperCase()
-            )}
-          </div>
+          <Avatar
+            name={group.name}
+            src={group.avatarUrl}
+            className={groupDetailsViewStyles.avatar}
+            fallbackClassName={groupDetailsViewStyles.avatarFallback}
+          />
 
           <div className={groupDetailsViewStyles.infoContent}>
             <h1 className={groupDetailsViewStyles.title}>{group.name}</h1>
@@ -210,16 +199,19 @@ export function GroupDetailsView() {
             )}
 
             <div className={groupDetailsViewStyles.badgeList}>
-              <span className={groupDetailsViewStyles.badge}>
-                <Users className="size-3 sm:size-3.5" />
-                {t("groupDetails.membersCount", { count: members.length })}
-              </span>
+              {/* Only members can read the member list (rules M1), so outsiders would always see 0 */}
+              {isMember && (
+                <span className={groupDetailsViewStyles.badge}>
+                  <Users className="size-3 sm:size-3.5" />
+                  {t("groupDetails.membersCount", { count: members.length })}
+                </span>
+              )}
               <span className={groupDetailsViewStyles.badge}>
                 <Shield className="size-3 sm:size-3.5" />
                 {group.type === "private" ? t("groupDetails.private") : t("groupDetails.public")}
               </span>
               {isMember && currentUserRole && (
-                <span className="flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 bg-brand/10 text-brand rounded-full border border-brand/20 text-[11px] sm:text-xs font-semibold">
+                <span className="flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 bg-brand/10 text-brand-text rounded-full border border-brand/20 text-2xs sm:text-xs font-semibold">
                   {t(`manageGroupSheet.role_${currentUserRole}`) || currentUserRole}
                 </span>
               )}
@@ -262,15 +254,13 @@ export function GroupDetailsView() {
                   <span>{t("manageGroupSheet.inviteFriends")}</span>
                 </Button>
               )}
-              {(currentUserRole === "owner" || hasGroupPermission(group, currentUserRole, "manageRequests")) && (
+              {auth.canManageRequests && (
                 <RequestsSheet groupId={group.id} />
               )}
-              {(currentUserRole === "owner" ||
-                hasGroupPermission(group, currentUserRole, "editGroup") ||
-                hasGroupPermission(group, currentUserRole, "manageMembers")) && (
+              {auth.canOpenManageSheet && (
                 <ManageGroupSheet groupId={group.id} />
               )}
-              {currentUserRole !== "owner" && (
+              {auth.canLeave && (
                 <>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -325,11 +315,7 @@ export function GroupDetailsView() {
                 {members.map((member) => {
                   const profile = membersProfiles?.find((p) => p.uid === member.userId);
                   const displayName = profile?.username || member.userId;
-                  const initials = displayName.substring(0, 2).toUpperCase();
-                  const isCurrentUser = user?.uid === member.userId;
-                  const friendStatus = isFriend(member.userId);
-                  const sentStatus = hasSentFriendRequest(member.userId);
-                  const receivedStatus = hasReceivedFriendRequest(member.userId);
+                  const status = getFriendStatus(member.userId);
 
                   const isSending = sendFriendRequest.isPending && sendFriendRequest.variables?.uid === member.userId;
                   const isCanceling = cancelFriendRequest.isPending && cancelFriendRequest.variables === member.userId;
@@ -341,16 +327,16 @@ export function GroupDetailsView() {
                       className={groupDetailsViewStyles.memberRow}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <Avatar className="size-10 border border-border shrink-0">
-                          {profile?.avatarUrl && <AvatarImage src={profile.avatarUrl} alt={displayName} />}
-                          <AvatarFallback className="bg-gradient-to-tr from-brand to-brand-dark text-zinc-950 font-bold text-sm">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
+                        <Avatar
+                          variant="brand"
+                          name={displayName}
+                          src={profile?.avatarUrl}
+                          className="size-10 border border-border shrink-0 text-sm"
+                        />
                         <div className="min-w-0">
                           <span className="font-medium text-sm text-foreground block truncate">{displayName}</span>
-                          {isCurrentUser && (
-                            <span className="text-[11px] text-muted-foreground block">{t("manageGroupSheet.you")}</span>
+                          {status === "self" && (
+                            <span className="text-2xs text-muted-foreground block">{t("manageGroupSheet.you")}</span>
                           )}
                         </div>
                       </div>
@@ -360,14 +346,14 @@ export function GroupDetailsView() {
                           {t(`manageGroupSheet.role_${member.role}`) || member.role}
                         </span>
 
-                        {!isCurrentUser && (
+                        {status !== "self" && (
                           <>
-                            {friendStatus ? (
+                            {status === "friend" ? (
                               <div className={groupDetailsViewStyles.memberFriendBadge}>
                                 <UserCheck className="size-3.5" />
                                 <span className="hidden sm:inline">{t("groupDetails.isFriend")}</span>
                               </div>
-                            ) : sentStatus ? (
+                            ) : status === "outgoing" ? (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -384,7 +370,7 @@ export function GroupDetailsView() {
                                   </>
                                 )}
                               </Button>
-                            ) : receivedStatus ? (
+                            ) : status === "incoming" ? (
                               <Button
                                 size="sm"
                                 variant="brand"
@@ -419,7 +405,7 @@ export function GroupDetailsView() {
                                     avatarUrl: profile?.avatarUrl,
                                   })
                                 }
-                                className={`${groupDetailsViewStyles.memberActionBtn} border-border hover:bg-brand/10 hover:border-brand/30 hover:text-brand`}
+                                className={`${groupDetailsViewStyles.memberActionBtn} border-border hover:bg-brand/10 hover:border-brand/30 hover:text-brand-text`}
                               >
                                 {isSending ? (
                                   <Loader2 className="size-3.5 animate-spin" />

@@ -13,18 +13,20 @@ Username reservations: the doc id is the lower-cased username, the doc points at
 | --- | --- | --- |
 | `uid` | string (owner) | ✓ |
 
+**TS type:** `packages/shared/src/api/users/types.ts#UsernameReservation`
+
 ## Write flows
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
-| Sign up (email) | `signUpWithEmailUser` (`shared/src/context/AuthContext`) | set `usernames/{lower}` + set `users/{me}` | ✅ batch |
-| First Google sign-in | `createProfileWithReservation` (AuthContext) | set `usernames/{lower}` + set `users/{me}` | ✅ batch |
-| Change username | `updateUserProfile` (`settings/src/api/users`) | set new (when free), delete own old, merge-set `users/{me}` | ✅ batch |
+| Sign up (email) | `createUserProfile` (`shared/src/api/users`, via AuthContext `signUpWithEmailUser`) | set `usernames/{lower}` + set `users/{me}` | ✅ batch |
+| First Google sign-in | `createUserProfileWithFreeUsername` (`shared/src/api/users`, via AuthContext) | set `usernames/{lower}` + set `users/{me}` | ✅ batch |
+| Change username | `updateUserProfile` (`shared/src/api/users`, via Settings) | set new (when free), delete own old, merge-set `users/{me}` | ✅ batch |
 | Legacy backfill | `scripts/backfill-usernames.mjs` (Admin SDK) | set missing, delete stale | ✅ batch per user |
 
 ## Queries
 | Query | Endpoint | Allowed by |
 | --- | --- | --- |
-| `get usernames/{lower}` | sign-up, first Google sign-in and profile edit (availability check) | read: public |
+| `get usernames/{lower}` | `getUsernameOwner` (`shared/src/api/users`): sign-up, first Google sign-in and profile edit (availability check) | read: public |
 
 ## Access matrix
 | Actor \ operation | read | create free id | overwrite someone else's id | delete own (profile moved to another name) | delete own current name | delete someone else's |

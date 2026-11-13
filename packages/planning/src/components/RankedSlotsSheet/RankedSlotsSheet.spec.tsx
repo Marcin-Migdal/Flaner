@@ -19,7 +19,7 @@ describe("RankedSlotsSheet", () => {
       {
         start: "2026-08-01",
         end: "2026-08-01",
-        color: "#10b981",
+        color: "teal",
         votes: {
           u1: "yes",
           u2: "yes",
@@ -28,7 +28,7 @@ describe("RankedSlotsSheet", () => {
       {
         start: "2026-08-05",
         end: "2026-08-06",
-        color: "#6366f1",
+        color: "indigo",
         votes: {
           u1: "maybe",
           u2: "no",
@@ -85,7 +85,7 @@ describe("RankedSlotsSheet", () => {
     const finalizedEvent: SchedulerEvent = {
       ...mockEvent,
       isFinalized: true,
-      finalizedSlotIndex: 0,
+      finalizedSlotKey: "2026-08-01_2026-08-01",
     };
 
     renderWithProviders(
@@ -102,7 +102,7 @@ describe("RankedSlotsSheet", () => {
     expect(screen.queryByTitle(/voting\.maybe/i)).not.toBeInTheDocument();
   });
 
-  it("handles tie-breaker sorting and renders rank 2, 3, and 4 badges", () => {
+  it("renders a badge for each rank, shared by tied slots", () => {
     const multiSlotEvent: SchedulerEvent = {
       ...mockEvent,
       participants: ["u1", "u2", "u3", "u4"],
@@ -111,35 +111,35 @@ describe("RankedSlotsSheet", () => {
         {
           start: "2026-08-01",
           end: "2026-08-01",
-          color: "#3b82f6",
+          color: "blue",
           votes: { u1: "yes", u2: "yes", u3: "yes" },
         },
         // Slot 1: 2 yes votes -> Rank 2
         {
           start: "2026-08-02",
           end: "2026-08-02",
-          color: "#3b82f6",
+          color: "blue",
           votes: { u1: "yes", u2: "yes" },
         },
-        // Slot 2: 1 yes vote -> Rank 3 (hits line 179)
+        // Slot 2: 1 yes vote -> Rank 3
         {
           start: "2026-08-03",
           end: "2026-08-03",
-          color: "#3b82f6",
+          color: "blue",
           votes: { u1: "yes" },
         },
-        // Slot 3: 1 yes vote -> Equal score and yesCount to Slot 2 (hits tie-breaker line 124)
+        // Slot 3: 1 yes vote -> ties with Slot 2, shares Rank 3
         {
           start: "2026-08-04",
           end: "2026-08-04",
-          color: "#3b82f6",
+          color: "blue",
           votes: { u2: "yes" },
         },
-        // Slot 4: 0 votes -> Rank 4 (hits generic rank #4)
+        // Slot 4: 0 votes -> Rank 5
         {
           start: "2026-08-05",
           end: "2026-08-05",
-          color: "#3b82f6",
+          color: "blue",
           votes: {},
         },
       ],
@@ -196,7 +196,7 @@ describe("RankedSlotsSheet", () => {
         {
           start: "2026-08-01",
           end: "2026-08-01",
-          color: "#3b82f6",
+          color: "blue",
           votes: { u1: "maybe" },
         },
       ],
@@ -225,7 +225,7 @@ describe("RankedSlotsSheet", () => {
         {
           start: "2026-08-01",
           end: "2026-08-01",
-          color: "#3b82f6",
+          color: "blue",
           votes: { u1: "no" },
         },
       ],
@@ -254,7 +254,7 @@ describe("RankedSlotsSheet", () => {
         {
           start: "2026-12-31",
           end: "2027-01-02",
-          color: "#3b82f6",
+          color: "blue",
           votes: { u1: "yes" },
         },
       ],
@@ -283,7 +283,7 @@ describe("RankedSlotsSheet", () => {
         {
           start: "2026-08-01",
           end: "2026-08-01",
-          color: "#3b82f6",
+          color: "blue",
           votes: {
             "u-unknown-1": "yes",
             "u-unknown-2": "maybe",

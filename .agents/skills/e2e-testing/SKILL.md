@@ -15,13 +15,15 @@ All E2E tests, configuration, and test utilities live strictly in the root `e2e/
 
 ```
 e2e/
-├── config/                 # Base playwright.config.ts, project definitions
-├── support/                # Shared fixtures, global setup, auth state, POM base classes
-├── core/                   # Host app shell, top-level navigation, and authentication flows
-├── community/              # Community MFE user journeys (Groups, members, posts)
-├── settings/               # Settings MFE user journeys (Profile, preferences, theme)
+├── playwright.config.ts    # Projects per domain, emulators + dev servers as webServer
+├── support/
+│   ├── helpers/            # auth.ts (sign-in), emulator.ts (typed seeds / reads), viewport.ts
+│   └── pages/              # Page objects (`*.page.ts`)
+├── core/ community/ settings/ planning/ shopping/ tools/   # Specs per domain (= Playwright project)
 ├── mobile/                 # Dedicated mobile render stability & viewport tests
-└── project.json            # Nx project definition connecting E2E to monorepo targets
+├── screens/                # Reference screenshots for the design system (`npm run design:screens`)
+├── tsconfig.json           # `npx nx run e2e:typecheck` (Playwright itself strips types)
+└── project.json            # Nx project: e2e, e2e:<project>, typecheck, lint
 ```
 
 ---
@@ -35,7 +37,14 @@ E2E never touches a real Firebase project. `e2e/playwright.config.ts` starts the
 - **No auth mocks.** Users are real emulator accounts:
   - `signInAsNewUser(page, overrides?)` (`e2e/support/helpers/auth.ts`) — creates a unique user and signs in through the real email/password form.
   - `createUser()` + `signIn(page, user)` — when a test needs several users (open each in its own `browser.newContext()`).
-- **Seed, don't click, the preconditions.** `e2e/support/helpers/emulator.ts` writes docs with emulator admin access (bypasses rules): `seedGroup`, `seedGroupInvitation`, `seedDocument`. Drive through the UI only the flow under test.
+- **Seed, don't click, the preconditions.** `e2e/support/helpers/emulator.ts` writes docs with emulator admin access (bypasses rules). Drive through the UI only the flow under test.
+  - One typed helper per collection: `createUser`, `seedProfile`, `seedFriendship`, `seedNotification`, `seedGroup`, `seedGroupMember`, `seedGroupInvitation`, `seedEvent`, `seedSplitGroup`, `seedTemplate`, `seedSpool`, `seedLookupMaterial`. Each builds the app's own document type from `packages/*/src/api/**/types.ts` (kept equal to the rules' Schema tables by `scripts/firestore-schema-check.mjs`), so a schema change fails `e2e:typecheck`. A new collection gets a new helper; the raw `seedDocument` stays private.
+  - Reads: `readDocument(path)` returns the fields as plain values (`undefined` when the doc does not exist), `listDocumentIds(collection)` the ids. Assert with a typed partial, never on the REST JSON:
+    ```typescript
+    await expect.poll(() => readDocument(`events/${event.id}`))
+      .toMatchObject({ finalizedSlotKey: key } satisfies Partial<SchedulerEvent>);
+    ```
+  - `uniqueId(prefix)` for ids / names that must not collide between parallel tests.
 - **Isolation:** tests run in parallel against one emulator — always use unique users/groups (the helpers generate unique ids); never wipe the whole database mid-run.
 - Multi-user flows (invitations, join requests, roles) belong in E2E — they are what exercises UI + code + security rules together (see `e2e/community/group-membership.spec.ts`).
 
@@ -46,9 +55,10 @@ E2E never touches a real Firebase project. `e2e/playwright.config.ts` starts the
 Every view or MFE module tested in E2E must have a corresponding Page Object Model in `e2e/support/pages/` or alongside the domain specs.
 
 ### POM Rules:
-1. **Encapsulate Locators**: Do not scatter `page.locator(...)` calls inside test files.
-2. **Expose User Actions**: Provide semantic helper methods that mirror real user actions (e.g., `createGroup()`, `openSettings()`, `fillProfileForm()`).
-3. **Semantic Locators**: Use accessible locators (`page.getByRole`, `page.getByLabel`, `page.getByPlaceholder`).
+1. **Specs talk in intents only**: no `page.locator` / `page.getBy*` / `page.keyboard` in spec files — every element and action lives in a page object (`e2e/support/pages/`). Specs may still navigate (`page.goto`) and assert on the URL. A flow used by two specs (e.g. the group invitations sheet) gets its own page object.
+2. **Expose User Actions**: Provide semantic helper methods that mirror real user actions (e.g., `createGroup()`, `inviteUser()`, `markRemainingAsNo()`); expose locators only for what specs assert on.
+3. **Semantic Locators**: Use accessible locators (`getByRole`, `getByLabel`, `getByPlaceholder`, `getByText`), scoped to a landmark / dialog where a name repeats (`page.getByRole("main")`, `page.getByRole("dialog")`). `getByTestId` only where nothing has a role (the shopping placeholder). Check names with `await page.locator("body").ariaSnapshot()`.
+4. **Wait on content, not on spinners**: `goto()` waits for the view's heading or main control, not for `Loading...` to disappear.
 
 ### Example POM:
 ```typescript
@@ -131,21 +141,24 @@ Every view must be verified on mobile viewports (`Pixel 7`, `iPhone 14`) for vis
   - `page.getByRole("button", { name: "Submit" })`
   - `page.getByLabel("Email Address")`
   - `page.getByRole("heading", { level: 1 })`
-- ❌ **Avoid Brittle CSS / XPath:**
+- ❌ **Avoid Brittle CSS / XPath** (in page objects too):
   - Never use: `page.locator(".flex > div:nth-child(2) > button")` or `page.locator("//div[3]/span")`.
   - Never rely on Tailwind utility class names (`page.locator(".bg-blue-500")`) as they can change during styling refactors.
+  - Never rely on ui-components internals: `data-slot`, `data-sidebar`, `data-sonner-toast`, `data-state` (assert `aria-selected` / `aria-expanded` instead), lucide icon classes.
 
 ---
 
 ## 6. Selective Execution & CI (GitHub Actions)
 
-CI lives in `.github/workflows/ci.yml` (runs on PRs to `develop` / `master`). The `e2e` job runs `scripts/e2e-affected.mjs <PR base sha>`, which combines `nx show projects --affected` with `git diff` to pick Playwright projects (defined per domain in `e2e/playwright.config.ts`):
+CI lives in `.github/workflows/ci.yml` (runs on PRs to `develop` / `master`). The `E2E plan` job runs `scripts/e2e-affected.mjs <PR base sha>`, which combines `nx show projects --affected` with `git diff` to pick Playwright projects (defined per domain in `e2e/playwright.config.ts`):
 
 - `core`, `shared`, `ui-components`, `test-utils` affected, or a change in `e2e/support`, e2e config, root config, lockfile or `.github/` → **full suite**.
 - One MFE affected → that MFE's project + `core` + `mobile`.
 - Change in `e2e/<project>/` → that project.
 - Only `.agents/**` / `*.md` → E2E skipped.
 
-The selection runs in a single `npx playwright test --config=e2e/playwright.config.ts --project=a --project=b` call, so emulators and dev servers start once. On failure `playwright-report/` is uploaded as an artifact. When adding a new MFE / Playwright project, update `MFES` and the `e2e/<project>` regex in `scripts/e2e-affected.mjs`.
+Each selected project gets its own runner (`E2E (<project>)` matrix job: emulators + dev servers + `--project=<project>`, `setup` runs as a dependency), so the wall time is the slowest project (`community`), not the sum. On failure that project uploads `playwright-report-<project>`. The required check is the summary job **E2E (affected)**, because the matrix jobs exist only for affected projects. When adding a new MFE / Playwright project, update `MFES`, `ALL_PROJECTS` and the `e2e/<project>` regex in `scripts/e2e-affected.mjs`.
+
+`e2e` also has `typecheck` and `lint` targets, run by the "Typecheck, lint" job (`nx affected`; `e2e` is affected by every MFE through `implicitDependencies`), so a seed that no longer matches a document type fails CI before any browser starts.
 
 Locally, single projects: `npx nx run e2e:e2e:<project>` or `npx playwright test --config=e2e/playwright.config.ts --project=<project>`.

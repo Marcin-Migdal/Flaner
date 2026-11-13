@@ -110,6 +110,9 @@ describe("RequestsSheet component", () => {
     renderWithProviders(<RequestsSheet groupId="grp-1" />);
 
     expect(screen.getByText("ClimberDan")).toBeInTheDocument();
+    expect(screen.getByText("CL")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "requestsSheet.accept" })).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("button", { name: "requestsSheet.reject" })).toBeDisabled();
   });
 
   it("renders loading state when users or requests are loading", () => {
@@ -136,5 +139,7 @@ describe("RequestsSheet component", () => {
 
     renderWithProviders(<RequestsSheet groupId="grp-1" />);
     expect(screen.getByText("ClimberDan")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "requestsSheet.reject" })).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("button", { name: "requestsSheet.accept" })).toBeDisabled();
   });
 });

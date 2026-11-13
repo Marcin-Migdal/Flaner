@@ -12,7 +12,7 @@ const mockEvent: SchedulerEvent = {
   creatorId: "user-1",
   participants: ["user-1"],
   proposedDates: [
-    { start: "2026-07-01T10:00:00Z", end: "2026-07-03T18:00:00Z", color: "#3b82f6" },
+    { start: "2026-07-01T10:00:00Z", end: "2026-07-03T18:00:00Z", color: "blue" },
   ],
   isFinalized: false,
   createdAt: 1700000000000,
@@ -209,7 +209,7 @@ describe("SchedulerEventHeader", () => {
     const finalizedEvent: SchedulerEvent = {
       ...mockEvent,
       isFinalized: true,
-      finalizedSlotIndex: 0,
+      finalizedSlotKey: "2026-07-01T10:00:00Z_2026-07-03T18:00:00Z",
     };
 
     rerender(

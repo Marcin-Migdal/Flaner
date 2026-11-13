@@ -1,37 +1,23 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { renderWithProviders, createTestI18n } from "@flaner/test-utils";
+import { renderWithProviders, createTestI18n, createMockUser } from "@flaner/test-utils";
 import { ShellLayout } from "./ShellLayout";
 
 const mockSignOutUser = vi.fn();
 const mockUpdateUser = vi.fn();
 const mockSetTheme = vi.fn();
 
-const stableUser = {
-  uid: "test-user-123",
-  username: "Marcin",
-  email: "marcin@flaner.app",
-  avatarUrl: "https://example.com/avatar.jpg",
-  language: "pl" as const,
-  darkMode: false,
+const signedIn = {
+  user: createMockUser({ uid: "test-user-123", username: "Marcin", language: "pl", darkMode: false }),
+  auth: { signOutUser: mockSignOutUser, updateUser: mockUpdateUser },
 };
 
 let mockNavigationState = "idle";
-let currentUser: typeof stableUser | null = stableUser;
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({
-    user: currentUser,
-    signOutUser: mockSignOutUser,
-    updateUser: mockUpdateUser,
-    isLoading: false,
-  }),
-}));
 
 let mockIsMobile = false;
 let mockIsDark = false;
-const mockUpdateDoc = vi.fn().mockResolvedValue(undefined);
+const mockUpdateUserProfile = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@flaner/shared/hooks", async () => {
   const actual = await vi.importActual("@flaner/shared/hooks");
@@ -45,15 +31,9 @@ vi.mock("@flaner/shared/hooks", async () => {
   };
 });
 
-vi.mock("@flaner/shared/firebase", () => ({
-  fb: {
-    firestore: {},
-  },
-}));
-
-vi.mock("firebase/firestore", () => ({
-  doc: vi.fn(),
-  updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
+vi.mock("@flaner/shared/api", async () => ({
+  ...(await vi.importActual("@flaner/shared/api")),
+  updateUserProfile: (...args: unknown[]) => mockUpdateUserProfile(...args),
 }));
 
 vi.mock("react-router", async () => {
@@ -106,7 +86,7 @@ describe("ShellLayout", () => {
   });
 
   it("renders brand logo, navigation items, notifications popover, and profile", async () => {
-    renderWithProviders(<ShellLayout />, { i18nInstance: i18n });
+    renderWithProviders(<ShellLayout />, { i18nInstance: i18n, ...signedIn });
 
     expect(screen.getAllByText("FLANER").length).toBeGreaterThan(0);
     expect(screen.getByTestId("notifications-popover")).toBeInTheDocument();
@@ -119,7 +99,7 @@ describe("ShellLayout", () => {
 
   it("renders navigation loading fallback when route transition is pending", async () => {
     mockNavigationState = "loading";
-    const { container } = renderWithProviders(<ShellLayout />, { i18nInstance: i18n });
+    const { container } = renderWithProviders(<ShellLayout />, { i18nInstance: i18n, ...signedIn });
     expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
     mockNavigationState = "idle";
     await waitFor(() => {
@@ -129,7 +109,7 @@ describe("ShellLayout", () => {
 
   it("opens profile dropdown and executes sign out", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<ShellLayout />, { i18nInstance: i18n });
+    renderWithProviders(<ShellLayout />, { i18nInstance: i18n, ...signedIn });
 
     const profileButton = screen.getByText("Marcin");
     await user.click(profileButton);
@@ -142,7 +122,7 @@ describe("ShellLayout", () => {
 
   it("changes language and persists to firestore with error handling", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<ShellLayout />, { i18nInstance: i18n });
+    renderWithProviders(<ShellLayout />, { i18nInstance: i18n, ...signedIn });
 
     const profileButton = screen.getByText("Marcin");
     await user.click(profileButton);
@@ -156,11 +136,10 @@ describe("ShellLayout", () => {
     await waitFor(() => {
       expect(mockUpdateUser).toHaveBeenCalledWith({ language: "en" });
     });
-    expect(mockUpdateDoc).toHaveBeenCalled();
+    expect(mockUpdateUserProfile).toHaveBeenCalled();
 
-    // Test persistence error
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    mockUpdateDoc.mockRejectedValueOnce(new Error("Firestore write error"));
+    // A failed write leaves the profile in the context untouched
+    mockUpdateUserProfile.mockRejectedValueOnce(new Error("Firestore write error"));
 
     await user.click(profileButton);
     const langSubTrigger2 = await screen.findByText("Język");
@@ -168,24 +147,13 @@ describe("ShellLayout", () => {
     const plOption = await screen.findByText("Polski");
     fireEvent.click(plOption);
 
-    await waitFor(() => {
-      expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to persist language change", expect.any(Error));
-    });
-    consoleErrorSpy.mockRestore();
-
-    // Test without user uid (unauthenticated / missing uid)
-    currentUser = null;
-    await user.click(profileButton);
-    const langSubTrigger3 = await screen.findByText("Język");
-    await user.hover(langSubTrigger3);
-    const plOption3 = await screen.findByText("Polski");
-    fireEvent.click(plOption3);
-    currentUser = stableUser;
+    await waitFor(() => expect(mockUpdateUserProfile).toHaveBeenCalledTimes(2));
+    expect(mockUpdateUser).not.toHaveBeenCalledWith({ language: "pl" });
   });
 
   it("changes theme and persists to firestore with error handling", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<ShellLayout />, { i18nInstance: i18n });
+    renderWithProviders(<ShellLayout />, { i18nInstance: i18n, ...signedIn });
 
     const profileButton = screen.getByText("Marcin");
     await user.click(profileButton);
@@ -201,9 +169,8 @@ describe("ShellLayout", () => {
       expect(mockUpdateUser).toHaveBeenCalledWith({ darkMode: true });
     });
 
-    // Test persistence error
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    mockUpdateDoc.mockRejectedValueOnce(new Error("Theme write error"));
+    // A failed write leaves the profile in the context untouched
+    mockUpdateUserProfile.mockRejectedValueOnce(new Error("Theme write error"));
 
     await user.click(profileButton);
     const themeSubTrigger2 = await screen.findByText("Motyw");
@@ -212,26 +179,15 @@ describe("ShellLayout", () => {
     fireEvent.click(lightOption);
 
     expect(mockSetTheme).toHaveBeenCalledWith("light");
-    await waitFor(() => {
-      expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to persist theme change", expect.any(Error));
-    });
-    consoleErrorSpy.mockRestore();
-
-    // Test without user uid
-    currentUser = null;
-    await user.click(profileButton);
-    const themeSubTrigger3 = await screen.findByText("Motyw");
-    await user.hover(themeSubTrigger3);
-    const lightOption3 = await screen.findByText("Jasny");
-    fireEvent.click(lightOption3);
-    currentUser = stableUser;
+    await waitFor(() => expect(mockUpdateUserProfile).toHaveBeenCalledTimes(2));
+    expect(mockUpdateUser).not.toHaveBeenCalledWith({ darkMode: false });
   });
 
   it("toggles expandable navigation item and navigates on mobile", async () => {
     const user = userEvent.setup();
     mockIsMobile = true;
 
-    renderWithProviders(<ShellLayout />, { i18nInstance: i18n });
+    renderWithProviders(<ShellLayout />, { i18nInstance: i18n, ...signedIn });
 
     // Click mobile header logo link directly while sidebar is closed
     const headerLogo = screen.getByRole("link", { name: /FLANER/i });
@@ -284,7 +240,7 @@ describe("ShellLayout", () => {
     const user = userEvent.setup();
     mockIsDark = true;
 
-    renderWithProviders(<ShellLayout />, { i18nInstance: i18n });
+    renderWithProviders(<ShellLayout />, { i18nInstance: i18n, ...signedIn });
 
     const profileButton = screen.getByText("Marcin");
     await user.click(profileButton);
@@ -298,15 +254,13 @@ describe("ShellLayout", () => {
     fireEvent.click(darkOption);
 
     expect(mockSetTheme).toHaveBeenCalledWith("dark");
-    expect(mockUpdateDoc).toHaveBeenCalled();
+    await waitFor(() => expect(mockUpdateUserProfile).toHaveBeenCalled());
 
     mockIsDark = false;
   });
 
   it("renders with null user gracefully", () => {
-    currentUser = null;
-    renderWithProviders(<ShellLayout />);
+    renderWithProviders(<ShellLayout />, { user: null });
     expect(screen.getByText("nav.home")).toBeInTheDocument();
-    currentUser = stableUser;
   });
 });

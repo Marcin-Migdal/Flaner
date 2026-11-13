@@ -1,51 +1,24 @@
-
-import { useController, type UseControllerProps, type FieldValues, type FieldPath } from "react-hook-form";
+import type { FieldPath, FieldValues } from "react-hook-form";
+import { useFormField, type FormFieldProps } from "../../hooks/useFormField";
 import { IconTextField, type IconTextFieldProps } from "../IconTextField";
 
 export type FormIconTextFieldProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
-> = Omit<IconTextFieldProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur"> &
-  UseControllerProps<TFieldValues, TName> & {
-    onClear?: () => void;
-  };
+> = FormFieldProps<IconTextFieldProps, TFieldValues, TName>;
 
 export function FormIconTextField<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
->({
-  name,
-  rules,
-  shouldUnregister,
-  defaultValue,
-  control,
-  disabled,
-  onClear,
-  ...props
-}: FormIconTextFieldProps<TFieldValues, TName>) {
-  const { field, fieldState } = useController({
-    name,
-    rules,
-    shouldUnregister,
-    defaultValue,
-    control,
-    disabled,
-  });
+>({ onClear, ...props }: FormIconTextFieldProps<TFieldValues, TName>) {
+  const { field, error, rest } = useFormField(props);
 
   const handleClear = () => {
     field.onChange("");
     onClear?.();
   };
 
-  return (
-    <IconTextField
-      {...props}
-      {...field}
-      disabled={disabled}
-      error={fieldState.error?.message}
-      onClear={props.isClearable ? handleClear : undefined}
-    />
-  );
+  return <IconTextField {...rest} {...field} error={error} onClear={rest.isClearable ? handleClear : undefined} />;
 }
 
 export default FormIconTextField;

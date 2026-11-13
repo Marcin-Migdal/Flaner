@@ -1,6 +1,7 @@
 import React from "react";
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import userEvent from "@testing-library/user-event";
 import { SpoolerView } from "./SpoolerView";
 import type { FilamentSpool } from "../../api/spools";
@@ -38,6 +39,7 @@ let currentTemplates: FilamentTemplate[] = mockTemplates;
 let currentSpools: FilamentSpool[] = mockSpools;
 
 vi.mock("../../hooks", () => ({
+  useGetAssociatedSpoolsQuery: () => ({ data: [], isLoading: false }),
   useToolsTranslations: () => ({
     t: (key: string, opt?: Record<string, unknown>) => {
       if (opt?.weight) return `${key}:${opt.weight}`;
@@ -71,9 +73,7 @@ vi.mock("../../hooks", () => ({
   useDeleteTemplateMutation: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: { uid: "user-1" } }),
-}));
+const render = (ui: React.ReactElement) => renderWithProviders(ui, { user: createMockUser({ uid: "user-1" }) });
 
 describe("SpoolerView", () => {
   beforeEach(() => {
@@ -125,7 +125,7 @@ describe("SpoolerView", () => {
   it("formats total weight in kg when >= 1000g and handles 0 weight", () => {
     currentSpools = [
       { ...mockSpools[0], id: "spool-1", currentWeight: 1500 },
-      { ...mockSpools[0], id: "spool-2", currentWeight: 0 as unknown as number },
+      { ...mockSpools[0], id: "spool-2", currentWeight: 0 },
     ];
     render(<SpoolerView />);
     expect(screen.getByText("1.50 kg")).toBeInTheDocument();

@@ -15,4 +15,4 @@ Index of the places where a rule of one collection reads another collection, or 
 | `updateTemplate`, `deleteTemplate` | the owner's `spools` (`templateId`) | `templates.md`, `spools.md` |
 | `deleteLookupMaterial`, `deleteLookupType` | child lookups matched by name | `lookup_*.md` |
 
-**Denormalized copies** (not kept in sync by rules): `username` / `avatarUrl` in `friendships`, `friendRequests` and notifications; template fields in `spools`; group name / avatar in invitations.
+**Denormalized copies** (not kept in sync by rules): `username` / `avatarUrl` in `friendRequests` and notifications (historical, kept as sent); template fields in `spools`; group name / avatar in invitations. `friendships` hold no profile copy: friend lists read `users/{uid}` live (#26).

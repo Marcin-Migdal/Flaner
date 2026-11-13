@@ -1,11 +1,10 @@
-import { useQuery, type UseQueryOptions, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { useAuth } from "@flaner/shared/context";
+import { requireUser } from "@flaner/shared/hooks";
 import { type UserProfile } from "@flaner/shared/types";
 import { searchUsers } from '../../../../api/users';
 import { reactQueryMeta } from "@flaner/shared/constants";
-
-
-const getSearchUsersQueryKeys = (searchQuery: string, userId: string) => ["searchUsers", searchQuery, userId];
+import { userKeys } from "../../queryKeys";
 
 export const useSearchUsersQuery = (
   searchQuery: string,
@@ -14,22 +13,19 @@ export const useSearchUsersQuery = (
   const { user } = useAuth();
 
   return useQuery<UserProfile[], Error>({
-      meta: reactQueryMeta.fetch,
-    queryKey: getSearchUsersQueryKeys(searchQuery, user?.uid ?? ""),
+    meta: reactQueryMeta.fetch,
+    queryKey: userKeys.search(searchQuery, user?.uid ?? ""),
     queryFn: () => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
+      const { uid } = requireUser(user);
       if (!searchQuery.trim()) return [];
-      return searchUsers(searchQuery, user.uid);
+      return searchUsers(searchQuery, uid);
     },
     enabled: !!user && !!searchQuery.trim(),
     staleTime: 5000,
+    // Keeps the last results on screen while the next query loads, so typing does not flash a spinner
+    placeholderData: keepPreviousData,
     ...options,
   });
-};
-
-export const useInvalidateSearchUsersQuery = () => {
-  const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: ["searchUsers"] });
 };
 
 export default useSearchUsersQuery;

@@ -6,15 +6,15 @@ import { AvailabilityGridWinnerHeader } from "./AvailabilityGridWinnerHeader";
 
 describe("AvailabilityGridWinnerHeader", () => {
   const proposedDates: ProposedDateSlot[] = [
-    { start: "2026-06-01T10:00:00Z", end: "2026-06-01T12:00:00Z", color: "#3b82f6" },
-    { start: "2026-06-02T10:00:00Z", end: "2026-06-02T12:00:00Z", color: "#10b981" },
+    { start: "2026-06-01T10:00:00Z", end: "2026-06-01T12:00:00Z", color: "blue" },
+    { start: "2026-06-02T10:00:00Z", end: "2026-06-02T12:00:00Z", color: "teal" },
   ];
 
   it("renders status column and winner badge on the winning slot", () => {
     renderWithProviders(
       <AvailabilityGridWinnerHeader
         proposedDates={proposedDates}
-        finalizedSlotIndex={0}
+        finalizedSlotKey="2026-06-01T10:00:00Z_2026-06-01T12:00:00Z"
         gridTemplateColumns="150px 100px 100px"
       />,
     );
@@ -23,7 +23,7 @@ describe("AvailabilityGridWinnerHeader", () => {
     expect(screen.getByText("grid.winner")).toBeInTheDocument();
   });
 
-  it("does not render winner badge when finalizedSlotIndex is undefined", () => {
+  it("does not render winner badge when finalizedSlotKey is undefined", () => {
     renderWithProviders(
       <AvailabilityGridWinnerHeader
         proposedDates={proposedDates}

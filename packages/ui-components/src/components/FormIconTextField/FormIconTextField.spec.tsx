@@ -47,9 +47,7 @@ describe("FormIconTextField component", () => {
     expect(input).toHaveValue("hello");
 
     // Click clear button
-    const buttons = screen.getAllByRole("button");
-    const clearBtn = buttons[1]; // clear button
-    await user.click(clearBtn);
+    await user.click(screen.getByRole("button", { name: "clear" }));
 
     expect(input).toHaveValue("");
 

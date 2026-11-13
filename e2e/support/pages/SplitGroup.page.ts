@@ -7,6 +7,8 @@ export class SplitGroupPage {
   readonly balancesPanel: Locator;
   readonly markAsPaidButton: Locator;
   readonly allSettled: Locator;
+  readonly settlementTooLargeError: Locator;
+  readonly paymentAlreadyPendingError: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -15,6 +17,8 @@ export class SplitGroupPage {
     this.balancesPanel = page.getByRole("tabpanel");
     this.markAsPaidButton = this.balancesPanel.getByRole("button", { name: /^mark as paid$/i });
     this.allSettled = this.balancesPanel.getByText(/everyone is settled up/i);
+    this.settlementTooLargeError = page.getByText(/settlement amount cannot exceed/i);
+    this.paymentAlreadyPendingError = page.getByText(/already waiting for confirmation/i);
   }
 
   async goto(groupId: string) {
@@ -48,6 +52,22 @@ export class SplitGroupPage {
   /** A visible amount in the "Who pays whom" list (debt cards render it twice for different breakpoints). */
   debtAmount(formattedAmount: string): Locator {
     return this.balancesPanel.getByText(formattedAmount, { exact: true }).filter({ visible: true });
+  }
+
+  /** Records a payment through the header "Settle up" dialog; `payer` / `receiver` are member names ("You" for oneself). */
+  async recordPayment({ payer, receiver, amount }: { payer?: string; receiver: string; amount: string }) {
+    await this.page.getByRole("button", { name: /^settle up$/i }).click();
+    if (payer) await this.chooseMember(/^who pays$/i, payer);
+    await this.chooseMember(/^to whom$/i, receiver);
+    await this.dialog.getByRole("spinbutton", { name: /^amount$/i }).fill(amount);
+    await this.dialog.getByRole("button", { name: /^save$/i }).click();
+  }
+
+  private async chooseMember(label: RegExp, name: string) {
+    // react-select's input is not clickable; focus it and open the menu with the keyboard
+    await this.dialog.getByLabel(label).focus();
+    await this.page.keyboard.press("ArrowDown");
+    await this.page.getByRole("option", { name, exact: true }).click();
   }
 
   async confirmPendingPayment() {

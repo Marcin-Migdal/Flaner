@@ -1,9 +1,33 @@
-import { screen } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
+import type { ReactElement } from "react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders, createTestI18n } from "@flaner/test-utils";
 import { SidebarProvider } from "@flaner/ui-components";
+import type { AppNotification } from "@flaner/shared/api";
 import { NotificationsPopover } from "./NotificationsPopover";
+
+const { mockNavigate, mockToastCustom, mockToastDismiss } = vi.hoisted(() => ({
+  mockNavigate: vi.fn(),
+  mockToastCustom: vi.fn<(render: (id: string | number) => ReactElement, options?: { id?: string; duration?: number }) => void>(),
+  mockToastDismiss: vi.fn(),
+}));
+
+vi.mock("react-router", async () => ({
+  ...(await vi.importActual("react-router")),
+  useNavigate: () => mockNavigate,
+}));
+
+vi.mock("../../../utils/loadNotificationTargets", () => ({
+  loadNotificationTargets: async () => ({ friend_request: () => "/community/friends#friend-requests" }),
+}));
+
+vi.mock("@flaner/shared/utils", async () => ({
+  ...(await vi.importActual("@flaner/shared/utils")),
+  toast: { custom: mockToastCustom, dismiss: mockToastDismiss },
+}));
+
+let mockOnNew: (notifications: AppNotification[]) => void = () => {};
 
 const mockMarkAsRead = vi.fn();
 const mockMarkAllAsRead = vi.fn();
@@ -44,12 +68,15 @@ vi.mock("@flaner/shared/hooks", () => ({
 }));
 
 vi.mock("../../../hooks/useNotifications", () => ({
-  useNotifications: () => ({
+  useNotifications: ({ onNew }: { onNew: (notifications: AppNotification[]) => void }) => {
+    mockOnNew = onNew;
+    return {
     notifications: mockUnreadNotifications,
     unreadCount: mockUnreadNotifications.filter((n) => !n.read).length,
     markAsRead: mockMarkAsRead,
     markAllAsRead: mockMarkAllAsRead,
-  }),
+    };
+  },
 }));
 
 vi.mock("../../../hooks", () => ({
@@ -250,5 +277,56 @@ describe("NotificationsPopover", () => {
 
     renderPopover();
     expect(screen.getByRole("button", { name: /powiadomienia/i })).toBeInTheDocument();
+  });
+
+  describe("toasts for new notifications", () => {
+    const incoming = (id: string): AppNotification => ({
+      id,
+      senderUid: "u2",
+      senderUsername: "Alice",
+      senderAvatarUrl: "",
+      type: "friend_request",
+      read: false,
+      createdAt: Date.now(),
+    });
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockUnreadNotifications = [];
+      mockReadNotifications = [];
+    });
+
+    it("shows at most 3 toasts, keyed by notification id", () => {
+      renderPopover();
+
+      act(() => mockOnNew(["n1", "n2", "n3", "n4"].map(incoming)));
+
+      expect(mockToastCustom).toHaveBeenCalledTimes(3);
+      expect(mockToastCustom.mock.calls.map(([, options]) => options?.id)).toEqual(["n1", "n2", "n3"]);
+    });
+
+    it("clicking a toast marks it read, navigates like the card and dismisses it", async () => {
+      const user = userEvent.setup();
+      renderPopover();
+      act(() => mockOnNew([incoming("n1")]));
+
+      const [render] = mockToastCustom.mock.calls[0];
+      renderWithProviders(render("toast-1"));
+      await user.click(screen.getByText("notifications.friendRequest"));
+
+      expect(mockMarkAsRead).toHaveBeenCalledWith("n1");
+      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/community/friends#friend-requests"));
+      expect(mockToastDismiss).toHaveBeenCalledWith("toast-1");
+    });
+
+    it("shows no toast while the popover is open", async () => {
+      const user = userEvent.setup();
+      renderPopover();
+      await user.click(screen.getByRole("button", { name: /powiadomienia/i }));
+
+      act(() => mockOnNew([incoming("n1")]));
+
+      expect(mockToastCustom).not.toHaveBeenCalled();
+    });
   });
 });

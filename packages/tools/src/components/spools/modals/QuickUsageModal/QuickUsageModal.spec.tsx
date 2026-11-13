@@ -4,13 +4,19 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TooltipProvider } from "@flaner/ui-components";
 import { QuickUsageModal } from "./QuickUsageModal";
-import type { FilamentSpool } from "../../../../api/spools";
+import type { FilamentSpool, RecordUsageInput, RecordUsageResult } from "../../../../api/spools";
 
 const mutateMock = vi.fn();
 
 let mockIsFinished = false;
 
 let mockRecordIsPending = false;
+
+// What the transaction read: the stored spool, which may differ from the snapshot the modal was opened with
+const runOutResult = (isFinished: boolean): RecordUsageResult => ({
+  spool: { ...mockSpool, currentWeight: isFinished ? 0 : 100, isFinished },
+  carryover: isFinished ? 120 : 0,
+});
 
 vi.mock("../../../../hooks", () => ({
   useToolsTranslations: () => ({
@@ -23,10 +29,10 @@ vi.mock("../../../../hooks", () => ({
     data: 1.5,
     isLoading: false,
   }),
-  useRecordSpoolUsageMutation: (opts?: { onSuccess?: (result: { isFinished: boolean }, variables: { spool: FilamentSpool; usage: number }) => void }) => ({
-    mutate: (vars: { spool: FilamentSpool; usage: number }) => {
+  useRecordSpoolUsageMutation: (opts?: { onSuccess?: (result: RecordUsageResult) => void }) => ({
+    mutate: (vars: RecordUsageInput) => {
       mutateMock(vars);
-      opts?.onSuccess?.({ isFinished: mockIsFinished }, vars);
+      opts?.onSuccess?.(runOutResult(mockIsFinished));
     },
     isPending: mockRecordIsPending,
   }),
@@ -83,16 +89,16 @@ describe("QuickUsageModal", () => {
     await user.click(submitBtn);
 
     expect(mutateMock).toHaveBeenCalledWith({
-      spool: mockSpool,
+      spoolId: "spool-1",
       usage: 11.5, // 10 + 1.5 startup waste
     });
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("triggers onFinished when recordUsageMutation returns isFinished: true", async () => {
+  it("hands the transaction result to onRunOut when the print empties the spool", async () => {
     mockIsFinished = true;
     const user = userEvent.setup();
-    const onFinished = vi.fn();
+    const onRunOut = vi.fn();
     const onClose = vi.fn();
 
     render(
@@ -101,7 +107,7 @@ describe("QuickUsageModal", () => {
           isOpen={true}
           onClose={onClose}
           spool={mockSpool}
-          onFinished={onFinished}
+          onRunOut={onRunOut}
         />
       </TooltipProvider>
     );
@@ -112,7 +118,7 @@ describe("QuickUsageModal", () => {
     const submitBtn = screen.getByRole("button", { name: "spooler.spools.recordPrint" });
     await user.click(submitBtn);
 
-    expect(onFinished).toHaveBeenCalledWith(mockSpool, 501.5);
+    expect(onRunOut).toHaveBeenCalledWith(runOutResult(true));
     expect(onClose).toHaveBeenCalled();
   });
 

@@ -1,28 +1,20 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getUsers } from '../../../../api/users';
+import { useQuery } from "@tanstack/react-query";
+import { getUserProfiles } from "@flaner/shared/api";
 import { type UserProfile } from "@flaner/shared/types";
 import { reactQueryMeta } from "@flaner/shared/constants";
-
-
-const getUsersQueryKeys = (uids: string[]) => ["users", uids];
+import { userKeys } from "../../queryKeys";
 
 export const useGetUsersQuery = (uids: string[]) => {
-
   return useQuery<UserProfile[], Error>({
-      meta: reactQueryMeta.fetch,
-    queryKey: getUsersQueryKeys(uids),
+    meta: reactQueryMeta.fetch,
+    queryKey: userKeys.profiles(uids),
     queryFn: async () => {
       if (!uids || uids.length === 0) return [];
-      return getUsers(uids);
+      return getUserProfiles(uids);
     },
     enabled: !!uids && uids.length > 0,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
-};
-
-export const useInvalidateUsersQuery = () => {
-  const queryClient = useQueryClient();
-  return (uids: string[]) => queryClient.invalidateQueries({ queryKey: getUsersQueryKeys(uids) });
 };
 
 export default useGetUsersQuery;

@@ -1,8 +1,9 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { signIn } from "../support/helpers/auth";
-import { createUser, seedGroup, seedGroupInvitation, type E2EUser } from "../support/helpers/emulator";
+import { createUser, listDocumentIds, seedGroup, seedGroupInvitation, type E2EUser } from "../support/helpers/emulator";
 import { CommunityPage } from "../support/pages/Community.page";
 import { GroupDetailsPage } from "../support/pages/GroupDetails.page";
+import { GroupInvitationsSheet } from "../support/pages/GroupInvitationsSheet.page";
 
 // Each scenario needs two real users in separate browser contexts (separate auth sessions)
 const openSessionAs = async (browser: Browser, user: E2EUser): Promise<Page> => {
@@ -12,12 +13,11 @@ const openSessionAs = async (browser: Browser, user: E2EUser): Promise<Page> => 
   return page;
 };
 
-const openGroupInvitations = async (page: Page) => {
-  await new CommunityPage(page).goto();
-  await page.getByRole("button", { name: /^group invitations$/i }).click();
-};
-
 test.describe("Group membership flows", () => {
+  // Most scenarios sign in two users in separate contexts: two cold app loads (no shared cache) plus the
+  // multi-step flow regularly exceed the default 30 s under parallel workers.
+  test.describe.configure({ timeout: 60_000 });
+
   let owner: E2EUser;
   let other: E2EUser;
 
@@ -31,39 +31,53 @@ test.describe("Group membership flows", () => {
 
     const community = new CommunityPage(page);
     await community.goto();
-    await community.openCreateModal();
-    await community.fillGroupForm(groupName);
-    await community.submitGroupForm();
-    await page.getByText(groupName).click();
+    await community.createGroup(groupName);
+    await community.openGroup(groupName);
 
     const ownerView = new GroupDetailsPage(page);
     await ownerView.inviteUser(other.username);
 
     const inviteePage = await openSessionAs(browser, other);
-    await openGroupInvitations(inviteePage);
-    const invitations = inviteePage.getByRole("dialog");
-    await expect(invitations.getByText(groupName)).toBeVisible();
-    await invitations.getByRole("button", { name: /^accept$/i }).click();
-    await expect(invitations.getByText(groupName)).not.toBeVisible();
+    const invitations = new GroupInvitationsSheet(inviteePage);
+    await invitations.open();
+    await expect(invitations.invitation(groupName)).toBeVisible();
+    await invitations.accept();
+    await expect(invitations.invitation(groupName)).not.toBeVisible();
 
-    await inviteePage.getByText(groupName).click();
+    await new CommunityPage(inviteePage).openGroup(groupName);
     const inviteeView = new GroupDetailsPage(inviteePage);
     await expect(inviteeView.membersHeading).toBeVisible();
     await expect(inviteeView.member(owner.username)).toBeVisible();
 
-    await page.reload();
+    // Live: the owner's member list updates without a reload
     await expect(ownerView.member(other.username)).toBeVisible();
+  });
+
+  test("the inviter's \"Invited\" label clears live when the invitee rejects", async ({ page, browser }) => {
+    const group = await seedGroup(owner, { type: "private", requiresApproval: false });
+    await signIn(page, owner);
+    const ownerView = new GroupDetailsPage(page);
+    await ownerView.goto(group.id);
+    await ownerView.inviteUser(other.username, { keepOpen: true });
+
+    const invitations = new GroupInvitationsSheet(await openSessionAs(browser, other));
+    await invitations.open();
+    await invitations.reject();
+
+    // The owner's invite modal stays open: the label goes back to "Invite" without a reload
+    await expect(ownerView.inviteCandidateButton("invite")).toBeVisible();
+    await expect(ownerView.inviteCandidateButton("invited")).toHaveCount(0);
   });
 
   test("invitee rejects an invitation and does not join the group", async ({ page, browser }) => {
     const group = await seedGroup(owner, { type: "private", requiresApproval: false });
     await seedGroupInvitation(group, other, owner);
 
-    const inviteePage = await openSessionAs(browser, other);
-    await openGroupInvitations(inviteePage);
-    await inviteePage.getByRole("dialog").getByRole("button", { name: /^reject$/i }).click();
+    const invitations = new GroupInvitationsSheet(await openSessionAs(browser, other));
+    await invitations.open();
+    await invitations.reject();
     // The invitations button disappears once there is nothing left to answer
-    await expect(inviteePage.getByRole("button", { name: /^group invitations$/i })).toHaveCount(0);
+    await expect(invitations.trigger).toHaveCount(0);
 
     await signIn(page, owner);
     const ownerView = new GroupDetailsPage(page);
@@ -80,6 +94,9 @@ test.describe("Group membership flows", () => {
     await requesterView.goto(group.id);
     await requesterView.requestToJoinButton.click();
     await expect(requesterView.requestPendingButton).toBeVisible();
+    // The realtime listener shows the local, not yet acknowledged write; reloading before the server
+    // commits it would drop the request, so wait for it to land in the emulator first.
+    await expect.poll(() => listDocumentIds(`groups/${group.id}/requests`)).toContain(other.uid);
     await requesterPage.reload();
     await expect(requesterView.requestPendingButton).toBeVisible();
     await expect(requesterView.membersHeading).toHaveCount(0);
@@ -87,8 +104,8 @@ test.describe("Group membership flows", () => {
     await signIn(page, owner);
     const ownerView = new GroupDetailsPage(page);
     await ownerView.goto(group.id);
-    await ownerView.requestsButton.click();
-    await expect(ownerView.dialog.getByText(other.username)).toBeVisible();
+    await ownerView.openRequests();
+    await expect(ownerView.request(other.username)).toBeVisible();
   });
 
   test("owner approves a join request and the requester becomes a member", async ({ page, browser }) => {
@@ -104,10 +121,10 @@ test.describe("Group membership flows", () => {
     const ownerView = new GroupDetailsPage(page);
     await ownerView.goto(group.id);
     await ownerView.acceptRequest();
-    await page.keyboard.press("Escape");
+    await ownerView.closeDialog();
     await expect(ownerView.member(other.username)).toBeVisible();
 
-    await requesterPage.reload();
+    // Live: the requester's view switches to member without a reload
     await expect(requesterView.membersHeading).toBeVisible();
   });
 
@@ -124,11 +141,11 @@ test.describe("Group membership flows", () => {
     const ownerView = new GroupDetailsPage(page);
     await ownerView.goto(group.id);
     await ownerView.declineRequest();
-    await expect(ownerView.dialog.getByText(other.username)).toHaveCount(0);
-    await page.keyboard.press("Escape");
+    await expect(ownerView.request(other.username)).toHaveCount(0);
+    await ownerView.closeDialog();
     await expect(ownerView.member(other.username)).toHaveCount(0);
 
-    await requesterPage.reload();
+    // Live: the pending request disappears for the requester without a reload
     await expect(requesterView.requestToJoinButton).toBeVisible();
     await expect(requesterView.membersHeading).toHaveCount(0);
   });

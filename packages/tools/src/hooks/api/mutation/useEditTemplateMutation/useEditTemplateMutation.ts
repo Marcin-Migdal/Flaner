@@ -1,8 +1,7 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth } from "@flaner/shared/context";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { editTemplate, type TemplateInput } from "../../../../api/templates";
-import { useInvalidateGetTemplatesQuery } from "../../query/useGetTemplatesQuery";
-import { useInvalidateGetSpoolsQuery } from "../../query/useGetSpoolsQuery";
+import { spoolerInvalidation } from "../../queryKeys";
 
 export type EditTemplateVariables = {
   templateId: string;
@@ -10,31 +9,18 @@ export type EditTemplateVariables = {
   propagate?: boolean;
 };
 
-export const useEditTemplateMutation = (
-  options?: UseMutationOptions<void, Error, EditTemplateVariables>,
-) => {
-  const { user } = useAuth();
-  const invalidateTemplates = useInvalidateGetTemplatesQuery();
-  const invalidateSpools = useInvalidateGetSpoolsQuery();
-
-  return useMutation<void, Error, EditTemplateVariables>({
-    mutationFn: async ({ templateId, newData, propagate }) => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      await editTemplate(templateId, newData, propagate, user.uid);
+export const useEditTemplateMutation = (options?: UseMutationOptions<void, Error, EditTemplateVariables>) =>
+  useUserMutation<void, EditTemplateVariables>(
+    {
+      mutationKey: ["editTemplate"],
+      mutationFn: ({ templateId, newData, propagate }, { uid }) => editTemplate(templateId, newData, propagate, uid),
+      invalidates: spoolerInvalidation.editTemplate,
+      meta: {
+        successMessageKey: "tools:toasts.templates.editSuccess",
+        errorMessageKey: "tools:toasts.templates.editError",
+      },
     },
-    meta: {
-      successMessageKey: "tools:toasts.templates.editSuccess",
-      errorMessageKey: "tools:toasts.templates.editError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      invalidateTemplates();
-      invalidateSpools();
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useEditTemplateMutation;

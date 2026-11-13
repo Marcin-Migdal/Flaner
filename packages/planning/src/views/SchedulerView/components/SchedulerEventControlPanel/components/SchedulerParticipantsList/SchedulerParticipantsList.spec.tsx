@@ -11,7 +11,7 @@ const mockEvent: SchedulerEvent = {
   creatorId: "user-1",
   participants: ["user-1", "user-2"],
   proposedDates: [
-    { start: "2026-07-01T10:00:00Z", end: "2026-07-03T18:00:00Z", color: "#3b82f6", votes: { "user-1": "yes" } },
+    { start: "2026-07-01T10:00:00Z", end: "2026-07-03T18:00:00Z", color: "blue", votes: { "user-1": "yes" } },
   ],
   isFinalized: false,
   createdAt: 1700000000000,
@@ -61,7 +61,7 @@ describe("SchedulerParticipantsList", () => {
     expect(screen.getByText("hub.noParticipants")).toBeInTheDocument();
   });
 
-  it("renders participant with avatar image", () => {
+  it("shows the participant's initial while the avatar image has not loaded", () => {
     renderWithProviders(
       <SchedulerParticipantsList
         participants={[
@@ -72,7 +72,7 @@ describe("SchedulerParticipantsList", () => {
       />,
     );
 
-    const img = screen.getByRole("img", { name: "Alice" });
-    expect(img).toHaveAttribute("src", "https://example.com/alice.jpg");
+    // jsdom never loads images, so the avatar keeps its fallback
+    expect(screen.getByText("A")).toBeInTheDocument();
   });
 });

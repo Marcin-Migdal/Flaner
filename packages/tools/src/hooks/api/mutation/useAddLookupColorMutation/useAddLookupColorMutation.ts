@@ -1,31 +1,20 @@
-import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { useAuth } from "@flaner/shared/context";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useUserMutation } from "@flaner/shared/hooks";
 import { addLookupColor, type AddLookupColorInput } from "../../../../api/lookups";
-import { useInvalidateGetLookupColorsQuery } from "../../query/useGetLookupColorsQuery";
+import { spoolerInvalidation } from "../../queryKeys";
 
-export const useAddLookupColorMutation = (
-  options?: UseMutationOptions<string, Error, AddLookupColorInput>,
-) => {
-  const { user } = useAuth();
-  const invalidateColors = useInvalidateGetLookupColorsQuery();
-
-  return useMutation<string, Error, AddLookupColorInput>({
-    mutationFn: async (data: AddLookupColorInput) => {
-      if (!user) throw new Error("errors.userNotAuthenticated");
-      return await addLookupColor(user.uid, data);
+export const useAddLookupColorMutation = (options?: UseMutationOptions<string, Error, AddLookupColorInput>) =>
+  useUserMutation<string, AddLookupColorInput>(
+    {
+      mutationKey: ["addLookupColor"],
+      mutationFn: (data, { uid }) => addLookupColor(uid, data),
+      invalidates: spoolerInvalidation.addLookupColor,
+      meta: {
+        successMessageKey: "tools:toasts.lookups.addColorSuccess",
+        errorMessageKey: "tools:toasts.lookups.addColorError",
+      },
     },
-    meta: {
-      successMessageKey: "tools:toasts.lookups.addColorSuccess",
-      errorMessageKey: "tools:toasts.lookups.addColorError",
-    },
-    ...options,
-    onSuccess: async (...args) => {
-      invalidateColors();
-      if (options?.onSuccess) {
-        await options.onSuccess(...args);
-      }
-    },
-  });
-};
+    options,
+  );
 
 export default useAddLookupColorMutation;

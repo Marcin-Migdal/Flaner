@@ -1,5 +1,3 @@
-import type { Timestamp } from "firebase/firestore";
-
 export type FilamentSpool = {
   id: string;
   userId: string;
@@ -8,8 +6,8 @@ export type FilamentSpool = {
   initialWeight: number;
   currentWeight: number;
   isFinished: boolean;
-  finishedAt?: Timestamp | null;
-  createdAt?: Timestamp | null;
+  finishedAt?: number | null;
+  createdAt?: number | null;
   material: string;
   type: string;
   colorName: string;
@@ -26,19 +24,18 @@ export type SpoolInput = {
 export type SpoolPrint = {
   id: string;
   usedWeight: number;
-  createdAt: Timestamp | null;
+  createdAt: number | null;
 };
 
 export type RecordUsageInput = {
-  spool: FilamentSpool;
+  spoolId: string;
   usage: number;
 };
 
+/** Read from the transaction: the spool after the print and what it could not cover (goes onto the next spool). */
 export type RecordUsageResult = {
-  isFinished: boolean;
-  wentBelowZero: boolean;
-  spoolId: string;
-  newWeight: number;
+  spool: FilamentSpool;
+  carryover: number;
 };
 
 export type UndoPrintInput = {

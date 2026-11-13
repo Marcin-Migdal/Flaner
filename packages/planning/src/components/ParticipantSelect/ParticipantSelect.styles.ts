@@ -12,7 +12,7 @@ export const participantSelectStyles = {
   chips: "flex flex-wrap gap-2 mt-2",
   chip: "flex items-center gap-2 bg-muted/50 pl-1.5 pr-3 py-1 rounded-full text-sm border border-border/50 max-w-[260px]",
   chipAvatar: "size-6 shrink-0",
-  chipAvatarFallback: "text-[10px] font-semibold",
+  chipAvatarFallback: "text-3xs font-semibold",
   chipIcon: "size-3 text-muted-foreground",
   chipLabel: "truncate flex-1 min-w-0",
   chipMeta: "text-muted-foreground ml-1",

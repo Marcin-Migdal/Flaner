@@ -50,13 +50,10 @@ test.describe("Community Module E2E", () => {
       const community = new CommunityPage(page);
       await community.goto();
 
-      // Click search trigger button to expand search input
-      await community.searchTriggerButton.click();
-      const searchInput = page.getByPlaceholder(/search groups|szukaj grup/i);
-      await expect(searchInput).toBeVisible();
-
-      await searchInput.fill("Global Search");
-      await expect(searchInput).toHaveValue("Global Search");
+      // The search trigger expands the search input
+      await community.search("Global Search");
+      await expect(community.searchInput).toBeVisible();
+      await expect(community.searchInput).toHaveValue("Global Search");
     });
   });
 });
