@@ -2,6 +2,11 @@
   "name": "@flaner/shared",
   "version": "0.0.1",
   "exports": {
+    "./api": {
+      "types": "./src/api/index.ts",
+      "import": "./src/api/index.ts",
+      "default": "./src/api/index.ts"
+    },
     "./constants": {
       "types": "./src/constants/index.ts",
       "import": "./src/constants/index.ts",

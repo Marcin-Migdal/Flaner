@@ -6,7 +6,7 @@ The single source of truth for AI rules and skills is `.agents/` (shared with Cu
 
 ## Packages
 - `core` — MF host (routing, i18n, `mf.ts`, `sw.ts`)
-- `shared` — constants, context (Auth), firebase, hooks, types, utils (`@flaner/shared/*`)
+- `shared` — api (user profiles `users/{uid}` + `usernames/{lower}`: the only code touching them), constants, context (Auth), firebase, hooks, types, utils (`@flaner/shared/*`)
 - `ui-components` — design system (shadcn + CVA) (`@flaner/ui-components`)
 - `test-utils` — `renderWithProviders`, factories (`@flaner/test-utils`)
 - MFEs: `community`, `planning`, `settings`, `shopping`, `tools` (Spooler)

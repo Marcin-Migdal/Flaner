@@ -2,7 +2,6 @@ import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import {
   collection,
   deleteDoc,
-  deleteField,
   doc,
   documentId,
   getDoc,
@@ -43,7 +42,7 @@ describe("users/{userId}", () => {
     await assertFails(getDoc(doc(anonymous(), "users", BOB)));
   });
 
-  it("accepts the first Google sign-in batch: profile + reservation (createProfileWithReservation)", async () => {
+  it("accepts the first Google sign-in batch: profile + reservation (createUserProfileWithFreeUsername)", async () => {
     await seed({ "usernames/alice": { uid: BOB } });
     const db = as(ALICE);
     const batch = writeBatch(db);
@@ -92,7 +91,7 @@ describe("users/{userId}", () => {
     await assertSucceeds(batch.commit());
   });
 
-  it("lets a user update theme, language and Spooler settings (ShellLayout, updateStartupWaste)", async () => {
+  it("lets a user update theme, language and Spooler settings (updateUserProfile)", async () => {
     const db = as(BOB);
 
     await assertSucceeds(updateDoc(doc(db, "users", BOB), { darkMode: false }));
@@ -105,7 +104,7 @@ describe("users/{userId}", () => {
     await assertFails(setDoc(doc(as(ALICE), "users", BOB), profile(BOB, "Hacked")));
   });
 
-  it("allows the username prefix search (searchUsers, searchParticipants)", async () => {
+  it("allows the username prefix search (searchUserProfiles)", async () => {
     const q = query(
       collection(as(ALICE), "users"),
       where("usernameLower", ">=", "bo"),
@@ -116,7 +115,7 @@ describe("users/{userId}", () => {
     await assertSucceeds(getDocs(q));
   });
 
-  it("allows fetching profiles by id (getEventParticipantsProfiles)", async () => {
+  it("allows fetching profiles by id (getUserProfiles)", async () => {
     await assertSucceeds(getDocs(query(collection(as(ALICE), "users"), where(documentId(), "in", [BOB]))));
   });
 
@@ -127,15 +126,6 @@ describe("users/{userId}", () => {
     await assertFails(updateDoc(doc(as(BOB), "users", BOB), { email: "bob@example.com" }));
     await assertFails(updateDoc(doc(as(BOB), "users", BOB), { isAdmin: true }));
   });
-
-  it("lets a legacy profile drop its email (loadProfile) and blocks other writes until it does", async () => {
-    await seed({ [`users/${ALICE}`]: { ...profile(ALICE, "Alice"), email: "alice@example.com" } });
-    const db = as(ALICE);
-
-    await assertFails(updateDoc(doc(db, "users", ALICE), { darkMode: false }));
-    await assertSucceeds(updateDoc(doc(db, "users", ALICE), { email: deleteField() }));
-    await assertSucceeds(updateDoc(doc(db, "users", ALICE), { darkMode: false }));
-  });
 });
 
 describe("usernames/{usernameLower}", () => {
@@ -145,7 +135,7 @@ describe("usernames/{usernameLower}", () => {
     await assertSucceeds(getDoc(doc(anonymous(), "usernames", "bob")));
   });
 
-  it("accepts the sign-up batch: profile + reservation (signUpWithEmailUser)", async () => {
+  it("accepts the sign-up batch: profile + reservation (createUserProfile)", async () => {
     const db = as(ALICE);
     const batch = writeBatch(db);
     batch.set(doc(db, "users", ALICE), profile(ALICE, "Alice"));

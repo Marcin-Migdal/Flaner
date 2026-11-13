@@ -465,6 +465,7 @@ describe("community groups endpoints", () => {
       mockGetDoc
         .mockResolvedValueOnce({ exists: () => true }) // invitor is member
         .mockResolvedValueOnce({
+          exists: () => true,
           data: () => ({ username: "Alice", avatarUrl: "alice.png" }),
         }); // invitor user profile
 
@@ -483,6 +484,7 @@ describe("community groups endpoints", () => {
       mockGetDoc
         .mockResolvedValueOnce({ exists: () => true })
         .mockResolvedValueOnce({
+          exists: () => true,
           data: () => ({ username: undefined, avatarUrl: undefined }),
         });
 
@@ -640,7 +642,7 @@ describe("community groups endpoints", () => {
     });
 
     it("inviteUserToGroup rejects when the batch fails, so no partial invitation is left", async () => {
-      mockGetDoc.mockResolvedValueOnce({ exists: () => true }).mockResolvedValueOnce({ data: () => undefined });
+      mockGetDoc.mockResolvedValueOnce({ exists: () => true }).mockResolvedValueOnce({ exists: () => false });
       mockBatchCommit.mockRejectedValueOnce(new Error("permission-denied"));
 
       await expect(inviteUserToGroup("group-1", "Hiking", "user-2", "user-1")).rejects.toThrow("permission-denied");
