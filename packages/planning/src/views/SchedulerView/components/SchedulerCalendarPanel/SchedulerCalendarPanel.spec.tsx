@@ -112,7 +112,7 @@ describe("SchedulerCalendarPanel", () => {
     const finalizedEvent: SchedulerEvent = {
       ...mockEvent,
       isFinalized: true,
-      finalizedSlotIndex: 0,
+      finalizedSlotKey: "2026-08-10_2026-08-11",
     };
 
     renderWithProviders(
@@ -130,7 +130,7 @@ describe("SchedulerCalendarPanel", () => {
     const finalizedEvent: SchedulerEvent = {
       ...mockEvent,
       isFinalized: true,
-      finalizedSlotIndex: 0,
+      finalizedSlotKey: "2026-08-10_2026-08-11",
     };
 
     renderWithProviders(

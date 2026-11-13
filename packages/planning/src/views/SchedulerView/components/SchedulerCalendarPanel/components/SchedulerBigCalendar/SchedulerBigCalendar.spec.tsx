@@ -212,7 +212,7 @@ describe("SchedulerBigCalendar", () => {
     const finalizedEvent: SchedulerEvent = {
       ...mockEvent,
       isFinalized: true,
-      finalizedSlotIndex: 0,
+      finalizedSlotKey: "2026-06-01T18:00:00Z_2026-06-01T21:00:00Z",
     };
 
     renderWithProviders(

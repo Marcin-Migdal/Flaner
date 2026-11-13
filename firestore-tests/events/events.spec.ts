@@ -85,8 +85,9 @@ describe("events/{eventId}", () => {
   });
 
   it("blocks participant votes after finalization and outsider votes", async () => {
-    await seed({ [`events/${EVENT_ID}`]: schedulerEvent({ isFinalized: true, finalizedSlotIndex: 0 }) });
+    await seed({ [`events/${EVENT_ID}`]: schedulerEvent({ isFinalized: true, finalizedSlotKey: SLOT_KEY }) });
     await assertFails(vote(PARTICIPANT));
+    await assertFails(vote(CREATOR));
 
     await seed({ [`events/${EVENT_ID}`]: schedulerEvent() });
     await assertFails(vote(OUTSIDER));
@@ -98,18 +99,53 @@ describe("events/{eventId}", () => {
 
     await assertSucceeds(updateDoc(doc(db, "events", EVENT_ID), { name: "Trip 2", updatedAt: Date.now() }));
     await assertSucceeds(
-      updateDoc(doc(db, "events", EVENT_ID), { isFinalized: true, finalizedSlotIndex: 0, updatedAt: Date.now() }),
+      updateDoc(doc(db, "events", EVENT_ID), { isFinalized: true, finalizedSlotKey: SLOT_KEY, updatedAt: Date.now() }),
     );
 
     const batch = writeBatch(db);
     batch.update(doc(db, "events", EVENT_ID), {
       isFinalized: false,
-      finalizedSlotIndex: deleteField(),
+      finalizedSlotKey: deleteField(),
       updatedAt: Date.now(),
     });
     const notifRef = doc(collection(db, `users/${PARTICIPANT}/notifications`));
     batch.set(notifRef, eventNotification(notifRef.id, "event_reopened"));
     await assertSucceeds(batch.commit());
+  });
+
+  it("lets the creator only rename a finalized event or reopen it dropping past slots and their votes (I5)", async () => {
+    const pastSlot = { start: "2020-01-01", end: "2020-01-02", color: "blue" };
+    const slot = { start: "2026-11-01", end: "2026-11-02", color: "blue" };
+    const finalized = schedulerEvent({
+      proposedDates: [pastSlot, slot],
+      votes: { [PARTICIPANT]: { "2020-01-01_2020-01-02": "yes", [SLOT_KEY]: "no" } },
+      isFinalized: true,
+      finalizedSlotKey: SLOT_KEY,
+    });
+    await seed({ [`events/${EVENT_ID}`]: finalized });
+    const ref = doc(as(CREATOR), "events", EVENT_ID);
+
+    // updateSchedulerEvent on a finalized event
+    await assertSucceeds(updateDoc(ref, { name: "Trip 2", description: "New", updatedAt: Date.now() }));
+    await assertFails(updateDoc(ref, { proposedDates: [pastSlot], updatedAt: Date.now() }));
+    await assertFails(updateDoc(ref, { participants: [CREATOR], updatedAt: Date.now() }));
+    await assertFails(updateDoc(ref, { endDate: "2026-12-01", updatedAt: Date.now() }));
+    await assertFails(updateDoc(ref, { finalizedSlotKey: "2020-01-01_2020-01-02", updatedAt: Date.now() }));
+    // Reopen cannot sneak in a new slot
+    await assertFails(
+      updateDoc(ref, { isFinalized: false, proposedDates: [slot, { ...slot, start: "2026-12-24" }], updatedAt: Date.now() }),
+    );
+
+    // unfinalizeSchedulerEvent: drops the past slot and only its votes
+    await assertSucceeds(
+      updateDoc(ref, {
+        isFinalized: false,
+        finalizedSlotKey: deleteField(),
+        proposedDates: [slot],
+        [`votes.${PARTICIPANT}.2020-01-01_2020-01-02`]: deleteField(),
+        updatedAt: Date.now(),
+      }),
+    );
   });
 
   it("lets only the creator delete the event", async () => {
@@ -142,7 +178,7 @@ describe("events/{eventId}", () => {
 
     await assertFails(updateDoc(ref, { creatorId: PARTICIPANT }));
     await assertFails(updateDoc(ref, { participants: [PARTICIPANT, OUTSIDER] }));
-    await assertFails(updateDoc(ref, { isFinalized: true, finalizedSlotIndex: 0 }));
+    await assertFails(updateDoc(ref, { isFinalized: true, finalizedSlotKey: SLOT_KEY }));
     await assertFails(updateDoc(ref, { name: "Renamed", updatedAt: Date.now() }));
   });
 

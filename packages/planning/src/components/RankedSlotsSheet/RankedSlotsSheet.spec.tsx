@@ -85,7 +85,7 @@ describe("RankedSlotsSheet", () => {
     const finalizedEvent: SchedulerEvent = {
       ...mockEvent,
       isFinalized: true,
-      finalizedSlotIndex: 0,
+      finalizedSlotKey: "2026-08-01_2026-08-01",
     };
 
     renderWithProviders(
