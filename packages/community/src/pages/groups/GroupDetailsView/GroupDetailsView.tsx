@@ -24,11 +24,9 @@ import {
   useAcceptFriendRequestMutation,
   useAddGroupMemberMutation,
   useCancelFriendRequestMutation,
-  useGetFriendsListRealtimeQuery,
+  useFriendStatus,
   useGetGroupMembersQuery,
   useGetGroupQuery,
-  useGetReceivedFriendRequestRealtimeQuery,
-  useGetSentFriendRequestRealtimeQuery,
   useGetUserGroupRequestQuery,
   useGetUserGroupsQuery,
   useGetUsersQuery,
@@ -68,17 +66,11 @@ export function GroupDetailsView() {
   const { data: userRequest } = useGetUserGroupRequestQuery(groupId || "");
 
   // Friends data for member actions - only enabled for members
-  const { data: friends = [] } = useGetFriendsListRealtimeQuery({ enabled: isMember });
-  const { data: sentFriendRequests = [] } = useGetSentFriendRequestRealtimeQuery({ enabled: isMember });
-  const { data: receivedFriendRequests = [] } = useGetReceivedFriendRequestRealtimeQuery({ enabled: isMember });
+  const getFriendStatus = useFriendStatus({ enabled: isMember });
 
   const sendFriendRequest = useSendFriendRequestMutation();
   const cancelFriendRequest = useCancelFriendRequestMutation();
   const acceptFriendRequest = useAcceptFriendRequestMutation();
-
-  const isFriend = (uid: string) => friends.some((f) => f.uid === uid);
-  const hasSentFriendRequest = (uid: string) => sentFriendRequests.some((r) => r.receiverUid === uid);
-  const hasReceivedFriendRequest = (uid: string) => receivedFriendRequests.some((r) => r.senderUid === uid);
 
   const { mutateAsync: joinGroup, isPending: isJoining } = useAddGroupMemberMutation();
   const { mutateAsync: requestJoin, isPending: isRequesting } = useRequestJoinGroupMutation();
@@ -323,10 +315,7 @@ export function GroupDetailsView() {
                 {members.map((member) => {
                   const profile = membersProfiles?.find((p) => p.uid === member.userId);
                   const displayName = profile?.username || member.userId;
-                  const isCurrentUser = user?.uid === member.userId;
-                  const friendStatus = isFriend(member.userId);
-                  const sentStatus = hasSentFriendRequest(member.userId);
-                  const receivedStatus = hasReceivedFriendRequest(member.userId);
+                  const status = getFriendStatus(member.userId);
 
                   const isSending = sendFriendRequest.isPending && sendFriendRequest.variables?.uid === member.userId;
                   const isCanceling = cancelFriendRequest.isPending && cancelFriendRequest.variables === member.userId;
@@ -346,7 +335,7 @@ export function GroupDetailsView() {
                         />
                         <div className="min-w-0">
                           <span className="font-medium text-sm text-foreground block truncate">{displayName}</span>
-                          {isCurrentUser && (
+                          {status === "self" && (
                             <span className="text-2xs text-muted-foreground block">{t("manageGroupSheet.you")}</span>
                           )}
                         </div>
@@ -357,14 +346,14 @@ export function GroupDetailsView() {
                           {t(`manageGroupSheet.role_${member.role}`) || member.role}
                         </span>
 
-                        {!isCurrentUser && (
+                        {status !== "self" && (
                           <>
-                            {friendStatus ? (
+                            {status === "friend" ? (
                               <div className={groupDetailsViewStyles.memberFriendBadge}>
                                 <UserCheck className="size-3.5" />
                                 <span className="hidden sm:inline">{t("groupDetails.isFriend")}</span>
                               </div>
-                            ) : sentStatus ? (
+                            ) : status === "outgoing" ? (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -381,7 +370,7 @@ export function GroupDetailsView() {
                                   </>
                                 )}
                               </Button>
-                            ) : receivedStatus ? (
+                            ) : status === "incoming" ? (
                               <Button
                                 size="sm"
                                 variant="brand"

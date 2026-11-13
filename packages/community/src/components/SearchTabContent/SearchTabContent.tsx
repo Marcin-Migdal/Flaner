@@ -1,7 +1,7 @@
 import { Avatar, Button, Input, TabsContent } from "@flaner/ui-components";
 import { Loader2, Search, UserCheck, UserPlus, X } from "lucide-react";
 import { useState } from "react";
-import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useGetFriendsListRealtimeQuery, useGetReceivedFriendRequestRealtimeQuery, useGetSentFriendRequestRealtimeQuery, useSearchUsersQuery, useSendFriendRequestMutation } from "../../hooks";
+import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useFriendStatus, useSearchUsersQuery, useSendFriendRequestMutation } from "../../hooks";
 import { useCommunityTranslations } from "../../hooks/useCommunityTranslations";
 
 import { useDebounce } from "@flaner/shared/hooks";
@@ -12,19 +12,13 @@ export function SearchTabContent() {
   const debouncedSearch = useDebounce(searchText, 300);
 
   // Queries
-  const { data: friends = [] } = useGetFriendsListRealtimeQuery();
-  const { data: sentRequests = [] } = useGetSentFriendRequestRealtimeQuery();
-  const { data: receivedRequests = [] } = useGetReceivedFriendRequestRealtimeQuery();
+  const getFriendStatus = useFriendStatus();
   const { data: searchResults = [], isLoading: searchingUsers } = useSearchUsersQuery(debouncedSearch);
 
   // Mutations
   const sendRequest = useSendFriendRequestMutation();
   const cancelRequest = useCancelFriendRequestMutation();
   const acceptRequest = useAcceptFriendRequestMutation();
-
-  const isFriend = (uid: string) => friends.some((f) => f.uid === uid);
-  const hasSentRequest = (uid: string) => sentRequests.some((r) => r.receiverUid === uid);
-  const hasReceivedRequest = (uid: string) => receivedRequests.some((r) => r.senderUid === uid);
 
   return (
     <TabsContent value="search" className="space-y-3 outline-none">
@@ -59,9 +53,7 @@ export function SearchTabContent() {
       ) : debouncedSearch ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {searchResults.map((match) => {
-            const friendStatus = isFriend(match.uid);
-            const sentStatus = hasSentRequest(match.uid);
-            const receivedStatus = hasReceivedRequest(match.uid);
+            const status = getFriendStatus(match.uid);
 
             const isSending = sendRequest.isPending && sendRequest.variables?.uid === match.uid;
             const isCanceling = cancelRequest.isPending && cancelRequest.variables === match.uid;
@@ -85,12 +77,12 @@ export function SearchTabContent() {
                 </div>
 
                 <div className="shrink-0">
-                  {friendStatus ? (
+                  {status === "friend" ? (
                     <div className="flex items-center gap-1 text-success-text font-medium text-xs px-3 py-1.5 bg-success-subtle rounded-lg">
                       <UserCheck className="size-3.5" />
                       <span>{t("searchTab.isFriend")}</span>
                     </div>
-                  ) : sentStatus ? (
+                  ) : status === "outgoing" ? (
                     <Button
                       size="sm"
                       variant="outline"
@@ -107,7 +99,7 @@ export function SearchTabContent() {
                         </>
                       )}
                     </Button>
-                  ) : receivedStatus ? (
+                  ) : status === "incoming" ? (
                     <Button
                       size="sm"
                       variant="brand"

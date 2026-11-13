@@ -6,15 +6,14 @@ import { Tabs } from "@flaner/ui-components";
 import { renderWithProviders } from "@flaner/test-utils";
 import { SearchTabContent } from "./SearchTabContent";
 import * as hooks from "../../hooks";
+import type { FriendStatus } from "../../hooks";
 
 vi.mock("@flaner/shared/hooks", () => ({
   useDebounce: (val: string) => val,
 }));
 
 vi.mock("../../hooks", () => ({
-  useGetFriendsListRealtimeQuery: vi.fn(),
-  useGetSentFriendRequestRealtimeQuery: vi.fn(),
-  useGetReceivedFriendRequestRealtimeQuery: vi.fn(),
+  useFriendStatus: vi.fn(),
   useSearchUsersQuery: vi.fn(),
   useSendFriendRequestMutation: vi.fn(),
   useCancelFriendRequestMutation: vi.fn(),
@@ -50,17 +49,8 @@ describe("SearchTabContent component", () => {
       isPending: false,
     } as unknown as ReturnType<typeof hooks.useAcceptFriendRequestMutation>);
 
-    vi.mocked(hooks.useGetFriendsListRealtimeQuery).mockReturnValue({
-      data: [{ uid: "friend-1", username: "Alice", createdAt: 1, userRef: {} as never, usernameLower: "alice" }],
-    } as unknown as ReturnType<typeof hooks.useGetFriendsListRealtimeQuery>);
-
-    vi.mocked(hooks.useGetSentFriendRequestRealtimeQuery).mockReturnValue({
-      data: [{ receiverUid: "sent-1" } as never],
-    } as unknown as ReturnType<typeof hooks.useGetSentFriendRequestRealtimeQuery>);
-
-    vi.mocked(hooks.useGetReceivedFriendRequestRealtimeQuery).mockReturnValue({
-      data: [{ senderUid: "recv-1" } as never],
-    } as unknown as ReturnType<typeof hooks.useGetReceivedFriendRequestRealtimeQuery>);
+    const statuses: Record<string, FriendStatus> = { "friend-1": "friend", "sent-1": "outgoing", "recv-1": "incoming" };
+    vi.mocked(hooks.useFriendStatus).mockReturnValue((uid) => statuses[uid] ?? "none");
   });
 
   const renderComponent = () =>
