@@ -209,7 +209,7 @@ describe("SchedulerEventHeader", () => {
     const finalizedEvent: SchedulerEvent = {
       ...mockEvent,
       isFinalized: true,
-      finalizedSlotIndex: 0,
+      finalizedSlotKey: "2026-07-01T10:00:00Z_2026-07-03T18:00:00Z",
     };
 
     rerender(

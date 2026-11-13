@@ -27,7 +27,15 @@ export type SchedulerEvent = {
   proposedDates: ProposedDateSlot[];
   votes?: EventVotes;
   isFinalized?: boolean;
-  finalizedSlotIndex?: number;
+  /** Slot key (`getSlotKey`) of the winning slot, set by `finalizeSchedulerEvent`; slots of a finalized event cannot change */
+  finalizedSlotKey?: string;
   createdAt: number;
   updatedAt: number;
 };
+
+/** The winning slot of a finalized event */
+export const getWinningSlot = ({ isFinalized, finalizedSlotKey, proposedDates }: SchedulerEvent) =>
+  isFinalized ? proposedDates.find((slot) => getSlotKey(slot) === finalizedSlotKey) : undefined;
+
+/** What the creator may change in an edit; a finalized event takes only `name` and `description` */
+export type SchedulerEventEdit = Partial<Pick<SchedulerEvent, "name" | "description" | "endDate" | "participants" | "proposedDates">>;

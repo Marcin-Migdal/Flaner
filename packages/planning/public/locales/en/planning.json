@@ -35,7 +35,8 @@
     "resultUser": "Friend"
   },
   "edit": {
-    "title": "Edit event"
+    "title": "Edit event",
+    "finalizedNotice": "This event is finalized: only its name and description can be changed. Reopen voting to change the rest."
   },
   "deleteModal": {
     "title": "Delete event",

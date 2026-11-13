@@ -35,7 +35,8 @@
     "resultUser": "Znajomy"
   },
   "edit": {
-    "title": "Edytuj wydarzenie"
+    "title": "Edytuj wydarzenie",
+    "finalizedNotice": "Wydarzenie jest sfinalizowane: możesz zmienić tylko nazwę i opis. Aby zmienić resztę, wznów głosowanie."
   },
   "deleteModal": {
     "title": "Usuń wydarzenie",

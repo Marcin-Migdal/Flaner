@@ -73,7 +73,7 @@ describe("FinalizeEventModal", () => {
 
     expect(mockFinalizeMutateAsync).toHaveBeenCalledWith({
       eventId: "evt-123",
-      finalizedSlotIndex: 1, // slot with 100% score is index 1
+      slotKey: "2026-07-05_2026-07-06", // the slot with a 100% score
     });
     expect(handleOpenChange).toHaveBeenCalledWith(false);
   });
@@ -114,7 +114,7 @@ describe("FinalizeEventModal", () => {
 
     expect(mockFinalizeMutateAsync).toHaveBeenCalledWith({
       eventId: "evt-123",
-      finalizedSlotIndex: 0,
+      slotKey: "2026-07-01_2026-07-01",
     });
   });
 

@@ -14,7 +14,7 @@ describe("AvailabilityGridWinnerHeader", () => {
     renderWithProviders(
       <AvailabilityGridWinnerHeader
         proposedDates={proposedDates}
-        finalizedSlotIndex={0}
+        finalizedSlotKey="2026-06-01T10:00:00Z_2026-06-01T12:00:00Z"
         gridTemplateColumns="150px 100px 100px"
       />,
     );
@@ -23,7 +23,7 @@ describe("AvailabilityGridWinnerHeader", () => {
     expect(screen.getByText("grid.winner")).toBeInTheDocument();
   });
 
-  it("does not render winner badge when finalizedSlotIndex is undefined", () => {
+  it("does not render winner badge when finalizedSlotKey is undefined", () => {
     renderWithProviders(
       <AvailabilityGridWinnerHeader
         proposedDates={proposedDates}

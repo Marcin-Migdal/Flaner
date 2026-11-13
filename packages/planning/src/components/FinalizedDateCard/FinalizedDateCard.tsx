@@ -3,7 +3,7 @@ import { pl, enUS } from "date-fns/locale";
 import { CheckCircle, Calendar, Users, RotateCcw } from "lucide-react";
 import { Button } from "@flaner/ui-components";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
-import type { SchedulerEvent } from "../../api/events/types";
+import { getWinningSlot, type SchedulerEvent } from "../../api/events/types";
 import { isSameDaySlot, tallyVotes } from "../../utils/slotRanking";
 
 export type FinalizedDateCardProps = {
@@ -16,8 +16,7 @@ export const FinalizedDateCard = ({ event, isOwner, onReopen }: FinalizedDateCar
   const { t, i18n } = usePlanningTranslations();
   const dateLocale = i18n.language === "pl" ? pl : enUS;
 
-  const slotIndex = event.finalizedSlotIndex ?? 0;
-  const winningSlot = event.proposedDates[slotIndex];
+  const winningSlot = getWinningSlot(event);
 
   if (!winningSlot) return null;
 

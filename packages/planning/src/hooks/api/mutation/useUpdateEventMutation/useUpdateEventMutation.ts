@@ -1,10 +1,10 @@
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useUserMutation } from "@flaner/shared/hooks";
-import { updateSchedulerEvent, type SchedulerEvent } from "../../../../api/events";
+import { updateSchedulerEvent, type SchedulerEventEdit } from "../../../../api/events";
 
 export type UpdateEventParams = {
   eventId: string;
-  data: Partial<Omit<SchedulerEvent, "id" | "createdAt" | "updatedAt">>;
+  data: SchedulerEventEdit;
 };
 
 export const useUpdateEventMutation = (options?: UseMutationOptions<void, Error, UpdateEventParams>) =>
