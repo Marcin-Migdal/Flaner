@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { signInAsNewUser } from "../support/helpers/auth";
 import { PlanningPage } from "../support/pages/Planning.page";
+import { SchedulerPage } from "../support/pages/Scheduler.page";
 import { LoginPage } from "../support/pages/LoginPage.page";
 
 test.describe("Planning Module E2E", () => {
@@ -31,8 +32,6 @@ test.describe("Planning Module E2E", () => {
       const planning = new PlanningPage(page);
       await planning.gotoSplits();
 
-      // Heading or sidebar list is visible
-      await expect(page.locator("body")).toBeVisible();
       await expect(planning.createSplitGroupButton).toBeVisible();
     });
 
@@ -47,15 +46,15 @@ test.describe("Planning Module E2E", () => {
       await expect(planning.groupNameInput).toHaveValue("Holiday Trip Split");
 
       // Dismiss dialog
-      await page.keyboard.press("Escape");
+      await planning.closeDialog();
       await expect(planning.groupModalTitle).not.toBeVisible();
     });
 
     test("renders scheduling calendar view cleanly without runtime crashes", async ({ page }) => {
-      const planning = new PlanningPage(page);
-      await planning.gotoScheduler();
+      const scheduler = new SchedulerPage(page);
+      await scheduler.goto();
 
-      await expect(planning.schedulerRoot).toBeVisible();
+      await expect(scheduler.root).toBeVisible();
     });
   });
 });

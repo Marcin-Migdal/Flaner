@@ -7,6 +7,8 @@ export class SplitGroupPage {
   readonly balancesPanel: Locator;
   readonly markAsPaidButton: Locator;
   readonly allSettled: Locator;
+  readonly settlementTooLargeError: Locator;
+  readonly paymentAlreadyPendingError: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -15,6 +17,8 @@ export class SplitGroupPage {
     this.balancesPanel = page.getByRole("tabpanel");
     this.markAsPaidButton = this.balancesPanel.getByRole("button", { name: /^mark as paid$/i });
     this.allSettled = this.balancesPanel.getByText(/everyone is settled up/i);
+    this.settlementTooLargeError = page.getByText(/settlement amount cannot exceed/i);
+    this.paymentAlreadyPendingError = page.getByText(/already waiting for confirmation/i);
   }
 
   async goto(groupId: string) {

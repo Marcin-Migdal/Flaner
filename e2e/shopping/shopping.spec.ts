@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { signInAsNewUser } from "../support/helpers/auth";
 import { LoginPage } from "../support/pages/LoginPage.page";
+import { ShoppingPage } from "../support/pages/Shopping.page";
 
 test.describe("Shopping Module E2E", () => {
   test("redirects unauthenticated user from /shopping to /login", async ({ page }) => {
@@ -27,10 +28,11 @@ test.describe("Shopping Module E2E", () => {
     });
 
     test("renders shopping container cleanly when authenticated", async ({ page }) => {
-      await page.goto("/shopping/lists");
+      const shopping = new ShoppingPage(page);
+      await shopping.goto();
 
       // Verify MFE mounted cleanly
-      await expect(page.locator("[data-testid='shopping']")).toBeVisible();
+      await expect(shopping.root).toBeVisible();
     });
   });
 });

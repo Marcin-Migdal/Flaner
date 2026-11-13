@@ -4,6 +4,14 @@
   "projectType": "application",
   "sourceRoot": "e2e",
   "targets": {
+    "typecheck": {
+      "cache": true,
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p tsconfig.json --noEmit",
+        "cwd": "e2e"
+      }
+    },
     "e2e": {
       "executor": "nx:run-commands",
       "options": {

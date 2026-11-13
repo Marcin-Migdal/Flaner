@@ -69,7 +69,7 @@ test.describe("Split group settlements", () => {
 
     await debtorView.recordPayment({ receiver: creditor.username, amount: "50" });
 
-    await expect(page.getByText(/already waiting for confirmation/i)).toBeVisible();
+    await expect(debtorView.paymentAlreadyPendingError).toBeVisible();
     await expect(debtorView.dialog).toBeVisible();
   });
 });

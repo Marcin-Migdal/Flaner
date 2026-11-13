@@ -78,7 +78,7 @@ test.describe("Split group currency conversion", () => {
 
     await splitGroup.confirmPendingPayment();
     await expect(splitGroup.allSettled).toBeVisible();
-    await expect(page.getByText(/settlement amount cannot exceed/i)).toHaveCount(0);
+    await expect(splitGroup.settlementTooLargeError).toHaveCount(0);
   });
 
   test("confirmed and pending payments in a foreign currency are converted together", async ({ page }) => {

@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
+import type { SchedulerEvent } from "../../packages/planning/src/api/events/types";
 import { signIn } from "../support/helpers/auth";
-import { createUser, readDocumentFields, seedDocument } from "../support/helpers/emulator";
-import { PlanningPage } from "../support/pages/Planning.page";
+import { createUser, readDocument, seedEvent } from "../support/helpers/emulator";
+import { SchedulerPage } from "../support/pages/Scheduler.page";
 
 // #89: the winning slot is stored by its slot key; a finalized event takes only a new name / description; reopen keeps the votes
 
@@ -14,53 +15,42 @@ test("the creator finalizes the top slot, renames the finalized event and reopen
   const [creator, participant] = await Promise.all([createUser(), createUser()]);
   const [first, second] = [isoDay(1), isoDay(2)];
   const [firstKey, secondKey] = [`${first}_${first}`, `${second}_${second}`];
-  const eventId = `ev-${Date.now().toString(36)}`;
-  await seedDocument(`events/${eventId}`, {
-    id: eventId,
+  const votes = {
+    [creator.uid]: { [firstKey]: "no", [secondKey]: "yes" },
+    [participant.uid]: { [firstKey]: "maybe", [secondKey]: "yes" },
+  } satisfies SchedulerEvent["votes"];
+  const event = await seedEvent(creator, {
     name: "E2E lifecycle",
-    description: "",
-    creatorId: creator.uid,
-    participants: [creator.uid, participant.uid],
+    participants: [creator, participant],
     proposedDates: [
       { start: first, end: first, color: "blue" },
       { start: second, end: second, color: "teal" },
     ],
     // The second slot is the top pick
-    votes: {
-      [creator.uid]: { [firstKey]: "no", [secondKey]: "yes" },
-      [participant.uid]: { [firstKey]: "maybe", [secondKey]: "yes" },
-    },
-    isFinalized: false,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    votes,
   });
-  const stored = async () => JSON.stringify(await readDocumentFields(`events/${eventId}`));
+  const stored = () => readDocument(`events/${event.id}`);
 
   await signIn(page, creator);
-  await new PlanningPage(page).gotoScheduler();
+  const scheduler = new SchedulerPage(page);
+  await scheduler.goto();
 
   // Finalize: the modal preselects the top pick
-  await page.getByRole("button", { name: /finalize event date/i }).click();
-  await page.getByRole("button", { name: /confirm this date/i }).click();
-  await expect.poll(stored).toContain(`"finalizedSlotKey":{"stringValue":"${secondKey}"}`);
-  await expect(page.getByText("Date Confirmed")).toBeVisible();
+  await scheduler.finalizeTopSlot();
+  await expect.poll(stored).toMatchObject({ isFinalized: true, finalizedSlotKey: secondKey } satisfies Partial<SchedulerEvent>);
+  await expect(scheduler.dateConfirmed).toBeVisible();
 
   // A finalized event: only name and description
-  await page.getByRole("button", { name: /^edit$/i }).click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.getByText(/only its name and description can be changed/i)).toBeVisible();
-  await expect(dialog.getByText(/deadline for dates selection/i)).toHaveCount(0);
-  await dialog.getByLabel(/event name/i).fill("E2E renamed");
-  await dialog.getByRole("button", { name: /^save$/i }).click();
-  await expect.poll(stored).toContain(`"name":{"stringValue":"E2E renamed"}`);
-  expect(await stored()).toContain(`"finalizedSlotKey":{"stringValue":"${secondKey}"}`);
+  await scheduler.openEdit();
+  await expect(scheduler.finalizedEditNotice).toBeVisible();
+  await expect(scheduler.deadlineField).toHaveCount(0);
+  await scheduler.renameInEdit("E2E renamed");
+  await expect
+    .poll(stored)
+    .toMatchObject({ name: "E2E renamed", finalizedSlotKey: secondKey } satisfies Partial<SchedulerEvent>);
 
   // Reopen: voting continues with every vote kept
-  await page.getByRole("button", { name: /reopen voting/i }).click();
-  await page.getByRole("dialog").getByRole("button", { name: /reopen voting/i }).click();
-  await expect.poll(stored).toContain(`"isFinalized":{"booleanValue":false}`);
-  const reopened = await stored();
-  expect(reopened).not.toContain("finalizedSlotKey");
-  expect(reopened).toContain(`"${firstKey}":{"stringValue":"maybe"}`);
-  expect(reopened).toContain(`"${secondKey}":{"stringValue":"yes"}`);
+  await scheduler.reopenVoting();
+  await expect.poll(stored).toMatchObject({ isFinalized: false, votes } satisfies Partial<SchedulerEvent>);
+  expect(await stored()).not.toHaveProperty("finalizedSlotKey");
 });

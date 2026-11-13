@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { signInAsNewUser } from "../support/helpers/auth";
-import { createUser, readDocumentFields } from "../support/helpers/emulator";
+import type { UsernameReservation } from "../../packages/shared/src/api/users/types";
+import type { UserProfile } from "../../packages/shared/src/types";
+import { createUser, readDocument } from "../support/helpers/emulator";
 import { SettingsPage } from "../support/pages/Settings.page";
 import { LoginPage } from "../support/pages/LoginPage.page";
 
@@ -49,16 +51,15 @@ test.describe("Settings Module E2E", () => {
       const settings = new SettingsPage(page);
       await settings.goto();
 
-      await settings.usernameInput.fill(newName);
-      await settings.saveButton.click();
-      await expect(page.getByText(/settings updated successfully|zostały pomyślnie zaktualizowane/i)).toBeVisible();
+      await settings.changeUsername(newName);
+      await expect(settings.savedMessage).toBeVisible();
 
       await expect
-        .poll(async () => (await readDocumentFields(`users/${user.uid}`)).usernameLower)
-        .toEqual({ stringValue: newName.toLowerCase() });
-      expect((await readDocumentFields(`usernames/${newName.toLowerCase()}`)).uid).toEqual({ stringValue: user.uid });
-      // The old reservation is released: the emulator answers 404
-      await expect(readDocumentFields(`usernames/${user.usernameLower}`)).rejects.toThrow(/404/);
+        .poll(() => readDocument(`users/${user.uid}`))
+        .toMatchObject({ username: newName, usernameLower: newName.toLowerCase() } satisfies Partial<UserProfile>);
+      expect(await readDocument(`usernames/${newName.toLowerCase()}`)).toEqual({ uid: user.uid } satisfies UsernameReservation);
+      // The old reservation is released
+      expect(await readDocument(`usernames/${user.usernameLower}`)).toBeUndefined();
 
       await page.reload();
       await expect(settings.usernameInput).toHaveValue(newName);
@@ -70,11 +71,10 @@ test.describe("Settings Module E2E", () => {
       const settings = new SettingsPage(page);
       await settings.goto();
 
-      await settings.usernameInput.fill(other.username.toUpperCase());
-      await settings.saveButton.click();
+      await settings.changeUsername(other.username.toUpperCase());
 
-      await expect(page.getByText(/this username is already taken|zajęta/i)).toBeVisible();
-      expect((await readDocumentFields(`users/${user.uid}`)).username).toEqual({ stringValue: user.username });
+      await expect(settings.usernameTakenError).toBeVisible();
+      expect(await readDocument(`users/${user.uid}`)).toMatchObject({ username: user.username } satisfies Partial<UserProfile>);
     });
   });
 });
