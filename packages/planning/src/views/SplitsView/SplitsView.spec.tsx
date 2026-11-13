@@ -79,7 +79,6 @@ vi.mock("../../hooks/api/query", () => ({
   }),
   useGetUserSchedulerEventsRealtimeQuery: () => ({ data: [], isLoading: false }),
   useSearchParticipantsQuery: () => ({ data: [], isLoading: false }),
-  useUserSchedulerEventsQuery: () => ({ data: [], isLoading: false }),
 }));
 
 vi.mock("../../hooks/useSyncSplitGroupFeed", () => ({
