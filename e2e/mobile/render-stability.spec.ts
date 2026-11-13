@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { expectNoHorizontalScroll } from "../support/helpers/viewport";
 import { signInAsNewUser } from "../support/helpers/auth";
+import { AppShellPage } from "../support/pages/AppShell.page";
 import { LoginPage } from "../support/pages/LoginPage.page";
 
 test.describe("Mobile Render Stability", () => {
@@ -41,8 +42,10 @@ test.describe("Mobile Render Stability", () => {
   });
 
   test.describe("Authenticated Mobile Journeys & Drawers", () => {
+    let shell: AppShellPage;
+
     test.beforeEach(async ({ page }) => {
-      await signInAsNewUser(page, { username: "Mobile Tester" });
+      shell = new AppShellPage(page, await signInAsNewUser(page, { username: "Mobile Tester" }));
     });
 
     test("authenticated views maintain zero horizontal scroll on mobile viewport", async ({ page }) => {
@@ -63,17 +66,15 @@ test.describe("Mobile Render Stability", () => {
     });
 
     test("mobile header renders hamburger trigger and toggles mobile drawer cleanly", async ({ page }) => {
-      await page.goto("/");
+      await shell.goto("/");
 
-      const header = page.locator("header");
-      await expect(header).toBeVisible();
+      await expect(shell.header).toBeVisible();
 
       // Mobile trigger button
-      const trigger = header.locator("button").first();
-      await expect(trigger).toBeVisible();
+      await expect(shell.sidebarTrigger).toBeVisible();
 
       // Open mobile drawer
-      await trigger.click();
+      await shell.sidebarTrigger.click();
 
       // Verify no horizontal overflow when drawer is open
       await expectNoHorizontalScroll(page);

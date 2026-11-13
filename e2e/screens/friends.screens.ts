@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
 import path from "node:path";
 import { signIn } from "../support/helpers/auth";
-import { createUser, seedDocument, type E2EUser } from "../support/helpers/emulator";
+import { createUser, seedFriendship } from "../support/helpers/emulator";
+import { FriendsPage } from "../support/pages/Friends.page";
 
 // Friends view (community) as reference for Claude Design (#62) — light/dark × phone/desktop.
 
@@ -10,21 +11,17 @@ const VIEWPORTS = { mobile: { width: 390, height: 844 }, desktop: { width: 1440,
 const FRIENDS = ["anna.nowak", "jan.kowalski", "ola", "piotr.wisniewski", "kasia_m"];
 const DAY = 24 * 60 * 60 * 1000;
 
-const befriend = async (user: E2EUser, friend: E2EUser, createdAt: number) => {
-  await seedDocument(`users/${user.uid}/friendships/${friend.uid}`, { createdAt });
-  await seedDocument(`users/${friend.uid}/friendships/${user.uid}`, { createdAt });
-};
-
 for (const theme of ["light", "dark"] as const) {
   test(`friends — ${theme}`, async ({ page }) => {
     const user = await createUser({ username: "marta", darkMode: theme === "dark" });
     // Same names in both runs: only the `usernames/*` lookup doc is shared, and the view does not read it
     const friends = await Promise.all(FRIENDS.map((username) => createUser({ username })));
-    await Promise.all(friends.map((friend, i) => befriend(user, friend, Date.now() - (i + 1) * 9 * DAY)));
+    await Promise.all(friends.map((friend, i) => seedFriendship(user, friend, Date.now() - (i + 1) * 9 * DAY)));
 
     await signIn(page, user);
-    await page.goto("/community/friends");
-    await expect(page.getByText(friends[0].username, { exact: true })).toBeVisible();
+    const friendsPage = new FriendsPage(page);
+    await friendsPage.goto();
+    await expect(friendsPage.friend(friends[0].username)).toBeVisible();
 
     for (const [name, size] of Object.entries(VIEWPORTS)) {
       await page.setViewportSize(size);

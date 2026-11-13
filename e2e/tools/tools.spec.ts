@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { signInAsNewUser } from "../support/helpers/auth";
-import { seedDocument } from "../support/helpers/emulator";
+import { seedLookupMaterial, seedSpool, seedTemplate, type E2EUser } from "../support/helpers/emulator";
 import { ToolsPage } from "../support/pages/Tools.page";
 import { LoginPage } from "../support/pages/LoginPage.page";
 
@@ -24,28 +24,15 @@ test.describe("Tools Module E2E", () => {
   });
 
   test.describe("Authenticated Tools Journeys", () => {
-    let userId = "";
+    let user: E2EUser;
 
     test.beforeEach(async ({ page }) => {
-      ({ uid: userId } = await signInAsNewUser(page, { username: "Maker Tools" }));
+      user = await signInAsNewUser(page, { username: "Maker Tools" });
     });
 
     test("records a print and undoes it; undo is disabled without prints", async ({ page }) => {
       const spoolName = "E2E Print Spool";
-      await seedDocument(`spools/spool-${userId}`, {
-        id: `spool-${userId}`,
-        userId,
-        templateId: null,
-        name: spoolName,
-        initialWeight: 1000,
-        currentWeight: 1000,
-        isFinished: false,
-        finishedAt: null,
-        material: "PLA",
-        type: "Basic",
-        colorName: "Black",
-        colorHex: "#000000",
-      });
+      await seedSpool(user, { name: spoolName, initialWeight: 1000 });
       const tools = new ToolsPage(page);
       await tools.goto();
 
@@ -55,7 +42,7 @@ test.describe("Tools Module E2E", () => {
 
       // Default startup waste: 1.5 g on top of the model weight
       await tools.recordPrint(spoolName, 10);
-      await expect(page.getByText(/failed to load/i)).toHaveCount(0);
+      await expect(tools.loadError).toHaveCount(0);
       await expect(card).toContainText("988.5g");
       await expect(tools.undoButton(spoolName)).toBeEnabled();
 
@@ -67,31 +54,8 @@ test.describe("Tools Module E2E", () => {
 
     test("a print that empties a spool offers the next spool with the carryover already taken", async ({ page }) => {
       const spoolName = "E2E Run-out Spool";
-      await seedDocument(`templates/tpl-${userId}`, {
-        id: `tpl-${userId}`,
-        userId,
-        material: "PLA",
-        type: "Basic",
-        colorName: "Black",
-        colorHex: "#000000",
-        defaultWeight: 1000,
-        createdAt: 1,
-      });
-      await seedDocument(`spools/spool-${userId}`, {
-        id: `spool-${userId}`,
-        userId,
-        templateId: `tpl-${userId}`,
-        name: spoolName,
-        initialWeight: 1000,
-        currentWeight: 10,
-        isFinished: false,
-        finishedAt: null,
-        createdAt: 1,
-        material: "PLA",
-        type: "Basic",
-        colorName: "Black",
-        colorHex: "#000000",
-      });
+      const template = await seedTemplate(user, { defaultWeight: 1000 });
+      await seedSpool(user, { name: spoolName, template, initialWeight: 1000, currentWeight: 10 });
       const tools = new ToolsPage(page);
       await tools.goto();
 
@@ -107,17 +71,8 @@ test.describe("Tools Module E2E", () => {
 
     test("a deleted custom material stays deleted after a reload, even when a template uses it", async ({ page }) => {
       const material = "E2E Nylon";
-      await seedDocument(`templates/tpl-${userId}`, {
-        id: `tpl-${userId}`,
-        userId,
-        material,
-        type: "CF",
-        colorName: "Snow",
-        colorHex: "#ffffff",
-        defaultWeight: 750,
-        createdAt: 1,
-      });
-      await seedDocument(`lookup_materials/mat-${userId}`, { id: `mat-${userId}`, userId, name: material, createdAt: 1 });
+      await seedTemplate(user, { material, type: "CF", colorName: "Snow", colorHex: "#ffffff", defaultWeight: 750 });
+      await seedLookupMaterial(user, material);
       const tools = new ToolsPage(page);
       await tools.goto();
 
@@ -153,11 +108,11 @@ test.describe("Tools Module E2E", () => {
 
       // Click Templates tab
       await tools.templatesTab.click();
-      await expect(tools.templatesTab).toHaveAttribute("data-state", "active");
+      await expect(tools.templatesTab).toHaveAttribute("aria-selected", "true");
 
       // Click Spools tab back
       await tools.spoolsTab.click();
-      await expect(tools.spoolsTab).toHaveAttribute("data-state", "active");
+      await expect(tools.spoolsTab).toHaveAttribute("aria-selected", "true");
     });
   });
 });

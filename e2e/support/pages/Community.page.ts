@@ -1,12 +1,14 @@
-import { type Page, type Locator } from "@playwright/test";
+import { type Locator, type Page } from "@playwright/test";
 
+/** The groups list (`/community/groups`) and its "Create a group" modal. */
 export class CommunityPage {
   readonly page: Page;
   readonly heading: Locator;
   readonly createGroupButton: Locator;
   readonly filterTriggerButton: Locator;
   readonly searchTriggerButton: Locator;
-  readonly emptyStateActionBtn: Locator;
+  /** The expanded search field (disabled until its trigger is clicked). */
+  readonly searchInput: Locator;
 
   // Create Group Modal locators
   readonly modalTitle: Locator;
@@ -19,15 +21,16 @@ export class CommunityPage {
     this.page = page;
     this.heading = page.getByRole("heading", { level: 1, name: /^groups$/i });
     this.createGroupButton = page.getByRole("button", { name: /create group|utwórz grupę/i }).first();
-    this.filterTriggerButton = page.locator("[data-slot='field']").first();
-    this.searchTriggerButton = page.locator("[data-slot='field']").nth(1);
-    this.emptyStateActionBtn = page.getByRole("button", { name: /create your first group|utwórz swoją pierwszą grupę/i });
+    this.filterTriggerButton = page.getByRole("button", { name: /^filter my groups/i });
+    this.searchTriggerButton = page.getByRole("button", { name: /^search groups/i });
+    this.searchInput = page.getByRole("textbox", { name: /^search groups/i });
 
+    const dialog = page.getByRole("dialog");
     this.modalTitle = page.getByRole("heading", { name: /create a group|utwórz grupę/i });
     this.groupNameInput = page.getByPlaceholder(/enter name|wprowadź nazwę/i);
     this.groupDescInput = page.getByPlaceholder(/what is this group about|o czym jest ta grupa/i);
-    this.submitModalButton = page.locator("div[role='dialog']").getByRole("button", { name: /create group|utwórz grupę/i });
-    this.cancelModalButton = page.locator("div[role='dialog']").getByRole("button", { name: /cancel|anuluj/i });
+    this.submitModalButton = dialog.getByRole("button", { name: /create group|utwórz grupę/i });
+    this.cancelModalButton = dialog.getByRole("button", { name: /cancel|anuluj/i });
   }
 
   async goto() {
@@ -52,5 +55,22 @@ export class CommunityPage {
 
   async cancelGroupModal() {
     await this.cancelModalButton.click();
+  }
+
+  /** Creates a group through the modal (private, no description). */
+  async createGroup(name: string) {
+    await this.openCreateModal();
+    await this.fillGroupForm(name);
+    await this.submitGroupForm();
+  }
+
+  /** Opens a group from the list by its card. */
+  async openGroup(name: string) {
+    await this.page.getByRole("button", { name }).click();
+  }
+
+  async search(query: string) {
+    await this.searchTriggerButton.click();
+    await this.searchInput.fill(query);
   }
 }

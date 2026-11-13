@@ -26,18 +26,32 @@ export class GroupDetailsPage {
     await this.page.goto(`/community/groups/${groupId}`);
   }
 
-  /** A row in the members list (scoped to the section, so the app shell's own username doesn't match). */
+  /** A row in the members list (the page content lists usernames only there; the shell's own is outside `main`). */
   member(username: string): Locator {
-    return this.membersHeading.locator("xpath=..").getByText(username, { exact: true });
+    return this.page.getByRole("main").getByText(username, { exact: true });
   }
 
-  /** Invites a user found by their (unique) username through the invite modal. */
-  async inviteUser(username: string) {
+  /** The invite modal's button for the searched user: "Invite", or "Invited" once the invitation is pending. */
+  inviteCandidateButton(state: "invite" | "invited"): Locator {
+    return this.dialog.getByRole("button", { name: state === "invite" ? /^invite$/i : /^invited$/i });
+  }
+
+  /** Invites a user found by their (unique) username; the modal stays open with `keepOpen`. */
+  async inviteUser(username: string, { keepOpen = false }: { keepOpen?: boolean } = {}) {
     await this.inviteButton.click();
     await this.dialog.getByPlaceholder(/search users/i).fill(username);
-    await this.dialog.getByRole("button", { name: /^invite$/i }).click();
-    await this.dialog.getByRole("button", { name: /^invited$/i }).waitFor();
+    await this.inviteCandidateButton("invite").click();
+    await this.inviteCandidateButton("invited").waitFor();
+    if (!keepOpen) await this.closeDialog();
+  }
+
+  async closeDialog() {
     await this.page.keyboard.press("Escape");
+  }
+
+  /** A join request in the owner's requests sheet. */
+  request(username: string): Locator {
+    return this.dialog.getByText(username);
   }
 
   async acceptRequest() {
@@ -48,5 +62,17 @@ export class GroupDetailsPage {
   async declineRequest() {
     await this.requestsButton.click();
     await this.dialog.getByRole("button", { name: /^decline$/i }).click();
+  }
+
+  async openRequests() {
+    await this.requestsButton.click();
+  }
+
+  /** Owner only: deletes the group from the manage sheet and lands back on the groups list. */
+  async deleteGroup() {
+    await this.page.getByRole("button", { name: /^manage$/i }).click();
+    await this.dialog.getByRole("button", { name: /^delete group$/i }).click();
+    await this.page.getByRole("button", { name: /^yes, delete group$/i }).click();
+    await this.page.waitForURL(/\/community\/groups$/);
   }
 }

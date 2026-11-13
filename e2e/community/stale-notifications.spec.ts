@@ -3,14 +3,14 @@ import { signIn } from "../support/helpers/auth";
 import {
   createUser,
   listDocumentIds,
-  seedDocument,
   seedGroup,
   seedGroupInvitation,
+  seedGroupMember,
   seedNotification,
   type E2EUser,
 } from "../support/helpers/emulator";
-import { CommunityPage } from "../support/pages/Community.page";
 import { GroupDetailsPage } from "../support/pages/GroupDetails.page";
+import { GroupInvitationsSheet } from "../support/pages/GroupInvitationsSheet.page";
 
 // #49: notifications about a source that got resolved disappear while unread; read ones stay.
 
@@ -25,10 +25,7 @@ const inboxOf = (user: E2EUser) => listDocumentIds(`users/${user.uid}/notificati
 const deleteGroupAsOwner = async (page: Page, groupId: string) => {
   const view = new GroupDetailsPage(page);
   await view.goto(groupId);
-  await page.getByRole("button", { name: /^manage$/i }).click();
-  await view.dialog.getByRole("button", { name: /^delete group$/i }).click();
-  await page.getByRole("button", { name: /^yes, delete group$/i }).click();
-  await page.waitForURL(/\/community\/groups$/);
+  await view.deleteGroup();
 };
 
 test.describe("Stale notifications (#49)", () => {
@@ -62,16 +59,16 @@ test.describe("Stale notifications (#49)", () => {
     await seedNotification(invitee, id, { type: "group_invitation", sender: owner, groupId: group.id, groupName: group.name });
 
     await signIn(page, invitee);
-    await new CommunityPage(page).goto();
-    await page.getByRole("button", { name: /^group invitations$/i }).click();
-    await page.getByRole("dialog").getByRole("button", { name: /^reject$/i }).click();
+    const invitations = new GroupInvitationsSheet(page);
+    await invitations.open();
+    await invitations.reject();
 
     await expect.poll(() => inboxOf(invitee)).not.toContain(id);
   });
 
   test("a member keeps only 'group deleted' from a deleted group's unread notifications", async ({ page, browser }) => {
     const group = await seedGroup(owner, { type: "private", requiresApproval: false });
-    await seedDocument(`groups/${group.id}/members/${invitee.uid}`, { userId: invitee.uid, role: "member", joinedAt: Date.now() });
+    await seedGroupMember(group, invitee);
     await seedNotification(invitee, "request-accepted", {
       type: "group_request_accepted",
       sender: owner,

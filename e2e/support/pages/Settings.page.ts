@@ -1,22 +1,31 @@
-import { type Page, type Locator } from "@playwright/test";
+import { type Locator, type Page } from "@playwright/test";
 
 export class SettingsPage {
   readonly page: Page;
+  readonly heading: Locator;
   readonly usernameInput: Locator;
   readonly saveButton: Locator;
-  readonly backButton: Locator;
   readonly darkModeSwitch: Locator;
+  readonly savedMessage: Locator;
+  readonly usernameTakenError: Locator;
 
   constructor(page: Page) {
     this.page = page;
-    this.usernameInput = page.getByRole("textbox").first();
+    this.heading = page.getByRole("heading", { level: 1, name: /^(settings|ustawienia)$/i });
+    this.usernameInput = page.getByRole("textbox", { name: /^(username|nazwa użytkownika)$/i });
     this.saveButton = page.getByRole("button", { name: /save|zapisz/i });
-    this.backButton = page.locator("button").filter({ has: page.locator("svg.lucide-arrow-left") }).first();
-    this.darkModeSwitch = page.getByRole("checkbox", { name: /dark mode|tryb ciemny/i }).or(page.locator("button[role='switch']")).first();
+    this.darkModeSwitch = page.getByRole("checkbox", { name: /dark mode|tryb ciemny/i });
+    this.savedMessage = page.getByText(/settings updated successfully|zostały pomyślnie zaktualizowane/i);
+    this.usernameTakenError = page.getByText(/this username is already taken|zajęta/i);
   }
 
   async goto() {
     await this.page.goto("/settings");
-    await this.page.locator("text=Loading...").waitFor({ state: "detached" }).catch(() => {});
+    await this.heading.waitFor({ state: "visible" });
+  }
+
+  async changeUsername(username: string) {
+    await this.usernameInput.fill(username);
+    await this.saveButton.click();
   }
 }
