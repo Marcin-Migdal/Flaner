@@ -6,6 +6,7 @@ import { renderWithProviders, createMockGroup, createMockUser } from "@flaner/te
 import { GroupDetailsView } from "./GroupDetailsView";
 import * as hooks from "../../../hooks";
 import type { Group } from "../../../api/groups";
+import type { FriendStatus } from "../../../hooks";
 
 const mockNavigate = vi.fn();
 
@@ -39,9 +40,7 @@ vi.mock("../../../hooks", () => ({
   useGetGroupMembersQuery: vi.fn(),
   useGetUsersQuery: vi.fn(),
   useGetUserGroupRequestQuery: vi.fn(),
-  useGetFriendsListRealtimeQuery: vi.fn(),
-  useGetSentFriendRequestRealtimeQuery: vi.fn(),
-  useGetReceivedFriendRequestRealtimeQuery: vi.fn(),
+  useFriendStatus: vi.fn(),
   useAddGroupMemberMutation: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
   useRequestJoinGroupMutation: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
   useRemoveGroupMemberMutation: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
@@ -62,6 +61,9 @@ vi.mock("../../../hooks/useCommunityTranslations", () => ({
 
 const currentUser = createMockUser({ uid: "user-123", username: "currentuser" });
 
+const mockFriendStatuses = (statuses: Record<string, FriendStatus>) =>
+  vi.mocked(hooks.useFriendStatus).mockReturnValue((uid) => (uid === currentUser.uid ? "self" : (statuses[uid] ?? "none")));
+
 describe("GroupDetailsView page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -70,17 +72,7 @@ describe("GroupDetailsView page", () => {
       data: null,
     } as unknown as ReturnType<typeof hooks.useGetUserGroupRequestQuery>);
 
-    vi.mocked(hooks.useGetFriendsListRealtimeQuery).mockReturnValue({
-      data: [],
-    } as unknown as ReturnType<typeof hooks.useGetFriendsListRealtimeQuery>);
-
-    vi.mocked(hooks.useGetSentFriendRequestRealtimeQuery).mockReturnValue({
-      data: [],
-    } as unknown as ReturnType<typeof hooks.useGetSentFriendRequestRealtimeQuery>);
-
-    vi.mocked(hooks.useGetReceivedFriendRequestRealtimeQuery).mockReturnValue({
-      data: [],
-    } as unknown as ReturnType<typeof hooks.useGetReceivedFriendRequestRealtimeQuery>);
+    mockFriendStatuses({});
 
     vi.mocked(hooks.useGetGroupMembersQuery).mockReturnValue({
       data: [],
@@ -352,13 +344,7 @@ describe("GroupDetailsView page", () => {
       isLoading: false,
     } as never);
 
-    vi.mocked(hooks.useGetSentFriendRequestRealtimeQuery).mockReturnValue({
-      data: [{ receiverUid: "user-sent" } as never],
-    } as never);
-
-    vi.mocked(hooks.useGetReceivedFriendRequestRealtimeQuery).mockReturnValue({
-      data: [{ senderUid: "user-recv" } as never],
-    } as never);
+    mockFriendStatuses({ "user-sent": "outgoing", "user-recv": "incoming" });
 
     renderWithProviders(<GroupDetailsView />, { user: currentUser });
 
@@ -387,9 +373,7 @@ describe("GroupDetailsView page", () => {
     const mockGroup: Group = createMockGroup({ id: "grp-1", ownerId: "user-123" });
     vi.mocked(hooks.useGetUserGroupsQuery).mockReturnValue({ data: [mockGroup] } as never);
     vi.mocked(hooks.useGetGroupQuery).mockReturnValue({ data: mockGroup, isLoading: false } as never);
-    vi.mocked(hooks.useGetFriendsListRealtimeQuery).mockReturnValue({
-      data: [{ uid: "user-already-friend" } as never],
-    } as never);
+    mockFriendStatuses({ "user-already-friend": "friend" });
     vi.mocked(hooks.useGetGroupMembersQuery).mockReturnValue({
       data: [
         { userId: "user-123", role: "owner", joinedAt: 100 },
@@ -511,12 +495,7 @@ describe("GroupDetailsView page", () => {
       isLoading: false,
     } as never);
 
-    vi.mocked(hooks.useGetSentFriendRequestRealtimeQuery).mockReturnValue({
-      data: [{ receiverUid: "user-sent" } as never],
-    } as never);
-    vi.mocked(hooks.useGetReceivedFriendRequestRealtimeQuery).mockReturnValue({
-      data: [{ senderUid: "user-recv" } as never],
-    } as never);
+    mockFriendStatuses({ "user-sent": "outgoing", "user-recv": "incoming" });
 
     vi.mocked(hooks.useCancelFriendRequestMutation).mockReturnValue({
       mutate: vi.fn(),
