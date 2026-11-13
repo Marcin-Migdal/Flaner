@@ -329,6 +329,9 @@ service cloud.firestore {
         allow create: if isAuthenticated() && isSplitGroupParticipant() &&
           request.resource.data.createdBy == request.auth.uid &&
           request.resource.data.groupId == groupId &&
+          // Only the receiver records a confirmed settlement; anyone else's waits for the receiver (I12)
+          (request.resource.data.get('status', 'confirmed') == 'pending' ||
+            request.resource.data.receiverId == request.auth.uid) &&
           splitGroupCounterChangedBy('settlementsCount', 1);
         allow update: if isAuthenticated() && isSplitGroupParticipant() &&
           request.resource.data.createdBy == resource.data.createdBy &&

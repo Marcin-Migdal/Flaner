@@ -1,18 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
 import type { Settlement, SplitGroup } from "../../../../api/splits";
 import type { SplitGroupMember } from "../../../../hooks/useSplitGroupMembers";
 import type { Debt } from "../../../../utils/debtSimplification";
 import { BalancesTab } from "./BalancesTab";
 
-const mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
-let currentMockUser: typeof mockUser | null = mockUser;
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: currentMockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-1", username: "Alice", email: "alice@flaner.app" });
 
 const updateGroupMock = vi.fn();
 const confirmSettlementMock = vi.fn().mockResolvedValue(undefined);
@@ -70,12 +65,12 @@ describe("BalancesTab", () => {
       <BalancesTab
         group={mockGroup}
         members={mockMembers}
-        pairwiseDebts={mockDebts}
-        simplifiedDebts={mockDebts}
+        debts={mockDebts}
         getMember={(id) => (id === "user-1" ? mockMembers[0] : mockMembers[1])}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onSettleDebt={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     expect(screen.getAllByText("splits.balances.transfers")[0]).toBeInTheDocument();
@@ -95,12 +90,12 @@ describe("BalancesTab", () => {
       <BalancesTab
         group={mockGroup}
         members={mockMembers}
-        pairwiseDebts={mockDebts}
-        simplifiedDebts={mockDebts}
+        debts={mockDebts}
         getMember={(id) => (id === "user-1" ? mockMembers[0] : mockMembers[1])}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onSettleDebt={onSettleMock}
-      />
+      />,
+      { user: mockUser },
     );
 
     const markBtn = screen.getByRole("button", { name: "splits.actions.markAsPaid" });
@@ -130,12 +125,12 @@ describe("BalancesTab", () => {
         group={mockGroup}
         members={mockMembers}
         settlements={[mockSettlement]}
-        pairwiseDebts={mockDebts}
-        simplifiedDebts={mockDebts}
+        debts={mockDebts}
         getMember={(id) => (id === "user-1" ? mockMembers[0] : mockMembers[1])}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onSettleDebt={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     // DebtCard renders markAsPaid button which triggers onConfirmPending when pendingSettlement exists
@@ -179,12 +174,12 @@ describe("BalancesTab", () => {
       <BalancesTab
         group={mockGroup}
         members={extendedMembers}
-        pairwiseDebts={complexDebts}
-        simplifiedDebts={complexDebts}
+        debts={complexDebts}
         getMember={(id) => extendedMembers.find((m) => m.id === id) ?? extendedMembers[0]}
         getMemberName={(id) => extendedMembers.find((m) => m.id === id)?.name ?? id}
         onSettleDebt={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     expect(screen.getAllByText("splits.balances.transfers")[0]).toBeInTheDocument();
@@ -197,12 +192,12 @@ describe("BalancesTab", () => {
       <BalancesTab
         group={mockGroup}
         members={mockMembers}
-        pairwiseDebts={mockDebts}
-        simplifiedDebts={mockDebts}
+        debts={mockDebts}
         getMember={(id) => (id === "user-1" ? mockMembers[0] : mockMembers[1])}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onSettleDebt={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     const switchBtn = screen.getByRole("checkbox", { name: /splits\.balances\.simplify/i });
@@ -230,12 +225,12 @@ describe("BalancesTab", () => {
       <BalancesTab
         group={multiCurrencyGroup}
         members={mockMembers}
-        pairwiseDebts={[]}
-        simplifiedDebts={[]}
+        debts={[]}
         getMember={(id) => (id === "user-1" ? mockMembers[0] : mockMembers[1])}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onSettleDebt={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     const participantsTrigger = screen.getByRole("button", { name: "splits.balances.participants" });
@@ -254,53 +249,48 @@ describe("BalancesTab", () => {
       <BalancesTab
         group={simplifiedGroup}
         members={mockMembers}
-        pairwiseDebts={[]}
-        simplifiedDebts={mockDebts}
+        debts={mockDebts}
         getMember={(id) => (id === "user-1" ? mockMembers[0] : mockMembers[1])}
         getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
         onSettleDebt={vi.fn()}
-      />
+      />,
+      { user: mockUser },
     );
 
     expect(screen.getAllByText("splits.balances.transfers")[0]).toBeInTheDocument();
   });
 
   it("handles settled balances, null user, and multi-debt sorting with different currencies", async () => {
-    currentMockUser = null;
     const user = userEvent.setup();
 
-    try {
-      const settledGroup: SplitGroup = {
-        ...mockGroup,
-        balances: {
-          EUR: {},
-        },
-      };
+    const settledGroup: SplitGroup = {
+      ...mockGroup,
+      balances: {
+        EUR: {},
+      },
+    };
 
-      const mixedDebts: Debt[] = [
-        { from: "user-2", to: "user-1", amount: 1000, currency: "USD" },
-        { from: "user-2", to: "user-1", amount: 2000, currency: "USD" },
-        { from: "user-2", to: "user-1", amount: 500, currency: "GBP" },
-      ];
+    const mixedDebts: Debt[] = [
+      { from: "user-2", to: "user-1", amount: 1000, currency: "USD" },
+      { from: "user-2", to: "user-1", amount: 2000, currency: "USD" },
+      { from: "user-2", to: "user-1", amount: 500, currency: "GBP" },
+    ];
 
-      renderWithProviders(
-        <BalancesTab
-          group={settledGroup}
-          members={mockMembers}
-          pairwiseDebts={mixedDebts}
-          simplifiedDebts={mixedDebts}
-          getMember={(id) => (id === "user-1" ? mockMembers[0] : mockMembers[1])}
-          getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
-          onSettleDebt={vi.fn()}
-        />
-      );
+    renderWithProviders(
+      <BalancesTab
+        group={settledGroup}
+        members={mockMembers}
+        debts={mixedDebts}
+        getMember={(id) => (id === "user-1" ? mockMembers[0] : mockMembers[1])}
+        getMemberName={(id) => (id === "user-1" ? "Alice" : "Bob")}
+        onSettleDebt={vi.fn()}
+      />,
+      { user: null },
+    );
 
-      const participantsTrigger = screen.getByRole("button", { name: "splits.balances.participants" });
-      await user.click(participantsTrigger);
+    const participantsTrigger = screen.getByRole("button", { name: "splits.balances.participants" });
+    await user.click(participantsTrigger);
 
-      expect(screen.getAllByText("splits.balances.settled")[0]).toBeInTheDocument();
-    } finally {
-      currentMockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
-    }
+    expect(screen.getAllByText("splits.balances.settled")[0]).toBeInTheDocument();
   });
 });

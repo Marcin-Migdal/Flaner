@@ -1,17 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
-import type { SplitGroup } from "../../../../api/splits";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
+import type { Settlement, SplitGroup } from "../../../../api/splits";
 import type { SplitGroupMember } from "../../../../hooks/useSplitGroupMembers";
 import { SettleUpModal, type SettleUpDraft } from "./SettleUpModal";
 import { toast } from "@flaner/shared/utils";
 
-const mockUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
+const mockUser = createMockUser({ uid: "user-1", username: "Alice", email: "alice@flaner.app" });
 
 vi.mock("@flaner/shared/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@flaner/shared/utils")>();
@@ -83,7 +79,8 @@ describe("SettleUpModal", () => {
 
   it("does not render dialog content when draft is null", () => {
     renderWithProviders(
-      <SettleUpModal draft={null} onClose={vi.fn()} group={mockGroup} members={mockMembers} />,
+      <SettleUpModal draft={null} onClose={vi.fn()} group={mockGroup} members={mockMembers} settlements={[]} />,
+      { user: mockUser },
     );
 
     expect(screen.queryByText("splits.settleModal.title")).not.toBeInTheDocument();
@@ -94,7 +91,8 @@ describe("SettleUpModal", () => {
     const onClose = vi.fn();
 
     renderWithProviders(
-      <SettleUpModal draft={mockDraft} onClose={onClose} group={mockGroup} members={mockMembers} />,
+      <SettleUpModal draft={mockDraft} onClose={onClose} group={mockGroup} members={mockMembers} settlements={[]} />,
+      { user: mockUser },
     );
 
     expect(screen.getByText("splits.settleModal.title")).toBeInTheDocument();
@@ -127,7 +125,8 @@ describe("SettleUpModal", () => {
     };
 
     renderWithProviders(
-      <SettleUpModal draft={overpayingDraft} onClose={onClose} group={mockGroup} members={mockMembers} />,
+      <SettleUpModal draft={overpayingDraft} onClose={onClose} group={mockGroup} members={mockMembers} settlements={[]} />,
+      { user: mockUser },
     );
 
     const saveBtn = screen.getByRole("button", { name: "splits.actions.save" });
@@ -148,7 +147,8 @@ describe("SettleUpModal", () => {
     };
 
     renderWithProviders(
-      <SettleUpModal draft={mockDraft} onClose={onClose} group={noDebtGroup} members={mockMembers} />,
+      <SettleUpModal draft={mockDraft} onClose={onClose} group={noDebtGroup} members={mockMembers} settlements={[]} />,
+      { user: mockUser },
     );
 
     const saveBtn = screen.getByRole("button", { name: "splits.actions.save" });
@@ -159,12 +159,40 @@ describe("SettleUpModal", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  it("shows attention toast when the whole debt is already waiting for confirmation", async () => {
+    const user = userEvent.setup();
+    const pending: Settlement = {
+      id: "s1",
+      groupId: "grp-1",
+      payerId: "user-1",
+      receiverId: "user-2",
+      amount: 2000,
+      currency: "EUR",
+      date: "2026-06-01",
+      note: "",
+      status: "pending",
+      createdBy: "user-1",
+      createdAt: 1,
+    };
+
+    renderWithProviders(
+      <SettleUpModal draft={mockDraft} onClose={vi.fn()} group={mockGroup} members={mockMembers} settlements={[pending]} />,
+      { user: mockUser },
+    );
+
+    await user.click(screen.getByRole("button", { name: "splits.actions.save" }));
+
+    expect(toast.attention).toHaveBeenCalledWith("errors.settlementAlreadyPending");
+    expect(createSettlementMock).not.toHaveBeenCalled();
+  });
+
   it("displays stale warning and refreshes amount when group version changes", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
 
     const { rerender } = renderWithProviders(
-      <SettleUpModal draft={mockDraft} onClose={onClose} group={mockGroup} members={mockMembers} />,
+      <SettleUpModal draft={mockDraft} onClose={onClose} group={mockGroup} members={mockMembers} settlements={[]} />,
+      { user: mockUser },
     );
 
     expect(screen.queryByText("splits.settleModal.staleWarning")).not.toBeInTheDocument();
@@ -181,7 +209,7 @@ describe("SettleUpModal", () => {
     };
 
     rerender(
-      <SettleUpModal draft={mockDraft} onClose={onClose} group={updatedGroup} members={mockMembers} />,
+      <SettleUpModal draft={mockDraft} onClose={onClose} group={updatedGroup} members={mockMembers} settlements={[]} />,
     );
 
     expect(screen.getByText("splits.settleModal.staleWarning")).toBeInTheDocument();
@@ -197,7 +225,8 @@ describe("SettleUpModal", () => {
     const onClose = vi.fn();
 
     renderWithProviders(
-      <SettleUpModal draft={mockDraft} onClose={onClose} group={mockGroup} members={mockMembers} />,
+      <SettleUpModal draft={mockDraft} onClose={onClose} group={mockGroup} members={mockMembers} settlements={[]} />,
+      { user: mockUser },
     );
 
     const cancelBtn = screen.getByRole("button", { name: "splits.actions.cancel" });
@@ -211,16 +240,17 @@ describe("SettleUpModal", () => {
     const onClose = vi.fn();
 
     const { rerender } = renderWithProviders(
-      <SettleUpModal draft={mockDraft} onClose={onClose} group={mockGroup} members={mockMembers} />,
+      <SettleUpModal draft={mockDraft} onClose={onClose} group={mockGroup} members={mockMembers} settlements={[]} />,
+      { user: mockUser },
     );
 
     rerender(
-      <SettleUpModal draft={null} onClose={onClose} group={mockGroup} members={mockMembers} />,
+      <SettleUpModal draft={null} onClose={onClose} group={mockGroup} members={mockMembers} settlements={[]} />,
     );
     expect(screen.queryByText("splits.settleModal.title")).not.toBeInTheDocument();
 
     rerender(
-      <SettleUpModal draft={mockDraft} onClose={onClose} group={mockGroup} members={mockMembers} />,
+      <SettleUpModal draft={mockDraft} onClose={onClose} group={mockGroup} members={mockMembers} settlements={[]} />,
     );
     const closeBtn = screen.getByRole("button", { name: /close/i });
     await user.click(closeBtn);

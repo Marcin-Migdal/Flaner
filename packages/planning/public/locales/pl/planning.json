@@ -105,7 +105,8 @@
     "notAuthorizedToConfirmSettlement": "Tylko odbiorca tej spłaty może ją potwierdzić.",
     "settlementVersionConflict": "Salda w grupie uległy zmianie w trakcie rejestrowania spłaty. Odśwież dane i spróbuj ponownie.",
     "settlementAmountExceedsDebt": "Kwota spłaty nie może być wyższa niż aktualne zadłużenie.",
-    "noOutstandingDebtToSettle": "Brak zaległego zadłużenia do spłaty między tymi uczestnikami."
+    "noOutstandingDebtToSettle": "Brak zaległego zadłużenia do spłaty między tymi uczestnikami.",
+    "settlementAlreadyPending": "Spłata tego długu czeka już na potwierdzenie."
   },
   "splits": {
     "you": "Ty",

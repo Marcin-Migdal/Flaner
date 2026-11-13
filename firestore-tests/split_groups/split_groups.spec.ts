@@ -427,14 +427,38 @@ describe("split_groups/{groupId}/settlements/{settlementId}", () => {
     await seed({ [GROUP]: splitGroup() });
   });
 
-  it("accepts a confirmed settlement (createSettlement)", async () => {
-    const db = as(PARTICIPANT);
+  it("accepts a confirmed settlement recorded by the receiver (createSettlement)", async () => {
+    const db = as(OWNER);
 
     await assertSucceeds(
       writeWithGroup(
         db,
-        (transaction) =>
-          transaction.set(doc(db, `${GROUP}/settlements`, "s1"), settlement("s1", PARTICIPANT, "confirmed")),
+        (transaction) => transaction.set(doc(db, `${GROUP}/settlements`, "s1"), settlement("s1", OWNER, "confirmed")),
+        (group) => ({ settlementsCount: group.settlementsCount + 1 }),
+      ),
+    );
+  });
+
+  it("blocks a confirmed settlement recorded by the payer or a third participant", async () => {
+    for (const uid of [PARTICIPANT, THIRD]) {
+      const db = as(uid);
+      await assertFails(
+        writeWithGroup(
+          db,
+          (transaction) => transaction.set(doc(db, `${GROUP}/settlements`, "s1"), settlement("s1", uid, "confirmed")),
+          (group) => ({ settlementsCount: group.settlementsCount + 1 }),
+        ),
+      );
+    }
+  });
+
+  it("accepts a pending settlement recorded by a third participant", async () => {
+    const db = as(THIRD);
+
+    await assertSucceeds(
+      writeWithGroup(
+        db,
+        (transaction) => transaction.set(doc(db, `${GROUP}/settlements`, "s1"), settlement("s1", THIRD, "pending")),
         (group) => ({ settlementsCount: group.settlementsCount + 1 }),
       ),
     );
