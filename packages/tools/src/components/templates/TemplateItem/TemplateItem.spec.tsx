@@ -47,33 +47,29 @@ describe("TemplateItem", () => {
     expect(swatch).not.toBeNull();
   });
 
-  it("falls back to white for unknown material with white hex or missing hex", () => {
-    const unknownTemplate: FilamentTemplate = {
-      ...mockTemplate,
-      material: "CustomMat",
-      type: "CustomType",
-      colorName: "CustomColor",
-      colorHex: "#ffffff",
-    };
-
-    const { container, rerender } = render(
+  it("keeps the stored hex of a custom colour, white included", () => {
+    // "CustomColor" is not a PLA / Basic catalog colour, so #ffffff is a real white, not "missing"
+    const { container } = render(
       <TemplateItem
-        template={unknownTemplate}
+        template={{ ...mockTemplate, colorName: "CustomColor", colorHex: "#ffffff" }}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
       />
     );
 
-    const whiteSwatch = container.querySelector('div[style*="background-color: rgb(255, 255, 255)"]');
-    expect(whiteSwatch).not.toBeNull();
-
-    rerender(
-      <TemplateItem
-        template={{ ...unknownTemplate, colorHex: "" }}
-        onEdit={vi.fn()}
-        onDelete={vi.fn()}
-      />
-    );
     expect(container.querySelector('div[style*="background-color: rgb(255, 255, 255)"]')).not.toBeNull();
+  });
+
+  it("uses the catalog hex for a catalog colour", () => {
+    const { container } = render(
+      <TemplateItem
+        template={{ ...mockTemplate, colorName: "Red", colorHex: "#ffffff" }}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+
+    // PLA / Basic / Red is #d32f2f in the catalog
+    expect(container.querySelector('div[style*="background-color: rgb(211, 47, 47)"]')).not.toBeNull();
   });
 });

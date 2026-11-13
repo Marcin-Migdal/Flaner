@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { CheckCircle2, Edit2, History, MoreVertical, Printer, RotateCcw, Trash2 } from "lucide-react";
 import {
   Button,
@@ -9,7 +9,7 @@ import {
 } from "@flaner/ui-components";
 import type { FilamentSpool } from "../../../api/spools";
 import { useGetLastSpoolPrintQuery, useToolsTranslations } from "../../../hooks";
-import { bambuFilaments } from "../../../utils/bambuFilaments";
+import { resolveColorHex } from "../../../utils/filamentCatalog";
 
 type SpoolItemProps = {
   spool: FilamentSpool;
@@ -34,21 +34,7 @@ export const SpoolItem: React.FC<SpoolItemProps> = ({
   const { data: lastPrint } = useGetLastSpoolPrintQuery(spool.id);
   const percentage = Math.max(0, Math.min(100, (spool.currentWeight / spool.initialWeight) * 100));
 
-  const displayHex = useMemo(() => {
-    if (spool.colorHex && spool.colorHex.toLowerCase() !== "#ffffff") {
-      return spool.colorHex;
-    }
-    const mat = bambuFilaments.find(
-      (m) => m.name.toLowerCase() === spool.material?.toLowerCase(),
-    );
-    const typ = mat?.types.find(
-      (t) => t.name.toLowerCase() === spool.type?.toLowerCase(),
-    );
-    const col = typ?.colors.find(
-      (c) => c.name.toLowerCase() === spool.colorName?.toLowerCase(),
-    );
-    return col?.hex || spool.colorHex || "#ffffff";
-  }, [spool.colorHex, spool.material, spool.type, spool.colorName]);
+  const displayHex = resolveColorHex(spool);
 
   return (
     <article

@@ -3,11 +3,17 @@ import { useUserMutation } from "@flaner/shared/hooks";
 import { deleteLookupColor } from "../../../../api/lookups";
 import { spoolerInvalidation } from "../../queryKeys";
 
-export const useDeleteLookupColorMutation = (options?: UseMutationOptions<void, Error, string>) =>
-  useUserMutation<void, string>(
+export type DeleteLookupColorVariables = {
+  materialName: string;
+  typeName: string;
+  name: string;
+};
+
+export const useDeleteLookupColorMutation = (options?: UseMutationOptions<void, Error, DeleteLookupColorVariables>) =>
+  useUserMutation<void, DeleteLookupColorVariables>(
     {
       mutationKey: ["deleteLookupColor"],
-      mutationFn: (colorId) => deleteLookupColor(colorId),
+      mutationFn: ({ materialName, typeName, name }, { uid }) => deleteLookupColor(uid, materialName, typeName, name),
       invalidates: spoolerInvalidation.deleteLookupColor,
       meta: {
         successMessageKey: "tools:toasts.lookups.deleteColorSuccess",
