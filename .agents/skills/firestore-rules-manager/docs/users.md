@@ -151,9 +151,9 @@ match /friendships/{friendId} {
 
 ### Invariants
 - **N1** Only the recipient lists their inbox, marks notifications as read and deletes any of them.
-- **N4** Notifications with a source (invitation, friend request, event, split group, settlement) have a deterministic id `{type}_{sourceId}` so whoever resolves the source can find them. A **resolver** — the sender, an admin / owner of the notification's `groupId`, the owner of its `splitGroupId` — may `get` that one doc and delete it **only while it is unread** (read notifications stay). Deleting / reading a doc that does not exist is allowed (a resolving batch must not fail because the recipient already deleted it).
+- **N4** Notifications with a source (invitation, friend request, event, split group, settlement) have a deterministic id `{type}_{sourceId}` (outcome notifications — accepted / rejected / transferred / deleted — get a random id, so a repeated outcome by someone else never hits N5) so whoever resolves the source can find them. A **resolver** — the sender, an admin / owner of the notification's `groupId`, the owner of its `splitGroupId` — may `get` that one doc and delete it **only while it is unread** (read notifications stay). Deleting / reading a doc that does not exist is allowed (a resolving batch must not fail because the recipient already deleted it).
 - **N5** A valid new notification (own name, unread) may overwrite one with the same id when it is the caller's own (e.g. an event reopened twice) or already read (e.g. a re-added split participant invited by someone else); an unread notification from someone else is never replaced.
-- **N2** Any signed-in user can notify another user, but only in their own name (`senderUid == me`), unread, with a known client `type` and only the schema fields. `system_alert` is written only by admin tooling (bypasses rules).
+- **N2** Any signed-in user can notify another user, but only in their own name (`senderUid == me`), unread, with a known client `type` and only the schema fields.
 - **N3** The recipient can only flip `read`; the content is immutable except for N5.
 
 ### Schema
@@ -168,7 +168,7 @@ match /friendships/{friendId} {
 | `splitGroupId`, `splitGroupName` | string | – | `split_*` types |
 | `groupId`, `groupName` | string | – | `group_*` types |
 
-`type`: `friend_request`, `friend_request_accepted`, `friend_request_rejected`, `group_invitation`, `group_invitation_accepted`, `group_invitation_rejected`, `group_request_accepted`, `group_request_rejected`, `group_ownership_transferred`, `group_deleted`, `system_alert`, `event_invitation`, `event_reopened`, `split_group_invitation`, `split_settlement_pending` (`core/src/api/notifications/types.ts`).
+`type`: `friend_request`, `friend_request_accepted`, `friend_request_rejected`, `group_invitation`, `group_invitation_accepted`, `group_invitation_rejected`, `group_request_accepted`, `group_request_rejected`, `group_ownership_transferred`, `group_deleted`, `event_invitation`, `event_reopened`, `split_group_invitation`, `split_settlement_pending` (`shared/src/api/notifications/types.ts`).
 
 ### Write flows
 | Flow | Endpoint | Writes |
@@ -185,7 +185,7 @@ match /friendships/{friendId} {
 | Mark as read | `markNotificationAsRead`, `markAllNotificationsAsRead` (core) | update `read: true` (single / batch) |
 | Source resolved (N4) | group / friend / event / split flows (see their files) | `get` the deterministic-id notification, delete it in the resolving batch only while unread |
 
-Every writer sets `id` to the doc id.
+Every writer builds the doc with `createNotification` (`shared/src/api/notifications`), which sets `id` to the doc id and the sender fields from the sender's profile; source removal uses `getUnreadNotificationRefs` (batch) / `deleteIfUnread` (transaction) from the same module.
 
 ### Queries
 | Query | Endpoint | Allowed by |
