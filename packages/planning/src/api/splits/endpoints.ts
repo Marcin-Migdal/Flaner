@@ -1,13 +1,8 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/split_groups.md (keep their Write flows / Queries in sync).
 import { fb } from "@flaner/shared/firebase";
 import type { UserType } from "@flaner/shared/types";
-import {
-  BATCH_LIMIT,
-  deleteInBatches,
-  firestoreConverter,
-  getUnreadNotificationRefs,
-  sourceNotificationRef,
-} from "@flaner/shared/utils";
+import { createNotification, deleteIfUnread, getUnreadNotificationRefs, sourceNotificationRef } from "@flaner/shared/api";
+import { BATCH_LIMIT, deleteInBatches, firestoreConverter } from "@flaner/shared/utils";
 import {
   collection,
   deleteDoc,
@@ -19,9 +14,7 @@ import {
   runTransaction,
   where,
   writeBatch,
-  type DocumentReference,
   type FirestoreError,
-  type Transaction,
 } from "firebase/firestore";
 import {
   addExpenseToGroup,
@@ -59,18 +52,6 @@ import type {
   UpdateSplitGroupInput,
 } from "./types";
 
-type SplitGroupNotification = {
-  id: string;
-  type: "split_group_invitation" | "split_settlement_pending";
-  senderUid: string;
-  senderUsername: string;
-  senderAvatarUrl: string;
-  splitGroupId: string;
-  splitGroupName: string;
-  createdAt: number;
-  read: boolean;
-};
-
 const refs = {
   groups: () => collection(fb.firestore, "split_groups").withConverter(firestoreConverter<SplitGroup>()),
   group: (groupId: string) =>
@@ -87,63 +68,31 @@ const refs = {
     ),
   // Deterministic ids (see sourceNotificationRef), so resolving flows can remove them while unread
   invitationNotification: (userId: string, groupId: string) =>
-    sourceNotificationRef(fb.firestore, userId, "split_group_invitation", groupId).withConverter(
-      firestoreConverter<SplitGroupNotification>(),
-    ),
+    sourceNotificationRef(userId, "split_group_invitation", groupId),
   settlementNotification: (userId: string, settlementId: string) =>
-    sourceNotificationRef(fb.firestore, userId, "split_settlement_pending", settlementId).withConverter(
-      firestoreConverter<SplitGroupNotification>(),
-    ),
+    sourceNotificationRef(userId, "split_settlement_pending", settlementId),
 };
 
-// Inside a transaction: delete the notification only while it exists and is unread (read ones stay)
-const deleteIfUnread = async (transaction: Transaction, ref: DocumentReference<SplitGroupNotification>) => {
-  const snap = await transaction.get(ref);
-  return () => {
-    if (snap.exists() && snap.data().read === false) transaction.delete(ref);
-  };
-};
-
-const buildInvitationNotification = (
-  recipientId: string,
-  sender: UserType,
-  group: Pick<SplitGroup, "id" | "name">,
-) => {
-  const notificationRef = refs.invitationNotification(recipientId, group.id);
-  const notification: SplitGroupNotification = {
-    id: notificationRef.id,
+const buildInvitationNotification = (recipientId: string, sender: UserType, group: Pick<SplitGroup, "id" | "name">) =>
+  createNotification(recipientId, sender, {
     type: "split_group_invitation",
-    senderUid: sender.uid,
-    senderUsername: sender.username,
-    senderAvatarUrl: sender.avatarUrl || "",
+    sourceId: group.id,
     splitGroupId: group.id,
     splitGroupName: group.name,
-    createdAt: Date.now(),
-    read: false,
-  };
-  return { notificationRef, notification };
-};
+  });
 
 const buildSettlementNotification = (
   recipientId: string,
   sender: UserType,
   group: Pick<SplitGroup, "id" | "name">,
   settlementId: string,
-) => {
-  const notificationRef = refs.settlementNotification(recipientId, settlementId);
-  const notification: SplitGroupNotification = {
-    id: notificationRef.id,
+) =>
+  createNotification(recipientId, sender, {
     type: "split_settlement_pending",
-    senderUid: sender.uid,
-    senderUsername: sender.username,
-    senderAvatarUrl: sender.avatarUrl || "",
+    sourceId: settlementId,
     splitGroupId: group.id,
     splitGroupName: group.name,
-    createdAt: Date.now(),
-    read: false,
-  };
-  return { notificationRef, notification };
-};
+  });
 
 const sortByDateDesc = <T extends { date: string; createdAt: number }>(items: T[]): T[] =>
   [...items].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
@@ -206,7 +155,7 @@ export const createSplitGroup = async (data: CreateSplitGroupInput, user: UserTy
   participants
     .filter((uid) => uid !== user.uid)
     .forEach((uid) => {
-      const { notificationRef, notification } = buildInvitationNotification(uid, user, newGroup);
+      const { ref: notificationRef, data: notification } = buildInvitationNotification(uid, user, newGroup);
       batch.set(notificationRef, notification);
     });
 
@@ -280,7 +229,7 @@ export const addParticipantToGroup = async (groupId: string, participantId: stri
       updatedAt: Date.now(),
     });
 
-    const { notificationRef, notification } = buildInvitationNotification(participantId, user, group);
+    const { ref: notificationRef, data: notification } = buildInvitationNotification(participantId, user, group);
     transaction.set(notificationRef, notification);
   });
 };
@@ -447,7 +396,12 @@ export const createSettlement = async (
     transaction.update(groupRef, addSettlementToGroup(group, settlement, now));
 
     if (settlement.status === "pending" && typeof user !== "string") {
-      const { notificationRef, notification } = buildSettlementNotification(data.receiverId, user, group, settlement.id);
+      const { ref: notificationRef, data: notification } = buildSettlementNotification(
+        data.receiverId,
+        user,
+        group,
+        settlement.id,
+      );
       transaction.set(notificationRef, notification);
     }
 

@@ -3,7 +3,8 @@ import { requireUser } from "@flaner/shared/hooks";
 import { type AppInfiniteQueryOptions, type FirestorePageParam } from "@flaner/shared/types";
 import { useInfiniteQuery, type InfiniteData } from "@tanstack/react-query";
 import type { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
-import { getReadNotificationsPage, type AppNotification } from "../../../../api/notifications";
+import type { AppNotification } from "@flaner/shared/api";
+import { getReadNotificationsPage } from "../../../../api/notifications";
 import { reactQueryMeta } from "@flaner/shared/constants";
 import { notificationKeys } from "../../queryKeys";
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AppNotification } from "../../api/notifications";
+import type { AppNotification } from "@flaner/shared/api";
 import { getStaleGroupNotificationIds } from "./getStaleGroupNotificationIds";
 
 const notification = (id: string, overrides: Partial<AppNotification>): AppNotification => ({

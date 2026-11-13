@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { AppNotification } from "../../../api/notifications";
+import type { AppNotification } from "@flaner/shared/api";
 import { NotificationContent } from "../NotificationContent";
 
 type NotificationToastProps = {
