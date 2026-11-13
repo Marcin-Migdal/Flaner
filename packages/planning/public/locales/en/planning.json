@@ -106,7 +106,8 @@
     "notAuthorizedToConfirmSettlement": "Only the receiver of this payment can confirm it.",
     "settlementVersionConflict": "Group balances changed while submitting the settlement. Please refresh and try again.",
     "settlementAmountExceedsDebt": "Settlement amount cannot exceed the current outstanding debt.",
-    "noOutstandingDebtToSettle": "No outstanding debt to settle between these members."
+    "noOutstandingDebtToSettle": "No outstanding debt to settle between these members.",
+    "settlementAlreadyPending": "A payment for this debt is already waiting for confirmation."
   },
   "splits": {
     "you": "You",

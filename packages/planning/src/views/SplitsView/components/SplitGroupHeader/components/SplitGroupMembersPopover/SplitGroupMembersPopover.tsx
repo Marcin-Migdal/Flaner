@@ -14,7 +14,7 @@ import type { SplitGroup } from "../../../../../../api/splits";
 import { useRemoveParticipantFromGroupMutation } from "../../../../../../hooks/api/mutation";
 import { usePlanningTranslations } from "../../../../../../hooks/usePlanningTranslations";
 import type { SplitGroupMember } from "../../../../../../hooks/useSplitGroupMembers";
-import { hasOutstandingBalance } from "../../../../../../utils/splitBalances";
+import { hasOutstandingBalance } from "../../../../../../utils/splitLedger";
 import { splitGroupMembersPopoverStyles as styles } from "./SplitGroupMembersPopover.styles";
 
 export type SplitGroupMembersPopoverProps = {

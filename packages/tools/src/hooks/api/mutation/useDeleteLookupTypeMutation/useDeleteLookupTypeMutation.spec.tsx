@@ -20,11 +20,11 @@ describe("useDeleteLookupTypeMutation", () => {
 
     const { result, queryClient } = renderHookWithProviders(() => useDeleteLookupTypeMutation(), { user: mockUser });
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-    result.current.mutate({ typeId: "t-1", materialName: "PLA", typeName: "Basic" });
+    result.current.mutate({ materialName: "PLA", typeName: "Basic" });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(lookupsApi.deleteLookupType).toHaveBeenCalledWith("user-1", "t-1", "PLA", "Basic");
+    expect(lookupsApi.deleteLookupType).toHaveBeenCalledWith("user-1", "PLA", "Basic");
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["spooler", "lookupTypes", "user-1"] });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["spooler", "lookupColors", "user-1"] });
   });
@@ -34,7 +34,7 @@ describe("useDeleteLookupTypeMutation", () => {
     const onSuccessMock = vi.fn();
     const { result } = renderHookWithProviders(() => useDeleteLookupTypeMutation({ onSuccess: onSuccessMock }), { user: mockUser });
 
-    result.current.mutate({ typeId: "t-1", materialName: "PLA", typeName: "Basic" });
+    result.current.mutate({ materialName: "PLA", typeName: "Basic" });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(onSuccessMock).toHaveBeenCalled();
@@ -43,7 +43,7 @@ describe("useDeleteLookupTypeMutation", () => {
   it("throws error if user is not authenticated", async () => {
     const { result } = renderHookWithProviders(() => useDeleteLookupTypeMutation(), { user: null });
 
-    result.current.mutate({ typeId: "t-1", materialName: "PLA", typeName: "Basic" });
+    result.current.mutate({ materialName: "PLA", typeName: "Basic" });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error?.message).toBe("errors.userNotAuthenticated");

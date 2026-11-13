@@ -4,7 +4,6 @@ import { deleteLookupMaterial } from "../../../../api/lookups";
 import { spoolerInvalidation } from "../../queryKeys";
 
 export type DeleteLookupMaterialVariables = {
-  materialId: string;
   materialName: string;
 };
 
@@ -12,7 +11,7 @@ export const useDeleteLookupMaterialMutation = (options?: UseMutationOptions<voi
   useUserMutation<void, DeleteLookupMaterialVariables>(
     {
       mutationKey: ["deleteLookupMaterial"],
-      mutationFn: ({ materialId, materialName }, { uid }) => deleteLookupMaterial(uid, materialId, materialName),
+      mutationFn: ({ materialName }, { uid }) => deleteLookupMaterial(uid, materialName),
       invalidates: spoolerInvalidation.deleteLookupMaterial,
       meta: {
         successMessageKey: "tools:toasts.lookups.deleteMaterialSuccess",

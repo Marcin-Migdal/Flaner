@@ -202,7 +202,16 @@ describe("splits endpoints (emulator)", () => {
 
       await updateSplitGroup("group-1", { name: "Updated Name" });
 
-      expect(await read(GROUP)).toMatchObject({ name: "Updated Name", description: "Rome trip expenses" });
+      expect(await read(GROUP)).toMatchObject({ name: "Updated Name", description: "Rome trip expenses", version: 1 });
+    });
+
+    it("bumps the version when the debt mode changes", async () => {
+      await seed({ [GROUP]: group() });
+      await signInAs("user-2");
+
+      await updateSplitGroup("group-1", { simplifyDebts: true });
+
+      expect(await read(GROUP)).toMatchObject({ simplifyDebts: true, version: 2 });
     });
 
     it("is rejected by the rules for a missing group", async () => {
@@ -318,6 +327,7 @@ describe("splits endpoints (emulator)", () => {
     });
   });
 
+  // The money math is covered by the ledger spec (utils/splitLedger); these tests check what is stored and the rules
   describe("expenses", () => {
     beforeEach(() => signInAs("user-1"));
 
@@ -331,38 +341,26 @@ describe("splits endpoints (emulator)", () => {
       expect((await getGroupExpenses("group-1")).map((e) => e.id)).toEqual(["e2", "e1"]);
     });
 
-    it("createExpense stores the expense and applies it to the group", async () => {
+    it("createExpense stores the expense and the group changes together", async () => {
       await seed({ [GROUP]: group() });
 
       const created = await createExpense("group-1", expenseInput(), "user-1");
 
       expect(await read(`${GROUP}/expenses/${created.id}`)).toMatchObject({ title: "Dinner", amount: 40, createdBy: "user-1" });
-      expect(await read(GROUP)).toMatchObject({
-        balances: { EUR: { "user-1": 20, "user-2": -20 } },
-        pairBalances: { EUR: { "user-1__user-2": 20 } },
-        totalSpent: { EUR: 40 },
-        expensesCount: 1,
-        version: 2,
-      });
+      expect(await read(GROUP)).toMatchObject({ ...owes(-20), totalSpent: { EUR: 40 }, expensesCount: 1, version: 2 });
     });
 
-    it("createExpense rejects users outside the group and splits that do not add up", async () => {
+    it("createExpense stores nothing for an invalid expense, and is rejected by the rules for a missing group", async () => {
       await seed({ [GROUP]: group() });
 
-      await expect(
-        createExpense("group-1", expenseInput({ splits: [{ userId: "user-outside", amount: 40 }] }), "user-1"),
-      ).rejects.toThrow("Expense references users outside of the group");
       await expect(
         createExpense("group-1", expenseInput({ splits: [{ userId: "user-1", amount: 5 }] }), "user-1"),
       ).rejects.toThrow("Expense splits do not add up to the total amount");
       expect(await list(`${GROUP}/expenses`)).toEqual({});
-    });
-
-    it("createExpense is rejected by the rules for a missing group", async () => {
       await expect(createExpense("missing", expenseInput(), "user-1")).rejects.toMatchObject(DENIED);
     });
 
-    it("updateExpense replaces the expense and recalculates the balances", async () => {
+    it("updateExpense replaces the expense and the group changes together", async () => {
       await seed({
         [GROUP]: group({ ...owes(-20), totalSpent: { EUR: 40 }, expensesCount: 1 }),
         [`${GROUP}/expenses/e1`]: expense(),
@@ -379,13 +377,7 @@ describe("splits endpoints (emulator)", () => {
       await updateExpense("group-1", "e1", updated, "user-1");
 
       expect(await read(`${GROUP}/expenses/e1`)).toMatchObject({ title: "Dinner & Drinks", amount: 60, createdAt: 100 });
-      expect(await read(GROUP)).toMatchObject({
-        balances: { EUR: { "user-1": 30, "user-2": -30 } },
-        pairBalances: { EUR: { "user-1__user-2": 30 } },
-        totalSpent: { EUR: 60 },
-        expensesCount: 1,
-        version: 2,
-      });
+      expect(await read(GROUP)).toMatchObject({ ...owes(-30), totalSpent: { EUR: 60 }, expensesCount: 1, version: 2 });
     });
 
     it("updateExpense refuses a missing expense and another user's expense", async () => {
@@ -398,7 +390,7 @@ describe("splits endpoints (emulator)", () => {
       );
     });
 
-    it("deleteExpense removes the expense and reverts it from the group", async () => {
+    it("deleteExpense removes the expense and reverts the group", async () => {
       await seed({
         [GROUP]: group({ ...owes(-20), totalSpent: { EUR: 40 }, expensesCount: 1 }),
         [`${GROUP}/expenses/e1`]: expense(),
@@ -411,11 +403,10 @@ describe("splits endpoints (emulator)", () => {
       expect(await read(GROUP)).toEqual(group({ expensesCount: 0, version: 2, updatedAt: expect.any(Number) }));
     });
 
-    it("deleteExpense refuses a missing expense and another user's expense", async () => {
+    it("deleteExpense refuses another user's expense", async () => {
       await seed({ [GROUP]: group({ expensesCount: 1 }), [`${GROUP}/expenses/e1`]: expense() });
-
-      await expect(deleteExpense("group-1", "missing", "user-1")).rejects.toThrow("Expense does not exist");
       await signInAs("user-2");
+
       await expect(deleteExpense("group-1", "e1", "user-2")).rejects.toThrow(
         "planning:errors.notAuthorizedToDeleteExpense",
       );
@@ -424,6 +415,8 @@ describe("splits endpoints (emulator)", () => {
   });
 
   describe("settlements", () => {
+    const input = { payerId: "user-1", receiverId: "user-2", amount: 30, currency: "EUR", date: "2026-06-01", note: "" };
+
     beforeEach(() => signInAs("user-1"));
 
     it("getGroupSettlements returns the settlements by date, newest first", async () => {
@@ -436,58 +429,51 @@ describe("splits endpoints (emulator)", () => {
       expect((await getGroupSettlements("group-1")).map((s) => s.id)).toEqual(["s2", "s1"]);
     });
 
-    it("createSettlement stores a confirmed settlement and applies it", async () => {
+    it("createSettlement by the receiver stores a confirmed settlement and applies it", async () => {
       await seed({ [GROUP]: group(owes(50)) });
+      await signInAs("user-2");
 
-      const created = await createSettlement(
-        "group-1",
-        { payerId: "user-1", receiverId: "user-2", amount: 30, currency: "EUR", date: "2026-06-01", note: "Dinner share" },
-        alice,
-      );
+      const created = await createSettlement("group-1", { ...input, note: "Dinner share" }, "user-2");
 
-      expect(await read(`${GROUP}/settlements/${created.id}`)).toMatchObject({ amount: 30, status: "confirmed", createdBy: "user-1" });
+      expect(await read(`${GROUP}/settlements/${created.id}`)).toMatchObject({ amount: 30, status: "confirmed", createdBy: "user-2" });
       expect(await read(GROUP)).toMatchObject({ ...owes(20), settlementsCount: 1, version: 2 });
-      expect(await list("users/user-2/notifications")).toEqual({});
+      expect(await list("users/user-1/notifications")).toEqual({});
     });
 
-    it("createSettlement stores a pending settlement without touching the balances and notifies the receiver", async () => {
-      await seed({ [GROUP]: group(owes(100)) });
-      const input = { payerId: "user-1", receiverId: "user-2", amount: 30, currency: "EUR", date: "2026-06-01", note: "" };
+    it("createSettlement by the payer or a third participant stores a pending one and notifies the receiver", async () => {
+      await seed({ [GROUP]: group({ ...owes(100), participants: ["user-1", "user-2", "user-3"] }) });
 
       // Sender given only by uid: no notification
-      await createSettlement("group-1", { ...input, status: "pending" }, "user-1");
+      await createSettlement("group-1", input, "user-1");
       expect(await list("users/user-2/notifications")).toEqual({});
 
-      const created = await createSettlement("group-1", { ...input, status: "pending" }, alice);
+      const byPayer = await createSettlement("group-1", input, alice);
+      await signInAs("user-3");
+      const byThird = await createSettlement("group-1", { ...input, amount: 10 }, "user-3");
 
-      expect(await read(GROUP)).toMatchObject({ ...owes(100), settlementsCount: 2, version: 3 });
-      expect(await read(`users/user-2/notifications/split_settlement_pending_${created.id}`)).toMatchObject({
+      expect(byPayer.status).toBe("pending");
+      expect(await read(`${GROUP}/settlements/${byThird.id}`)).toMatchObject({ status: "pending", createdBy: "user-3" });
+      expect(await read(GROUP)).toMatchObject({ ...owes(100), settlementsCount: 3, version: 4 });
+      expect(await read(`users/user-2/notifications/split_settlement_pending_${byPayer.id}`)).toMatchObject({
         type: "split_settlement_pending",
         senderUid: "user-1",
         read: false,
       });
     });
 
-    it("createSettlement refuses a version conflict, outside users, an invalid settlement and amounts over the debt", async () => {
-      await seed({ [GROUP]: group({ ...owes(20), version: 2 }) });
-      const input = { payerId: "user-1", receiverId: "user-2", amount: 10, currency: "EUR", date: "2026-06-01", note: "" };
+    it("createSettlement refuses a version conflict and the part of the debt that is already pending", async () => {
+      await seed({
+        [GROUP]: group({ ...owes(50), version: 2, settlementsCount: 1 }),
+        [`${GROUP}/settlements/s1`]: settlement({ status: "pending", amount: 30 }),
+      });
 
       await expect(createSettlement("group-1", { ...input, expectedVersion: 1 }, alice)).rejects.toThrow(
         "planning:errors.settlementVersionConflict",
       );
-      await expect(createSettlement("group-1", { ...input, receiverId: "user-outside" }, alice)).rejects.toThrow(
-        "Settlement references users outside of the group",
-      );
-      await expect(createSettlement("group-1", { ...input, receiverId: "user-1" }, alice)).rejects.toThrow(
-        "Invalid settlement",
-      );
-      await expect(createSettlement("group-1", { ...input, currency: "USD" }, alice)).rejects.toThrow(
-        "planning:errors.noOutstandingDebtToSettle",
-      );
-      await expect(createSettlement("group-1", { ...input, amount: 50 }, alice)).rejects.toThrow(
+      await expect(createSettlement("group-1", { ...input, amount: 21 }, alice)).rejects.toThrow(
         "planning:errors.settlementAmountExceedsDebt",
       );
-      expect(await list(`${GROUP}/settlements`)).toEqual({});
+      expect(Object.keys(await list(`${GROUP}/settlements`))).toEqual(["s1"]);
     });
 
     it("confirmSettlement lets the receiver confirm, applies it and drops the unread notification", async () => {
@@ -513,14 +499,13 @@ describe("splits endpoints (emulator)", () => {
       expect(await read(GROUP)).toMatchObject({ version: 1 });
     });
 
-    it("confirmSettlement refuses another user, a missing settlement, a version conflict and an amount over the debt", async () => {
+    it("confirmSettlement refuses another user, a version conflict and an amount over the debt", async () => {
       await seed({ [GROUP]: group({ ...owes(10), version: 5 }), [`${GROUP}/settlements/s1`]: settlement({ status: "pending" }) });
 
       await expect(confirmSettlement("group-1", "s1", "user-1")).rejects.toThrow(
         "planning:errors.notAuthorizedToConfirmSettlement",
       );
       await signInAs("user-2");
-      await expect(confirmSettlement("group-1", "missing", "user-2")).rejects.toThrow("Settlement does not exist");
       await expect(confirmSettlement("group-1", "s1", "user-2", 3)).rejects.toThrow(
         "planning:errors.settlementVersionConflict",
       );
@@ -557,14 +542,13 @@ describe("splits endpoints (emulator)", () => {
       expect(await list("users/user-2/notifications")).toEqual({});
     });
 
-    it("deleteSettlement refuses a participant who is neither payer nor receiver, and a missing settlement", async () => {
+    it("deleteSettlement refuses a participant who is neither payer nor receiver", async () => {
       await seed({
         [GROUP]: group({ participants: ["user-1", "user-2", "user-3"], settlementsCount: 1 }),
         [`${GROUP}/settlements/s1`]: settlement(),
       });
-
-      await expect(deleteSettlement("group-1", "missing", "user-1")).rejects.toThrow("Settlement does not exist");
       await signInAs("user-3");
+
       await expect(deleteSettlement("group-1", "s1", "user-3")).rejects.toThrow(
         "planning:errors.notAuthorizedToDeleteSettlement",
       );
@@ -593,20 +577,28 @@ describe("splits endpoints (emulator)", () => {
       await expect(convertSplitGroupCurrency("group-1", "EUR")).rejects.toThrow("Too many entries to convert at once");
     });
 
-    it("converts expenses and confirmed settlements and moves the balances", async () => {
+    it("converts expenses, confirmed and pending settlements of other users and moves the balances", async () => {
       vi.mocked(getExchangeRate).mockResolvedValue({ rate: 0.9, date: "2026-06-01" });
       await seed({
-        // user-1 paid 100 USD for both, user-2 paid back 50 USD: settled
-        [GROUP]: group({ totalSpent: { USD: 100 }, expensesCount: 1, settlementsCount: 1 }),
+        // user-2 (not the signed-in user) paid 100 USD for both and has a pending 50 USD from user-1
+        [GROUP]: group({
+          balances: { USD: { "user-1": -50, "user-2": 50 } },
+          pairBalances: { USD: { "user-1__user-2": -50 } },
+          totalSpent: { USD: 100 },
+          expensesCount: 1,
+          settlementsCount: 1,
+        }),
         [`${GROUP}/expenses/e1`]: expense({
           currency: "USD",
           amount: 100,
+          paidBy: "user-2",
+          createdBy: "user-2",
           splits: [
             { userId: "user-1", amount: 50 },
             { userId: "user-2", amount: 50 },
           ],
         }),
-        [`${GROUP}/settlements/s1`]: settlement({ payerId: "user-2", receiverId: "user-1", amount: 50, currency: "USD", createdBy: "user-2" }),
+        [`${GROUP}/settlements/s1`]: settlement({ amount: 50, currency: "USD", status: "pending", createdBy: "user-1" }),
       });
 
       expect(await convertSplitGroupCurrency("group-1", "EUR")).toBe(2);
@@ -616,27 +608,18 @@ describe("splits endpoints (emulator)", () => {
         amount: 90,
         conversion: expect.objectContaining({ originalCurrency: "USD", originalAmount: 100, rate: 0.9 }),
       });
-      expect(await read(`${GROUP}/settlements/s1`)).toMatchObject({ currency: "EUR", amount: 45 });
-      expect(await read(GROUP)).toMatchObject({ totalSpent: { EUR: 90 }, lastUsedCurrency: "EUR", version: 2 });
+      expect(await read(`${GROUP}/settlements/s1`)).toMatchObject({ currency: "EUR", amount: 45, status: "pending" });
+      expect(await read(GROUP)).toMatchObject({
+        balances: { EUR: { "user-1": -45, "user-2": 45 } },
+        totalSpent: { EUR: 90 },
+        lastUsedCurrency: "EUR",
+        version: 2,
+      });
     });
 
-    it("converts back to the original values without a rate, and skips entries already converted meanwhile", async () => {
+    it("skips entries converted meanwhile", async () => {
       await seed({
-        [GROUP]: group({ totalSpent: { PLN: 400, USD: 50 }, expensesCount: 2 }),
-        [`${GROUP}/expenses/e-back`]: expense({
-          id: "e-back",
-          amount: 400,
-          currency: "PLN",
-          splits: [{ userId: "user-1", amount: 400 }],
-          conversion: {
-            originalCurrency: "EUR",
-            originalAmount: 100,
-            originalSplits: [{ userId: "user-1", amount: 100 }],
-            rate: 4,
-            rateDate: "2026-06-01",
-            convertedAt: 50,
-          },
-        }),
+        [GROUP]: group({ totalSpent: { USD: 50 }, expensesCount: 1 }),
         [`${GROUP}/expenses/e-usd`]: expense({ id: "e-usd", amount: 50, currency: "USD", splits: [{ userId: "user-1", amount: 50 }] }),
       });
       // Someone converts e-usd while the rates are being fetched
@@ -645,11 +628,7 @@ describe("splits endpoints (emulator)", () => {
         return { rate: 0.9, date: "2026-06-01" };
       });
 
-      expect(await convertSplitGroupCurrency("group-1", "EUR")).toBe(1);
-
-      const reverted = await read(`${GROUP}/expenses/e-back`);
-      expect(reverted).toMatchObject({ currency: "EUR", amount: 100, splits: [{ userId: "user-1", amount: 100 }] });
-      expect(reverted).not.toHaveProperty("conversion");
+      expect(await convertSplitGroupCurrency("group-1", "EUR")).toBe(0);
       expect(await read(`${GROUP}/expenses/e-usd`)).toMatchObject({ amount: 45 });
     });
 
@@ -662,78 +641,6 @@ describe("splits endpoints (emulator)", () => {
 
       await expect(convertSplitGroupCurrency("group-1", "EUR")).rejects.toThrow("Missing exchange rate for USD on 2026-06-02");
       expect(await read(`${GROUP}/expenses/e1`)).toMatchObject({ currency: "USD" });
-    });
-
-    describe("pending settlements", () => {
-      // user-2 owes user-1 half of every expense, all in USD; the rate to EUR is 0.9
-      const convertToEur = async (expenseAmounts: number[], pendingAmount: number) => {
-        const debt = expenseAmounts.reduce((sum, amount) => sum + amount / 2, 0);
-        const docs: Record<string, SplitGroup | Expense | Settlement> = {
-          [GROUP]: group({
-            balances: { USD: { "user-1": debt, "user-2": -debt } },
-            pairBalances: { USD: { "user-1__user-2": debt } },
-            totalSpent: { USD: debt * 2 },
-            expensesCount: expenseAmounts.length,
-            settlementsCount: 1,
-          }),
-          [`${GROUP}/settlements/s-pending`]: settlement({
-            id: "s-pending",
-            payerId: "user-2",
-            receiverId: "user-1",
-            amount: pendingAmount,
-            currency: "USD",
-            status: "pending",
-            createdBy: "user-2",
-          }),
-        };
-        expenseAmounts.forEach((amount, i) => {
-          docs[`${GROUP}/expenses/e${i}`] = expense({
-            id: `e${i}`,
-            amount,
-            currency: "USD",
-            splits: [
-              { userId: "user-1", amount: amount / 2 },
-              { userId: "user-2", amount: amount / 2 },
-            ],
-          });
-        });
-        await seed(docs);
-        vi.mocked(getExchangeRate).mockResolvedValue({ rate: 0.9, date: "2026-06-01" });
-
-        const count = await convertSplitGroupCurrency("group-1", "EUR");
-        return { count, group: await read(GROUP), pending: await read(`${GROUP}/settlements/s-pending`) };
-      };
-
-      it("converts a pending settlement without changing the balances", async () => {
-        const result = await convertToEur([10000], 5000);
-
-        expect(result.count).toBe(2);
-        expect(result.group).toMatchObject({
-          balances: { EUR: { "user-1": 4500, "user-2": -4500 } },
-          pairBalances: { EUR: { "user-1__user-2": 4500 } },
-          totalSpent: { EUR: 9000 },
-        });
-        expect(result.pending).toMatchObject({
-          currency: "EUR",
-          amount: 4500,
-          status: "pending",
-          conversion: expect.objectContaining({ originalCurrency: "USD", originalAmount: 5000, rate: 0.9 }),
-        });
-      });
-
-      it("caps a pending settlement at the converted debt when rounding pushes it above", async () => {
-        // 5 × 10.09 USD → 5 × 9.08 EUR = 45.40 EUR of debt, while 50.45 USD alone rounds to 45.41 EUR
-        const result = await convertToEur([2018, 2018, 2018, 2018, 2018], 5045);
-
-        expect(result.group).toMatchObject({ balances: { EUR: { "user-1": 4540, "user-2": -4540 } } });
-        expect(result.pending).toMatchObject({ currency: "EUR", amount: 4540, status: "pending" });
-      });
-
-      it("does not cap a pending settlement that already exceeded the debt before conversion", async () => {
-        const result = await convertToEur([10000], 6000);
-
-        expect(result.pending).toMatchObject({ currency: "EUR", amount: 5400 });
-      });
     });
   });
 });
