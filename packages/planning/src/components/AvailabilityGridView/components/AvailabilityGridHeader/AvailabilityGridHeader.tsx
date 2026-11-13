@@ -1,6 +1,6 @@
 import { format, parseISO } from "date-fns";
 import { Trophy, Users } from "lucide-react";
-import type { ProposedDateSlot } from "../../../../api/events/types";
+import { getSlotKey, type ProposedDateSlot } from "../../../../api/events/types";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { isSameDaySlot, type RankedSlot } from "../../../../utils/slotRanking";
 import {
@@ -13,7 +13,7 @@ export type AvailabilityGridHeaderProps = {
   participantsCount: number;
   slotStats: RankedSlot[];
   isFinalized?: boolean;
-  finalizedSlotIndex?: number;
+  finalizedSlotKey?: string;
   gridTemplateColumns: string;
 };
 
@@ -22,7 +22,7 @@ export const AvailabilityGridHeader = ({
   participantsCount,
   slotStats,
   isFinalized,
-  finalizedSlotIndex,
+  finalizedSlotKey,
   gridTemplateColumns,
 }: AvailabilityGridHeaderProps) => {
   const { t } = usePlanningTranslations();
@@ -50,7 +50,7 @@ export const AvailabilityGridHeader = ({
         const isSameDay = isSameDaySlot(slot);
         const stat = slotStats[slotIdx];
         const isTop = stat.isTop;
-        const isWinning = isFinalized && finalizedSlotIndex === slotIdx;
+        const isWinning = isFinalized && finalizedSlotKey === getSlotKey(slot);
         const highlight = isWinning ? "winning" : isTop ? "top" : "none";
 
         const dateDisplay = isSameDay

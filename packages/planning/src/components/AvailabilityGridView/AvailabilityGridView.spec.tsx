@@ -67,11 +67,11 @@ describe("AvailabilityGridView", () => {
     expect(screen.getByText("user-3")).toBeInTheDocument();
   });
 
-  it("renders winner header when event is finalized and handles undefined finalizedSlotIndex", () => {
+  it("renders winner header when event is finalized and handles undefined finalizedSlotKey", () => {
     const finalizedEvent: SchedulerEvent = {
       ...mockEvent,
       isFinalized: true,
-      finalizedSlotIndex: 0,
+      finalizedSlotKey: "2026-07-10_2026-07-10",
     };
 
     const { rerender } = renderWithProviders(
@@ -86,7 +86,7 @@ describe("AvailabilityGridView", () => {
 
     rerender(
       <AvailabilityGridView
-        event={{ ...finalizedEvent, finalizedSlotIndex: undefined }}
+        event={{ ...finalizedEvent, finalizedSlotKey: undefined }}
         participantsProfiles={mockProfiles}
         currentUserId="user-1"
       />,

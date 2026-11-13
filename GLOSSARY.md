@@ -112,14 +112,14 @@ A slot's rating computed from its votes, used to rank slots from best to worst.
 _Avoid_: points, match (the match percentage is the share of participants who can make it)
 
 **Finalize**:
-The event creator picks one slot as the event's date; voting stops.
+The event creator picks one slot as the event's date; voting stops. A finalized event keeps its slots, participants and voting deadline; only its name and description can change.
 
 **Winning slot**:
 The slot picked when an event is finalized. It is chosen by the creator and is not necessarily the top-ranked slot.
 _Avoid_: winner, finalized date, top-voted slot
 
 **Reopen**:
-Undoing a finalize so that voting continues.
+Undoing a finalize so that voting continues. Slots that have already passed are dropped with their votes; all other votes stay.
 _Avoid_: unfinalize
 
 ## Splits

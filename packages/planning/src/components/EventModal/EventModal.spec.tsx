@@ -1,7 +1,8 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders } from "@flaner/test-utils";
+import { createMockUser, renderWithProviders } from "@flaner/test-utils";
+import type { UserType } from "@flaner/shared/types";
 import type { SchedulerEvent } from "../../api/events/types";
 import { EventModal } from "./EventModal";
 import type { CustomSlotsConfig } from "../CustomDateSlotsPopover/CustomDateSlotsPopover";
@@ -11,17 +12,8 @@ const mockUpdateEvent = vi.fn();
 const mockToastAttention = vi.fn();
 const mockToastSuccess = vi.fn();
 
-let mockCurrentUser: { uid: string; username: string; email: string } | null = {
-  uid: "user-1",
-  username: "Alice",
-  email: "alice@flaner.app",
-};
-
-vi.mock("@flaner/shared/context", () => ({
-  useAuth: () => ({
-    user: mockCurrentUser,
-  }),
-}));
+const alice = createMockUser({ uid: "user-1", username: "Alice" });
+const render = (ui: React.ReactElement, user: UserType | null = alice) => renderWithProviders(ui, { user });
 
 vi.mock("@flaner/shared/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@flaner/shared/utils")>();
@@ -236,14 +228,14 @@ describe("EventModal", () => {
   };
 
   it("renders create modal with empty title input", () => {
-    renderWithProviders(<EventModal isOpen={true} onOpenChange={vi.fn()} />);
+    render(<EventModal isOpen={true} onOpenChange={vi.fn()} />);
 
     expect(screen.getByText("create.title")).toBeInTheDocument();
     expect(screen.getByLabelText(/fields\.name/i)).toHaveValue("");
   });
 
   it("renders edit modal with existing event values prefilled", () => {
-    renderWithProviders(
+    render(
       <EventModal isOpen={true} onOpenChange={vi.fn()} eventToEdit={existingEvent} />,
     );
 
@@ -259,7 +251,7 @@ describe("EventModal", () => {
       return Promise.resolve();
     });
 
-    renderWithProviders(
+    render(
       <EventModal
         isOpen={true}
         onOpenChange={vi.fn()}
@@ -296,7 +288,7 @@ describe("EventModal", () => {
       return Promise.resolve();
     });
 
-    renderWithProviders(
+    render(
       <EventModal
         isOpen={true}
         onOpenChange={handleOpenChange}
@@ -336,7 +328,7 @@ describe("EventModal", () => {
 
   it("adds date slots, sorts them by start/end, and shows attention toast on duplicate slot", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<EventModal isOpen={true} onOpenChange={vi.fn()} />);
+    render(<EventModal isOpen={true} onOpenChange={vi.fn()} />);
 
     const addSlot1 = screen.getByTestId("mock-add-slot-1");
     await user.click(addSlot1);
@@ -352,7 +344,7 @@ describe("EventModal", () => {
 
   it("removes a date slot when clicked in the calendar", async () => {
     const user = userEvent.setup();
-    renderWithProviders(
+    render(
       <EventModal isOpen={true} onOpenChange={vi.fn()} eventToEdit={existingEvent} />,
     );
 
@@ -363,7 +355,7 @@ describe("EventModal", () => {
 
   it("applies custom date slots: success, empty, and duplicate batch handling", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<EventModal isOpen={true} onOpenChange={vi.fn()} />);
+    render(<EventModal isOpen={true} onOpenChange={vi.fn()} />);
 
     // 1. Empty config -> returns early
     const applyEmptyBtn = screen.getByTestId("mock-apply-empty-slots");
@@ -382,7 +374,7 @@ describe("EventModal", () => {
 
   it("toggles mobile calendar view with proposeDates and back buttons", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<EventModal isOpen={true} onOpenChange={vi.fn()} />);
+    render(<EventModal isOpen={true} onOpenChange={vi.fn()} />);
 
     const mobileProposeBtn = screen.getByRole("button", { name: /create\.proposeDates/i });
     await user.click(mobileProposeBtn);
@@ -396,46 +388,42 @@ describe("EventModal", () => {
     }
   });
 
-  it("updates finalizedSlotIndex when editing a finalized event with matching winningSlot", async () => {
+  it("edits only the name and description of a finalized event", async () => {
     const user = userEvent.setup();
+    // Past slots and no deadline: the hidden fields must not block the save
     const finalizedEvent: SchedulerEvent = {
       ...existingEvent,
+      endDate: undefined,
+      proposedDates: [{ start: "2026-09-15", end: "2026-09-16", color: "blue" }],
       isFinalized: true,
-      finalizedSlotIndex: 0,
-      proposedDates: [
-        {
-          start: "2026-10-15",
-          end: "2026-10-16",
-          color: "blue",
-        },
-      ],
+      finalizedSlotKey: "2026-09-15_2026-09-16",
     };
-
     mockUpdateEvent.mockImplementation((_data, options) => {
       options?.onSuccess?.();
       return Promise.resolve();
     });
 
-    renderWithProviders(
-      <EventModal isOpen={true} onOpenChange={vi.fn()} eventToEdit={finalizedEvent} />,
-    );
+    render(<EventModal isOpen={true} onOpenChange={vi.fn()} eventToEdit={finalizedEvent} />);
 
-    const submitBtn = screen.getAllByRole("button", { name: /actions\.save/i })[0];
-    await user.click(submitBtn);
+    expect(screen.getByText("edit.finalizedNotice")).toBeInTheDocument();
+    expect(screen.queryByTestId("mock-participant-select")).not.toBeInTheDocument();
+    expect(screen.queryByText("fields.endDate")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /create\.proposeDates/i })).not.toBeInTheDocument();
+
+    const nameInput = screen.getByLabelText(/fields\.name/i);
+    await user.clear(nameInput);
+    await user.type(nameInput, "Renamed");
+    await user.click(screen.getByRole("button", { name: /actions\.save/i }));
 
     expect(mockUpdateEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          finalizedSlotIndex: 0,
-        }),
-      }),
+      { eventId: "evt-edit", data: { name: "Renamed", description: "BBQ and games" } },
       expect.any(Object),
     );
   });
 
   it("renders uncontrolled modal with trigger and handles internal open state", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<EventModal />);
+    render(<EventModal />);
 
     const plusTriggerBtn = screen.getByRole("button");
     await user.click(plusTriggerBtn);
@@ -444,13 +432,13 @@ describe("EventModal", () => {
   });
 
   it("renders with custom trigger prop", () => {
-    renderWithProviders(<EventModal trigger={<button>Custom Trigger</button>} />);
+    render(<EventModal trigger={<button>Custom Trigger</button>} />);
     expect(screen.getByRole("button", { name: "Custom Trigger" })).toBeInTheDocument();
   });
 
   it("handles partial and null date selections and numeric id removal in calendar", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<EventModal isOpen={true} onOpenChange={vi.fn()} />);
+    render(<EventModal isOpen={true} onOpenChange={vi.fn()} />);
     await user.click(screen.getByTestId("mock-date-change-partial"));
     await user.click(screen.getByTestId("mock-date-change-null"));
     await user.click(screen.getByTestId("mock-remove-numeric-id"));
@@ -458,7 +446,7 @@ describe("EventModal", () => {
 
   it("sorts custom slots by end date when start dates match", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<EventModal isOpen={true} onOpenChange={vi.fn()} />);
+    render(<EventModal isOpen={true} onOpenChange={vi.fn()} />);
     // sampleValidConfig generates slots starting at 2026-11-01
     // Add slot with start 2026-11-01 and end 2026-11-05
     await user.click(screen.getByTestId("mock-add-slot-custom-conflict"));
@@ -468,16 +456,14 @@ describe("EventModal", () => {
 
   it("aborts submission if user is null", async () => {
     const user = userEvent.setup();
-    mockCurrentUser = null;
-    renderWithProviders(<EventModal isOpen={true} onOpenChange={vi.fn()} />);
+    render(<EventModal isOpen={true} onOpenChange={vi.fn()} />, null);
 
     const submitBtn = screen.getAllByRole("button", { name: /actions\.add/i })[0];
     await user.click(submitBtn);
     expect(mockCreateEvent).not.toHaveBeenCalled();
-    mockCurrentUser = { uid: "user-1", username: "Alice", email: "alice@flaner.app" };
   });
 
-  it("handles editing event with missing description and winning slot not found", async () => {
+  it("sends an empty description when the edited event has none", async () => {
     const user = userEvent.setup();
     const minimalEvent: SchedulerEvent = {
       id: "evt-min",
@@ -486,8 +472,6 @@ describe("EventModal", () => {
       creatorId: "user-1",
       participants: ["user-1"],
       endDate: "2026-10-10",
-      isFinalized: true,
-      finalizedSlotIndex: 99,
       proposedDates: [
         { start: "2026-10-15", end: "2026-10-16", color: "blue", votes: { "user-1": "yes" } },
       ],
@@ -500,7 +484,7 @@ describe("EventModal", () => {
       return Promise.resolve();
     });
 
-    renderWithProviders(
+    render(
       <EventModal isOpen={true} onOpenChange={vi.fn()} eventToEdit={minimalEvent} />,
     );
     const submitBtn = screen.getAllByRole("button", { name: /actions\.save/i })[0];
@@ -512,7 +496,6 @@ describe("EventModal", () => {
         data: expect.objectContaining({
           description: "",
           endDate: "2026-10-10",
-          finalizedSlotIndex: 99,
         }),
       }),
       expect.any(Object),
@@ -520,7 +503,7 @@ describe("EventModal", () => {
   });
 
   it("handles eventToEdit without endDate during initialization", () => {
-    renderWithProviders(
+    render(
       <EventModal
         isOpen={true}
         onOpenChange={vi.fn()}
@@ -539,53 +522,9 @@ describe("EventModal", () => {
     expect(screen.getByText("edit.title")).toBeInTheDocument();
   });
 
-  it("handles editing event where winningSlot is removed from proposedDates", async () => {
-    const user = userEvent.setup();
-    const winningEvent: SchedulerEvent = {
-      id: "evt-win",
-      name: "Winning Event",
-      description: "Test description",
-      creatorId: "user-1",
-      participants: ["user-1"],
-      endDate: "2026-10-10",
-      isFinalized: true,
-      finalizedSlotIndex: 0,
-      proposedDates: [
-        { start: "2026-10-15", end: "2026-10-16", color: "blue" },
-      ],
-      createdAt: 1700000000000,
-      updatedAt: 1700000000000,
-    };
-
-    mockUpdateEvent.mockImplementation((_data, options) => {
-      options?.onSuccess?.();
-      return Promise.resolve();
-    });
-
-    renderWithProviders(
-      <EventModal isOpen={true} onOpenChange={vi.fn()} eventToEdit={winningEvent} />,
-    );
-
-    const slot0 = screen.getByTestId("mock-event-slot-0");
-    await user.click(slot0);
-    await user.click(screen.getByTestId("mock-add-slot-1"));
-
-    const submitBtn = screen.getAllByRole("button", { name: /actions\.save/i })[0];
-    await user.click(submitBtn);
-
-    expect(mockUpdateEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          finalizedSlotIndex: 0,
-        }),
-      }),
-      expect.any(Object),
-    );
-  });
-
   it("displays saving state on submit button when isSaving is true", () => {
     mockIsPending = true;
-    renderWithProviders(<EventModal isOpen={true} onOpenChange={vi.fn()} />);
+    render(<EventModal isOpen={true} onOpenChange={vi.fn()} />);
 
     const savingButtons = screen.getAllByRole("button", { name: "actions.saving" });
     expect(savingButtons.length).toBeGreaterThan(0);

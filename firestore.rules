@@ -88,7 +88,13 @@ service cloud.firestore {
         request.resource.data.get('votes', {}).keys().hasOnly([request.auth.uid]);
       allow update: if isAuthenticated() && (
         (resource.data.creatorId == request.auth.uid &&
-          request.resource.data.creatorId == resource.data.creatorId) ||
+          request.resource.data.creatorId == resource.data.creatorId &&
+          (resource.data.get('isFinalized', false) == false ||
+            // Finalized (I5): rename / new description, or reopen dropping only slots (and their votes)
+            onlyChanges(['name', 'description', 'updatedAt']) ||
+            (request.resource.data.isFinalized == false &&
+              onlyChanges(['isFinalized', 'finalizedSlotKey', 'proposedDates', 'votes', 'updatedAt']) &&
+              resource.data.proposedDates.hasAll(request.resource.data.proposedDates)))) ||
         // Participants vote: only their own entry in `votes` changes, while the event is open
         (resource.data.get('isFinalized', false) == false &&
           request.auth.uid in resource.data.participants &&

@@ -9,7 +9,7 @@ import {
   Avatar,
 } from "@flaner/ui-components";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
-import type { SchedulerEvent, VoteType } from "../../api/events/types";
+import { getSlotKey, type SchedulerEvent, type VoteType } from "../../api/events/types";
 import type { ParticipantResult } from "../../api/participants";
 import {
   rankedSlotCardVariants,
@@ -68,7 +68,7 @@ export const RankedSlotsSheet = ({
           {rankedSlots.map((item) => {
             const dateDisplay = formatSlotDate(item.slot, dateLocale);
 
-            const isWinning = event.isFinalized && event.finalizedSlotIndex === item.slotIndex;
+            const isWinning = event.isFinalized && event.finalizedSlotKey === getSlotKey(item.slot);
             const isRankOne = item.isTop;
             const currentUserVote = currentUserId ? item.slot.votes?.[currentUserId] : undefined;
 
