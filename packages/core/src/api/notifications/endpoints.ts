@@ -1,12 +1,12 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/users.md (keep their Write flows / Queries in sync).
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, writeBatch, getDocs, where, limit, startAfter, type QueryDocumentSnapshot, type DocumentData, type FirestoreError } from "firebase/firestore";
+// The inbox (read side); notifications are built and removed by `@flaner/shared/api` (#86).
+import { query, orderBy, onSnapshot, doc, updateDoc, writeBatch, getDocs, where, limit, startAfter, type QueryDocumentSnapshot, type DocumentData, type FirestoreError } from "firebase/firestore";
+import { notificationsRef, type AppNotification } from "@flaner/shared/api";
 import { fb } from "@flaner/shared/firebase";
-import { firestoreConverter } from "@flaner/shared/utils";
-import type { AppNotification } from "./types";
 
 const refs = {
-  notifications: (uid: string) => collection(fb.firestore, `users/${uid}/notifications`).withConverter(firestoreConverter<AppNotification>()),
-  notification: (uid: string, notificationId: string) => doc(fb.firestore, `users/${uid}/notifications`, notificationId).withConverter(firestoreConverter<AppNotification>()),
+  notifications: notificationsRef,
+  notification: (uid: string, notificationId: string) => doc(notificationsRef(uid), notificationId),
 };
 
 /**

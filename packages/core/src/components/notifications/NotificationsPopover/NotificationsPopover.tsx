@@ -15,12 +15,11 @@ import {
 import { Bell, Check, Inbox, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
 import { toast } from "@flaner/shared/utils";
-import { AppNotification } from "../../../api/notifications";
+import type { AppNotification } from "@flaner/shared/api";
 import { useNotifications } from "../../../hooks/useNotifications";
 import { useReadNotifications } from "../../../hooks";
-import { getNotificationTarget } from "../../../utils/getNotificationTarget";
+import { useOpenNotification } from "../../../hooks/useOpenNotification";
 import { NotificationCard } from "../NotificationCard";
 import { NotificationToast } from "../NotificationToast";
 
@@ -31,7 +30,7 @@ const MAX_TOASTS = 3;
 export function NotificationsPopover() {
   const { isMobile } = useSidebar();
   const { t } = useTranslation("common");
-  const navigate = useNavigate();
+  const openNotification = useOpenNotification();
   const [open, setOpen] = useState(false);
 
   const showToasts = (added: AppNotification[]) => {
@@ -45,9 +44,8 @@ export function NotificationsPopover() {
             notification={notification}
             onOpen={() => {
               markAsRead(notification.id);
-              const target = getNotificationTarget(notification);
-              if (target) navigate(target);
               toast.dismiss(toastId);
+              void openNotification(notification);
             }}
             onClose={() => toast.dismiss(toastId)}
           />

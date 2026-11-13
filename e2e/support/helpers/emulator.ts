@@ -82,7 +82,14 @@ export const readDocumentFields = async (path: string): Promise<Record<string, F
 export const seedNotification = async (
   recipient: E2EUser,
   id: string,
-  { type, sender, read = false, groupId, groupName }: { type: string; sender: E2EUser; read?: boolean; groupId?: string; groupName?: string },
+  {
+    type,
+    sender,
+    read = false,
+    groupId,
+    groupName,
+    eventId,
+  }: { type: string; sender: E2EUser; read?: boolean; groupId?: string; groupName?: string; eventId?: string },
 ) => {
   await seedDocument(`users/${recipient.uid}/notifications/${id}`, {
     id,
@@ -92,6 +99,7 @@ export const seedNotification = async (
     senderAvatarUrl: "",
     groupId,
     groupName,
+    eventId,
     createdAt: Date.now(),
     read,
   });

@@ -34,6 +34,7 @@ export default defineConfig({
         './App': './src/App.tsx',
         './routes': './src/routes.tsx',
         './navigation': './src/navigation.ts',
+        './notificationTargets': './src/notificationTargets.ts',
       },
       shared: sharedFederationConfig,
     }),

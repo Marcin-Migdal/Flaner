@@ -1,14 +1,21 @@
 // Firestore rules spec: .agents/skills/firestore-rules-manager/docs/friendRequests.md, users.md (keep their Write flows / Queries in sync).
 import type { FriendRequest, Friendship, FriendshipDoc } from "./types";
 import { collection, doc, getDocs, query, where, onSnapshot, writeBatch, type FirestoreError, type QueryDocumentSnapshot } from "firebase/firestore";
-import { searchUserProfiles, userProfileRef } from "@flaner/shared/api";
+import {
+  createNotification,
+  getUnreadNotificationRefs,
+  searchUserProfiles,
+  sourceNotificationRef,
+  userProfileRef,
+  type NotificationSender,
+} from "@flaner/shared/api";
 import { fb } from "@flaner/shared/firebase";
 import { type UserProfile } from "@flaner/shared/types";
-import { firestoreConverter, getUnreadNotificationRefs, sourceNotificationRef } from "@flaner/shared/utils";
+import { firestoreConverter } from "@flaner/shared/utils";
 
 // The receiver's "friend_request" notification (deterministic id, see sourceNotificationRef)
 const friendRequestNotificationRef = (senderUid: string, receiverUid: string) =>
-  sourceNotificationRef(fb.firestore, receiverUid, "friend_request", senderUid);
+  sourceNotificationRef(receiverUid, "friend_request", senderUid);
 
 const friendshipsRef = (userUid: string) =>
   collection(fb.firestore, `users/${userUid}/friendships`).withConverter(firestoreConverter<FriendshipDoc>());
@@ -24,8 +31,8 @@ export const searchUsers = async (searchQuery: string, currentUserUid: string): 
 
 // 2. Send friend request (and write notification to receiver)
 export const sendFriendRequest = async (
-  sender: { uid: string; username: string; avatarUrl?: string },
-  receiver: { uid: string; username: string; avatarUrl?: string }
+  sender: NotificationSender,
+  receiver: NotificationSender
 ): Promise<void> => {
   const requestId = `${sender.uid}_${receiver.uid}`;
   const reqRef = doc(fb.firestore, "friendRequests", requestId);
@@ -42,17 +49,8 @@ export const sendFriendRequest = async (
     createdAt: Date.now(),
   });
 
-  // Create notification for receiver
-  const notifRef = friendRequestNotificationRef(sender.uid, receiver.uid);
-  batch.set(notifRef, {
-    id: notifRef.id,
-    type: "friend_request",
-    senderUid: sender.uid,
-    senderUsername: sender.username,
-    senderAvatarUrl: sender.avatarUrl || "",
-    createdAt: Date.now(),
-    read: false,
-  });
+  const notification = createNotification(receiver.uid, sender, { type: "friend_request", sourceId: sender.uid });
+  batch.set(notification.ref, notification.data);
 
   await batch.commit();
 };
@@ -71,8 +69,8 @@ export const cancelFriendRequest = async (senderUid: string, receiverUid: string
 // 4. Accept friend request (creates mutual friendship records, notifies sender).
 // One batch: the rules allow the friendships only while the request still exists before the batch.
 export const acceptFriendRequest = async (
-  sender: { uid: string; username: string; avatarUrl?: string },
-  receiver: { uid: string; username: string; avatarUrl?: string }
+  sender: NotificationSender,
+  receiver: NotificationSender
 ): Promise<void> => {
   const requestId = `${sender.uid}_${receiver.uid}`;
   const reqRef = doc(fb.firestore, "friendRequests", requestId);
@@ -97,25 +95,17 @@ export const acceptFriendRequest = async (
     createdAt: Date.now(),
   });
 
-  // Create notification for sender (A) notifying that receiver (B) accepted
-  const notifRef = doc(collection(fb.firestore, `users/${sender.uid}/notifications`));
-  batch.set(notifRef, {
-    id: notifRef.id,
-    type: "friend_request_accepted",
-    senderUid: receiver.uid,
-    senderUsername: receiver.username,
-    senderAvatarUrl: receiver.avatarUrl || "",
-    createdAt: Date.now(),
-    read: false,
-  });
+  // Notify sender (A) that receiver (B) accepted
+  const notification = createNotification(sender.uid, receiver, { type: "friend_request_accepted" });
+  batch.set(notification.ref, notification.data);
 
   await batch.commit();
 };
 
 // 5. Reject friend request (deletes request, notifies sender)
 export const rejectFriendRequest = async (
-  sender: { uid: string; username: string; avatarUrl?: string },
-  receiver: { uid: string; username: string; avatarUrl?: string }
+  sender: NotificationSender,
+  receiver: NotificationSender
 ): Promise<void> => {
   const requestId = `${sender.uid}_${receiver.uid}`;
   const reqRef = doc(fb.firestore, "friendRequests", requestId);
@@ -126,17 +116,9 @@ export const rejectFriendRequest = async (
   batch.delete(reqRef);
   staleNotifications.forEach((ref) => batch.delete(ref));
 
-  // Create notification for sender (A) notifying that receiver (B) declined
-  const notifRef = doc(collection(fb.firestore, `users/${sender.uid}/notifications`));
-  batch.set(notifRef, {
-    id: notifRef.id,
-    type: "friend_request_rejected",
-    senderUid: receiver.uid,
-    senderUsername: receiver.username,
-    senderAvatarUrl: receiver.avatarUrl || "",
-    createdAt: Date.now(),
-    read: false,
-  });
+  // Notify sender (A) that receiver (B) declined
+  const notification = createNotification(sender.uid, receiver, { type: "friend_request_rejected" });
+  batch.set(notification.ref, notification.data);
 
   await batch.commit();
 };

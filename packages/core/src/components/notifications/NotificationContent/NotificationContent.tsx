@@ -2,9 +2,9 @@ import { Avatar } from "@flaner/ui-components";
 import { formatDistanceToNow } from "date-fns";
 import { pl, enUS } from "date-fns/locale";
 import { TFunction } from "i18next";
-import { AlertCircle, Bell, Calendar, CheckCircle, Crown, HandCoins, Trash2, UserPlus, Users, Wallet, XCircle } from "lucide-react";
+import { Bell, Calendar, CheckCircle, Crown, HandCoins, Trash2, UserPlus, Users, Wallet, XCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { AppNotification, NotificationType } from "../../../api/notifications";
+import type { AppNotification, NotificationType } from "@flaner/shared/api";
 
 const getIcon = (notificationType: NotificationType) => {
   switch (notificationType) {
@@ -31,8 +31,6 @@ const getIcon = (notificationType: NotificationType) => {
       return <Wallet className="size-4 text-brand-text" />;
     case "split_settlement_pending":
       return <HandCoins className="size-4 text-warning-text" />;
-    case "system_alert":
-      return <AlertCircle className="size-4 text-warning-text" />;
     default:
       return <Bell className="size-4 text-brand-text" />;
   }
@@ -68,8 +66,6 @@ const getText = ({ type, groupName }: AppNotification, t: TFunction) => {
       return t("notifications.splitGroupInvitation");
     case "split_settlement_pending":
       return t("notifications.splitSettlementPending");
-    case "system_alert":
-      return t("notifications.systemAlert");
     default:
       return t("notifications.system");
   }
