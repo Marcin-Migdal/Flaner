@@ -28,13 +28,16 @@ export const subscribeToNotifications = (
 
   // Until the first server snapshot everything is "already there": the persistent cache answers first,
   // then the server adds what came while the app was closed. Only later additions are new (#37).
+  // One created after subscribing is new even if it comes with that first server snapshot (#106).
   let synced = false;
+  const subscribedAt = Date.now();
 
   return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
     const notifications = snapshot.docs.map((doc) => doc.data());
-    const added = synced
-      ? snapshot.docChanges().flatMap((change) => (change.type === "added" ? [change.doc.data()] : []))
-      : [];
+    const added = snapshot
+      .docChanges()
+      .flatMap((change) => (change.type === "added" ? [change.doc.data()] : []))
+      .filter((notification) => synced || notification.createdAt > subscribedAt);
     if (!snapshot.metadata.fromCache) synced = true;
     onUpdate(notifications, added);
   }, onError);
