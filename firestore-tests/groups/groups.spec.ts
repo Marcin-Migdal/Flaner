@@ -108,6 +108,10 @@ describe("groups/{groupId}", () => {
     await assertFails(getDoc(doc(as(STRANGER), GROUP)));
   });
 
+  it("lets a listener read a deleted (missing) group as not found (#106)", async () => {
+    await assertSucceeds(getDoc(doc(as(OWNER), "groups/deleted-group")));
+  });
+
   it("allows the public group search (searchGlobalGroups, searchParticipants)", async () => {
     await seedGroup({ type: "public" });
     const q = query(
