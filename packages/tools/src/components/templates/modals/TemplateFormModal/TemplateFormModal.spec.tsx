@@ -399,7 +399,7 @@ describe("TemplateFormModal", () => {
     expect(matInput).not.toBeNull();
     if (matInput) {
       await user.type(matInput, "BrandNewMat");
-      const createMatOption = await screen.findByText(/create "brandnewmat"/i);
+      const createMatOption = await screen.findByText("select.create");
       await user.click(createMatOption);
       expect(addLookupMaterialMock).toHaveBeenCalledWith({ name: "BrandNewMat" });
     }
@@ -409,7 +409,7 @@ describe("TemplateFormModal", () => {
     expect(typeInput).not.toBeNull();
     if (typeInput) {
       await user.type(typeInput, "BrandNewType");
-      const createTypeOption = await screen.findByText(/create "brandnewtype"/i);
+      const createTypeOption = await screen.findByText("select.create");
       await user.click(createTypeOption);
       expect(addLookupTypeMock).toHaveBeenCalledWith({
         materialName: "BrandNewMat",
@@ -422,7 +422,7 @@ describe("TemplateFormModal", () => {
     expect(colorInput).not.toBeNull();
     if (colorInput) {
       await user.type(colorInput, "BrandNewColor");
-      const createColorOption = await screen.findByText(/create "brandnewcolor"/i);
+      const createColorOption = await screen.findByText("select.create");
       await user.click(createColorOption);
       // The colour lookup is written with its real hex (on pick / submit), never with a placeholder
       expect(addLookupColorMock).not.toHaveBeenCalled();
@@ -473,7 +473,7 @@ describe("TemplateFormModal", () => {
     const colorInput = controls[2].querySelector("input");
     if (!colorInput) throw new Error("colour input not found");
     await user.type(colorInput, "NewColor");
-    await user.click(await screen.findByText(/create "newcolor"/i));
+    await user.click(await screen.findByText("select.create"));
 
     expect(screen.getByLabelText("spooler.templates.colorHex")).toHaveValue("");
   });
@@ -543,7 +543,7 @@ describe("TemplateFormModal", () => {
     expect(typeInput).not.toBeNull();
     if (typeInput) {
       await user.type(typeInput, "OtherType");
-      const createOtherType = await screen.findByText(/create "othertype"/i);
+      const createOtherType = await screen.findByText("select.create");
       await user.click(createOtherType);
     }
 
