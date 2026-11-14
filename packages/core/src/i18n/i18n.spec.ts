@@ -1,6 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { readdirSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import i18n from "./i18n";
 
 describe("core i18n configuration", () => {
@@ -33,8 +31,10 @@ describe("core i18n configuration", () => {
   });
 
   it("uses \"a\", not \"an\", before a consonant in the English texts (#106)", () => {
-    const dir = resolve(__dirname, "../../public/locales/en");
-    const texts = readdirSync(dir).map((file) => readFileSync(resolve(dir, file), "utf8"));
+    const texts = Object.values(
+      import.meta.glob<string>("../../public/locales/en/*.json", { query: "?raw", import: "default", eager: true }),
+    );
+    expect(texts.length).toBeGreaterThan(0);
 
     expect(texts.join("\n").match(/\ban [bcdfgjklmnpqrstvwxyz]\w*/gi)).toBeNull();
   });
