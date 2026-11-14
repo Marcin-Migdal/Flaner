@@ -90,7 +90,7 @@
     "groupDeleted": "Deleted the group {{groupName}}.",
     "eventInvitation": "Invited you to an event.",
     "eventReopened": "Reopened voting in an event.",
-    "splitGroupInvitation": "Added you to an split group.",
+    "splitGroupInvitation": "Added you to a split group.",
     "splitSettlementPending": "Submitted a settlement in an expense group.",
     "system": "You have a new notification.",
     "toast": {
