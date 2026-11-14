@@ -100,7 +100,7 @@ describe("FormTextField component", () => {
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
         username: "Alice",
-        age: undefined,
+        age: null,
       }),
       expect.anything()
     );
@@ -118,5 +118,17 @@ describe("FormTextField component", () => {
 
     render(<UndefinedForm />);
     expect(screen.getByLabelText("Username")).toHaveValue("");
+  });
+
+  it("keeps a cleared number field empty instead of showing its default value again (#106)", async () => {
+    const user = userEvent.setup();
+    render(<TestForm defaultValues={{ username: "", age: 975 }} />);
+    const input = screen.getByLabelText("Age");
+
+    await user.clear(input);
+    expect(input).toHaveValue(null);
+
+    await user.type(input, "1000");
+    expect(input).toHaveValue(1000);
   });
 });

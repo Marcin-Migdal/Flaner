@@ -1,5 +1,5 @@
 import type { FieldPath, FieldValues } from "react-hook-form";
-import { toNumberOrUndefined, useFormField, type FormFieldProps } from "../../hooks/useFormField";
+import { toNumberOrNull, useFormField, type FormFieldProps } from "../../hooks/useFormField";
 import { TextField, type TextFieldProps } from "../TextField";
 
 export type FormTextFieldProps<
@@ -18,7 +18,7 @@ export function FormTextField<
       {...rest}
       {...field}
       value={field.value ?? ""}
-      onChange={(e) => field.onChange(rest.type === "number" ? toNumberOrUndefined(e.target.value) : e)}
+      onChange={(e) => field.onChange(rest.type === "number" ? toNumberOrNull(e.target.value) : e)}
       onStep={(_, nextVal) => field.onChange(nextVal)}
       error={error}
     />
