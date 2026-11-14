@@ -39,7 +39,11 @@ export const FinalizeEventModal = ({
 
   const { ranked } = rankSlots(event);
 
-  const [selectedSlotKey, setSelectedSlotKey] = useState(() => (ranked[0] ? getSlotKey(ranked[0].slot) : undefined));
+  // The modal stays mounted across events: a pick counts only for the event it was made on
+  const [pick, setPick] = useState<{ eventId: string; slotKey: string } | null>(null);
+  const setSelectedSlotKey = (slotKey: string) => setPick({ eventId: event.id, slotKey });
+  const selectedSlotKey =
+    pick?.eventId === event.id ? pick.slotKey : ranked[0] ? getSlotKey(ranked[0].slot) : undefined;
 
   const handleConfirm = async () => {
     if (!selectedSlotKey) return;
