@@ -28,7 +28,7 @@ describe("useGetGroupExpensesQuery", () => {
       },
     ];
     vi.mocked(splitsApi.getGroupExpenses).mockResolvedValueOnce(mockExpenses);
-    const { result } = renderHookWithProviders(() => useGetGroupExpensesQuery("grp-1"));
+    const { result } = renderHookWithProviders(() => useGetGroupExpensesQuery({ id: "grp-1", expensesCount: 1 }));
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -52,9 +52,18 @@ describe("useGetGroupExpensesQuery", () => {
 
   it("caches under the split group's expenses key (refreshed by useSyncSplitGroupFeed)", async () => {
     vi.mocked(splitsApi.getGroupExpenses).mockResolvedValueOnce([]);
-    const { result, queryClient } = renderHookWithProviders(() => useGetGroupExpensesQuery("grp-1"));
+    const { result, queryClient } = renderHookWithProviders(() => useGetGroupExpensesQuery({ id: "grp-1", expensesCount: 1 }));
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(queryClient.getQueryData(["splits", "group", "grp-1", "expenses"])).toEqual([]);
+  });
+
+  it("returns no expenses without a read while the group has none (#106)", async () => {
+    vi.mocked(splitsApi.getGroupExpenses).mockClear();
+    const { result } = renderHookWithProviders(() => useGetGroupExpensesQuery({ id: "grp-new", expensesCount: 0 }));
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual([]);
+    expect(splitsApi.getGroupExpenses).not.toHaveBeenCalled();
   });
 });
