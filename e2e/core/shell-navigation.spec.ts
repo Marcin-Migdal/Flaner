@@ -50,7 +50,8 @@ test.describe("Core Host Shell & Navigation E2E", () => {
   });
 
   test("redirects unknown routes to home", async ({ page }) => {
-    await page.goto("/unknown-non-existing-route-404");
+    // The client-side redirect starts a new navigation before "load", which aborts goto (#106)
+    await page.goto("/unknown-non-existing-route-404", { waitUntil: "commit" });
 
     // Catch-all route in router redirects to /
     await expect(page).toHaveURL(/\/$/);
