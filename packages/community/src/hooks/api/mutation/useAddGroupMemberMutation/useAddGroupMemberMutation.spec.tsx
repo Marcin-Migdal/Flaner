@@ -15,7 +15,7 @@ describe("useAddGroupMemberMutation", () => {
     vi.clearAllMocks();
   });
 
-  it("calls addGroupMember and refetches the keys the user just got access to", async () => {
+  it("calls addGroupMember without refetching listener-backed keys", async () => {
     vi.mocked(groupsApi.addGroupMember).mockResolvedValueOnce(undefined);
 
     const { result, queryClient } = renderHookWithProviders(() => useAddGroupMemberMutation(), { user: mockUser });
@@ -27,10 +27,7 @@ describe("useAddGroupMemberMutation", () => {
 
     expect(groupsApi.addGroupMember).toHaveBeenCalledWith("grp-1", "u-2", "member");
     // The user just got access: refetch what the listeners opened before the write committed (queryKeys/groups)
-    expect(invalidateSpy.mock.calls).toEqual([
-      [{ queryKey: ["groups", "user", "user-123"] }],
-      [{ queryKey: ["groups", "detail", "grp-1", "members"] }],
-    ]);
+    expect(invalidateSpy).not.toHaveBeenCalled();
   });
 
   it("calls options.onSuccess callback when provided", async () => {

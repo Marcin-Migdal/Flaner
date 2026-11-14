@@ -526,10 +526,16 @@ export const subscribeToUserGroups = (
     onUpdate(groupIds.flatMap((id) => groups.get(id) ?? []));
   };
 
+  // A new membership from a local, not yet committed write (create, join, accept) is skipped until the server
+  // confirms it: before that its group is not readable there, and a listener started then dies on permission-denied
   const unsubscribeMembers = onSnapshot(
     query(refs.membersGroup(), where("userId", "==", userId)),
+    { includeMetadataChanges: true },
     (snap) => {
-      groupIds = snap.docs.flatMap((d) => d.ref.parent.parent?.id ?? []);
+      groupIds = snap.docs.flatMap((d) => {
+        const id = d.ref.parent.parent?.id;
+        return id && (!d.metadata.hasPendingWrites || groupListeners.has(id)) ? [id] : [];
+      });
 
       groupListeners.forEach((unsubscribe, id) => {
         if (groupIds.includes(id)) return;

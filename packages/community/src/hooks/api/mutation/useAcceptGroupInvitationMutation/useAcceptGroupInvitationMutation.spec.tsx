@@ -15,7 +15,7 @@ describe("useAcceptGroupInvitationMutation", () => {
     vi.clearAllMocks();
   });
 
-  it("calls acceptGroupInvitation and refetches the keys the user just got access to", async () => {
+  it("calls acceptGroupInvitation without refetching listener-backed keys", async () => {
     vi.mocked(groupsApi.acceptGroupInvitation).mockResolvedValueOnce(undefined);
 
     const { result, queryClient } = renderHookWithProviders(() => useAcceptGroupInvitationMutation(), { user: mockUser });
@@ -27,10 +27,7 @@ describe("useAcceptGroupInvitationMutation", () => {
 
     expect(groupsApi.acceptGroupInvitation).toHaveBeenCalledWith("grp-1", "user-123");
     // The user just got access: refetch what the listeners opened before the write committed (queryKeys/groups)
-    expect(invalidateSpy.mock.calls).toEqual([
-      [{ queryKey: ["groups", "user", "user-123"] }],
-      [{ queryKey: ["groups", "detail", "grp-1", "members"] }],
-    ]);
+    expect(invalidateSpy).not.toHaveBeenCalled();
   });
 
   it("calls options.onSuccess callback when provided", async () => {
