@@ -9,10 +9,9 @@ import {
   orderBy,
   limit,
   runTransaction,
-  writeBatch,
 } from "firebase/firestore";
 import { fb } from "@flaner/shared/firebase";
-import { firestoreConverter } from "@flaner/shared/utils";
+import { deleteInBatches, firestoreConverter } from "@flaner/shared/utils";
 import type { FilamentSpool, RecordUsageResult, SpoolInput, SpoolPrint } from "./types";
 import type { FilamentTemplate } from "../templates/types";
 import { applyPrint, finishState } from "../../utils/spoolLifecycle";
@@ -145,12 +144,10 @@ export const undoLastPrint = async (spoolId: string, printId?: string): Promise<
   });
 };
 
+// Prints first, in batches (a spool can have more prints than one batch takes); the spool goes last, since the prints rules read it
 export const deleteSpool = async (spoolId: string): Promise<void> => {
   const printsSnap = await getDocs(spoolRefs.prints(spoolId));
-  const batch = writeBatch(fb.firestore);
-  printsSnap.docs.forEach((d) => batch.delete(d.ref));
-  batch.delete(spoolRefs.spool(spoolId));
-  await batch.commit();
+  await deleteInBatches(fb.firestore, [...printsSnap.docs.map((d) => d.ref), spoolRefs.spool(spoolId)]);
 };
 
 // Manual finish: whatever is left on the spool is discarded (undoing a print later restores only that print).

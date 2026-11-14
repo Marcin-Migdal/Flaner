@@ -74,11 +74,22 @@ export const acceptFriendRequest = async (
 ): Promise<void> => {
   const requestId = `${sender.uid}_${receiver.uid}`;
   const reqRef = doc(fb.firestore, "friendRequests", requestId);
-  const staleNotifications = await getUnreadNotificationRefs([friendRequestNotificationRef(sender.uid, receiver.uid)]);
+  // Both may have sent a request before seeing the other's: the reverse one is resolved by this accept too (#99).
+  // A query, not a get: the rules deny reading a request that does not exist.
+  const [reverseRequests, staleNotifications] = await Promise.all([
+    getDocs(
+      query(friendRequestsRef(), where("senderUid", "==", receiver.uid), where("receiverUid", "==", sender.uid)),
+    ),
+    getUnreadNotificationRefs([
+      friendRequestNotificationRef(sender.uid, receiver.uid),
+      friendRequestNotificationRef(receiver.uid, sender.uid),
+    ]),
+  ]);
   const batch = writeBatch(fb.firestore);
 
-  // Delete the request (and the receiver's own unread "friend_request" notification)
+  // Delete the request(s) and their unread "friend_request" notifications (own and, for the reverse request, the sender's)
   batch.delete(reqRef);
+  reverseRequests.docs.forEach((d) => batch.delete(d.ref));
   staleNotifications.forEach((ref) => batch.delete(ref));
 
   // Add friendship to receiver (B)'s subcollection

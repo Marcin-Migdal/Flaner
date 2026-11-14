@@ -118,6 +118,31 @@ describe("FinalizeEventModal", () => {
     });
   });
 
+  it("preselects the top slot of a new event instead of the pick made on the previous one (#106)", async () => {
+    const user = userEvent.setup();
+    mockFinalizeMutateAsync.mockResolvedValueOnce({});
+    const otherEvent: SchedulerEvent = {
+      ...mockEvent,
+      id: "evt-456",
+      proposedDates: mockEvent.proposedDates.map((slot) => ({
+        ...slot,
+        start: slot.start.replace("2026-07", "2026-09"),
+        end: slot.end.replace("2026-07", "2026-09"),
+      })),
+    };
+
+    const { rerender } = renderWithProviders(
+      <FinalizeEventModal open={true} onOpenChange={vi.fn()} event={mockEvent} />,
+    );
+    const lowerRankedSlotBtn = screen.getByText("33%").closest("button");
+    if (lowerRankedSlotBtn) await user.click(lowerRankedSlotBtn);
+
+    rerender(<FinalizeEventModal open={true} onOpenChange={vi.fn()} event={otherEvent} />);
+    await user.click(screen.getByRole("button", { name: /finalizeModal\.confirmButton/i }));
+
+    expect(mockFinalizeMutateAsync).toHaveBeenCalledWith({ eventId: "evt-456", slotKey: "2026-09-05_2026-09-06" });
+  });
+
   it("shows the full dates of a slot that spans two years", () => {
     const crossYearEvent: SchedulerEvent = {
       ...mockEvent,

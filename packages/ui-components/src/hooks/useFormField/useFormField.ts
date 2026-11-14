@@ -12,7 +12,9 @@ export type FormFieldProps<
 > = Omit<TBaseProps, BoundProps | TOmit> & UseControllerProps<TFieldValues, TName>;
 
 /** Value of a numeric text input as the form stores it: an empty field is `undefined`, anything else a number. */
-export const toNumberOrUndefined = (value: string): number | undefined => (value === "" ? undefined : Number(value));
+// An empty number input is null, not undefined: for undefined react-hook-form's useController shows the
+// default value again (#106)
+export const toNumberOrNull = (value: string): number | null => (value === "" ? null : Number(value));
 
 /**
  * The one react-hook-form binding behind every FormX wrapper. Splits the controller props off,

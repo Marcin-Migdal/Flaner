@@ -25,7 +25,7 @@ All endpoints: `packages/community/src/api/users/endpoints.ts`.
 | --- | --- | --- | --- |
 | Send | `sendFriendRequest` | set request, create `users/{receiver}/notifications/*` | ✅ batch |
 | Cancel (sender) | `cancelFriendRequest` | delete request + the receiver's unread `friend_request_{sender}` notification | ✅ batch |
-| Accept (receiver) | `acceptFriendRequest` | delete request + own unread `friend_request_{sender}` notification + friendships + notification (see `users.md`) | ✅ batch |
+| Accept (receiver) | `acceptFriendRequest` | delete request + own unread `friend_request_{sender}` notification + the reverse request (if both sent one) and the sender's unread `friend_request_{receiver}` notification + friendships + notification (see `users.md`) | ✅ batch |
 | Reject (receiver) | `rejectFriendRequest` | delete request + own unread `friend_request_{sender}` notification, create `users/{sender}/notifications/*` | ✅ batch |
 
 ## Queries
@@ -33,6 +33,7 @@ All endpoints: `packages/community/src/api/users/endpoints.ts`.
 | --- | --- | --- |
 | `senderUid == me && status == 'pending'` | `getSentFriendRequests`, `subscribeToSentFriendRequests` | read: sender |
 | `receiverUid == me && status == 'pending'` | `getReceivedFriendRequests`, `subscribeToReceivedFriendRequests` | read: receiver |
+| `senderUid == me && receiverUid == X` | `acceptFriendRequest` (reverse request) | read: sender |
 
 ## Access matrix
 | Actor \ operation | read | create | update | delete |

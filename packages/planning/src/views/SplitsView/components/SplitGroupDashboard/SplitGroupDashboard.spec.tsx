@@ -43,7 +43,6 @@ vi.mock("../../../../hooks/api/query", () => ({
   useGetUserSplitGroupsRealtimeQuery: () => ({ data: [], isLoading: false }),
   useGetUserSchedulerEventsRealtimeQuery: () => ({ data: [], isLoading: false }),
   useSearchParticipantsQuery: () => ({ data: [], isLoading: false }),
-  useUserSchedulerEventsQuery: () => ({ data: [], isLoading: false }),
 }));
 
 vi.mock("../../../../hooks/api/mutation", () => ({

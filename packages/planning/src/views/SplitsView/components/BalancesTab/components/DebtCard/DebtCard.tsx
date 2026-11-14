@@ -137,7 +137,9 @@ export const DebtCard = ({
                 </TooltipTrigger>
                 <TooltipContent>{t("splits.actions.markAsPaid")}</TooltipContent>
               </Tooltip>
-              {pendingSettlement && <span className={styles.indicatorDot} aria-hidden="true" />}
+              {pendingSettlement && (
+                <span className={styles.indicatorDot} role="img" aria-label={t("splits.settlements.pendingBadge")} />
+              )}
             </div>
           </div>
         )}

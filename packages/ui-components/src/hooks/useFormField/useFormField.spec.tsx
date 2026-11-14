@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm, FormProvider, type FieldPath, type FieldValues } from "react-hook-form";
-import { toNumberOrUndefined, useFormField, type FormFieldProps } from "./useFormField";
+import { toNumberOrNull, useFormField, type FormFieldProps } from "./useFormField";
 
 type ProbeBaseProps = {
   label: string;
@@ -64,15 +64,15 @@ const TestForm = ({
   );
 };
 
-describe("toNumberOrUndefined", () => {
+describe("toNumberOrNull", () => {
   it.each([
-    ["", undefined],
+    ["", null],
     ["0", 0],
     ["12", 12],
     ["12.5", 12.5],
     ["-3", -3],
   ])("converts %j to %j", (input, expected) => {
-    expect(toNumberOrUndefined(input)).toBe(expected);
+    expect(toNumberOrNull(input)).toBe(expected);
   });
 });
 

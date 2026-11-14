@@ -6,7 +6,7 @@ import {
   type FieldValues,
   type RegisterOptions,
 } from "react-hook-form";
-import { toNumberOrUndefined, useFormField } from "../../hooks/useFormField";
+import { toNumberOrNull, useFormField } from "../../hooks/useFormField";
 import { MoneyInput, type MoneyInputProps } from "../MoneyInput";
 
 export type FormMoneyInputProps<
@@ -74,7 +74,7 @@ function FormMoneyInputInner<
       ref={amountField.ref}
       name={amountField.name}
       value={amountField.value ?? ""}
-      onChange={(e) => amountField.onChange(toNumberOrUndefined(e.target.value))}
+      onChange={(e) => amountField.onChange(toNumberOrNull(e.target.value))}
       onBlur={amountField.onBlur}
       onStep={(_, nextVal) => amountField.onChange(nextVal)}
       currency={currencyValue}

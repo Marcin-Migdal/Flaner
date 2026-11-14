@@ -37,7 +37,7 @@ export const SpoolerSettingsModal: React.FC<SpoolerSettingsModalProps> = ({
   });
 
   const methods = useForm<SettingsFormData>({
-    resolver: zodResolver(getSettingsSchema()),
+    resolver: zodResolver(getSettingsSchema(t)),
     defaultValues: {
       startupWaste: 1.5,
     },

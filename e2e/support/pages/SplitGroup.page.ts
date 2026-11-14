@@ -71,6 +71,8 @@ export class SplitGroupPage {
   }
 
   async confirmPendingPayment() {
+    // Until the pending payment has loaded, "Mark as paid" opens "Record a payment" instead (#106)
+    await this.balancesPanel.getByRole("img", { name: /^pending confirmation$/i }).waitFor();
     await this.markAsPaidButton.click();
     await this.dialog.getByRole("button", { name: /^confirm receipt$/i }).click();
   }

@@ -1,9 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@flaner/test-utils";
 import type { SchedulerEvent } from "../../../../../../api/events/types";
 import { SchedulerEventHeader } from "./SchedulerEventHeader";
+
+const getMenu = () => {
+  const menu = document.querySelector<HTMLElement>(".react-select__menu");
+  if (!menu) throw new Error("Select menu is not open");
+  return menu;
+};
 
 const mockEvent: SchedulerEvent = {
   id: "ev-1",
@@ -144,22 +150,14 @@ describe("SchedulerEventHeader", () => {
     const combobox = screen.getByRole("combobox");
     fireEvent.keyDown(combobox, { key: "ArrowDown" });
 
-    // Find menu and click edit and delete buttons rendered for owned event
-    const menu = document.querySelector(".react-select__menu");
-    const menuEditBtn = menu?.querySelector(".lucide-pencil")?.closest("button");
-    if (menuEditBtn) {
-      await user.click(menuEditBtn);
-      expect(onEditEvent).toHaveBeenCalled();
-    }
+    // The menu options' edit / delete buttons are named, so they are reachable by role (#99); the first option is Summer Camp
+    await user.click(within(getMenu()).getAllByRole("button", { name: "actions.edit" })[0]);
+    expect(onEditEvent).toHaveBeenCalledWith(mockEvent, expect.anything());
 
     // Reopen menu for delete button since edit click closed menu
     fireEvent.keyDown(combobox, { key: "ArrowDown" });
-    const reopenedMenu = document.querySelector(".react-select__menu");
-    const menuDeleteBtn = reopenedMenu?.querySelector(".lucide-trash-2")?.closest("button");
-    if (menuDeleteBtn) {
-      await user.click(menuDeleteBtn);
-      expect(onDeleteEvent).toHaveBeenCalledWith({ id: "ev-1", name: "Summer Camp" });
-    }
+    await user.click(within(getMenu()).getAllByRole("button", { name: "actions.delete" })[0]);
+    expect(onDeleteEvent).toHaveBeenCalledWith({ id: "ev-1", name: "Summer Camp" });
 
     // Select second event
     const secondOption = await screen.findByText("Autumn Hike");

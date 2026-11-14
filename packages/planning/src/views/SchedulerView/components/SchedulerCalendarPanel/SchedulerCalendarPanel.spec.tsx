@@ -21,12 +21,14 @@ vi.mock("./components/SchedulerBigCalendar", () => ({
     onVoteSlot,
     onSlotClick,
     onOpenRankedSheet,
+    topVotedSlotIndices,
   }: {
+    topVotedSlotIndices: Set<number>;
     onVoteSlot: (slotIndex: number, vote: "yes" | "no" | "maybe" | null) => Promise<void>;
     onSlotClick: (slotIndex: number) => void;
     onOpenRankedSheet: () => void;
   }) => (
-    <div data-testid="mock-big-calendar">
+    <div data-testid="mock-big-calendar" data-top-voted={[...topVotedSlotIndices].join(",")}>
       <button type="button" onClick={() => onVoteSlot(0, "yes")}>Trigger Vote</button>
       <button type="button" onClick={() => onSlotClick(0)}>Trigger Slot Click</button>
       <button type="button" onClick={onOpenRankedSheet}>Trigger Ranked Sheet</button>
@@ -123,6 +125,22 @@ describe("SchedulerCalendarPanel", () => {
     const voteBtn = screen.getByText("Trigger Vote");
     await user.click(voteBtn);
     expect(mockVoteSlot).not.toHaveBeenCalled();
+  });
+
+  it("highlights the top-voted slot only while the event is open (#106)", () => {
+    const { rerender } = renderWithProviders(
+      <SchedulerCalendarPanel activeEvent={mockEvent} participants={mockParticipants} />,
+      { user: signedInUser },
+    );
+    expect(screen.getByTestId("mock-big-calendar")).toHaveAttribute("data-top-voted", "0");
+
+    rerender(
+      <SchedulerCalendarPanel
+        activeEvent={{ ...mockEvent, isFinalized: true, finalizedSlotKey: "2026-08-10_2026-08-11" }}
+        participants={mockParticipants}
+      />,
+    );
+    expect(screen.getByTestId("mock-big-calendar")).toHaveAttribute("data-top-voted", "");
   });
 
   it("does not open the voting modal on slot click when activeEvent is finalized", async () => {

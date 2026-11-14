@@ -23,7 +23,7 @@ export const getCreateExpenseSchema = (t: (key: string, options?: Record<string,
         z.object({
           userId: z.string(),
           included: z.boolean(),
-          amount: z.number().optional(),
+          amount: z.number().nullish(),
         }),
       ),
     })
@@ -40,7 +40,7 @@ export const getCreateExpenseSchema = (t: (key: string, options?: Record<string,
       }
 
       const hasInvalidAmount = data.splits.some(
-        (split) => split.amount !== undefined && (split.amount < 0 || !hasAtMostTwoDecimals(split.amount)),
+        (split) => split.amount != null && (split.amount < 0 || !hasAtMostTwoDecimals(split.amount)),
       );
       if (hasInvalidAmount) {
         ctx.addIssue({

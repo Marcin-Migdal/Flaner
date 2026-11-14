@@ -399,7 +399,7 @@ describe("TemplateFormModal", () => {
     expect(matInput).not.toBeNull();
     if (matInput) {
       await user.type(matInput, "BrandNewMat");
-      const createMatOption = await screen.findByText(/create "brandnewmat"/i);
+      const createMatOption = await screen.findByText("select.create");
       await user.click(createMatOption);
       expect(addLookupMaterialMock).toHaveBeenCalledWith({ name: "BrandNewMat" });
     }
@@ -409,7 +409,7 @@ describe("TemplateFormModal", () => {
     expect(typeInput).not.toBeNull();
     if (typeInput) {
       await user.type(typeInput, "BrandNewType");
-      const createTypeOption = await screen.findByText(/create "brandnewtype"/i);
+      const createTypeOption = await screen.findByText("select.create");
       await user.click(createTypeOption);
       expect(addLookupTypeMock).toHaveBeenCalledWith({
         materialName: "BrandNewMat",
@@ -422,7 +422,7 @@ describe("TemplateFormModal", () => {
     expect(colorInput).not.toBeNull();
     if (colorInput) {
       await user.type(colorInput, "BrandNewColor");
-      const createColorOption = await screen.findByText(/create "brandnewcolor"/i);
+      const createColorOption = await screen.findByText("select.create");
       await user.click(createColorOption);
       // The colour lookup is written with its real hex (on pick / submit), never with a placeholder
       expect(addLookupColorMock).not.toHaveBeenCalled();
@@ -473,7 +473,7 @@ describe("TemplateFormModal", () => {
     const colorInput = controls[2].querySelector("input");
     if (!colorInput) throw new Error("colour input not found");
     await user.type(colorInput, "NewColor");
-    await user.click(await screen.findByText(/create "newcolor"/i));
+    await user.click(await screen.findByText("select.create"));
 
     expect(screen.getByLabelText("spooler.templates.colorHex")).toHaveValue("");
   });
@@ -543,7 +543,7 @@ describe("TemplateFormModal", () => {
     expect(typeInput).not.toBeNull();
     if (typeInput) {
       await user.type(typeInput, "OtherType");
-      const createOtherType = await screen.findByText(/create "othertype"/i);
+      const createOtherType = await screen.findByText("select.create");
       await user.click(createOtherType);
     }
 
@@ -758,6 +758,26 @@ describe("TemplateFormModal", () => {
     await user.click(presetBtn);
 
     expect(addLookupColorMock).toHaveBeenCalledWith(expect.objectContaining({ name: "CustomColor", hex: "#ef4444" }));
+  });
+
+  it("adds a custom colour once when it is picked and the template is then saved (#106)", async () => {
+    const user = userEvent.setup();
+    render(<TemplateFormModal isOpen={true} onClose={vi.fn()} />);
+
+    const controls = document.body.querySelectorAll(".react-select__control");
+    await user.click(controls[0]);
+    await user.click(await screen.findByText("CustomMat"));
+    await user.click(controls[1]);
+    await user.click(await screen.findByText("CustomType"));
+    await user.click(controls[2]);
+    await user.click(await screen.findByText("CustomColor"));
+    await user.click(screen.getByRole("button", { name: "Pick color" }));
+    await user.click(await screen.findByRole("button", { name: "Color #ef4444" }));
+
+    await user.click(screen.getByRole("button", { name: "spooler.templates.saveTemplate" }));
+
+    expect(addMutationMock).toHaveBeenCalled();
+    expect(addLookupColorMock).toHaveBeenCalledTimes(1);
   });
 
   it("renders saving state when mutation is pending", () => {

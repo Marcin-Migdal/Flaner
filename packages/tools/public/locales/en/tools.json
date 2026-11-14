@@ -63,7 +63,8 @@
         "materialRequired": "Material is required",
         "typeRequired": "Type is required",
         "colorRequired": "Color is required",
-        "alreadyExists": "A template with these parameters (material, type, and color) already exists."
+        "alreadyExists": "A template with these parameters (material, type, and color) already exists.",
+        "weightPositive": "Default weight must be a positive number"
       }
     },
     "spools": {
@@ -129,6 +130,7 @@
       "preferences": "Preferences",
       "startupWasteLabel": "Startup Waste (g)",
       "startupWasteDesc": "Filament weight consumed by printer startup procedures (purge, nozzle cleaning, poop). This will be automatically added when recording usage.",
+      "startupWasteRange": "Startup waste must be between 0 and 100 g",
       "saveSuccess": "Settings saved successfully!"
     },
     "filaments": {

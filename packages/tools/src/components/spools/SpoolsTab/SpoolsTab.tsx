@@ -38,7 +38,8 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
   const [usageSpool, setUsageSpool] = useState<FilamentSpool | null>(null);
 
   // History Modal State
-  const [historySpool, setHistorySpool] = useState<FilamentSpool | null>(null);
+  // By id, so the open modal shows the live spool (e.g. its weight after an undo)
+  const [historySpoolId, setHistorySpoolId] = useState<string | null>(null);
 
   // Undo Last Print Confirm State
   const [undoLastSpoolConfirm, setUndoLastSpoolConfirm] = useState<FilamentSpool | null>(null);
@@ -51,6 +52,7 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
 
   // Fetch Spools
   const { data: spools = [], isLoading } = useGetSpoolsQuery();
+  const historySpool = spools.find((spool) => spool.id === historySpoolId);
 
   // Mutations
   const markAsFinishedMutation = useMarkSpoolAsFinishedMutation({
@@ -117,7 +119,7 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
               onEdit={() => setSpoolForm({ mode: "edit", spool })}
               onMarkFinished={() => setManualFinishSpool(spool)}
               onDelete={() => setDeletingSpool(spool)}
-              onViewHistory={() => setHistorySpool(spool)}
+              onViewHistory={() => setHistorySpoolId(spool.id)}
               onUndoLastPrint={() => setUndoLastSpoolConfirm(spool)}
             />
           ))}
@@ -141,7 +143,7 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
                 spool={spool}
                 onClone={() => openClone(spool, 0)}
                 onDelete={() => setDeletingSpool(spool)}
-                onViewHistory={() => setHistorySpool(spool)}
+                onViewHistory={() => setHistorySpoolId(spool.id)}
               />
             ))}
           </div>
@@ -171,7 +173,7 @@ export const SpoolsTab: React.FC<SpoolsTabProps> = ({
       {historySpool && (
         <SpoolHistoryModal
           isOpen={!!historySpool}
-          onClose={() => setHistorySpool(null)}
+          onClose={() => setHistorySpoolId(null)}
           spool={historySpool}
         />
       )}

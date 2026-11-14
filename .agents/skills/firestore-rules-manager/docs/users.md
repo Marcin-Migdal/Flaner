@@ -184,7 +184,7 @@ match /friendships/{friendId} {
 | Group invitation accepted / rejected | `acceptGroupInvitation`, `rejectGroupInvitation` (community) | create in the inviter's inbox, in the answer batch |
 | Join request accepted / rejected | `acceptJoinRequest`, `rejectJoinRequest` (community) | create in the requester's inbox, in the resolve batch |
 | Ownership transferred | `transferGroupOwnership` (community) | create in the new owner's inbox, in the transfer batch |
-| Group deleted | `deleteGroup` (community) | create per member (not the owner), in the final delete batch |
+| Group deleted | `deleteGroup` (community) | create per member (not the owner), in batches after the group is deleted |
 | Event invitation / reopened | `createSchedulerEvent`, `unfinalizeSchedulerEvent` (planning) | create per participant, in the event batch |
 | Split group invitation | `createSplitGroup`, `addParticipantToGroup` (planning) | create per new participant, in the group batch / transaction |
 | Pending settlement | `createSettlement` (planning) | create in receiver's inbox, in the transaction |

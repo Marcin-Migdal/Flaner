@@ -62,6 +62,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
 
   const [deleteTarget, setDeleteTarget] = useState<DeleteLookupTarget | null>(null);
   const subDialogClosingRef = useRef(false);
+  const savedColorKeyRef = useRef<string | null>(null);
 
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -274,7 +275,10 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
     if (!HEX_COLOR_REGEX.test(formattedVal)) return;
 
     setValue("colorHex", formattedVal);
-    if (isCustomColor && watchMaterial && watchType) {
+    // Blur of the hex field and the submit both save: store each colour + hex once
+    const colorKey = [watchMaterial, watchType, watchColorName, formattedVal].join("|");
+    if (isCustomColor && watchMaterial && watchType && savedColorKeyRef.current !== colorKey) {
+      savedColorKeyRef.current = colorKey;
       addLookupColorMutation.mutate({
         materialName: watchMaterial,
         typeName: watchType,

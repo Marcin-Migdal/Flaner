@@ -15,7 +15,7 @@ describe("useCreateGroupMutation", () => {
     vi.clearAllMocks();
   });
 
-  it("calls createGroup and refreshes the user's groups and the global group search", async () => {
+  it("calls createGroup and refreshes only the global group search (the user's groups are listener-backed)", async () => {
     vi.mocked(groupsApi.createGroup).mockResolvedValueOnce("new-grp-id");
 
     const { result, queryClient } = renderHookWithProviders(() => useCreateGroupMutation(), { user: mockUser });
@@ -35,7 +35,7 @@ describe("useCreateGroupMutation", () => {
       "user-123"
     );
     // The owner just got access to the new group (see queryKeys/groups), and the global search is stale
-    expect(invalidateSpy.mock.calls).toEqual([[{ queryKey: ["groups", "user", "user-123"] }], [{ queryKey: ["groups", "search"] }]]);
+    expect(invalidateSpy.mock.calls).toEqual([[{ queryKey: ["groups", "search"] }]]);
   });
 
   it("throws error when user is not authenticated", async () => {
