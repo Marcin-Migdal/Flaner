@@ -85,6 +85,16 @@ describe("Select component", () => {
     );
   });
 
+  it("labels the create option with a translation key, not react-select's English text (#106)", async () => {
+    const user = userEvent.setup();
+    render(<Select label="Tags" creatable options={mockOptions} />);
+
+    await user.type(screen.getByRole("combobox"), "Snow");
+
+    expect(screen.getByText("select.create")).toBeInTheDocument();
+    expect(screen.queryByText('Create "Snow"')).not.toBeInTheDocument();
+  });
+
   it("renders disabled state", () => {
     const { container } = render(
       <Select

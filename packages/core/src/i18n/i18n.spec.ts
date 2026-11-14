@@ -29,4 +29,13 @@ describe("core i18n configuration", () => {
       expect(communityPath).toMatch(/https?:\/\/.*\/locales\/en\/community\.json/);
     }
   });
+
+  it("uses \"a\", not \"an\", before a consonant in the English texts (#106)", () => {
+    const texts = Object.values(
+      import.meta.glob<string>("../../public/locales/en/*.json", { query: "?raw", import: "default", eager: true }),
+    );
+    expect(texts.length).toBeGreaterThan(0);
+
+    expect(texts.join("\n").match(/\ban [bcdfgjklmnpqrstvwxyz]\w*/gi)).toBeNull();
+  });
 });

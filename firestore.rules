@@ -121,7 +121,9 @@ service cloud.firestore {
     // GRUPY (KOLEKCJA GŁÓWNA)
     // ==========================================
     match /groups/{groupId} {
+      // resource == null: a listener on a group that was just deleted gets "not found", not an evaluation error (#106)
       allow read: if isAuthenticated() && (
+        resource == null ||
         resource.data.type == 'public' ||
         exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)) ||
         exists(/databases/$(database)/documents/groups/$(groupId)/invitations/$(request.auth.uid))

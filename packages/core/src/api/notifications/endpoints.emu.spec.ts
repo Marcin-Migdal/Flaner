@@ -50,6 +50,22 @@ describe("core notifications endpoints", () => {
       unsubscribe();
     });
 
+    it("counts a notification created after subscribing as added, even in the first server snapshot (#106)", async () => {
+      await seedInbox("user-1", [notification("old", { createdAt: 1 })]);
+      await signInAs("user-1");
+      const onUpdate = vi.fn<(all: AppNotification[], added: AppNotification[]) => void>();
+
+      const unsubscribe = subscribeToNotifications("user-1", onUpdate, vi.fn());
+      // Seeded before the listener has synced, so it may arrive together with "old"
+      await seedInbox("user-1", [notification("fresh", { createdAt: Date.now() + 1 })]);
+
+      await vi.waitFor(() =>
+        expect(onUpdate.mock.calls.flatMap(([, added]) => added).map((n) => n.id)).toEqual(["fresh"]),
+        { timeout: 5000 },
+      );
+      unsubscribe();
+    });
+
     it("passes a denied listener (someone else's inbox) to onError", async () => {
       await signInAs("user-2");
       const onError = vi.fn();

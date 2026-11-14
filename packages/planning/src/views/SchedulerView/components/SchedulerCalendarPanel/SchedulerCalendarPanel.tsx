@@ -26,7 +26,8 @@ export const SchedulerCalendarPanel = ({
   const [isRankedSheetOpen, setIsRankedSheetOpen] = useState(false);
 
   const topVotedSlotIndices = useMemo(
-    () => (activeEvent ? rankSlots(activeEvent).topSlotIndices : new Set<number>()),
+    // A finalized event highlights only its winning slot
+    () => (activeEvent && !activeEvent.isFinalized ? rankSlots(activeEvent).topSlotIndices : new Set<number>()),
     [activeEvent],
   );
 

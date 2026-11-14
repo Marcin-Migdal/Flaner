@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TooltipProvider } from "@flaner/ui-components";
 import { SpoolsTab } from "./SpoolsTab";
@@ -295,6 +295,29 @@ describe("SpoolsTab", () => {
     await user.click(historyMenuItem);
 
     expect(screen.getByRole("heading", { name: "spooler.spools.printHistory" })).toBeInTheDocument();
+  });
+
+  it("shows the live spool weight in the open history modal (#106)", async () => {
+    const user = userEvent.setup();
+    const { container, rerender } = renderWithTooltip(
+      <SpoolsTab templates={mockTemplates} onNavigateToTemplates={vi.fn()} />
+    );
+
+    const moreBtn = container.querySelector("button[aria-haspopup='menu']");
+    if (moreBtn) await user.click(moreBtn);
+    await user.click(await screen.findByText("spooler.spools.printHistory"));
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText("750g")).toBeInTheDocument();
+
+    // An undo restores the weight: the spools query delivers the updated spool
+    queryState = { ...queryState, data: [{ ...mockSpools[0], currentWeight: 760 }, mockSpools[1]] };
+    rerender(
+      <TooltipProvider>
+        <SpoolsTab templates={mockTemplates} onNavigateToTemplates={vi.fn()} />
+      </TooltipProvider>
+    );
+
+    expect(within(screen.getByRole("dialog")).getByText("760g")).toBeInTheDocument();
   });
 
   it("opens confirmation and triggers undo last print", async () => {

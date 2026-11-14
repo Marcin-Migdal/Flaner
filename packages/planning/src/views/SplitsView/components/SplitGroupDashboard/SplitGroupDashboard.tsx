@@ -33,8 +33,8 @@ export const SplitGroupDashboard = ({ group, onBack }: SplitGroupDashboardProps)
   const [settleUpDraft, setSettleUpDraft] = useState<SettleUpDraft | null>(null);
 
   const { members, getMember, getMemberName, isLoading: isMembersLoading } = useSplitGroupMembers(group);
-  const { data: expenses = [], isLoading: isExpensesLoading } = useGetGroupExpensesQuery(group.id);
-  const { data: settlements = [], isLoading: isSettlementsLoading } = useGetGroupSettlementsQuery(group.id);
+  const { data: expenses = [], isLoading: isExpensesLoading } = useGetGroupExpensesQuery(group);
+  const { data: settlements = [], isLoading: isSettlementsLoading } = useGetGroupSettlementsQuery(group);
   useSyncSplitGroupFeed(group);
 
   const activeDebts = useMemo(() => getActiveDebts(group), [group]);

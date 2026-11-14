@@ -11,6 +11,7 @@ import CreatableSelect, { type CreatableProps } from "react-select/creatable";
 import { Field, FieldDescription, FieldError, FieldLabel } from "../ui/field";
 import { selectControlVariants, selectOptionVariants } from "./Select.styles";
 import { cn } from "@flaner/shared/utils";
+import { useUiTranslations } from "../../hooks/useUiTranslations";
 
 export type SelectOption = {
   label: string;
@@ -147,6 +148,7 @@ export const Select = <Option extends SelectOption = SelectOption>({
   classNames: externalClassNames,
   ...props
 }: CustomSelectProps<Option>) => {
+  const { t } = useUiTranslations();
   const defaultId = useId();
   const selectId = customId || defaultId;
   const [isMenuOpenState, setIsMenuOpenState] = useState(false);
@@ -277,6 +279,7 @@ export const Select = <Option extends SelectOption = SelectOption>({
             closeMenuOnScroll={closeMenuOnScroll}
             onMenuOpen={handleMenuOpen}
             onMenuClose={handleMenuClose}
+            formatCreateLabel={(inputValue) => t("select.create", { value: inputValue })}
             {...props}
           />
         ) : (

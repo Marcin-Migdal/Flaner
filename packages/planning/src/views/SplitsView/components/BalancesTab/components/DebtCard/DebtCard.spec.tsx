@@ -106,6 +106,9 @@ describe("DebtCard", () => {
       </TooltipProvider>,
     );
 
+    // The pending marker is announced, not only a coloured dot (#106)
+    expect(screen.getByRole("img", { name: "splits.settlements.pendingBadge" })).toBeInTheDocument();
+
     const markBtn = screen.getByRole("button", { name: "splits.actions.markAsPaid" });
     await user.click(markBtn);
 

@@ -10,7 +10,9 @@ export const getTemplateSchema = (t: TranslateFn) =>
     colorHex: z
       .string()
       .transform((val) => (val && val.trim() ? (val.trim().startsWith("#") ? val.trim() : `#${val.trim()}`) : "#ffffff")),
-    defaultWeight: z.number().positive(),
+    defaultWeight: z
+      .number({ message: t("spooler.templates.validation.weightPositive") })
+      .positive(t("spooler.templates.validation.weightPositive")),
   });
 
 export type TemplateFormData = z.infer<ReturnType<typeof getTemplateSchema>>;

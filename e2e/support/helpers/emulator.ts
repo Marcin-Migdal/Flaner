@@ -1,5 +1,5 @@
 import type { DocumentReference } from "firebase/firestore";
-import type { FriendshipDoc } from "../../../packages/community/src/api/users/types";
+import type { FriendRequest, FriendshipDoc } from "../../../packages/community/src/api/users/types";
 import type { Group, GroupInvitation, GroupMember, GroupRole } from "../../../packages/community/src/api/groups/types";
 import type { EventVotes, ProposedDateSlot, SchedulerEvent } from "../../../packages/planning/src/api/events/types";
 import type { AmountsByCurrency, Expense, Settlement, SplitGroup } from "../../../packages/planning/src/api/splits/types";
@@ -205,6 +205,23 @@ export const seedFriendship = async (a: E2EUser, b: E2EUser, createdAt = Date.no
     seedDocument(`users/${a.uid}/friendships/${b.uid}`, friendship(b)),
     seedDocument(`users/${b.uid}/friendships/${a.uid}`, friendship(a)),
   ]);
+};
+
+/** A pending friend request from `sender` to `receiver`, as `sendFriendRequest` writes it. */
+export const seedFriendRequest = async (sender: E2EUser, receiver: E2EUser) => {
+  const id = `${sender.uid}_${receiver.uid}`;
+  const request: FriendRequest = {
+    id,
+    senderUid: sender.uid,
+    receiverUid: receiver.uid,
+    senderUsername: sender.username,
+    senderAvatarUrl: sender.avatarUrl,
+    receiverUsername: receiver.username,
+    receiverAvatarUrl: receiver.avatarUrl,
+    status: "pending",
+    createdAt: Date.now(),
+  };
+  await seedDocument(`friendRequests/${id}`, request);
 };
 
 /** Seeds a notification in `recipient`'s inbox at `id` (deterministic ids: `{type}_{sourceId}`). */

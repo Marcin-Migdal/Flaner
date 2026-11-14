@@ -46,4 +46,11 @@ describe("template-schema", () => {
       schema.safeParse({ material: "PLA", type: "Basic", colorName: "", colorHex: "#ff0000", defaultWeight: 1000 }).success
     ).toBe(false);
   });
+
+  it("uses a translation key for a missing or non-positive default weight (#106)", () => {
+    for (const defaultWeight of [undefined, 0]) {
+      const result = schema.safeParse({ material: "PLA", type: "Basic", colorName: "Red", colorHex: "#ff0000", defaultWeight });
+      expect(result.error?.issues[0].message).toBe("translated:spooler.templates.validation.weightPositive");
+    }
+  });
 });

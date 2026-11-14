@@ -2,6 +2,9 @@
   "loading": "Ładowanie...",
   "confirm": "Potwierdź",
   "cancel": "Anuluj",
+  "select": {
+    "create": "Utwórz \"{{value}}\""
+  },
   "imagePicker": {
     "invalidFileType": "Wybrany plik musi być obrazem (JPEG, PNG itp.).",
     "fileTooSmall": "Plik jest za mały (minimum {{size}}).",

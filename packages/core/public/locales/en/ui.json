@@ -2,6 +2,9 @@
   "loading": "Loading...",
   "confirm": "Confirm",
   "cancel": "Cancel",
+  "select": {
+    "create": "Create \"{{value}}\""
+  },
   "imagePicker": {
     "invalidFileType": "Selected file must be an image (JPEG, PNG, etc.).",
     "fileTooSmall": "File is too small (minimum {{size}}).",
