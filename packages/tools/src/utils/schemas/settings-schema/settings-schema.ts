@@ -1,8 +1,13 @@
 import * as z from "zod";
 
-export const getSettingsSchema = () =>
+type TranslateFn = (key: string) => string;
+
+export const getSettingsSchema = (t: TranslateFn) =>
   z.object({
-    startupWaste: z.number().min(0).max(100),
+    startupWaste: z
+      .number({ message: t("spooler.settings.startupWasteRange") })
+      .min(0, t("spooler.settings.startupWasteRange"))
+      .max(100, t("spooler.settings.startupWasteRange")),
   });
 
 export type SettingsFormData = z.infer<ReturnType<typeof getSettingsSchema>>;

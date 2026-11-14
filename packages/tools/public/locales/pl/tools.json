@@ -63,7 +63,8 @@
         "materialRequired": "Materiał jest wymagany",
         "typeRequired": "Typ jest wymagany",
         "colorRequired": "Kolor jest wymagany",
-        "alreadyExists": "Szablon o tych parametrach (materiał, typ i kolor) już istnieje."
+        "alreadyExists": "Szablon o tych parametrach (materiał, typ i kolor) już istnieje.",
+        "weightPositive": "Domyślna waga musi być liczbą dodatnią"
       }
     },
     "spools": {
@@ -129,6 +130,7 @@
       "preferences": "Preferencje",
       "startupWasteLabel": "Ubytek startowy (g)",
       "startupWasteDesc": "Waga filamentu zużywana na procedurę startową drukarki (czyszczenie dyszy, purge, poop itp.). Ta wartość będzie automatycznie doliczana przy rejestracji ubytku ze szpuli.",
+      "startupWasteRange": "Odpad startowy musi mieścić się w zakresie 0–100 g",
       "saveSuccess": "Ustawienia zapisane pomyślnie!"
     },
     "filaments": {
