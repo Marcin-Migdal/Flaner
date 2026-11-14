@@ -760,6 +760,26 @@ describe("TemplateFormModal", () => {
     expect(addLookupColorMock).toHaveBeenCalledWith(expect.objectContaining({ name: "CustomColor", hex: "#ef4444" }));
   });
 
+  it("adds a custom colour once when it is picked and the template is then saved (#106)", async () => {
+    const user = userEvent.setup();
+    render(<TemplateFormModal isOpen={true} onClose={vi.fn()} />);
+
+    const controls = document.body.querySelectorAll(".react-select__control");
+    await user.click(controls[0]);
+    await user.click(await screen.findByText("CustomMat"));
+    await user.click(controls[1]);
+    await user.click(await screen.findByText("CustomType"));
+    await user.click(controls[2]);
+    await user.click(await screen.findByText("CustomColor"));
+    await user.click(screen.getByRole("button", { name: "Pick color" }));
+    await user.click(await screen.findByRole("button", { name: "Color #ef4444" }));
+
+    await user.click(screen.getByRole("button", { name: "spooler.templates.saveTemplate" }));
+
+    expect(addMutationMock).toHaveBeenCalled();
+    expect(addLookupColorMock).toHaveBeenCalledTimes(1);
+  });
+
   it("renders saving state when mutation is pending", () => {
     mockIsPending = true;
     render(<TemplateFormModal isOpen={true} onClose={vi.fn()} />);
