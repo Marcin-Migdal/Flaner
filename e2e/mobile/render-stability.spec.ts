@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { expectNoHorizontalScroll } from "../support/helpers/viewport";
-import { signInAsNewUser } from "../support/helpers/auth";
+import { signIn, signInAsNewUser } from "../support/helpers/auth";
+import { createUser, seedFriendRequest } from "../support/helpers/emulator";
 import { AppShellPage } from "../support/pages/AppShell.page";
 import { LoginPage } from "../support/pages/LoginPage.page";
 
@@ -79,5 +80,20 @@ test.describe("Mobile Render Stability", () => {
       // Verify no horizontal overflow when drawer is open
       await expectNoHorizontalScroll(page);
     });
+  });
+
+  test("a friend request in the invitations panel keeps the sender's name visible at 375px (#106)", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 800 });
+    const [receiver, sender] = await Promise.all([createUser(), createUser({ username: "Somebody Long" })]);
+    await seedFriendRequest(sender, receiver);
+    await signIn(page, receiver);
+
+    await page.goto("/community/friends");
+    await page.getByRole("button", { name: /^invitations$/i }).click();
+    const panel = page.getByRole("dialog");
+
+    await expect(panel.getByText(sender.username, { exact: true })).toBeVisible();
+    await expect(panel.getByRole("button", { name: /^decline$/i })).toBeVisible();
+    await expectNoHorizontalScroll(page);
   });
 });
