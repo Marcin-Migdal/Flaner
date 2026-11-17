@@ -204,3 +204,37 @@ The built-in list of known materials, filament types and colours.
 **Custom (material, filament type, colour)**:
 An entry the user added because it is not in the filament catalog.
 _Avoid_: lookup (in prose; it is the storage word)
+
+## Budget
+
+**Transaction**:
+One money movement of a single user, imported from a bank statement file or entered by hand: a date, an amount and who it was with.
+_Avoid_: expense (that word is for split groups), payment, operation
+
+**Recurring transaction**:
+A transaction that repeats on a regular interval (a subscription, a bill, rent, a loan instalment) and has a next due date.
+_Avoid_: recurring payment, recurring expense, subscription (as the general term)
+
+**Account**:
+A place a user's money sits (a bank account, a cash wallet); every transaction belongs to exactly one account. All accounts feed one shared transaction list.
+_Avoid_: wallet, bank account (as the general term)
+
+**Main account**:
+The account preselected for every new or imported transaction; a user creates it before anything else.
+_Avoid_: default account, primary account
+
+**Category / Subcategory**:
+The two-level tree a transaction is classified by, e.g. Food / Groceries. Expenses and income have separate trees; each user owns and edits their own copy, seeded from the default list.
+_Avoid_: tag (a separate, unrelated concept), type
+
+**Main currency**:
+The one currency a user's budget and reports are shown in; a transaction in another currency keeps its original amount and also carries the amount converted at the rate of its date.
+_Avoid_: base currency, default currency
+
+**Transaction part**:
+One piece of a transaction that was broken down, with its own subcategory and amount; the parts add up to the transaction.
+_Avoid_: split (that word is for split groups), share, line
+
+**Excluded transaction**:
+A transaction that stays in the list but is left out of summaries, the budget and charts.
+_Avoid_: irrelevant, hidden, ignored
