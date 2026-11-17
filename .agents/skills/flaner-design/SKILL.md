@@ -24,7 +24,7 @@ Read `design-system/brand-book.md` before designing or reviewing any view. It is
 
 ## 1. Designing a view with Claude Design
 
-1. Agree on the requirements first (`/grill-with-docs`, then `/to-spec`).
+1. Agree on the requirements first. Wayfinder route: the design is a `wayfinder:prototype` ticket on the map, worked after the grilling tickets it depends on, and the Design artifact is linked from that ticket. Grill route: `/grill-with-docs`, then `/to-spec`; design before `/to-tickets` and link it from the spec.
 2. Write the brief with the template in §2.
 3. Create the design:
    - **Claude Code / claude.ai:** `Artifact` `action: "quickstart"`, `intent: "design"` — its result names the Design type and the design systems you can use; pick **Flaner** (link above), then create the design from the Design type with the brief. Mount the real components as the design system's README ("Consuming this system") says — `x-import` of `Flaner.<Component>`, icons via `Flaner.Icon`; the pilot canvas shows the pattern (one parameterised `Main.dc.html`, other artboards `dc-import` it with `dark` / `desktop` / `empty`).
