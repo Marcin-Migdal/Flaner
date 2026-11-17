@@ -1,6 +1,16 @@
 # Issue tracker: GitHub
 
-Issues and specs for this repo live as GitHub issues in `Marcin-Migdal/Flaner`. Use the `gh` CLI for all operations. New issues follow the template `.github/ISSUE_TEMPLATE/task.yml` and carry the repo's `area:*`, `type:*` and `priority:*` labels alongside the triage labels.
+Issues and specs for this repo live as GitHub issues in `Marcin-Migdal/Flaner`. Use the `gh` CLI for all operations. Templates and labels: **Flaner conventions** below.
+
+## Flaner conventions
+
+- **Templates:** issues a skill creates (wayfinder map and tickets, `/to-spec` spec, `/to-tickets` tickets) use that skill's template. `.github/ISSUE_TEMPLATE/task.yml` is for deferred work filed by hand or outside those skills.
+- **Labels by issue kind:**
+  - Wayfinder map: `wayfinder:map` only. Decision tickets: `wayfinder:<type>` only. No triage, `area:*`, `type:*` or `priority:*` labels (wayfinder rule). When an existing feature issue becomes a map, its old labels come off.
+  - Spec (`/to-spec`): `ready-for-agent` plus `area:*` and `type:feature`. It is a sub-issue of the wayfinder map when one exists.
+  - Tickets (`/to-tickets`): sub-issues of the spec, `ready-for-agent` plus `area:*`; `priority:*` optional.
+  - Hand-filed backlog (`task.yml`): `area:*`, `type:*`, `priority:*`; a triage label once triaged.
+- **Closing:** the PR closes the spec and its tickets (`Closes #N`); `/implement` closes nothing itself.
 
 ## Conventions
 

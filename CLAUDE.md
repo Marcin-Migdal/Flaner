@@ -2,7 +2,7 @@
 
 Nx monorepo (npm workspaces): React 19 + Vite 8 + Module Federation, Firebase (Firestore + Auth), each app deployed separately to Vercel.
 
-The single source of truth for AI rules and skills is `.agents/` (shared with Cursor / Antigravity). `.claude/skills` is a junction to `.agents/skills`, so the project skills are available directly in Claude Code. The junction is gitignored — after a fresh clone recreate it (PowerShell): `New-Item -ItemType Junction -Path .claude\skills -Target .agents\skills`.
+The single source of truth for AI rules and skills is `.agents/`. `.claude/skills` is a junction to `.agents/skills`, so the project skills are available directly in Claude Code. The junction is gitignored — after a fresh clone recreate it (PowerShell): `New-Item -ItemType Junction -Path .claude\skills -Target .agents\skills`.
 
 ## Packages
 - `core` — MF host (routing, i18n, `mf.ts`, `sw.ts`)
@@ -35,7 +35,7 @@ The single source of truth for AI rules and skills is `.agents/` (shared with Cu
 
 ## Agent skills
 
-Feature work uses the `mattpocock-skills` Claude Code plugin (`grill-with-docs` → `to-spec` → `to-tickets` → `implement`). Install it once per machine: add marketplace `mattpocock` (GitHub `mattpocock/skills`) and enable `mattpocock-skills@mattpocock` in `~/.claude/settings.json` (`extraKnownMarketplaces` / `enabledPlugins`), then restart Claude.
+Feature work uses the `mattpocock-skills` Claude Code plugin (`wayfinder` for a large, unclear effort; otherwise `grill-with-docs` → `to-spec` → `to-tickets` → `implement`). Routes and the Flaner steps around them: `.agents/workflows/01-feature-workflow.md`. Skills the user invokes may run the git steps they define, within the guardrails in `.agents/AGENTS.md`. Install it once per machine: add marketplace `mattpocock` (GitHub `mattpocock/skills`) and enable `mattpocock-skills@mattpocock` in `~/.claude/settings.json` (`extraKnownMarketplaces` / `enabledPlugins`), then restart Claude.
 
 ### Issue tracker
 
@@ -51,7 +51,6 @@ Single-context: root `GLOSSARY.md` + `docs/adr/`. See `docs/agents/domain.md`.
 
 ## Rules (imported)
 @.agents/AGENTS.md
-@.agents/rules/01-ai-protocol.md
 @.agents/rules/02-project-standards.md
 @.agents/rules/03-package-structures.md
 

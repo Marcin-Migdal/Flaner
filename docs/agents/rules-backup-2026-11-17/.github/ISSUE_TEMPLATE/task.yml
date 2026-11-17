@@ -1,0 +1,34 @@
+name: Task
+description: Work for later (bug, security, tech debt, feature) with enough context to pick it up in a fresh session.
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why this matters — what is wrong or missing today, and how it was found.
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: The expected end state, in one or two sentences.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and files
+      description: Packages, files (`path:line`), Firestore collections / rules spec files involved; what is out of scope.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Checklist that proves it is done (tests, behaviour, docs).
+      value: |
+        - [ ]
+  - type: textarea
+    id: links
+    attributes:
+      label: Links
+      description: Related issues, PRs, review notes.
