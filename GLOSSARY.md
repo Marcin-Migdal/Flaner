@@ -238,3 +238,7 @@ _Avoid_: split (that word is for split groups), share, line
 **Excluded transaction**:
 A transaction that stays in the list but is left out of summaries, the budget and charts.
 _Avoid_: irrelevant, hidden, ignored
+
+**Planner**:
+The part of the Budget where a user plans a calendar month: the limits per category and how the month's transactions measure up against them.
+_Avoid_: Planning (the whole area that holds the Scheduler, Splits and the Budget), Scheduler, budget (as the name of this part)
