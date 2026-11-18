@@ -216,8 +216,12 @@ A transaction that repeats on a regular interval (a subscription, a bill, rent, 
 _Avoid_: recurring payment, recurring expense, subscription (as the general term)
 
 **Account**:
-A place a user's money sits (a bank account, a cash wallet); every transaction belongs to exactly one account. All accounts feed one shared transaction list.
+A place a user's money sits (a bank account, a cash wallet); every transaction belongs to exactly one account. All accounts feed one shared transaction list. An account has a default currency, but may hold transactions in several currencies.
 _Avoid_: wallet, bank account (as the general term)
+
+**Hidden account**:
+An account whose transactions are left out of the transaction list, summaries, the budget and charts until the user picks that account explicitly. The main account cannot be hidden.
+_Avoid_: archived account, inactive account
 
 **Main account**:
 The account preselected for every new or imported transaction; a user creates it before anything else.
@@ -236,8 +240,20 @@ One piece of a transaction that was broken down, with its own subcategory and am
 _Avoid_: split (that word is for split groups), share, line
 
 **Excluded transaction**:
-A transaction that stays in the list but is left out of summaries, the budget and charts.
+A transaction left out of summaries, the budget and charts. It is hidden from the transaction list unless the user asks to see excluded transactions, so the exclusion can be undone. A single transaction part can be excluded too; it stays visible, greyed out, inside its transaction.
 _Avoid_: irrelevant, hidden, ignored
+
+**Unconfirmed transaction**:
+A transaction whose category was guessed by a categorization rule, or that has no category yet. It becomes confirmed once the user sets or approves its category.
+_Avoid_: pending, unverified
+
+**Own transfer**:
+A transaction marked by the user as money moved between their own accounts. It is still counted like any other transaction; the mark only lets the user find it.
+_Avoid_: internal transfer, transfer (as the general term)
+
+**Linked refund**:
+An incoming transaction tied to the expense it refunds. The expense gets an excluded part of the refund's amount and the refund itself becomes excluded, so the expense costs less and the refund never counts as income.
+_Avoid_: return, chargeback, reimbursement
 
 **Planner**:
 The part of the Budget where a user plans a calendar month: the limits per category and how the month's transactions measure up against them.
