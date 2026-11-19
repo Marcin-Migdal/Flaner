@@ -258,3 +258,15 @@ _Avoid_: return, chargeback, reimbursement
 **Planner**:
 The part of the Budget where a user plans a calendar month: the limits per category and how the month's transactions measure up against them.
 _Avoid_: Planning (the whole area that holds the Scheduler, Splits and the Budget), Scheduler, budget (as the name of this part)
+
+**Limit**:
+The most a user plans to spend in one expense category or subcategory in one calendar month. Money left unspent never carries over to the next month, and neither does overspending.
+_Avoid_: budget (as a single amount), cap, allowance
+
+**Planned income**:
+The income a user expects in one income category or subcategory in one calendar month.
+_Avoid_: income limit, income target
+
+**Recurring occurrence**:
+One expected appearance of a recurring transaction in a given month, derived from its repeat rule. It is paid once a real transaction is matched to it; until then it is upcoming, and overdue after its due date.
+_Avoid_: instalment, scheduled transaction, planned payment
