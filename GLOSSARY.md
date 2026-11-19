@@ -255,6 +255,10 @@ _Avoid_: internal transfer, transfer (as the general term)
 An incoming transaction tied to the expense it refunds. The expense gets an excluded part of the refund's amount and the refund itself becomes excluded, so the expense costs less and the refund never counts as income.
 _Avoid_: return, chargeback, reimbursement
 
+**Import template**:
+A user's saved description of a bank statement file Flaner does not recognize by itself: which column holds the date, amount, payee and description, and how dates and amounts are written. Once saved, the same kind of file is recognized automatically on the next import.
+_Avoid_: preset, mapping profile, bank format
+
 **Planner**:
 The part of the Budget where a user plans a calendar month: the limits per category and how the month's transactions measure up against them.
 _Avoid_: Planning (the whole area that holds the Scheduler, Splits and the Budget), Scheduler, budget (as the name of this part)
