@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev-emulators",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:emulators"],
+      "port": 4200
+    },
+    {
+      "name": "dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 4200
+    }
+  ]
+}
