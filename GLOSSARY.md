@@ -247,6 +247,10 @@ _Avoid_: irrelevant, hidden, ignored
 A transaction whose category was guessed by a categorization rule, or that has no category yet. It becomes confirmed once the user sets or approves its category.
 _Avoid_: pending, unverified
 
+**Categorization rule**:
+A user's learned link from a counterparty to a category or subcategory, created or replaced whenever the user sets or changes a transaction's category. It recognizes the counterparty by their bank account number when the transaction has one, otherwise by a keyword found in the payee or description. It guesses categories only for new transactions, which stay unconfirmed.
+_Avoid_: auto-category, filter, mapping
+
 **Own transfer**:
 A transaction marked by the user as money moved between their own accounts. It is still counted like any other transaction; the mark only lets the user find it.
 _Avoid_: internal transfer, transfer (as the general term)
