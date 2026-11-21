@@ -212,7 +212,7 @@ One money movement of a single user, imported from a bank statement file or ente
 _Avoid_: expense (that word is for split groups), payment, operation
 
 **Recurring transaction**:
-A transaction that repeats on a regular interval (a subscription, a bill, rent, a loan instalment) and has a next due date.
+Something the user expects to pay or receive on a regular interval (a subscription, a bill, rent, a loan instalment, a salary), with a repeat rule and a next due date. It is created from a transaction, which becomes its first occurrence; every later transaction matched to it is another occurrence. Deleting one of those transactions does not end it.
 _Avoid_: recurring payment, recurring expense, subscription (as the general term)
 
 **Account**:
@@ -244,7 +244,7 @@ A transaction left out of summaries, the budget and charts. It is hidden from th
 _Avoid_: irrelevant, hidden, ignored
 
 **Unconfirmed transaction**:
-A transaction whose category was guessed by a categorization rule, or that has no category yet. It becomes confirmed once the user sets or approves its category.
+A transaction whose category was guessed by a categorization rule, or that has no category (none yet, or its category was deleted). It becomes confirmed once the user sets or approves its category.
 _Avoid_: pending, unverified
 
 **Categorization rule**:
@@ -278,3 +278,11 @@ _Avoid_: income limit, income target
 **Recurring occurrence**:
 One expected appearance of a recurring transaction in a given month, derived from its repeat rule. It is paid once a real transaction is matched to it; until then it is upcoming, and overdue after its due date.
 _Avoid_: instalment, scheduled transaction, planned payment
+
+**Budget passphrase**:
+A second secret, separate from the Flaner login, that unlocks a user's Budget data. Flaner never stores or sees it, so it cannot be reset by email.
+_Avoid_: budget password, PIN, master password
+
+**Recovery key**:
+A long random code shown once when the budget passphrase is set, kept by the user. It unlocks the Budget when the passphrase is forgotten; losing both leaves only resetting the Budget.
+_Avoid_: backup code, recovery phrase
