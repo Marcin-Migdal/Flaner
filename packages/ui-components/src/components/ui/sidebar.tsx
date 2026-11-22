@@ -237,8 +237,11 @@ Sidebar.displayName = "Sidebar"
 
 const SidebarTrigger = React.forwardRef<
   HTMLButtonElement,
-  React.ComponentProps<typeof Button>
->(({ className, onClick, ...props }, ref) => {
+  React.ComponentProps<typeof Button> & {
+    /** Accessible name (translated by the caller). */
+    label: string
+  }
+>(({ className, onClick, label, ...props }, ref) => {
   const { toggleSidebar } = useSidebar()
 
   return (
@@ -254,7 +257,7 @@ const SidebarTrigger = React.forwardRef<
       {...props}
     >
       <PanelLeft className="size-4" />
-      <span className="sr-only">Toggle Sidebar</span>
+      <span className="sr-only">{label}</span>
     </Button>
   )
 })
@@ -526,15 +529,18 @@ SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
 
 const SidebarRail = React.forwardRef<
   HTMLButtonElement,
-  React.ComponentProps<"button">
->(({ className, onClick, ...props }, ref) => {
+  React.ComponentProps<"button"> & {
+    /** Accessible name (translated by the caller). */
+    label: string
+  }
+>(({ className, onClick, label, ...props }, ref) => {
   const { toggleSidebar } = useSidebar()
 
   return (
     <button
       ref={ref}
       data-sidebar="rail"
-      aria-label="Toggle Sidebar"
+      aria-label={label}
       tabIndex={-1}
       onClick={(event) => {
         onClick?.(event)

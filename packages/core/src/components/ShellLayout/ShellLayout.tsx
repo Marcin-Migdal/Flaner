@@ -14,6 +14,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
   LoadingFallback,
+  NavIcon,
   Profile,
   Sidebar,
   SidebarContent,
@@ -31,7 +32,6 @@ import {
   useSidebar,
 } from "@flaner/ui-components";
 import { ChevronRight, ChevronsUpDown, Globe, LogOut, Settings, SunMoon } from "lucide-react";
-import { NavIcon } from "../NavIcon";
 import { Suspense, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useLocation, useNavigation } from "react-router";
@@ -40,6 +40,24 @@ import { NotificationsPopover } from "../notifications/NotificationsPopover";
 import { useUpdateUserPreferencesMutation } from "../../hooks";
 
 const HOME_NAV_ITEM: NavigationItem = { path: "/", labelKey: "nav.home", icon: "home" };
+
+/** Namespaces named by `ns:key` labels (e.g. `planning:nav.budget`), so the sidebar can load and render them. */
+const getNavNamespaces = (items: NavigationItem[]): string[] => {
+  const namespaces = new Set<string>();
+  const visit = (list: NavigationItem[]) => {
+    for (const item of list) {
+      const separator = item.labelKey.indexOf(":");
+      if (separator > 0) namespaces.add(item.labelKey.slice(0, separator));
+      if (item.children) visit(item.children);
+    }
+  };
+  visit(items);
+  return [...namespaces];
+};
+
+/** Active when the path is the current page or one of its ancestors (`/` boundary, so `/a/b` doesn't match `/a/bc`). */
+const isNavPathActive = (path: string, pathname: string) =>
+  path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
 
 export function ShellLayout() {
   return (
@@ -75,13 +93,15 @@ function ShellLayoutContent() {
           .filter((res): res is PromiseFulfilledResult<NavigationItem[]> => res.status === "fulfilled")
           .flatMap((res) => res.value);
 
+        // `ns:key` labels (e.g. `planning:nav.budget`) render only once their MFE namespace is loaded
+        await i18n.loadNamespaces(getNavNamespaces(loadedNavs));
         setNavItems([HOME_NAV_ITEM, ...loadedNavs]);
       } finally {
         setIsNavLoading(false);
       }
     }
     loadNavigation();
-  }, []);
+  }, [i18n]);
 
   useEffect(() => {
     if (user?.language) {
@@ -89,12 +109,7 @@ function ShellLayoutContent() {
     }
   }, [user?.language, i18n]);
 
-  const isLinkActive = (path: string) => {
-    if (path === "/") {
-      return location.pathname === "/";
-    }
-    return location.pathname.startsWith(path);
-  };
+  const isLinkActive = (path: string) => isNavPathActive(path, location.pathname);
 
   const toggleExpanded = (path: string, event?: React.MouseEvent) => {
     if (event) {
@@ -109,6 +124,38 @@ function ShellLayoutContent() {
       };
     });
   };
+
+  const renderExpandToggle = (item: NavigationItem, isExpanded: boolean) => (
+    <SidebarMenuAction
+      onClick={(e) => toggleExpanded(item.path, e)}
+      aria-expanded={isExpanded}
+      aria-label={t("nav.toggleSection", { label: t(item.labelKey) })}
+    >
+      <ChevronRight className={cn("size-4 transition-transform duration-200", isExpanded && "rotate-90")} />
+    </SidebarMenuAction>
+  );
+
+  // Levels 2+ : no icons; an item with children gets its own chevron and nested list
+  const renderSubItems = (items: NavigationItem[]) => (
+    <SidebarMenuSub>
+      {items.map((subItem) => {
+        const hasChildren = !!subItem.children?.length;
+        const isExpanded = expandedItems[subItem.path] ?? isLinkActive(subItem.path);
+
+        return (
+          <SidebarMenuSubItem key={subItem.path}>
+            <SidebarMenuSubButton asChild isActive={isLinkActive(subItem.path)} className={cn(hasChildren && "pr-10 md:pr-8")}>
+              <NavLink to={subItem.path} onClick={handleNavClick}>
+                <span>{t(subItem.labelKey)}</span>
+              </NavLink>
+            </SidebarMenuSubButton>
+            {hasChildren && renderExpandToggle(subItem, isExpanded)}
+            {hasChildren && isExpanded && renderSubItems(subItem.children ?? [])}
+          </SidebarMenuSubItem>
+        );
+      })}
+    </SidebarMenuSub>
+  );
 
   const handleNavClick = () => {
     if (isMobile) {
@@ -154,33 +201,15 @@ function ShellLayoutContent() {
                   <div className="relative w-full flex items-center">
                     <SidebarMenuButton asChild isActive={isLinkActive(item.path)} tooltip={t(item.labelKey)}>
                       <NavLink to={item.path} onClick={handleNavClick}>
-                        <NavIcon name={item.icon} />
+                        {item.icon && <NavIcon name={item.icon} />}
                         <span>{t(item.labelKey)}</span>
                       </NavLink>
                     </SidebarMenuButton>
 
-                    {hasChildren && (
-                      <SidebarMenuAction onClick={(e) => toggleExpanded(item.path, e)}>
-                        <ChevronRight
-                          className={cn("size-4 transition-transform duration-200", isExpanded && "rotate-90")}
-                        />
-                      </SidebarMenuAction>
-                    )}
+                    {hasChildren && renderExpandToggle(item, isExpanded)}
                   </div>
 
-                  {hasChildren && isExpanded && (
-                    <SidebarMenuSub>
-                      {item.children?.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.path}>
-                          <SidebarMenuSubButton asChild isActive={location.pathname === subItem.path}>
-                            <NavLink to={subItem.path} onClick={() => isMobile && setOpenMobile(false)}>
-                              <span>{t(subItem.labelKey)}</span>
-                            </NavLink>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  )}
+                  {hasChildren && isExpanded && renderSubItems(item.children ?? [])}
                 </SidebarMenuItem>
               );
             })}
@@ -302,7 +331,7 @@ function ShellLayoutContent() {
         {/* Mobile Header (Visible only on mobile screen widths) */}
         <header className="flex md:hidden sticky top-0 z-40 h-14 items-center justify-between border-b border-sidebar-border bg-sidebar px-4">
           <div className="flex items-center gap-3">
-            <SidebarTrigger className="size-10 [&_svg]:size-5 rounded-xl" />
+            <SidebarTrigger label={t("nav.toggleSidebar")} className="size-10 [&_svg]:size-5 rounded-xl" />
             <NavLink
               to="/"
               onClick={() => isMobile && setOpenMobile(false)}
@@ -318,7 +347,7 @@ function ShellLayoutContent() {
         <div className="flex-1 relative flex flex-col">
           {/* Desktop Floating Trigger Button (Visible only on desktop, positioned top-left of content) */}
           <div className="hidden md:block absolute top-4 left-6 z-30">
-            <SidebarTrigger />
+            <SidebarTrigger label={t("nav.toggleSidebar")} />
           </div>
 
           <main className="flex-1 py-3 md:py-8 md:pt-16 px-2.5 sm:px-4 md:px-6 overflow-x-hidden">
