@@ -175,6 +175,7 @@ const COLOR_USAGE = {
   "brand-subtle": "Tinted brand background: icon tiles (`PageHeader`, `EmptyState`), selected rows.",
   "chart-positive": "Diverging data: positive balance (= `success`).",
   "chart-negative": "Diverging data: negative balance (= `danger`).",
+  "chart-muted": "Neutral remainder slice or bar (e.g. \"Others\"), ≥ 3:1 vs. background.",
   destructive: "shadcn alias of `danger` (destructive buttons, invalid fields).",
   "destructive-foreground": "Text on `destructive`.",
 };
