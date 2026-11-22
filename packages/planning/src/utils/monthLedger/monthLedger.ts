@@ -43,14 +43,17 @@ export type MonthLedgerInput = {
   accounts: BudgetAccount[];
 };
 
-const signed = (transaction: BudgetTransaction) =>
-  transaction.type === "income" ? transaction.amountMain : -transaction.amountMain;
+/** The month a `YYYY-MM-DD` date falls in. */
+export const monthOfDate = (date: string): BudgetMonth => date.slice(0, 7);
+
+/** An amount with its direction: positive for income, negative for an expense. */
+export const signedAmount = (type: BudgetTransaction["type"], amount: number) => (type === "income" ? amount : -amount);
 
 export const buildMonthLedger = ({ month, transactions, accounts }: MonthLedgerInput): MonthLedger => {
   const hiddenAccountIds = new Set(accounts.filter((account) => account.hidden).map((account) => account.id));
   const counted = transactions.filter(
     (transaction) =>
-      transaction.date.startsWith(`${month}-`) && !transaction.excluded && !hiddenAccountIds.has(transaction.accountId),
+      monthOfDate(transaction.date) === month && !transaction.excluded && !hiddenAccountIds.has(transaction.accountId),
   );
 
   const totals: MonthTotals = { income: 0, expenses: 0, balance: 0 };
@@ -62,7 +65,7 @@ export const buildMonthLedger = ({ month, transactions, accounts }: MonthLedgerI
     else totals.expenses += transaction.amountMain;
 
     const day = daysByDate.get(transaction.date) ?? { date: transaction.date, net: 0, transactions: [] };
-    day.net += signed(transaction);
+    day.net += signedAmount(transaction.type, transaction.amountMain);
     day.transactions.push(transaction);
     daysByDate.set(transaction.date, day);
   }

@@ -485,7 +485,8 @@
       "tabs": {
         "transactions": "Transactions",
         "recurring": "Recurring"
-      }
+      },
+      "add": "Add transaction"
     },
     "settings": {
       "tabs": {
@@ -721,8 +722,7 @@
     "transactionsEmpty": {
       "title": "No transactions yet",
       "description": "Import a bank statement file or add a transaction to get started.",
-      "import": "Import file",
-      "add": "Add transaction"
+      "import": "Import file"
     },
     "transactionList": {
       "uncategorized": "Uncategorized",
@@ -748,7 +748,8 @@
       "title": "You're offline",
       "description": "Months you have already opened stay available. Adding and deleting transactions needs a connection.",
       "noConnection": "No connection. Your change was not saved.",
-      "retry": "Retry"
+      "retry": "Retry",
+      "monthUnavailable": "This month hasn't been opened on this device yet, so it isn't available offline."
     },
     "transactionForm": {
       "title": "Add transaction",

@@ -199,6 +199,7 @@ export const BudgetTransactionDialog = ({
 
               {isForeign && (
                 <div className={styles.conversion}>
+                  {/* Not `FormMoneyInput`: typing here must also set `rateOverridden` */}
                   <MoneyInput
                     ref={amountMainField.ref}
                     name={amountMainField.name}
@@ -263,7 +264,8 @@ export const BudgetTransactionDialog = ({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
                 {t("budget.transactionForm.cancel")}
               </Button>
-              <Button type="submit" variant="brand" isBusy={isPending} disabled={saveDisabled}>
+              {/* Never saves an amount computed from the previous date's / currency's rate */}
+              <Button type="submit" variant="brand" isBusy={isPending} disabled={saveDisabled || (isForeign && isRateFetching)}>
                 {t("budget.transactionForm.save")}
               </Button>
             </div>

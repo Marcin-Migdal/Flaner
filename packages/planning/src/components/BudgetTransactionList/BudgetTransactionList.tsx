@@ -6,7 +6,7 @@ import { CircleHelp, Trash2 } from "lucide-react";
 import type { BudgetAccount, BudgetCategoryTree, BudgetTransaction } from "../../api/budget";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { BUDGET_CATEGORY_COLOR_CLASSES, BUDGET_CATEGORY_ICON_COMPONENTS } from "../../utils/budgetCategoryIcons";
-import { resolveTransactionCategory, type LedgerDay } from "../../utils/monthLedger";
+import { resolveTransactionCategory, signedAmount, type LedgerDay } from "../../utils/monthLedger";
 import { budgetTransactionListStyles as styles } from "./BudgetTransactionList.styles";
 
 export type BudgetTransactionListProps = {
@@ -20,8 +20,6 @@ export type BudgetTransactionListProps = {
   /** Disables the row actions (e.g. offline). */
   actionsDisabled?: boolean;
 };
-
-const signedAmount = (type: BudgetTransaction["type"], amount: number) => (type === "income" ? amount : -amount);
 
 /** The Budget's transaction rows grouped by day, each day with its net. Shared by Transactions and the import preview. */
 export const BudgetTransactionList = ({

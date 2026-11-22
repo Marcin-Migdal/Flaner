@@ -10,7 +10,7 @@ import {
   TabsTrigger,
 } from "@flaner/ui-components";
 import { format } from "date-fns";
-import { FileUp, Plus, ReceiptText } from "lucide-react";
+import { FileUp, Plus, ReceiptText, WifiOff } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import type { BudgetMonth, BudgetTransaction } from "../../api/budget";
@@ -84,6 +84,10 @@ export const BudgetTransactionsView = () => {
   const isError = profile.isError || accounts.isError || categories.isError || transactions.isError;
 
   const renderTransactions = () => {
+    // A month never opened before cannot load offline: its query waits paused for the connection
+    if (transactions.isPending && transactions.fetchStatus === "paused") {
+      return <EmptyState icon={<WifiOff aria-hidden="true" />} title={t("budget.offline.monthUnavailable")} />;
+    }
     if (isLoading) return <LoadingFallback />;
     if (isError || !profile.data || !categories.data || !accounts.data) {
       return <EmptyState title={t("errors.fetchError", { ns: "common" })} />;
@@ -130,7 +134,7 @@ export const BudgetTransactionsView = () => {
         actions={
           <Button variant="brand" disabled={!isOnline || !canAdd} onClick={() => setIsAddOpen(true)}>
             <Plus aria-hidden="true" />
-            {t("budget.transactionsEmpty.add")}
+            {t("budget.transactions.add")}
           </Button>
         }
       />

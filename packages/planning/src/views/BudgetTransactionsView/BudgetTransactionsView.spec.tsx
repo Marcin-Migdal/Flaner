@@ -279,6 +279,19 @@ describe("BudgetTransactionsView", () => {
     expect(screen.getByRole("button", { name: "Delete Biedronka" })).toBeDisabled();
   });
 
+  it("says a month never opened is not available offline instead of showing it empty", async () => {
+    const userEvents = userEvent.setup();
+    renderView();
+    expect(await screen.findByRole("heading", { name: "No transactions yet" })).toBeInTheDocument();
+
+    onlineManager.setOnline(false);
+    await userEvents.click(screen.getByRole("button", { name: "Previous month" }));
+
+    expect(
+      await screen.findByText("This month hasn't been opened on this device yet, so it isn't available offline."),
+    ).toBeInTheDocument();
+  });
+
   it("shows No connection with Retry when a save fails, and retries the save", async () => {
     vi.mocked(budgetApi.addBudgetTransaction).mockRejectedValueOnce(
       new FirebaseError("unavailable", "Failed to get document because the client is offline."),

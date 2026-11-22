@@ -1,5 +1,6 @@
 import type { UserType } from "@flaner/shared/types";
 import type { BudgetMonth } from "../../../api/budget";
+import { monthOfDate } from "../../../utils/monthLedger";
 
 // Budget query keys — the only place that builds them. All fetched (no listeners).
 // - `locked`: the user's stored keys (`budget_keys/{uid}`), read by the Budget gate to pick onboarding or unlock.
@@ -11,11 +12,13 @@ export const budgetKeys = {
   categories: (uid: string) => ["budget", "categories", uid],
   accounts: (uid: string) => ["budget", "accounts", uid],
   transactions: (uid: string, month: BudgetMonth) => ["budget", "transactions", uid, month],
+  /** A published rate (`getExchangeRate`); never changes, so it is never invalidated. */
+  exchangeRate: (from: string, to: string, date: string) => ["budget", "exchangeRate", from, to, date],
 };
 
 /** Which keys each budget write makes stale. */
 export const budgetInvalidation = {
   createBudget: ({ uid }: UserType) => [budgetKeys.locked(uid)],
   /** Adding or deleting a transaction changes its month only. */
-  transactionsChanged: ({ uid }: UserType, { date }: { date: string }) => [budgetKeys.transactions(uid, date.slice(0, 7))],
+  transactionsChanged: ({ uid }: UserType, { date }: { date: string }) => [budgetKeys.transactions(uid, monthOfDate(date))],
 };

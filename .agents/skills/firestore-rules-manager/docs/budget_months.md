@@ -5,7 +5,7 @@ Budget transactions (MFE `planning`, Budget; ADR 0002): one document per account
 ## Invariants
 - **M1** Only members read, update and delete a month; a month that does not exist yet can be read (inside a transaction) only by a member of its account.
 - **M2** `memberIds` is exactly `[me]` on create and on every update, and the caller is a member of the account the month belongs to (`budget_accounts/{accountId}`).
-- **M3** The id is `{accountId}_{month}`: `accountId` and `month` (`YYYY-MM`) match it, so they never change.
+- **M3** The id is `{accountId}_{month}`: `accountId` and `month` (`YYYY-MM`) match it, so they never change. Account ids are Firestore auto-ids (no `_`), so the first `_` splits the id (used when reading a month that does not exist yet).
 - **M4** The doc is a fixed envelope: exactly the schema fields, with the documented types and sizes. `payload` stays below `MAX_MONTH_PAYLOAD_BYTES` (900,000 bytes), which the client checks before writing (size guard, `errors.budget.monthTooLarge`). Content (amounts, categories) is checked on the client.
 
 ## Schema

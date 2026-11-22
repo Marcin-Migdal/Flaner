@@ -26,6 +26,7 @@ import {
   unwrapDataKey,
   wrapDataKey,
 } from "../../utils/budgetCrypto";
+import { monthOfDate } from "../../utils/monthLedger";
 import type {
   BudgetAccount,
   BudgetAccountDoc,
@@ -243,8 +244,6 @@ export const getBudgetAccounts = async (budget: UnlockedBudget): Promise<BudgetA
 // Transactions: one encrypted month document per account and month
 // ---------------------------------------------------------------------------
 
-const monthOf = (date: string): BudgetMonth => date.slice(0, 7);
-
 const readMonth = async (
   transaction: Transaction,
   budget: UnlockedBudget,
@@ -314,7 +313,7 @@ export const addBudgetTransaction = async (
   input: BudgetTransactionInput,
 ): Promise<BudgetTransaction> => {
   const { accountId, ...stored } = input;
-  const month = monthOf(input.date);
+  const month = monthOfDate(input.date);
   const id = crypto.randomUUID();
 
   await runTransaction(fb.firestore, async (transaction) => {
@@ -331,7 +330,7 @@ export const deleteBudgetTransaction = async (
   budget: UnlockedBudget,
   { id, accountId, date }: BudgetTransactionRef,
 ): Promise<void> => {
-  const month = monthOf(date);
+  const month = monthOfDate(date);
 
   await runTransaction(fb.firestore, async (transaction) => {
     const payload = await readMonth(transaction, budget, accountId, month);

@@ -491,7 +491,8 @@
       "tabs": {
         "transactions": "Transakcje",
         "recurring": "Cykliczne"
-      }
+      },
+      "add": "Dodaj transakcję"
     },
     "settings": {
       "tabs": {
@@ -727,8 +728,7 @@
     "transactionsEmpty": {
       "title": "Brak transakcji",
       "description": "Zaimportuj plik z wyciągiem bankowym albo dodaj transakcję, żeby zacząć.",
-      "import": "Importuj plik",
-      "add": "Dodaj transakcję"
+      "import": "Importuj plik"
     },
     "transactionList": {
       "uncategorized": "Bez kategorii",
@@ -754,7 +754,8 @@
       "title": "Jesteś offline",
       "description": "Otwarte wcześniej miesiące są nadal dostępne. Dodawanie i usuwanie transakcji wymaga połączenia.",
       "noConnection": "Brak połączenia. Zmiana nie została zapisana.",
-      "retry": "Ponów"
+      "retry": "Ponów",
+      "monthUnavailable": "Ten miesiąc nie był jeszcze otwierany na tym urządzeniu, więc nie jest dostępny offline."
     },
     "transactionForm": {
       "title": "Dodaj transakcję",
