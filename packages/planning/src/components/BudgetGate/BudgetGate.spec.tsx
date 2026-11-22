@@ -9,7 +9,14 @@ import type { LockedBudget, UnlockedBudget } from "../../api/budget";
 import { BudgetProvider, useBudgetSession } from "../../context/BudgetContext";
 import { BudgetGate } from "./BudgetGate";
 
+import * as budgetDevice from "../../utils/budgetDevice";
+
 vi.mock("../../api/budget", () => ({ getLockedBudget: vi.fn(), unlockWithPassphrase: vi.fn() }));
+vi.mock("../../utils/budgetDevice", () => ({ getRememberedBudget: vi.fn() }));
+
+beforeEach(() => {
+  vi.mocked(budgetDevice.getRememberedBudget).mockResolvedValue(null);
+});
 
 const i18n = createTestI18n({ en: { planning: en } });
 const alice = createMockUser({ uid: "alice" });
@@ -84,6 +91,28 @@ describe("BudgetGate", () => {
 
     setUser(bob);
     rerender(ui);
+    expect(await screen.findByRole("heading", { name: "Unlock your Budget" })).toBeInTheDocument();
+    expect(screen.queryByText("Budget page")).not.toBeInTheDocument();
+  });
+
+  it("opens the page without a prompt on a remembered device", async () => {
+    vi.mocked(budgetApi.getLockedBudget).mockResolvedValue(locked);
+    vi.mocked(budgetDevice.getRememberedBudget).mockResolvedValue(unlocked);
+    renderGate();
+
+    expect(await screen.findByText("Budget page")).toBeInTheDocument();
+    expect(budgetDevice.getRememberedBudget).toHaveBeenCalledWith(locked);
+    expect(screen.queryByRole("heading", { name: "Unlock your Budget" })).not.toBeInTheDocument();
+  });
+
+  it("asks to unlock again when the stored key changed (budget reset on another device)", async () => {
+    vi.mocked(budgetApi.getLockedBudget).mockResolvedValue({ ...locked, keyId: "key-2" });
+    const events = userEvent.setup();
+    renderGate();
+
+    await screen.findByRole("heading", { name: "Unlock your Budget" });
+    await events.click(screen.getByRole("button", { name: "test-unlock" }));
+
     expect(await screen.findByRole("heading", { name: "Unlock your Budget" })).toBeInTheDocument();
     expect(screen.queryByText("Budget page")).not.toBeInTheDocument();
   });

@@ -21,6 +21,7 @@ The Budget's per-user settings (MFE `planning`, Budget; ADR 0002). One doc per u
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
 | Onboarding | `packages/planning/src/api/budget/endpoints.ts#createBudget` | set `budget_profiles/{me}` with keys, categories and the main account (see `budget_keys.md`) | ✅ transaction |
+| Reset budget | `packages/planning/src/api/budget/endpoints.ts#resetBudget` | delete `budget_profiles/{me}`, with every other budget document of the user; `budget_keys/{me}` in the last batch | ⚠️ batches of 500 (keys last, so a failed reset stays locked and can be retried) |
 
 ## Queries
 | Query | Endpoint | Allowed by |
@@ -64,4 +65,4 @@ match /budget_profiles/{uid} {
 
 ## Tests
 - `firestore-tests/budget/budget_profiles.spec.ts` — own create / read / update / delete, other users / anonymous denied, invalid envelope (extra field, plain-text payload, wrong currency, changed `createdAt`) denied.
-- `packages/planning/src/api/budget/endpoints.emu.spec.ts` — profile created by onboarding and read back decrypted.
+- `packages/planning/src/api/budget/endpoints.emu.spec.ts` — profile created by onboarding and read back decrypted; deleted by reset.

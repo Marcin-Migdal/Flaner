@@ -99,7 +99,13 @@
     },
     "budget": {
       "setupSuccess": "Budżet jest gotowy",
-      "setupError": "Nie udało się skonfigurować budżetu. Spróbuj ponownie."
+      "setupError": "Nie udało się skonfigurować budżetu. Spróbuj ponownie.",
+      "passphraseChangeSuccess": "Hasło budżetu zmienione",
+      "passphraseChangeError": "Nie udało się zmienić hasła. Spróbuj ponownie.",
+      "recoveryKeySuccess": "Nowy klucz odzyskiwania zapisany. Stary już nie działa.",
+      "recoveryKeyError": "Nie udało się zapisać nowego klucza odzyskiwania. Spróbuj ponownie.",
+      "resetSuccess": "Budżet zresetowany. Możesz go skonfigurować od nowa.",
+      "resetError": "Nie udało się zresetować budżetu. Spróbuj ponownie."
     }
   },
   "errors": {
@@ -116,7 +122,9 @@
       "wrongPassphrase": "Nieprawidłowe hasło. Jeśli go nie pamiętasz, użyj klucza odzyskiwania.",
       "alreadySetUp": "Ten budżet jest już skonfigurowany. Odśwież stronę i go odblokuj.",
       "invalidRecoveryKey": "To nie jest prawidłowy klucz odzyskiwania.",
-      "accountKeyMissing": "Brakuje klucza tego konta. Nie da się go odszyfrować w tym budżecie."
+      "accountKeyMissing": "Brakuje klucza tego konta. Nie da się go odszyfrować w tym budżecie.",
+      "wrongRecoveryKey": "Ten klucz odzyskiwania nie odblokowuje budżetu.",
+      "keyChanged": "Budżet został zresetowany na innym urządzeniu. Odśwież stronę."
     }
   },
   "splits": {
@@ -697,7 +705,23 @@
       "title": "Odblokuj Budżet",
       "description": "Wpisz hasło budżetu, aby odszyfrować budżet na tym urządzeniu.",
       "label": "Hasło budżetu",
-      "submit": "Odblokuj"
+      "submit": "Odblokuj",
+      "remember": "Zapamiętaj to urządzenie",
+      "rememberHint": "Budżet otworzy się tutaj bez hasła, dopóki nie zablokujesz go w Ustawieniach.",
+      "useRecoveryKey": "Nie pamiętasz hasła? Użyj klucza odzyskiwania",
+      "recovery": {
+        "title": "Odblokuj kluczem odzyskiwania",
+        "description": "Wpisz klucz odzyskiwania zapisany podczas konfiguracji budżetu. Potem ustawisz nowe hasło.",
+        "label": "Klucz odzyskiwania",
+        "hint": "32 litery i cyfry. Myślniki, spacje i wielkie litery są opcjonalne.",
+        "usePassphrase": "Użyj hasła",
+        "lostBoth": "Zgubiłeś też klucz odzyskiwania?"
+      },
+      "newPassphrase": {
+        "title": "Ustaw nowe hasło",
+        "description": "Klucz odzyskiwania zadziałał. Ustaw nowe hasło budżetu; klucz odzyskiwania pozostaje ważny.",
+        "submit": "Zapisz i otwórz budżet"
+      }
     },
     "validation": {
       "passphraseTooShort": "Użyj co najmniej 12 znaków.",
@@ -708,13 +732,64 @@
       "recoveryKeySaved": "Potwierdź, że zapisałeś(-aś) klucz odzyskiwania.",
       "accountNameRequired": "Wpisz nazwę konta.",
       "accountNameMax": "Użyj najwyżej 60 znaków.",
-      "currencyRequired": "Wybierz walutę."
+      "currencyRequired": "Wybierz walutę.",
+      "recoveryKeyRequired": "Wpisz klucz odzyskiwania.",
+      "recoveryKeyInvalid": "Klucz odzyskiwania ma 32 litery i cyfry.",
+      "resetConfirmation": "Wpisz słowo dokładnie tak, jak pokazano."
     },
     "transactionsEmpty": {
       "title": "Brak transakcji",
       "description": "Zaimportuj plik z wyciągiem bankowym albo dodaj transakcję, żeby zacząć.",
       "import": "Importuj plik",
       "add": "Dodaj transakcję"
+    },
+    "actions": {
+      "cancel": "Anuluj"
+    },
+    "security": {
+      "title": "Bezpieczeństwo",
+      "changePassphrase": {
+        "title": "Hasło budżetu",
+        "description": "Zmień je, podając obecne hasło lub klucz odzyskiwania. Dane nie są szyfrowane od nowa.",
+        "action": "Zmień hasło",
+        "dialogTitle": "Zmień hasło budżetu",
+        "dialogDescription": "Urządzenia, które pamiętają budżet, pozostają odblokowane.",
+        "current": {
+          "passphrase": "Obecne hasło",
+          "recoveryKey": "Klucz odzyskiwania"
+        },
+        "switchTo": {
+          "passphrase": "Użyj obecnego hasła",
+          "recoveryKey": "Nie pamiętasz? Użyj klucza odzyskiwania"
+        },
+        "newLabel": "Nowe hasło",
+        "confirmLabel": "Powtórz nowe hasło",
+        "submit": "Zmień hasło"
+      },
+      "recoveryKey": {
+        "title": "Klucz odzyskiwania",
+        "description": "Wygeneruj nowy klucz odzyskiwania. Stary przestanie działać.",
+        "action": "Nowy klucz odzyskiwania",
+        "dialogTitle": "Nowy klucz odzyskiwania",
+        "dialogDescription": "Zapisz ten klucz w bezpiecznym miejscu. Po potwierdzeniu stary klucz odzyskiwania przestanie działać.",
+        "passphraseLabel": "Hasło budżetu",
+        "submit": "Zastąp klucz odzyskiwania"
+      },
+      "lock": {
+        "title": "Zablokuj budżet",
+        "description": "To urządzenie zapomni zapamiętany klucz i następnym razem zapyta o hasło.",
+        "action": "Zablokuj budżet"
+      },
+      "reset": {
+        "title": "Zresetuj budżet",
+        "description": "Usuń wszystkie dane budżetu i zacznij od nowa. Tylko jeśli zgubiłeś i hasło, i klucz odzyskiwania.",
+        "action": "Zresetuj budżet",
+        "dialogTitle": "Zresetować budżet?",
+        "dialogDescription": "Wszystkie dane budżetu zostaną trwale usunięte: konta, transakcje, kategorie, reguły i plany. Tego nie można cofnąć.",
+        "confirmationWord": "RESETUJ",
+        "confirmationLabel": "Wpisz {{word}}, aby potwierdzić",
+        "submit": "Usuń wszystkie dane budżetu"
+      }
     }
   }
 }

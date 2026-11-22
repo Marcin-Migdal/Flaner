@@ -2,12 +2,16 @@
 import { setupEmulator } from "@flaner/test-utils/emulator";
 import { generateRecoveryKey } from "../../utils/budgetCrypto";
 import {
+  changeBudgetPassphrase,
   createBudget,
   getBudgetAccounts,
   getBudgetCategories,
   getBudgetProfile,
   getLockedBudget,
+  replaceRecoveryKey,
+  resetBudget,
   unlockWithPassphrase,
+  unlockWithRecoveryKey,
 } from "./endpoints";
 import type { BudgetCategoryTree, CreateBudgetInput } from "./types";
 
@@ -89,6 +93,95 @@ describe("budget endpoints", () => {
     );
   });
 
+  it("unlocks with the recovery key in any formatting and rejects another key", async () => {
+    await signInAs(ME);
+    const recoveryKey = generateRecoveryKey();
+    await createBudget(ME, input({ recoveryKey }));
+    const locked = await getLockedBudget(ME);
+    if (!locked) throw new Error("keys missing");
+
+    const unlocked = await unlockWithRecoveryKey(locked, recoveryKey.replace(/-/g, "").toLowerCase());
+    expect(await getBudgetAccounts(unlocked)).toHaveLength(1);
+
+    await expect(unlockWithRecoveryKey(locked, generateRecoveryKey())).rejects.toThrow(
+      "planning:errors.budget.wrongRecoveryKey",
+    );
+    await expect(unlockWithRecoveryKey(locked, "not a key")).rejects.toThrow(
+      "planning:errors.budget.invalidRecoveryKey",
+    );
+  });
+
+  it("changes the passphrase with the old passphrase or the recovery key, without re-encrypting data", async () => {
+    await signInAs(ME);
+    const recoveryKey = generateRecoveryKey();
+    await createBudget(ME, input({ recoveryKey }));
+    const before = [await read(`budget_profiles/${ME}`), await read(`budget_categories/${ME}`), await list("budget_accounts")];
+    const locked = async () => {
+      const keys = await getLockedBudget(ME);
+      if (!keys) throw new Error("keys missing");
+      return keys;
+    };
+
+    await changeBudgetPassphrase(await unlockWithPassphrase(await locked(), "purple tractor sings loudly"), "green kettle hums softly");
+    await expect(unlockWithPassphrase(await locked(), "purple tractor sings loudly")).rejects.toThrow(
+      "planning:errors.budget.wrongPassphrase",
+    );
+    const unlocked = await unlockWithPassphrase(await locked(), "green kettle hums softly");
+    expect(unlocked.keyId).toBe((await locked()).keyId);
+
+    await changeBudgetPassphrase(await unlockWithRecoveryKey(await locked(), recoveryKey), "blue piano naps daily");
+    expect(await getBudgetAccounts(await unlockWithPassphrase(await locked(), "blue piano naps daily"))).toHaveLength(1);
+    expect([await read(`budget_profiles/${ME}`), await read(`budget_categories/${ME}`), await list("budget_accounts")]).toEqual(
+      before,
+    );
+  });
+
+  it("a new recovery key unlocks and the old one stops working", async () => {
+    await signInAs(ME);
+    const oldKey = generateRecoveryKey();
+    const budget = await createBudget(ME, input({ recoveryKey: oldKey }));
+    const newKey = generateRecoveryKey();
+
+    await replaceRecoveryKey(budget, newKey);
+
+    const locked = await getLockedBudget(ME);
+    if (!locked) throw new Error("keys missing");
+    await expect(unlockWithRecoveryKey(locked, oldKey)).rejects.toThrow("planning:errors.budget.wrongRecoveryKey");
+    expect(await getBudgetAccounts(await unlockWithRecoveryKey(locked, newKey))).toHaveLength(1);
+    expect(await getBudgetAccounts(await unlockWithPassphrase(locked, "purple tractor sings loudly"))).toHaveLength(1);
+  });
+
+  it("reset deletes every budget document of the user and allows a new onboarding", async () => {
+    await signInAs(OTHER);
+    await createBudget(OTHER, input());
+    await signInAs(ME);
+    await createBudget(ME, input());
+
+    await resetBudget(ME);
+
+    expect(await read(`budget_keys/${ME}`)).toBeUndefined();
+    expect(await read(`budget_profiles/${ME}`)).toBeUndefined();
+    expect(await read(`budget_categories/${ME}`)).toBeUndefined();
+    const accounts = Object.values(await list("budget_accounts"));
+    expect(accounts.map((account) => account.memberIds)).toEqual([[OTHER]]);
+    expect(await read(`budget_keys/${OTHER}`)).toBeDefined();
+
+    await createBudget(ME, input());
+    expect(await getLockedBudget(ME)).not.toBeNull();
+  });
+
+  it("refuses to re-wrap a budget that was reset in the meantime", async () => {
+    await signInAs(ME);
+    const stale = await createBudget(ME, input());
+    await resetBudget(ME);
+    await createBudget(ME, input());
+
+    await expect(changeBudgetPassphrase(stale, "green kettle hums softly")).rejects.toThrow(
+      "planning:errors.budget.keyChanged",
+    );
+    await expect(replaceRecoveryKey(stale, generateRecoveryKey())).rejects.toThrow("planning:errors.budget.keyChanged");
+  });
+
   it("never runs onboarding twice", async () => {
     await signInAs(ME);
     await createBudget(ME, input());
@@ -107,6 +200,8 @@ describe("budget endpoints", () => {
     await expect(getBudgetCategories(budget)).rejects.toMatchObject(DENIED);
     await expect(getBudgetAccounts(budget)).rejects.toMatchObject(DENIED);
     await expect(createBudget(ME, input())).rejects.toMatchObject(DENIED);
+    await expect(changeBudgetPassphrase(budget, "green kettle hums softly")).rejects.toMatchObject(DENIED);
+    await expect(resetBudget(ME)).rejects.toMatchObject(DENIED);
     expect(await getBudgetAccounts({ ...budget, uid: OTHER })).toEqual([]);
   });
 });

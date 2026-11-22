@@ -286,3 +286,15 @@ _Avoid_: budget password, PIN, master password
 **Recovery key**:
 A long random code shown once when the budget passphrase is set, kept by the user. It unlocks the Budget when the passphrase is forgotten; losing both leaves only resetting the Budget.
 _Avoid_: backup code, recovery phrase
+
+**Remembered device**:
+A browser where the user ticked "Remember this device" while unlocking: it keeps a copy of the key that cannot be read out, so the Budget opens there without the passphrase. It stops being remembered when the user locks the budget, or when the budget was reset elsewhere.
+_Avoid_: trusted device, saved login
+
+**Lock budget**:
+Making this device forget its remembered key, so the Budget asks for the passphrase again. Nothing is deleted.
+_Avoid_: log out, sign out
+
+**Reset budget**:
+Deleting every budget document of the user, confirmed by typing RESET / RESETUJ, after which the Budget starts with onboarding again. The only way out when both the passphrase and the recovery key are lost.
+_Avoid_: delete budget, wipe, clear data
