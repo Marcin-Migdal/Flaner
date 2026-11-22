@@ -138,6 +138,8 @@
   --chart-6: oklch(0.58 0.15 195);
   --chart-7: oklch(0.6 0.15 110);
   --chart-8: oklch(0.6 0.15 340);
+  /* Remainder slice ("Others") — neutral, still ≥ 3:1 */
+  --chart-muted: oklch(0.6 0.01 80);
 
   /* Scrollbar */
   --scrollbar-thumb: oklch(0.8 0.008 80);
@@ -221,6 +223,7 @@
   --chart-6: oklch(0.74 0.14 195);
   --chart-7: oklch(0.74 0.14 110);
   --chart-8: oklch(0.74 0.14 340);
+  --chart-muted: oklch(0.6 0.01 80);
 
   --scrollbar-thumb: oklch(1 0 0 / 15%);
   --scrollbar-thumb-hover: oklch(1 0 0 / 25%);
@@ -323,6 +326,7 @@
   --color-chart-6: var(--chart-6);
   --color-chart-7: var(--chart-7);
   --color-chart-8: var(--chart-8);
+  --color-chart-muted: var(--chart-muted);
   --color-chart-positive: var(--success);
   --color-chart-negative: var(--danger);
 

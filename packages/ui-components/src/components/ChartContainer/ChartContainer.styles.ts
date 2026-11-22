@@ -23,6 +23,7 @@ export const chartSwatchVariants = cva("size-2.5 shrink-0 rounded-full", {
       6: "bg-chart-6",
       7: "bg-chart-7",
       8: "bg-chart-8",
+      muted: "bg-chart-muted",
       positive: "bg-chart-positive",
       negative: "bg-chart-negative",
     },
@@ -31,3 +32,33 @@ export const chartSwatchVariants = cva("size-2.5 shrink-0 rounded-full", {
 });
 
 export type ChartColor = NonNullable<VariantProps<typeof chartSwatchVariants>["color"]>;
+
+/** SVG fill per chart colour (static strings so Tailwind generates them). */
+export const chartFillClasses: Record<ChartColor, string> = {
+  1: "fill-chart-1",
+  2: "fill-chart-2",
+  3: "fill-chart-3",
+  4: "fill-chart-4",
+  5: "fill-chart-5",
+  6: "fill-chart-6",
+  7: "fill-chart-7",
+  8: "fill-chart-8",
+  muted: "fill-chart-muted",
+  positive: "fill-chart-positive",
+  negative: "fill-chart-negative",
+};
+
+/** Background per chart colour, for bars drawn in HTML. */
+export const chartBgClasses: Record<ChartColor, string> = {
+  1: "bg-chart-1",
+  2: "bg-chart-2",
+  3: "bg-chart-3",
+  4: "bg-chart-4",
+  5: "bg-chart-5",
+  6: "bg-chart-6",
+  7: "bg-chart-7",
+  8: "bg-chart-8",
+  muted: "bg-chart-muted",
+  positive: "bg-chart-positive",
+  negative: "bg-chart-negative",
+};

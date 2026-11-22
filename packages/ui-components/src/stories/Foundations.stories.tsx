@@ -120,6 +120,7 @@ const CHARTS: Swatch[] = [
   { name: "chart-6", className: "bg-chart-6" },
   { name: "chart-7", className: "bg-chart-7" },
   { name: "chart-8", className: "bg-chart-8" },
+  { name: "chart-muted", className: "bg-chart-muted" },
   { name: "chart-positive", className: "bg-chart-positive" },
   { name: "chart-negative", className: "bg-chart-negative" },
 ];

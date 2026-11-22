@@ -71,5 +71,14 @@
     "selectDate": "Select date"
   },
   "clear": "Clear",
-  "collapse": "Collapse"
+  "collapse": "Collapse",
+  "chart": {
+    "back": "Back",
+    "total": "Total",
+    "table": {
+      "item": "Item",
+      "value": "Value",
+      "share": "Share"
+    }
+  }
 }
