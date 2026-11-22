@@ -13,10 +13,10 @@ describe("planning navigation", () => {
     expect(rootNav.icon).toBe("calendar");
 
     expect(rootNav.children).toBeDefined();
-    expect(rootNav.children).toHaveLength(2);
+    expect(rootNav.children).toHaveLength(3);
 
     const childPaths = rootNav.children?.map((child) => child.path);
-    expect(childPaths).toEqual(["/planning/scheduling", "/planning/splits"]);
+    expect(childPaths).toEqual(["/planning/scheduling", "/planning/splits", "/planning/budget"]);
   });
 
   it("contains appropriate label keys and icons for subroutes", () => {
@@ -34,5 +34,16 @@ describe("planning navigation", () => {
       labelKey: "nav.splits",
       icon: "wallet",
     });
+  });
+
+  it("nests the four Budget views as a third level, labelled from the planning namespace", () => {
+    const budgetNav = navigation[0].children?.find((item) => item.path === "/planning/budget");
+    expect(budgetNav?.labelKey).toBe("planning:nav.budget");
+    expect(budgetNav?.children?.map((item) => [item.path, item.labelKey])).toEqual([
+      ["/planning/budget/summary", "planning:nav.budgetSummary"],
+      ["/planning/budget/transactions", "planning:nav.budgetTransactions"],
+      ["/planning/budget/planner", "planning:nav.budgetPlanner"],
+      ["/planning/budget/settings", "planning:nav.budgetSettings"],
+    ]);
   });
 });

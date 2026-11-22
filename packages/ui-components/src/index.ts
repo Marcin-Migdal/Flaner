@@ -5,6 +5,8 @@ export * from "./components/EmptyState";
 export * from "./components/ListItem";
 export * from "./components/SidePanel";
 export * from "./components/PageHeader";
+export * from "./components/PageTiles";
+export * from "./components/NavIcon";
 export * from "./components/Skeleton";
 export * from "./components/Stepper";
 export * from "./components/ColorPickerField";

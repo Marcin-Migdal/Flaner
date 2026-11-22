@@ -49,6 +49,34 @@ test.describe("Core Host Shell & Navigation E2E", () => {
     await expect(new LoginPage(page).heading).toBeVisible();
   });
 
+  test("reaches a Budget view through the three-level sidebar and keeps its tab on refresh", async ({ page }) => {
+    await shell.goto("/");
+
+    // Level 1 → level 2: Planning expands to show Budget, which has its own chevron
+    await shell.navToggle("Planning").click();
+    await expect(shell.navToggle("Budget")).toHaveAttribute("aria-expanded", "false");
+    await shell.navLink("Budget").click();
+
+    // /planning/budget is a tiles page of the four Budget views
+    await expect(page).toHaveURL(/\/planning\/budget$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Budget" })).toBeVisible();
+    for (const view of ["Summary", "Transactions", "Planner", "Settings"]) {
+      await expect(page.getByRole("main").getByRole("button", { name: view, exact: true })).toBeVisible();
+    }
+
+    // Level 3 from the sidebar; Budget stays highlighted on its views
+    await shell.navLink("Transactions").click();
+    await expect(page).toHaveURL(/\/planning\/budget\/transactions$/);
+    await expect(shell.navLink("Transactions")).toHaveAttribute("data-active", "true");
+    await expect(shell.navLink("Budget")).toHaveAttribute("data-active", "true");
+
+    // The tab lives in the URL hash and survives a refresh
+    await page.getByRole("tab", { name: "Recurring" }).click();
+    await expect(page).toHaveURL(/#recurring$/);
+    await page.reload();
+    await expect(page.getByRole("tab", { name: "Recurring" })).toHaveAttribute("aria-selected", "true");
+  });
+
   test("redirects unknown routes to home", async ({ page }) => {
     // The client-side redirect starts a new navigation before "load", which aborts goto (#106)
     await page.goto("/unknown-non-existing-route-404", { waitUntil: "commit" });

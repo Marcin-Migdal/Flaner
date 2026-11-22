@@ -1,6 +1,15 @@
 import type { AppRouteObject, NavigationItem } from "../../types/navigation";
 
-export function generateNavigation(routes: AppRouteObject[], basePath: string): NavigationItem[] {
+export type GenerateNavigationOptions = {
+  /** Skip labelled routes without an icon at this level (default `true`). Deeper levels never need an icon. */
+  requireIcon?: boolean;
+};
+
+export function generateNavigation(
+  routes: AppRouteObject[],
+  basePath: string,
+  { requireIcon = true }: GenerateNavigationOptions = {},
+): NavigationItem[] {
   const items: NavigationItem[] = [];
 
   for (const route of routes) {
@@ -11,15 +20,15 @@ export function generateNavigation(routes: AppRouteObject[], basePath: string): 
     const cleanPath = fullPath.replace(/\/+/g, "/").replace(/\/$/, ""); // cleanup double slashes and trailing slashes
 
     const handle = route.handle;
-    if (handle?.label && handle?.icon) {
+    if (handle?.label && (handle.icon || !requireIcon)) {
       const item: NavigationItem = {
         path: cleanPath,
         labelKey: handle.label,
-        icon: handle.icon,
+        ...(handle.icon && { icon: handle.icon }),
       };
 
       if (route.children && route.children.length > 0) {
-        const children = generateNavigation(route.children, cleanPath);
+        const children = generateNavigation(route.children, cleanPath, { requireIcon: false });
         if (children.length > 0) {
           item.children = children;
         }
@@ -27,7 +36,7 @@ export function generateNavigation(routes: AppRouteObject[], basePath: string): 
 
       items.push(item);
     } else if (route.children) {
-      const children = generateNavigation(route.children, cleanPath);
+      const children = generateNavigation(route.children, cleanPath, { requireIcon });
       items.push(...children);
     }
   }

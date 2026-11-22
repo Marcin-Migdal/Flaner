@@ -133,4 +133,53 @@ describe("generateNavigation", () => {
     expect(result[0].path).toBe("/base");
     expect(result[0].children).toBeUndefined();
   });
+
+  it("requires an icon only at the top level and builds three levels", () => {
+    const routes: AppRouteObject[] = [
+      {
+        path: "",
+        handle: { label: "nav.planning", icon: DummyIcon },
+        children: [
+          {
+            path: "budget",
+            handle: { label: "nav.budget" },
+            children: [
+              { index: true },
+              { path: "summary", handle: { label: "nav.summary" } },
+              { path: "planner", handle: { label: "nav.planner" } },
+            ],
+          },
+        ],
+      },
+      // Top-level route without an icon -> skipped
+      { path: "noicon", handle: { label: "nav.noicon" } },
+    ];
+
+    const result = generateNavigation(routes, "/planning");
+    expect(result).toEqual([
+      {
+        path: "/planning",
+        labelKey: "nav.planning",
+        icon: DummyIcon,
+        children: [
+          {
+            path: "/planning/budget",
+            labelKey: "nav.budget",
+            children: [
+              { path: "/planning/budget/summary", labelKey: "nav.summary" },
+              { path: "/planning/budget/planner", labelKey: "nav.planner" },
+            ],
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("does not require an icon at the top level when requireIcon is false", () => {
+    const routes: AppRouteObject[] = [{ path: "summary", handle: { label: "nav.summary" } }];
+
+    expect(generateNavigation(routes, "/budget", { requireIcon: false })).toEqual([
+      { path: "/budget/summary", labelKey: "nav.summary" },
+    ]);
+  });
 });

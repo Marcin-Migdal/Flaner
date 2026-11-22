@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders, createTestI18n, createMockUser } from "@flaner/test-utils";
 import { ShellLayout } from "./ShellLayout";
 
@@ -14,6 +14,7 @@ const signedIn = {
 };
 
 let mockNavigationState = "idle";
+let mockPathname = "/";
 
 let mockIsMobile = false;
 let mockIsDark = false;
@@ -41,7 +42,7 @@ vi.mock("react-router", async () => {
   return {
     ...actual,
     useNavigation: () => ({ state: mockNavigationState }),
-    useLocation: () => ({ pathname: "/" }),
+    useLocation: () => ({ pathname: mockPathname }),
   };
 });
 
@@ -54,6 +55,27 @@ vi.mock("../../mf", () => ({
           labelKey: "nav.community",
           icon: "users",
           children: [{ path: "/community/friends", labelKey: "nav.friends" }],
+        },
+      ];
+    }
+    if (name === "planning") {
+      return [
+        {
+          path: "/planning",
+          labelKey: "nav.planning",
+          icon: "calendar",
+          children: [
+            {
+              path: "/planning/budget",
+              labelKey: "planning:nav.budget",
+              children: [
+                { path: "/planning/budget/summary", labelKey: "planning:nav.budgetSummary" },
+                { path: "/planning/budget/transactions", labelKey: "planning:nav.budgetTransactions" },
+              ],
+            },
+            // Shares the "/planning/budget" prefix without a "/" boundary
+            { path: "/planning/budgeting", labelKey: "nav.budgeting" },
+          ],
         },
       ];
     }
@@ -81,6 +103,13 @@ describe("ShellLayout", () => {
         "nav.themeDark": "Ciemny",
         "nav.settings": "Ustawienia",
         "nav.signOut": "Wyloguj się",
+        "nav.planning": "Planowanie",
+        "nav.budgeting": "Budżetowanie",
+        "nav.toggleSection": "Rozwiń {{label}}",
+        "nav.toggleSidebar": "Toggle Sidebar",
+      },
+      planning: {
+        nav: { budget: "Budżet", budgetSummary: "Podsumowanie", budgetTransactions: "Transakcje" },
       },
     },
   });
@@ -262,5 +291,53 @@ describe("ShellLayout", () => {
   it("renders with null user gracefully", () => {
     renderWithProviders(<ShellLayout />, { user: null });
     expect(screen.getByText("nav.home")).toBeInTheDocument();
+  });
+
+  it("labels the sidebar toggles from the translation file (Polish)", async () => {
+    const plI18n = createTestI18n({ pl: { common: { "nav.toggleSidebar": "Przełącz panel boczny" } } });
+    await plI18n.changeLanguage("pl");
+    renderWithProviders(<ShellLayout />, { i18nInstance: plI18n, ...signedIn });
+
+    const toggles = screen.getAllByRole("button", { name: "Przełącz panel boczny" });
+    expect(toggles.length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: /toggle sidebar/i })).not.toBeInTheDocument();
+  });
+
+  describe("three-level navigation", () => {
+    afterEach(() => {
+      mockPathname = "/";
+    });
+
+    it("highlights the Budget branch on a Budget page, with a / boundary for siblings", async () => {
+      mockPathname = "/planning/budget/transactions";
+      renderWithProviders(<ShellLayout />, { i18nInstance: i18n, ...signedIn });
+
+      // Active branch is expanded by default; labels come from the planning namespace
+      const budget = await screen.findByRole("link", { name: "Budżet" });
+      expect(budget).toHaveAttribute("data-active", "true");
+      expect(screen.getByRole("link", { name: "Transakcje" })).toHaveAttribute("data-active", "true");
+      expect(screen.getByRole("link", { name: "Podsumowanie" })).toHaveAttribute("data-active", "false");
+      expect(screen.getByRole("link", { name: "Budżetowanie" })).toHaveAttribute("data-active", "false");
+      expect(screen.getByRole("link", { name: "Planowanie" })).toHaveAttribute("data-active", "true");
+    });
+
+    it("gives a level-2 item with children an expand chevron", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<ShellLayout />, { i18nInstance: i18n, ...signedIn });
+
+      await user.click(await screen.findByRole("button", { name: "Rozwiń Planowanie" }));
+      expect(screen.getByRole("link", { name: "Budżet" })).toBeInTheDocument();
+      // Level-2 item without children has no chevron
+      expect(screen.queryByRole("button", { name: "Rozwiń Budżetowanie" })).not.toBeInTheDocument();
+
+      const budgetToggle = screen.getByRole("button", { name: "Rozwiń Budżet" });
+      expect(budgetToggle).toHaveAttribute("aria-expanded", "false");
+      expect(screen.queryByRole("link", { name: "Podsumowanie" })).not.toBeInTheDocument();
+
+      await user.click(budgetToggle);
+
+      expect(budgetToggle).toHaveAttribute("aria-expanded", "true");
+      expect(screen.getByRole("link", { name: "Podsumowanie" })).toHaveAttribute("href", "/planning/budget/summary");
+    });
   });
 });

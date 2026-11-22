@@ -28,6 +28,7 @@
     "friends": "Friends",
     "groups": "Groups",
     "toggleSidebar": "Toggle Sidebar",
+    "toggleSection": "Expand or collapse {{label}}",
     "profile": "Profile",
     "notifications": "Notifications"
   },

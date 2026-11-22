@@ -17,7 +17,7 @@ export class AppShellPage {
     this.page = page;
     this.logo = page.getByRole("link", { name: "FLANER", exact: true });
     this.header = page.getByRole("banner");
-    this.sidebarTrigger = page.getByRole("button", { name: /^toggle sidebar$/i }).filter({ visible: true });
+    this.sidebarTrigger = page.getByRole("button", { name: /^(toggle sidebar|przełącz panel boczny)$/i }).filter({ visible: true });
     // Its name is the avatar's initials followed by the username
     this.userMenuButton = page.getByRole("button", { name: user.username });
     this.notificationsButton = page.getByRole("button", { name: /^(notifications|powiadomienia)/i });
@@ -31,6 +31,11 @@ export class AppShellPage {
   /** A sidebar link by its exact label. */
   navLink(name: string): Locator {
     return this.page.getByRole("link", { name, exact: true });
+  }
+
+  /** The chevron that expands / collapses a sidebar item with children. */
+  navToggle(label: string): Locator {
+    return this.page.getByRole("button", { name: `Expand or collapse ${label}`, exact: true });
   }
 
   /** The document theme: the app toggles `dark` on `<html>`. */
