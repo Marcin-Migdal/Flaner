@@ -37,7 +37,7 @@ type SeedData = { [key: string]: SeedValue };
 /** A stored document type as seeded: `DocumentReference` fields become `DocRef`s. */
 type Seed<T> = { [K in keyof T]: T[K] extends DocumentReference ? DocRef : T[K] };
 
-/** A field as read back: plain JS values (timestamps as ISO strings, references as document paths). */
+/** A field as read back: plain JS values (timestamps as ISO strings, references as document paths, bytes as base64). */
 export type StoredValue = string | boolean | number | null | StoredValue[] | { [key: string]: StoredValue };
 export type StoredData = { [key: string]: StoredValue };
 
@@ -49,6 +49,7 @@ type FirestoreValue =
   | { nullValue: null }
   | { timestampValue: string }
   | { referenceValue: string }
+  | { bytesValue: string }
   | { arrayValue: { values?: FirestoreValue[] } }
   | { mapValue: { fields?: Record<string, FirestoreValue> } };
 
@@ -80,6 +81,8 @@ const fromFirestoreValue = (value: FirestoreValue): StoredValue => {
   if ("nullValue" in value) return null;
   if ("timestampValue" in value) return value.timestampValue;
   if ("referenceValue" in value) return value.referenceValue.slice(DOCUMENTS_ROOT.length + 1);
+  // Bytes (budget ciphertexts) as their base64 string
+  if ("bytesValue" in value) return value.bytesValue;
   if ("arrayValue" in value) return (value.arrayValue.values ?? []).map(fromFirestoreValue);
   return fromFirestoreFields(value.mapValue.fields ?? {});
 };

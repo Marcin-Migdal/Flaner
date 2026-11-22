@@ -8,7 +8,10 @@ const i18n = createTestI18n({
   en: {
     planning: {
       nav: { budgetTransactions: "Transactions" },
-      budget: { transactions: { tabs: { transactions: "Transactions", recurring: "Recurring" } } },
+      budget: {
+        transactions: { tabs: { transactions: "Transactions", recurring: "Recurring" } },
+        transactionsEmpty: { title: "No transactions yet", import: "Import file", add: "Add transaction" },
+      },
     },
   },
 });
@@ -22,6 +25,14 @@ describe("BudgetTransactionsView", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "Transactions" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Transactions" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("invites to import a file or add a transaction while there are none", () => {
+    renderView("/planning/budget/transactions");
+
+    expect(screen.getByRole("heading", { name: "No transactions yet" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Import file" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add transaction" })).toBeInTheDocument();
   });
 
   it("opens the Recurring tab from #recurring and switches tabs on click", async () => {

@@ -96,6 +96,10 @@
       "settlementConfirmError": "Failed to confirm payment",
       "convertSuccess": "Entries converted to group currency",
       "convertError": "Failed to convert entries"
+    },
+    "budget": {
+      "setupSuccess": "Your budget is ready",
+      "setupError": "Couldn't set up the budget. Try again."
     }
   },
   "errors": {
@@ -107,7 +111,13 @@
     "settlementVersionConflict": "Group balances changed while submitting the settlement. Please refresh and try again.",
     "settlementAmountExceedsDebt": "Settlement amount cannot exceed the current outstanding debt.",
     "noOutstandingDebtToSettle": "No outstanding debt to settle between these members.",
-    "settlementAlreadyPending": "A payment for this debt is already waiting for confirmation."
+    "settlementAlreadyPending": "A payment for this debt is already waiting for confirmation.",
+    "budget": {
+      "wrongPassphrase": "Wrong passphrase. If you forgot it, use your recovery key.",
+      "alreadySetUp": "This budget is already set up. Reload the page and unlock it.",
+      "invalidRecoveryKey": "This is not a valid recovery key.",
+      "accountKeyMissing": "This account's key is missing. It cannot be decrypted on this budget."
+    }
   },
   "splits": {
     "you": "You",
@@ -477,6 +487,228 @@
         "categories": "Categories",
         "rules": "Rules"
       }
+    },
+    "defaultCategories": {
+      "expense": {
+        "shopping": {
+          "name": "Shopping",
+          "subcategories": {
+            "groceries": "Groceries",
+            "newspapers": "Newspapers & magazines",
+            "householdChemicals": "Household chemicals",
+            "hobbies": "Hobbies",
+            "clothing": "Clothing & footwear",
+            "electronics": "Electronics",
+            "alcohol": "Alcohol",
+            "other": "Other shopping"
+          }
+        },
+        "kidsEducation": {
+          "name": "Kids & education",
+          "subcategories": {
+            "education": "Education & personal growth",
+            "childcare": "Preschool & childcare",
+            "toys": "Toys",
+            "other": "Other (kids & education)"
+          }
+        },
+        "home": {
+          "name": "Home & garden",
+          "subcategories": {
+            "mortgage": "Mortgage",
+            "furniture": "Furniture & appliances",
+            "garden": "Garden",
+            "renovation": "Renovation",
+            "services": "Home services",
+            "other": "Other (home)"
+          }
+        },
+        "personal": {
+          "name": "Personal",
+          "subcategories": {
+            "cosmetics": "Cosmetics & personal care",
+            "ticketsTaxis": "Tickets & taxis",
+            "sport": "Sport",
+            "barber": "Barber",
+            "spa": "Massage, tanning & spa",
+            "pets": "Pets",
+            "loanRepayment": "Loan repayment",
+            "loanGiven": "Loan given",
+            "lifeInsurance": "Life insurance",
+            "other": "Other personal"
+          }
+        },
+        "taxes": {
+          "name": "Taxes",
+          "subcategories": {
+            "incomeTax": "Income tax",
+            "vat": "VAT",
+            "socialSecurity": "Social security (ZUS)",
+            "capitalGains": "Capital gains tax",
+            "other": "Other taxes & fees"
+          }
+        },
+        "gifts": {
+          "name": "Gifts & donations",
+          "subcategories": {
+            "charity": "Charity",
+            "gift": "Gift"
+          }
+        },
+        "bills": {
+          "name": "Bills & utilities",
+          "subcategories": {
+            "streaming": "Streaming",
+            "electricity": "Electricity",
+            "gas": "Gas",
+            "internet": "Internet",
+            "mobile": "Mobile phone",
+            "landline": "Landline",
+            "tv": "Cable & satellite TV",
+            "water": "Water",
+            "sewage": "Sewage",
+            "homeInsurance": "Home insurance",
+            "rent": "Rent",
+            "bankFees": "Bank fees",
+            "other": "Other bills"
+          }
+        },
+        "entertainment": {
+          "name": "Entertainment",
+          "subcategories": {
+            "concerts": "Concerts",
+            "restaurants": "Restaurants, pubs & clubs",
+            "filmsGames": "Films, games & music",
+            "booksCinema": "Books, cinema & theatre",
+            "trips": "Trips & holidays",
+            "gambling": "Lotteries & gambling",
+            "other": "Other entertainment"
+          }
+        },
+        "car": {
+          "name": "Car",
+          "subcategories": {
+            "carWash": "Car wash",
+            "fuel": "Fuel",
+            "parking": "Parking",
+            "service": "Service & parts",
+            "fees": "Fees",
+            "insurance": "Car insurance",
+            "other": "Other (car)"
+          }
+        },
+        "business": {
+          "name": "Business services",
+          "subcategories": {
+            "marketing": "Marketing",
+            "legal": "Legal & accounting",
+            "hosting": "Hosting & domains",
+            "office": "Office supplies",
+            "goods": "Goods for resale",
+            "other": "Other business services"
+          }
+        },
+        "health": {
+          "name": "Health",
+          "subcategories": {
+            "tests": "Medical tests",
+            "medicines": "Medicines",
+            "dentist": "Dentist",
+            "eyeDoctor": "Eye doctor",
+            "doctor": "Doctor (other)",
+            "insurance": "Health insurance",
+            "other": "Other (health)"
+          }
+        },
+        "savings": {
+          "name": "Savings"
+        }
+      },
+      "income": {
+        "salary": "Salary",
+        "bonus": "Bonus & award",
+        "services": "Payment for services",
+        "sales": "Sales of goods",
+        "giftReceived": "Gift received",
+        "investments": "Investments",
+        "interest": "Bank interest",
+        "refund": "Refund (loan, tax, purchase)",
+        "cashDeposit": "Cash deposit",
+        "other": "Other income"
+      }
+    },
+    "onboarding": {
+      "title": "Set up your Budget",
+      "intro": "Your budget data is encrypted on this device before it is saved. It takes four short steps.",
+      "steps": {
+        "passphrase": "Passphrase",
+        "recoveryKey": "Recovery key",
+        "currency": "Currency",
+        "account": "Main account"
+      },
+      "passphrase": {
+        "title": "Choose a budget passphrase",
+        "notFlanerPassword": "This is not your Flaner password. Flaner never sees it and cannot reset it by email. If you lose both the passphrase and the recovery key, your budget data cannot be recovered.",
+        "label": "Budget passphrase",
+        "confirmLabel": "Repeat the passphrase",
+        "hint": "At least 12 characters. A few unrelated words work well.",
+        "strength": {
+          "level0": "Too short",
+          "level1": "Weak",
+          "level2": "Fair",
+          "level3": "Strong",
+          "level4": "Very strong"
+        }
+      },
+      "recoveryKey": {
+        "title": "Save your recovery key",
+        "description": "If you forget the passphrase, this key unlocks your budget. It is shown only this once, so store it somewhere safe, e.g. in a password manager.",
+        "copy": "Copy",
+        "copied": "Copied",
+        "download": "Download .txt",
+        "fileContent": "Flaner budget recovery key\n\n{{key}}\n\nKeep this key safe. It unlocks your budget if you forget the budget passphrase.",
+        "confirm": "I have saved my recovery key"
+      },
+      "currency": {
+        "title": "Choose your main currency",
+        "description": "All totals and reports are shown in this currency.",
+        "label": "Main currency"
+      },
+      "account": {
+        "title": "Create your main account",
+        "description": "New and imported transactions go here by default. You can add more accounts later.",
+        "nameLabel": "Account name",
+        "namePlaceholder": "e.g. mBank, Cash",
+        "currencyLabel": "Account currency"
+      },
+      "actions": {
+        "back": "Back",
+        "next": "Continue",
+        "finish": "Finish setup"
+      }
+    },
+    "unlock": {
+      "title": "Unlock your Budget",
+      "description": "Enter your budget passphrase to decrypt your budget on this device.",
+      "label": "Budget passphrase",
+      "submit": "Unlock"
+    },
+    "validation": {
+      "passphraseTooShort": "Use at least 12 characters.",
+      "passphraseCommon": "This passphrase is too common. Pick something harder to guess.",
+      "passphraseContainsIdentity": "Don't use your email or username in the passphrase.",
+      "passphraseMismatch": "The passphrases don't match.",
+      "passphraseRequired": "Enter your budget passphrase.",
+      "recoveryKeySaved": "Confirm that you saved the recovery key.",
+      "accountNameRequired": "Enter an account name.",
+      "accountNameMax": "Use at most 60 characters.",
+      "currencyRequired": "Choose a currency."
+    },
+    "transactionsEmpty": {
+      "title": "No transactions yet",
+      "description": "Import a bank statement file or add a transaction to get started.",
+      "import": "Import file",
+      "add": "Add transaction"
     }
   }
 }

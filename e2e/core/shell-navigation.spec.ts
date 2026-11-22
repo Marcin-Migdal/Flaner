@@ -1,7 +1,10 @@
 import { test, expect } from "@playwright/test";
 import { signInAsNewUser } from "../support/helpers/auth";
 import { AppShellPage } from "../support/pages/AppShell.page";
+import { BudgetGatePage } from "../support/pages/BudgetGate.page";
 import { LoginPage } from "../support/pages/LoginPage.page";
+
+const BUDGET_PASSPHRASE = "purple tractor sings loudly";
 
 test.describe("Core Host Shell & Navigation E2E", () => {
   let shell: AppShellPage;
@@ -50,11 +53,20 @@ test.describe("Core Host Shell & Navigation E2E", () => {
   });
 
   test("reaches a Budget view through the three-level sidebar and keeps its tab on refresh", async ({ page }) => {
+    // Budget onboarding and unlock each run 600,000 PBKDF2 rounds in the browser
+    test.slow();
+    const budgetGate = new BudgetGatePage(page);
     await shell.goto("/");
 
     // Level 1 → level 2: Planning expands to show Budget, which has its own chevron
     await shell.navToggle("Planning").click();
     await expect(shell.navToggle("Budget")).toHaveAttribute("aria-expanded", "false");
+    await shell.navLink("Budget").click();
+
+    // A first visit sets the budget up; it then opens Transactions
+    await expect(page).toHaveURL(/\/planning\/budget$/);
+    await budgetGate.completeOnboarding({ passphrase: BUDGET_PASSPHRASE, accountName: "Cash" });
+    await expect(page).toHaveURL(/\/planning\/budget\/transactions$/);
     await shell.navLink("Budget").click();
 
     // /planning/budget is a tiles page of the four Budget views
@@ -74,6 +86,7 @@ test.describe("Core Host Shell & Navigation E2E", () => {
     await page.getByRole("tab", { name: "Recurring" }).click();
     await expect(page).toHaveURL(/#recurring$/);
     await page.reload();
+    await budgetGate.unlock(BUDGET_PASSPHRASE);
     await expect(page.getByRole("tab", { name: "Recurring" })).toHaveAttribute("aria-selected", "true");
   });
 

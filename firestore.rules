@@ -77,6 +77,100 @@ service cloud.firestore {
     }
 
     // ==========================================
+    // BUDŻET: KONTA (BUDGET_ACCOUNTS)
+    // ==========================================
+    match /budget_accounts/{accountId} {
+      // A2 + A3: single member (the caller), fixed envelope
+      function isValidBudgetAccount() {
+        let data = request.resource.data;
+        let me = request.auth.uid;
+        return request.resource.data.keys().hasOnly([
+          'memberIds', 'defaultCurrency', 'hidden', 'wrappedKeys', 'payload', 'createdAt'
+        ]) &&
+        data.keys().hasAll(['memberIds', 'defaultCurrency', 'hidden', 'wrappedKeys', 'payload', 'createdAt']) &&
+        data.memberIds == [me] &&
+        data.defaultCurrency is string && data.defaultCurrency.size() == 3 &&
+        data.hidden is bool &&
+        data.wrappedKeys is map && data.wrappedKeys.keys().hasOnly([me]) && data.wrappedKeys.keys().hasAll([me]) &&
+        data.wrappedKeys[me] is bytes && data.wrappedKeys[me].size() <= 128 &&
+        data.payload is bytes && data.payload.size() <= 4096 &&
+        data.createdAt is number;
+      }
+
+      allow read, delete: if isAuthenticated() && request.auth.uid in resource.data.memberIds;
+      allow create: if isAuthenticated() && isValidBudgetAccount();
+      allow update: if isAuthenticated() && request.auth.uid in resource.data.memberIds && isValidBudgetAccount() &&
+        request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    // ==========================================
+    // BUDŻET: KATEGORIE (BUDGET_CATEGORIES)
+    // ==========================================
+    match /budget_categories/{uid} {
+      function isValidBudgetCategories() {
+        let data = request.resource.data;
+        return request.resource.data.keys().hasOnly(['payload', 'updatedAt']) &&
+          data.keys().hasAll(['payload', 'updatedAt']) &&
+          data.payload is bytes && data.payload.size() <= 262144 &&
+          data.updatedAt is number;
+      }
+
+      allow read, delete: if isAuthenticated() && request.auth.uid == uid;
+      allow create, update: if isAuthenticated() && request.auth.uid == uid && isValidBudgetCategories();
+    }
+
+    // ==========================================
+    // BUDŻET: KLUCZE (BUDGET_KEYS)
+    // ==========================================
+    match /budget_keys/{uid} {
+      function isValidBudgetKeys() {
+        let data = request.resource.data;
+        return request.resource.data.keys().hasOnly([
+          'salt', 'iterations', 'keyId', 'passphraseWrappedKey', 'recoveryWrappedKey', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasAll([
+          'salt', 'iterations', 'keyId', 'passphraseWrappedKey', 'recoveryWrappedKey', 'createdAt', 'updatedAt'
+        ]) &&
+        data.salt is bytes && data.salt.size() == 16 &&
+        data.iterations is int && data.iterations >= 600000 &&
+        data.keyId is string && data.keyId.size() > 0 && data.keyId.size() <= 64 &&
+        data.passphraseWrappedKey is bytes && data.passphraseWrappedKey.size() <= 128 &&
+        data.recoveryWrappedKey is bytes && data.recoveryWrappedKey.size() <= 128 &&
+        data.createdAt is number && data.updatedAt is number;
+      }
+
+      allow read, delete: if isAuthenticated() && request.auth.uid == uid;
+      // K2: `create` applies only to a missing doc; an existing one is an `update`
+      allow create: if isAuthenticated() && request.auth.uid == uid && isValidBudgetKeys();
+      // K3: re-wrap only
+      allow update: if isAuthenticated() && request.auth.uid == uid && isValidBudgetKeys() &&
+        request.resource.data.keyId == resource.data.keyId &&
+        request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    // ==========================================
+    // BUDŻET: PROFIL (BUDGET_PROFILES)
+    // ==========================================
+    match /budget_profiles/{uid} {
+      function isValidBudgetProfile() {
+        let data = request.resource.data;
+        return request.resource.data.keys().hasOnly([
+          'mainCurrency', 'mainAccountId', 'payload', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasAll(['mainCurrency', 'mainAccountId', 'payload', 'createdAt', 'updatedAt']) &&
+        data.mainCurrency is string && data.mainCurrency.size() == 3 &&
+        data.mainAccountId is string && data.mainAccountId.size() > 0 && data.mainAccountId.size() <= 128 &&
+        data.payload is bytes && data.payload.size() <= 262144 &&
+        data.createdAt is number && data.updatedAt is number;
+      }
+
+      allow read, delete: if isAuthenticated() && request.auth.uid == uid;
+      allow create: if isAuthenticated() && request.auth.uid == uid && isValidBudgetProfile();
+      allow update: if isAuthenticated() && request.auth.uid == uid && isValidBudgetProfile() &&
+        request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    // ==========================================
     // WYDARZENIA (EVENTS)
     // ==========================================
     match /events/{eventId} {

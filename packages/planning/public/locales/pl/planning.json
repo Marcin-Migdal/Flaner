@@ -96,6 +96,10 @@
       "settlementConfirmError": "Nie udało się potwierdzić spłaty",
       "convertSuccess": "Przeliczono wpisy na walutę grupy",
       "convertError": "Nie udało się przeliczyć wpisów"
+    },
+    "budget": {
+      "setupSuccess": "Budżet jest gotowy",
+      "setupError": "Nie udało się skonfigurować budżetu. Spróbuj ponownie."
     }
   },
   "errors": {
@@ -107,7 +111,13 @@
     "settlementVersionConflict": "Salda w grupie uległy zmianie w trakcie rejestrowania spłaty. Odśwież dane i spróbuj ponownie.",
     "settlementAmountExceedsDebt": "Kwota spłaty nie może być wyższa niż aktualne zadłużenie.",
     "noOutstandingDebtToSettle": "Brak zaległego zadłużenia do spłaty między tymi uczestnikami.",
-    "settlementAlreadyPending": "Spłata tego długu czeka już na potwierdzenie."
+    "settlementAlreadyPending": "Spłata tego długu czeka już na potwierdzenie.",
+    "budget": {
+      "wrongPassphrase": "Nieprawidłowe hasło. Jeśli go nie pamiętasz, użyj klucza odzyskiwania.",
+      "alreadySetUp": "Ten budżet jest już skonfigurowany. Odśwież stronę i go odblokuj.",
+      "invalidRecoveryKey": "To nie jest prawidłowy klucz odzyskiwania.",
+      "accountKeyMissing": "Brakuje klucza tego konta. Nie da się go odszyfrować w tym budżecie."
+    }
   },
   "splits": {
     "you": "Ty",
@@ -483,6 +493,228 @@
         "categories": "Kategorie",
         "rules": "Reguły"
       }
+    },
+    "defaultCategories": {
+      "expense": {
+        "shopping": {
+          "name": "Zakupy",
+          "subcategories": {
+            "groceries": "Spożywcze",
+            "newspapers": "Gazety i czasopisma",
+            "householdChemicals": "Chemia",
+            "hobbies": "Hobby",
+            "clothing": "Odzież i obuwie",
+            "electronics": "Elektronika",
+            "alcohol": "Alkohol",
+            "other": "Inne zakupy"
+          }
+        },
+        "kidsEducation": {
+          "name": "Dzieci i edukacja",
+          "subcategories": {
+            "education": "Edukacja i rozwój osobisty",
+            "childcare": "Przedszkole i opiekunka",
+            "toys": "Zabawki",
+            "other": "Inne (dzieci i edukacja)"
+          }
+        },
+        "home": {
+          "name": "Mieszkanie, dom i ogród",
+          "subcategories": {
+            "mortgage": "Kredyt hipoteczny",
+            "furniture": "Meble, sprzęt, wyposażenie",
+            "garden": "Ogród",
+            "renovation": "Remont i rozbudowa",
+            "services": "Usługi dla mieszkania, domu",
+            "other": "Inne (mieszkanie, dom)"
+          }
+        },
+        "personal": {
+          "name": "Osobiste",
+          "subcategories": {
+            "cosmetics": "Kosmetyki i higiena osobista",
+            "ticketsTaxis": "Bilety i taksówki",
+            "sport": "Sport",
+            "barber": "Barber",
+            "spa": "Masaż, solarium, spa",
+            "pets": "Zwierzęta",
+            "loanRepayment": "Spłata pożyczki",
+            "loanGiven": "Udzielenie pożyczki",
+            "lifeInsurance": "Ubezpieczenie na życie",
+            "other": "Inne osobiste"
+          }
+        },
+        "taxes": {
+          "name": "Podatki",
+          "subcategories": {
+            "incomeTax": "Podatek dochodowy",
+            "vat": "VAT",
+            "socialSecurity": "ZUS",
+            "capitalGains": "Podatek \"Belki\"",
+            "other": "Inne podatki i opłaty"
+          }
+        },
+        "gifts": {
+          "name": "Prezenty i darowizny",
+          "subcategories": {
+            "charity": "Charytatywne",
+            "gift": "Prezent"
+          }
+        },
+        "bills": {
+          "name": "Rachunki i media",
+          "subcategories": {
+            "streaming": "Streaming media",
+            "electricity": "Prąd",
+            "gas": "Gaz",
+            "internet": "Internet",
+            "mobile": "Komórka",
+            "landline": "Telefon stacjonarny",
+            "tv": "Kablówka i satelita",
+            "water": "Woda",
+            "sewage": "Kanalizacja",
+            "homeInsurance": "Ubezpieczenie mieszkania, domu",
+            "rent": "Czynsz i wynajem",
+            "bankFees": "Opłaty i prowizje bankowe",
+            "other": "Inne rachunki"
+          }
+        },
+        "entertainment": {
+          "name": "Rozrywka",
+          "subcategories": {
+            "concerts": "Koncerty",
+            "restaurants": "Restauracje, puby, kluby",
+            "filmsGames": "Filmy, gry, płyty",
+            "booksCinema": "Książki, kino, teatr",
+            "trips": "Wyjazdy, podróże, wakacje",
+            "gambling": "Loterie, kasyna, hazard",
+            "other": "Inne formy rozrywki"
+          }
+        },
+        "car": {
+          "name": "Samochód",
+          "subcategories": {
+            "carWash": "Myjnia",
+            "fuel": "Paliwo",
+            "parking": "Parkowanie",
+            "service": "Serwis i części",
+            "fees": "Opłaty",
+            "insurance": "OC / AC",
+            "other": "Inne (samochód)"
+          }
+        },
+        "business": {
+          "name": "Usługi biznesowe",
+          "subcategories": {
+            "marketing": "Marketing",
+            "legal": "Prawne i księgowe",
+            "hosting": "Internet, serwery, domeny",
+            "office": "Zaopatrzenie biura",
+            "goods": "Zakup towarów",
+            "other": "Inne usługi biznesowe"
+          }
+        },
+        "health": {
+          "name": "Zdrowie",
+          "subcategories": {
+            "tests": "Badania",
+            "medicines": "Lekarstwa",
+            "dentist": "Dentysta",
+            "eyeDoctor": "Okulista",
+            "doctor": "Lekarz (inny)",
+            "insurance": "Ubezpieczenie zdrowotne",
+            "other": "Inne (zdrowie)"
+          }
+        },
+        "savings": {
+          "name": "Oszczędności"
+        }
+      },
+      "income": {
+        "salary": "Pensja",
+        "bonus": "Premia, nagroda",
+        "services": "Zapłata za usługę",
+        "sales": "Sprzedaż towarów",
+        "giftReceived": "Otrzymany prezent",
+        "investments": "Inwestycje finansowe",
+        "interest": "Odsetki bankowe",
+        "refund": "Zwrot (pożyczki, podatku, zakupu)",
+        "cashDeposit": "Wpłata gotówki",
+        "other": "Inne przychody"
+      }
+    },
+    "onboarding": {
+      "title": "Skonfiguruj Budżet",
+      "intro": "Dane budżetu są szyfrowane na tym urządzeniu, zanim zostaną zapisane. To tylko cztery krótkie kroki.",
+      "steps": {
+        "passphrase": "Hasło",
+        "recoveryKey": "Klucz odzyskiwania",
+        "currency": "Waluta",
+        "account": "Konto główne"
+      },
+      "passphrase": {
+        "title": "Ustaw hasło budżetu",
+        "notFlanerPassword": "To nie jest hasło do Flanera. Flaner go nie zna i nie może go zresetować mailem. Jeśli stracisz hasło i klucz odzyskiwania, danych budżetu nie da się odzyskać.",
+        "label": "Hasło budżetu",
+        "confirmLabel": "Powtórz hasło",
+        "hint": "Co najmniej 12 znaków. Dobrze sprawdza się kilka niepowiązanych słów.",
+        "strength": {
+          "level0": "Za krótkie",
+          "level1": "Słabe",
+          "level2": "Średnie",
+          "level3": "Silne",
+          "level4": "Bardzo silne"
+        }
+      },
+      "recoveryKey": {
+        "title": "Zapisz klucz odzyskiwania",
+        "description": "Jeśli zapomnisz hasła, ten klucz odblokuje budżet. Pokazujemy go tylko ten jeden raz, więc zapisz go w bezpiecznym miejscu, np. w menedżerze haseł.",
+        "copy": "Kopiuj",
+        "copied": "Skopiowano",
+        "download": "Pobierz .txt",
+        "fileContent": "Klucz odzyskiwania budżetu Flaner\n\n{{key}}\n\nPrzechowuj go bezpiecznie. Odblokuje budżet, jeśli zapomnisz hasła budżetu.",
+        "confirm": "Zapisałem(-am) klucz odzyskiwania"
+      },
+      "currency": {
+        "title": "Wybierz walutę główną",
+        "description": "W tej walucie pokazujemy wszystkie sumy i raporty.",
+        "label": "Waluta główna"
+      },
+      "account": {
+        "title": "Utwórz konto główne",
+        "description": "Tu domyślnie trafiają nowe i importowane transakcje. Kolejne konta dodasz później.",
+        "nameLabel": "Nazwa konta",
+        "namePlaceholder": "np. mBank, Gotówka",
+        "currencyLabel": "Waluta konta"
+      },
+      "actions": {
+        "back": "Wstecz",
+        "next": "Dalej",
+        "finish": "Zakończ konfigurację"
+      }
+    },
+    "unlock": {
+      "title": "Odblokuj Budżet",
+      "description": "Wpisz hasło budżetu, aby odszyfrować budżet na tym urządzeniu.",
+      "label": "Hasło budżetu",
+      "submit": "Odblokuj"
+    },
+    "validation": {
+      "passphraseTooShort": "Użyj co najmniej 12 znaków.",
+      "passphraseCommon": "To hasło jest zbyt popularne. Wybierz coś trudniejszego do odgadnięcia.",
+      "passphraseContainsIdentity": "Nie używaj w haśle swojego adresu e-mail ani nazwy użytkownika.",
+      "passphraseMismatch": "Hasła się różnią.",
+      "passphraseRequired": "Wpisz hasło budżetu.",
+      "recoveryKeySaved": "Potwierdź, że zapisałeś(-aś) klucz odzyskiwania.",
+      "accountNameRequired": "Wpisz nazwę konta.",
+      "accountNameMax": "Użyj najwyżej 60 znaków.",
+      "currencyRequired": "Wybierz walutę."
+    },
+    "transactionsEmpty": {
+      "title": "Brak transakcji",
+      "description": "Zaimportuj plik z wyciągiem bankowym albo dodaj transakcję, żeby zacząć.",
+      "import": "Importuj plik",
+      "add": "Dodaj transakcję"
     }
   }
 }

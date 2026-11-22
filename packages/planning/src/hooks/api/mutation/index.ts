@@ -17,3 +17,4 @@ export * from "./useUpdateSplitGroupMutation";
 export * from "./useDeleteSplitGroupMutation";
 export * from "./useRemoveParticipantFromGroupMutation";
 export * from "./useConvertSplitGroupCurrencyMutation";
+export * from "./useCreateBudgetMutation";
