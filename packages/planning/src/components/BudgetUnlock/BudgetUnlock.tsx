@@ -1,55 +1,71 @@
-import { Button, Card, FormTextField } from "@flaner/ui-components";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { FormProvider, useForm } from "react-hook-form";
-import { unlockWithPassphrase, type LockedBudget, type UnlockedBudget } from "../../api/budget";
+import { Card } from "@flaner/ui-components";
+import { useState } from "react";
+import type { LockedBudget, UnlockedBudget } from "../../api/budget";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
-import { getBudgetUnlockSchema, type BudgetUnlockFormData } from "../../utils/schemas";
+import { rememberBudget } from "../../utils/budgetDevice";
+import { ResetBudgetDialog } from "../ResetBudgetDialog";
 import { budgetUnlockStyles as styles } from "./BudgetUnlock.styles";
+import { NewPassphraseForm } from "./components/NewPassphraseForm";
+import { PassphraseUnlockForm } from "./components/PassphraseUnlockForm";
+import { RecoveryKeyUnlockForm } from "./components/RecoveryKeyUnlockForm";
 
 export type BudgetUnlockProps = {
   locked: LockedBudget;
   onUnlock: (budget: UnlockedBudget) => void;
 };
 
-/** Unlock with the budget passphrase (remember device and the recovery-key path: #170). */
+/** A recovery-key unlock always ends with a new passphrase, so the forgotten one is replaced. */
+type Stage =
+  | { kind: "passphrase" }
+  | { kind: "recoveryKey" }
+  | { kind: "newPassphrase"; budget: UnlockedBudget; remember: boolean };
+
+const STAGE_TEXT = {
+  passphrase: { title: "budget.unlock.title", description: "budget.unlock.description" },
+  recoveryKey: { title: "budget.unlock.recovery.title", description: "budget.unlock.recovery.description" },
+  newPassphrase: { title: "budget.unlock.newPassphrase.title", description: "budget.unlock.newPassphrase.description" },
+};
+
+/** Unlock with the passphrase or the recovery key, optionally remembering this device. */
 export const BudgetUnlock = ({ locked, onUnlock }: BudgetUnlockProps) => {
   const { t } = usePlanningTranslations();
-  const methods = useForm<BudgetUnlockFormData>({
-    resolver: zodResolver(getBudgetUnlockSchema(t)),
-    defaultValues: { passphrase: "" },
-  });
+  const [stage, setStage] = useState<Stage>({ kind: "passphrase" });
+  const [isResetOpen, setResetOpen] = useState(false);
 
-  // Local crypto only (no Firestore write), so no mutation: a wrong passphrase is a field error, not a toast
-  const submit = async ({ passphrase }: BudgetUnlockFormData) => {
-    try {
-      onUnlock(await unlockWithPassphrase(locked, passphrase));
-    } catch {
-      // The passphrase key failed to unwrap the user key
-      methods.setError("passphrase", { message: t("errors.budget.wrongPassphrase") });
-    }
+  const finish = async (budget: UnlockedBudget, remember: boolean) => {
+    // Storage blocked (private browsing): the budget still opens, it just asks again next time
+    if (remember) await rememberBudget(budget).catch(reportError);
+    onUnlock(budget);
   };
 
   return (
     <div className={styles.root}>
       <Card className={styles.card}>
         <div className={styles.header}>
-          <h1 className={styles.title}>{t("budget.unlock.title")}</h1>
-          <p className={styles.description}>{t("budget.unlock.description")}</p>
+          <h1 className={styles.title}>{t(STAGE_TEXT[stage.kind].title)}</h1>
+          <p className={styles.description}>{t(STAGE_TEXT[stage.kind].description)}</p>
         </div>
-        <FormProvider {...methods}>
-          <form onSubmit={methods.handleSubmit(submit)} noValidate className={styles.form}>
-            <FormTextField<BudgetUnlockFormData>
-              name="passphrase"
-              type="password"
-              autoComplete="current-password"
-              label={t("budget.unlock.label")}
-            />
-            <Button type="submit" variant="brand" className={styles.submit} isBusy={methods.formState.isSubmitting}>
-              {t("budget.unlock.submit")}
-            </Button>
-          </form>
-        </FormProvider>
+
+        {stage.kind === "passphrase" && (
+          <PassphraseUnlockForm
+            locked={locked}
+            onUnlock={finish}
+            onUseRecoveryKey={() => setStage({ kind: "recoveryKey" })}
+          />
+        )}
+        {stage.kind === "recoveryKey" && (
+          <RecoveryKeyUnlockForm
+            locked={locked}
+            onUnlock={(budget, remember) => setStage({ kind: "newPassphrase", budget, remember })}
+            onUsePassphrase={() => setStage({ kind: "passphrase" })}
+            onReset={() => setResetOpen(true)}
+          />
+        )}
+        {stage.kind === "newPassphrase" && (
+          <NewPassphraseForm budget={stage.budget} onSaved={() => finish(stage.budget, stage.remember)} />
+        )}
       </Card>
+      <ResetBudgetDialog open={isResetOpen} onOpenChange={setResetOpen} />
     </div>
   );
 };

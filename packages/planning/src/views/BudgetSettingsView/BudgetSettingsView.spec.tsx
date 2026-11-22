@@ -1,7 +1,10 @@
 import { screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { createTestI18n, renderWithProviders } from "@flaner/test-utils";
+import { describe, expect, it, vi } from "vitest";
+import { createMockUser, createTestI18n, renderWithProviders } from "@flaner/test-utils";
+import { BudgetProvider } from "../../context/BudgetContext";
 import { BudgetSettingsView } from "./BudgetSettingsView";
+
+vi.mock("../../api/budget", () => ({ getLockedBudget: vi.fn().mockResolvedValue(null) }));
 
 const i18n = createTestI18n({
   en: {
@@ -13,7 +16,12 @@ const i18n = createTestI18n({
 });
 
 const renderView = (entry: string) =>
-  renderWithProviders(<BudgetSettingsView />, { i18nInstance: i18n, initialEntries: [entry] });
+  renderWithProviders(
+    <BudgetProvider>
+      <BudgetSettingsView />
+    </BudgetProvider>,
+    { i18nInstance: i18n, initialEntries: [entry], user: createMockUser() },
+  );
 
 describe("BudgetSettingsView", () => {
   it("shows the three tabs with Accounts & security first", () => {

@@ -25,11 +25,14 @@ The Budget's key material (MFE `planning`, Budget; ADR 0002). One doc per user (
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
 | Onboarding | `packages/planning/src/api/budget/endpoints.ts#createBudget` | read `budget_keys/{me}` (must be missing), set `budget_keys/{me}` + `budget_profiles/{me}` + `budget_categories/{me}` + `budget_accounts/{new}` | ✅ transaction |
+| Change passphrase (also after a recovery-key unlock) | `packages/planning/src/api/budget/endpoints.ts#changeBudgetPassphrase` | read `budget_keys/{me}` (`keyId` must be unchanged), update `salt`, `iterations`, `passphraseWrappedKey`, `updatedAt` | ✅ transaction |
+| New recovery key | `packages/planning/src/api/budget/endpoints.ts#replaceRecoveryKey` | read `budget_keys/{me}` (`keyId` must be unchanged), update `recoveryWrappedKey`, `updatedAt` | ✅ transaction |
+| Reset budget | `packages/planning/src/api/budget/endpoints.ts#resetBudget` | delete `budget_keys/{me}`, with every other budget document of the user; `budget_keys/{me}` in the last batch | ⚠️ batches of 500 (keys last, so a failed reset stays locked and can be retried) |
 
 ## Queries
 | Query | Endpoint | Allowed by |
 | --- | --- | --- |
-| `get budget_keys/{me}` | `getLockedBudget` (Budget gate), `createBudget` (transaction read) | read: self |
+| `get budget_keys/{me}` | `getLockedBudget` (Budget gate), `createBudget`, `changeBudgetPassphrase`, `replaceRecoveryKey` (transaction reads) | read: self |
 
 ## Access matrix
 | Actor \ operation | read | create (valid, none yet) | update keeping `keyId` / `createdAt` | update changing `keyId` / `createdAt` | write invalid envelope | delete |
@@ -77,4 +80,4 @@ match /budget_keys/{uid} {
 
 ## Tests
 - `firestore-tests/budget/budget_keys.spec.ts` — onboarding transaction, own read, re-wrap update, second onboarding (new `keyId`) denied, other users / anonymous denied, invalid envelope (extra field, wrong salt size, too few iterations, oversized key) denied, own delete.
-- `packages/planning/src/api/budget/endpoints.emu.spec.ts` (`npm run test:emulator`) — onboarding through the API module against the real rules, second onboarding fails, another user denied.
+- `packages/planning/src/api/budget/endpoints.emu.spec.ts` (`npm run test:emulator`) — onboarding through the API module against the real rules, second onboarding fails, unlock with the passphrase and the recovery key, change passphrase (with either) and new recovery key re-wrap without touching other documents, a stale `keyId` is refused, reset deletes the keys, another user denied.
