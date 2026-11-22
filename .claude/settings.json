@@ -10,5 +10,18 @@
   },
   "enabledPlugins": {
     "mattpocock-skills@mattpocock": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/claude-cloud-setup.mjs",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
   }
 }
