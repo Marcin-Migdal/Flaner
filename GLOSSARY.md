@@ -235,12 +235,12 @@ _Avoid_: tag (a separate, unrelated concept), type
 The one currency a user's budget and reports are shown in; a transaction in another currency keeps its original amount and also carries the amount converted at the rate of its date.
 _Avoid_: base currency, default currency
 
-**Transaction part**:
-One piece of a transaction that was broken down, with its own subcategory and amount; the parts add up to the transaction.
-_Avoid_: split (that word is for split groups), share, line
+**Split-off**:
+A sub-transaction carved out of a transaction: it takes part of the amount and has its own subcategory and note, while the transaction keeps its own category and the rest (Media Expert 500, split off "headphones" 250, Media Expert keeps 250). Removing a split-off returns its amount to the transaction.
+_Avoid_: transaction part, part, split (that word is for split groups), share, line
 
 **Excluded transaction**:
-A transaction left out of summaries, the budget and charts. It is hidden from the transaction list unless the user asks to see excluded transactions, so the exclusion can be undone. A single transaction part can be excluded too; it stays visible, greyed out, inside its transaction.
+A transaction left out of summaries, the budget and charts. It is hidden from the transaction list unless the user asks to see excluded transactions, so the exclusion can be undone. A single split-off can be excluded too; it stays visible, greyed out, under its transaction.
 _Avoid_: irrelevant, hidden, ignored
 
 **Unconfirmed transaction**:
@@ -251,12 +251,8 @@ _Avoid_: pending, unverified
 A user's learned link from a counterparty to a category or subcategory, created or replaced whenever the user sets or changes a transaction's category. It recognizes the counterparty by their bank account number when the transaction has one, otherwise by a keyword found in the payee or description. It guesses categories only for new transactions, which stay unconfirmed.
 _Avoid_: auto-category, filter, mapping
 
-**Own transfer**:
-A transaction marked by the user as money moved between their own accounts. It is still counted like any other transaction; the mark only lets the user find it.
-_Avoid_: internal transfer, transfer (as the general term)
-
 **Linked refund**:
-An incoming transaction tied to the expense it refunds. The expense gets an excluded part of the refund's amount and the refund itself becomes excluded, so the expense costs less and the refund never counts as income.
+An incoming transaction tied to the expense it refunds. The refund's amount is split off from the expense as an excluded split-off and the refund itself becomes excluded, so the expense costs less and the refund never counts as income.
 _Avoid_: return, chargeback, reimbursement
 
 **Import template**:
@@ -268,8 +264,12 @@ The part of the Budget where a user plans a calendar month: the limits per categ
 _Avoid_: Planning (the whole area that holds the Scheduler, Splits and the Budget), Scheduler, budget (as the name of this part)
 
 **Limit**:
-The most a user plans to spend in one expense category or subcategory in one calendar month. Money left unspent never carries over to the next month, and neither does overspending.
+The most a user plans to spend in one expense category or subcategory in one calendar month. A category and its subcategories each have their own limit or none, independently. A subcategory without a limit is outside the plan even when its category has one. Money left unspent never carries over to the next month, and neither does overspending.
 _Avoid_: budget (as a single amount), cap, allowance
+
+**Outside the plan**:
+The Planner group of every expense category or subcategory that has spending (or recurring occurrences) in the month but no limit of its own, plus uncategorized spending. Adding a limit moves it into the plan.
+_Avoid_: unplanned, unbudgeted, other
 
 **Planned income**:
 The income a user expects in one income category or subcategory in one calendar month.
