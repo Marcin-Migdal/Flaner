@@ -40,12 +40,12 @@ export const BudgetGate = ({ children }: BudgetGateProps) => {
     getRememberedBudget(locked).then((remembered) => {
       if (cancelled) return;
       if (remembered) setBudget(remembered);
-      setCheckedDevice(`${locked.uid}:${locked.keyId}`);
+      setCheckedDevice(lockedId);
     });
     return () => {
       cancelled = true;
     };
-  }, [locked, budget, setBudget]);
+  }, [locked, lockedId, budget, setBudget]);
 
   if (isOwnBudget) return children;
   if (isPending) return <LoadingFallback />;

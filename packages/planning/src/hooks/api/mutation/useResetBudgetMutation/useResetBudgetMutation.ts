@@ -17,7 +17,7 @@ export const useResetBudgetMutation = (options?: UseMutationOptions<void, Error,
       mutationFn: async (_, { uid }) => {
         await resetBudget(uid);
         // Storage blocked: a leftover record is dropped by its `keyId` check on the next visit
-        await forgetBudget(uid).catch(() => undefined);
+        await forgetBudget(uid).catch(reportError);
         const lockedKey = budgetKeys.locked(uid);
         queryClient.removeQueries({
           queryKey: budgetKeys.all,

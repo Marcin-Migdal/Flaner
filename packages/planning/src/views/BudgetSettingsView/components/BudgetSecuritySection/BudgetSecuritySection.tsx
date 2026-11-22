@@ -38,7 +38,7 @@ export const BudgetSecuritySection = () => {
 
   const lock = async () => {
     // Storage blocked: nothing was remembered, so dropping the key from memory is enough
-    if (user) await forgetBudget(user.uid).catch(() => undefined);
+    if (user) await forgetBudget(user.uid).catch(reportError);
     setBudget(null);
   };
 

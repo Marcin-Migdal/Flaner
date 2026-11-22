@@ -7,9 +7,6 @@ import { nonExtractableCopy } from "../budgetCrypto";
 const DB_NAME = "flaner-budget";
 const STORE = "rememberedKeys";
 
-/** What a record holds; the key is the non-extractable copy. */
-type RememberedBudget = UnlockedBudget;
-
 const openDb = () =>
   new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, 1);
@@ -35,14 +32,15 @@ const inStore = async <T>(mode: IDBTransactionMode, run: (store: IDBObjectStore)
 
 /** Remembers the budget on this device. Needs a key unlocked by a secret (an extractable one). */
 export const rememberBudget = async ({ uid, keyId, userKey }: UnlockedBudget): Promise<void> => {
-  const record: RememberedBudget = { uid, keyId, userKey: await nonExtractableCopy(userKey) };
+  // A record holds the non-extractable copy of the key
+  const record: UnlockedBudget = { uid, keyId, userKey: await nonExtractableCopy(userKey) };
   await inStore("readwrite", (store) => store.put(record));
 };
 
 /** The remembered budget for these keys, or `null` (none, another `keyId`, or IndexedDB unavailable). */
 export const getRememberedBudget = async (locked: LockedBudget): Promise<UnlockedBudget | null> => {
   try {
-    const record = await inStore<RememberedBudget | undefined>("readonly", (store) => store.get(locked.uid));
+    const record = await inStore<UnlockedBudget | undefined>("readonly", (store) => store.get(locked.uid));
     if (!record) return null;
     if (record.keyId !== locked.keyId) {
       await forgetBudget(locked.uid);
