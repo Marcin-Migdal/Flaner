@@ -10,6 +10,8 @@ const BudgetSummaryView = React.lazy(() => import("./views/BudgetSummaryView"));
 const BudgetTransactionsView = React.lazy(() => import("./views/BudgetTransactionsView"));
 const BudgetPlannerView = React.lazy(() => import("./views/BudgetPlannerView"));
 const BudgetSettingsView = React.lazy(() => import("./views/BudgetSettingsView"));
+// Onboarding / unlock in front of every Budget page; lazy, so the budget crypto loads only there
+const BudgetGate = React.lazy(() => import("./components/BudgetGate"));
 
 const budgetViews: AppRouteObject[] = [
   {
@@ -58,7 +60,11 @@ export const routes: AppRouteObject[] = [
       },
       {
         path: "budget",
-        element: <Outlet />,
+        element: (
+          <BudgetGate>
+            <Outlet />
+          </BudgetGate>
+        ),
         handle: { label: "planning:nav.budget", icon: "piggy-bank" },
         // A route with children shows a tiles page of them as its index
         children: [{ index: true, element: <BudgetTilesView routes={budgetViews} /> }, ...budgetViews],

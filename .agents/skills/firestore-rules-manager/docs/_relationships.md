@@ -14,5 +14,6 @@ Index of the places where a rule of one collection reads another collection, or 
 | `spools/{s}/prints` rules | `spools/{s}.userId` | `spools.md` |
 | `editTemplate`, `deleteTemplate` | the owner's `spools` (`templateId`) | `templates.md`, `spools.md` |
 | `deleteLookupMaterial`, `deleteLookupType` | child lookups matched by name | `lookup_*.md` |
+| `createBudget` (Budget onboarding) | `budget_keys` must be missing; writes `budget_keys`, `budget_profiles`, `budget_categories`, `budget_accounts` in one transaction | `budget_*.md` |
 
 **Denormalized copies** (not kept in sync by rules): `username` / `avatarUrl` in `friendRequests` and notifications (historical, kept as sent); template fields in `spools`; group name / avatar in invitations. `friendships` hold no profile copy: friend lists read `users/{uid}` live (#26).
