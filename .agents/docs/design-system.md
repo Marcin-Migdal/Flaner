@@ -103,7 +103,7 @@ Semantic meaning of raw colours in use: `emerald` = success / "yes", `amber` = w
 | D11 | **Motion**: `--duration-fast` 150ms (hover, toggles), `--duration-base` 200ms (popovers, tabs), `--duration-slow` 300ms (sheets, modals); `--ease-standard` / `--ease-emphasized`. Global `prefers-reduced-motion` rule disables non-essential animation. Existing `duration-100/500` → nearest token. |
 | D12 | **Breakpoints**: Tailwind defaults + named `--breakpoint-desktop: 1080px` (replaces `min-[1080px]`/`max-[1079px]`/`min-[1200px]`) and `--breakpoint-wide: 1440px` (replaces `min-[1438px]`, `min-[1284px]`). |
 | D13 | **Z-index**: named layers `z-base`(0) `z-raised`(10) `z-sticky`(20) `z-overlay`(50) `z-toast`(100). |
-| D14 | **Data-viz palette**: `--chart-1..8` categorical (OKLCH, hues 65 / 240 / 155 / 20 / 300 / 195 / 110 / 340; L≈0.60 light, L≈0.74 dark; all ≥ 3:1 vs. background in both themes), plus `--chart-positive` / `--chart-negative` (= success / danger) for diverging values (balances). Sequential = one hue with opacity steps (no extra tokens). Fixes B5. |
+| D14 | **Data-viz palette**: `--chart-1..8` categorical (OKLCH, hues 65 / 240 / 155 / 20 / 300 / 195 / 110 / 340; L≈0.60 light, L≈0.74 dark; all ≥ 3:1 vs. background in both themes), plus `--chart-muted` (neutral, ≥ 3:1) for a remainder such as "Others", and `--chart-positive` / `--chart-negative` (= success / danger) for diverging values (balances). Sequential = one hue with opacity steps (no extra tokens). Fixes B5. |
 | D15 | **Focus**: one visible focus ring `ring-2 ring-ring` with `--ring` ≥ 3:1 vs. background in both themes; `--ring` moves to a brand-tinted value. |
 | D16 | **Icons**: lucide only; sizes `size-4` (inline), `size-5` (buttons/nav), `size-6` (empty states / headers); default stroke. |
 | D17 | **Enforcement**: `scripts/check-design-tokens.mjs` (CI + `npm run lint:tokens`) fails on raw palette classes, hex/rgb inside class strings, `text-[Npx]`, `shadow-[…]`, `z-[N]`, arbitrary breakpoints. Allowlist: data files (filament colours, colour presets, event colours, `GoogleIcon`), `components/ui/*` shadcn primitives. |
@@ -145,9 +145,9 @@ Semantic meaning of raw colours in use: `emerald` = success / "yes", `amber` = w
 | `destructive` | alias of `danger` | alias of `danger` | shadcn compatibility |
 | `vote-yes|maybe|no` (+ `-foreground`, `-subtle`, `-text`, `-border`) | alias of `success` / `warning` / `danger` | alias | domain tier; `-hover` dropped (use `/90`), `-tint` renamed `-subtle` |
 | `ring` | `oklch(0.52 0.12 65)` | `#edad5e` | focus, ≥ 3:1 |
-| `chart-1..8`, `chart-positive|negative` | see D14 | see D14 | data-viz |
+| `chart-1..8`, `chart-muted`, `chart-positive|negative` | see D14 | see D14 | data-viz |
 
-Exact values are verified by `packages/ui-components/src/theme/theme.spec.ts`, which parses `theme.css` and asserts AA for text pairs (4.5:1) and graphics / focus / inputs / charts (3:1) in both themes (64 checks).
+Exact values are verified by `packages/ui-components/src/theme/theme.spec.ts`, which parses `theme.css` and asserts AA for text pairs (4.5:1) and graphics / focus / inputs / charts (3:1) in both themes (66 checks).
 
 **Forced-dark surfaces:** an element that must stay dark regardless of the theme can carry the `dark` class, so every token inside resolves to its dark value. (Scheduler slot pills used this until the theme-aware `--event-*` colours replaced it.)
 

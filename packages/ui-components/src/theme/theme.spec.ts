@@ -85,7 +85,7 @@ const pairs: [string, string, number][] = [
   ["ring", "background", GRAPHIC],
   ["input-border", "card", GRAPHIC],
   ["input-border", "background", GRAPHIC],
-  ...[1, 2, 3, 4, 5, 6, 7, 8].map((i): [string, string, number] => [`chart-${i}`, "background", GRAPHIC]),
+  ...[1, 2, 3, 4, 5, 6, 7, 8, "muted"].map((i): [string, string, number] => [`chart-${i}`, "background", GRAPHIC]),
 ];
 
 describe("theme.css contrast (WCAG 2.2 AA)", () => {

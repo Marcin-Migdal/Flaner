@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DonutChart, type DonutChartSegment } from "./DonutChart";
 
@@ -61,7 +61,7 @@ describe("DonutChart", () => {
 
     expect(screen.getByRole("graphics-document", { name: "Spending" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Food: 600 zł (60%)" })).toBeInTheDocument();
-    expect(screen.getByRole("graphics-symbol", { name: "Others: 100 zł (10%)" })).not.toHaveAttribute("tabindex");
+    expect(screen.getByRole("graphics-symbol", { name: "Others: 100 zł (10%)" })).toHaveAttribute("tabindex", "0");
   });
 
   it("drills into a segment with Enter or Space", async () => {
@@ -128,18 +128,19 @@ describe("DonutChart", () => {
       />,
     );
 
-    fireEvent.keyDown(screen.getByRole("button", { name: /^Groceries/ }), { key: "Escape" });
+    screen.getByRole("button", { name: /^Groceries/ }).focus();
+    await userEvent.keyboard("{Escape}");
 
     expect(onDrillChange).toHaveBeenCalledWith(null);
   });
 
-  it("moves keyboard focus to Back when the children are not selectable", async () => {
+  it("moves keyboard focus into the first child even when the children are not selectable", async () => {
     render(<Drillable />);
 
     await userEvent.tab();
     await userEvent.keyboard("{Enter}");
 
-    expect(screen.getByRole("button", { name: "chart.back" })).toHaveFocus();
+    expect(screen.getByRole("graphics-symbol", { name: /^Groceries/ })).toHaveFocus();
   });
 
   it("moves keyboard focus into the first child on drill-down and back to the parent on Back", async () => {

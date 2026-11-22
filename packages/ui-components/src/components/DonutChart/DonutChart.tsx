@@ -50,8 +50,6 @@ const DURATION_MS = 450;
 const drawArc = (angles: { start: number; end: number }) =>
   arc()({ innerRadius: RADIUS * 0.62, outerRadius: RADIUS, startAngle: angles.start, endAngle: angles.end });
 
-const BACK_FOCUS = "\u0000back";
-
 const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 type Tween = {
@@ -122,17 +120,14 @@ export function DonutChart({
     return () => frame.stop();
   }, [running, tween.key]);
 
-  // Keyboard focus follows the drill: into the first child (or Back when children can't be
-  // selected), and back to the segment left.
+  // Keyboard focus follows the drill: into the first child, and back to the segment left.
   const focusAfterDrill = React.useRef<string | null>(null);
   const segmentRefs = React.useRef(new Map<string, SVGPathElement>());
-  const backRef = React.useRef<HTMLButtonElement>(null);
   React.useEffect(() => {
     const id = focusAfterDrill.current;
     if (!id) return;
     focusAfterDrill.current = null;
-    if (id === BACK_FOCUS) backRef.current?.focus();
-    else segmentRefs.current.get(id)?.focus();
+    segmentRefs.current.get(id)?.focus();
   }, [drilled?.id]);
 
   const [activeId, setActiveId] = React.useState<string | null>(null);
@@ -146,7 +141,7 @@ export function DonutChart({
   };
   const activate = (segment: DonutChartSegment) => {
     if (!drilled && segment.children?.length) {
-      focusAfterDrill.current = onSegmentSelect ? segment.children[0].id : BACK_FOCUS;
+      focusAfterDrill.current = segment.children[0].id;
       onDrillChange(segment.id);
     } else {
       onSegmentSelect?.(segment);
@@ -160,14 +155,7 @@ export function DonutChart({
   return (
     <div className={cn(donutChartStyles.root, className)}>
       {drilled ? (
-        <Button
-          ref={backRef}
-          type="button"
-          variant="ghost"
-          size="sm"
-          className={donutChartStyles.back}
-          onClick={goBack}
-        >
+        <Button type="button" variant="ghost" size="sm" className={donutChartStyles.back} onClick={goBack}>
           <ChevronLeft aria-hidden="true" />
           {backLabel ?? t("chart.back")}
         </Button>
@@ -200,26 +188,24 @@ export function DonutChart({
                     chartFillClasses[segment.color],
                     interactive && donutChartStyles.interactive,
                   )}
+                  // Every segment is a tab stop (it shows its readout in the middle); only
+                  // segments that drill in or can be selected act as buttons.
+                  role={interactive ? "button" : "graphics-symbol"}
+                  tabIndex={0}
                   aria-label={name}
                   onMouseEnter={show}
                   onMouseLeave={hide}
-                  {...(interactive
-                    ? {
-                        role: "button",
-                        tabIndex: 0,
-                        onFocus: show,
-                        onBlur: hide,
-                        onClick: () => activate(segment),
-                        onKeyDown: (event: React.KeyboardEvent) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            activate(segment);
-                          } else if (event.key === "Escape" && drilled) {
-                            goBack();
-                          }
-                        },
-                      }
-                    : { role: "graphics-symbol" })}
+                  onFocus={show}
+                  onBlur={hide}
+                  onClick={interactive ? () => activate(segment) : undefined}
+                  onKeyDown={(event) => {
+                    if (interactive && (event.key === "Enter" || event.key === " ")) {
+                      event.preventDefault();
+                      activate(segment);
+                    } else if (event.key === "Escape" && drilled) {
+                      goBack();
+                    }
+                  }}
                 />
               );
             })}
