@@ -20,7 +20,7 @@ export type BarChartProps = {
   groups: BarChartGroup[];
   series: BarChartSeries[];
   formatValue: (value: number) => string;
-  /** Group drawn on a highlighted band (e.g. the chosen month). */
+  /** Group drawn on a highlighted band, with the other groups' bars dimmed (e.g. the chosen month). */
   highlightedId?: string;
   className?: string;
 };
@@ -91,7 +91,10 @@ export function BarChart({ label, groups, series, formatValue, highlightedId, cl
                     y={percent(100 - height)}
                     height={percent(height)}
                     rx="2"
-                    className={chartFillClasses[item.color]}
+                    className={cn(
+                      chartFillClasses[item.color],
+                      highlightedId !== undefined && group.id !== highlightedId && barChartStyles.dimmed,
+                    )}
                   />
                 );
               })}

@@ -34,6 +34,21 @@ describe("BarChart", () => {
     expect(screen.getByRole("rowheader", { name: "Oct" })).not.toHaveAttribute("aria-current");
   });
 
+  it("dims the other groups' bars so the highlighted group's bars stand out", () => {
+    render(
+      <BarChart label="Income vs expenses" groups={GROUPS} series={SERIES} formatValue={formatValue} highlightedId="2026-11" />,
+    );
+
+    expect(screen.getByRole("graphics-symbol", { name: "Nov, Income: 5200 zł" })).not.toHaveClass("opacity-40");
+    expect(screen.getByRole("graphics-symbol", { name: "Oct, Income: 5000 zł" })).toHaveClass("opacity-40");
+  });
+
+  it("dims nothing without a highlight", () => {
+    render(<BarChart label="Income vs expenses" groups={GROUPS} series={SERIES} formatValue={formatValue} />);
+
+    expect(screen.getByRole("graphics-symbol", { name: "Oct, Income: 5000 zł" })).not.toHaveClass("opacity-40");
+  });
+
   it("lists every value in a visually hidden data table", () => {
     render(<BarChart label="Income vs expenses" groups={GROUPS} series={SERIES} formatValue={formatValue} />);
 
