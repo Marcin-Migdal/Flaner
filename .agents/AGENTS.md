@@ -1,5 +1,9 @@
 # Flaner v2 AI Agent Global Rules
 
+**LANGUAGE**
+- Every chat reply to the user is in Polish, from the first sentence: answers, questions, progress notes, recaps and end-of-task reports (local and cloud sessions alike).
+- Text persisted outside chat stays in English: code, comments, commits, branch names, PR bodies and comments, issues, specs, tickets, GLOSSARY, ADRs, docs.
+
 **HOW WORK FLOWS: MATTPOCOCK SKILLS FIRST**
 - Planning and feature work run through the `mattpocock-skills` plugin. Routes (wayfinder / grill-with-docs → to-spec → to-tickets → implement) and the Flaner steps the skills don't cover: `.agents/workflows/01-feature-workflow.md`.
 - A mattpocock skill the user invokes (`/wayfinder`, `/grill-with-docs`, `/to-spec`, `/to-tickets`, `/implement`, `/implement-spec`, `/prototype`, `/research`, `/tdd`, `/code-review`, `/diagnosing-bugs`, `/triage`, …) runs by its own `SKILL.md`; invoking it approves the file and tracker writes it defines.
