@@ -12,6 +12,8 @@ import {
   query,
   runTransaction,
   where,
+  writeBatch,
+  type DocumentReference,
   type Transaction,
 } from "firebase/firestore";
 import {
@@ -195,6 +197,102 @@ export const unlockWithPassphrase = async (locked: LockedBudget, passphrase: str
     throw new Error("planning:errors.budget.wrongPassphrase");
   });
   return { uid: locked.uid, keyId: locked.keyId, userKey };
+};
+
+/**
+ * Accepts the key with or without dashes, in any case. Fails with `errors.budget.invalidRecoveryKey` when the input
+ * cannot be a recovery key and with `errors.budget.wrongRecoveryKey` when it does not unwrap the user key.
+ */
+export const unlockWithRecoveryKey = async (locked: LockedBudget, input: string): Promise<UnlockedBudget> => {
+  const recoveryKey = parseRecoveryKey(input);
+  if (!recoveryKey) throw new Error("planning:errors.budget.invalidRecoveryKey");
+
+  const userKey = await unwrapDataKey(
+    locked.recoveryWrappedKey,
+    await deriveRecoveryKey(recoveryKey),
+    paths.keys(locked.uid),
+  ).catch(() => {
+    throw new Error("planning:errors.budget.wrongRecoveryKey");
+  });
+  return { uid: locked.uid, keyId: locked.keyId, userKey };
+};
+
+// ---------------------------------------------------------------------------
+// Keys: re-wrapping (the data stays encrypted with the same user key)
+// ---------------------------------------------------------------------------
+
+type KeysRewrap = Partial<Pick<BudgetKeysDoc, "salt" | "iterations" | "passphraseWrappedKey" | "recoveryWrappedKey">>;
+
+/**
+ * Re-wraps in a transaction that fails with `errors.budget.keyChanged` when the stored user key is no longer
+ * `budget`'s (the budget was reset on another device): writing it anyway would lock the new budget out.
+ */
+const rewrapKeys = (budget: UnlockedBudget, fields: KeysRewrap) =>
+  runTransaction(fb.firestore, async (transaction) => {
+    const stored = (await transaction.get(refs.keys(budget.uid))).data();
+    if (stored?.keyId !== budget.keyId) throw new Error("planning:errors.budget.keyChanged");
+    transaction.update(refs.keys(budget.uid), { ...fields, updatedAt: Date.now() });
+  });
+
+/** Wraps the user key by a new passphrase (new salt). Needs a budget unlocked by a passphrase or recovery key. */
+export const changeBudgetPassphrase = async (budget: UnlockedBudget, passphrase: string): Promise<void> => {
+  const salt = generateSalt();
+  const passphraseKey = await derivePassphraseKey(passphrase, salt);
+  await rewrapKeys(budget, {
+    salt: toBytes(salt),
+    iterations: KDF_ITERATIONS,
+    passphraseWrappedKey: toBytes(await wrapDataKey(budget.userKey, passphraseKey, paths.keys(budget.uid))),
+  });
+};
+
+/** Wraps the user key by a new recovery key; the old one stops working. Needs a budget unlocked by a secret. */
+export const replaceRecoveryKey = async (budget: UnlockedBudget, input: string): Promise<void> => {
+  const recoveryKey = parseRecoveryKey(input);
+  if (!recoveryKey) throw new Error("planning:errors.budget.invalidRecoveryKey");
+
+  const recoveryWrappedKey = await wrapDataKey(budget.userKey, await deriveRecoveryKey(recoveryKey), paths.keys(budget.uid));
+  await rewrapKeys(budget, { recoveryWrappedKey: toBytes(recoveryWrappedKey) });
+};
+
+// ---------------------------------------------------------------------------
+// Reset
+// ---------------------------------------------------------------------------
+
+/**
+ * Every budget collection Reset budget empties, and how a user's documents are found in it: `docId` (one document
+ * per user, id == uid) or `memberIds` (`array-contains uid`). A ticket that adds a budget collection adds it here.
+ * `budget_keys` is not listed: it is always deleted last.
+ */
+const RESET_COLLECTIONS: { name: string; owner: "docId" | "memberIds" }[] = [
+  { name: "budget_profiles", owner: "docId" },
+  { name: "budget_categories", owner: "docId" },
+  { name: "budget_months", owner: "memberIds" },
+  { name: "budget_accounts", owner: "memberIds" },
+];
+
+// Firestore's limit of writes per batch
+const BATCH_LIMIT = 500;
+
+/**
+ * Deletes every budget document of the user (Reset budget), after which the Budget shows onboarding again.
+ * The keys go in the last batch, so a reset that fails half-way leaves the budget locked, not half set up, and can
+ * be run again.
+ */
+export const resetBudget = async (uid: string): Promise<void> => {
+  const owned = await Promise.all(
+    RESET_COLLECTIONS.map(async ({ name, owner }): Promise<DocumentReference[]> => {
+      if (owner === "docId") return [doc(fb.firestore, name, uid)];
+      const snapshot = await getDocs(query(collection(fb.firestore, name), where("memberIds", "array-contains", uid)));
+      return snapshot.docs.map((ownedDoc) => ownedDoc.ref);
+    }),
+  );
+  const toDelete = [...owned.flat(), refs.keys(uid)];
+
+  for (let start = 0; start < toDelete.length; start += BATCH_LIMIT) {
+    const batch = writeBatch(fb.firestore);
+    toDelete.slice(start, start + BATCH_LIMIT).forEach((ref) => batch.delete(ref));
+    await batch.commit();
+  }
 };
 
 // ---------------------------------------------------------------------------

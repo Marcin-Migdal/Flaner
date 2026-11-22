@@ -23,11 +23,13 @@ Budget transactions (MFE `planning`, Budget; ADR 0002): one document per account
 | --- | --- | --- | --- |
 | Add a transaction (manual) | `packages/planning/src/api/budget/endpoints.ts#addBudgetTransaction` | get + set `budget_months/{accountId}_{month}` (created on the month's first transaction) | ✅ transaction |
 | Delete a transaction | `packages/planning/src/api/budget/endpoints.ts#deleteBudgetTransaction` | get + set the month, or delete it once its last transaction is gone | ✅ transaction |
+| Reset budget | `packages/planning/src/api/budget/endpoints.ts#resetBudget` | delete every `budget_months` doc where `memberIds array-contains me`, with every other budget document of the user; `budget_keys/{me}` in the last batch (see `budget_accounts.md`) | ⚠️ batches of 500 (keys last, so a failed reset stays locked and can be retried) |
 
 ## Queries
 | Query | Endpoint | Allowed by |
 | --- | --- | --- |
 | `budget_months` where `memberIds array-contains me` and `month` between two months | `getBudgetTransactions` | read: member; index `memberIds CONTAINS, month ASC` |
+| `budget_months` where `memberIds array-contains me` | `resetBudget` | read: member |
 | `get budget_months/{accountId}_{month}` (missing doc, inside a transaction) | `addBudgetTransaction` | read: member of `budget_accounts/{accountId}` |
 
 ## Access matrix
@@ -75,5 +77,5 @@ match /budget_months/{monthId} {
 ```
 
 ## Tests
-- `firestore-tests/budget/budget_months.spec.ts` — create / read / update / delete by the member, month-range query by `memberIds` + `month`, reading a missing month of an own vs a foreign account, other or extra members denied, a month on another user's account denied, id / `accountId` / `month` mismatch denied, invalid envelope (readable field, wrong types, oversized payload) denied, non-members / anonymous denied.
-- `packages/planning/src/api/budget/endpoints.emu.spec.ts` — transactions round-trip encrypted (no readable payee or amount), month packing, month-range query, the size guard rejects an oversized write, another user denied.
+- `firestore-tests/budget/budget_months.spec.ts` — create / read / update / delete by the member, member-only query (reset), month-range query by `memberIds` + `month`, reading a missing month of an own vs a foreign account, other or extra members denied, a month on another user's account denied, id / `accountId` / `month` mismatch denied, invalid envelope (readable field, wrong types, oversized payload) denied, non-members / anonymous denied.
+- `packages/planning/src/api/budget/endpoints.emu.spec.ts` — transactions round-trip encrypted (no readable payee or amount), month packing, month-range query, the size guard rejects an oversized write, another user denied; Reset budget deletes the user's months and keeps other users'.

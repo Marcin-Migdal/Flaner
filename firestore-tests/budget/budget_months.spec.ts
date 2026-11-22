@@ -49,6 +49,11 @@ describe("budget_months", () => {
       ),
     );
     expect(mine.docs.map((d) => d.id)).toEqual([MONTH_ID]);
+    // Reset budget lists every month of the caller, without a month range
+    const all = await assertSucceeds(
+      getDocs(query(collection(as(ME), "budget_months"), where("memberIds", "array-contains", ME))),
+    );
+    expect(all.docs).toHaveLength(2);
     await assertFails(getDocs(query(collection(as(ME), "budget_months"), where("month", "==", MONTH))));
   });
 

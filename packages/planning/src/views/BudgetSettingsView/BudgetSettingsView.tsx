@@ -2,6 +2,7 @@ import { PageHeader, Tabs, TabsContent, TabsList, TabsTrigger } from "@flaner/ui
 import { useHashTab } from "../../hooks/useHashTab";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { budgetSettingsViewStyles as styles } from "./BudgetSettingsView.styles";
+import { BudgetSecuritySection } from "./components/BudgetSecuritySection";
 
 const TABS = ["accounts", "categories", "rules"] as const;
 
@@ -22,9 +23,12 @@ export const BudgetSettingsView = () => {
             </TabsTrigger>
           ))}
         </TabsList>
-        {TABS.map((value) => (
-          <TabsContent key={value} value={value} />
-        ))}
+        <TabsContent value="accounts" className={styles.tabContent}>
+          {/* The account list joins this tab with its own ticket */}
+          <BudgetSecuritySection />
+        </TabsContent>
+        <TabsContent value="categories" />
+        <TabsContent value="rules" />
       </Tabs>
     </div>
   );

@@ -3,10 +3,12 @@ import type { BudgetMonth } from "../../../api/budget";
 import { monthOfDate } from "../../../utils/monthLedger";
 
 // Budget query keys — the only place that builds them. All fetched (no listeners).
+// - `all`: prefix of every budget key (Reset budget drops them).
 // - `locked`: the user's stored keys (`budget_keys/{uid}`), read by the Budget gate to pick onboarding or unlock.
 // - `profile` / `categories` / `accounts`: decrypted per-user documents, read behind the gate.
 // - `transactions`: the decrypted transactions of all the user's accounts in one month (one month-range query).
 export const budgetKeys = {
+  all: ["budget"],
   locked: (uid: string) => ["budget", "locked", uid],
   profile: (uid: string) => ["budget", "profile", uid],
   categories: (uid: string) => ["budget", "categories", uid],
@@ -21,4 +23,6 @@ export const budgetInvalidation = {
   createBudget: ({ uid }: UserType) => [budgetKeys.locked(uid)],
   /** Adding or deleting a transaction changes its month only. */
   transactionsChanged: ({ uid }: UserType, { date }: { date: string }) => [budgetKeys.transactions(uid, monthOfDate(date))],
+  // New salt / wrapped keys: a cached copy would no longer unlock
+  rewrapKeys: ({ uid }: UserType) => [budgetKeys.locked(uid)],
 };

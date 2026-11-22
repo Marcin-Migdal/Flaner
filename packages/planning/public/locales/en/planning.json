@@ -100,6 +100,12 @@
     "budget": {
       "setupSuccess": "Your budget is ready",
       "setupError": "Couldn't set up the budget. Try again.",
+      "passphraseChangeSuccess": "Budget passphrase changed",
+      "passphraseChangeError": "Couldn't change the passphrase. Try again.",
+      "recoveryKeySuccess": "New recovery key saved. The old one no longer works.",
+      "recoveryKeyError": "Couldn't save the new recovery key. Try again.",
+      "resetSuccess": "Budget reset. You can set it up again.",
+      "resetError": "Couldn't reset the budget. Try again.",
       "transactionAdded": "Transaction added",
       "transactionDeleted": "Transaction deleted",
       "saveError": "Couldn't save the transaction. Try again.",
@@ -121,6 +127,8 @@
       "alreadySetUp": "This budget is already set up. Reload the page and unlock it.",
       "invalidRecoveryKey": "This is not a valid recovery key.",
       "accountKeyMissing": "This account's key is missing. It cannot be decrypted on this budget.",
+      "wrongRecoveryKey": "This recovery key doesn't unlock your budget.",
+      "keyChanged": "Your budget was reset on another device. Reload the page.",
       "monthTooLarge": "This month is full: it cannot hold more transactions for this account.",
       "rateUnavailable": "Couldn't fetch the exchange rate."
     }
@@ -698,7 +706,23 @@
       "title": "Unlock your Budget",
       "description": "Enter your budget passphrase to decrypt your budget on this device.",
       "label": "Budget passphrase",
-      "submit": "Unlock"
+      "submit": "Unlock",
+      "remember": "Remember this device",
+      "rememberHint": "The budget opens here without the passphrase until you lock it in Settings.",
+      "useRecoveryKey": "Forgot the passphrase? Use your recovery key",
+      "recovery": {
+        "title": "Unlock with your recovery key",
+        "description": "Enter the recovery key you saved when you set up the budget. You will choose a new passphrase next.",
+        "label": "Recovery key",
+        "hint": "32 letters and digits. Dashes, spaces and capitals are optional.",
+        "usePassphrase": "Use the passphrase instead",
+        "lostBoth": "Lost the recovery key too?"
+      },
+      "newPassphrase": {
+        "title": "Choose a new passphrase",
+        "description": "Your recovery key worked. Set a new budget passphrase; the recovery key stays valid.",
+        "submit": "Save and open the budget"
+      }
     },
     "validation": {
       "passphraseTooShort": "Use at least 12 characters.",
@@ -710,6 +734,9 @@
       "accountNameRequired": "Enter an account name.",
       "accountNameMax": "Use at most 60 characters.",
       "currencyRequired": "Choose a currency.",
+      "recoveryKeyRequired": "Enter your recovery key.",
+      "recoveryKeyInvalid": "A recovery key has 32 letters and digits.",
+      "resetConfirmation": "Type the word exactly as shown.",
       "amountRequired": "Enter an amount.",
       "amountPositive": "The amount must be greater than zero.",
       "amountDecimals": "Use at most two decimal places.",
@@ -723,6 +750,54 @@
       "title": "No transactions yet",
       "description": "Import a bank statement file or add a transaction to get started.",
       "import": "Import file"
+    },
+    "actions": {
+      "cancel": "Cancel"
+    },
+    "security": {
+      "title": "Security",
+      "changePassphrase": {
+        "title": "Budget passphrase",
+        "description": "Change it with the current passphrase or the recovery key. Your data is not re-encrypted.",
+        "action": "Change passphrase",
+        "dialogTitle": "Change the budget passphrase",
+        "dialogDescription": "Your devices that remember the budget stay unlocked.",
+        "current": {
+          "passphrase": "Current passphrase",
+          "recoveryKey": "Recovery key"
+        },
+        "switchTo": {
+          "passphrase": "Use the current passphrase instead",
+          "recoveryKey": "Forgot it? Use the recovery key"
+        },
+        "newLabel": "New passphrase",
+        "confirmLabel": "Repeat the new passphrase",
+        "submit": "Change passphrase"
+      },
+      "recoveryKey": {
+        "title": "Recovery key",
+        "description": "Generate a new recovery key. The old one stops working.",
+        "action": "New recovery key",
+        "dialogTitle": "New recovery key",
+        "dialogDescription": "Save this key somewhere safe. Once you confirm, your old recovery key stops working.",
+        "passphraseLabel": "Budget passphrase",
+        "submit": "Replace recovery key"
+      },
+      "lock": {
+        "title": "Lock budget",
+        "description": "This device forgets the remembered key and asks for the passphrase next time.",
+        "action": "Lock budget"
+      },
+      "reset": {
+        "title": "Reset budget",
+        "description": "Delete all budget data and start over. Use it only if you lost both the passphrase and the recovery key.",
+        "action": "Reset budget",
+        "dialogTitle": "Reset the budget?",
+        "dialogDescription": "This permanently deletes all your budget data: accounts, transactions, categories, rules and plans. It cannot be undone.",
+        "confirmationWord": "RESET",
+        "confirmationLabel": "Type {{word}} to confirm",
+        "submit": "Delete all budget data"
+      }
     },
     "transactionList": {
       "uncategorized": "Uncategorized",

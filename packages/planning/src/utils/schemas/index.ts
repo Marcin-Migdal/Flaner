@@ -5,3 +5,4 @@ export * from "./create-settlement-schema";
 export * from "./budget-onboarding-schema";
 export * from "./budget-unlock-schema";
 export * from "./budget-transaction-schema";
+export * from "./budget-security-schema";

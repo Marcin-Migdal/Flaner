@@ -52,6 +52,13 @@ export const generateSalt = () => randomBytes(SALT_BYTES);
 /** A random AES-GCM key: the user key or an account's data key. Extractable, so it can be re-wrapped. */
 export const generateDataKey = () => crypto.subtle.generateKey(DATA_KEY, true, DATA_KEY_USAGES);
 
+/**
+ * The same key, but non-extractable: what "Remember this device" stores in IndexedDB, so the raw user key never
+ * leaves Web Crypto there. It still encrypts, decrypts and wraps account keys, but cannot be re-wrapped itself.
+ */
+export const nonExtractableCopy = async (key: CryptoKey): Promise<CryptoKey> =>
+  crypto.subtle.importKey("raw", await crypto.subtle.exportKey("raw", key), DATA_KEY, false, DATA_KEY_USAGES);
+
 export const derivePassphraseKey = async (
   passphrase: string,
   salt: Uint8Array,

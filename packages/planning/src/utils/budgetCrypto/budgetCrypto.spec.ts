@@ -9,6 +9,7 @@ import {
   generateDataKey,
   generateRecoveryKey,
   generateSalt,
+  nonExtractableCopy,
   parseRecoveryKey,
   unwrapDataKey,
   wrapDataKey,
@@ -100,6 +101,18 @@ describe("budgetCrypto", () => {
     it("rejects input of the wrong length or with unknown characters", () => {
       expect(parseRecoveryKey("ABCD-EFGH")).toBeNull();
       expect(parseRecoveryKey("ABCD-EFGH-JKMN-PQRS-TVWX-YZ01-2345-678U")).toBeNull();
+    });
+  });
+
+  describe("nonExtractableCopy", () => {
+    it("decrypts what the original encrypted and cannot be exported", async () => {
+      const key = await generateDataKey();
+      const sealed = await encryptJson({ amount: 12.5 }, key, "budget_profiles/u1");
+
+      const copy = await nonExtractableCopy(key);
+
+      expect(await decryptJson(sealed, copy, "budget_profiles/u1")).toEqual({ amount: 12.5 });
+      await expect(crypto.subtle.exportKey("raw", copy)).rejects.toThrow();
     });
   });
 });
