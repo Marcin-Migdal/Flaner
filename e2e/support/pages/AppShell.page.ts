@@ -17,7 +17,7 @@ export class AppShellPage {
     this.page = page;
     this.logo = page.getByRole("link", { name: "FLANER", exact: true });
     this.header = page.getByRole("banner");
-    this.sidebarTrigger = page.getByRole("button", { name: /^toggle sidebar$/i }).filter({ visible: true });
+    this.sidebarTrigger = page.getByRole("button", { name: /^(toggle sidebar|przełącz panel boczny)$/i }).filter({ visible: true });
     // Its name is the avatar's initials followed by the username
     this.userMenuButton = page.getByRole("button", { name: user.username });
     this.notificationsButton = page.getByRole("button", { name: /^(notifications|powiadomienia)/i });

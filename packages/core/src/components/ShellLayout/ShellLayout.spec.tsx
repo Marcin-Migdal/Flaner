@@ -106,6 +106,7 @@ describe("ShellLayout", () => {
         "nav.planning": "Planowanie",
         "nav.budgeting": "Budżetowanie",
         "nav.toggleSection": "Rozwiń {{label}}",
+        "nav.toggleSidebar": "Toggle Sidebar",
       },
       planning: {
         nav: { budget: "Budżet", budgetSummary: "Podsumowanie", budgetTransactions: "Transakcje" },
@@ -290,6 +291,16 @@ describe("ShellLayout", () => {
   it("renders with null user gracefully", () => {
     renderWithProviders(<ShellLayout />, { user: null });
     expect(screen.getByText("nav.home")).toBeInTheDocument();
+  });
+
+  it("labels the sidebar toggles from the translation file (Polish)", async () => {
+    const plI18n = createTestI18n({ pl: { common: { "nav.toggleSidebar": "Przełącz panel boczny" } } });
+    await plI18n.changeLanguage("pl");
+    renderWithProviders(<ShellLayout />, { i18nInstance: plI18n, ...signedIn });
+
+    const toggles = screen.getAllByRole("button", { name: "Przełącz panel boczny" });
+    expect(toggles.length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: /toggle sidebar/i })).not.toBeInTheDocument();
   });
 
   describe("three-level navigation", () => {

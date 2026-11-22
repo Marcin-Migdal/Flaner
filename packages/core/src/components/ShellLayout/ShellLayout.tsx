@@ -331,7 +331,7 @@ function ShellLayoutContent() {
         {/* Mobile Header (Visible only on mobile screen widths) */}
         <header className="flex md:hidden sticky top-0 z-40 h-14 items-center justify-between border-b border-sidebar-border bg-sidebar px-4">
           <div className="flex items-center gap-3">
-            <SidebarTrigger className="size-10 [&_svg]:size-5 rounded-xl" />
+            <SidebarTrigger label={t("nav.toggleSidebar")} className="size-10 [&_svg]:size-5 rounded-xl" />
             <NavLink
               to="/"
               onClick={() => isMobile && setOpenMobile(false)}
@@ -347,7 +347,7 @@ function ShellLayoutContent() {
         <div className="flex-1 relative flex flex-col">
           {/* Desktop Floating Trigger Button (Visible only on desktop, positioned top-left of content) */}
           <div className="hidden md:block absolute top-4 left-6 z-30">
-            <SidebarTrigger />
+            <SidebarTrigger label={t("nav.toggleSidebar")} />
           </div>
 
           <main className="flex-1 py-3 md:py-8 md:pt-16 px-2.5 sm:px-4 md:px-6 overflow-x-hidden">
