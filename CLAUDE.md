@@ -35,7 +35,7 @@ The single source of truth for AI rules and skills is `.agents/`. `.claude/skill
 
 ## Agent skills
 
-Feature work uses the `mattpocock-skills` Claude Code plugin (`wayfinder` for a large, unclear effort; otherwise `grill-with-docs` → `to-spec` → `to-tickets` → `implement`). Routes and the Flaner steps around them: `.agents/workflows/01-feature-workflow.md`. Skills the user invokes may run the git steps they define, within the guardrails in `.agents/AGENTS.md`. Install it once per machine: add marketplace `mattpocock` (GitHub `mattpocock/skills`) and enable `mattpocock-skills@mattpocock` in `~/.claude/settings.json` (`extraKnownMarketplaces` / `enabledPlugins`), then restart Claude.
+Feature work uses the `mattpocock-skills` Claude Code plugin (`wayfinder` for a large, unclear effort; otherwise `grill-with-docs` → `to-spec` → `to-tickets` → `implement`). Routes and the Flaner steps around them: `.agents/workflows/01-feature-workflow.md`. Skills the user invokes may run the git steps they define, within the guardrails in `.agents/AGENTS.md`. The committed `.claude/settings.json` declares the `mattpocock` marketplace (GitHub `mattpocock/skills`) and enables `mattpocock-skills@mattpocock`, so local and cloud sessions get it; locally, trust the marketplace when Claude asks, then restart Claude.
 
 ### Issue tracker
 
