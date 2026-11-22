@@ -1,9 +1,38 @@
 import React from "react";
 import { Outlet } from "react-router";
 import type { AppRouteObject } from "@flaner/shared/types";
+import { BudgetTilesView } from "./views/BudgetTilesView";
 
 const SchedulerView = React.lazy(() => import("./views/SchedulerView"));
 const SplitsView = React.lazy(() => import("./views/SplitsView"));
+// Budget views stay lazy so their heavy dependencies (charts, CSV parser) load only on Budget pages
+const BudgetSummaryView = React.lazy(() => import("./views/BudgetSummaryView"));
+const BudgetTransactionsView = React.lazy(() => import("./views/BudgetTransactionsView"));
+const BudgetPlannerView = React.lazy(() => import("./views/BudgetPlannerView"));
+const BudgetSettingsView = React.lazy(() => import("./views/BudgetSettingsView"));
+
+const budgetViews: AppRouteObject[] = [
+  {
+    path: "summary",
+    element: <BudgetSummaryView />,
+    handle: { label: "planning:nav.budgetSummary", icon: "chart-pie" },
+  },
+  {
+    path: "transactions",
+    element: <BudgetTransactionsView />,
+    handle: { label: "planning:nav.budgetTransactions", icon: "arrow-left-right" },
+  },
+  {
+    path: "planner",
+    element: <BudgetPlannerView />,
+    handle: { label: "planning:nav.budgetPlanner", icon: "list-checks" },
+  },
+  {
+    path: "settings",
+    element: <BudgetSettingsView />,
+    handle: { label: "planning:nav.budgetSettings", icon: "settings" },
+  },
+];
 
 export const routes: AppRouteObject[] = [
   {
@@ -26,6 +55,13 @@ export const routes: AppRouteObject[] = [
           label: "nav.splits",
           icon: "wallet",
         },
+      },
+      {
+        path: "budget",
+        element: <Outlet />,
+        handle: { label: "planning:nav.budget", icon: "piggy-bank" },
+        // Every route with children shows a tiles page of them
+        children: [{ index: true, element: <BudgetTilesView routes={budgetViews} /> }, ...budgetViews],
       },
     ],
   },

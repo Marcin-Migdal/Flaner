@@ -28,6 +28,7 @@
     "friends": "Znajomi",
     "groups": "Grupy",
     "toggleSidebar": "Przełącz panel boczny",
+    "toggleSection": "Rozwiń lub zwiń: {{label}}",
     "profile": "Profil",
     "notifications": "Powiadomienia"
   },

@@ -456,5 +456,27 @@
     },
     "appliedSuccess": "Added new date slots ({{count}})",
     "allDuplicates": "All generated date slots were already added"
+  },
+  "nav": {
+    "budget": "Budget",
+    "budgetSummary": "Summary",
+    "budgetTransactions": "Transactions",
+    "budgetPlanner": "Planner",
+    "budgetSettings": "Settings"
+  },
+  "budget": {
+    "transactions": {
+      "tabs": {
+        "transactions": "Transactions",
+        "recurring": "Recurring"
+      }
+    },
+    "settings": {
+      "tabs": {
+        "accounts": "Accounts & security",
+        "categories": "Categories",
+        "rules": "Rules"
+      }
+    }
   }
 }

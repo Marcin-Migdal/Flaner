@@ -462,5 +462,27 @@
     },
     "appliedSuccess": "Dodano nowe terminy ({{count}})",
     "allDuplicates": "Wszystkie wygenerowane terminy zostały już wcześniej dodane"
+  },
+  "nav": {
+    "budget": "Budżet",
+    "budgetSummary": "Podsumowanie",
+    "budgetTransactions": "Transakcje",
+    "budgetPlanner": "Planer",
+    "budgetSettings": "Ustawienia"
+  },
+  "budget": {
+    "transactions": {
+      "tabs": {
+        "transactions": "Transakcje",
+        "recurring": "Cykliczne"
+      }
+    },
+    "settings": {
+      "tabs": {
+        "accounts": "Konta i bezpieczeństwo",
+        "categories": "Kategorie",
+        "rules": "Reguły"
+      }
+    }
   }
 }

@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders, createTestI18n } from "@flaner/test-utils";
 import { loadRemote } from "@module-federation/runtime";
+import type { AppRouteObject } from "@flaner/shared/types";
 import { PageTilesView } from "./PageTilesView";
 
 const { mockNavigate } = vi.hoisted(() => ({
@@ -21,6 +22,11 @@ vi.mock("@module-federation/runtime", () => ({
   loadRemote: vi.fn(),
 }));
 
+// An MFE exposes its views as children of a root route at `/<mfe>`
+const root = (children: AppRouteObject[]): AppRouteObject[] => [
+  { path: "", handle: { label: "nav.community", icon: "users" }, children },
+];
+
 describe("PageTilesView", () => {
   const i18n = createTestI18n({
     en: {
@@ -36,7 +42,7 @@ describe("PageTilesView", () => {
   it("renders tiles and navigates when clicking on a tile", async () => {
     const user = userEvent.setup();
     vi.mocked(loadRemote).mockResolvedValueOnce({
-      routes: [
+      routes: root([
         {
           path: "friends",
           handle: {
@@ -44,7 +50,7 @@ describe("PageTilesView", () => {
             icon: "users",
           },
         },
-      ],
+      ]),
     });
 
     renderWithProviders(<PageTilesView mfe="community" />, { i18nInstance: i18n });
@@ -98,7 +104,7 @@ describe("PageTilesView", () => {
 
   it("handles nested route children and renders sub-tiles", async () => {
     vi.mocked(loadRemote).mockResolvedValueOnce({
-      routes: [
+      routes: root([
         {
           path: "parent",
           children: [
@@ -111,7 +117,7 @@ describe("PageTilesView", () => {
             },
           ],
         },
-      ],
+      ]),
     });
 
     renderWithProviders(<PageTilesView mfe="community" />, { i18nInstance: i18n });
@@ -119,17 +125,38 @@ describe("PageTilesView", () => {
     await waitFor(() => {
       expect(screen.getByText("Znajomi")).toBeInTheDocument();
     });
+    await userEvent.setup().click(screen.getByRole("button", { name: /znajomi/i }));
+    expect(mockNavigate).toHaveBeenCalledWith("/community/parent/child");
+  });
+
+  it("shows only the root's own children, not grandchildren", async () => {
+    vi.mocked(loadRemote).mockResolvedValueOnce({
+      routes: root([
+        {
+          path: "budget",
+          handle: { label: "nav.friends", icon: "wallet" },
+          children: [{ path: "summary", handle: { label: "nav.community" } }],
+        },
+      ]),
+    });
+
+    renderWithProviders(<PageTilesView mfe="planning" />, { i18nInstance: i18n });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /znajomi/i })).toBeInTheDocument();
+    });
+    expect(screen.queryByRole("button", { name: /społeczność/i })).not.toBeInTheDocument();
   });
 
   it("updates routes when mfe prop changes", async () => {
     vi.mocked(loadRemote)
       .mockResolvedValueOnce({
-        routes: [
+        routes: root([
           {
             path: "friends",
             handle: { label: "nav.friends", icon: "users" },
           },
-        ],
+        ]),
       })
       .mockResolvedValueOnce({
         routes: [],
@@ -152,12 +179,12 @@ describe("PageTilesView", () => {
   it("handles tile without icon", async () => {
     const user = userEvent.setup();
     vi.mocked(loadRemote).mockResolvedValueOnce({
-      routes: [
+      routes: root([
         {
           path: "feed",
           handle: { label: "nav.community" },
         },
-      ],
+      ]),
     });
 
     renderWithProviders(<PageTilesView mfe="community" />, { i18nInstance: i18n });

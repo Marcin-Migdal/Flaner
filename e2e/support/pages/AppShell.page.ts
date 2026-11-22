@@ -33,6 +33,11 @@ export class AppShellPage {
     return this.page.getByRole("link", { name, exact: true });
   }
 
+  /** The chevron that expands / collapses a sidebar item with children. */
+  navToggle(label: string): Locator {
+    return this.page.getByRole("button", { name: `Expand or collapse ${label}`, exact: true });
+  }
+
   /** The document theme: the app toggles `dark` on `<html>`. */
   get documentRoot(): Locator {
     return this.page.locator("html");
