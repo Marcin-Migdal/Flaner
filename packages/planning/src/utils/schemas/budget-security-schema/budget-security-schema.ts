@@ -51,15 +51,15 @@ export const getBudgetNewRecoveryKeySchema = (t: Translate) =>
 
 export type BudgetNewRecoveryKeyFormData = z.infer<ReturnType<typeof getBudgetNewRecoveryKeySchema>>;
 
-/** Reset budget: the user types the confirmation word (RESET / RESETUJ); case and surrounding spaces are ignored. */
+/**
+ * Reset budget: the user types the confirmation word of the page's language (RESET / RESETUJ), case-sensitive.
+ * Only surrounding spaces are ignored.
+ */
 export const getBudgetResetSchema = (t: Translate, confirmationWord: string) =>
   z.object({
     confirmation: z
       .string()
-      .refine(
-        (value) => value.trim().toUpperCase() === confirmationWord.toUpperCase(),
-        t("budget.validation.resetConfirmation"),
-      ),
+      .refine((value) => value.trim() === confirmationWord, t("budget.validation.resetConfirmation")),
   });
 
 export type BudgetResetFormData = z.infer<ReturnType<typeof getBudgetResetSchema>>;

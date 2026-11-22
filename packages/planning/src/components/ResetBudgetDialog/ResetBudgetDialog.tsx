@@ -22,7 +22,10 @@ export type ResetBudgetDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-/** Reset budget: the user types RESET / RESETUJ; every budget document goes and the Budget shows onboarding. */
+/**
+ * Reset budget: the user types RESET / RESETUJ (the page's language, case-sensitive); every budget document goes
+ * and the Budget shows onboarding.
+ */
 export const ResetBudgetDialog = ({ open, onOpenChange }: ResetBudgetDialogProps) => {
   const { t } = usePlanningTranslations();
   const { setBudget } = useBudgetSession();

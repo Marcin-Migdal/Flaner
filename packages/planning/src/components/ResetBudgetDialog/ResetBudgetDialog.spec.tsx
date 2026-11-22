@@ -59,7 +59,7 @@ describe("ResetBudgetDialog", () => {
   it("does nothing until the confirmation word is typed", async () => {
     const { events } = await renderDialog();
 
-    await events.type(screen.getByLabelText("Type RESET to confirm"), "RESTE");
+    await events.type(screen.getByLabelText("Type RESET to confirm"), "reset");
     await events.click(screen.getByRole("button", { name: "Delete all budget data" }));
 
     expect(await screen.findByText("Type the word exactly as shown.")).toBeInTheDocument();
@@ -70,7 +70,7 @@ describe("ResetBudgetDialog", () => {
     vi.mocked(budgetApi.resetBudget).mockResolvedValueOnce();
     const { onOpenChange, events } = await renderDialog();
 
-    await events.type(screen.getByLabelText("Type RESET to confirm"), "reset");
+    await events.type(screen.getByLabelText("Type RESET to confirm"), "RESET");
     await events.click(screen.getByRole("button", { name: "Delete all budget data" }));
 
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));

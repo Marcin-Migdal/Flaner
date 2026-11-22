@@ -46,10 +46,12 @@ describe("budget change passphrase schema", () => {
 });
 
 describe("budget reset schema", () => {
-  it("accepts only the confirmation word, ignoring case and spaces", () => {
+  it("accepts only the confirmation word of the page's language, case-sensitive", () => {
     const schema = getBudgetResetSchema(t, "RESETUJ");
 
-    expect(schema.safeParse({ confirmation: " resetuj " }).success).toBe(true);
+    expect(schema.safeParse({ confirmation: "RESETUJ" }).success).toBe(true);
+    expect(schema.safeParse({ confirmation: " RESETUJ " }).success).toBe(true);
+    expect(schema.safeParse({ confirmation: "resetuj" }).success).toBe(false);
     expect(schema.safeParse({ confirmation: "RESET" }).success).toBe(false);
     expect(schema.safeParse({ confirmation: "" }).success).toBe(false);
   });
