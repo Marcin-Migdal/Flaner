@@ -149,6 +149,37 @@ service cloud.firestore {
     }
 
     // ==========================================
+    // BUDŻET: MIESIĄCE TRANSAKCJI (BUDGET_MONTHS)
+    // ==========================================
+    match /budget_months/{monthId} {
+      function isBudgetAccountMember(accountId) {
+        return request.auth.uid in get(/databases/$(database)/documents/budget_accounts/$(accountId)).data.memberIds;
+      }
+
+      // M2 + M3 + M4: single member (the caller) of the month's own account, id == accountId_month, fixed envelope
+      function isValidBudgetMonth() {
+        let data = request.resource.data;
+        return data.keys().hasOnly(['accountId', 'memberIds', 'month', 'payload']) &&
+        data.keys().hasAll(['accountId', 'memberIds', 'month', 'payload']) &&
+        data.memberIds == [request.auth.uid] &&
+        data.accountId is string && data.month is string &&
+        data.month.matches('^[0-9]{4}-(0[1-9]|1[0-2])$') &&
+        monthId == data.accountId + '_' + data.month &&
+        data.payload is bytes && data.payload.size() <= 900000 &&
+        isBudgetAccountMember(data.accountId);
+      }
+
+      // M1: an existing month by its members; a missing one (first transaction of the month) by the account's members
+      allow read: if isAuthenticated() && (
+        (resource == null && isBudgetAccountMember(monthId.split('_')[0])) ||
+        (resource != null && request.auth.uid in resource.data.memberIds)
+      );
+      allow create: if isAuthenticated() && isValidBudgetMonth();
+      allow update: if isAuthenticated() && request.auth.uid in resource.data.memberIds && isValidBudgetMonth();
+      allow delete: if isAuthenticated() && request.auth.uid in resource.data.memberIds;
+    }
+
+    // ==========================================
     // BUDŻET: PROFIL (BUDGET_PROFILES)
     // ==========================================
     match /budget_profiles/{uid} {

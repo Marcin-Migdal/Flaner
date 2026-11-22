@@ -18,6 +18,7 @@ export const toast = {
     sonnerToast.error(message, {
       description: options?.description,
       duration: options?.duration,
+      action: options?.action,
     });
   },
   attention: (message: string, options?: ToastOptions) => {

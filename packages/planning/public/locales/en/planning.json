@@ -99,7 +99,11 @@
     },
     "budget": {
       "setupSuccess": "Your budget is ready",
-      "setupError": "Couldn't set up the budget. Try again."
+      "setupError": "Couldn't set up the budget. Try again.",
+      "transactionAdded": "Transaction added",
+      "transactionDeleted": "Transaction deleted",
+      "saveError": "Couldn't save the transaction. Try again.",
+      "deleteError": "Couldn't delete the transaction. Try again."
     }
   },
   "errors": {
@@ -116,7 +120,9 @@
       "wrongPassphrase": "Wrong passphrase. If you forgot it, use your recovery key.",
       "alreadySetUp": "This budget is already set up. Reload the page and unlock it.",
       "invalidRecoveryKey": "This is not a valid recovery key.",
-      "accountKeyMissing": "This account's key is missing. It cannot be decrypted on this budget."
+      "accountKeyMissing": "This account's key is missing. It cannot be decrypted on this budget.",
+      "monthTooLarge": "This month is full: it cannot hold more transactions for this account.",
+      "rateUnavailable": "Couldn't fetch the exchange rate."
     }
   },
   "splits": {
@@ -702,13 +708,75 @@
       "recoveryKeySaved": "Confirm that you saved the recovery key.",
       "accountNameRequired": "Enter an account name.",
       "accountNameMax": "Use at most 60 characters.",
-      "currencyRequired": "Choose a currency."
+      "currencyRequired": "Choose a currency.",
+      "amountRequired": "Enter an amount.",
+      "amountPositive": "The amount must be greater than zero.",
+      "amountDecimals": "Use at most two decimal places.",
+      "dateRequired": "Choose a date.",
+      "payeeRequired": "Enter a payee.",
+      "payeeMax": "Use at most 120 characters.",
+      "descriptionMax": "Use at most 500 characters.",
+      "accountRequired": "Choose an account."
     },
     "transactionsEmpty": {
       "title": "No transactions yet",
       "description": "Import a bank statement file or add a transaction to get started.",
       "import": "Import file",
       "add": "Add transaction"
+    },
+    "transactionList": {
+      "uncategorized": "Uncategorized",
+      "delete": "Delete {{payee}}"
+    },
+    "categoryPicker": {
+      "placeholder": "Choose a category",
+      "noResults": "No matching categories"
+    },
+    "monthSwitcher": {
+      "previous": "Previous month",
+      "next": "Next month",
+      "pick": "Pick a month",
+      "previousYear": "Previous year",
+      "nextYear": "Next year"
+    },
+    "monthTotals": {
+      "income": "Income",
+      "expenses": "Expenses",
+      "balance": "Balance"
+    },
+    "offline": {
+      "title": "You're offline",
+      "description": "Months you have already opened stay available. Adding and deleting transactions needs a connection.",
+      "noConnection": "No connection. Your change was not saved.",
+      "retry": "Retry"
+    },
+    "transactionForm": {
+      "title": "Add transaction",
+      "type": "Transaction type",
+      "types": {
+        "expense": "Expense",
+        "income": "Income"
+      },
+      "amount": "Amount",
+      "currency": "Currency",
+      "amountMain": "Amount in {{currency}}",
+      "rateLoading": "Fetching the exchange rate…",
+      "rate": "Rate {{rate}} from {{date}}",
+      "rateMissing": "No exchange rate available. Enter the amount yourself.",
+      "useRate": "Use the exchange rate",
+      "date": "Date",
+      "account": "Account",
+      "payee": "Payee",
+      "description": "Description",
+      "optional": "Optional",
+      "category": "Category",
+      "cancel": "Cancel",
+      "save": "Add transaction"
+    },
+    "deleteTransaction": {
+      "title": "Delete this transaction?",
+      "description": "\"{{payee}}\" will be removed from your budget. This cannot be undone.",
+      "confirm": "Delete"
     }
   }
 }

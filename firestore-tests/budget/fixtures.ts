@@ -41,3 +41,14 @@ export const budgetAccount = (uid: string, overrides: Record<string, unknown> = 
   createdAt: 1,
   ...overrides,
 });
+
+export const MONTH = "2026-11";
+export const MONTH_ID = `${ACCOUNT_ID}_${MONTH}`;
+
+export const budgetMonth = (uid: string, overrides: Record<string, unknown> = {}) => ({
+  accountId: ACCOUNT_ID,
+  memberIds: [uid],
+  month: MONTH,
+  payload: bytes(512),
+  ...overrides,
+});

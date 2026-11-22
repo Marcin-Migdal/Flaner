@@ -31,6 +31,7 @@ describe("toast utility", () => {
     expect(sonnerToast.error).toHaveBeenCalledWith("Error occurred", {
       description: "Failed to save",
       duration: undefined,
+      action: undefined,
     });
   });
 
