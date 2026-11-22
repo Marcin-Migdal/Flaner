@@ -19,7 +19,7 @@ Flaner is a personal planning app for friends and small groups: plan events and 
 - **Brand amber** (`brand`, #edad5e) is the one accent. Use it as a fill for the primary call to action (`Button variant=brand`), active states, count badges and highlights — always with `brand-foreground` (ink) on it, never white. For amber text or icons on a neutral surface use `brand-text`. For a tinted background (icon tiles, selected row) use `brand-subtle`.
 - Status colours carry meaning only: `success` (done / yes), `warning` (pending / maybe), `danger` (error / destructive / no), `info`. Each has a solid fill + `-foreground`, a `-subtle` tint with `-text` on it. Status is never colour alone: pair it with an icon or a word.
 - `on-media` (white) and `scrim` (black) are fixed in both themes: text on photos / user-chosen colours, and modal backdrops (`scrim` at 40%).
-- Data-viz uses `chart-1`…`chart-8` in order; balances use `chart-positive` / `chart-negative`.
+- Data-viz uses `chart-1`…`chart-8` in order, `chart-muted` for a remainder ("Others"); balances use `chart-positive` / `chart-negative`.
 - Domain sets (`vote-*`, `medal-*`, `event-*`) belong to their screens (planning, scheduler) only.
 - Design every screen in **both themes**. Light mode separates surfaces by tone and borders (`border`), dark mode by lighter alpha fills (`surface-subtle` = white at 5%).
 
@@ -73,6 +73,7 @@ Use these before inventing anything. Names are the real component names.
 | Forms | `TextField`, `TextArea`, `Select`, `DatePicker`, `MoneyInput`, `Switch`, `Checkbox`, `ColorPickerField`, `ImagePicker`, `Field` (+ `Form*` variants bound to react-hook-form) | label above, helper / error below (`Field`, `FieldLabel`, `FieldError`) |
 | Multi-step flow | `Stepper` | `steps`, `currentStep` |
 | Chart frame | `ChartContainer` | title + legend in `chart-*` colours; chart inside |
+| Charts | `DonutChart`, `BarChart`, `RankedList` | go inside `ChartContainer`; donut drills down by id, bars highlight one group |
 | Calendar | `BigCalendar`, `Calendar` | planning only |
 | Feedback | `Alert`, `Toaster` | |
 | Signed-in user chip | `Profile` | avatar + username; `size` sm / md / lg, `showName` |

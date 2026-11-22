@@ -71,5 +71,14 @@
     "selectDate": "Wybierz datę"
   },
   "clear": "Wyczyść",
-  "collapse": "Zwiń"
+  "collapse": "Zwiń",
+  "chart": {
+    "back": "Wstecz",
+    "total": "Razem",
+    "table": {
+      "item": "Pozycja",
+      "value": "Wartość",
+      "share": "Udział"
+    }
+  }
 }
