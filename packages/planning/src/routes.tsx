@@ -60,7 +60,7 @@ export const routes: AppRouteObject[] = [
         path: "budget",
         element: <Outlet />,
         handle: { label: "planning:nav.budget", icon: "piggy-bank" },
-        // Every route with children shows a tiles page of them
+        // A route with children shows a tiles page of them as its index
         children: [{ index: true, element: <BudgetTilesView routes={budgetViews} /> }, ...budgetViews],
       },
     ],

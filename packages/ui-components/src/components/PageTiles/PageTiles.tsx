@@ -1,5 +1,5 @@
 import type { AppRouteObject } from "@flaner/shared/types";
-import { cn, generateNavigation } from "@flaner/shared/utils";
+import { generateNavigation } from "@flaner/shared/utils";
 import { LayoutGrid } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "../EmptyState";
@@ -17,16 +17,15 @@ export type PageTilesProps = {
   onSelect: (path: string) => void;
   emptyTitle: string;
   emptyDescription?: string;
-  className?: string;
 };
 
 /** Landing page of a route with children: one tile per child view. Tile labels are translation keys from route handles. */
-export function PageTiles({ title, routes, basePath, onSelect, emptyTitle, emptyDescription, className }: PageTilesProps) {
+export function PageTiles({ title, routes, basePath, onSelect, emptyTitle, emptyDescription }: PageTilesProps) {
   const { t } = useTranslation();
   const tiles = generateNavigation(routes, basePath, { requireIcon: false });
 
   return (
-    <div data-slot="page-tiles" className={cn(pageTilesStyles.root, className)}>
+    <div data-slot="page-tiles" className={pageTilesStyles.root}>
       <PageHeader className={pageTilesStyles.header} title={title} />
 
       {tiles.length === 0 ? (

@@ -1,7 +1,7 @@
 import type { RouteObject } from "react-router";
 
 // Icons the host can render in navigation. A static list (not lucide's DynamicIcon) keeps ~1900 icon chunks
-// out of the build and the PWA precache; a remote that needs a new icon adds it here and in core's NavIcon.
+// out of the build and the PWA precache; a remote that needs a new icon adds it here and in ui-components' NavIcon.
 export type NavIconName =
   | "arrow-left-right"
   | "calendar"

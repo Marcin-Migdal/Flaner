@@ -15,7 +15,7 @@ const routesCache = new Map<string, AppRouteObject[]>();
 
 export function PageTilesView({ mfe }: PageTilesViewProps) {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const cached = routesCache.get(mfe);
   const [routes, setRoutes] = useState<AppRouteObject[]>(cached || []);
@@ -33,7 +33,9 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
     let active = true;
 
     loadRemote<{ routes: AppRouteObject[] }>(`${mfe}/routes`)
-      .then((mod) => {
+      // Tile labels may be `<mfe>:key`; load that namespace so a deep link never shows raw keys
+      .then(async (mod) => {
+        await i18n.loadNamespaces(mfe);
         const loadedRoutes = mod?.routes || [];
         routesCache.set(mfe, loadedRoutes);
         if (active) {
@@ -62,7 +64,7 @@ export function PageTilesView({ mfe }: PageTilesViewProps) {
     return () => {
       active = false;
     };
-  }, [mfe]);
+  }, [mfe, i18n]);
 
   if (loading) {
     return <LoadingFallback />;
