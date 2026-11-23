@@ -54,6 +54,12 @@ export type BudgetAccount = {
   createdAt: number;
 };
 
+/** A new account; the API gives it its id and key. */
+export type BudgetAccountInput = Pick<BudgetAccount, "name" | "defaultCurrency">;
+
+/** What Settings can change on an account; omitted fields stay as they are. */
+export type BudgetAccountChanges = Partial<Pick<BudgetAccount, "name" | "defaultCurrency" | "hidden">>;
+
 /** A user's stored keys, still locked: pass it to an unlock function. */
 export type LockedBudget = {
   uid: string;

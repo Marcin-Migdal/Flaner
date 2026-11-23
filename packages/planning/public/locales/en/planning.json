@@ -109,7 +109,14 @@
       "transactionAdded": "Transaction added",
       "transactionDeleted": "Transaction deleted",
       "saveError": "Couldn't save the transaction. Try again.",
-      "deleteError": "Couldn't delete the transaction. Try again."
+      "deleteError": "Couldn't delete the transaction. Try again.",
+      "accountAdded": "Account added",
+      "accountSaved": "Account updated",
+      "mainAccountChanged": "Main account changed",
+      "mainCurrencyChanged": "Main currency changed",
+      "accountDeleted": "Account deleted",
+      "accountSaveError": "Couldn't save the account. Try again.",
+      "accountDeleteError": "Couldn't delete the account. Try again."
     }
   },
   "errors": {
@@ -130,7 +137,11 @@
       "wrongRecoveryKey": "This recovery key doesn't unlock your budget.",
       "keyChanged": "Your budget was reset on another device. Reload the page.",
       "monthTooLarge": "This month is full: it cannot hold more transactions for this account.",
-      "rateUnavailable": "Couldn't fetch the exchange rate."
+      "rateUnavailable": "Couldn't fetch the exchange rate.",
+      "mainAccountLocked": "The main account can't be hidden or deleted. Make another account main first.",
+      "accountHasTransactions": "This account has transactions, so its currency can't be changed.",
+      "hiddenAccountCannotBeMain": "A hidden account can't be the main account. Show it first.",
+      "mainCurrencyLocked": "The main currency is locked because transactions exist."
     }
   },
   "splits": {
@@ -853,6 +864,45 @@
       "title": "Delete this transaction?",
       "description": "\"{{payee}}\" will be removed from your budget. This cannot be undone.",
       "confirm": "Delete"
+    },
+    "accounts": {
+      "title": "Accounts",
+      "add": "Add account",
+      "main": "Main",
+      "hidden": "Hidden",
+      "actions": "Actions for {{name}}",
+      "edit": "Edit",
+      "makeMain": "Make main",
+      "hide": "Hide",
+      "show": "Show",
+      "hiddenHint": "A hidden account's transactions are left out of the list, totals, Planner and charts until you pick it in the Accounts filter. You can still import into it and add transactions to it.",
+      "form": {
+        "addTitle": "Add account",
+        "addDescription": "Track another bank account, card or cash.",
+        "addSubmit": "Add account",
+        "editTitle": "Edit account",
+        "editDescription": "Rename the account or change its currency.",
+        "editSubmit": "Save",
+        "name": "Account name",
+        "currency": "Default currency",
+        "currencyLocked": "The currency can't be changed once the account has transactions."
+      },
+      "delete": {
+        "action": "Delete",
+        "title": "Delete {{name}}?",
+        "counting": "Counting the account's transactions…",
+        "countUnavailable": "Couldn't count the account's transactions.",
+        "description_one": "{{name}} and its {{count}} transaction will be deleted. This can't be undone.",
+        "description_other": "{{name}} and its {{count}} transactions will be deleted. This can't be undone.",
+        "hideHint": "To keep its history but leave it out of totals, hide the account instead.",
+        "hideInstead": "Hide instead",
+        "confirm": "Delete account"
+      },
+      "mainCurrency": {
+        "label": "Main currency",
+        "editable": "All totals are shown in this currency. You can change it until the first transaction.",
+        "locked": "All totals are shown in this currency. It is locked because transactions exist."
+      }
     }
   }
 }

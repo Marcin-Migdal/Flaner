@@ -1,0 +1,16 @@
+export const budgetAccountsSectionStyles = {
+  root: "space-y-3",
+  header: "flex items-center justify-between gap-3",
+  title: "text-base font-semibold text-foreground",
+  list: "divide-y divide-border",
+  row: "flex items-center gap-3 p-4",
+  icon: "hidden text-muted-foreground sm:flex [&_svg]:size-5",
+  text: "min-w-0 flex-1 space-y-0.5",
+  nameLine: "flex flex-wrap items-center gap-2",
+  name: "truncate text-sm font-medium text-foreground",
+  meta: "text-sm text-muted-foreground",
+  menu: "w-52",
+  destructiveItem: "text-destructive focus:bg-destructive/10 focus:text-destructive [&_svg]:text-destructive",
+  footnote: "text-sm text-muted-foreground",
+  currencyCard: "sm:max-w-sm",
+};

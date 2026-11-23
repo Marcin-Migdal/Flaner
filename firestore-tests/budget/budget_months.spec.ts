@@ -54,7 +54,19 @@ describe("budget_months", () => {
       getDocs(query(collection(as(ME), "budget_months"), where("memberIds", "array-contains", ME))),
     );
     expect(all.docs).toHaveLength(2);
+    // Account delete / currency lock list one account's months
+    const ofAccount = await assertSucceeds(
+      getDocs(
+        query(
+          collection(as(ME), "budget_months"),
+          where("memberIds", "array-contains", ME),
+          where("accountId", "==", ACCOUNT_ID),
+        ),
+      ),
+    );
+    expect(ofAccount.docs).toHaveLength(2);
     await assertFails(getDocs(query(collection(as(ME), "budget_months"), where("month", "==", MONTH))));
+    await assertFails(getDocs(query(collection(as(ME), "budget_months"), where("accountId", "==", "account-2"))));
   });
 
   it("denies reading a missing month of another user's account", async () => {
