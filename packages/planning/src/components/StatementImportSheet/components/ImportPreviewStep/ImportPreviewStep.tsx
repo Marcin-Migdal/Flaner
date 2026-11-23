@@ -80,6 +80,28 @@ export const ImportPreviewStep = ({
   // Months newest first; within a month the list groups by day
   const months = [...new Set(visibleRows.map((row) => monthOfDate(row.transaction.date)))];
   const monthFormat = new Intl.DateTimeFormat(i18n.language, { month: "long", year: "numeric" });
+  // Phones show the status and edit action on a second line (`rowFooter`), so the payee keeps its width
+  const renderStatus = (transaction: BudgetTransaction, className: string) => {
+    const row = rowsById.get(transaction.id);
+    if (!row) return null;
+    return (
+      <span className={className}>
+        <Badge variant={STATUS_BADGE[row.status]}>{t(`budget.import.preview.status.${row.status}`)}</Badge>
+        {isSelectable(row) && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className={styles.editButton}
+            aria-label={t("budget.import.preview.edit", { payee: transaction.payee })}
+            onClick={() => onEdit(transaction)}
+          >
+            <Pencil aria-hidden="true" />
+          </Button>
+        )}
+      </span>
+    );
+  };
+
   const selectedCount = rows.filter((row) => isSelectable(row) && selected.has(row.transaction.id)).length;
 
   return (
@@ -154,26 +176,8 @@ export const ImportPreviewStep = ({
                   />
                 );
               }}
-              renderRowEnd={(transaction) => {
-                const row = rowsById.get(transaction.id);
-                if (!row) return null;
-                return (
-                  <span className={styles.rowEnd}>
-                    <Badge variant={STATUS_BADGE[row.status]}>{t(`budget.import.preview.status.${row.status}`)}</Badge>
-                    {isSelectable(row) && (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        className={styles.editButton}
-                        aria-label={t("budget.import.preview.edit", { payee: transaction.payee })}
-                        onClick={() => onEdit(transaction)}
-                      >
-                        <Pencil aria-hidden="true" />
-                      </Button>
-                    )}
-                  </span>
-                );
-              }}
+              renderRowEnd={(transaction) => renderStatus(transaction, styles.rowEnd)}
+              renderRowFooter={(transaction) => renderStatus(transaction, styles.rowFooter)}
             />
           </section>
         );

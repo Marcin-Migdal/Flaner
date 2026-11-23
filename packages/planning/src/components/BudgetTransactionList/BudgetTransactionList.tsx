@@ -24,6 +24,8 @@ export type BudgetTransactionListProps = {
   renderRowStart?: (transaction: BudgetTransaction) => ReactNode;
   /** Content after a row's amounts (e.g. the import preview's status and edit action). */
   renderRowEnd?: (transaction: BudgetTransaction) => ReactNode;
+  /** A second line under a row, full width (e.g. the import preview's status on narrow screens). */
+  renderRowFooter?: (transaction: BudgetTransaction) => ReactNode;
   /** Greys a row out (e.g. a pending card hold in the import preview). */
   isRowMuted?: (transaction: BudgetTransaction) => boolean;
 };
@@ -38,6 +40,7 @@ export const BudgetTransactionList = ({
   actionsDisabled,
   renderRowStart,
   renderRowEnd,
+  renderRowFooter,
   isRowMuted,
 }: BudgetTransactionListProps) => {
   const { t, i18n } = usePlanningTranslations();
@@ -70,7 +73,10 @@ export const BudgetTransactionList = ({
               const isIncome = transaction.type === "income";
 
               return (
-                <li key={transaction.id} className={cn(styles.row, isRowMuted?.(transaction) && styles.muted)}>
+                <li
+                  key={transaction.id}
+                  className={cn(styles.row, renderRowFooter && styles.rowWithFooter, isRowMuted?.(transaction) && styles.muted)}
+                >
                   {renderRowStart?.(transaction)}
                   <span className={styles.icon}>
                     <Icon
@@ -107,6 +113,7 @@ export const BudgetTransactionList = ({
                       <Trash2 aria-hidden="true" />
                     </Button>
                   )}
+                  {renderRowFooter?.(transaction)}
                 </li>
               );
             })}

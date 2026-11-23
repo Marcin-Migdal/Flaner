@@ -1,9 +1,9 @@
 import { useCurrencyOptions } from "@flaner/shared/hooks";
-import { Button, FormSelect } from "@flaner/ui-components";
+import { Button, FormSelect, Select } from "@flaner/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileText } from "lucide-react";
 import { useMemo } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useController, useForm } from "react-hook-form";
 import type { BudgetAccount } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { STATEMENT_BANKS } from "../../../../utils/statementImport";
@@ -40,6 +40,8 @@ export const ImportSettingsStep = ({
     defaultValues,
   });
 
+  const { field: accountField, fieldState: accountState } = useController({ control: methods.control, name: "accountId" });
+
   const bankOptions = useMemo(
     () => STATEMENT_BANKS.map((bank) => ({ value: bank, label: t(`budget.import.banks.${bank}`) })),
     [t],
@@ -63,7 +65,17 @@ export const ImportSettingsStep = ({
           description={file.bank ? t("budget.import.settings.bankDetected") : t("budget.import.settings.bankNotDetected")}
           options={bankOptions}
         />
-        <FormSelect name="accountId" label={t("budget.import.settings.account")} options={accountOptions} />
+        {/* Not `FormSelect disabled`: react-hook-form would drop a disabled field's value on submit */}
+        <Select
+          label={t("budget.import.settings.account")}
+          name={accountField.name}
+          options={accountOptions}
+          value={accountOptions.find((option) => option.value === accountField.value) ?? null}
+          onChange={(option) => option && accountField.onChange(option.value)}
+          onBlur={accountField.onBlur}
+          error={accountState.error?.message}
+          disabled={accounts.length < 2}
+        />
         <FormSelect
           name="fallbackCurrency"
           label={t("budget.import.settings.fallbackCurrency")}
