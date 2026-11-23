@@ -66,6 +66,7 @@ const renderList = (props: Partial<BudgetTransactionListProps> = {}) =>
       categories={categories}
       accounts={accounts}
       mainCurrency="PLN"
+      expandable
       {...props}
     />,
     { i18nInstance: i18n },

@@ -26,6 +26,9 @@ export const budgetInvalidation = {
   /** Edits and bulk deletes change every month a transaction left or moved to. */
   transactionsInMonths: ({ uid }: UserType, dates: string[]) =>
     [...new Set(dates.map(monthOfDate))].map((month) => budgetKeys.transactions(uid, month)),
+  /** An import changes every month it adds to. */
+  transactionsImported: ({ uid }: UserType, inputs: { date: string }[]) =>
+    [...new Set(inputs.map(({ date }) => monthOfDate(date)))].map((month) => budgetKeys.transactions(uid, month)),
   // New salt / wrapped keys: a cached copy would no longer unlock
   rewrapKeys: ({ uid }: UserType) => [budgetKeys.locked(uid)],
 };

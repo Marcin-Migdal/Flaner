@@ -4,6 +4,9 @@ export const transactionRowStyles = {
   excluded: "[&>div:first-child]:opacity-60",
   mobileLine: "flex items-center has-[button[role=checkbox]]:pl-3",
   mobileSummary: "min-w-0 flex-1",
+  staticSummary: "flex items-center gap-3 px-3 py-2.5 sm:px-4",
+  staticCursor: "cursor-default",
+  footer: "px-3 pb-2 sm:px-4",
   summary:
     "flex cursor-pointer items-center gap-3 px-3 py-2.5 select-none sm:px-4 md:select-auto",
   checkbox: "shrink-0",

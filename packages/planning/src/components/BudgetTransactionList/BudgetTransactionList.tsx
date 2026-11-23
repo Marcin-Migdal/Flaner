@@ -1,6 +1,6 @@
 import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { parseISO } from "date-fns";
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import type { BudgetAccount, BudgetCategoryTree, BudgetTransaction, BudgetTransactionPatch } from "../../api/budget";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import type { LedgerDay } from "../../utils/monthLedger";
@@ -31,6 +31,16 @@ export type BudgetTransactionListProps = {
    */
   selectedIds?: ReadonlySet<string>;
   onSelectionChange?: (ids: Set<string>) => void;
+  /** Rows expand (chevron on desktop, tap on the phone) into their details and actions. */
+  expandable?: boolean;
+  /** Content before a row's icon (e.g. the import preview's checkbox). */
+  renderRowStart?: (transaction: BudgetTransaction) => ReactNode;
+  /** Content after a row's amounts (e.g. the import preview's status and edit action). */
+  renderRowEnd?: (transaction: BudgetTransaction) => ReactNode;
+  /** A second line under a row, full width (e.g. the import preview's status on narrow screens). */
+  renderRowFooter?: (transaction: BudgetTransaction) => ReactNode;
+  /** Greys a row out (e.g. a pending card hold in the import preview). */
+  isRowMuted?: (transaction: BudgetTransaction) => boolean;
 };
 
 /** The Budget's transaction rows grouped by day, each day with its net. Shared by Transactions and the import preview. */
@@ -45,6 +55,11 @@ export const BudgetTransactionList = ({
   onEdit,
   selectedIds,
   onSelectionChange,
+  expandable = false,
+  renderRowStart,
+  renderRowEnd,
+  renderRowFooter,
+  isRowMuted,
 }: BudgetTransactionListProps) => {
   const { i18n } = usePlanningTranslations();
   const { format } = useMoneyFormatter();
@@ -92,8 +107,12 @@ export const BudgetTransactionList = ({
                 accountName={accountNames.get(transaction.accountId) ?? ""}
                 showAccount={showAccount}
                 mainCurrency={mainCurrency}
-                expanded={expandedId === transaction.id}
-                onToggleExpanded={() => setExpandedId((id) => (id === transaction.id ? null : transaction.id))}
+                expanded={expandable && expandedId === transaction.id}
+                onToggleExpanded={
+                  expandable
+                    ? () => setExpandedId((id) => (id === transaction.id ? null : transaction.id))
+                    : undefined
+                }
                 selectable={selectable}
                 selected={!!selectedIds?.has(transaction.id)}
                 selectionMode={selectionMode}
@@ -102,6 +121,10 @@ export const BudgetTransactionList = ({
                 onEdit={onEdit && (() => onEdit(transaction))}
                 onDelete={onDelete && (() => onDelete(transaction))}
                 actionsDisabled={actionsDisabled}
+                muted={!!isRowMuted?.(transaction)}
+                start={renderRowStart?.(transaction)}
+                end={renderRowEnd?.(transaction)}
+                footer={renderRowFooter?.(transaction)}
               />
             ))}
           </ul>

@@ -110,7 +110,8 @@
       "transactionDeleted": "Transaction deleted",
       "saveError": "Couldn't save the transaction. Try again.",
       "deleteError": "Couldn't delete the transaction. Try again.",
-      "transactionsDeleted": "Transactions deleted"
+      "transactionsDeleted": "Transactions deleted",
+      "importError": "Couldn't import the transactions. Nothing was saved. Try again."
     }
   },
   "errors": {
@@ -132,7 +133,8 @@
       "keyChanged": "Your budget was reset on another device. Reload the page.",
       "monthTooLarge": "This month is full: it cannot hold more transactions for this account.",
       "rateUnavailable": "Couldn't fetch the exchange rate.",
-      "transactionMissing": "This transaction no longer exists. Reload the page."
+      "transactionMissing": "This transaction no longer exists. Reload the page.",
+      "importTooLarge": "This import doesn't fit: one of its months would exceed the size limit for this account. Nothing was imported. Split the file into smaller periods."
     }
   },
   "splits": {
@@ -496,7 +498,8 @@
         "transactions": "Transactions",
         "recurring": "Recurring"
       },
-      "add": "Add transaction"
+      "add": "Add transaction",
+      "import": "Import"
     },
     "settings": {
       "tabs": {
@@ -926,6 +929,97 @@
       "deleteTitle_other": "Delete {{count}} transactions?",
       "deleteDescription": "They will be removed from the budget. This cannot be undone.",
       "deleteConfirm": "Delete"
+    },
+    "import": {
+      "title": "Import a statement",
+      "description": "Bring in transactions from your bank's statement file.",
+      "back": "Back",
+      "steps": {
+        "file": "File",
+        "settings": "Settings",
+        "preview": "Preview",
+        "result": "Result"
+      },
+      "banks": {
+        "millennium": "Bank Millennium"
+      },
+      "file": {
+        "drop": "Drop a CSV file here or click to choose one",
+        "hint": "One statement file at a time, in CSV format.",
+        "notCsv": "This is not a CSV file. Export the statement from your bank as CSV and try again.",
+        "empty": "This file has no transactions.",
+        "unreadable": "Couldn't read this file. Make sure it's a CSV statement from your bank.",
+        "recognized": "Recognized automatically: {{banks}}"
+      },
+      "settings": {
+        "bank": "Bank",
+        "bankDetected": "Recognized from the file. Change it if it's wrong.",
+        "bankNotDetected": "This file's layout wasn't recognized. Choose the bank that issued it.",
+        "account": "Import to account",
+        "fallbackCurrency": "Currency for rows without one",
+        "fallbackCurrencyHint": "Used only when a row doesn't state its currency.",
+        "next": "Preview",
+        "previewError": "Couldn't prepare the preview (no connection or exchange rate). Try again."
+      },
+      "validation": {
+        "bankRequired": "Choose a bank."
+      },
+      "preview": {
+        "filtersLabel": "Show rows",
+        "filters": {
+          "all": "All",
+          "new": "New",
+          "duplicate": "Duplicates",
+          "error": "Errors",
+          "pending": "Pending",
+          "unselected": "Not selected"
+        },
+        "selectedCount_one": "{{count}} row selected",
+        "selectedCount_other": "{{count}} rows selected",
+        "setCategory": "Set category",
+        "errorsHeading": "Rows that couldn't be read",
+        "errorRow": "Row {{row}}: {{reason}}",
+        "status": {
+          "new": "New",
+          "duplicate": "Duplicate",
+          "error": "Error",
+          "pending": "Pending card hold"
+        },
+        "select": "Import {{payee}}",
+        "edit": "Edit {{payee}}",
+        "empty": "No rows to show.",
+        "import_one": "Import {{count}} transaction",
+        "import_other": "Import {{count}} transactions"
+      },
+      "rowErrors": {
+        "columns": "wrong number of columns",
+        "date": "unreadable date",
+        "amount": "unreadable amount",
+        "currency": "unreadable currency"
+      },
+      "rowDialog": {
+        "title": "Edit row",
+        "save": "Save"
+      },
+      "categoryDialog": {
+        "title": "Set category",
+        "description": "The category is set on every selected row of its type.",
+        "expense": "Category for expenses",
+        "income": "Category for income",
+        "apply": "Set category"
+      },
+      "result": {
+        "title_one": "{{count}} transaction imported",
+        "title_other": "{{count}} transactions imported",
+        "summary": "Import summary",
+        "importedTo": "Imported to {{account}}",
+        "duplicates": "Duplicates skipped",
+        "pending": "Pending card holds (not imported)",
+        "errors": "Rows with errors",
+        "unconfirmed": "Transactions without a category",
+        "close": "Close",
+        "openMonth": "Show imported transactions"
+      }
     }
   }
 }

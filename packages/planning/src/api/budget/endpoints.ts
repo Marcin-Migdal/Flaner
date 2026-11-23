@@ -407,6 +407,38 @@ export const getBudgetTransactions = async (
   return months.flat();
 };
 
+/** Every month `from`..`to` (inclusive, `YYYY-MM`). */
+const monthsBetween = (from: BudgetMonth, to: BudgetMonth): BudgetMonth[] => {
+  const months: BudgetMonth[] = [];
+  for (let [year, month] = from.split("-").map(Number); `${year}-${String(month).padStart(2, "0")}` <= to; ) {
+    months.push(`${year}-${String(month).padStart(2, "0")}`);
+    [year, month] = month === 12 ? [year + 1, 1] : [year, month + 1];
+  }
+  return months;
+};
+
+/** The transactions of one account dated in the months `from`..`to`: only that account's month documents are read. */
+export const getAccountTransactions = async (
+  budget: UnlockedBudget,
+  accountId: string,
+  { from, to }: { from: BudgetMonth; to: BudgetMonth },
+): Promise<BudgetTransaction[]> => {
+  const accountKey = await getAccountKey(budget, accountId);
+  const months = await Promise.all(
+    monthsBetween(from, to).map(async (month) => {
+      const data = (await getDoc(refs.month(accountId, month))).data();
+      if (!data) return [];
+      const { transactions } = await decryptJson<BudgetMonthPayload>(
+        data.payload.toUint8Array(),
+        accountKey,
+        paths.month(accountId, month),
+      );
+      return transactions.map((transaction): BudgetTransaction => ({ ...transaction, accountId }));
+    }),
+  );
+  return months.flat();
+};
+
 export const addBudgetTransaction = async (
   budget: UnlockedBudget,
   input: BudgetTransactionInput,
@@ -423,6 +455,47 @@ export const addBudgetTransaction = async (
   });
 
   return { id, ...input };
+};
+
+/**
+ * Adds an import's transactions in one transaction: every affected month is read, then written. An import that
+ * would push any month over the size guard fails as a whole with `errors.budget.importTooLarge`.
+ */
+export const importBudgetTransactions = async (
+  budget: UnlockedBudget,
+  inputs: BudgetTransactionInput[],
+): Promise<BudgetTransaction[]> => {
+  const added = inputs.map((input): BudgetTransaction => ({ id: crypto.randomUUID(), ...input }));
+  const byMonth = new Map<string, { accountId: string; month: BudgetMonth; stored: BudgetMonthPayload["transactions"] }>();
+  for (const { accountId, ...stored } of added) {
+    const month = monthOfDate(stored.date);
+    const key = paths.month(accountId, month);
+    const group = byMonth.get(key) ?? { accountId, month, stored: [] };
+    group.stored.push(stored);
+    byMonth.set(key, group);
+  }
+
+  await runTransaction(fb.firestore, async (transaction) => {
+    // A Firestore transaction reads everything before its first write
+    const months = await Promise.all(
+      [...byMonth.values()].map(async (group) => ({
+        ...group,
+        payload: await readMonth(transaction, budget, group.accountId, group.month),
+      })),
+    );
+    for (const { accountId, month, stored, payload } of months) {
+      try {
+        await writeMonth(transaction, budget, accountId, month, { transactions: [...payload.transactions, ...stored] });
+      } catch (error) {
+        if (error instanceof Error && error.message === "planning:errors.budget.monthTooLarge") {
+          throw new Error("planning:errors.budget.importTooLarge");
+        }
+        throw error;
+      }
+    }
+  });
+
+  return added;
 };
 
 export const deleteBudgetTransaction = (budget: UnlockedBudget, ref: BudgetTransactionRef): Promise<void> =>

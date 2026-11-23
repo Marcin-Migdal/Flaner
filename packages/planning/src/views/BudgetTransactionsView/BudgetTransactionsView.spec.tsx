@@ -32,6 +32,11 @@ vi.mock("../../api/budget", async (importOriginal) => ({
   updateBudgetTransactions: vi.fn(),
 }));
 vi.mock("../../api/exchangeRates", () => ({ getExchangeRate: vi.fn() }));
+// The wizard has its own specs; here only its Result step's "open the month" callback matters
+vi.mock("../../components/StatementImportSheet", () => ({
+  StatementImportSheet: ({ open, onOpenMonth }: { open: boolean; onOpenMonth: (month: string) => void }) =>
+    open ? <button onClick={() => onOpenMonth("2026-10")}>Show imported transactions</button> : null,
+}));
 vi.mock("@flaner/shared/utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@flaner/shared/utils")>()),
   toast: { failure: vi.fn(), success: vi.fn(), message: vi.fn(), attention: vi.fn() },
@@ -454,5 +459,20 @@ describe("BudgetTransactionsView", () => {
       await userEvents.click(within(confirm).getByRole("button", { name: "Delete" }));
       await waitFor(() => expect(budgetApi.deleteBudgetTransactions).toHaveBeenCalledWith(budget, [expenses[1]]));
     });
+  });
+
+  it("opens the month from the import's result unfiltered", async () => {
+    setUp({ transactions: [tx({ payee: "Biedronka", confirmed: false })] });
+    const userEvents = userEvent.setup();
+    renderView("/planning/budget/transactions?month=2026-11&status=confirmed");
+    expect(await screen.findByRole("heading", { name: "No transactions match these filters" })).toBeInTheDocument();
+
+    await userEvents.click(screen.getByRole("button", { name: "Import" }));
+    await userEvents.click(screen.getByRole("button", { name: "Show imported transactions" }));
+
+    await waitFor(() =>
+      expect(budgetApi.getBudgetTransactions).toHaveBeenCalledWith(budget, { from: "2026-10", to: "2026-10" }),
+    );
+    expect(screen.queryByRole("button", { name: "Clear filters" })).not.toBeInTheDocument();
   });
 });

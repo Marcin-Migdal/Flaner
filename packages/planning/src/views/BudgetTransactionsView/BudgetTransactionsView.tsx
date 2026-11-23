@@ -23,6 +23,7 @@ import { BudgetMonthSwitcher } from "../../components/BudgetMonthSwitcher";
 import { BudgetOfflineBanner } from "../../components/BudgetOfflineBanner";
 import { BudgetTransactionDialog } from "../../components/BudgetTransactionDialog";
 import { BudgetTransactionList } from "../../components/BudgetTransactionList";
+import { StatementImportSheet } from "../../components/StatementImportSheet";
 import {
   useDeleteBudgetTransactionMutation,
   useDeleteBudgetTransactionsMutation,
@@ -71,6 +72,7 @@ export const BudgetTransactionsView = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   // `null`: the dialog adds a transaction
   const [editing, setEditing] = useState<BudgetTransaction | null>(null);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [toDelete, setToDelete] = useState<BudgetTransaction | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
@@ -95,12 +97,14 @@ export const BudgetTransactionsView = () => {
   // Only rows still shown take part in a bulk action (a filter change can hide selected ones)
   const selected = visible.filter((transaction) => selectedIds.has(transaction.id));
 
-  const setMonth = (next: BudgetMonth) => {
+  /** `clearFilters`: opens the month unfiltered (e.g. the import's "Show imported transactions"). */
+  const setMonth = (next: BudgetMonth, { clearFilters = false } = {}) => {
     setSelectedIds(new Set());
     setSearchParams(
       (params) => {
-        params.set("month", next);
-        return params;
+        const updated = clearFilters ? writeTransactionFilters(params, DEFAULT_TRANSACTION_FILTERS) : params;
+        updated.set("month", next);
+        return updated;
       },
       { preventScrollReset: true },
     );
@@ -200,9 +204,8 @@ export const BudgetTransactionsView = () => {
             title={t("budget.transactionsEmpty.title")}
             description={t("budget.transactionsEmpty.description")}
             action={
-              // Import is wired by #172
               <div className={styles.emptyActions}>
-                <Button variant="outline" disabled>
+                <Button variant="outline" disabled={!isOnline || !canAdd} onClick={() => setIsImportOpen(true)}>
                   <FileUp aria-hidden="true" />
                   {t("budget.transactionsEmpty.import")}
                 </Button>
@@ -239,6 +242,7 @@ export const BudgetTransactionsView = () => {
                 actionsDisabled={!isOnline}
                 selectedIds={selectedIds}
                 onSelectionChange={setSelectedIds}
+                expandable
               />
             )}
             {selected.length > 0 && (
@@ -265,10 +269,16 @@ export const BudgetTransactionsView = () => {
       <PageHeader
         title={t("nav.budgetTransactions")}
         actions={
-          <Button variant="brand" disabled={!isOnline || !canAdd} onClick={() => openDialog(null)}>
-            <Plus aria-hidden="true" />
-            {t("budget.transactions.add")}
-          </Button>
+          <div className={styles.headerActions}>
+            <Button variant="outline" disabled={!isOnline || !canAdd} onClick={() => setIsImportOpen(true)}>
+              <FileUp aria-hidden="true" />
+              {t("budget.transactions.import")}
+            </Button>
+            <Button variant="brand" disabled={!isOnline || !canAdd} onClick={() => openDialog(null)}>
+              <Plus aria-hidden="true" />
+              {t("budget.transactions.add")}
+            </Button>
+          </div>
         }
       />
 
@@ -300,6 +310,20 @@ export const BudgetTransactionsView = () => {
           accounts={accounts.data}
           categories={categories.data}
           saveDisabled={!isOnline}
+        />
+      )}
+
+      {profile.data && accounts.data && categories.data && (
+        <StatementImportSheet
+          open={isImportOpen}
+          onOpenChange={setIsImportOpen}
+          profile={profile.data}
+          accounts={accounts.data}
+          categories={categories.data}
+          onOpenMonth={(next) => {
+            setIsImportOpen(false);
+            setMonth(next, { clearFilters: true });
+          }}
         />
       )}
 

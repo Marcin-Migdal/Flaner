@@ -2,7 +2,7 @@ import { useIsMobile, useMoneyFormatter } from "@flaner/shared/hooks";
 import { cn, fromMinorUnits, toMinorUnits } from "@flaner/shared/utils";
 import { Badge, Button, ShadcnCheckbox } from "@flaner/ui-components";
 import { ChevronDown, CircleHelp } from "lucide-react";
-import { useRef, type KeyboardEvent, type MouseEvent } from "react";
+import { useRef, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import type { BudgetCategoryTree, BudgetTransaction, BudgetTransactionPatch } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { BUDGET_CATEGORY_COLOR_CLASSES, BUDGET_CATEGORY_ICON_COMPONENTS } from "../../../../utils/budgetCategoryIcons";
@@ -24,7 +24,8 @@ export type TransactionRowProps = {
   showAccount: boolean;
   mainCurrency: string;
   expanded: boolean;
-  onToggleExpanded: () => void;
+  /** Without it the row does not expand (e.g. the import preview). */
+  onToggleExpanded?: () => void;
   /** Rows can be selected (Ctrl / Shift click, long-press on the phone). */
   selectable: boolean;
   selected: boolean;
@@ -36,6 +37,12 @@ export type TransactionRowProps = {
   onEdit?: () => void;
   onDelete?: () => void;
   actionsDisabled?: boolean;
+  /** Greyed out (e.g. a pending card hold in the import preview). */
+  muted?: boolean;
+  /** Extra content before the row's icon, after its amounts, and on a full-width line below it. */
+  start?: ReactNode;
+  end?: ReactNode;
+  footer?: ReactNode;
 };
 
 const parseAmount = (text: string) => Number(text.replace(/\s/g, "").replace(",", "."));
@@ -56,6 +63,10 @@ export const TransactionRow = ({
   onEdit,
   onDelete,
   actionsDisabled,
+  muted,
+  start,
+  end,
+  footer,
 }: TransactionRowProps) => {
   const { t, i18n } = usePlanningTranslations();
   const { format } = useMoneyFormatter();
@@ -136,69 +147,86 @@ export const TransactionRow = ({
       aria-label={t("budget.transactionList.select", { payee })}
     />
   );
-  const rowClass = cn(styles.row, selected && styles.selected, transaction.excluded && styles.excluded);
+  const rowClass = cn(
+    styles.row,
+    selected && styles.selected,
+    (transaction.excluded || muted) && styles.excluded,
+  );
+  const footerLine = footer && <div className={styles.footer}>{footer}</div>;
 
   if (isMobile) {
     const clearPress = () => window.clearTimeout(pressTimer.current);
     const activate = () => {
       if (selectable && selectionMode) onSelect("toggle");
-      else onToggleExpanded();
+      else onToggleExpanded?.();
     };
+    const summaryContent = (
+      <>
+        {staticIcon}
+        <span className={styles.body}>
+          <span className={styles.payee}>{payee}</span>
+          <span className={styles.meta}>
+            {[categoryName, showAccount ? accountName : null, transaction.description || null]
+              .filter(Boolean)
+              .join(" · ")}
+          </span>
+        </span>
+        <span className={styles.amounts}>
+          <span className={cn(styles.amount, isIncome && styles.income)}>
+            {format(signedAmount(type, transaction.amount), currency)}
+          </span>
+          {amountMain}
+          {excludedBadge}
+        </span>
+      </>
+    );
 
     return (
       <li className={rowClass}>
         {/* Beside, not inside, the row button: an interactive control cannot nest in another */}
         <div className={styles.mobileLine}>
+          {start}
           {checkbox}
-          <div
-          role="button"
-          tabIndex={0}
-          aria-expanded={expanded}
-          className={cn(styles.summary, styles.mobileSummary)}
-          onPointerDown={() => {
-            if (!selectable) return;
-            longPressed.current = false;
-            pressTimer.current = window.setTimeout(() => {
-              longPressed.current = true;
-              onSelect("toggle");
-            }, LONG_PRESS_MS);
-          }}
-          onPointerUp={clearPress}
-          onPointerLeave={clearPress}
-          onPointerCancel={clearPress}
-          onContextMenu={(event) => selectable && event.preventDefault()}
-          onClick={() => {
-            // The click that ends a long-press already selected the row
-            if (longPressed.current) {
-              longPressed.current = false;
-              return;
-            }
-            activate();
-          }}
-          onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
-            if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
-            event.preventDefault();
-            activate();
-          }}
-        >
-          {staticIcon}
-          <span className={styles.body}>
-            <span className={styles.payee}>{payee}</span>
-            <span className={styles.meta}>
-              {[categoryName, showAccount ? accountName : null, transaction.description || null]
-                .filter(Boolean)
-                .join(" · ")}
-            </span>
-          </span>
-          <span className={styles.amounts}>
-            <span className={cn(styles.amount, isIncome && styles.income)}>
-              {format(signedAmount(type, transaction.amount), currency)}
-            </span>
-            {amountMain}
-            {excludedBadge}
-          </span>
-          </div>
+          {selectable || onToggleExpanded ? (
+            <div
+              role="button"
+              tabIndex={0}
+              aria-expanded={onToggleExpanded ? expanded : undefined}
+              className={cn(styles.summary, styles.mobileSummary)}
+              onPointerDown={() => {
+                if (!selectable) return;
+                longPressed.current = false;
+                pressTimer.current = window.setTimeout(() => {
+                  longPressed.current = true;
+                  onSelect("toggle");
+                }, LONG_PRESS_MS);
+              }}
+              onPointerUp={clearPress}
+              onPointerLeave={clearPress}
+              onPointerCancel={clearPress}
+              onContextMenu={(event) => selectable && event.preventDefault()}
+              onClick={() => {
+                // The click that ends a long-press already selected the row
+                if (longPressed.current) {
+                  longPressed.current = false;
+                  return;
+                }
+                activate();
+              }}
+              onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+                if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+                event.preventDefault();
+                activate();
+              }}
+            >
+              {summaryContent}
+            </div>
+          ) : (
+            <div className={cn(styles.staticSummary, styles.mobileSummary)}>{summaryContent}</div>
+          )}
+          {end}
         </div>
+        {footerLine}
         {details}
       </li>
     );
@@ -213,14 +241,15 @@ export const TransactionRow = ({
       return;
     }
     if (event.target instanceof Element && event.target.closest("input, button, [data-row-control]")) return;
-    onToggleExpanded();
+    onToggleExpanded?.();
   };
 
   return (
     <li className={rowClass}>
       {/* Mouse shortcuts only: the keyboard expands with the chevron button and selects with the checkbox */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-      <div className={styles.summary} onClick={onSummaryClick}>
+      <div className={cn(styles.summary, !onToggleExpanded && !selectable && styles.staticCursor)} onClick={onSummaryClick}>
+        {start}
         {checkbox}
         {categoryPicker ? (
           <span className={styles.category} data-row-control>
@@ -291,17 +320,21 @@ export const TransactionRow = ({
           )}
           {amountMain}
         </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={styles.expandButton}
-          aria-expanded={expanded}
-          aria-label={t("budget.transactionList.details", { payee })}
-          onClick={onToggleExpanded}
-        >
-          <ChevronDown aria-hidden="true" className={cn(styles.chevron, expanded && styles.chevronOpen)} />
-        </Button>
+        {end}
+        {onToggleExpanded && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className={styles.expandButton}
+            aria-expanded={expanded}
+            aria-label={t("budget.transactionList.details", { payee })}
+            onClick={onToggleExpanded}
+          >
+            <ChevronDown aria-hidden="true" className={cn(styles.chevron, expanded && styles.chevronOpen)} />
+          </Button>
+        )}
       </div>
+      {footerLine}
       {details}
     </li>
   );
