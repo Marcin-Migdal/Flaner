@@ -19,7 +19,6 @@ import {
   resetBudget,
   unlockWithPassphrase,
   unlockWithRecoveryKey,
-  updateBudgetTransaction,
   updateBudgetTransactions,
 } from "./endpoints";
 import type {
@@ -27,6 +26,7 @@ import type {
   BudgetCategoryTree,
   BudgetTransactionInput,
   BudgetTransactionPatch,
+  BudgetTransactionRef,
   CreateBudgetInput,
   UnlockedBudget,
 } from "./types";
@@ -248,6 +248,12 @@ describe("budget endpoints", () => {
   });
 });
 
+// One edit through the bulk endpoint
+const updateOne = async (budget: UnlockedBudget, ref: BudgetTransactionRef, patch: BudgetTransactionPatch) => {
+  const [updated] = await updateBudgetTransactions(budget, [{ ref, patch }]);
+  return updated;
+};
+
 describe("budget transactions", () => {
   const transaction = (accountId: string, overrides: Partial<BudgetTransactionInput> = {}): BudgetTransactionInput => ({
     accountId,
@@ -352,7 +358,7 @@ describe("budget transactions", () => {
     const first = await addBudgetTransaction(budget, transaction(accountId));
     const second = await addBudgetTransaction(budget, transaction(accountId, { payee: "Second" }));
 
-    const edited = await updateBudgetTransaction(budget, first, { payee: "Renamed", amount: 3000, confirmed: false });
+    const edited = await updateOne(budget, first, { payee: "Renamed", amount: 3000, confirmed: false });
 
     expect(edited).toEqual({ ...first, payee: "Renamed", amount: 3000, confirmed: false });
     expect(await getBudgetTransactions(budget, { from: "2026-11", to: "2026-11" })).toEqual([edited, second]);
@@ -362,7 +368,7 @@ describe("budget transactions", () => {
     const { budget, accountId } = await setUp();
     const moved = await addBudgetTransaction(budget, transaction(accountId, { date: "2026-11-14" }));
 
-    const edited = await updateBudgetTransaction(budget, moved, { date: "2026-12-02" });
+    const edited = await updateOne(budget, moved, { date: "2026-12-02" });
 
     expect(edited).toEqual({ ...moved, date: "2026-12-02" });
     expect(Object.keys(await list("budget_months"))).toEqual([`${accountId}_2026-12`]);
@@ -376,7 +382,7 @@ describe("budget transactions", () => {
     const stays = await addBudgetTransaction(budget, transaction(accountId, { payee: "Stays" }));
     const there = await addBudgetTransaction(budget, transaction(savingsId, { date: "2026-10-03", payee: "There" }));
 
-    const edited = await updateBudgetTransaction(budget, moved, { accountId: savingsId, date: "2026-10-20" });
+    const edited = await updateOne(budget, moved, { accountId: savingsId, date: "2026-10-20" });
 
     expect(edited).toEqual({ ...moved, accountId: savingsId, date: "2026-10-20" });
     expect(await getBudgetTransactions(budget, { from: "2026-11", to: "2026-11" })).toEqual([stays]);
@@ -392,7 +398,7 @@ describe("budget transactions", () => {
     // Not a fresh literal, so the extra fields get past the type, as a careless caller's object would
     const patch: BudgetTransactionPatch = Object.assign({ payee: "Fixed" }, { importHash: "x", sourceFile: "y" });
 
-    const edited = await updateBudgetTransaction(budget, imported, patch);
+    const edited = await updateOne(budget, imported, patch);
 
     expect(edited).toMatchObject({ payee: "Fixed", sourceFile: "statement.csv", importHash: "frozen-hash" });
     expect(await getBudgetTransactions(budget, { from: "2026-11", to: "2026-11" })).toEqual([edited]);
@@ -440,7 +446,7 @@ describe("budget transactions", () => {
     await expect(getBudgetTransactions(budget, { from: "2026-11", to: "2026-11" })).rejects.toMatchObject(DENIED);
     await expect(addBudgetTransaction(budget, transaction(accountId))).rejects.toMatchObject(DENIED);
     await expect(deleteBudgetTransaction(budget, added)).rejects.toMatchObject(DENIED);
-    await expect(updateBudgetTransaction(budget, added, { date: "2026-12-01" })).rejects.toMatchObject(DENIED);
+    await expect(updateOne(budget, added, { date: "2026-12-01" })).rejects.toMatchObject(DENIED);
     expect(await getBudgetTransactions({ ...budget, uid: OTHER }, { from: "2026-11", to: "2026-11" })).toEqual([]);
   });
 });

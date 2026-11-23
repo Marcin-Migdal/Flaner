@@ -22,6 +22,7 @@ import {
   TRANSACTION_STATUSES,
   UNCATEGORIZED_FILTER,
   hasActiveTransactionFilters,
+  oneOf,
   type TransactionFilters,
 } from "../../../../utils/transactionFilters";
 import { budgetTransactionFiltersStyles as styles } from "./BudgetTransactionFilters.styles";
@@ -34,9 +35,6 @@ export type BudgetTransactionFiltersProps = {
 };
 
 const toggle = (ids: string[], id: string) => (ids.includes(id) ? ids.filter((value) => value !== id) : [...ids, id]);
-
-const oneOf = <T extends string>(values: readonly T[], value: string, fallback: T): T =>
-  values.find((item) => item === value) ?? fallback;
 
 // Keeps a multi-select menu open while items are toggled
 const keepOpen = (event: Event) => event.preventDefault();

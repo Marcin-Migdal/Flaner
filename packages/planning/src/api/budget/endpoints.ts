@@ -44,7 +44,6 @@ import type {
   BudgetProfilePayload,
   BudgetTransaction,
   BudgetTransactionInput,
-  BudgetTransactionPatch,
   BudgetTransactionRef,
   BudgetTransactionUpdate,
   CreateBudgetInput,
@@ -527,12 +526,3 @@ export const updateBudgetTransactions = async (
     await writeMonths(transaction, budget, months);
     return updated;
   });
-
-export const updateBudgetTransaction = async (
-  budget: UnlockedBudget,
-  ref: BudgetTransactionRef,
-  patch: BudgetTransactionPatch,
-): Promise<BudgetTransaction> => {
-  const [updated] = await updateBudgetTransactions(budget, [{ ref, patch }]);
-  return updated;
-};

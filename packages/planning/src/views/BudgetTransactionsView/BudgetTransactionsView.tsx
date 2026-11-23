@@ -13,7 +13,12 @@ import { format } from "date-fns";
 import { FileUp, Plus, ReceiptText, SearchX, WifiOff } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
-import type { BudgetMonth, BudgetTransaction, BudgetTransactionPatch } from "../../api/budget";
+import type {
+  BudgetMonth,
+  BudgetTransaction,
+  BudgetTransactionPatch,
+  BudgetTransactionUpdate,
+} from "../../api/budget";
 import { BudgetMonthSwitcher } from "../../components/BudgetMonthSwitcher";
 import { BudgetOfflineBanner } from "../../components/BudgetOfflineBanner";
 import { BudgetTransactionDialog } from "../../components/BudgetTransactionDialog";
@@ -109,7 +114,7 @@ export const BudgetTransactionsView = () => {
     setIsDialogOpen(true);
   };
 
-  const update = async (updates: Parameters<typeof updateTransactions>[0], onDone?: () => void) => {
+  const update = async (updates: BudgetTransactionUpdate[], onDone?: () => void) => {
     try {
       await updateTransactions(updates);
       onDone?.();
@@ -140,6 +145,10 @@ export const BudgetTransactionsView = () => {
     const toConfirm = selected.filter(
       (transaction) => !transaction.confirmed && resolveTransactionCategory(tree, transaction),
     );
+    if (toConfirm.length === 0) {
+      clearSelection();
+      return;
+    }
     void update(
       toConfirm.map((transaction) => ({ ref: transaction, patch: { confirmed: true } })),
       clearSelection,

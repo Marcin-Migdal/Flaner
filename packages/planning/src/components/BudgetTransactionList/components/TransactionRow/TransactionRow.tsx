@@ -147,11 +147,14 @@ export const TransactionRow = ({
 
     return (
       <li className={rowClass}>
-        <div
+        {/* Beside, not inside, the row button: an interactive control cannot nest in another */}
+        <div className={styles.mobileLine}>
+          {checkbox}
+          <div
           role="button"
           tabIndex={0}
           aria-expanded={expanded}
-          className={styles.summary}
+          className={cn(styles.summary, styles.mobileSummary)}
           onPointerDown={() => {
             if (!selectable) return;
             longPressed.current = false;
@@ -178,7 +181,6 @@ export const TransactionRow = ({
             activate();
           }}
         >
-          {checkbox}
           {staticIcon}
           <span className={styles.body}>
             <span className={styles.payee}>{payee}</span>
@@ -195,6 +197,7 @@ export const TransactionRow = ({
             {amountMain}
             {excludedBadge}
           </span>
+          </div>
         </div>
         {details}
       </li>

@@ -150,6 +150,17 @@ export const BudgetTransactionDialog = ({
     // Without a published rate (e.g. the rate service is down) the typed amount defines the rate
     const usedRate = foreign ? (rate ?? { rate: amountMain / amountMinor, date: day }) : { rate: 1, date: day };
 
+    // An edit that keeps amount, currency, date and main-currency amount keeps the stored conversion as it was
+    const keepConversion =
+      !!transaction &&
+      transaction.amount === amountMinor &&
+      transaction.currency === data.currency &&
+      transaction.date === day &&
+      transaction.amountMain === amountMain;
+    const conversion = keepConversion
+      ? { rate: transaction.rate, rateDate: transaction.rateDate, rateOverridden: transaction.rateOverridden }
+      : { rate: usedRate.rate, rateDate: usedRate.date, rateOverridden: foreign && (data.rateOverridden || !rate) };
+
     const input = {
       accountId: data.accountId,
       date: day,
@@ -157,9 +168,7 @@ export const BudgetTransactionDialog = ({
       amount: amountMinor,
       currency: data.currency,
       amountMain,
-      rate: usedRate.rate,
-      rateDate: usedRate.date,
-      rateOverridden: foreign && (data.rateOverridden || !rate),
+      ...conversion,
       payee: data.payee.trim(),
       description: data.description.trim(),
       categoryId: data.categoryId,

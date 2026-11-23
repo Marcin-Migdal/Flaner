@@ -2,7 +2,10 @@ export const transactionRowStyles = {
   row: "group transition-colors",
   selected: "bg-accent/60",
   excluded: "[&>div:first-child]:opacity-60",
-  summary: "flex cursor-pointer items-center gap-3 px-3 py-2.5 select-none sm:px-4 md:select-auto",
+  mobileLine: "flex items-center has-[button[role=checkbox]]:pl-3",
+  mobileSummary: "min-w-0 flex-1",
+  summary:
+    "flex cursor-pointer items-center gap-3 px-3 py-2.5 select-none sm:px-4 md:select-auto",
   checkbox: "shrink-0",
   checkboxIdle: "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
   icon: "relative flex size-9 shrink-0 items-center justify-center rounded-full bg-muted [&>svg]:size-4",

@@ -23,7 +23,7 @@ Budget transactions (MFE `planning`, Budget; ADR 0002): one document per account
 | --- | --- | --- | --- |
 | Add a transaction (manual) | `packages/planning/src/api/budget/endpoints.ts#addBudgetTransaction` | get + set `budget_months/{accountId}_{month}` (created on the month's first transaction) | ✅ transaction |
 | Delete transactions (one or bulk) | `packages/planning/src/api/budget/endpoints.ts#deleteBudgetTransactions` (`deleteBudgetTransaction` for one) | get + set every affected month, or delete a month once its last transaction is gone | ✅ transaction |
-| Edit transactions (inline, dialog, bulk set category / confirm); move to another month / account | `packages/planning/src/api/budget/endpoints.ts#updateBudgetTransactions` (`updateBudgetTransaction` for one) | get every source and target month, then set each (a month left empty is deleted; a target month is created on its first transaction) | ✅ transaction |
+| Edit transactions (inline, dialog, bulk set category / confirm); move to another month / account | `packages/planning/src/api/budget/endpoints.ts#updateBudgetTransactions` | get every source and target month, then set each (a month left empty is deleted; a target month is created on its first transaction) | ✅ transaction |
 | Reset budget | `packages/planning/src/api/budget/endpoints.ts#resetBudget` | delete every `budget_months` doc where `memberIds array-contains me`, with every other budget document of the user; `budget_keys/{me}` in the last batch (see `budget_accounts.md`) | ⚠️ batches of 500 (keys last, so a failed reset stays locked and can be retried) |
 
 ## Queries

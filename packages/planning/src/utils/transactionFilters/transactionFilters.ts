@@ -87,7 +87,8 @@ const PARAMS = {
 
 const FILTER_KEYS: (keyof TransactionFilters)[] = ["search", "accountIds", "categoryIds", "direction", "status", "relevance"];
 
-const oneOf = <T extends string>(values: readonly T[], value: string | null, fallback: T): T =>
+/** `value` if it is one of `values`, else `fallback`. */
+export const oneOf = <T extends string>(values: readonly T[], value: string | null, fallback: T): T =>
   values.find((candidate) => candidate === value) ?? fallback;
 
 const list = (value: string | null) => (value ? value.split(",").filter(Boolean) : []);
