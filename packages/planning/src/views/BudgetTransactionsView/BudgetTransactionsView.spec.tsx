@@ -351,6 +351,8 @@ describe("BudgetTransactionsView", () => {
       expect(screen.getByDisplayValue("Employer")).toBeInTheDocument();
       expect(screen.queryByDisplayValue("Old fridge")).not.toBeInTheDocument();
       expect(screen.queryByDisplayValue("Savings move")).not.toBeInTheDocument();
+      // The only other account is hidden, so there is nothing to pick in an Accounts filter
+      expect(screen.queryByRole("button", { name: "Accounts" })).not.toBeInTheDocument();
 
       await userEvents.click(screen.getByRole("button", { name: "Type" }));
       await userEvents.click(screen.getByRole("menuitemradio", { name: "Excluded" }));

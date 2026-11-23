@@ -58,6 +58,8 @@ const FilterMenu = ({ label, count, children }: { label: string; count: number; 
 export const BudgetTransactionFilters = ({ filters, onChange, accounts, categories }: BudgetTransactionFiltersProps) => {
   const { t } = usePlanningTranslations();
   const set = (patch: Partial<TransactionFilters>) => onChange({ ...filters, ...patch });
+  // Hidden accounts stay out of the list entirely, so they are not offered here
+  const visibleAccounts = accounts.filter((account) => !account.hidden);
   const typeCount = (["direction", "status", "relevance"] as const).filter(
     (key) => filters[key] !== DEFAULT_TRANSACTION_FILTERS[key],
   ).length;
@@ -73,9 +75,9 @@ export const BudgetTransactionFilters = ({ filters, onChange, accounts, categori
         onChange={(event) => set({ search: event.target.value })}
       />
 
-      {accounts.length > 1 && (
+      {visibleAccounts.length > 1 && (
         <FilterMenu label={t("budget.transactionFilters.accounts")} count={filters.accountIds.length}>
-          {accounts.map((account) => (
+          {visibleAccounts.map((account) => (
             <DropdownMenuCheckboxItem
               key={account.id}
               checked={filters.accountIds.includes(account.id)}

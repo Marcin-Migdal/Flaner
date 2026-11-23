@@ -67,10 +67,10 @@ describe("filterTransactions", () => {
     expect(filter(rows, { search: "  Biedronka " })).toEqual(["payee", "note"]);
   });
 
-  it("shows only the picked accounts, a hidden one too once it is picked", () => {
+  it("shows only the picked accounts, never a hidden one", () => {
     const rows = [tx("main"), tx("cash", { accountId: "cash" }), tx("savings", { accountId: "savings" })];
 
-    expect(filter(rows, { accountIds: ["cash", "savings"] })).toEqual(["cash", "savings"]);
+    expect(filter(rows, { accountIds: ["cash", "savings"] })).toEqual(["cash"]);
   });
 
   it("matches a picked category with its subcategories, and Uncategorized for no or a deleted category", () => {

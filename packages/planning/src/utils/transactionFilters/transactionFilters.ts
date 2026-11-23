@@ -17,7 +17,7 @@ export const UNCATEGORIZED_FILTER = "uncategorized";
 export type TransactionFilters = {
   /** Matched against payee and description. */
   search: string;
-  /** Empty: every account that is not hidden. A hidden account shows once picked. */
+  /** Empty: every account. Hidden accounts are never listed (and cannot be picked). */
   accountIds: string[];
   /** Empty: every category. A main category matches its subcategories too; `UNCATEGORIZED_FILTER` matches none. */
   categoryIds: string[];
@@ -41,10 +41,11 @@ export const filterTransactions = (
   { accounts, categories }: { accounts: BudgetAccount[]; categories: BudgetCategoryTree },
 ): BudgetTransaction[] => {
   const search = filters.search.trim().toLowerCase();
+  const picked = new Set(filters.accountIds);
   const visibleAccountIds = new Set(
-    filters.accountIds.length > 0
-      ? filters.accountIds
-      : accounts.filter((account) => !account.hidden).map((account) => account.id),
+    accounts
+      .filter((account) => !account.hidden && (picked.size === 0 || picked.has(account.id)))
+      .map((account) => account.id),
   );
   const categoryIds = new Set(filters.categoryIds);
 
