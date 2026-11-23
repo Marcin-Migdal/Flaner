@@ -37,6 +37,20 @@
         }
       ],
       "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "budget_months",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "arrayConfig": "CONTAINS",
+          "fieldPath": "memberIds"
+        },
+        {
+          "fieldPath": "month",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [

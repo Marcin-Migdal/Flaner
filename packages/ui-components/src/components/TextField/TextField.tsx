@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "../ui/input";
 import { Field, FieldLabel, FieldDescription, FieldError } from "../ui/field";
 import { cn } from "@flaner/shared/utils";
+import { useUiTranslations } from "../../hooks/useUiTranslations";
 
 export type TextFieldProps = Omit<React.ComponentPropsWithoutRef<"input">, "id"> & {
   id?: string;
@@ -16,6 +17,7 @@ export type TextFieldProps = Omit<React.ComponentPropsWithoutRef<"input">, "id">
 
 export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
   ({ label, description, error, id: customId, className, type, incrementLabel, decrementLabel, onStep, ...props }, ref) => {
+    const { t } = useUiTranslations();
     const defaultId = useId();
     const inputId = customId || defaultId;
     const innerRef = useRef<HTMLInputElement | null>(null);
@@ -68,6 +70,8 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
     };
 
     const isNumber = type === "number";
+    const stepUpLabel = incrementLabel ?? t("textField.increment");
+    const stepDownLabel = decrementLabel ?? t("textField.decrement");
 
     return (
       <Field data-invalid={!!error} className={className}>
@@ -88,8 +92,8 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
                 disabled={props.disabled}
                 onClick={() => handleStep(1)}
                 className="h-1/2 w-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded-xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                title={incrementLabel ?? "Increment"}
-                aria-label={incrementLabel ?? "Increment"}
+                title={stepUpLabel}
+                aria-label={stepUpLabel}
               >
                 <ChevronUp className="size-3" />
               </button>
@@ -99,8 +103,8 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
                 disabled={props.disabled}
                 onClick={() => handleStep(-1)}
                 className="h-1/2 w-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded-xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                title={decrementLabel ?? "Decrement"}
-                aria-label={decrementLabel ?? "Decrement"}
+                title={stepDownLabel}
+                aria-label={stepDownLabel}
               >
                 <ChevronDown className="size-3" />
               </button>

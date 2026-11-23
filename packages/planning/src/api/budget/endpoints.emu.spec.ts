@@ -2,24 +2,46 @@
 import { setupEmulator } from "@flaner/test-utils/emulator";
 import { generateRecoveryKey } from "../../utils/budgetCrypto";
 import {
+  MAX_MONTH_PAYLOAD_BYTES,
+  addBudgetTransaction,
   changeBudgetPassphrase,
   createBudget,
+  deleteBudgetTransaction,
   getBudgetAccounts,
   getBudgetCategories,
   getBudgetProfile,
+  getBudgetTransactions,
   getLockedBudget,
   replaceRecoveryKey,
   resetBudget,
   unlockWithPassphrase,
   unlockWithRecoveryKey,
 } from "./endpoints";
-import type { BudgetCategoryTree, CreateBudgetInput } from "./types";
+import type { BudgetCategoryTree, BudgetTransactionInput, CreateBudgetInput, UnlockedBudget } from "./types";
 
 const { signInAs, read, list } = setupEmulator();
 
 const ME = "budget-user";
 const OTHER = "budget-intruder";
 const DENIED = { code: "permission-denied" };
+
+// A transaction in the account's month of `date` (no exchange rate involved)
+const monthTransaction = (accountId: string, date = "2026-11-14"): BudgetTransactionInput => ({
+  accountId,
+  date,
+  type: "expense",
+  amount: 1000,
+  currency: "PLN",
+  amountMain: 1000,
+  rate: 1,
+  rateDate: date,
+  rateOverridden: false,
+  payee: "Shop",
+  description: "",
+  categoryId: null,
+  confirmed: false,
+  excluded: false,
+});
 
 const categories: BudgetCategoryTree = {
   expense: [
@@ -153,11 +175,19 @@ describe("budget endpoints", () => {
 
   it("reset deletes every budget document of the user and allows a new onboarding", async () => {
     await signInAs(OTHER);
-    await createBudget(OTHER, input());
+    const otherBudget = await createBudget(OTHER, input());
+    const [otherAccount] = await getBudgetAccounts(otherBudget);
+    await addBudgetTransaction(otherBudget, monthTransaction(otherAccount.id));
     await signInAs(ME);
-    await createBudget(ME, input());
+    const budget = await createBudget(ME, input());
+    const [account] = await getBudgetAccounts(budget);
+    await addBudgetTransaction(budget, monthTransaction(account.id, "2026-10-02"));
+    await addBudgetTransaction(budget, monthTransaction(account.id, "2026-11-02"));
 
     await resetBudget(ME);
+
+    const months = Object.values(await list("budget_months"));
+    expect(months.map((month) => month.memberIds)).toEqual([[OTHER]]);
 
     expect(await read(`budget_keys/${ME}`)).toBeUndefined();
     expect(await read(`budget_profiles/${ME}`)).toBeUndefined();
@@ -203,5 +233,99 @@ describe("budget endpoints", () => {
     await expect(changeBudgetPassphrase(budget, "green kettle hums softly")).rejects.toMatchObject(DENIED);
     await expect(resetBudget(ME)).rejects.toMatchObject(DENIED);
     expect(await getBudgetAccounts({ ...budget, uid: OTHER })).toEqual([]);
+  });
+});
+
+describe("budget transactions", () => {
+  const transaction = (accountId: string, overrides: Partial<BudgetTransactionInput> = {}): BudgetTransactionInput => ({
+    accountId,
+    date: "2026-11-14",
+    type: "expense",
+    amount: 2550,
+    currency: "EUR",
+    // The exchange rate is looked up by the form, so no external call happens here
+    amountMain: 10965,
+    rate: 4.3,
+    rateDate: "2026-11-13",
+    rateOverridden: false,
+    payee: "Secret Payee",
+    description: "Secret note",
+    categoryId: "sub-groceries",
+    confirmed: true,
+    excluded: false,
+    ...overrides,
+  });
+
+  const setUp = async (): Promise<{ budget: UnlockedBudget; accountId: string }> => {
+    await signInAs(ME);
+    const budget = await createBudget(ME, input());
+    const [account] = await getBudgetAccounts(budget);
+    return { budget, accountId: account.id };
+  };
+
+  it("round-trips transactions encrypted: nothing readable about payee, note or amount is stored", async () => {
+    const { budget, accountId } = await setUp();
+
+    const added = await addBudgetTransaction(budget, transaction(accountId));
+
+    expect(await getBudgetTransactions(budget, { from: "2026-11", to: "2026-11" })).toEqual([added]);
+    const stored = await read(`budget_months/${accountId}_2026-11`);
+    expect(stored).toEqual({ accountId, memberIds: [ME], month: "2026-11", payload: expect.anything() });
+    const raw = JSON.stringify(stored);
+    for (const secret of ["Secret Payee", "Secret note", "2550", "10965", "sub-groceries"]) {
+      expect(raw).not.toContain(secret);
+    }
+  });
+
+  it("packs transactions into one document per account and month, and queries a month range", async () => {
+    const { budget, accountId } = await setUp();
+
+    const october = await addBudgetTransaction(budget, transaction(accountId, { date: "2026-10-31" }));
+    const first = await addBudgetTransaction(budget, transaction(accountId, { date: "2026-11-01" }));
+    const second = await addBudgetTransaction(budget, transaction(accountId, { date: "2026-11-30", type: "income" }));
+    const december = await addBudgetTransaction(budget, transaction(accountId, { date: "2026-12-01" }));
+
+    expect(Object.keys(await list("budget_months")).sort()).toEqual([
+      `${accountId}_2026-10`,
+      `${accountId}_2026-11`,
+      `${accountId}_2026-12`,
+    ]);
+    expect(await getBudgetTransactions(budget, { from: "2026-11", to: "2026-11" })).toEqual([first, second]);
+    expect(await getBudgetTransactions(budget, { from: "2026-10", to: "2026-12" })).toEqual(
+      expect.arrayContaining([october, first, second, december]),
+    );
+  });
+
+  it("deletes a transaction and the month document with its last one", async () => {
+    const { budget, accountId } = await setUp();
+    const first = await addBudgetTransaction(budget, transaction(accountId));
+    const second = await addBudgetTransaction(budget, transaction(accountId, { payee: "Other" }));
+
+    await deleteBudgetTransaction(budget, first);
+    expect(await getBudgetTransactions(budget, { from: "2026-11", to: "2026-11" })).toEqual([second]);
+
+    await deleteBudgetTransaction(budget, second);
+    expect(await read(`budget_months/${accountId}_2026-11`)).toBeUndefined();
+  });
+
+  it("rejects a write that would push the month over the size guard, keeping the month as it was", async () => {
+    const { budget, accountId } = await setUp();
+    const kept = await addBudgetTransaction(budget, transaction(accountId));
+
+    await expect(
+      addBudgetTransaction(budget, transaction(accountId, { description: "x".repeat(MAX_MONTH_PAYLOAD_BYTES) })),
+    ).rejects.toThrow("planning:errors.budget.monthTooLarge");
+    expect(await getBudgetTransactions(budget, { from: "2026-11", to: "2026-11" })).toEqual([kept]);
+  });
+
+  it("denies another user", async () => {
+    const { budget, accountId } = await setUp();
+    const added = await addBudgetTransaction(budget, transaction(accountId));
+
+    await signInAs(OTHER);
+    await expect(getBudgetTransactions(budget, { from: "2026-11", to: "2026-11" })).rejects.toMatchObject(DENIED);
+    await expect(addBudgetTransaction(budget, transaction(accountId))).rejects.toMatchObject(DENIED);
+    await expect(deleteBudgetTransaction(budget, added)).rejects.toMatchObject(DENIED);
+    expect(await getBudgetTransactions({ ...budget, uid: OTHER }, { from: "2026-11", to: "2026-11" })).toEqual([]);
   });
 });

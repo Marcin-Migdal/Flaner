@@ -72,6 +72,44 @@ export type UnlockedBudget = {
   userKey: CryptoKey;
 };
 
+/** A calendar month, `YYYY-MM`. */
+export type BudgetMonth = string;
+
+/**
+ * One money movement (GLOSSARY → Transaction). Amounts are positive integers in minor units; `type` gives the
+ * direction. Stored encrypted inside its account's month document (`budget_months/{accountId}_{YYYY-MM}`).
+ */
+export type BudgetTransaction = {
+  id: string;
+  /** Derived from the month document on read, never stored in the payload. */
+  accountId: string;
+  /** `YYYY-MM-DD`; its month picks the month document. */
+  date: string;
+  type: BudgetCategoryType;
+  amount: number;
+  currency: string;
+  /** `amount` in the main currency. */
+  amountMain: number;
+  /** `currency` → main currency rate used for `amountMain` (1 for the main currency). */
+  rate: number;
+  /** The day the rate was published (the closest earlier day for weekends and holidays). */
+  rateDate: string;
+  /** `amountMain` was typed by hand instead of computed from `rate`. */
+  rateOverridden: boolean;
+  payee: string;
+  description: string;
+  /** A category or subcategory id of the `type`'s tree; `null` (or an id no longer in the tree) reads as Uncategorized. */
+  categoryId: string | null;
+  confirmed: boolean;
+  excluded: boolean;
+};
+
+/** A new transaction; the API gives it its id. */
+export type BudgetTransactionInput = Omit<BudgetTransaction, "id">;
+
+/** Identifies a stored transaction (its month document and its id inside it). */
+export type BudgetTransactionRef = Pick<BudgetTransaction, "id" | "accountId" | "date">;
+
 export type CreateBudgetInput = {
   passphrase: string;
   /** The recovery key shown to the user (any formatting `parseRecoveryKey` accepts). */
@@ -124,3 +162,15 @@ export type BudgetAccountDoc = {
 };
 
 export type BudgetAccountPayload = Pick<BudgetAccount, "name">;
+
+/** `budget_months/{accountId}_{YYYY-MM}`: one per account and month. `payload`: `BudgetMonthPayload` (account key). */
+export type BudgetMonthDoc = {
+  accountId: string;
+  memberIds: string[];
+  month: BudgetMonth;
+  payload: Bytes;
+};
+
+export type BudgetMonthPayload = {
+  transactions: Omit<BudgetTransaction, "accountId">[];
+};

@@ -80,5 +80,9 @@
       "value": "Wartość",
       "share": "Udział"
     }
+  },
+  "textField": {
+    "increment": "Zwiększ",
+    "decrement": "Zmniejsz"
   }
 }

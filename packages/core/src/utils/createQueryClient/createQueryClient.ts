@@ -37,6 +37,7 @@ export const createQueryClient = () =>
       },
       onError: (error, _variables, _context, mutation) => {
         logError("mutation", error, { operation: mutation.options.mutationKey, meta: mutation.meta });
+        if (mutation.meta?.skipErrorToast) return;
 
         const finalMessage = resolveApiToastMessage(t, mutation.meta?.errorMessageKey, error, "errors.mutationError");
 

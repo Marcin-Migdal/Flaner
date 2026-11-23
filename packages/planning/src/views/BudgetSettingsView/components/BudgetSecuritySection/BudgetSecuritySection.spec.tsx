@@ -6,6 +6,7 @@ import en from "../../../../../public/locales/en/planning.json";
 import * as budgetApi from "../../../../api/budget";
 import type { LockedBudget, UnlockedBudget } from "../../../../api/budget";
 import { BudgetProvider, useBudgetSession } from "../../../../context/BudgetContext";
+import { budgetKeys } from "../../../../hooks/api/queryKeys";
 import * as budgetDevice from "../../../../utils/budgetDevice";
 import { BudgetSecuritySection } from "./BudgetSecuritySection";
 
@@ -48,7 +49,7 @@ const SessionState = () => {
 
 const renderSection = async () => {
   vi.mocked(budgetApi.getLockedBudget).mockResolvedValue(locked);
-  renderWithProviders(
+  const { queryClient } = renderWithProviders(
     <BudgetProvider>
       <SessionState />
       <BudgetSecuritySection />
@@ -57,23 +58,30 @@ const renderSection = async () => {
   );
   const events = userEvent.setup();
   await events.click(screen.getByRole("button", { name: "test-unlock" }));
-  return events;
+  return { events, queryClient };
 };
 
 describe("BudgetSecuritySection", () => {
   it("Lock budget forgets this device and locks the session", async () => {
-    const events = await renderSection();
+    const { events, queryClient } = await renderSection();
+    // The test client collects unobserved queries at once
+    queryClient.setQueryDefaults(budgetKeys.all, { gcTime: Infinity });
+    queryClient.setQueryData(budgetKeys.transactions("user-1", "2026-11"), []);
+    queryClient.setQueryData(budgetKeys.locked("user-1"), locked);
 
     await events.click(screen.getByRole("button", { name: "Lock budget" }));
 
     await waitFor(() => expect(screen.getByTestId("session")).toHaveTextContent("locked"));
     expect(budgetDevice.forgetBudget).toHaveBeenCalledWith("user-1");
+    // Decrypted data is dropped with the key; the locked keys stay for the unlock screen
+    expect(queryClient.getQueryData(budgetKeys.transactions("user-1", "2026-11"))).toBeUndefined();
+    expect(queryClient.getQueryData(budgetKeys.locked("user-1"))).toEqual(locked);
   });
 
   it("changes the passphrase with the recovery key", async () => {
     vi.mocked(budgetApi.unlockWithRecoveryKey).mockResolvedValueOnce(unlocked);
     vi.mocked(budgetApi.changeBudgetPassphrase).mockResolvedValueOnce();
-    const events = await renderSection();
+    const { events } = await renderSection();
 
     await events.click(screen.getByRole("button", { name: "Change passphrase" }));
     await events.click(await screen.findByRole("button", { name: "Forgot it? Use the recovery key" }));
@@ -90,7 +98,7 @@ describe("BudgetSecuritySection", () => {
 
   it("rejects a wrong current passphrase without changing anything", async () => {
     vi.mocked(budgetApi.unlockWithPassphrase).mockRejectedValueOnce(new Error("planning:errors.budget.wrongPassphrase"));
-    const events = await renderSection();
+    const { events } = await renderSection();
 
     await events.click(screen.getByRole("button", { name: "Change passphrase" }));
     await events.type(await screen.findByLabelText("Current passphrase"), "wrong passphrase here");
@@ -105,7 +113,7 @@ describe("BudgetSecuritySection", () => {
   it("stores a new recovery key only after it is confirmed as saved", async () => {
     vi.mocked(budgetApi.unlockWithPassphrase).mockResolvedValueOnce(unlocked);
     vi.mocked(budgetApi.replaceRecoveryKey).mockResolvedValueOnce();
-    const events = await renderSection();
+    const { events } = await renderSection();
 
     await events.click(screen.getByRole("button", { name: "New recovery key" }));
     const shownKey = (await screen.findByTestId("budget-recovery-key")).getAttribute("aria-label");

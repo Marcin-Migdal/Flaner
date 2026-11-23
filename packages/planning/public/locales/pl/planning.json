@@ -105,7 +105,11 @@
       "recoveryKeySuccess": "Nowy klucz odzyskiwania zapisany. Stary już nie działa.",
       "recoveryKeyError": "Nie udało się zapisać nowego klucza odzyskiwania. Spróbuj ponownie.",
       "resetSuccess": "Budżet zresetowany. Możesz go skonfigurować od nowa.",
-      "resetError": "Nie udało się zresetować budżetu. Spróbuj ponownie."
+      "resetError": "Nie udało się zresetować budżetu. Spróbuj ponownie.",
+      "transactionAdded": "Dodano transakcję",
+      "transactionDeleted": "Usunięto transakcję",
+      "saveError": "Nie udało się zapisać transakcji. Spróbuj ponownie.",
+      "deleteError": "Nie udało się usunąć transakcji. Spróbuj ponownie."
     }
   },
   "errors": {
@@ -124,7 +128,9 @@
       "invalidRecoveryKey": "To nie jest prawidłowy klucz odzyskiwania.",
       "accountKeyMissing": "Brakuje klucza tego konta. Nie da się go odszyfrować w tym budżecie.",
       "wrongRecoveryKey": "Ten klucz odzyskiwania nie odblokowuje budżetu.",
-      "keyChanged": "Budżet został zresetowany na innym urządzeniu. Odśwież stronę."
+      "keyChanged": "Budżet został zresetowany na innym urządzeniu. Odśwież stronę.",
+      "monthTooLarge": "Ten miesiąc jest pełny: nie zmieści więcej transakcji tego konta.",
+      "rateUnavailable": "Nie udało się pobrać kursu waluty."
     }
   },
   "splits": {
@@ -493,7 +499,8 @@
       "tabs": {
         "transactions": "Transakcje",
         "recurring": "Cykliczne"
-      }
+      },
+      "add": "Dodaj transakcję"
     },
     "settings": {
       "tabs": {
@@ -735,13 +742,20 @@
       "currencyRequired": "Wybierz walutę.",
       "recoveryKeyRequired": "Wpisz klucz odzyskiwania.",
       "recoveryKeyInvalid": "Klucz odzyskiwania ma 32 litery i cyfry.",
-      "resetConfirmation": "Wpisz słowo dokładnie tak, jak pokazano."
+      "resetConfirmation": "Wpisz słowo dokładnie tak, jak pokazano.",
+      "amountRequired": "Wpisz kwotę.",
+      "amountPositive": "Kwota musi być większa od zera.",
+      "amountDecimals": "Użyj najwyżej dwóch miejsc po przecinku.",
+      "dateRequired": "Wybierz datę.",
+      "payeeRequired": "Wpisz odbiorcę lub nadawcę.",
+      "payeeMax": "Użyj najwyżej 120 znaków.",
+      "descriptionMax": "Użyj najwyżej 500 znaków.",
+      "accountRequired": "Wybierz konto."
     },
     "transactionsEmpty": {
       "title": "Brak transakcji",
       "description": "Zaimportuj plik z wyciągiem bankowym albo dodaj transakcję, żeby zacząć.",
-      "import": "Importuj plik",
-      "add": "Dodaj transakcję"
+      "import": "Importuj plik"
     },
     "actions": {
       "cancel": "Anuluj"
@@ -790,6 +804,61 @@
         "confirmationLabel": "Wpisz {{word}}, aby potwierdzić",
         "submit": "Usuń wszystkie dane budżetu"
       }
+    },
+    "transactionList": {
+      "uncategorized": "Bez kategorii",
+      "delete": "Usuń {{payee}}"
+    },
+    "categoryPicker": {
+      "placeholder": "Wybierz kategorię",
+      "noResults": "Brak pasujących kategorii"
+    },
+    "monthSwitcher": {
+      "previous": "Poprzedni miesiąc",
+      "next": "Następny miesiąc",
+      "pick": "Wybierz miesiąc",
+      "previousYear": "Poprzedni rok",
+      "nextYear": "Następny rok"
+    },
+    "monthTotals": {
+      "income": "Wpływy",
+      "expenses": "Wydatki",
+      "balance": "Bilans"
+    },
+    "offline": {
+      "title": "Jesteś offline",
+      "description": "Otwarte wcześniej miesiące są nadal dostępne. Dodawanie i usuwanie transakcji wymaga połączenia.",
+      "noConnection": "Brak połączenia. Zmiana nie została zapisana.",
+      "retry": "Ponów",
+      "monthUnavailable": "Ten miesiąc nie był jeszcze otwierany na tym urządzeniu, więc nie jest dostępny offline."
+    },
+    "transactionForm": {
+      "title": "Dodaj transakcję",
+      "type": "Rodzaj transakcji",
+      "types": {
+        "expense": "Wydatek",
+        "income": "Wpływ"
+      },
+      "amount": "Kwota",
+      "currency": "Waluta",
+      "amountMain": "Kwota w {{currency}}",
+      "rateLoading": "Pobieranie kursu waluty…",
+      "rate": "Kurs {{rate}} z {{date}}",
+      "rateMissing": "Brak kursu waluty. Wpisz kwotę samodzielnie.",
+      "useRate": "Użyj kursu waluty",
+      "date": "Data",
+      "account": "Konto",
+      "payee": "Odbiorca / nadawca",
+      "description": "Opis",
+      "optional": "Opcjonalnie",
+      "category": "Kategoria",
+      "cancel": "Anuluj",
+      "save": "Dodaj transakcję"
+    },
+    "deleteTransaction": {
+      "title": "Usunąć tę transakcję?",
+      "description": "„{{payee}}” zostanie usunięta z budżetu. Tej operacji nie można cofnąć.",
+      "confirm": "Usuń"
     }
   }
 }

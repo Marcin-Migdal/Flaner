@@ -18,6 +18,8 @@ export * from "./useDeleteSplitGroupMutation";
 export * from "./useRemoveParticipantFromGroupMutation";
 export * from "./useConvertSplitGroupCurrencyMutation";
 export * from "./useCreateBudgetMutation";
+export * from "./useAddBudgetTransactionMutation";
+export * from "./useDeleteBudgetTransactionMutation";
 export * from "./useChangeBudgetPassphraseMutation";
 export * from "./useReplaceRecoveryKeyMutation";
 export * from "./useResetBudgetMutation";

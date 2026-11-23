@@ -14,6 +14,7 @@ import {
   where,
   writeBatch,
   type DocumentReference,
+  type Transaction,
 } from "firebase/firestore";
 import {
   KDF_ITERATIONS,
@@ -27,6 +28,7 @@ import {
   unwrapDataKey,
   wrapDataKey,
 } from "../../utils/budgetCrypto";
+import { monthOfDate } from "../../utils/monthLedger";
 import type {
   BudgetAccount,
   BudgetAccountDoc,
@@ -34,9 +36,15 @@ import type {
   BudgetCategoriesDoc,
   BudgetCategoryTree,
   BudgetKeysDoc,
+  BudgetMonth,
+  BudgetMonthDoc,
+  BudgetMonthPayload,
   BudgetProfile,
   BudgetProfileDoc,
   BudgetProfilePayload,
+  BudgetTransaction,
+  BudgetTransactionInput,
+  BudgetTransactionRef,
   CreateBudgetInput,
   LockedBudget,
   UnlockedBudget,
@@ -48,6 +56,7 @@ const paths = {
   profile: (uid: string) => `budget_profiles/${uid}`,
   categories: (uid: string) => `budget_categories/${uid}`,
   account: (accountId: string) => `budget_accounts/${accountId}`,
+  month: (accountId: string, month: BudgetMonth) => `budget_months/${accountId}_${month}`,
 };
 
 const refs = {
@@ -58,9 +67,45 @@ const refs = {
   accounts: () => collection(fb.firestore, "budget_accounts").withConverter(firestoreConverter<BudgetAccountDoc>()),
   account: (accountId: string) =>
     doc(fb.firestore, paths.account(accountId)).withConverter(firestoreConverter<BudgetAccountDoc>()),
+  months: () => collection(fb.firestore, "budget_months").withConverter(firestoreConverter<BudgetMonthDoc>()),
+  month: (accountId: string, month: BudgetMonth) =>
+    doc(fb.firestore, paths.month(accountId, month)).withConverter(firestoreConverter<BudgetMonthDoc>()),
 };
 
+/**
+ * Largest encrypted month payload written (a Firestore document holds at most 1 MiB, envelope included).
+ * Mirrored by the `budget_months` rules.
+ */
+export const MAX_MONTH_PAYLOAD_BYTES = 900_000;
+
 const toBytes = (value: Uint8Array) => Bytes.fromUint8Array(value);
+
+// Unwrapped account keys of an unlocked budget, kept for as long as that budget object lives (dropped on lock)
+const accountKeyCache = new WeakMap<UnlockedBudget, Map<string, Promise<CryptoKey>>>();
+
+const unwrapAccountKey = ({ uid, userKey }: UnlockedBudget, accountId: string, data: BudgetAccountDoc) => {
+  const wrappedKey = data.wrappedKeys[uid];
+  if (!wrappedKey) return Promise.reject(new Error("planning:errors.budget.accountKeyMissing"));
+  return unwrapDataKey(wrappedKey.toUint8Array(), userKey, paths.account(accountId));
+};
+
+const getAccountKey = (budget: UnlockedBudget, accountId: string, data?: BudgetAccountDoc): Promise<CryptoKey> => {
+  const keys = accountKeyCache.get(budget) ?? new Map<string, Promise<CryptoKey>>();
+  accountKeyCache.set(budget, keys);
+
+  const cached = keys.get(accountId);
+  if (cached) return cached;
+
+  const key = (async () => {
+    const accountData = data ?? (await getDoc(refs.account(accountId))).data();
+    if (!accountData) throw new Error("planning:errors.budget.accountKeyMissing");
+    return unwrapAccountKey(budget, accountId, accountData);
+  })();
+  // A failed unwrap is not cached, so a later call can retry
+  key.catch(() => keys.delete(accountId));
+  keys.set(accountId, key);
+  return key;
+};
 
 // ---------------------------------------------------------------------------
 // Keys: onboarding and unlock
@@ -221,6 +266,7 @@ export const replaceRecoveryKey = async (budget: UnlockedBudget, input: string):
 const RESET_COLLECTIONS: { name: string; owner: "docId" | "memberIds" }[] = [
   { name: "budget_profiles", owner: "docId" },
   { name: "budget_categories", owner: "docId" },
+  { name: "budget_months", owner: "memberIds" },
   { name: "budget_accounts", owner: "memberIds" },
 ];
 
@@ -269,17 +315,15 @@ export const getBudgetCategories = async ({ uid, userKey }: UnlockedBudget): Pro
 };
 
 /** The user's accounts, oldest first. */
-export const getBudgetAccounts = async ({ uid, userKey }: UnlockedBudget): Promise<BudgetAccount[]> => {
+export const getBudgetAccounts = async (budget: UnlockedBudget): Promise<BudgetAccount[]> => {
+  const { uid } = budget;
   const snapshot = await getDocs(query(refs.accounts(), where("memberIds", "array-contains", uid)));
 
   const accounts = await Promise.all(
     snapshot.docs.map(async (accountDoc) => {
       const data = accountDoc.data();
       const path = paths.account(accountDoc.id);
-      const wrappedKey = data.wrappedKeys[uid];
-      if (!wrappedKey) throw new Error("planning:errors.budget.accountKeyMissing");
-
-      const accountKey = await unwrapDataKey(wrappedKey.toUint8Array(), userKey, path);
+      const accountKey = await getAccountKey(budget, accountDoc.id, data);
       const { name } = await decryptJson<BudgetAccountPayload>(data.payload.toUint8Array(), accountKey, path);
       return {
         id: accountDoc.id,
@@ -292,4 +336,104 @@ export const getBudgetAccounts = async ({ uid, userKey }: UnlockedBudget): Promi
   );
 
   return accounts.sort((a, b) => a.createdAt - b.createdAt);
+};
+
+// ---------------------------------------------------------------------------
+// Transactions: one encrypted month document per account and month
+// ---------------------------------------------------------------------------
+
+const readMonth = async (
+  transaction: Transaction,
+  budget: UnlockedBudget,
+  accountId: string,
+  month: BudgetMonth,
+): Promise<BudgetMonthPayload> => {
+  const data = (await transaction.get(refs.month(accountId, month))).data();
+  if (!data) return { transactions: [] };
+
+  const accountKey = await getAccountKey(budget, accountId);
+  return decryptJson<BudgetMonthPayload>(data.payload.toUint8Array(), accountKey, paths.month(accountId, month));
+};
+
+/** Encrypts and writes the month (deletes it once empty); fails with `errors.budget.monthTooLarge` above the size guard. */
+const writeMonth = async (
+  transaction: Transaction,
+  budget: UnlockedBudget,
+  accountId: string,
+  month: BudgetMonth,
+  payload: BudgetMonthPayload,
+) => {
+  const ref = refs.month(accountId, month);
+  if (payload.transactions.length === 0) {
+    transaction.delete(ref);
+    return;
+  }
+
+  const accountKey = await getAccountKey(budget, accountId);
+  const sealed = await encryptJson(payload, accountKey, paths.month(accountId, month));
+  if (sealed.byteLength > MAX_MONTH_PAYLOAD_BYTES) throw new Error("planning:errors.budget.monthTooLarge");
+
+  const monthDoc: BudgetMonthDoc = { accountId, memberIds: [budget.uid], month, payload: toBytes(sealed) };
+  transaction.set(ref, monthDoc);
+};
+
+/** Every transaction of the user's accounts dated in the months `from`..`to` (inclusive, `YYYY-MM`). */
+export const getBudgetTransactions = async (
+  budget: UnlockedBudget,
+  { from, to }: { from: BudgetMonth; to: BudgetMonth },
+): Promise<BudgetTransaction[]> => {
+  const snapshot = await getDocs(
+    query(
+      refs.months(),
+      where("memberIds", "array-contains", budget.uid),
+      where("month", ">=", from),
+      where("month", "<=", to),
+    ),
+  );
+
+  const months = await Promise.all(
+    snapshot.docs.map(async (monthDoc) => {
+      const { accountId, month, payload } = monthDoc.data();
+      const accountKey = await getAccountKey(budget, accountId);
+      const { transactions } = await decryptJson<BudgetMonthPayload>(
+        payload.toUint8Array(),
+        accountKey,
+        paths.month(accountId, month),
+      );
+      return transactions.map((transaction): BudgetTransaction => ({ ...transaction, accountId }));
+    }),
+  );
+  return months.flat();
+};
+
+export const addBudgetTransaction = async (
+  budget: UnlockedBudget,
+  input: BudgetTransactionInput,
+): Promise<BudgetTransaction> => {
+  const { accountId, ...stored } = input;
+  const month = monthOfDate(input.date);
+  const id = crypto.randomUUID();
+
+  await runTransaction(fb.firestore, async (transaction) => {
+    const payload = await readMonth(transaction, budget, accountId, month);
+    await writeMonth(transaction, budget, accountId, month, {
+      transactions: [...payload.transactions, { id, ...stored }],
+    });
+  });
+
+  return { id, ...input };
+};
+
+export const deleteBudgetTransaction = async (
+  budget: UnlockedBudget,
+  { id, accountId, date }: BudgetTransactionRef,
+): Promise<void> => {
+  const month = monthOfDate(date);
+
+  await runTransaction(fb.firestore, async (transaction) => {
+    const payload = await readMonth(transaction, budget, accountId, month);
+    await writeMonth(transaction, budget, accountId, month, {
+      transactions: payload.transactions.filter((stored) => stored.id !== id),
+    });
+  });
 };

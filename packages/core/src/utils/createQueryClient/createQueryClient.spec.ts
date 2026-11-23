@@ -36,6 +36,21 @@ describe("createQueryClient", () => {
     expect(failure).toHaveBeenCalledWith("errors.mutationError");
   });
 
+  it("only logs a failing mutation that shows its own error toast", async () => {
+    const queryClient = createQueryClient();
+    const error = new Error("offline");
+    const mutation = queryClient.getMutationCache().build(queryClient, {
+      mutationKey: ["addItem"],
+      meta: { skipErrorToast: true },
+      mutationFn: () => Promise.reject(error),
+    });
+
+    await mutation.execute(undefined).catch(() => {});
+
+    expect(logError).toHaveBeenCalledTimes(1);
+    expect(failure).not.toHaveBeenCalled();
+  });
+
   it("logs without a toast when access to already loaded data is lost", async () => {
     const queryClient = createQueryClient();
     queryClient.setQueryData(["group", "g1"], { id: "g1" });

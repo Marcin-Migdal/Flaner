@@ -30,6 +30,8 @@ declare module "@tanstack/react-query" {
     mutationMeta: {
       successMessageKey?: string;
       errorMessageKey?: string;
+      /** The caller shows its own error toast (e.g. "No connection" with Retry); the global handler only logs. */
+      skipErrorToast?: boolean;
     };
     queryMeta: {
       errorMessageKey?: string;

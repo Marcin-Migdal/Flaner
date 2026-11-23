@@ -1,9 +1,11 @@
 import { useAuth } from "@flaner/shared/context";
 import { Button, Card } from "@flaner/ui-components";
 import { KeyRound, Lock, RotateCcw, ShieldCheck } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { ResetBudgetDialog } from "../../../../components/ResetBudgetDialog";
 import { useBudgetSession } from "../../../../context/BudgetContext";
+import { budgetKeys } from "../../../../hooks/api/queryKeys";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { forgetBudget } from "../../../../utils/budgetDevice";
 import { ChangePassphraseDialog } from "../ChangePassphraseDialog";
@@ -30,6 +32,7 @@ export const BudgetSecuritySection = () => {
   const { t } = usePlanningTranslations();
   const { user } = useAuth();
   const { setBudget } = useBudgetSession();
+  const queryClient = useQueryClient();
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const dialogProps = (name: Dialog) => ({
     open: dialog === name,
@@ -40,6 +43,8 @@ export const BudgetSecuritySection = () => {
     // Storage blocked: nothing was remembered, so dropping the key from memory is enough
     if (user) await forgetBudget(user.uid).catch(reportError);
     setBudget(null);
+    // Decrypted budget data must not outlive the key; the stored (still locked) keys stay for the unlock screen
+    queryClient.removeQueries({ queryKey: budgetKeys.all, predicate: ({ queryKey }) => queryKey[1] !== "locked" });
   };
 
   return (

@@ -80,5 +80,9 @@
       "value": "Value",
       "share": "Share"
     }
+  },
+  "textField": {
+    "increment": "Increase",
+    "decrement": "Decrease"
   }
 }
