@@ -477,7 +477,8 @@ export const deleteBudgetTransactions = async (budget: UnlockedBudget, refs: Bud
 /**
  * Applies the edits; a new `date` or `accountId` moves the transaction to that month / account document. Every
  * affected month document is read and written in one transaction, so a move never leaves a copy or loses the row.
- * The frozen import fields (`sourceFile`, `importHash`) always keep their stored values.
+ * The frozen import fields (`importHash`, `sourceFile`, `counterpartyAccount`) always keep their stored values:
+ * the stored transaction is spread and only the patch's fields override it.
  */
 export const updateBudgetTransactions = async (
   budget: UnlockedBudget,
@@ -508,8 +509,9 @@ export const updateBudgetTransactions = async (
         accountId: ref.accountId,
         ...patch,
         id: stored.id,
-        sourceFile: stored.sourceFile,
         importHash: stored.importHash,
+        sourceFile: stored.sourceFile,
+        counterpartyAccount: stored.counterpartyAccount,
       };
       const { accountId, ...nextStored } = next;
 

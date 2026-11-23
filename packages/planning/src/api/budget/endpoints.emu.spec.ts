@@ -393,15 +393,30 @@ describe("budget transactions", () => {
     const { budget, accountId } = await setUp();
     const imported = await addBudgetTransaction(
       budget,
-      transaction(accountId, { sourceFile: "statement.csv", importHash: "frozen-hash" }),
+      transaction(accountId, { sourceFile: "statement.csv", importHash: "frozen-hash", counterpartyAccount: "12345678" }),
     );
     // Not a fresh literal, so the extra fields get past the type, as a careless caller's object would
-    const patch: BudgetTransactionPatch = Object.assign({ payee: "Fixed" }, { importHash: "x", sourceFile: "y" });
+    const patch: BudgetTransactionPatch = Object.assign(
+      { payee: "Fixed" },
+      { importHash: "x", sourceFile: "y", counterpartyAccount: "z" },
+    );
 
     const edited = await updateOne(budget, imported, patch);
 
-    expect(edited).toMatchObject({ payee: "Fixed", sourceFile: "statement.csv", importHash: "frozen-hash" });
+    expect(edited).toMatchObject({
+      payee: "Fixed",
+      sourceFile: "statement.csv",
+      importHash: "frozen-hash",
+      counterpartyAccount: "12345678",
+    });
     expect(await getBudgetTransactions(budget, { from: "2026-11", to: "2026-11" })).toEqual([edited]);
+
+    // A bulk category change that also moves the row keeps them too
+    const [moved] = await updateBudgetTransactions(budget, [
+      { ref: edited, patch: { date: "2026-12-01", categoryId: "cat-food", confirmed: true } },
+    ]);
+    expect(moved).toMatchObject({ sourceFile: "statement.csv", importHash: "frozen-hash", counterpartyAccount: "12345678" });
+    expect(await getBudgetTransactions(budget, { from: "2026-12", to: "2026-12" })).toEqual([moved]);
   });
 
   it("applies bulk edits and bulk deletes across months and accounts in one transaction", async () => {
