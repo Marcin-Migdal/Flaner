@@ -10,8 +10,10 @@ import {
   getBudgetAccounts,
   getBudgetCategories,
   getBudgetProfile,
+  getAccountTransactions,
   getBudgetTransactions,
   getLockedBudget,
+  importBudgetTransactions,
   replaceRecoveryKey,
   resetBudget,
   unlockWithPassphrase,
@@ -316,6 +318,41 @@ describe("budget transactions", () => {
       addBudgetTransaction(budget, transaction(accountId, { description: "x".repeat(MAX_MONTH_PAYLOAD_BYTES) })),
     ).rejects.toThrow("planning:errors.budget.monthTooLarge");
     expect(await getBudgetTransactions(budget, { from: "2026-11", to: "2026-11" })).toEqual([kept]);
+  });
+
+  it("imports many transactions into their months at once, keeping the import fields", async () => {
+    const { budget, accountId } = await setUp();
+    const kept = await addBudgetTransaction(budget, transaction(accountId));
+    const imported = { importHash: "hash-1", sourceFile: "statement.csv", counterpartyAccount: "123" };
+
+    const added = await importBudgetTransactions(budget, [
+      transaction(accountId, { date: "2026-10-02", ...imported }),
+      transaction(accountId, { date: "2026-11-20", payee: "Second" }),
+    ]);
+
+    expect(added).toHaveLength(2);
+    expect(new Set(added.map(({ id }) => id)).size).toBe(2);
+    expect(await getBudgetTransactions(budget, { from: "2026-10", to: "2026-11" })).toEqual(
+      expect.arrayContaining([kept, ...added]),
+    );
+    expect(added[0]).toMatchObject(imported);
+    // One account's months, read document by document across a year boundary and gaps
+    expect(await getAccountTransactions(budget, accountId, { from: "2025-12", to: "2026-11" })).toEqual(
+      expect.arrayContaining([kept, ...added]),
+    );
+    expect(await getAccountTransactions(budget, accountId, { from: "2026-12", to: "2027-01" })).toEqual([]);
+  });
+
+  it("fails an import as a whole when one month would exceed the size guard", async () => {
+    const { budget, accountId } = await setUp();
+
+    await expect(
+      importBudgetTransactions(budget, [
+        transaction(accountId, { date: "2026-10-02" }),
+        transaction(accountId, { description: "x".repeat(MAX_MONTH_PAYLOAD_BYTES) }),
+      ]),
+    ).rejects.toThrow("planning:errors.budget.importTooLarge");
+    expect(await getBudgetTransactions(budget, { from: "2026-10", to: "2026-11" })).toEqual([]);
   });
 
   it("denies another user", async () => {

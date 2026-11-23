@@ -6,6 +6,8 @@ export const budgetTransactionListStyles = {
   dayNet: "tabular-nums text-muted-foreground",
   rows: "divide-y divide-border-subtle overflow-hidden rounded-xl border border-border bg-card",
   row: "flex items-center gap-3 px-3 py-2.5 sm:px-4",
+  rowWithFooter: "flex-wrap gap-y-1",
+  muted: "opacity-60",
   icon: "flex size-9 shrink-0 items-center justify-center rounded-full bg-muted [&>svg]:size-4",
   uncategorizedIcon: "text-muted-foreground",
   body: "min-w-0 flex-1",

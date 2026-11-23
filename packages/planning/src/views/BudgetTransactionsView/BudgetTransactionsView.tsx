@@ -18,6 +18,7 @@ import { BudgetMonthSwitcher } from "../../components/BudgetMonthSwitcher";
 import { BudgetOfflineBanner } from "../../components/BudgetOfflineBanner";
 import { BudgetTransactionDialog } from "../../components/BudgetTransactionDialog";
 import { BudgetTransactionList } from "../../components/BudgetTransactionList";
+import { StatementImportSheet } from "../../components/StatementImportSheet";
 import { useDeleteBudgetTransactionMutation } from "../../hooks/api/mutation";
 import {
   useGetBudgetAccountsQuery,
@@ -47,6 +48,7 @@ export const BudgetTransactionsView = () => {
   const showWriteError = useBudgetWriteErrorToast();
 
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [toDelete, setToDelete] = useState<BudgetTransaction | null>(null);
   const { mutateAsync: deleteTransaction, isPending: isDeleting } = useDeleteBudgetTransactionMutation();
 
@@ -102,9 +104,8 @@ export const BudgetTransactionsView = () => {
             title={t("budget.transactionsEmpty.title")}
             description={t("budget.transactionsEmpty.description")}
             action={
-              // Import is wired by #172
               <div className={styles.emptyActions}>
-                <Button variant="outline" disabled>
+                <Button variant="outline" disabled={!isOnline || !canAdd} onClick={() => setIsImportOpen(true)}>
                   <FileUp aria-hidden="true" />
                   {t("budget.transactionsEmpty.import")}
                 </Button>
@@ -132,10 +133,16 @@ export const BudgetTransactionsView = () => {
       <PageHeader
         title={t("nav.budgetTransactions")}
         actions={
-          <Button variant="brand" disabled={!isOnline || !canAdd} onClick={() => setIsAddOpen(true)}>
-            <Plus aria-hidden="true" />
-            {t("budget.transactions.add")}
-          </Button>
+          <div className={styles.headerActions}>
+            <Button variant="outline" disabled={!isOnline || !canAdd} onClick={() => setIsImportOpen(true)}>
+              <FileUp aria-hidden="true" />
+              {t("budget.transactions.import")}
+            </Button>
+            <Button variant="brand" disabled={!isOnline || !canAdd} onClick={() => setIsAddOpen(true)}>
+              <Plus aria-hidden="true" />
+              {t("budget.transactions.add")}
+            </Button>
+          </div>
         }
       />
 
@@ -166,6 +173,20 @@ export const BudgetTransactionsView = () => {
           accounts={accounts.data}
           categories={categories.data}
           saveDisabled={!isOnline}
+        />
+      )}
+
+      {profile.data && accounts.data && categories.data && (
+        <StatementImportSheet
+          open={isImportOpen}
+          onOpenChange={setIsImportOpen}
+          profile={profile.data}
+          accounts={accounts.data}
+          categories={categories.data}
+          onOpenMonth={(next) => {
+            setIsImportOpen(false);
+            setMonth(next);
+          }}
         />
       )}
 

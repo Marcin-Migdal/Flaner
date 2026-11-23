@@ -5,7 +5,8 @@ import { BUDGET_CATEGORY_TYPES } from "../../../api/budget/types";
 export const BUDGET_PAYEE_MAX = 120;
 export const BUDGET_DESCRIPTION_MAX = 500;
 
-const money = (t: (key: string) => string) =>
+/** A positive amount with at most two decimals (major units). */
+export const getBudgetAmountSchema = (t: (key: string) => string) =>
   z
     .number({ message: t("budget.validation.amountRequired") })
     .positive(t("budget.validation.amountPositive"))
@@ -16,7 +17,7 @@ export const getBudgetTransactionSchema = (t: (key: string) => string, mainCurre
   z
     .object({
       type: z.enum(BUDGET_CATEGORY_TYPES),
-      amount: money(t),
+      amount: getBudgetAmountSchema(t),
       currency: z.string().min(1, t("budget.validation.currencyRequired")),
       amountMain: z.number().nullable(),
       rateOverridden: z.boolean(),
@@ -32,7 +33,7 @@ export const getBudgetTransactionSchema = (t: (key: string) => string, mainCurre
     })
     .superRefine((data, ctx) => {
       if (data.currency === mainCurrency) return;
-      const result = money(t).safeParse(data.amountMain);
+      const result = getBudgetAmountSchema(t).safeParse(data.amountMain);
       if (!result.success) {
         ctx.addIssue({ code: "custom", message: result.error.issues[0].message, path: ["amountMain"] });
       }

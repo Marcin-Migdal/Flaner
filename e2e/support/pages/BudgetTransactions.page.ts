@@ -10,6 +10,8 @@ export class BudgetTransactionsPage {
   readonly importButton: Locator;
   readonly addTransactionButton: Locator;
   readonly addDialog: Locator;
+  readonly headerImportButton: Locator;
+  readonly importSheet: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -19,6 +21,20 @@ export class BudgetTransactionsPage {
     this.importButton = main.getByRole("button", { name: /^(import file|importuj plik)$/i });
     this.addTransactionButton = main.getByRole("button", { name: /^(add transaction|dodaj transakcję)$/i });
     this.addDialog = page.getByRole("dialog", { name: /^(add transaction|dodaj transakcję)$/i });
+    this.headerImportButton = main.getByRole("button", { name: /^(import|importuj)$/i });
+    this.importSheet = page.getByRole("dialog", { name: /^(import a statement|import wyciągu)$/i });
+  }
+
+  /** Opens the import wizard and walks File → Settings (bank and account as detected) to the Preview step. */
+  async openImportPreview(filePath: string) {
+    await this.headerImportButton.click();
+    await this.importSheet.locator('input[type="file"]').setInputFiles(filePath);
+    await this.importSheet.getByRole("button", { name: /^(preview|podgląd)$/i }).click();
+  }
+
+  /** A status filter tab of the import preview, with its count. */
+  importFilter(name: RegExp, count: number): Locator {
+    return this.importSheet.getByRole("tab", { name: new RegExp(`^(${name.source})\\s*${count}$`, "i") });
   }
 
   /** A row of the list, found by its payee. */
