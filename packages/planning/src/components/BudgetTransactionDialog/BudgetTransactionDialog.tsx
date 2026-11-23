@@ -16,7 +16,7 @@ import {
   TabsTrigger,
 } from "@flaner/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useController, useForm, useWatch, type DefaultValues } from "react-hook-form";
 import {
@@ -72,7 +72,7 @@ export const BudgetTransactionDialog = ({
   categories,
   saveDisabled,
 }: BudgetTransactionDialogProps) => {
-  const { t } = usePlanningTranslations();
+  const { t, i18n } = usePlanningTranslations();
   const currencyOptions = useCurrencyOptions();
   const showWriteError = useBudgetWriteErrorToast();
   const { mainCurrency } = profile;
@@ -217,7 +217,12 @@ export const BudgetTransactionDialog = ({
                   />
                   <p className={styles.conversionHint} aria-live="polite">
                     {isRateFetching && t("budget.transactionForm.rateLoading")}
-                    {!isRateFetching && rate && t("budget.transactionForm.rate", { rate: rate.rate, date: rate.date })}
+                    {!isRateFetching &&
+                      rate &&
+                      t("budget.transactionForm.rate", {
+                        rate: new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 6 }).format(rate.rate),
+                        date: new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(parseISO(rate.date)),
+                      })}
                     {!isRateFetching && isRateError && t("budget.transactionForm.rateMissing")}
                     {rateOverridden && rate && (
                       <Button type="button" variant="link" size="xs" onClick={() => setValue("rateOverridden", false)}>

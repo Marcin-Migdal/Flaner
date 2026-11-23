@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createTestI18n, renderWithProviders } from "@flaner/test-utils";
 import { TextField } from "./TextField";
 
 describe("TextField component", () => {
@@ -123,5 +124,19 @@ describe("TextField component", () => {
     const ref = { current: null as HTMLInputElement | null };
     render(<TextField ref={ref} label="Ref Field" />);
     expect(ref.current).toBeInstanceOf(HTMLInputElement);
+  });
+
+  // Last: react-i18next keeps the instance it was initialised with for the rest of the file
+  it("names the step buttons in the UI language unless labels are passed", () => {
+    const i18n = createTestI18n({ en: { ui: { textField: { increment: "Increase", decrement: "Decrease" } } } });
+    renderWithProviders(<TextField label="Amount" type="number" />, { i18nInstance: i18n });
+    renderWithProviders(<TextField label="Count" type="number" incrementLabel="More" decrementLabel="Less" />, {
+      i18nInstance: i18n,
+    });
+
+    expect(screen.getByRole("button", { name: "Increase" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Decrease" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "More" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Less" })).toBeInTheDocument();
   });
 });

@@ -43,9 +43,9 @@ describe("BudgetMonthSwitcher", () => {
     const { onChange } = renderSwitcher("2026-11");
 
     await user.click(screen.getByRole("button", { name: "Pick a month" }));
-    expect(screen.getByRole("button", { name: "Nov" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "November 2026" })).toHaveAttribute("aria-pressed", "true");
     await user.click(screen.getByRole("button", { name: "Next year" }));
-    await user.click(screen.getByRole("button", { name: "Mar" }));
+    await user.click(screen.getByRole("button", { name: "March 2027" }));
 
     expect(onChange).toHaveBeenCalledWith("2027-03");
   });

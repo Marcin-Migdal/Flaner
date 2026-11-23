@@ -66,6 +66,7 @@ export const BudgetMonthSwitcher = ({ month, onChange }: BudgetMonthSwitcherProp
                   variant={value === month ? "brand" : "ghost"}
                   className={styles.month}
                   aria-pressed={value === month}
+                  aria-label={monthLabel.format(new Date(year, index, 1))}
                   onClick={() => pick(index)}
                 >
                   {shortMonth.format(new Date(year, index, 1))}

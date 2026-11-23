@@ -46,8 +46,8 @@ export type MonthLedgerInput = {
 /** The month a `YYYY-MM-DD` date falls in. */
 export const monthOfDate = (date: string): BudgetMonth => date.slice(0, 7);
 
-/** An amount with its direction: positive for income, negative for an expense. */
-export const signedAmount = (type: BudgetTransaction["type"], amount: number) => (type === "income" ? amount : -amount);
+/** An amount with its direction: positive for income, negative for an expense (never `-0`, which formats as "-0.00"). */
+export const signedAmount = (type: BudgetTransaction["type"], amount: number) => (type === "income" ? amount : 0 - amount);
 
 export const buildMonthLedger = ({ month, transactions, accounts }: MonthLedgerInput): MonthLedger => {
   const hiddenAccountIds = new Set(accounts.filter((account) => account.hidden).map((account) => account.id));

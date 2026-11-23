@@ -158,6 +158,9 @@ describe("BudgetTransactionsView", () => {
 
     expect(await screen.findByRole("heading", { name: "No transactions yet" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add transaction" })).toBeEnabled();
+    // No "-PLN 0.00" for an empty month
+    const totals = screen.getByText("Expenses").closest("dl");
+    expect(totals).not.toHaveTextContent("-");
   });
 
   it("adds a confirmed expense on the main account with the picked category", async () => {
@@ -165,7 +168,7 @@ describe("BudgetTransactionsView", () => {
     renderView();
     const dialog = await openAddForm(userEvents);
 
-    await userEvents.type(within(dialog).getByLabelText("Amount"), "12.5");
+    await userEvents.type(within(dialog).getByRole("spinbutton", { name: "Amount" }), "12.5");
     await userEvents.type(within(dialog).getByLabelText("Payee"), "Biedronka");
     await userEvents.type(within(dialog).getByLabelText("Category"), "Groc");
     await userEvents.click(screen.getByRole("option", { name: "Groceries" }));
@@ -226,7 +229,7 @@ describe("BudgetTransactionsView", () => {
     const dialog = await openAddForm(userEvents);
 
     await userEvents.type(within(dialog).getByLabelText("Amount"), "20");
-    expect(await within(dialog).findByText("Rate 4.25 from 2026-11-13")).toBeInTheDocument();
+    expect(await within(dialog).findByText("Rate 4.25 from Nov 13, 2026")).toBeInTheDocument();
     const amountMain = within(dialog).getByLabelText("Amount in PLN");
     await waitFor(() => expect(amountMain).toHaveValue(85));
     expect(exchangeRatesApi.getExchangeRate).toHaveBeenCalledWith("EUR", "PLN", format(new Date(), "yyyy-MM-dd"));

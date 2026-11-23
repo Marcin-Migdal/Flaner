@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BudgetAccount, BudgetCategoryTree, BudgetTransaction } from "../../api/budget";
-import { buildMonthLedger, resolveTransactionCategory } from "./monthLedger";
+import { buildMonthLedger, resolveTransactionCategory, signedAmount } from "./monthLedger";
 
 const accounts: BudgetAccount[] = [
   { id: "main", name: "mBank", defaultCurrency: "PLN", hidden: false, createdAt: 1 },
@@ -124,5 +124,13 @@ describe("resolveTransactionCategory", () => {
     expect(resolveTransactionCategory(categories, tx({ categoryId: null }))).toBeNull();
     expect(resolveTransactionCategory(categories, tx({ categoryId: "deleted" }))).toBeNull();
     expect(resolveTransactionCategory(categories, tx({ type: "income", categoryId: "groceries" }))).toBeNull();
+  });
+});
+
+describe("signedAmount", () => {
+  it("gives an expense a minus and never returns -0", () => {
+    expect(signedAmount("expense", 1250)).toBe(-1250);
+    expect(signedAmount("income", 1250)).toBe(1250);
+    expect(Object.is(signedAmount("expense", 0), 0)).toBe(true);
   });
 });

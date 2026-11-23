@@ -1,7 +1,7 @@
 import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { cn } from "@flaner/shared/utils";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
-import type { MonthTotals } from "../../../../utils/monthLedger";
+import { signedAmount, type MonthTotals } from "../../../../utils/monthLedger";
 import { budgetMonthTotalsStyles as styles } from "./BudgetMonthTotals.styles";
 
 export type BudgetMonthTotalsProps = { totals: MonthTotals; mainCurrency: string };
@@ -12,7 +12,7 @@ export const BudgetMonthTotals = ({ totals, mainCurrency }: BudgetMonthTotalsPro
   const { format } = useMoneyFormatter();
   const items = [
     { key: "income", value: totals.income, className: styles.income },
-    { key: "expenses", value: -totals.expenses, className: undefined },
+    { key: "expenses", value: signedAmount("expense", totals.expenses), className: undefined },
     { key: "balance", value: totals.balance, className: undefined },
   ] as const;
 
