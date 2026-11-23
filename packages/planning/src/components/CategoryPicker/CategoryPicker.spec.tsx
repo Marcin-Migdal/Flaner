@@ -6,7 +6,17 @@ import type { BudgetCategoryTree } from "../../api/budget";
 import { CategoryPicker } from "./CategoryPicker";
 
 const i18n = createTestI18n({
-  en: { planning: { budget: { categoryPicker: { placeholder: "Choose a category", noResults: "No categories" } } } },
+  en: {
+    planning: {
+      budget: {
+        categoryPicker: {
+          placeholder: "Choose a category",
+          noResults: "No categories",
+          confirm: "Confirm category {{category}}",
+        },
+      },
+    },
+  },
 });
 
 const tree: BudgetCategoryTree = {
@@ -73,5 +83,55 @@ describe("CategoryPicker", () => {
     renderPicker({ value: "deleted" });
 
     expect(screen.getByText("Choose a category")).toBeInTheDocument();
+  });
+
+  describe("inline", () => {
+    const renderInline = (props: Partial<Parameters<typeof CategoryPicker>[0]> = {}) => {
+      const onChange = vi.fn();
+      const onConfirm = vi.fn();
+      renderWithProviders(
+        <CategoryPicker
+          tree={tree}
+          type="expense"
+          value="fuel"
+          onChange={onChange}
+          onConfirm={onConfirm}
+          variant="inline"
+          aria-label="Category of Orlen"
+          {...props}
+        />,
+        { i18nInstance: i18n },
+      );
+      return { onChange, onConfirm };
+    };
+
+    it("marks an unconfirmed category with ? and confirms it on an icon click", async () => {
+      const user = userEvent.setup();
+      const { onConfirm, onChange } = renderInline({ confirmed: false });
+
+      expect(screen.getByText("?")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Confirm category Fuel" }));
+
+      expect(onConfirm).toHaveBeenCalledTimes(1);
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it("shows no ? and nothing to confirm on a confirmed category or Uncategorized", () => {
+      renderInline({ confirmed: true });
+      expect(screen.queryByText("?")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Confirm category/ })).not.toBeInTheDocument();
+    });
+
+    it("opens the searchable list on a click on the name", async () => {
+      const user = userEvent.setup();
+      const { onChange, onConfirm } = renderInline({ confirmed: false });
+
+      await user.click(screen.getByText("Car / Fuel"));
+      await user.type(screen.getByLabelText("Category of Orlen"), "groc");
+      await user.click(screen.getByRole("option", { name: "Groceries" }));
+
+      expect(onChange).toHaveBeenCalledWith("groceries");
+      expect(onConfirm).not.toHaveBeenCalled();
+    });
   });
 });

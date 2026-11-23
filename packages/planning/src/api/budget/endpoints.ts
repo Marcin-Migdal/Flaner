@@ -44,7 +44,9 @@ import type {
   BudgetProfilePayload,
   BudgetTransaction,
   BudgetTransactionInput,
+  BudgetTransactionPatch,
   BudgetTransactionRef,
+  BudgetTransactionUpdate,
   CreateBudgetInput,
   LockedBudget,
   UnlockedBudget,
@@ -424,16 +426,113 @@ export const addBudgetTransaction = async (
   return { id, ...input };
 };
 
-export const deleteBudgetTransaction = async (
-  budget: UnlockedBudget,
-  { id, accountId, date }: BudgetTransactionRef,
-): Promise<void> => {
-  const month = monthOfDate(date);
+export const deleteBudgetTransaction = (budget: UnlockedBudget, ref: BudgetTransactionRef): Promise<void> =>
+  deleteBudgetTransactions(budget, [ref]);
+
+type MonthSlot = { accountId: string; month: BudgetMonth };
+
+const slotId = ({ accountId, month }: MonthSlot) => `${accountId}_${month}`;
+
+const slotOf = ({ accountId, date }: Pick<BudgetTransaction, "accountId" | "date">): MonthSlot => ({
+  accountId,
+  month: monthOfDate(date),
+});
+
+type LoadedMonth = { slot: MonthSlot; transactions: BudgetMonthPayload["transactions"] };
+type LoadedMonths = Map<string, LoadedMonth>;
+
+/** Reads every slot once (a Firestore transaction needs all reads before its first write). */
+const readMonths = async (transaction: Transaction, budget: UnlockedBudget, slots: MonthSlot[]): Promise<LoadedMonths> => {
+  const unique = new Map(slots.map((slot) => [slotId(slot), slot]));
+  const loaded = await Promise.all(
+    [...unique.values()].map(async (slot): Promise<LoadedMonth> => {
+      const { transactions } = await readMonth(transaction, budget, slot.accountId, slot.month);
+      return { slot, transactions };
+    }),
+  );
+  return new Map(loaded.map((month) => [slotId(month.slot), month]));
+};
+
+const writeMonths = (transaction: Transaction, budget: UnlockedBudget, months: LoadedMonths) =>
+  Promise.all(
+    [...months.values()].map(({ slot, transactions }) =>
+      writeMonth(transaction, budget, slot.accountId, slot.month, { transactions }),
+    ),
+  );
+
+const missingTransaction = () => new Error("planning:errors.budget.transactionMissing");
+
+/** Deletes the transactions, each from its month; every affected month is written in one transaction. */
+export const deleteBudgetTransactions = async (budget: UnlockedBudget, refs: BudgetTransactionRef[]): Promise<void> => {
+  const ids = new Set(refs.map((ref) => ref.id));
 
   await runTransaction(fb.firestore, async (transaction) => {
-    const payload = await readMonth(transaction, budget, accountId, month);
-    await writeMonth(transaction, budget, accountId, month, {
-      transactions: payload.transactions.filter((stored) => stored.id !== id),
-    });
+    const months = await readMonths(transaction, budget, refs.map(slotOf));
+    for (const month of months.values()) {
+      month.transactions = month.transactions.filter((stored) => !ids.has(stored.id));
+    }
+    await writeMonths(transaction, budget, months);
   });
+};
+
+/**
+ * Applies the edits; a new `date` or `accountId` moves the transaction to that month / account document. Every
+ * affected month document is read and written in one transaction, so a move never leaves a copy or loses the row.
+ * The frozen import fields (`sourceFile`, `importHash`) always keep their stored values.
+ */
+export const updateBudgetTransactions = async (
+  budget: UnlockedBudget,
+  updates: BudgetTransactionUpdate[],
+): Promise<BudgetTransaction[]> =>
+  runTransaction(fb.firestore, async (transaction) => {
+    const targetOf = ({ ref, patch }: BudgetTransactionUpdate) =>
+      slotOf({ accountId: patch.accountId ?? ref.accountId, date: patch.date ?? ref.date });
+    const months = await readMonths(transaction, budget, [
+      ...updates.map(({ ref }) => slotOf(ref)),
+      ...updates.map(targetOf),
+    ]);
+    const monthAt = (slot: MonthSlot) => {
+      const month = months.get(slotId(slot));
+      if (!month) throw missingTransaction();
+      return month;
+    };
+
+    const updated = updates.map((update) => {
+      const { ref, patch } = update;
+      const source = monthAt(slotOf(ref));
+      const index = source.transactions.findIndex((stored) => stored.id === ref.id);
+      if (index === -1) throw missingTransaction();
+
+      const stored = source.transactions[index];
+      const next: BudgetTransaction = {
+        ...stored,
+        accountId: ref.accountId,
+        ...patch,
+        id: stored.id,
+        sourceFile: stored.sourceFile,
+        importHash: stored.importHash,
+      };
+      const { accountId, ...nextStored } = next;
+
+      const target = monthAt(targetOf(update));
+      if (target === source) {
+        source.transactions[index] = nextStored;
+      } else {
+        source.transactions.splice(index, 1);
+        target.transactions.push(nextStored);
+      }
+      return { ...nextStored, accountId };
+    });
+
+    await writeMonths(transaction, budget, months);
+    return updated;
+  });
+
+export const updateBudgetTransaction = async (
+  budget: UnlockedBudget,
+  ref: BudgetTransactionRef,
+  patch: BudgetTransactionPatch,
+): Promise<BudgetTransaction> => {
+  const [updated] = await updateBudgetTransactions(budget, [{ ref, patch }]);
+  return updated;
 };

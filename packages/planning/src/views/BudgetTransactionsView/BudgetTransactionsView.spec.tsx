@@ -28,6 +28,8 @@ vi.mock("../../api/budget", async (importOriginal) => ({
   getBudgetTransactions: vi.fn(),
   addBudgetTransaction: vi.fn(),
   deleteBudgetTransaction: vi.fn(),
+  deleteBudgetTransactions: vi.fn(),
+  updateBudgetTransactions: vi.fn(),
 }));
 vi.mock("../../api/exchangeRates", () => ({ getExchangeRate: vi.fn() }));
 vi.mock("@flaner/shared/utils", async (importOriginal) => ({
@@ -85,6 +87,8 @@ const setUp = ({
   vi.mocked(budgetApi.getBudgetTransactions).mockResolvedValue(transactions);
   vi.mocked(budgetApi.addBudgetTransaction).mockImplementation(async (_, input) => ({ id: "new", ...input }));
   vi.mocked(budgetApi.deleteBudgetTransaction).mockResolvedValue(undefined);
+  vi.mocked(budgetApi.deleteBudgetTransactions).mockResolvedValue(undefined);
+  vi.mocked(budgetApi.updateBudgetTransactions).mockResolvedValue([]);
 };
 
 // Stands in for the Budget gate: the page renders once the budget is unlocked
@@ -137,7 +141,7 @@ describe("BudgetTransactionsView", () => {
     const userEvents = userEvent.setup();
     renderView();
 
-    expect(await screen.findByText("Biedronka")).toBeInTheDocument();
+    expect(await screen.findByDisplayValue("Biedronka")).toBeInTheDocument();
     const totals = screen.getByText("Balance").closest("dl");
     if (!totals) throw new Error("totals missing");
     expect(within(totals).getByText("PLN 5,000.00")).toBeInTheDocument();
@@ -260,7 +264,8 @@ describe("BudgetTransactionsView", () => {
     const userEvents = userEvent.setup();
     renderView();
 
-    await userEvents.click(await screen.findByRole("button", { name: "Delete Biedronka" }));
+    await userEvents.click(await screen.findByRole("button", { name: "Details of Biedronka" }));
+    await userEvents.click(screen.getByRole("button", { name: "Delete" }));
     const confirm = screen.getByRole("dialog", { name: "Delete this transaction?" });
     expect(budgetApi.deleteBudgetTransaction).not.toHaveBeenCalled();
     await userEvents.click(within(confirm).getByRole("button", { name: "Delete" }));
@@ -271,15 +276,19 @@ describe("BudgetTransactionsView", () => {
 
   it("keeps a loaded month browsable offline, with a banner and writes disabled", async () => {
     setUp({ transactions: [tx({ payee: "Biedronka" })] });
+    const userEvents = userEvent.setup();
     renderView();
-    expect(await screen.findByText("Biedronka")).toBeInTheDocument();
+    expect(await screen.findByDisplayValue("Biedronka")).toBeInTheDocument();
 
     onlineManager.setOnline(false);
 
     expect(await screen.findByText("You're offline")).toBeInTheDocument();
+    // Inline fields turn back into text
     expect(screen.getByText("Biedronka")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add transaction" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Delete Biedronka" })).toBeDisabled();
+    await userEvents.click(screen.getByRole("button", { name: "Details of Biedronka" }));
+    expect(screen.getByRole("button", { name: "Delete" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Edit" })).toBeDisabled();
   });
 
   it("says a month never opened is not available offline instead of showing it empty", async () => {
@@ -319,5 +328,129 @@ describe("BudgetTransactionsView", () => {
 
     await waitFor(() => expect(budgetApi.addBudgetTransaction).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  describe("list tools (#172)", () => {
+    const rows = [
+      tx({ id: "a", payee: "Biedronka", confirmed: false }),
+      tx({ id: "b", payee: "Employer", type: "income", amount: 500000, amountMain: 500000, categoryId: "salary" }),
+      tx({ id: "c", payee: "Old fridge", excluded: true }),
+      tx({ id: "d", payee: "Savings move", accountId: "savings" }),
+    ];
+    const accounts = [account(), account({ id: "savings", name: "Savings", hidden: true, createdAt: 2 })];
+
+    it("hides excluded rows and hidden accounts by default, and filters from the URL", async () => {
+      setUp({ accounts, transactions: rows });
+      const userEvents = userEvent.setup();
+      renderView("/planning/budget/transactions?month=2026-11&status=unconfirmed");
+
+      expect(await screen.findByDisplayValue("Biedronka")).toBeInTheDocument();
+      expect(screen.queryByDisplayValue("Employer")).not.toBeInTheDocument();
+
+      await userEvents.click(screen.getByRole("button", { name: "Clear filters" }));
+      expect(screen.getByDisplayValue("Employer")).toBeInTheDocument();
+      expect(screen.queryByDisplayValue("Old fridge")).not.toBeInTheDocument();
+      expect(screen.queryByDisplayValue("Savings move")).not.toBeInTheDocument();
+
+      await userEvents.click(screen.getByRole("button", { name: "Type" }));
+      await userEvents.click(screen.getByRole("menuitemradio", { name: "Excluded" }));
+      await userEvents.keyboard("{Escape}");
+      expect(screen.getByDisplayValue("Old fridge")).toBeInTheDocument();
+      expect(screen.queryByDisplayValue("Biedronka")).not.toBeInTheDocument();
+      expect(screen.getByText("Excluded")).toBeInTheDocument();
+
+      await userEvents.click(screen.getByRole("button", { name: "Clear filters" }));
+      await userEvents.type(screen.getByRole("searchbox", { name: "Search payee or description" }), "nothing");
+      expect(screen.getByRole("heading", { name: "No transactions match these filters" })).toBeInTheDocument();
+    });
+
+    it("saves an inline edit and confirms a guessed category", async () => {
+      setUp({ transactions: rows });
+      const userEvents = userEvent.setup();
+      renderView();
+
+      const payee = await screen.findByDisplayValue("Biedronka");
+      await userEvents.type(payee, " Sp. z o.o.{Enter}");
+      await userEvents.click(screen.getByRole("button", { name: "Confirm category Groceries" }));
+
+      await waitFor(() => expect(budgetApi.updateBudgetTransactions).toHaveBeenCalledTimes(2));
+      expect(vi.mocked(budgetApi.updateBudgetTransactions).mock.calls.map(([, updates]) => updates)).toEqual([
+        [{ ref: rows[0], patch: { payee: "Biedronka Sp. z o.o." } }],
+        [{ ref: rows[0], patch: { confirmed: true } }],
+      ]);
+    });
+
+    it("edits every field in the dialog; an unchanged category keeps its confirmation", async () => {
+      setUp({ transactions: rows });
+      const userEvents = userEvent.setup();
+      renderView();
+
+      await userEvents.click(await screen.findByRole("button", { name: "Details of Employer" }));
+      await userEvents.click(screen.getByRole("button", { name: "Edit" }));
+      const dialog = await screen.findByRole("dialog", { name: "Edit transaction" });
+      expect(within(dialog).getByLabelText("Payee")).toHaveValue("Employer");
+      const description = within(dialog).getByLabelText("Description");
+      await userEvents.type(description, "Bonus");
+      await userEvents.click(within(dialog).getByRole("button", { name: "Save changes" }));
+
+      await waitFor(() => expect(budgetApi.updateBudgetTransactions).toHaveBeenCalled());
+      const [[, [update]]] = vi.mocked(budgetApi.updateBudgetTransactions).mock.calls;
+      expect(update.ref).toBe(rows[1]);
+      expect(update.patch).toMatchObject({
+        accountId: "main",
+        date: "2026-11-10",
+        type: "income",
+        amount: 500000,
+        payee: "Employer",
+        description: "Bonus",
+        categoryId: "salary",
+        confirmed: true,
+      });
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    });
+
+    it("sets a category on, confirms and deletes the selected rows in bulk", async () => {
+      const expenses = [
+        tx({ id: "a", payee: "Biedronka", confirmed: false }),
+        tx({ id: "e", payee: "Lidl", categoryId: null, confirmed: false }),
+      ];
+      setUp({ transactions: expenses });
+      const userEvents = userEvent.setup();
+      renderView();
+
+      await userEvents.click(await screen.findByRole("checkbox", { name: "Select Biedronka" }));
+      await userEvents.click(screen.getByRole("checkbox", { name: "Select Lidl" }));
+      const toolbar = screen.getByRole("toolbar", { name: "Bulk actions" });
+      expect(within(toolbar).getByText("2 selected")).toBeInTheDocument();
+
+      // Confirm skips the row without a category
+      await userEvents.click(within(toolbar).getByRole("button", { name: "Confirm" }));
+      await waitFor(() =>
+        expect(budgetApi.updateBudgetTransactions).toHaveBeenCalledWith(budget, [
+          { ref: expenses[0], patch: { confirmed: true } },
+        ]),
+      );
+      expect(screen.queryByRole("toolbar")).not.toBeInTheDocument();
+
+      await userEvents.click(screen.getByRole("checkbox", { name: "Select Biedronka" }));
+      await userEvents.click(screen.getByRole("checkbox", { name: "Select Lidl" }));
+      await userEvents.click(screen.getByRole("button", { name: "Set category" }));
+      const dialog = await screen.findByRole("dialog", { name: "Set the category of 2 transactions" });
+      await userEvents.click(within(dialog).getByLabelText("Category"));
+      await userEvents.click(screen.getByRole("option", { name: "Shopping" }));
+      await userEvents.click(within(dialog).getByRole("button", { name: "Set category" }));
+      await waitFor(() =>
+        expect(budgetApi.updateBudgetTransactions).toHaveBeenLastCalledWith(budget, [
+          { ref: expenses[0], patch: { categoryId: "shopping", confirmed: true } },
+          { ref: expenses[1], patch: { categoryId: "shopping", confirmed: true } },
+        ]),
+      );
+
+      await userEvents.click(screen.getByRole("checkbox", { name: "Select Lidl" }));
+      await userEvents.click(screen.getByRole("button", { name: "Delete" }));
+      const confirm = screen.getByRole("dialog", { name: "Delete 1 transaction?" });
+      await userEvents.click(within(confirm).getByRole("button", { name: "Delete" }));
+      await waitFor(() => expect(budgetApi.deleteBudgetTransactions).toHaveBeenCalledWith(budget, [expenses[1]]));
+    });
   });
 });

@@ -109,7 +109,8 @@
       "transactionAdded": "Dodano transakcję",
       "transactionDeleted": "Usunięto transakcję",
       "saveError": "Nie udało się zapisać transakcji. Spróbuj ponownie.",
-      "deleteError": "Nie udało się usunąć transakcji. Spróbuj ponownie."
+      "deleteError": "Nie udało się usunąć transakcji. Spróbuj ponownie.",
+      "transactionsDeleted": "Transakcje usunięte"
     }
   },
   "errors": {
@@ -130,7 +131,8 @@
       "wrongRecoveryKey": "Ten klucz odzyskiwania nie odblokowuje budżetu.",
       "keyChanged": "Budżet został zresetowany na innym urządzeniu. Odśwież stronę.",
       "monthTooLarge": "Ten miesiąc jest pełny: nie zmieści więcej transakcji tego konta.",
-      "rateUnavailable": "Nie udało się pobrać kursu waluty."
+      "rateUnavailable": "Nie udało się pobrać kursu waluty.",
+      "transactionMissing": "Ta transakcja już nie istnieje. Odśwież stronę."
     }
   },
   "splits": {
@@ -807,11 +809,20 @@
     },
     "transactionList": {
       "uncategorized": "Bez kategorii",
-      "delete": "Usuń {{payee}}"
+      "unconfirmed": "Niepotwierdzona kategoria",
+      "excluded": "Wykluczona",
+      "category": "Kategoria: {{payee}}",
+      "select": "Zaznacz: {{payee}}",
+      "payee": "Odbiorca / nadawca",
+      "description": "Opis: {{payee}}",
+      "addDescription": "Dodaj opis",
+      "amount": "Kwota: {{payee}}",
+      "details": "Szczegóły: {{payee}}"
     },
     "categoryPicker": {
       "placeholder": "Wybierz kategorię",
-      "noResults": "Brak pasujących kategorii"
+      "noResults": "Brak pasujących kategorii",
+      "confirm": "Potwierdź kategorię {{category}}"
     },
     "monthSwitcher": {
       "previous": "Poprzedni miesiąc",
@@ -853,12 +864,80 @@
       "optional": "Opcjonalnie",
       "category": "Kategoria",
       "cancel": "Anuluj",
-      "save": "Dodaj transakcję"
+      "save": "Dodaj transakcję",
+      "editTitle": "Edytuj transakcję",
+      "saveEdit": "Zapisz zmiany"
     },
     "deleteTransaction": {
       "title": "Usunąć tę transakcję?",
       "description": "„{{payee}}” zostanie usunięta z budżetu. Tej operacji nie można cofnąć.",
       "confirm": "Usuń"
+    },
+    "transactionDetails": {
+      "date": "Data",
+      "account": "Konto",
+      "source": "Plik źródłowy",
+      "manual": "Dodana ręcznie",
+      "amount": "Kwota",
+      "amountAtRate": "{{amount}} = {{amountMain}} po kursie {{rate}} z {{date}}",
+      "amountTyped": "{{amount}} = {{amountMain}} (wpisane ręcznie)",
+      "edit": "Edytuj",
+      "delete": "Usuń"
+    },
+    "transactionFilters": {
+      "label": "Filtry",
+      "search": "Szukaj odbiorcy lub opisu",
+      "accounts": "Konta",
+      "allAccounts": "Wszystkie konta",
+      "categories": "Kategorie",
+      "allCategories": "Wszystkie kategorie",
+      "uncategorized": "Bez kategorii",
+      "type": "Typ",
+      "direction": "Kierunek",
+      "status": "Status",
+      "relevance": "Uwzględnianie",
+      "directions": {
+        "all": "Wszystkie",
+        "income": "Wpływy",
+        "expense": "Wydatki"
+      },
+      "statuses": {
+        "all": "Wszystkie",
+        "confirmed": "Potwierdzone",
+        "unconfirmed": "Niepotwierdzone"
+      },
+      "relevances": {
+        "relevant": "Uwzględniane",
+        "excluded": "Wykluczone",
+        "all": "Wszystkie"
+      },
+      "clear": "Wyczyść filtry",
+      "noMatches": "Żadna transakcja nie pasuje do filtrów"
+    },
+    "bulkActions": {
+      "label": "Akcje zbiorcze",
+      "selected_one": "Zaznaczono {{count}}",
+      "selected_few": "Zaznaczono {{count}}",
+      "selected_many": "Zaznaczono {{count}}",
+      "selected_other": "Zaznaczono {{count}}",
+      "setCategory": "Ustaw kategorię",
+      "confirm": "Potwierdź",
+      "delete": "Usuń",
+      "clear": "Odznacz wszystko",
+      "mixedTypes": "Zaznacz same wydatki albo same wpływy, aby ustawić kategorię",
+      "setCategoryTitle_one": "Ustaw kategorię {{count}} transakcji",
+      "setCategoryTitle_few": "Ustaw kategorię {{count}} transakcji",
+      "setCategoryTitle_many": "Ustaw kategorię {{count}} transakcji",
+      "setCategoryTitle_other": "Ustaw kategorię {{count}} transakcji",
+      "category": "Kategoria",
+      "save": "Ustaw kategorię",
+      "cancel": "Anuluj",
+      "deleteTitle_one": "Usunąć {{count}} transakcję?",
+      "deleteTitle_few": "Usunąć {{count}} transakcje?",
+      "deleteTitle_many": "Usunąć {{count}} transakcji?",
+      "deleteTitle_other": "Usunąć {{count}} transakcji?",
+      "deleteDescription": "Zostaną usunięte z budżetu. Tej operacji nie można cofnąć.",
+      "deleteConfirm": "Usuń"
     }
   }
 }

@@ -49,30 +49,45 @@ export const monthOfDate = (date: string): BudgetMonth => date.slice(0, 7);
 /** An amount with its direction: positive for income, negative for an expense (never `-0`, which formats as "-0.00"). */
 export const signedAmount = (type: BudgetTransaction["type"], amount: number) => (type === "income" ? amount : 0 - amount);
 
-export const buildMonthLedger = ({ month, transactions, accounts }: MonthLedgerInput): MonthLedger => {
-  const hiddenAccountIds = new Set(accounts.filter((account) => account.hidden).map((account) => account.id));
-  const counted = transactions.filter(
-    (transaction) =>
-      monthOfDate(transaction.date) === month && !transaction.excluded && !hiddenAccountIds.has(transaction.accountId),
-  );
+const hiddenAccountIdsOf = (accounts: BudgetAccount[]) =>
+  new Set(accounts.filter((account) => account.hidden).map((account) => account.id));
 
-  const totals: MonthTotals = { income: 0, expenses: 0, balance: 0 };
+const isCounted = (transaction: BudgetTransaction, hiddenAccountIds: Set<string>) =>
+  !transaction.excluded && !hiddenAccountIds.has(transaction.accountId);
+
+/**
+ * Rows grouped by day, newest day first; within a day the one added last comes first. Every given row is listed
+ * (e.g. excluded ones the Relevance filter shows), but a day's net counts only what the ledger counts.
+ */
+export const groupTransactionsByDay = (transactions: BudgetTransaction[], accounts: BudgetAccount[]): LedgerDay[] => {
+  const hiddenAccountIds = hiddenAccountIdsOf(accounts);
   const daysByDate = new Map<string, LedgerDay>();
 
   // Walk backwards, so within a day the transaction added last comes first
-  for (const transaction of [...counted].reverse()) {
-    if (transaction.type === "income") totals.income += transaction.amountMain;
-    else totals.expenses += transaction.amountMain;
-
+  for (const transaction of [...transactions].reverse()) {
     const day = daysByDate.get(transaction.date) ?? { date: transaction.date, net: 0, transactions: [] };
-    day.net += signedAmount(transaction.type, transaction.amountMain);
+    if (isCounted(transaction, hiddenAccountIds)) day.net += signedAmount(transaction.type, transaction.amountMain);
     day.transactions.push(transaction);
     daysByDate.set(transaction.date, day);
   }
+
+  return [...daysByDate.values()].sort((a, b) => b.date.localeCompare(a.date));
+};
+
+export const buildMonthLedger = ({ month, transactions, accounts }: MonthLedgerInput): MonthLedger => {
+  const hiddenAccountIds = hiddenAccountIdsOf(accounts);
+  const counted = transactions.filter(
+    (transaction) => monthOfDate(transaction.date) === month && isCounted(transaction, hiddenAccountIds),
+  );
+
+  const totals: MonthTotals = { income: 0, expenses: 0, balance: 0 };
+  for (const transaction of counted) {
+    if (transaction.type === "income") totals.income += transaction.amountMain;
+    else totals.expenses += transaction.amountMain;
+  }
   totals.balance = totals.income - totals.expenses;
 
-  const days = [...daysByDate.values()].sort((a, b) => b.date.localeCompare(a.date));
-  return { totals, days };
+  return { totals, days: groupTransactionsByDay(counted, accounts) };
 };
 
 export type ResolvedCategory = {

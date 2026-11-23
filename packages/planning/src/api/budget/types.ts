@@ -102,6 +102,10 @@ export type BudgetTransaction = {
   categoryId: string | null;
   confirmed: boolean;
   excluded: boolean;
+  /** Name of the statement file an imported transaction came from (absent on manual entries). */
+  sourceFile?: string;
+  /** Import dedup hash, computed from the original file row and frozen: edits never change it. */
+  importHash?: string;
 };
 
 /** A new transaction; the API gives it its id. */
@@ -109,6 +113,15 @@ export type BudgetTransactionInput = Omit<BudgetTransaction, "id">;
 
 /** Identifies a stored transaction (its month document and its id inside it). */
 export type BudgetTransactionRef = Pick<BudgetTransaction, "id" | "accountId" | "date">;
+
+/**
+ * Edited fields of a stored transaction. A new `date` or `accountId` moves it to that month / account.
+ * The frozen import fields are not editable.
+ */
+export type BudgetTransactionPatch = Partial<Omit<BudgetTransaction, "id" | "sourceFile" | "importHash">>;
+
+/** One edit of a bulk update: which transaction (where it is stored now) and what changes. */
+export type BudgetTransactionUpdate = { ref: BudgetTransactionRef; patch: BudgetTransactionPatch };
 
 export type CreateBudgetInput = {
   passphrase: string;

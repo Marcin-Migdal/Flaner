@@ -109,7 +109,8 @@
       "transactionAdded": "Transaction added",
       "transactionDeleted": "Transaction deleted",
       "saveError": "Couldn't save the transaction. Try again.",
-      "deleteError": "Couldn't delete the transaction. Try again."
+      "deleteError": "Couldn't delete the transaction. Try again.",
+      "transactionsDeleted": "Transactions deleted"
     }
   },
   "errors": {
@@ -130,7 +131,8 @@
       "wrongRecoveryKey": "This recovery key doesn't unlock your budget.",
       "keyChanged": "Your budget was reset on another device. Reload the page.",
       "monthTooLarge": "This month is full: it cannot hold more transactions for this account.",
-      "rateUnavailable": "Couldn't fetch the exchange rate."
+      "rateUnavailable": "Couldn't fetch the exchange rate.",
+      "transactionMissing": "This transaction no longer exists. Reload the page."
     }
   },
   "splits": {
@@ -801,11 +803,20 @@
     },
     "transactionList": {
       "uncategorized": "Uncategorized",
-      "delete": "Delete {{payee}}"
+      "unconfirmed": "Unconfirmed category",
+      "excluded": "Excluded",
+      "category": "Category of {{payee}}",
+      "select": "Select {{payee}}",
+      "payee": "Payee",
+      "description": "Description of {{payee}}",
+      "addDescription": "Add a description",
+      "amount": "Amount of {{payee}}",
+      "details": "Details of {{payee}}"
     },
     "categoryPicker": {
       "placeholder": "Choose a category",
-      "noResults": "No matching categories"
+      "noResults": "No matching categories",
+      "confirm": "Confirm category {{category}}"
     },
     "monthSwitcher": {
       "previous": "Previous month",
@@ -847,12 +858,74 @@
       "optional": "Optional",
       "category": "Category",
       "cancel": "Cancel",
-      "save": "Add transaction"
+      "save": "Add transaction",
+      "editTitle": "Edit transaction",
+      "saveEdit": "Save changes"
     },
     "deleteTransaction": {
       "title": "Delete this transaction?",
       "description": "\"{{payee}}\" will be removed from your budget. This cannot be undone.",
       "confirm": "Delete"
+    },
+    "transactionDetails": {
+      "date": "Date",
+      "account": "Account",
+      "source": "Source file",
+      "manual": "Added by hand",
+      "amount": "Amount",
+      "amountAtRate": "{{amount}} = {{amountMain}} at the rate {{rate}} from {{date}}",
+      "amountTyped": "{{amount}} = {{amountMain}} (entered by hand)",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "transactionFilters": {
+      "label": "Filters",
+      "search": "Search payee or description",
+      "accounts": "Accounts",
+      "allAccounts": "All accounts",
+      "categories": "Categories",
+      "allCategories": "All categories",
+      "uncategorized": "Uncategorized",
+      "type": "Type",
+      "direction": "Direction",
+      "status": "Status",
+      "relevance": "Relevance",
+      "directions": {
+        "all": "All",
+        "income": "Income",
+        "expense": "Expenses"
+      },
+      "statuses": {
+        "all": "All",
+        "confirmed": "Confirmed",
+        "unconfirmed": "Unconfirmed"
+      },
+      "relevances": {
+        "relevant": "Relevant",
+        "excluded": "Excluded",
+        "all": "All"
+      },
+      "clear": "Clear filters",
+      "noMatches": "No transactions match these filters"
+    },
+    "bulkActions": {
+      "label": "Bulk actions",
+      "selected_one": "{{count}} selected",
+      "selected_other": "{{count}} selected",
+      "setCategory": "Set category",
+      "confirm": "Confirm",
+      "delete": "Delete",
+      "clear": "Clear selection",
+      "mixedTypes": "Select only expenses or only income to set a category",
+      "setCategoryTitle_one": "Set the category of {{count}} transaction",
+      "setCategoryTitle_other": "Set the category of {{count}} transactions",
+      "category": "Category",
+      "save": "Set category",
+      "cancel": "Cancel",
+      "deleteTitle_one": "Delete {{count}} transaction?",
+      "deleteTitle_other": "Delete {{count}} transactions?",
+      "deleteDescription": "They will be removed from the budget. This cannot be undone.",
+      "deleteConfirm": "Delete"
     }
   }
 }

@@ -21,9 +21,29 @@ export class BudgetTransactionsPage {
     this.addDialog = page.getByRole("dialog", { name: /^(add transaction|dodaj transakcję)$/i });
   }
 
-  /** A row of the list, found by its payee. */
+  /** A row of the list, found by its payee (on desktop the payee is an inline field, so by the row's Details button). */
   row(payee: string): Locator {
-    return this.page.getByRole("main").getByRole("listitem").filter({ hasText: payee });
+    return this.page
+      .getByRole("main")
+      .getByRole("listitem")
+      .filter({ has: this.page.getByRole("button", { name: new RegExp(`^(details of|szczegóły:) ${payee}$`, "i") }) });
+  }
+
+  /** The inline payee field of a row (desktop). */
+  payeeField(payee: string): Locator {
+    return this.row(payee).getByRole("textbox", { name: /^(payee|odbiorca \/ nadawca)$/i });
+  }
+
+  async expandRow(payee: string) {
+    await this.row(payee).getByRole("button", { name: new RegExp(`^(details of|szczegóły:) ${payee}$`, "i") }).click();
+  }
+
+  async selectRow(payee: string) {
+    await this.page.getByRole("checkbox", { name: new RegExp(`^(select|zaznacz:) ${payee}$`, "i") }).check();
+  }
+
+  get bulkActions(): Locator {
+    return this.page.getByRole("toolbar", { name: /^(bulk actions|akcje zbiorcze)$/i });
   }
 
   /** Adds an expense in the main account's currency, without a category. */
@@ -35,9 +55,19 @@ export class BudgetTransactionsPage {
   }
 
   async deleteTransaction(payee: string) {
-    await this.page.getByRole("button", { name: new RegExp(`^(delete|usuń) ${payee}$`, "i") }).click();
+    await this.expandRow(payee);
+    await this.row(payee).getByRole("button", { name: /^(delete|usuń)$/i }).click();
     await this.page
       .getByRole("dialog", { name: /^(delete this transaction\?|usunąć tę transakcję\?)$/i })
+      .getByRole("button", { name: /^(delete|usuń)$/i })
+      .click();
+  }
+
+  /** Deletes the selected rows from the bulk actions toolbar, after confirmation. */
+  async bulkDelete() {
+    await this.bulkActions.getByRole("button", { name: /^(delete|usuń)$/i }).click();
+    await this.page
+      .getByRole("dialog", { name: /^(delete \d+ transactions?\?|usunąć \d+ transakcj\S*\?)$/i })
       .getByRole("button", { name: /^(delete|usuń)$/i })
       .click();
   }

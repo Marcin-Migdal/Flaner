@@ -1,24 +1,36 @@
 import { useMoneyFormatter } from "@flaner/shared/hooks";
-import { cn } from "@flaner/shared/utils";
-import { Button } from "@flaner/ui-components";
 import { parseISO } from "date-fns";
-import { CircleHelp, Trash2 } from "lucide-react";
-import type { BudgetAccount, BudgetCategoryTree, BudgetTransaction } from "../../api/budget";
+import { useRef, useState } from "react";
+import type { BudgetAccount, BudgetCategoryTree, BudgetTransaction, BudgetTransactionPatch } from "../../api/budget";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
-import { BUDGET_CATEGORY_COLOR_CLASSES, BUDGET_CATEGORY_ICON_COMPONENTS } from "../../utils/budgetCategoryIcons";
-import { resolveTransactionCategory, signedAmount, type LedgerDay } from "../../utils/monthLedger";
+import type { LedgerDay } from "../../utils/monthLedger";
+import { TransactionRow, type SelectMode } from "./components/TransactionRow";
 import { budgetTransactionListStyles as styles } from "./BudgetTransactionList.styles";
 
 export type BudgetTransactionListProps = {
-  /** Rows grouped by day, newest first (`buildMonthLedger(...).days`). */
+  /** Rows grouped by day, newest first (`groupTransactionsByDay` / `buildMonthLedger(...).days`). */
   days: LedgerDay[];
   categories: BudgetCategoryTree;
   accounts: BudgetAccount[];
   mainCurrency: string;
-  /** Shows a Delete action on every row. */
+  /** Delete action in the expanded row. */
   onDelete?: (transaction: BudgetTransaction) => void;
-  /** Disables the row actions (e.g. offline). */
+  /** Disables the row actions and inline edits (e.g. offline). */
   actionsDisabled?: boolean;
+  /**
+   * Saves an inline edit: on desktop payee, title and amount are fields in the row; on both the category picker
+   * changes and confirms the category. Without it rows are read-only.
+   */
+  onUpdate?: (transaction: BudgetTransaction, patch: BudgetTransactionPatch) => void;
+  /** Edit action in the expanded row (every field). */
+  onEdit?: (transaction: BudgetTransaction) => void;
+  /**
+   * Selected transaction ids. With `onSelectionChange`, rows are selected by Ctrl / ⌘ + click (toggle),
+   * Shift + click (range from the last toggled row) or a long-press on the phone; once any row is selected,
+   * rows show a checkbox and a tap on the phone toggles the row.
+   */
+  selectedIds?: ReadonlySet<string>;
+  onSelectionChange?: (ids: Set<string>) => void;
 };
 
 /** The Budget's transaction rows grouped by day, each day with its net. Shared by Transactions and the import preview. */
@@ -29,12 +41,38 @@ export const BudgetTransactionList = ({
   mainCurrency,
   onDelete,
   actionsDisabled,
+  onUpdate,
+  onEdit,
+  selectedIds,
+  onSelectionChange,
 }: BudgetTransactionListProps) => {
-  const { t, i18n } = usePlanningTranslations();
+  const { i18n } = usePlanningTranslations();
   const { format } = useMoneyFormatter();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const selectionAnchor = useRef<string | null>(null);
+
   const dayFormat = new Intl.DateTimeFormat(i18n.language, { weekday: "long", day: "numeric", month: "long" });
   const accountNames = new Map(accounts.map((account) => [account.id, account.name]));
   const showAccount = accounts.length > 1;
+  const selectable = !!selectedIds && !!onSelectionChange;
+  const selectionMode = selectable && selectedIds.size > 0;
+
+  const select = (id: string, mode: SelectMode) => {
+    if (!selectedIds || !onSelectionChange) return;
+    const next = new Set(selectedIds);
+    const order = days.flatMap((day) => day.transactions.map((transaction) => transaction.id));
+    const anchor = selectionAnchor.current ? order.indexOf(selectionAnchor.current) : -1;
+
+    if (mode === "range" && anchor !== -1) {
+      const target = order.indexOf(id);
+      order.slice(Math.min(anchor, target), Math.max(anchor, target) + 1).forEach((rowId) => next.add(rowId));
+    } else {
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      selectionAnchor.current = id;
+    }
+    onSelectionChange(next);
+  };
 
   return (
     <div className={styles.root}>
@@ -46,58 +84,26 @@ export const BudgetTransactionList = ({
           </header>
 
           <ul className={styles.rows}>
-            {day.transactions.map((transaction) => {
-              const resolved = resolveTransactionCategory(categories, transaction);
-              const Icon = resolved ? BUDGET_CATEGORY_ICON_COMPONENTS[resolved.category.icon] : CircleHelp;
-              const categoryName = resolved
-                ? (resolved.subcategory?.name ?? resolved.category.name)
-                : t("budget.transactionList.uncategorized");
-              const meta = [
-                categoryName,
-                showAccount ? accountNames.get(transaction.accountId) : null,
-                transaction.description || null,
-              ].filter(Boolean);
-              const isIncome = transaction.type === "income";
-
-              return (
-                <li key={transaction.id} className={styles.row}>
-                  <span className={styles.icon}>
-                    <Icon
-                      aria-hidden="true"
-                      className={
-                        resolved ? BUDGET_CATEGORY_COLOR_CLASSES[resolved.category.color] : styles.uncategorizedIcon
-                      }
-                    />
-                  </span>
-                  <span className={styles.body}>
-                    <span className={styles.payee}>{transaction.payee}</span>
-                    <span className={styles.meta}>{meta.join(" · ")}</span>
-                  </span>
-                  <span className={styles.amounts}>
-                    <span className={cn(styles.amount, isIncome && styles.income)}>
-                      {format(signedAmount(transaction.type, transaction.amount), transaction.currency)}
-                    </span>
-                    {transaction.currency !== mainCurrency && (
-                      <span className={styles.amountMain}>
-                        {format(signedAmount(transaction.type, transaction.amountMain), mainCurrency)}
-                      </span>
-                    )}
-                  </span>
-                  {onDelete && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={styles.deleteButton}
-                      disabled={actionsDisabled}
-                      aria-label={t("budget.transactionList.delete", { payee: transaction.payee })}
-                      onClick={() => onDelete(transaction)}
-                    >
-                      <Trash2 aria-hidden="true" />
-                    </Button>
-                  )}
-                </li>
-              );
-            })}
+            {day.transactions.map((transaction) => (
+              <TransactionRow
+                key={transaction.id}
+                transaction={transaction}
+                categories={categories}
+                accountName={accountNames.get(transaction.accountId) ?? ""}
+                showAccount={showAccount}
+                mainCurrency={mainCurrency}
+                expanded={expandedId === transaction.id}
+                onToggleExpanded={() => setExpandedId((id) => (id === transaction.id ? null : transaction.id))}
+                selectable={selectable}
+                selected={!!selectedIds?.has(transaction.id)}
+                selectionMode={selectionMode}
+                onSelect={(mode) => select(transaction.id, mode)}
+                onUpdate={onUpdate && ((patch) => onUpdate(transaction, patch))}
+                onEdit={onEdit && (() => onEdit(transaction))}
+                onDelete={onDelete && (() => onDelete(transaction))}
+                actionsDisabled={actionsDisabled}
+              />
+            ))}
           </ul>
         </section>
       ))}
