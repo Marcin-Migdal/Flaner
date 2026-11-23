@@ -29,9 +29,10 @@ Budget transactions (MFE `planning`, Budget; ADR 0002): one document per account
 ## Queries
 | Query | Endpoint | Allowed by |
 | --- | --- | --- |
-| `budget_months` where `memberIds array-contains me` and `month` between two months | `getBudgetTransactions` (also the import preview's duplicate check over the file's months) | read: member; index `memberIds CONTAINS, month ASC` |
+| `budget_months` where `memberIds array-contains me` and `month` between two months | `getBudgetTransactions` | read: member; index `memberIds CONTAINS, month ASC` |
 | `budget_months` where `memberIds array-contains me` | `resetBudget` | read: member |
 | `get budget_months/{accountId}_{month}` (missing doc, inside a transaction) | `addBudgetTransaction`, `importBudgetTransactions` | read: member of `budget_accounts/{accountId}` |
+| `get budget_months/{accountId}_{month}` for each month of a range (missing docs included) | `getAccountTransactions` (import preview duplicate check) | read: member of `budget_accounts/{accountId}` |
 
 ## Access matrix
 | Actor \ operation | read / query `memberIds array-contains me` | read missing month | create (`memberIds == [me]`, own account, valid) | create on another user's account | update (valid) | write invalid envelope / id mismatch / oversized | delete |
@@ -79,4 +80,4 @@ match /budget_months/{monthId} {
 
 ## Tests
 - `firestore-tests/budget/budget_months.spec.ts` — create / read / update / delete by the member, member-only query (reset), month-range query by `memberIds` + `month`, reading a missing month of an own vs a foreign account, other or extra members denied, a month on another user's account denied, id / `accountId` / `month` mismatch denied, invalid envelope (readable field, wrong types, oversized payload) denied, non-members / anonymous denied.
-- `packages/planning/src/api/budget/endpoints.emu.spec.ts` — transactions round-trip encrypted (no readable payee or amount), month packing, month-range query, the size guard rejects an oversized write, an import writes several months at once and fails as a whole over the size guard, another user denied; Reset budget deletes the user's months and keeps other users'.
+- `packages/planning/src/api/budget/endpoints.emu.spec.ts` — transactions round-trip encrypted (no readable payee or amount), month packing, month-range query, the size guard rejects an oversized write, an import writes several months at once and fails as a whole over the size guard, one account's months read document by document, another user denied; Reset budget deletes the user's months and keeps other users'.

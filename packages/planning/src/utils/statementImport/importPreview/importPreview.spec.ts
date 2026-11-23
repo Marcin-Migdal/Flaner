@@ -90,13 +90,7 @@ describe("buildImportPreview", () => {
 
   it("marks rows already imported to the account as duplicates, also after they were edited", async () => {
     const [hash] = await computeImportHashes([row()], "acc");
-    const loadTransactions = vi.fn(() =>
-      Promise.resolve([
-        stored({ importHash: hash }),
-        // Same hash on another account is not this account's duplicate
-        stored({ accountId: "other", importHash: "x" }),
-      ]),
-    );
+    const loadTransactions = vi.fn(() => Promise.resolve([stored({ importHash: hash })]));
 
     const preview = await buildImportPreview(
       input({ rows: [row(), row({ rowNumber: 3, date: "2026-09-30", amount: 5 })], loadTransactions }),
@@ -104,6 +98,14 @@ describe("buildImportPreview", () => {
 
     expect(loadTransactions).toHaveBeenCalledWith({ from: "2026-09", to: "2026-11" });
     expect(preview.rows.map(({ status }) => status)).toEqual(["duplicate", "new"]);
+  });
+
+  it("hashes per account, so the same row imported to another account is not a duplicate", async () => {
+    const [otherAccountHash] = await computeImportHashes([row()], "other");
+    const preview = await buildImportPreview(
+      input({ rows: [row()], loadTransactions: () => Promise.resolve([stored({ importHash: otherAccountHash })]) }),
+    );
+    expect(preview.rows.map(({ status }) => status)).toEqual(["new"]);
   });
 
   it("keeps errors apart and pending holds as pending, never duplicates", async () => {

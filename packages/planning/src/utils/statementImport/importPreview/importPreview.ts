@@ -28,7 +28,7 @@ export type ImportPreviewInput = {
   fallbackCurrency: string;
   mainCurrency: string;
   fileName: string;
-  /** The stored transactions of the months `from`..`to` (any account). */
+  /** The account's stored transactions of the months `from`..`to`. */
   loadTransactions: (range: { from: BudgetMonth; to: BudgetMonth }) => Promise<BudgetTransaction[]>;
   /** The `currency` → main currency rate of `date`. */
   getRate: (currency: string, date: string) => Promise<ExchangeRate>;
@@ -52,17 +52,15 @@ export const buildImportPreview = async ({
   getRate,
 }: ImportPreviewInput): Promise<ImportPreview> => {
   const errors = rows.filter(isErrorRow);
-  const read = rows.filter(isTransactionRow);
-  if (read.length === 0) return { rows: [], errors };
+  const readRows = rows.filter(isTransactionRow);
+  if (readRows.length === 0) return { rows: [], errors };
 
-  const months = read.map((row) => monthOfDate(row.date)).sort();
+  const months = readRows.map((row) => monthOfDate(row.date)).sort();
   const [hashes, stored] = await Promise.all([
-    computeImportHashes(read, accountId),
+    computeImportHashes(readRows, accountId),
     loadTransactions({ from: months[0], to: months[months.length - 1] }),
   ]);
-  const storedHashes = new Set(
-    stored.filter((transaction) => transaction.accountId === accountId).map((transaction) => transaction.importHash),
-  );
+  const storedHashes = new Set(stored.map((transaction) => transaction.importHash));
 
   const rates = new Map<string, Promise<ExchangeRate>>();
   const rateOf = (currency: string, date: string) => {
@@ -74,7 +72,7 @@ export const buildImportPreview = async ({
   };
 
   const previewRows = await Promise.all(
-    read.map(async (row, index): Promise<ImportPreviewRow> => {
+    readRows.map(async (row, index): Promise<ImportPreviewRow> => {
       const currency = row.currency ?? fallbackCurrency;
       const rate = await rateOf(currency, row.date);
       const importHash = hashes[index];

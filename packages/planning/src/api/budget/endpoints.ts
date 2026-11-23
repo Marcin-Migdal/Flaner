@@ -406,6 +406,38 @@ export const getBudgetTransactions = async (
   return months.flat();
 };
 
+/** Every month `from`..`to` (inclusive, `YYYY-MM`). */
+const monthsBetween = (from: BudgetMonth, to: BudgetMonth): BudgetMonth[] => {
+  const months: BudgetMonth[] = [];
+  for (let [year, month] = from.split("-").map(Number); `${year}-${String(month).padStart(2, "0")}` <= to; ) {
+    months.push(`${year}-${String(month).padStart(2, "0")}`);
+    [year, month] = month === 12 ? [year + 1, 1] : [year, month + 1];
+  }
+  return months;
+};
+
+/** The transactions of one account dated in the months `from`..`to`: only that account's month documents are read. */
+export const getAccountTransactions = async (
+  budget: UnlockedBudget,
+  accountId: string,
+  { from, to }: { from: BudgetMonth; to: BudgetMonth },
+): Promise<BudgetTransaction[]> => {
+  const accountKey = await getAccountKey(budget, accountId);
+  const months = await Promise.all(
+    monthsBetween(from, to).map(async (month) => {
+      const data = (await getDoc(refs.month(accountId, month))).data();
+      if (!data) return [];
+      const { transactions } = await decryptJson<BudgetMonthPayload>(
+        data.payload.toUint8Array(),
+        accountKey,
+        paths.month(accountId, month),
+      );
+      return transactions.map((transaction): BudgetTransaction => ({ ...transaction, accountId }));
+    }),
+  );
+  return months.flat();
+};
+
 export const addBudgetTransaction = async (
   budget: UnlockedBudget,
   input: BudgetTransactionInput,

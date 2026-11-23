@@ -124,57 +124,60 @@ export const ImportPreviewStep = ({
         </section>
       )}
 
-      {months.map((month) => (
-        <section key={month} className={styles.month} aria-label={monthFormat.format(parseISO(`${month}-01`))}>
-          <h3 className={styles.monthHeading}>{monthFormat.format(parseISO(`${month}-01`))}</h3>
-          <BudgetTransactionList
-            days={
-              buildMonthLedger({
-                month,
-                // The ledger lists a day's rows last-added first; reversing keeps the file's order
-                transactions: visibleRows.map((row) => row.transaction).reverse(),
-                accounts: [],
-              }).days
-            }
-            categories={categories}
-            accounts={accounts}
-            mainCurrency={mainCurrency}
-            isRowMuted={(transaction) => rowsById.get(transaction.id)?.status === "pending"}
-            renderRowStart={(transaction) => {
-              const row = rowsById.get(transaction.id);
-              return (
-                <ShadcnCheckbox
-                  className={styles.checkbox}
-                  checked={!!row && isSelectable(row) && selected.has(transaction.id)}
-                  disabled={!row || !isSelectable(row)}
-                  aria-label={t("budget.import.preview.select", { payee: transaction.payee })}
-                  onCheckedChange={(checked) => onToggle(transaction.id, checked === true)}
-                />
-              );
-            }}
-            renderRowEnd={(transaction) => {
-              const row = rowsById.get(transaction.id);
-              if (!row) return null;
-              return (
-                <span className={styles.rowEnd}>
-                  <Badge variant={STATUS_BADGE[row.status]}>{t(`budget.import.preview.status.${row.status}`)}</Badge>
-                  {isSelectable(row) && (
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      className={styles.editButton}
-                      aria-label={t("budget.import.preview.edit", { payee: transaction.payee })}
-                      onClick={() => onEdit(transaction)}
-                    >
-                      <Pencil aria-hidden="true" />
-                    </Button>
-                  )}
-                </span>
-              );
-            }}
-          />
-        </section>
-      ))}
+      {months.map((month) => {
+        const monthLabel = monthFormat.format(parseISO(`${month}-01`));
+        return (
+          <section key={month} className={styles.month} aria-label={monthLabel}>
+            <h3 className={styles.monthHeading}>{monthLabel}</h3>
+            <BudgetTransactionList
+              days={
+                buildMonthLedger({
+                  month,
+                  // The ledger lists a day's rows last-added first; reversing keeps the file's order
+                  transactions: visibleRows.map((row) => row.transaction).reverse(),
+                  accounts: [],
+                }).days
+              }
+              categories={categories}
+              accounts={accounts}
+              mainCurrency={mainCurrency}
+              isRowMuted={(transaction) => rowsById.get(transaction.id)?.status === "pending"}
+              renderRowStart={(transaction) => {
+                const row = rowsById.get(transaction.id);
+                return (
+                  <ShadcnCheckbox
+                    className={styles.checkbox}
+                    checked={!!row && isSelectable(row) && selected.has(transaction.id)}
+                    disabled={!row || !isSelectable(row)}
+                    aria-label={t("budget.import.preview.select", { payee: transaction.payee })}
+                    onCheckedChange={(checked) => onToggle(transaction.id, checked === true)}
+                  />
+                );
+              }}
+              renderRowEnd={(transaction) => {
+                const row = rowsById.get(transaction.id);
+                if (!row) return null;
+                return (
+                  <span className={styles.rowEnd}>
+                    <Badge variant={STATUS_BADGE[row.status]}>{t(`budget.import.preview.status.${row.status}`)}</Badge>
+                    {isSelectable(row) && (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className={styles.editButton}
+                        aria-label={t("budget.import.preview.edit", { payee: transaction.payee })}
+                        onClick={() => onEdit(transaction)}
+                      >
+                        <Pencil aria-hidden="true" />
+                      </Button>
+                    )}
+                  </span>
+                );
+              }}
+            />
+          </section>
+        );
+      })}
 
       {!showErrors && months.length === 0 && <p className={styles.empty}>{t("budget.import.preview.empty")}</p>}
 

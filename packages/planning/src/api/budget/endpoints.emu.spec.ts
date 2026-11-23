@@ -10,6 +10,7 @@ import {
   getBudgetAccounts,
   getBudgetCategories,
   getBudgetProfile,
+  getAccountTransactions,
   getBudgetTransactions,
   getLockedBudget,
   importBudgetTransactions,
@@ -335,6 +336,11 @@ describe("budget transactions", () => {
       expect.arrayContaining([kept, ...added]),
     );
     expect(added[0]).toMatchObject(imported);
+    // One account's months, read document by document across a year boundary and gaps
+    expect(await getAccountTransactions(budget, accountId, { from: "2025-12", to: "2026-11" })).toEqual(
+      expect.arrayContaining([kept, ...added]),
+    );
+    expect(await getAccountTransactions(budget, accountId, { from: "2026-12", to: "2027-01" })).toEqual([]);
   });
 
   it("fails an import as a whole when one month would exceed the size guard", async () => {
