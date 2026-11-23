@@ -23,3 +23,4 @@ export * from "./useDeleteBudgetTransactionMutation";
 export * from "./useChangeBudgetPassphraseMutation";
 export * from "./useReplaceRecoveryKeyMutation";
 export * from "./useResetBudgetMutation";
+export * from "./useSetBudgetPlanAmountMutation";

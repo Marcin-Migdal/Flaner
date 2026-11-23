@@ -52,3 +52,13 @@ export const budgetMonth = (uid: string, overrides: Record<string, unknown> = {}
   payload: bytes(512),
   ...overrides,
 });
+
+export const PLAN_ID = `${ME}_${MONTH}`;
+
+export const budgetPlan = (uid: string, overrides: Record<string, unknown> = {}) => ({
+  ownerId: uid,
+  month: MONTH,
+  payload: bytes(256),
+  updatedAt: 1,
+  ...overrides,
+});

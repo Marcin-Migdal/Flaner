@@ -109,7 +109,8 @@
       "transactionAdded": "Transaction added",
       "transactionDeleted": "Transaction deleted",
       "saveError": "Couldn't save the transaction. Try again.",
-      "deleteError": "Couldn't delete the transaction. Try again."
+      "deleteError": "Couldn't delete the transaction. Try again.",
+      "planSaveError": "Couldn't save the plan. Try again."
     }
   },
   "errors": {
@@ -744,7 +745,8 @@
       "payeeRequired": "Enter a payee.",
       "payeeMax": "Use at most 120 characters.",
       "descriptionMax": "Use at most 500 characters.",
-      "accountRequired": "Choose an account."
+      "accountRequired": "Choose an account.",
+      "categoryRequired": "Choose a category."
     },
     "transactionsEmpty": {
       "title": "No transactions yet",
@@ -853,6 +855,63 @@
       "title": "Delete this transaction?",
       "description": "\"{{payee}}\" will be removed from your budget. This cannot be undone.",
       "confirm": "Delete"
+    },
+    "planner": {
+      "monthHeader": {
+        "expenses": "Expenses",
+        "income": "Income",
+        "balance": "Balance",
+        "spentOfLimit": "{{spent}} of {{limit}}",
+        "receivedOfPlanned": "{{received}} of {{planned}}",
+        "actual": "Actual",
+        "planned": "Planned"
+      },
+      "sections": {
+        "expenses": "Expenses",
+        "outside": "Outside the plan",
+        "outsideHint": "Spending with no limit · {{amount}}",
+        "income": "Income",
+        "incomeHint": "Received {{received}} of {{planned}} planned"
+      },
+      "stats": {
+        "spent": "Spent",
+        "limit": "Limit",
+        "received": "Received",
+        "plannedIncome": "Planned income"
+      },
+      "addLimit": "Add limit",
+      "addPlannedIncome": "Add planned income",
+      "reviewInTransactions": "Review in Transactions",
+      "uncategorized": "Uncategorized",
+      "shortOfPlan": "Short of plan · {{amount}}",
+      "outsideTag": "Outside the plan",
+      "noLimits": "No limits this month yet. Add one to a category or subcategory.",
+      "noIncome": "No income planned or received this month.",
+      "limitFor": "Limit for {{name}}",
+      "plannedIncomeFor": "Planned income for {{name}}",
+      "openDetails": "Details of {{name}}",
+      "valueText": "{{value}} of {{max}}",
+      "dialog": {
+        "limitTitle": "Add limit",
+        "incomeTitle": "Add planned income",
+        "description": "{{month}} · a category or a single subcategory",
+        "category": "Category",
+        "limit": "Limit",
+        "plannedIncome": "Planned income",
+        "spentHint": "Already spent this month: {{amount}}",
+        "receivedHint": "Already received this month: {{amount}}",
+        "cancel": "Cancel",
+        "save": "Save"
+      },
+      "details": {
+        "removeLimit": "Remove limit",
+        "removePlannedIncome": "Remove planned income",
+        "left": "{{amount}} left",
+        "over": "{{amount}} over the limit",
+        "transactions": "Transactions this month ({{count}})",
+        "noTransactions": "No transactions this month.",
+        "openInTransactions": "Open in Transactions"
+      }
     }
   }
 }

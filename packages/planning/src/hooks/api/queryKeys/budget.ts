@@ -7,6 +7,7 @@ import { monthOfDate } from "../../../utils/monthLedger";
 // - `locked`: the user's stored keys (`budget_keys/{uid}`), read by the Budget gate to pick onboarding or unlock.
 // - `profile` / `categories` / `accounts`: decrypted per-user documents, read behind the gate.
 // - `transactions`: the decrypted transactions of all the user's accounts in one month (one month-range query).
+// - `plan`: the decrypted plan of one month (`budget_plans/{uid}_{month}`), `null` while the month has none.
 export const budgetKeys = {
   all: ["budget"],
   locked: (uid: string) => ["budget", "locked", uid],
@@ -14,6 +15,7 @@ export const budgetKeys = {
   categories: (uid: string) => ["budget", "categories", uid],
   accounts: (uid: string) => ["budget", "accounts", uid],
   transactions: (uid: string, month: BudgetMonth) => ["budget", "transactions", uid, month],
+  plan: (uid: string, month: BudgetMonth) => ["budget", "plan", uid, month],
   /** A published rate (`getExchangeRate`); never changes, so it is never invalidated. */
   exchangeRate: (from: string, to: string, date: string) => ["budget", "exchangeRate", from, to, date],
 };
@@ -23,6 +25,8 @@ export const budgetInvalidation = {
   createBudget: ({ uid }: UserType) => [budgetKeys.locked(uid)],
   /** Adding or deleting a transaction changes its month only. */
   transactionsChanged: ({ uid }: UserType, { date }: { date: string }) => [budgetKeys.transactions(uid, monthOfDate(date))],
+  /** A limit or planned income changes its month's plan only. */
+  planChanged: ({ uid }: UserType, { month }: { month: BudgetMonth }) => [budgetKeys.plan(uid, month)],
   // New salt / wrapped keys: a cached copy would no longer unlock
   rewrapKeys: ({ uid }: UserType) => [budgetKeys.locked(uid)],
 };

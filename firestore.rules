@@ -180,6 +180,32 @@ service cloud.firestore {
     }
 
     // ==========================================
+    // BUDŻET: PLANY MIESIĘCY (BUDGET_PLANS)
+    // ==========================================
+    match /budget_plans/{planId} {
+      // P2 + P3 + P4: owned by the caller, id == ownerId_month, fixed envelope
+      function isValidBudgetPlan() {
+        let data = request.resource.data;
+        return data.keys().hasOnly(['ownerId', 'month', 'payload', 'updatedAt']) &&
+        data.keys().hasAll(['ownerId', 'month', 'payload', 'updatedAt']) &&
+        data.ownerId == request.auth.uid &&
+        data.month is string && data.month.matches('^[0-9]{4}-(0[1-9]|1[0-2])$') &&
+        planId == data.ownerId + '_' + data.month &&
+        data.payload is bytes && data.payload.size() <= 65536 &&
+        data.updatedAt is number;
+      }
+
+      // P1: an existing plan by its owner; a missing one (first limit of the month) when its id is the caller's
+      allow read: if isAuthenticated() && (
+        (resource == null && planId.matches('^' + request.auth.uid + '_[0-9]{4}-(0[1-9]|1[0-2])$')) ||
+        (resource != null && resource.data.ownerId == request.auth.uid)
+      );
+      allow create: if isAuthenticated() && isValidBudgetPlan();
+      allow update: if isAuthenticated() && resource.data.ownerId == request.auth.uid && isValidBudgetPlan();
+      allow delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // ==========================================
     // BUDŻET: PROFIL (BUDGET_PROFILES)
     // ==========================================
     match /budget_profiles/{uid} {
