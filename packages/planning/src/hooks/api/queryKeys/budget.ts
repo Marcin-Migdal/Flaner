@@ -13,11 +13,11 @@ export const budgetKeys = {
   profile: (uid: string) => ["budget", "profile", uid],
   categories: (uid: string) => ["budget", "categories", uid],
   accounts: (uid: string) => ["budget", "accounts", uid],
-  transactions: (uid: string, month: BudgetMonth) => ["budget", "transactions", uid, month],
   /** Prefix of every month's transactions. */
   allTransactions: (uid: string) => ["budget", "transactions", uid],
-  /** Ids of the accounts holding at least one transaction (currency locks in Settings). */
-  accountsWithTransactions: (uid: string) => ["budget", "accountsWithTransactions", uid],
+  transactions: (uid: string, month: BudgetMonth) => [...budgetKeys.allTransactions(uid), month],
+  /** Ids of the accounts holding at least one transaction (currency locks); stale with the accounts. */
+  accountsWithTransactions: (uid: string) => [...budgetKeys.accounts(uid), "withTransactions"],
   /** One account's transaction count (delete confirmation). */
   accountTransactionCount: (uid: string, accountId: string) => ["budget", "accountTransactionCount", uid, accountId],
   /** A published rate (`getExchangeRate`); never changes, so it is never invalidated. */
@@ -37,12 +37,7 @@ export const budgetInvalidation = {
   /** Main account or main currency. */
   profileChanged: ({ uid }: UserType) => [budgetKeys.profile(uid)],
   /** The account's transactions go with it. */
-  accountDeleted: ({ uid }: UserType) => [
-    budgetKeys.accounts(uid),
-    budgetKeys.profile(uid),
-    budgetKeys.accountsWithTransactions(uid),
-    budgetKeys.allTransactions(uid),
-  ],
+  accountDeleted: ({ uid }: UserType) => [budgetKeys.accounts(uid), budgetKeys.profile(uid), budgetKeys.allTransactions(uid)],
   // New salt / wrapped keys: a cached copy would no longer unlock
   rewrapKeys: ({ uid }: UserType) => [budgetKeys.locked(uid)],
 };

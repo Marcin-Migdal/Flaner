@@ -439,7 +439,7 @@ export const updateBudgetAccount = async (
   await runTransaction(fb.firestore, async (transaction) => {
     const profile = (await transaction.get(refs.profile(budget.uid))).data();
     const account = (await transaction.get(refs.account(accountId))).data();
-    if (!account) throw new Error("planning:errors.budget.accountKeyMissing");
+    if (!account) throw new Error("planning:errors.budget.accountNotFound");
     if (hidden && profile?.mainAccountId === accountId) throw new Error("planning:errors.budget.mainAccountLocked");
     if (currencyLocked && defaultCurrency !== account.defaultCurrency) {
       throw new Error("planning:errors.budget.accountHasTransactions");
@@ -457,7 +457,7 @@ export const updateBudgetAccount = async (
 export const setMainBudgetAccount = async ({ uid }: UnlockedBudget, accountId: string): Promise<void> => {
   await runTransaction(fb.firestore, async (transaction) => {
     const account = (await transaction.get(refs.account(accountId))).data();
-    if (!account) throw new Error("planning:errors.budget.accountKeyMissing");
+    if (!account) throw new Error("planning:errors.budget.accountNotFound");
     if (account.hidden) throw new Error("planning:errors.budget.hiddenAccountCannotBeMain");
     transaction.update(refs.profile(uid), { mainAccountId: accountId, updatedAt: Date.now() });
   });

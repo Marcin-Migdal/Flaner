@@ -141,7 +141,8 @@
       "mainAccountLocked": "Konta głównego nie można ukryć ani usunąć. Najpierw ustaw inne konto jako główne.",
       "accountHasTransactions": "To konto ma transakcje, więc nie można zmienić jego waluty.",
       "hiddenAccountCannotBeMain": "Ukryte konto nie może być głównym. Najpierw je pokaż.",
-      "mainCurrencyLocked": "Waluta główna jest zablokowana, bo istnieją transakcje."
+      "mainCurrencyLocked": "Waluta główna jest zablokowana, bo istnieją transakcje.",
+      "accountNotFound": "To konto już nie istnieje. Odśwież stronę."
     }
   },
   "splits": {

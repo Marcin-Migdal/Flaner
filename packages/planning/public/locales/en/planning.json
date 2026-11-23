@@ -141,7 +141,8 @@
       "mainAccountLocked": "The main account can't be hidden or deleted. Make another account main first.",
       "accountHasTransactions": "This account has transactions, so its currency can't be changed.",
       "hiddenAccountCannotBeMain": "A hidden account can't be the main account. Show it first.",
-      "mainCurrencyLocked": "The main currency is locked because transactions exist."
+      "mainCurrencyLocked": "The main currency is locked because transactions exist.",
+      "accountNotFound": "This account no longer exists. Reload the page."
     }
   },
   "splits": {

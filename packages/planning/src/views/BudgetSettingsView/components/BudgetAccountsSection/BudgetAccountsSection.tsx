@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   EmptyState,
+  ListItem,
   LoadingFallback,
   Select,
   type SelectOption,
@@ -104,13 +105,13 @@ export const BudgetAccountsSection = () => {
           {sorted.map((account) => {
             const isMain = account.id === mainAccountId;
             return (
-              <li key={account.id} className={styles.row}>
-                <span className={styles.icon}>
-                  <Wallet aria-hidden="true" />
-                </span>
-                <div className={styles.text}>
-                  <div className={styles.nameLine}>
-                    <h3 className={styles.name}>{account.name}</h3>
+              <ListItem
+                key={account.id}
+                asChild
+                leading={<Wallet aria-hidden="true" />}
+                title={
+                  <span className={styles.nameLine}>
+                    {account.name}
                     {isMain && (
                       <Badge variant="brand" size="md">
                         {t("budget.accounts.main")}
@@ -121,47 +122,51 @@ export const BudgetAccountsSection = () => {
                         {t("budget.accounts.hidden")}
                       </Badge>
                     )}
-                  </div>
-                  <p className={styles.meta}>{account.defaultCurrency}</p>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={t("budget.accounts.actions", { name: account.name })}
-                      disabled={!isOnline}
-                    >
-                      <MoreHorizontal aria-hidden="true" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className={styles.menu}>
-                    <DropdownMenuItem onClick={() => setDialog({ mode: "edit", account })}>
-                      <Pencil aria-hidden="true" />
-                      {t("budget.accounts.edit")}
-                    </DropdownMenuItem>
-                    {/* The main account is never hidden or deleted, and a hidden account never made main */}
-                    {!isMain && !account.hidden && (
-                      <DropdownMenuItem onClick={() => void run(() => setMainAccount(account.id))}>
-                        <Star aria-hidden="true" />
-                        {t("budget.accounts.makeMain")}
+                  </span>
+                }
+                description={account.defaultCurrency}
+                trailing={
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t("budget.accounts.actions", { name: account.name })}
+                        disabled={!isOnline}
+                      >
+                        <MoreHorizontal aria-hidden="true" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className={styles.menu}>
+                      <DropdownMenuItem onClick={() => setDialog({ mode: "edit", account })}>
+                        <Pencil aria-hidden="true" />
+                        {t("budget.accounts.edit")}
                       </DropdownMenuItem>
-                    )}
-                    {!isMain && (
-                      <DropdownMenuItem onClick={() => void setHidden(account, !account.hidden)}>
-                        {account.hidden ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}
-                        {t(account.hidden ? "budget.accounts.show" : "budget.accounts.hide")}
-                      </DropdownMenuItem>
-                    )}
-                    {!isMain && (
-                      <DropdownMenuItem className={styles.destructiveItem} onClick={() => setToDelete(account)}>
-                        <Trash2 aria-hidden="true" />
-                        {t("budget.accounts.delete.action")}
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </li>
+                      {/* The main account is never hidden or deleted, and a hidden account never made main */}
+                      {!isMain && (
+                        <>
+                          {!account.hidden && (
+                            <DropdownMenuItem onClick={() => void run(() => setMainAccount(account.id))}>
+                              <Star aria-hidden="true" />
+                              {t("budget.accounts.makeMain")}
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={() => void setHidden(account, !account.hidden)}>
+                            {account.hidden ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}
+                            {t(account.hidden ? "budget.accounts.show" : "budget.accounts.hide")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className={styles.destructiveItem} onClick={() => setToDelete(account)}>
+                            <Trash2 aria-hidden="true" />
+                            {t("budget.accounts.delete.action")}
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                }
+              >
+                <li />
+              </ListItem>
             );
           })}
         </ul>

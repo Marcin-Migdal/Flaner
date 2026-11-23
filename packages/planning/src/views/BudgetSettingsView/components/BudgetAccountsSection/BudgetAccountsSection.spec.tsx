@@ -80,7 +80,6 @@ const renderSection = async () => {
   return userEvent.setup();
 };
 
-const rowNames = () => screen.getAllByRole("heading", { level: 3 }).map(({ textContent }) => textContent);
 
 const openMenu = async (events: ReturnType<typeof userEvent.setup>, name: string) => {
   await events.click(screen.getByRole("button", { name: `Actions for ${name}` }));
@@ -94,10 +93,10 @@ describe("BudgetAccountsSection", () => {
   it("lists the main account first, then the rest alphabetically, marking main and hidden", async () => {
     await renderSection();
 
-    expect(rowNames()).toEqual(["mBank", "cash", "Savings"]);
-    const [main, , savings] = screen.getAllByRole("listitem");
-    expect(within(main).getByText("Main")).toBeInTheDocument();
-    expect(within(savings).getByText("Hidden")).toBeInTheDocument();
+    const [main, cash, savings] = screen.getAllByRole("listitem");
+    expect(main).toHaveTextContent(/^mBankMainPLN$/);
+    expect(cash).toHaveTextContent(/^cashPLN$/);
+    expect(savings).toHaveTextContent(/^SavingsHiddenPLN$/);
   });
 
   it("offers the main account only Edit; another account can be made main, hidden or deleted", async () => {

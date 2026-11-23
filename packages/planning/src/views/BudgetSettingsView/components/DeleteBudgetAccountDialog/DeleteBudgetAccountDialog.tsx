@@ -41,7 +41,7 @@ export const DeleteBudgetAccountDialog = ({ account, onClose, onHide, actionsDis
     }
   };
 
-  const describe = () => {
+  const descriptionText = () => {
     if (count.isPending) return t("budget.accounts.delete.counting");
     if (count.isError) return t("budget.accounts.delete.countUnavailable");
     return t("budget.accounts.delete.description", { name: account?.name, count: count.data });
@@ -52,7 +52,7 @@ export const DeleteBudgetAccountDialog = ({ account, onClose, onHide, actionsDis
       <DialogContent showCloseButton={!isPending}>
         <DialogHeader>
           <DialogTitle>{t("budget.accounts.delete.title", { name: account?.name })}</DialogTitle>
-          <DialogDescription aria-live="polite">{describe()}</DialogDescription>
+          <DialogDescription aria-live="polite">{descriptionText()}</DialogDescription>
         </DialogHeader>
         {!account?.hidden && <p className={styles.hint}>{t("budget.accounts.delete.hideHint")}</p>}
         <DialogFooter>
