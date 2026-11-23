@@ -1,7 +1,7 @@
 import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { PlanProgressBar } from "@flaner/ui-components";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
-import type { PlannerMonth } from "../../../../utils/monthLedger";
+import type { PlannerMonth } from "../../../../utils/plannerMonth";
 import { plannerMonthHeaderStyles as styles } from "./PlannerMonthHeader.styles";
 
 export type PlannerMonthHeaderProps = { planner: PlannerMonth; mainCurrency: string };

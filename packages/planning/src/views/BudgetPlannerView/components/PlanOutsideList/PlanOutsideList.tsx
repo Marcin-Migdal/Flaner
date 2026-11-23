@@ -6,7 +6,7 @@ import { Link } from "react-router";
 import type { BudgetCategoryType } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { BUDGET_CATEGORY_COLOR_CLASSES, BUDGET_CATEGORY_ICON_COMPONENTS } from "../../../../utils/budgetCategoryIcons";
-import type { OutsideRow } from "../../../../utils/monthLedger";
+import type { OutsideRow } from "../../../../utils/plannerMonth";
 import { planOutsideListStyles as styles } from "./PlanOutsideList.styles";
 
 export type PlanOutsideListProps = {

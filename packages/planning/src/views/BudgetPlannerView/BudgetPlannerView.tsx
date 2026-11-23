@@ -4,7 +4,7 @@ import { format, parseISO } from "date-fns";
 import { Plus, WifiOff } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
-import type { BudgetCategoryTree, BudgetCategoryType, BudgetMonth } from "../../api/budget";
+import type { BudgetCategoryType, BudgetMonth } from "../../api/budget";
 import { BudgetMonthSwitcher } from "../../components/BudgetMonthSwitcher";
 import { BudgetOfflineBanner } from "../../components/BudgetOfflineBanner";
 import { useSetBudgetPlanAmountMutation } from "../../hooks/api/mutation";
@@ -18,7 +18,7 @@ import {
 import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
 import { useIsOnline } from "../../hooks/useIsOnline";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
-import { buildPlannerMonth, type PlannerMonth } from "../../utils/monthLedger";
+import { buildPlannerMonth, findPlannerRow } from "../../utils/plannerMonth";
 import {
   AddPlanAmountDialog,
   PlanCategoryCard,
@@ -26,43 +26,12 @@ import {
   PlannerMonthHeader,
   PlanOutsideList,
   type AddPlanAmountPreset,
-  type PlanDetail,
 } from "./components";
 import { budgetPlannerViewStyles as styles } from "./BudgetPlannerView.styles";
 
 const MONTH_PARAM = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 type Selection = { type: BudgetCategoryType; categoryId: string };
-
-/** The row a details sheet shows: the category or subcategory's numbers wherever it sits this month. */
-const findDetail = (
-  planner: PlannerMonth,
-  categories: BudgetCategoryTree,
-  { type, categoryId }: Selection,
-): PlanDetail | null => {
-  const side = type === "expense" ? planner.expenses : planner.income;
-  for (const category of categories[type]) {
-    const subcategory = category.subcategories.find((sub) => sub.id === categoryId) ?? null;
-    if (category.id !== categoryId && !subcategory) continue;
-
-    const base = {
-      type,
-      categoryId,
-      name: (subcategory ?? category).name,
-      parentName: subcategory ? category.name : null,
-      color: category.color,
-    };
-    const card = side.cards.find((candidate) => candidate.category.id === category.id);
-    const line = card?.lines.find((candidate) => candidate.subcategory.id === categoryId);
-    if (line) return { ...base, spent: line.spent, target: line.target, transactions: line.transactions };
-    if (card && !subcategory) {
-      return { ...base, spent: card.spent, target: card.target, transactions: card.transactions };
-    }
-    const row = side.outside.find((candidate) => candidate.id === categoryId);
-    return { ...base, spent: row?.spent ?? 0, target: null, transactions: row?.transactions ?? [] };
-  }
-  return null;
-};
 
 /** `/planning/budget/planner?month=YYYY-MM`: the month's limits against its spending, and planned income. */
 export const BudgetPlannerView = () => {
@@ -124,9 +93,8 @@ export const BudgetPlannerView = () => {
       throw error;
     }
   };
-  // Inline fields: the toast reports a failure, nothing else waits for it
   const changeAmount = (type: BudgetCategoryType) => (categoryId: string, amount: number | null) =>
-    void saveAmount(type, categoryId, amount).catch(() => undefined);
+    saveAmount(type, categoryId, amount);
   const openDetails = (type: BudgetCategoryType) => (categoryId: string) => setSelection({ type, categoryId });
 
   const isLoading =
@@ -144,6 +112,7 @@ export const BudgetPlannerView = () => {
       return <EmptyState title={t("errors.fetchError", { ns: "common" })} />;
     }
     const { mainCurrency } = profile.data;
+    const selectedRow = selection && findPlannerRow(planner, categories.data, selection.type, selection.categoryId);
 
     return (
       <>
@@ -267,11 +236,11 @@ export const BudgetPlannerView = () => {
           monthLabel={monthLabel}
           isSaving={isSaving}
           saveDisabled={writesDisabled}
-          onSave={(categoryId, amount) => saveAmount(addPreset?.type ?? "expense", categoryId, amount)}
+          onSave={saveAmount}
         />
 
         <PlanDetailsSheet
-          detail={selection && findDetail(planner, categories.data, selection)}
+          detail={selectedRow && selection && { ...selectedRow, ...selection }}
           onClose={() => setSelection(null)}
           accounts={accounts.data}
           mainCurrency={mainCurrency}

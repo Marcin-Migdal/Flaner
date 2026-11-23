@@ -143,6 +143,19 @@ describe("BudgetPlannerView", () => {
     );
   });
 
+  it("puts the saved limit back in the field when saving fails", async () => {
+    setUp({ plan: plan({ limits: { groceries: 100000 } }) });
+    vi.mocked(budgetApi.setBudgetPlanAmount).mockRejectedValue(new Error("planning:errors.budget.keyChanged"));
+    const userEvents = userEvent.setup();
+    renderView();
+
+    const field = await screen.findByRole("spinbutton", { name: "Limit for Groceries" });
+    await userEvents.clear(field);
+    await userEvents.type(field, "5{Enter}");
+
+    await waitFor(() => expect(field).toHaveValue(1000));
+  });
+
   it("adds a limit from Outside the plan, defaulting to what's spent", async () => {
     setUp({ transactions: [tx("coffee", 6400)] });
     const userEvents = userEvent.setup();

@@ -34,8 +34,8 @@ export type AddPlanAmountDialogProps = {
   mainCurrency: string;
   /** The month's label (e.g. "November 2026"). */
   monthLabel: string;
-  /** Saves the amount (minor units); rejects to keep the dialog open. */
-  onSave: (categoryId: string, amount: number) => Promise<void>;
+  /** Saves the amount (minor units) of the preset's type; rejects to keep the dialog open. */
+  onSave: (type: BudgetCategoryType, categoryId: string, amount: number) => Promise<void>;
   isSaving?: boolean;
   saveDisabled?: boolean;
 };
@@ -76,8 +76,9 @@ export const AddPlanAmountDialog = ({
   const { field: categoryField, fieldState: categoryState } = useController({ control, name: "categoryId" });
 
   const onSubmit = async ({ categoryId, amount }: BudgetPlanAmountFormData) => {
+    if (!preset) return;
     try {
-      await onSave(categoryId, toMinorUnits(amount));
+      await onSave(preset.type, categoryId, toMinorUnits(amount));
       onClose();
     } catch {
       // The caller shows the error toast; the dialog stays open for another try

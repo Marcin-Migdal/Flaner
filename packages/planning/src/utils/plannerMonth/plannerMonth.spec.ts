@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { BudgetAccount, BudgetCategoryTree, BudgetPlan, BudgetTransaction } from "../../api/budget";
-import { buildMonthLedger } from "./monthLedger";
-import { buildPlannerMonth } from "./plannerMonth";
+import { buildMonthLedger } from "../monthLedger";
+import { buildPlannerMonth, findPlannerRow } from "./plannerMonth";
 
 const accounts: BudgetAccount[] = [
   { id: "main", name: "mBank", defaultCurrency: "PLN", hidden: false, createdAt: 1 },
@@ -217,5 +217,24 @@ describe("buildPlannerMonth: income mirror", () => {
 
     expect(planner.income.cards).toEqual([]);
     expect(planner.expenses.cards.map((card) => card.category.id)).toEqual(["food"]);
+  });
+});
+
+describe("findPlannerRow", () => {
+  it("finds a category or subcategory wherever it sits this month: card, line or Outside the plan", () => {
+    const groceries = tx("groceries", 4000);
+    const coffee = tx("coffee", 700);
+    const planner = build([tx("food", 1000), groceries, coffee], plan({ limits: { food: 15000, groceries: 10000 } }));
+    const row = (type: "expense" | "income", id: string) => {
+      const found = findPlannerRow(planner, categories, type, id);
+      return found && [found.category.id, found.subcategory?.id ?? null, found.spent, found.target];
+    };
+
+    expect(row("expense", "food")).toEqual(["food", null, 5000, 15000]);
+    expect(row("expense", "groceries")).toEqual(["food", "groceries", 4000, 10000]);
+    expect(findPlannerRow(planner, categories, "expense", "groceries")?.transactions).toEqual([groceries]);
+    expect(row("expense", "coffee")).toEqual(["food", "coffee", 700, null]);
+    expect(row("expense", "parking")).toEqual(["transport", "parking", 0, null]);
+    expect(row("income", "food")).toBeNull();
   });
 });

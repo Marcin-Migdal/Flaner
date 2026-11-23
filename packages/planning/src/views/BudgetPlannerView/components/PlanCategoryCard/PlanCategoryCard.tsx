@@ -4,7 +4,7 @@ import { Badge, PlanProgressBar } from "@flaner/ui-components";
 import type { BudgetCategoryType } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { BUDGET_CATEGORY_COLOR_CLASSES, BUDGET_CATEGORY_ICON_COMPONENTS } from "../../../../utils/budgetCategoryIcons";
-import type { PlanCard } from "../../../../utils/monthLedger";
+import type { PlanCard } from "../../../../utils/plannerMonth";
 import { PlanAmountField } from "../PlanAmountField";
 import { planCategoryCardStyles as styles } from "./PlanCategoryCard.styles";
 
@@ -13,7 +13,7 @@ export type PlanCategoryCardProps = {
   type: BudgetCategoryType;
   mainCurrency: string;
   /** Sets (`amount`) or removes (`null`) the target of a category or subcategory. */
-  onAmountChange: (categoryId: string, amount: number | null) => void;
+  onAmountChange: (categoryId: string, amount: number | null) => Promise<void>;
   /** Opens the details sheet of a category or subcategory. */
   onOpen: (categoryId: string) => void;
   disabled?: boolean;

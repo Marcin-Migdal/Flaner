@@ -18,26 +18,15 @@ import {
 import { parseISO } from "date-fns";
 import { Trash2 } from "lucide-react";
 import { Link } from "react-router";
-import type { BudgetAccount, BudgetCategoryType, BudgetTransaction, ChartColorIndex } from "../../../../api/budget";
+import type { BudgetAccount, BudgetCategoryType } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { signedAmount } from "../../../../utils/monthLedger";
+import type { PlannerRow } from "../../../../utils/plannerMonth";
 import { PlanAmountField } from "../PlanAmountField";
 import { planDetailsSheetStyles as styles } from "./PlanDetailsSheet.styles";
 
 /** One category or subcategory of the month, as the details sheet shows it. */
-export type PlanDetail = {
-  type: BudgetCategoryType;
-  categoryId: string;
-  name: string;
-  /** The category's name for a subcategory. */
-  parentName: string | null;
-  color: ChartColorIndex;
-  /** Spent (or received) counted against `target` (the card's or line's), else the row's own. */
-  spent: number;
-  /** Its own limit / planned income. */
-  target: number | null;
-  transactions: BudgetTransaction[];
-};
+export type PlanDetail = PlannerRow & { type: BudgetCategoryType; categoryId: string };
 
 export type PlanDetailsSheetProps = {
   /** `null`: closed. */
@@ -48,7 +37,7 @@ export type PlanDetailsSheetProps = {
   monthLabel: string;
   /** The month in Transactions. */
   transactionsHref: string;
-  onAmountChange: (detail: PlanDetail, amount: number | null) => void;
+  onAmountChange: (detail: PlanDetail, amount: number | null) => Promise<void>;
   disabled?: boolean;
 };
 
@@ -70,7 +59,9 @@ export const PlanDetailsSheet = ({
   const accountNames = new Map(accounts.map((account) => [account.id, account.name]));
 
   const renderBody = (detail: PlanDetail) => {
-    const { type, name, color, spent, target, transactions } = detail;
+    const { type, spent, target, transactions } = detail;
+    const name = (detail.subcategory ?? detail.category).name;
+    const { color } = detail.category;
     const isExpense = type === "expense";
     const isOver = isExpense && target !== null && spent > target;
     const targetLabel = t(isExpense ? "budget.planner.stats.limit" : "budget.planner.stats.plannedIncome");
@@ -133,7 +124,8 @@ export const PlanDetailsSheet = ({
                   size="icon"
                   aria-label={removeLabel}
                   disabled={disabled}
-                  onClick={() => onAmountChange(detail, null)}
+                  // The No connection toast reports a failure
+                  onClick={() => void onAmountChange(detail, null).catch(() => undefined)}
                 >
                   <Trash2 aria-hidden="true" />
                 </Button>
@@ -185,8 +177,8 @@ export const PlanDetailsSheet = ({
         <SidePanel
           side={isMobile ? "bottom" : "right"}
           className={styles.content}
-          title={detail.name}
-          description={[detail.parentName, monthLabel].filter(Boolean).join(" · ")}
+          title={(detail.subcategory ?? detail.category).name}
+          description={[detail.subcategory ? detail.category.name : null, monthLabel].filter(Boolean).join(" · ")}
         >
           {renderBody(detail)}
         </SidePanel>

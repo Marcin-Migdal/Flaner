@@ -6,7 +6,7 @@ import type {
   BudgetSubcategory,
   BudgetTransaction,
 } from "../../api/budget";
-import { buildMonthLedger, resolveTransactionCategory, type MonthLedgerInput, type MonthTotals } from "./monthLedger";
+import { buildMonthLedger, resolveTransactionCategory, type MonthLedgerInput, type MonthTotals } from "../monthLedger";
 
 /**
  * The Planner's view of the month ledger (GLOSSARY → Planner, Limit, Outside the plan, Planned income). Built on
@@ -152,4 +152,40 @@ export const buildPlannerMonth = ({ categories, plan, ...ledgerInput }: PlannerM
   const expenses = buildSide(categories, "expense", plan?.limits ?? {}, counted);
   const income = buildSide(categories, "income", plan?.plannedIncome ?? {}, counted);
   return { totals, expenses, income, plannedBalance: income.planned - expenses.planned };
+};
+
+/** A category or subcategory as the Planner shows it this month: in a card, as a line or outside the plan. */
+export type PlannerRow = {
+  category: BudgetCategory;
+  /** `null` for the category itself. */
+  subcategory: BudgetSubcategory | null;
+  /** Counted against `target` in a card or line; the row's own amount outside the plan. */
+  spent: number;
+  /** Its own limit / planned income. */
+  target: number | null;
+  transactions: BudgetTransaction[];
+};
+
+/** The row of a category or subcategory of `type`'s tree; `null` when the id is not in that tree. */
+export const findPlannerRow = (
+  planner: PlannerMonth,
+  tree: BudgetCategoryTree,
+  type: BudgetCategoryType,
+  categoryId: string,
+): PlannerRow | null => {
+  const side = type === "expense" ? planner.expenses : planner.income;
+  for (const category of tree[type]) {
+    const subcategory = category.subcategories.find((sub) => sub.id === categoryId) ?? null;
+    if (category.id !== categoryId && !subcategory) continue;
+
+    const card = side.cards.find((candidate) => candidate.category.id === category.id);
+    const line = card?.lines.find((candidate) => candidate.subcategory.id === categoryId);
+    if (line) return { category, subcategory, spent: line.spent, target: line.target, transactions: line.transactions };
+    if (card && !subcategory && card.target !== null) {
+      return { category, subcategory, spent: card.spent, target: card.target, transactions: card.transactions };
+    }
+    const row = side.outside.find((candidate) => candidate.id === categoryId);
+    return { category, subcategory, spent: row?.spent ?? 0, target: null, transactions: row?.transactions ?? [] };
+  }
+  return null;
 };
