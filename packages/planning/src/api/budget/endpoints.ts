@@ -424,6 +424,47 @@ export const addBudgetTransaction = async (
   return { id, ...input };
 };
 
+/**
+ * Adds an import's transactions in one transaction: every affected month is read, then written. An import that
+ * would push any month over the size guard fails as a whole with `errors.budget.importTooLarge`.
+ */
+export const importBudgetTransactions = async (
+  budget: UnlockedBudget,
+  inputs: BudgetTransactionInput[],
+): Promise<BudgetTransaction[]> => {
+  const added = inputs.map((input): BudgetTransaction => ({ id: crypto.randomUUID(), ...input }));
+  const byMonth = new Map<string, { accountId: string; month: BudgetMonth; stored: BudgetMonthPayload["transactions"] }>();
+  for (const { accountId, ...stored } of added) {
+    const month = monthOfDate(stored.date);
+    const key = paths.month(accountId, month);
+    const group = byMonth.get(key) ?? { accountId, month, stored: [] };
+    group.stored.push(stored);
+    byMonth.set(key, group);
+  }
+
+  await runTransaction(fb.firestore, async (transaction) => {
+    // A Firestore transaction reads everything before its first write
+    const months = await Promise.all(
+      [...byMonth.values()].map(async (group) => ({
+        ...group,
+        payload: await readMonth(transaction, budget, group.accountId, group.month),
+      })),
+    );
+    for (const { accountId, month, stored, payload } of months) {
+      try {
+        await writeMonth(transaction, budget, accountId, month, { transactions: [...payload.transactions, ...stored] });
+      } catch (error) {
+        if (error instanceof Error && error.message === "planning:errors.budget.monthTooLarge") {
+          throw new Error("planning:errors.budget.importTooLarge");
+        }
+        throw error;
+      }
+    }
+  });
+
+  return added;
+};
+
 export const deleteBudgetTransaction = async (
   budget: UnlockedBudget,
   { id, accountId, date }: BudgetTransactionRef,

@@ -102,6 +102,12 @@ export type BudgetTransaction = {
   categoryId: string | null;
   confirmed: boolean;
   excluded: boolean;
+  /** Imported only: the frozen dedup hash of its statement row (`computeImportHashes`), kept through every edit. */
+  importHash?: string;
+  /** Imported only: the name of the statement file it came from. */
+  sourceFile?: string;
+  /** The counterparty's bank account number (digits only), when the statement gives one. */
+  counterpartyAccount?: string;
 };
 
 /** A new transaction; the API gives it its id. */

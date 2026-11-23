@@ -3,6 +3,7 @@ import { cn } from "@flaner/shared/utils";
 import { Button } from "@flaner/ui-components";
 import { parseISO } from "date-fns";
 import { CircleHelp, Trash2 } from "lucide-react";
+import type { ReactNode } from "react";
 import type { BudgetAccount, BudgetCategoryTree, BudgetTransaction } from "../../api/budget";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { BUDGET_CATEGORY_COLOR_CLASSES, BUDGET_CATEGORY_ICON_COMPONENTS } from "../../utils/budgetCategoryIcons";
@@ -19,6 +20,12 @@ export type BudgetTransactionListProps = {
   onDelete?: (transaction: BudgetTransaction) => void;
   /** Disables the row actions (e.g. offline). */
   actionsDisabled?: boolean;
+  /** Content before a row's icon (e.g. the import preview's checkbox). */
+  renderRowStart?: (transaction: BudgetTransaction) => ReactNode;
+  /** Content after a row's amounts (e.g. the import preview's status and edit action). */
+  renderRowEnd?: (transaction: BudgetTransaction) => ReactNode;
+  /** Greys a row out (e.g. a pending card hold in the import preview). */
+  isRowMuted?: (transaction: BudgetTransaction) => boolean;
 };
 
 /** The Budget's transaction rows grouped by day, each day with its net. Shared by Transactions and the import preview. */
@@ -29,6 +36,9 @@ export const BudgetTransactionList = ({
   mainCurrency,
   onDelete,
   actionsDisabled,
+  renderRowStart,
+  renderRowEnd,
+  isRowMuted,
 }: BudgetTransactionListProps) => {
   const { t, i18n } = usePlanningTranslations();
   const { format } = useMoneyFormatter();
@@ -60,7 +70,8 @@ export const BudgetTransactionList = ({
               const isIncome = transaction.type === "income";
 
               return (
-                <li key={transaction.id} className={styles.row}>
+                <li key={transaction.id} className={cn(styles.row, isRowMuted?.(transaction) && styles.muted)}>
+                  {renderRowStart?.(transaction)}
                   <span className={styles.icon}>
                     <Icon
                       aria-hidden="true"
@@ -83,6 +94,7 @@ export const BudgetTransactionList = ({
                       </span>
                     )}
                   </span>
+                  {renderRowEnd?.(transaction)}
                   {onDelete && (
                     <Button
                       variant="ghost"
