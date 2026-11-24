@@ -1,5 +1,6 @@
 export const budgetSettingsViewStyles = {
-  root: "max-w-6xl mx-auto py-4 space-y-6",
+  // w-full: in the shell's flex column, auto margins would otherwise size the page to its content
+  root: "w-full max-w-6xl mx-auto py-4 space-y-6",
   tabsList: "bg-muted/40 border border-border/50 p-1 rounded-xl",
   tabContent: "space-y-8 pt-4",
 };

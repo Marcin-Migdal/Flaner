@@ -1061,7 +1061,7 @@
       "makeMain": "Ustaw jako główne",
       "hide": "Ukryj",
       "show": "Pokaż",
-      "hiddenHint": "Transakcje ukrytego konta nie są wliczane do listy, sum, Planera ani wykresów, dopóki nie wybierzesz go w filtrze Konta. Nadal możesz do niego importować i dodawać transakcje.",
+      "hiddenHint": "Transakcje ukrytego konta nie są wliczane do listy transakcji, sum, Planera ani wykresów. Pokaż konto, aby znów je zobaczyć. Nadal możesz do niego importować i dodawać transakcje.",
       "form": {
         "addTitle": "Dodaj konto",
         "addDescription": "Śledź kolejne konto bankowe, kartę lub gotówkę.",

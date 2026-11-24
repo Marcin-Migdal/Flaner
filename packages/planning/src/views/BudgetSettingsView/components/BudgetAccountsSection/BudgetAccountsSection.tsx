@@ -111,7 +111,7 @@ export const BudgetAccountsSection = () => {
                 leading={<Wallet aria-hidden="true" />}
                 title={
                   <span className={styles.nameLine}>
-                    {account.name}
+                    <span className={styles.name}>{account.name}</span>
                     {isMain && (
                       <Badge variant="brand" size="md">
                         {t("budget.accounts.main")}

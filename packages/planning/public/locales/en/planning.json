@@ -1043,7 +1043,7 @@
       "makeMain": "Make main",
       "hide": "Hide",
       "show": "Show",
-      "hiddenHint": "A hidden account's transactions are left out of the list, totals, Planner and charts until you pick it in the Accounts filter. You can still import into it and add transactions to it.",
+      "hiddenHint": "A hidden account's transactions are left out of the Transactions list, totals, Planner and charts. Show the account to see them again. You can still import into it and add transactions to it.",
       "form": {
         "addTitle": "Add account",
         "addDescription": "Track another bank account, card or cash.",
