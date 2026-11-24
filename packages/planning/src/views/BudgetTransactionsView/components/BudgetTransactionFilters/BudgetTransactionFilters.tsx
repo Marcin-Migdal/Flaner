@@ -42,7 +42,7 @@ const keepOpen = (event: Event) => event.preventDefault();
 const FilterMenu = ({ label, count, children }: { label: string; count: number; children: ReactNode }) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
-      <Button variant="outline" size="lg" className={cn(count > 0 && styles.activeTrigger)}>
+      <Button type="button" variant="outline" size="lg" className={cn(count > 0 && styles.activeTrigger)}>
         {label}
         {count > 0 && <span className={styles.count}>{count}</span>}
         <ChevronDown aria-hidden="true" />
@@ -159,7 +159,7 @@ export const BudgetTransactionFilters = ({ filters, onChange, accounts, categori
       </FilterMenu>
 
       {hasActiveTransactionFilters(filters) && (
-        <Button variant="ghost" size="lg" onClick={() => onChange(DEFAULT_TRANSACTION_FILTERS)}>
+        <Button type="button" variant="ghost" size="lg" onClick={() => onChange(DEFAULT_TRANSACTION_FILTERS)}>
           <X aria-hidden="true" />
           {t("budget.transactionFilters.clear")}
         </Button>

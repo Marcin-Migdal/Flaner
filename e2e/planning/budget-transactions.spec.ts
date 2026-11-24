@@ -6,6 +6,7 @@ import { BudgetTransactionsPage } from "../support/pages/BudgetTransactions.page
 
 const PASSPHRASE = "purple tractor sings loudly";
 const PAYEE = "Secret corner shop";
+const LONG_PAYEE = "Newsagent and tobacconist at the central railway station";
 
 test.describe("Budget manual transactions", () => {
   test("a transaction added by hand is listed, stored encrypted, kept after unlock and deleted after confirmation", async ({
@@ -62,12 +63,18 @@ test.describe("Budget manual transactions", () => {
     await expect(transactions.addDialog).toBeHidden();
 
     // Inline edit, saved encrypted and kept after a reload
-    await transactions.payeeField("Kiosk").fill("Newsagent");
+    await transactions.payeeField("Kiosk").fill(LONG_PAYEE);
     await transactions.payeeField("Kiosk").press("Enter");
-    await expect(transactions.row("Newsagent")).toBeVisible();
+    await expect(transactions.row(LONG_PAYEE)).toBeVisible();
     await page.reload();
     await gate.unlock(PASSPHRASE);
-    await expect(transactions.row("Newsagent")).toBeVisible();
+    await expect(transactions.row(LONG_PAYEE)).toBeVisible();
+
+    // A long payee never widens the page on a 375 px phone (it is truncated instead)
+    await page.setViewportSize({ width: 375, height: 812 });
+    await expect(page.getByRole("main").getByRole("listitem").first()).toBeVisible();
+    expect(await page.getByRole("main").evaluate((main) => main.scrollWidth - main.clientWidth)).toBeLessThanOrEqual(0);
+    await page.setViewportSize({ width: 1280, height: 720 });
 
     // Both were added without a category, so both are unconfirmed; Confirmed hides them
     await page.getByRole("button", { name: /^(type|typ)$/i }).click();
@@ -77,7 +84,19 @@ test.describe("Budget manual transactions", () => {
     await expect(page).toHaveURL(/status=confirmed/);
     await page.getByRole("main").getByRole("button", { name: /^(clear filters|wyczyść filtry)$/i }).first().click();
 
-    await transactions.selectRow("Newsagent");
+    await transactions.selectRow(LONG_PAYEE);
+    await transactions.selectRow("Bakery");
+    // Bulk Set category picked with the keyboard: Enter chooses the option and keeps the dialog open
+    await transactions.bulkActions.getByRole("button", { name: /^(set category|ustaw kategorię)$/i }).click();
+    const categoryDialog = page.getByRole("dialog", { name: /^(set the category of 2 transactions|ustaw kategorię 2 transakcji)$/i });
+    await categoryDialog.getByLabel(/^(category|kategoria)$/i).fill("Shopping");
+    await page.keyboard.press("Enter");
+    await expect(categoryDialog).toBeVisible();
+    await categoryDialog.getByRole("button", { name: /^(set category|ustaw kategorię)$/i }).click();
+    await expect(categoryDialog).toBeHidden();
+    await expect(transactions.row("Bakery").getByRole("button", { name: /^(confirm category|potwierdź kategorię)/i })).toHaveCount(0);
+
+    await transactions.selectRow(LONG_PAYEE);
     await transactions.selectRow("Bakery");
     await transactions.bulkDelete();
     await expect(transactions.emptyStateTitle).toBeVisible();

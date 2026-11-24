@@ -1,4 +1,5 @@
 import { useMoneyFormatter } from "@flaner/shared/hooks";
+import { cn } from "@flaner/shared/utils";
 import { Button } from "@flaner/ui-components";
 import { parseISO } from "date-fns";
 import { Pencil, Trash2 } from "lucide-react";
@@ -43,8 +44,9 @@ export const TransactionDetails = ({
       })
     : format(transaction.amount, transaction.currency);
 
-  const details: [string, string][] = [
-    [t("budget.transactionDetails.date"), dateFormat.format(parseISO(transaction.date))],
+  // [term, value, value class]: only the date is capitalised (a weekday name); a file name is shown as is
+  const details: [string, string, string?][] = [
+    [t("budget.transactionDetails.date"), dateFormat.format(parseISO(transaction.date)), styles.dateValue],
     [t("budget.transactionDetails.account"), accountName],
     [t("budget.transactionDetails.source"), transaction.sourceFile ?? t("budget.transactionDetails.manual")],
     [t("budget.transactionDetails.amount"), amountSplit],
@@ -54,10 +56,10 @@ export const TransactionDetails = ({
     <div className={styles.root}>
       {children}
       <dl className={styles.list}>
-        {details.map(([term, value]) => (
+        {details.map(([term, value, valueClass]) => (
           <div key={term} className={styles.item}>
             <dt className={styles.term}>{term}</dt>
-            <dd className={styles.value}>{value}</dd>
+            <dd className={cn(styles.value, valueClass)}>{value}</dd>
           </div>
         ))}
       </dl>
@@ -65,13 +67,13 @@ export const TransactionDetails = ({
       {(onEdit || onDelete) && (
         <div className={styles.actions}>
           {onEdit && (
-            <Button variant="outline" size="sm" disabled={actionsDisabled} onClick={onEdit}>
+            <Button type="button" variant="outline" size="sm" disabled={actionsDisabled} onClick={onEdit}>
               <Pencil aria-hidden="true" />
               {t("budget.transactionDetails.edit")}
             </Button>
           )}
           {onDelete && (
-            <Button variant="destructive" size="sm" disabled={actionsDisabled} onClick={onDelete}>
+            <Button type="button" variant="destructive" size="sm" disabled={actionsDisabled} onClick={onDelete}>
               <Trash2 aria-hidden="true" />
               {t("budget.transactionDetails.delete")}
             </Button>

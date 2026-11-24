@@ -1,6 +1,7 @@
 export const pageHeaderStyles = {
   root: "flex flex-wrap items-center justify-between gap-3",
-  lead: "flex min-w-0 flex-1 items-center gap-3",
+  // Basis auto (not 0): actions that don't fit beside the title wrap below it instead of squeezing it
+  lead: "flex min-w-0 flex-auto items-center gap-3",
   icon: "shrink-0 rounded-xl bg-brand-subtle p-2 text-brand-text [&_svg:not([class*='size-'])]:size-6",
   main: "flex min-w-0 flex-col gap-1",
   back: "mb-1 self-start",

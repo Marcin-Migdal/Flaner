@@ -62,6 +62,7 @@ export const BudgetBulkActions = ({
       </span>
       <div className={styles.actions}>
         <Button
+          type="button"
           variant="outline"
           size="sm"
           disabled={disabled || !canSetCategory}
@@ -74,15 +75,15 @@ export const BudgetBulkActions = ({
           <Tags aria-hidden="true" />
           {t("budget.bulkActions.setCategory")}
         </Button>
-        <Button variant="outline" size="sm" disabled={disabled} onClick={onConfirm}>
+        <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={onConfirm}>
           <CheckCheck aria-hidden="true" />
           {t("budget.bulkActions.confirm")}
         </Button>
-        <Button variant="destructive" size="sm" disabled={disabled} onClick={onDelete}>
+        <Button type="button" variant="destructive" size="sm" disabled={disabled} onClick={onDelete}>
           <Trash2 aria-hidden="true" />
           {t("budget.bulkActions.delete")}
         </Button>
-        <Button variant="ghost" size="icon-sm" aria-label={t("budget.bulkActions.clear")} onClick={onClear}>
+        <Button type="button" variant="ghost" size="icon-sm" aria-label={t("budget.bulkActions.clear")} onClick={onClear}>
           <X aria-hidden="true" />
         </Button>
       </div>
@@ -101,10 +102,10 @@ export const BudgetBulkActions = ({
               onChange={setCategoryId}
             />
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCategoryOpen(false)} disabled={isSaving}>
+              <Button type="button" variant="outline" onClick={() => setIsCategoryOpen(false)} disabled={isSaving}>
                 {t("budget.bulkActions.cancel")}
               </Button>
-              <Button variant="brand" isBusy={isSaving} disabled={disabled || !categoryId} onClick={() => void saveCategory()}>
+              <Button type="button" variant="brand" isBusy={isSaving} disabled={disabled || !categoryId} onClick={() => void saveCategory()}>
                 {t("budget.bulkActions.save")}
               </Button>
             </DialogFooter>

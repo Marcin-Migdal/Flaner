@@ -50,7 +50,15 @@ const tx = (overrides: Partial<BudgetTransaction>): BudgetTransaction => ({
 const transactions = [
   tx({ payee: "Biedronka", date: "2026-11-03" }),
   tx({ payee: "Lidl", date: "2026-11-03", categoryId: null, accountId: "cash", description: "milk", confirmed: false }),
-  tx({ payee: "Zalando", date: "2026-11-12", currency: "EUR", amount: 2000, amountMain: 8600, rate: 4.3 }),
+  tx({
+    payee: "Zalando",
+    date: "2026-11-12",
+    currency: "EUR",
+    amount: 2000,
+    amountMain: 8600,
+    rate: 4.3,
+    sourceFile: "millennium-2026-11.csv",
+  }),
 ];
 
 // Holds the selection like the view does
@@ -123,7 +131,8 @@ describe("BudgetTransactionList", () => {
     await user.click(screen.getByRole("button", { name: "Details of Zalando" }));
     const row = rowOf("Zalando");
     expect(within(row).getByText("Thursday, November 12, 2026")).toBeInTheDocument();
-    expect(within(row).getByText("Added by hand")).toBeInTheDocument();
+    // The file name as is (only the date is capitalised)
+    expect(within(row).getByText("millennium-2026-11.csv")).not.toHaveClass("first-letter:uppercase");
     expect(within(row).getByText("€20.00 = PLN 86.00 at the rate 4.3 from Nov 10, 2026")).toBeInTheDocument();
 
     await user.click(within(row).getByRole("button", { name: "Edit" }));
@@ -138,7 +147,7 @@ describe("BudgetTransactionList", () => {
       const onUpdate = vi.fn();
       renderList({ onUpdate });
 
-      const payee = screen.getByDisplayValue("Lidl");
+      const payee = screen.getByRole("textbox", { name: "Payee of Lidl" });
       await user.clear(payee);
       await user.type(payee, "Lidl Polska{Enter}");
       await user.type(screen.getByRole("textbox", { name: "Description of Biedronka" }), "weekly{Enter}");

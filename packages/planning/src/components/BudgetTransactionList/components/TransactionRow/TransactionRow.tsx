@@ -264,7 +264,7 @@ export const TransactionRow = ({
               <InlineEdit
                 value={payee}
                 className={styles.payeeInput}
-                aria-label={t("budget.transactionList.payee")}
+                aria-label={t("budget.transactionList.payee", { payee })}
                 onCommit={(next) => {
                   if (!next) return false;
                   update({ payee: next });
@@ -323,6 +323,7 @@ export const TransactionRow = ({
         {end}
         {onToggleExpanded && (
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             className={styles.expandButton}

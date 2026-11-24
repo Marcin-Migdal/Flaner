@@ -816,7 +816,7 @@
       "excluded": "Wykluczona",
       "category": "Kategoria: {{payee}}",
       "select": "Zaznacz: {{payee}}",
-      "payee": "Odbiorca / nadawca",
+      "payee": "Odbiorca / nadawca: {{payee}}",
       "description": "Opis: {{payee}}",
       "addDescription": "Dodaj opis",
       "amount": "Kwota: {{payee}}",

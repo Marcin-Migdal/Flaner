@@ -810,7 +810,7 @@
       "excluded": "Excluded",
       "category": "Category of {{payee}}",
       "select": "Select {{payee}}",
-      "payee": "Payee",
+      "payee": "Payee of {{payee}}",
       "description": "Description of {{payee}}",
       "addDescription": "Add a description",
       "amount": "Amount of {{payee}}",

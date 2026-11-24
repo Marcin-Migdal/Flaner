@@ -47,7 +47,7 @@ export class BudgetTransactionsPage {
 
   /** The inline payee field of a row (desktop). */
   payeeField(payee: string): Locator {
-    return this.row(payee).getByRole("textbox", { name: /^(payee|odbiorca \/ nadawca)$/i });
+    return this.row(payee).getByRole("textbox", { name: new RegExp(`^(payee of|odbiorca / nadawca:) ${payee}$`, "i") });
   }
 
   async expandRow(payee: string) {
