@@ -7,6 +7,7 @@ import { monthOfDate } from "../../../utils/monthLedger";
 // - `locked`: the user's stored keys (`budget_keys/{uid}`), read by the Budget gate to pick onboarding or unlock.
 // - `profile` / `categories` / `accounts`: decrypted per-user documents, read behind the gate.
 // - `transactions`: the decrypted transactions of all the user's accounts in one month (one month-range query).
+// - `plan`: the decrypted plan of one month (`budget_plans/{uid}_{month}`), `null` while the month has none.
 export const budgetKeys = {
   all: ["budget"],
   locked: (uid: string) => ["budget", "locked", uid],
@@ -20,6 +21,7 @@ export const budgetKeys = {
   accountsWithTransactions: (uid: string) => [...budgetKeys.accounts(uid), "withTransactions"],
   /** One account's transaction count (delete confirmation). */
   accountTransactionCount: (uid: string, accountId: string) => ["budget", "accountTransactionCount", uid, accountId],
+  plan: (uid: string, month: BudgetMonth) => ["budget", "plan", uid, month],
   /** A published rate (`getExchangeRate`); never changes, so it is never invalidated. */
   exchangeRate: (from: string, to: string, date: string) => ["budget", "exchangeRate", from, to, date],
 };
@@ -48,6 +50,8 @@ export const budgetInvalidation = {
   profileChanged: ({ uid }: UserType) => [budgetKeys.profile(uid)],
   /** The account's transactions go with it. */
   accountDeleted: ({ uid }: UserType) => [budgetKeys.accounts(uid), budgetKeys.profile(uid), budgetKeys.allTransactions(uid)],
+  /** A limit or planned income changes its month's plan only. */
+  planChanged: ({ uid }: UserType, { month }: { month: BudgetMonth }) => [budgetKeys.plan(uid, month)],
   // New salt / wrapped keys: a cached copy would no longer unlock
   rewrapKeys: ({ uid }: UserType) => [budgetKeys.locked(uid)],
 };

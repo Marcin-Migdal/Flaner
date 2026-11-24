@@ -13,6 +13,7 @@ export * from "./components/NavIcon";
 export * from "./components/Skeleton";
 export * from "./components/Stepper";
 export * from "./components/PassphraseStrength";
+export * from "./components/PlanProgressBar";
 export * from "./components/ColorPickerField";
 export * from "./components/FormColorPickerField";
 export * from "./components/FormIconTextField";

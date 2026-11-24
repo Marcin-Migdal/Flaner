@@ -143,6 +143,26 @@ export type CreateBudgetInput = {
   categories: BudgetCategoryTree;
 };
 
+/**
+ * One calendar month's plan (GLOSSARY → Limit, Planned income). Amounts are integers in minor units of the main
+ * currency, keyed by a category or subcategory id; a category and its subcategories each have their own or none.
+ */
+export type BudgetPlan = {
+  month: BudgetMonth;
+  /** Expense category / subcategory id → limit. */
+  limits: Record<string, number>;
+  /** Income category / subcategory id → planned income. */
+  plannedIncome: Record<string, number>;
+};
+
+/** Sets (`amount`) or removes (`null`) one category's limit, or planned income for an income category. */
+export type BudgetPlanAmountInput = {
+  month: BudgetMonth;
+  type: BudgetCategoryType;
+  categoryId: string;
+  amount: number | null;
+};
+
 // ---------------------------------------------------------------------------
 // Stored documents: readable envelope + `payload` (sealed: 12-byte IV ‖ AES-GCM ciphertext, see `budgetCrypto`)
 // ---------------------------------------------------------------------------
@@ -198,3 +218,13 @@ export type BudgetMonthDoc = {
 export type BudgetMonthPayload = {
   transactions: Omit<BudgetTransaction, "accountId">[];
 };
+
+/** `budget_plans/{uid}_{YYYY-MM}`: one per planned month. `payload`: `BudgetPlanPayload` (user key). */
+export type BudgetPlanDoc = {
+  ownerId: string;
+  month: BudgetMonth;
+  payload: Bytes;
+  updatedAt: number;
+};
+
+export type BudgetPlanPayload = Pick<BudgetPlan, "limits" | "plannedIncome">;

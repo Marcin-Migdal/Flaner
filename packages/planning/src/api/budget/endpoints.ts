@@ -44,6 +44,10 @@ import type {
   BudgetMonth,
   BudgetMonthDoc,
   BudgetMonthPayload,
+  BudgetPlan,
+  BudgetPlanAmountInput,
+  BudgetPlanDoc,
+  BudgetPlanPayload,
   BudgetProfile,
   BudgetProfileDoc,
   BudgetProfilePayload,
@@ -63,6 +67,7 @@ const paths = {
   categories: (uid: string) => `budget_categories/${uid}`,
   account: (accountId: string) => `budget_accounts/${accountId}`,
   month: (accountId: string, month: BudgetMonth) => `budget_months/${accountId}_${month}`,
+  plan: (uid: string, month: BudgetMonth) => `budget_plans/${uid}_${month}`,
 };
 
 const refs = {
@@ -76,6 +81,8 @@ const refs = {
   months: () => collection(fb.firestore, "budget_months").withConverter(firestoreConverter<BudgetMonthDoc>()),
   month: (accountId: string, month: BudgetMonth) =>
     doc(fb.firestore, paths.month(accountId, month)).withConverter(firestoreConverter<BudgetMonthDoc>()),
+  plan: (uid: string, month: BudgetMonth) =>
+    doc(fb.firestore, paths.plan(uid, month)).withConverter(firestoreConverter<BudgetPlanDoc>()),
 };
 
 /**
@@ -288,14 +295,15 @@ export const replaceRecoveryKey = async (budget: UnlockedBudget, input: string):
 
 /**
  * Every budget collection Reset budget empties, and how a user's documents are found in it: `docId` (one document
- * per user, id == uid) or `memberIds` (`array-contains uid`). A ticket that adds a budget collection adds it here.
+ * per user, id == uid), `memberIds` (`array-contains uid`) or `ownerId` (`== uid`). A ticket that adds a budget collection adds it here.
  * `budget_keys` is not listed: it is always deleted last.
  */
-const RESET_COLLECTIONS: { name: string; owner: "docId" | "memberIds" }[] = [
+const RESET_COLLECTIONS: { name: string; owner: "docId" | "memberIds" | "ownerId" }[] = [
   { name: "budget_profiles", owner: "docId" },
   { name: "budget_categories", owner: "docId" },
   { name: "budget_months", owner: "memberIds" },
   { name: "budget_accounts", owner: "memberIds" },
+  { name: "budget_plans", owner: "ownerId" },
 ];
 
 // Firestore's limit of writes per batch
@@ -310,7 +318,8 @@ export const resetBudget = async (uid: string): Promise<void> => {
   const owned = await Promise.all(
     RESET_COLLECTIONS.map(async ({ name, owner }): Promise<DocumentReference[]> => {
       if (owner === "docId") return [doc(fb.firestore, name, uid)];
-      const snapshot = await getDocs(query(collection(fb.firestore, name), where("memberIds", "array-contains", uid)));
+      const ownerFilter = owner === "memberIds" ? where("memberIds", "array-contains", uid) : where("ownerId", "==", uid);
+      const snapshot = await getDocs(query(collection(fb.firestore, name), ownerFilter));
       return snapshot.docs.map((ownedDoc) => ownedDoc.ref);
     }),
   );
@@ -765,4 +774,51 @@ export const updateBudgetTransactions = async (
 
     await writeMonths(transaction, budget, months);
     return updated;
+  });
+
+// ---------------------------------------------------------------------------
+// Plans: one encrypted document per user and planned month
+// ---------------------------------------------------------------------------
+
+const decryptPlan = async (budget: UnlockedBudget, data: BudgetPlanDoc): Promise<BudgetPlan> => {
+  const payload = await decryptJson<BudgetPlanPayload>(
+    data.payload.toUint8Array(),
+    budget.userKey,
+    paths.plan(budget.uid, data.month),
+  );
+  return { month: data.month, ...payload };
+};
+
+/** The month's plan, or `null` when the month has none yet. */
+export const getBudgetPlan = async (budget: UnlockedBudget, month: BudgetMonth): Promise<BudgetPlan | null> => {
+  const data = (await getDoc(refs.plan(budget.uid, month))).data();
+  return data ? decryptPlan(budget, data) : null;
+};
+
+/**
+ * Sets or removes one limit (expense category) or planned income (income category) of a month, creating the month's
+ * plan on its first amount. Returns the plan as saved.
+ */
+export const setBudgetPlanAmount = (
+  budget: UnlockedBudget,
+  { month, type, categoryId, amount }: BudgetPlanAmountInput,
+): Promise<BudgetPlan> =>
+  runTransaction(fb.firestore, async (transaction) => {
+    const ref = refs.plan(budget.uid, month);
+    const stored = (await transaction.get(ref)).data();
+    const plan = stored ? await decryptPlan(budget, stored) : { month, limits: {}, plannedIncome: {} };
+
+    const field = type === "expense" ? "limits" : "plannedIncome";
+    const { [categoryId]: _removed, ...kept } = plan[field];
+    const next: BudgetPlan = { ...plan, [field]: amount === null ? kept : { ...kept, [categoryId]: amount } };
+
+    const payload: BudgetPlanPayload = { limits: next.limits, plannedIncome: next.plannedIncome };
+    const planDoc: BudgetPlanDoc = {
+      ownerId: budget.uid,
+      month,
+      payload: toBytes(await encryptJson(payload, budget.userKey, paths.plan(budget.uid, month))),
+      updatedAt: Date.now(),
+    };
+    transaction.set(ref, planDoc);
+    return next;
   });

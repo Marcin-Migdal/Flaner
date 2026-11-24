@@ -16,6 +16,7 @@ import {
   getBudgetAccounts,
   getBudgetAccountsWithTransactions,
   getBudgetCategories,
+  getBudgetPlan,
   getBudgetProfile,
   getAccountTransactions,
   getBudgetTransactions,
@@ -23,6 +24,7 @@ import {
   importBudgetTransactions,
   replaceRecoveryKey,
   resetBudget,
+  setBudgetPlanAmount,
   setBudgetMainCurrency,
   setMainBudgetAccount,
   unlockWithPassphrase,
@@ -199,13 +201,19 @@ describe("budget endpoints", () => {
     const otherBudget = await createBudget(OTHER, input());
     const [otherAccount] = await getBudgetAccounts(otherBudget);
     await addBudgetTransaction(otherBudget, monthTransaction(otherAccount.id));
+    await setBudgetPlanAmount(otherBudget, { month: "2026-11", type: "expense", categoryId: "cat-food", amount: 100 });
     await signInAs(ME);
     const budget = await createBudget(ME, input());
     const [account] = await getBudgetAccounts(budget);
     await addBudgetTransaction(budget, monthTransaction(account.id, "2026-10-02"));
     await addBudgetTransaction(budget, monthTransaction(account.id, "2026-11-02"));
+    await setBudgetPlanAmount(budget, { month: "2026-10", type: "expense", categoryId: "cat-food", amount: 100 });
+    await setBudgetPlanAmount(budget, { month: "2026-11", type: "income", categoryId: "cat-salary", amount: 100 });
 
     await resetBudget(ME);
+
+    const plans = Object.values(await list("budget_plans"));
+    expect(plans.map((plan) => plan.ownerId)).toEqual([OTHER]);
 
     const months = Object.values(await list("budget_months"));
     expect(months.map((month) => month.memberIds)).toEqual([[OTHER]]);
@@ -600,5 +608,74 @@ describe("budget accounts", () => {
       DENIED,
     );
     await expect(deleteBudgetAccount(budget, account.id)).rejects.toMatchObject(DENIED);
+  });
+});
+
+describe("budget plans", () => {
+  const setUp = async (): Promise<UnlockedBudget> => {
+    await signInAs(ME);
+    return createBudget(ME, input());
+  };
+
+  it("a month without a plan reads as null", async () => {
+    const budget = await setUp();
+
+    expect(await getBudgetPlan(budget, "2026-11")).toBeNull();
+  });
+
+  it("round-trips limits and planned income encrypted: no readable amount or category id is stored", async () => {
+    const budget = await setUp();
+
+    await setBudgetPlanAmount(budget, { month: "2026-11", type: "expense", categoryId: "cat-food", amount: 150075 });
+    await setBudgetPlanAmount(budget, { month: "2026-11", type: "expense", categoryId: "sub-groceries", amount: 90000 });
+    const saved = await setBudgetPlanAmount(budget, {
+      month: "2026-11",
+      type: "income",
+      categoryId: "cat-salary",
+      amount: 845000,
+    });
+
+    const expected = {
+      month: "2026-11",
+      limits: { "cat-food": 150075, "sub-groceries": 90000 },
+      plannedIncome: { "cat-salary": 845000 },
+    };
+    expect(saved).toEqual(expected);
+    expect(await getBudgetPlan(budget, "2026-11")).toEqual(expected);
+    expect(await getBudgetPlan(budget, "2026-12")).toBeNull();
+
+    const stored = await read(`budget_plans/${ME}_2026-11`);
+    expect(stored).toEqual({ ownerId: ME, month: "2026-11", payload: expect.anything(), updatedAt: expect.any(Number) });
+    const raw = JSON.stringify(stored);
+    for (const secret of ["150075", "90000", "845000", "cat-food", "sub-groceries", "cat-salary"]) {
+      expect(raw).not.toContain(secret);
+    }
+  });
+
+  it("changes and removes one amount, leaving the others", async () => {
+    const budget = await setUp();
+    await setBudgetPlanAmount(budget, { month: "2026-11", type: "expense", categoryId: "cat-food", amount: 1000 });
+    await setBudgetPlanAmount(budget, { month: "2026-11", type: "expense", categoryId: "sub-groceries", amount: 500 });
+
+    await setBudgetPlanAmount(budget, { month: "2026-11", type: "expense", categoryId: "cat-food", amount: 2000 });
+    await setBudgetPlanAmount(budget, { month: "2026-11", type: "expense", categoryId: "sub-groceries", amount: null });
+
+    expect(await getBudgetPlan(budget, "2026-11")).toEqual({
+      month: "2026-11",
+      limits: { "cat-food": 2000 },
+      plannedIncome: {},
+    });
+  });
+
+  it("denies another user", async () => {
+    const budget = await setUp();
+    await setBudgetPlanAmount(budget, { month: "2026-11", type: "expense", categoryId: "cat-food", amount: 1000 });
+
+    await signInAs(OTHER);
+    await expect(getBudgetPlan(budget, "2026-11")).rejects.toMatchObject(DENIED);
+    await expect(
+      setBudgetPlanAmount(budget, { month: "2026-11", type: "expense", categoryId: "cat-food", amount: 1 }),
+    ).rejects.toMatchObject(DENIED);
+    await expect(getBudgetPlan(budget, "2026-12")).rejects.toMatchObject(DENIED);
   });
 });

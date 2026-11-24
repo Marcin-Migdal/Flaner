@@ -118,7 +118,8 @@
       "mainCurrencyChanged": "Zmieniono walutę główną",
       "accountDeleted": "Konto usunięte",
       "accountSaveError": "Nie udało się zapisać konta. Spróbuj ponownie.",
-      "accountDeleteError": "Nie udało się usunąć konta. Spróbuj ponownie."
+      "accountDeleteError": "Nie udało się usunąć konta. Spróbuj ponownie.",
+      "planSaveError": "Nie udało się zapisać planu. Spróbuj ponownie."
     }
   },
   "errors": {
@@ -767,7 +768,8 @@
       "payeeRequired": "Wpisz odbiorcę lub nadawcę.",
       "payeeMax": "Użyj najwyżej 120 znaków.",
       "descriptionMax": "Użyj najwyżej 500 znaków.",
-      "accountRequired": "Wybierz konto."
+      "accountRequired": "Wybierz konto.",
+      "categoryRequired": "Wybierz kategorię."
     },
     "transactionsEmpty": {
       "title": "Brak transakcji",
@@ -1090,6 +1092,65 @@
         "label": "Waluta główna",
         "editable": "Wszystkie sumy są pokazywane w tej walucie. Możesz ją zmienić do pierwszej transakcji.",
         "locked": "Wszystkie sumy są pokazywane w tej walucie. Jest zablokowana, bo istnieją transakcje."
+      }
+    },
+    "planner": {
+      "monthHeader": {
+        "expenses": "Wydatki",
+        "income": "Przychody",
+        "balance": "Bilans",
+        "spentOfLimit": "{{spent}} z {{limit}}",
+        "receivedOfPlanned": "{{received}} z {{planned}}",
+        "actual": "Faktyczny",
+        "planned": "Planowany"
+      },
+      "sections": {
+        "expenses": "Wydatki",
+        "outside": "Poza planem",
+        "outsideHint": "Wydatki bez limitu · {{amount}}",
+        "income": "Przychody",
+        "incomeHint": "Otrzymano {{received}} z {{planned}} planowanych"
+      },
+      "stats": {
+        "spent": "Wydane",
+        "limit": "Limit",
+        "received": "Otrzymane",
+        "plannedIncome": "Planowany przychód"
+      },
+      "addLimit": "Dodaj limit",
+      "addLimitFor": "Dodaj limit: {{name}}",
+      "addPlannedIncome": "Dodaj planowany przychód",
+      "addPlannedIncomeFor": "Dodaj planowany przychód: {{name}}",
+      "reviewInTransactions": "Przejrzyj w Transakcjach",
+      "uncategorized": "Bez kategorii",
+      "shortOfPlan": "Poniżej planu · {{amount}}",
+      "outsideTag": "Poza planem",
+      "noLimits": "W tym miesiącu nie ma jeszcze limitów. Dodaj limit do kategorii lub podkategorii.",
+      "noIncome": "Brak planowanych i otrzymanych przychodów w tym miesiącu.",
+      "limitFor": "Limit dla: {{name}}",
+      "plannedIncomeFor": "Planowany przychód dla: {{name}}",
+      "openDetails": "Szczegóły: {{name}}",
+      "valueText": "{{value}} z {{max}}",
+      "dialog": {
+        "limitTitle": "Dodaj limit",
+        "incomeTitle": "Dodaj planowany przychód",
+        "description": "{{month}} · kategoria lub pojedyncza podkategoria",
+        "category": "Kategoria",
+        "limit": "Limit",
+        "plannedIncome": "Planowany przychód",
+        "spentHint": "Wydano już w tym miesiącu: {{amount}}",
+        "receivedHint": "Otrzymano już w tym miesiącu: {{amount}}",
+        "cancel": "Anuluj",
+        "save": "Zapisz"
+      },
+      "details": {
+        "removeLimit": "Usuń limit",
+        "removePlannedIncome": "Usuń planowany przychód",
+        "left": "Zostało {{amount}}",
+        "over": "{{amount}} ponad limit",
+        "transactions": "Transakcje w tym miesiącu ({{count}})",
+        "noTransactions": "Brak transakcji w tym miesiącu.",
+        "openInTransactions": "Otwórz w Transakcjach"
       }
     }
   }
