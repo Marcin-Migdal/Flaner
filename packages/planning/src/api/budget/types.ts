@@ -116,6 +116,18 @@ export type BudgetTransactionInput = Omit<BudgetTransaction, "id">;
 /** Identifies a stored transaction (its month document and its id inside it). */
 export type BudgetTransactionRef = Pick<BudgetTransaction, "id" | "accountId" | "date">;
 
+/** Fields read from the statement file: never edited, so a re-import still recognizes an edited row. */
+export type FrozenImportFields = "importHash" | "sourceFile" | "counterpartyAccount";
+
+/**
+ * Edited fields of a stored transaction. A new `date` or `accountId` moves it to that month / account.
+ * The frozen import fields are not editable.
+ */
+export type BudgetTransactionPatch = Partial<Omit<BudgetTransaction, "id" | FrozenImportFields>>;
+
+/** One edit of a bulk update: which transaction (where it is stored now) and what changes. */
+export type BudgetTransactionUpdate = { ref: BudgetTransactionRef; patch: BudgetTransactionPatch };
+
 export type CreateBudgetInput = {
   passphrase: string;
   /** The recovery key shown to the user (any formatting `parseRecoveryKey` accepts). */

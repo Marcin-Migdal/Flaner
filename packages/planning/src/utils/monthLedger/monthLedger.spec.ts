@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BudgetAccount, BudgetCategoryTree, BudgetTransaction } from "../../api/budget";
-import { buildMonthLedger, resolveTransactionCategory, signedAmount } from "./monthLedger";
+import { buildMonthLedger, groupTransactionsByDay, resolveTransactionCategory, signedAmount } from "./monthLedger";
 
 const accounts: BudgetAccount[] = [
   { id: "main", name: "mBank", defaultCurrency: "PLN", hidden: false, createdAt: 1 },
@@ -105,6 +105,18 @@ describe("buildMonthLedger", () => {
       totals: { income: 0, expenses: 0, balance: 0 },
       days: [],
     });
+  });
+});
+
+describe("groupTransactionsByDay", () => {
+  it("lists every given row, but a day's net counts only what the ledger counts", () => {
+    const counted = tx({ date: "2026-11-03", amountMain: 3000 });
+    const excluded = tx({ date: "2026-11-03", amountMain: 500, excluded: true });
+    const hidden = tx({ date: "2026-11-03", amountMain: 700, accountId: "savings" });
+
+    expect(groupTransactionsByDay([counted, excluded, hidden], accounts)).toEqual([
+      { date: "2026-11-03", net: -3000, transactions: [hidden, excluded, counted] },
+    ]);
   });
 });
 

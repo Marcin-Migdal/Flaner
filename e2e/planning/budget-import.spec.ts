@@ -52,7 +52,8 @@ test.describe("Budget statement import", () => {
 
     await expect(sheet).toBeHidden();
     await expect(page).toHaveURL(/month=2026-10/);
-    await expect(transactions.row("Gęś i Syn").filter({ hasText: "Opis 32" })).toBeVisible();
+    // On desktop the list's description is an inline field, so the row is found by the field's value
+    await expect(transactions.row("Gęś i Syn").filter({ has: page.locator('input[value="Opis 32"]') })).toBeVisible();
     await expect(transactions.row("Usługi Łąka Sp. z o.o. 12")).toBeVisible();
 
     // The same file again: every row is already in the account

@@ -1,5 +1,6 @@
 export const pageTilesStyles = {
-  root: "max-w-6xl mx-auto py-6 space-y-6",
+  // w-full: in the shell's flex column, auto margins would otherwise size the page to its content
+  root: "w-full max-w-6xl mx-auto py-6 space-y-6",
   header: "px-6",
   empty: "max-w-md mx-auto my-12 animate-in fade-in duration-300",
   grid: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-6 animate-in fade-in duration-200",

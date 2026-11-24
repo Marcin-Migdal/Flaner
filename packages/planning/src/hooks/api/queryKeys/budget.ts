@@ -23,6 +23,9 @@ export const budgetInvalidation = {
   createBudget: ({ uid }: UserType) => [budgetKeys.locked(uid)],
   /** Adding or deleting a transaction changes its month only. */
   transactionsChanged: ({ uid }: UserType, { date }: { date: string }) => [budgetKeys.transactions(uid, monthOfDate(date))],
+  /** Edits and bulk deletes change every month a transaction left or moved to. */
+  transactionsInMonths: ({ uid }: UserType, dates: string[]) =>
+    [...new Set(dates.map(monthOfDate))].map((month) => budgetKeys.transactions(uid, month)),
   /** An import changes every month it adds to. */
   transactionsImported: ({ uid }: UserType, inputs: { date: string }[]) =>
     [...new Set(inputs.map(({ date }) => monthOfDate(date)))].map((month) => budgetKeys.transactions(uid, month)),
