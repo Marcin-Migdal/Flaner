@@ -1118,7 +1118,9 @@
         "plannedIncome": "Planowany przychód"
       },
       "addLimit": "Dodaj limit",
+      "addLimitFor": "Dodaj limit: {{name}}",
       "addPlannedIncome": "Dodaj planowany przychód",
+      "addPlannedIncomeFor": "Dodaj planowany przychód: {{name}}",
       "reviewInTransactions": "Przejrzyj w Transakcjach",
       "uncategorized": "Bez kategorii",
       "shortOfPlan": "Poniżej planu · {{amount}}",

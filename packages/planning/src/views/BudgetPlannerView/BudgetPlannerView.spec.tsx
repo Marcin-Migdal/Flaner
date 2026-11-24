@@ -162,7 +162,7 @@ describe("BudgetPlannerView", () => {
     renderView();
 
     const outside = await screen.findByRole("list", { name: "Outside the plan" });
-    await userEvents.click(within(outside).getByRole("button", { name: "Add limit" }));
+    await userEvents.click(within(outside).getByRole("button", { name: "Add limit: Food / Coffee" }));
     const dialog = await screen.findByRole("dialog", { name: "Add limit" });
     expect(within(dialog).getByRole("spinbutton", { name: "Limit" })).toHaveValue(64);
     await userEvents.click(within(dialog).getByRole("button", { name: "Save" }));

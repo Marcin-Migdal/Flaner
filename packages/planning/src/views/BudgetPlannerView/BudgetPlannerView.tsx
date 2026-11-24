@@ -169,7 +169,7 @@ export const BudgetPlannerView = () => {
               rows={planner.expenses.outside}
               type="expense"
               mainCurrency={mainCurrency}
-              transactionsHref={transactionsHref}
+              month={month}
               onAdd={(row) => setAddPreset({ type: "expense", categoryId: row.id, amount: row.spent })}
               onOpen={openDetails("expense")}
               disabled={writesDisabled}
@@ -218,7 +218,7 @@ export const BudgetPlannerView = () => {
                   rows={planner.income.outside}
                   type="income"
                   mainCurrency={mainCurrency}
-                  transactionsHref={transactionsHref}
+                  month={month}
                   onAdd={(row) => setAddPreset({ type: "income", categoryId: row.id, amount: row.spent })}
                   onOpen={openDetails("income")}
                   disabled={writesDisabled}

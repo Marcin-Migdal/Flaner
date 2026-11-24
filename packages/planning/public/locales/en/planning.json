@@ -1098,7 +1098,9 @@
         "plannedIncome": "Planned income"
       },
       "addLimit": "Add limit",
+      "addLimitFor": "Add limit: {{name}}",
       "addPlannedIncome": "Add planned income",
+      "addPlannedIncomeFor": "Add planned income: {{name}}",
       "reviewInTransactions": "Review in Transactions",
       "uncategorized": "Uncategorized",
       "shortOfPlan": "Short of plan · {{amount}}",

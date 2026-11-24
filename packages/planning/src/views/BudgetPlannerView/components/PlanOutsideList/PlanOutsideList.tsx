@@ -3,22 +3,37 @@ import { cn } from "@flaner/shared/utils";
 import { Badge, Button, buttonVariants } from "@flaner/ui-components";
 import { CircleHelp, Plus } from "lucide-react";
 import { Link } from "react-router";
-import type { BudgetCategoryType } from "../../../../api/budget";
+import type { BudgetCategoryType, BudgetMonth } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { BUDGET_CATEGORY_COLOR_CLASSES, BUDGET_CATEGORY_ICON_COMPONENTS } from "../../../../utils/budgetCategoryIcons";
 import type { OutsideRow } from "../../../../utils/plannerMonth";
+import {
+  DEFAULT_TRANSACTION_FILTERS,
+  UNCATEGORIZED_FILTER,
+  writeTransactionFilters,
+} from "../../../../utils/transactionFilters";
 import { planOutsideListStyles as styles } from "./PlanOutsideList.styles";
 
 export type PlanOutsideListProps = {
   rows: OutsideRow[];
   type: BudgetCategoryType;
   mainCurrency: string;
-  /** Where Uncategorized is reviewed (the month in Transactions). */
-  transactionsHref: string;
+  /** Uncategorized links to this month in Transactions, filtered to uncategorized rows of `type`. */
+  month: BudgetMonth;
   /** Add limit / planned income, preset to the row's category and its amount so far. */
   onAdd: (row: OutsideRow & { id: string }) => void;
   onOpen: (categoryId: string) => void;
   disabled?: boolean;
+};
+
+/** The month in Transactions (a sibling route of the Planner), filtered to `type`'s uncategorized rows. */
+const uncategorizedHref = (month: BudgetMonth, type: BudgetCategoryType) => {
+  const params = writeTransactionFilters(new URLSearchParams({ month }), {
+    ...DEFAULT_TRANSACTION_FILTERS,
+    categoryIds: [UNCATEGORIZED_FILTER],
+    direction: type,
+  });
+  return `../transactions?${params.toString()}`;
 };
 
 const hasCategory = (row: OutsideRow): row is OutsideRow & { id: string } => row.id !== null;
@@ -28,7 +43,7 @@ export const PlanOutsideList = ({
   rows,
   type,
   mainCurrency,
-  transactionsHref,
+  month,
   onAdd,
   onOpen,
   disabled,
@@ -51,7 +66,7 @@ export const PlanOutsideList = ({
               </span>
               <span className={styles.spent}>{format(row.spent, mainCurrency)}</span>
               {/* Not `Button asChild`: Slot needs a single child and Button adds its busy spinner slot */}
-              <Link to={transactionsHref} className={buttonVariants({ variant: "ghost", size: "sm" })}>
+              <Link to={uncategorizedHref(month, type)} className={buttonVariants({ variant: "ghost", size: "sm" })}>
                 {t("budget.planner.reviewInTransactions")}
               </Link>
             </li>
@@ -82,7 +97,15 @@ export const PlanOutsideList = ({
               </Badge>
             )}
             <span className={styles.spent}>{format(row.spent, mainCurrency)}</span>
-            <Button variant="outline" size="sm" disabled={disabled} onClick={() => onAdd(row)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={disabled}
+              aria-label={t(isExpense ? "budget.planner.addLimitFor" : "budget.planner.addPlannedIncomeFor", {
+                name: row.subcategory ? `${row.category.name} / ${name}` : name,
+              })}
+              onClick={() => onAdd(row)}
+            >
               <Plus aria-hidden="true" />
               {t(isExpense ? "budget.planner.addLimit" : "budget.planner.addPlannedIncome")}
             </Button>
