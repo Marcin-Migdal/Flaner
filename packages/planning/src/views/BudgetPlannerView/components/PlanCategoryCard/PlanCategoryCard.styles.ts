@@ -5,7 +5,7 @@ export const planCategoryCardStyles = {
     "flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
   tile: "flex size-8 shrink-0 items-center justify-center rounded-md border border-current/40 bg-current/10 [&_svg]:size-4",
   name: "truncate text-sm font-semibold text-foreground sm:text-base",
-  subName: "truncate text-sm text-foreground",
+  subName: "block truncate text-sm text-foreground",
   stats: "flex items-center gap-4",
   stat: "flex flex-col items-end gap-0.5",
   statLabel: "text-xs text-muted-foreground",

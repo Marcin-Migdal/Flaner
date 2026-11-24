@@ -1,5 +1,6 @@
 export const budgetPlannerViewStyles = {
-  root: "max-w-6xl mx-auto py-4 space-y-6",
+  // w-full: in the shell's flex column, auto margins would otherwise size the page to its content
+  root: "w-full max-w-6xl mx-auto py-4 space-y-6",
   monthBar: "flex justify-center",
   section: "flex flex-col gap-3",
   sectionHeader: "flex flex-wrap items-center gap-x-3 gap-y-1",
