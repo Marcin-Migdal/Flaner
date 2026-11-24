@@ -75,6 +75,10 @@ Use these before inventing anything. Names are the real component names.
 | Chart frame | `ChartContainer` | title + legend in `chart-*` colours; chart inside |
 | Charts | `DonutChart`, `BarChart`, `RankedList` | go inside `ChartContainer`; donut drills down by id, bars highlight one group |
 | Calendar | `BigCalendar`, `Calendar` | planning only |
+| Plan progress | `PlanProgressBar` | amount vs its plan (spent vs limit, received vs planned income) as a `meter`; fill in the category's `chart-N` colour, `danger` above the target (`overTone="none"` for income); `size` default / sm (subcategory lines); caller passes the label and spoken value |
+| Passphrase strength | `PassphraseStrength` | four-segment meter under a passphrase field (`strength` 0–4 + `label` computed by the caller): weak `danger`, fair `warning`, strong `success` |
+| Landing page of a section | `PageTiles` | one tile per child route (icon + label from the route handle); every route with children shows it |
+| Navigation icon | `NavIcon` | Lucide icon by its route-handle name (sidebar, tiles); not for content icons |
 | Feedback | `Alert`, `Toaster` | |
 | Signed-in user chip | `Profile` | avatar + username; `size` sm / md / lg, `showName` |
 | Whole-view loading | `LoadingFallback` | centred spinner (+ optional text) while a lazy view loads |

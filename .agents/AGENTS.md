@@ -49,6 +49,11 @@ When writing code, you must adhere to project standards. If you don't know them 
 - The `.agents/skills/` skill matching the area you touch (e.g. `api-query-layer`, `react-hook-form`, `firestore-rules-manager`).
 These files and skills are this repo's coding standards: `/code-review` checks the Standards axis against them.
 
+**DESIGN SYSTEM ARTIFACT: KEEP IT IN SYNC**
+- Any change to `packages/ui-components` (component, story, export), `theme.css` or the brand book is unfinished until the "Flaner" Design System artifact in Claude matches it: run the re-sync in the `flaner-design` skill, section 4, in the same task, before the end-of-task report.
+- A new component also gets its row in the brand book's Components table in the same PR (`npm run design:export` fails without it).
+- The end-of-task report (and the PR body) names the artifact version published, or says why the sync could not run and what is left to do.
+
 **WORKFLOWS & FEATURE DEVELOPMENT**
 - New features and larger tasks are planned with the `mattpocock-skills` flow before any product code is written. Pick the route in `.agents/workflows/01-feature-workflow.md`; unsure which skill is next → `/ask-matt`.
 
