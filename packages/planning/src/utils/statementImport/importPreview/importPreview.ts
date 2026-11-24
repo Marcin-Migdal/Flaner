@@ -22,7 +22,7 @@ export type ImportPreview = {
 
 export type ImportPreviewInput = {
   rows: StatementRow[];
-  /** Every row goes to this account (multi-account mapping: #174). */
+  /** Every row goes to this account (the caller splits a multi-account file by its mapping). */
   accountId: string;
   /** For rows whose file gives no currency. */
   fallbackCurrency: string;

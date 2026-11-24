@@ -2,19 +2,32 @@ import { useCurrencyOptions } from "@flaner/shared/hooks";
 import { Button, FormSelect, Select } from "@flaner/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileText } from "lucide-react";
-import { useMemo } from "react";
-import { FormProvider, useController, useForm } from "react-hook-form";
+import { useEffect, useMemo } from "react";
+import { FormProvider, useController, useForm, useWatch, type Control } from "react-hook-form";
 import type { BudgetAccount } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
-import { STATEMENT_BANKS } from "../../../../utils/statementImport";
-import { getImportSettingsSchema, type ImportSettingsFormData } from "../../../../utils/schemas";
+import {
+  maskFileAccount,
+  parseStatementRows,
+  STATEMENT_BANKS,
+  type StatementBank,
+} from "../../../../utils/statementImport";
+import {
+  getImportSettingsSchema,
+  SKIP_FILE_ACCOUNT,
+  type ImportSettingsFormData,
+} from "../../../../utils/schemas";
 import type { ImportFile } from "../../types";
 import { importSettingsStepStyles as styles } from "./ImportSettingsStep.styles";
+
+type SelectOption = { value: string; label: string };
 
 export type ImportSettingsStepProps = {
   file: ImportFile;
   accounts: BudgetAccount[];
   defaultValues: Partial<ImportSettingsFormData>;
+  /** The preselected target of a bank account (remembered mapping, else the main account for a one-account file). */
+  defaultTarget: (fileAccount: string, isOnlyAccount: boolean) => string;
   /** The preview is being built. */
   isBusy: boolean;
   /** Why the preview could not be built. */
@@ -23,11 +36,25 @@ export type ImportSettingsStepProps = {
   onSubmit: (settings: ImportSettingsFormData) => void;
 };
 
-/** Import wizard, Settings step: bank (detected from the header, can be changed), account and fallback currency. */
+/** The bank accounts the file's rows belong to with their row counts, in file order. */
+const readFileAccounts = (bank: StatementBank | undefined, records: string[][]) => {
+  const counts = new Map<string, number>();
+  if (!bank) return counts;
+  for (const row of parseStatementRows(bank, records)) {
+    if (row.status === "ok") counts.set(row.fileAccount, (counts.get(row.fileAccount) ?? 0) + 1);
+  }
+  return counts;
+};
+
+/**
+ * Import wizard, Settings step: bank (detected from the header, can be changed), the target of each bank account
+ * of the file (one account: a Flaner account; several: a Flaner account each or skipped) and fallback currency.
+ */
 export const ImportSettingsStep = ({
   file,
   accounts,
   defaultValues,
+  defaultTarget,
   isBusy,
   error,
   onBack,
@@ -39,16 +66,36 @@ export const ImportSettingsStep = ({
     resolver: zodResolver(getImportSettingsSchema(t)),
     defaultValues,
   });
+  const { control, getValues, setValue } = methods;
 
-  const { field: accountField, fieldState: accountState } = useController({ control: methods.control, name: "accountId" });
+  const bank = useWatch({ control, name: "bank" });
+  const fileAccounts = useMemo(() => readFileAccounts(bank, file.records), [bank, file.records]);
+  const isMultiAccount = fileAccounts.size > 1;
+
+  // A (re)chosen bank reads the file again: its bank accounts get their preselected targets
+  useEffect(() => {
+    const listed = [...fileAccounts.keys()];
+    const current = getValues("fileAccounts") ?? [];
+    if (listed.length === current.length && listed.every((fileAccount, index) => current[index]?.fileAccount === fileAccount)) {
+      return;
+    }
+    setValue(
+      "fileAccounts",
+      listed.map((fileAccount) => ({ fileAccount, target: defaultTarget(fileAccount, listed.length === 1) })),
+    );
+  }, [fileAccounts, defaultTarget, getValues, setValue]);
 
   const bankOptions = useMemo(
-    () => STATEMENT_BANKS.map((bank) => ({ value: bank, label: t(`budget.import.banks.${bank}`) })),
+    () => STATEMENT_BANKS.map((option) => ({ value: option, label: t(`budget.import.banks.${option}`) })),
     [t],
   );
   const accountOptions = useMemo(
     () => accounts.map((account) => ({ value: account.id, label: account.name })),
     [accounts],
+  );
+  const accountOrSkipOptions = useMemo(
+    () => [...accountOptions, { value: SKIP_FILE_ACCOUNT, label: t("budget.import.settings.skipAccount") }],
+    [accountOptions, t],
   );
 
   return (
@@ -65,17 +112,34 @@ export const ImportSettingsStep = ({
           description={file.bank ? t("budget.import.settings.bankDetected") : t("budget.import.settings.bankNotDetected")}
           options={bankOptions}
         />
-        {/* Not `FormSelect disabled`: react-hook-form would drop a disabled field's value on submit */}
-        <Select
-          label={t("budget.import.settings.account")}
-          name={accountField.name}
-          options={accountOptions}
-          value={accountOptions.find((option) => option.value === accountField.value) ?? null}
-          onChange={(option) => option && accountField.onChange(option.value)}
-          onBlur={accountField.onBlur}
-          error={accountState.error?.message}
-          disabled={accounts.length < 2}
-        />
+
+        {isMultiAccount ? (
+          <fieldset className={styles.fileAccounts}>
+            <legend className={styles.fileAccountsLegend}>{t("budget.import.settings.fileAccounts")}</legend>
+            <p className={styles.fileAccountsHint}>{t("budget.import.settings.fileAccountsHint")}</p>
+            {[...fileAccounts].map(([fileAccount, rowCount], index) => (
+              <TargetSelect
+                key={fileAccount}
+                control={control}
+                index={index}
+                label={maskFileAccount(fileAccount)}
+                description={t("budget.import.settings.fileAccountRows", { count: rowCount })}
+                options={accountOrSkipOptions}
+              />
+            ))}
+          </fieldset>
+        ) : (
+          fileAccounts.size === 1 && (
+          <TargetSelect
+            control={control}
+            index={0}
+            label={t("budget.import.settings.account")}
+            options={accountOptions}
+            disabled={accounts.length < 2}
+          />
+          )
+        )}
+
         <FormSelect
           name="fallbackCurrency"
           label={t("budget.import.settings.fallbackCurrency")}
@@ -100,5 +164,33 @@ export const ImportSettingsStep = ({
         </div>
       </form>
     </FormProvider>
+  );
+};
+
+type TargetSelectProps = {
+  control: Control<ImportSettingsFormData>;
+  index: number;
+  label: string;
+  description?: string;
+  options: SelectOption[];
+  disabled?: boolean;
+};
+
+/** Where one bank account of the file goes. Not `FormSelect disabled`: react-hook-form would drop a disabled field's value on submit. */
+const TargetSelect = ({ control, index, label, description, options, disabled }: TargetSelectProps) => {
+  const { field, fieldState } = useController({ control, name: `fileAccounts.${index}.target` });
+
+  return (
+    <Select
+      label={label}
+      description={description}
+      name={field.name}
+      options={options}
+      value={options.find((option) => option.value === field.value) ?? null}
+      onChange={(option) => option && field.onChange(option.value)}
+      onBlur={field.onBlur}
+      error={fieldState.error?.message}
+      disabled={disabled}
+    />
   );
 };

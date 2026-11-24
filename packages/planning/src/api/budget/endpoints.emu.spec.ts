@@ -1,8 +1,17 @@
 // Runs against the Firestore + Auth emulators with the real security rules: `npm run test:emulator`.
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { fb } from "@flaner/shared/firebase";
 import { setupEmulator } from "@flaner/test-utils/emulator";
 import { Bytes, collection, doc, setDoc } from "firebase/firestore";
 import { encryptJson, generateDataKey, generateRecoveryKey, wrapDataKey } from "../../utils/budgetCrypto";
+import {
+  buildImportPreview,
+  decodeStatementFile,
+  parseStatementRows,
+  readStatement,
+  splitRowsByFileAccount,
+} from "../../utils/statementImport";
 import {
   MAX_MONTH_PAYLOAD_BYTES,
   addBudgetAccount,
@@ -22,6 +31,7 @@ import {
   getBudgetTransactions,
   getLockedBudget,
   importBudgetTransactions,
+  rememberFileAccountMappings,
   replaceRecoveryKey,
   resetBudget,
   setBudgetPlanAmount,
@@ -491,6 +501,63 @@ describe("budget transactions", () => {
       expect.arrayContaining([kept, ...added]),
     );
     expect(await getAccountTransactions(budget, accountId, { from: "2026-12", to: "2027-01" })).toEqual([]);
+  });
+
+  it("a multi-account Millennium import feeds several accounts; the mapping is remembered encrypted", async () => {
+    const { budget, accountId: mainId } = await setUp();
+    const savingsId = await addAccount(budget, "Savings");
+    const CHECKING = "PL34 0215 8418 3495 1552 2867 9694";
+    const SAVINGS = "PL12 9594 8546 4581 7280 7584 0369";
+    const text = decodeStatementFile(
+      new Uint8Array(
+        readFileSync(resolve(__dirname, "../../../../../fixtures/bank-statements/millennium/millennium-2026-10.csv")),
+      ),
+    );
+    const rows = parseStatementRows("millennium", (await readStatement(text)).records);
+    const targets = { [CHECKING]: mainId, [SAVINGS]: savingsId };
+
+    // As the import wizard does: one preview per Flaner account, then one import of every new row
+    const { groups } = splitRowsByFileAccount(rows, targets);
+    const previews = await Promise.all(
+      groups.map(({ accountId, rows: groupRows }) =>
+        buildImportPreview({
+          rows: groupRows,
+          accountId,
+          fallbackCurrency: "PLN",
+          mainCurrency: "PLN",
+          fileName: "millennium-2026-10.csv",
+          loadTransactions: (range) => getAccountTransactions(budget, accountId, range),
+          getRate: () => Promise.reject(new Error("every row is in the main currency")),
+        }),
+      ),
+    );
+    const inputs = previews
+      .flatMap((preview) => preview.rows)
+      .map(({ transaction: { id: _previewId, ...rest } }): BudgetTransactionInput => rest);
+    await importBudgetTransactions(budget, inputs);
+    await rememberFileAccountMappings(budget, targets);
+
+    const savingsRows = groups.find((group) => group.accountId === savingsId)?.rows.length ?? 0;
+    expect(savingsRows).toBeGreaterThan(0);
+    expect(await getAccountTransactions(budget, savingsId, { from: "2026-10", to: "2026-10" })).toHaveLength(savingsRows);
+    expect(await getAccountTransactions(budget, mainId, { from: "2026-10", to: "2026-10" })).toHaveLength(30 - savingsRows);
+    expect((await getBudgetProfile(budget))?.fileAccountMappings).toEqual(targets);
+    expect(JSON.stringify(await read(`budget_profiles/${ME}`))).not.toContain("9694");
+
+    // Next import skips the savings account: the remembered mapping is updated, the other entry kept
+    await rememberFileAccountMappings(budget, { [SAVINGS]: null });
+    expect((await getBudgetProfile(budget))?.fileAccountMappings).toEqual({ [CHECKING]: mainId, [SAVINGS]: null });
+    // Re-previewing the same file per account finds only duplicates
+    const again = await buildImportPreview({
+      rows: groups[0].rows,
+      accountId: groups[0].accountId,
+      fallbackCurrency: "PLN",
+      mainCurrency: "PLN",
+      fileName: "millennium-2026-10.csv",
+      loadTransactions: (monthRange) => getAccountTransactions(budget, groups[0].accountId, monthRange),
+      getRate: () => Promise.reject(new Error("every row is in the main currency")),
+    });
+    expect(again.rows.every((row) => row.status !== "new")).toBe(true);
   });
 
   it("fails an import as a whole when one month would exceed the size guard", async () => {

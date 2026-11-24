@@ -12,6 +12,8 @@ export type ImportFile = {
 
 export type ImportResult = {
   imported: { accountName: string; count: number }[];
+  /** Rows of bank accounts skipped in Settings. */
+  skipped: number;
   /** Duplicate rows left unchecked. */
   duplicates: number;
   pending: number;
