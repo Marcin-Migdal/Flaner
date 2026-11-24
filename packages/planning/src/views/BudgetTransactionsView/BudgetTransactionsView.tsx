@@ -39,6 +39,7 @@ import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
 import { useHashTab } from "../../hooks/useHashTab";
 import { useIsOnline } from "../../hooks/useIsOnline";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
+import { sortBudgetAccounts } from "../../utils/sortBudgetAccounts";
 import { buildMonthLedger, groupTransactionsByDay, resolveTransactionCategory } from "../../utils/monthLedger";
 import { categoryPatch } from "../../utils/transactionEdits";
 import {
@@ -59,7 +60,7 @@ const MONTH_PARAM = /^\d{4}-(0[1-9]|1[0-2])$/;
  * in the URL too (`q`, `accounts`, `categories`, `direction`, `status`, `relevance`), so a link can open it filtered.
  */
 export const BudgetTransactionsView = () => {
-  const { t } = usePlanningTranslations();
+  const { t, i18n } = usePlanningTranslations();
   const [tab, setTab] = useHashTab(TABS);
   const [searchParams, setSearchParams] = useSearchParams();
   const monthParam = searchParams.get("month") ?? "";
@@ -217,7 +218,7 @@ export const BudgetTransactionsView = () => {
             <BudgetTransactionFilters
               filters={filters}
               onChange={setFilters}
-              accounts={accounts.data}
+              accounts={sortBudgetAccounts(accounts.data, profile.data.mainAccountId, i18n.language)}
               categories={categories.data}
             />
             {visibleDays.length === 0 ? (

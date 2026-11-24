@@ -32,6 +32,7 @@ import { useGetExchangeRateQuery } from "../../hooks/api/query";
 import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { getBudgetTransactionSchema, type BudgetTransactionFormData } from "../../utils/schemas";
+import { sortBudgetAccounts } from "../../utils/sortBudgetAccounts";
 import { CategoryPicker } from "../CategoryPicker";
 import { budgetTransactionDialogStyles as styles } from "./BudgetTransactionDialog.styles";
 
@@ -138,8 +139,12 @@ export const BudgetTransactionDialog = ({
   const { field: accountField, fieldState: accountState } = useController({ control, name: "accountId" });
 
   const accountOptions = useMemo(
-    () => accounts.map((account) => ({ value: account.id, label: account.name })),
-    [accounts],
+    () =>
+      sortBudgetAccounts(accounts, profile.mainAccountId, i18n.language).map((account) => ({
+        value: account.id,
+        label: account.name,
+      })),
+    [accounts, profile.mainAccountId, i18n.language],
   );
 
   const onSubmit = async (data: BudgetTransactionFormData) => {

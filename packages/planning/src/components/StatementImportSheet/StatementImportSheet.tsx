@@ -27,6 +27,7 @@ import {
 } from "./components";
 import { statementImportSheetStyles as styles } from "./StatementImportSheet.styles";
 import type { ImportFile, ImportResult } from "./types";
+import { sortBudgetAccounts } from "../../utils/sortBudgetAccounts";
 
 const STEPS = ["file", "settings", "preview", "result"] as const;
 type ImportStep = (typeof STEPS)[number];
@@ -70,7 +71,7 @@ export const StatementImportSheet = ({ open, onOpenChange, ...props }: Statement
 type StatementImportWizardProps = Omit<StatementImportSheetProps, "open" | "onOpenChange"> & { onClose: () => void };
 
 const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onClose }: StatementImportWizardProps) => {
-  const { t } = usePlanningTranslations();
+  const { t, i18n } = usePlanningTranslations();
   const isOnline = useIsOnline();
   const showWriteError = useBudgetWriteErrorToast();
   const preview = useImportPreview();
@@ -189,7 +190,7 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
       {step === "settings" && file && (
         <ImportSettingsStep
           file={file}
-          accounts={accounts}
+          accounts={sortBudgetAccounts(accounts, profile.mainAccountId, i18n.language)}
           defaultValues={
             settings ?? {
               bank: file.bank ?? undefined,

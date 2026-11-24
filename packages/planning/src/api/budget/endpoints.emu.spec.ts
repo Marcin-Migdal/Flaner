@@ -5,12 +5,16 @@ import { Bytes, collection, doc, setDoc } from "firebase/firestore";
 import { encryptJson, generateDataKey, generateRecoveryKey, wrapDataKey } from "../../utils/budgetCrypto";
 import {
   MAX_MONTH_PAYLOAD_BYTES,
+  addBudgetAccount,
   addBudgetTransaction,
   changeBudgetPassphrase,
+  countBudgetAccountTransactions,
   createBudget,
+  deleteBudgetAccount,
   deleteBudgetTransaction,
   deleteBudgetTransactions,
   getBudgetAccounts,
+  getBudgetAccountsWithTransactions,
   getBudgetCategories,
   getBudgetProfile,
   getAccountTransactions,
@@ -19,8 +23,11 @@ import {
   importBudgetTransactions,
   replaceRecoveryKey,
   resetBudget,
+  setBudgetMainCurrency,
+  setMainBudgetAccount,
   unlockWithPassphrase,
   unlockWithRecoveryKey,
+  updateBudgetAccount,
   updateBudgetTransactions,
 } from "./endpoints";
 import type {
@@ -500,5 +507,98 @@ describe("budget transactions", () => {
     await expect(deleteBudgetTransaction(budget, added)).rejects.toMatchObject(DENIED);
     await expect(updateOne(budget, added, { date: "2026-12-01" })).rejects.toMatchObject(DENIED);
     expect(await getBudgetTransactions({ ...budget, uid: OTHER }, { from: "2026-11", to: "2026-11" })).toEqual([]);
+  });
+});
+
+describe("budget accounts", () => {
+  const setUp = async () => {
+    await signInAs(ME);
+    const budget = await createBudget(ME, input({ mainAccount: { name: "Main", currency: "PLN" } }));
+    const [main] = await getBudgetAccounts(budget);
+    return { budget, mainId: main.id };
+  };
+
+  it("adds an account with an encrypted name and lists it", async () => {
+    const { budget } = await setUp();
+
+    const savings = await addBudgetAccount(budget, { name: "Secret Savings", defaultCurrency: "EUR" });
+
+    expect(await getBudgetAccounts(budget)).toContainEqual(savings);
+    expect(JSON.stringify(await read(`budget_accounts/${savings.id}`))).not.toContain("Secret Savings");
+  });
+
+  it("renames, hides and shows an account; changes its currency only while it has no transactions", async () => {
+    const { budget } = await setUp();
+    const { id } = await addBudgetAccount(budget, { name: "Cash", defaultCurrency: "PLN" });
+
+    await updateBudgetAccount(budget, id, { name: "Wallet", defaultCurrency: "EUR", hidden: true });
+    expect(await getBudgetAccounts(budget)).toContainEqual(
+      expect.objectContaining({ id, name: "Wallet", defaultCurrency: "EUR", hidden: true }),
+    );
+
+    await addBudgetTransaction(budget, monthTransaction(id));
+    expect(await getBudgetAccountsWithTransactions(budget, [id])).toEqual([id]);
+    await expect(updateBudgetAccount(budget, id, { defaultCurrency: "USD" })).rejects.toThrow(
+      "planning:errors.budget.accountHasTransactions",
+    );
+    await updateBudgetAccount(budget, id, { defaultCurrency: "EUR", hidden: false });
+    expect(await getBudgetAccounts(budget)).toContainEqual(expect.objectContaining({ id, defaultCurrency: "EUR", hidden: false }));
+  });
+
+  it("makes another account main; the main account cannot be hidden or deleted, a hidden one cannot become main", async () => {
+    const { budget, mainId } = await setUp();
+    const other = await addBudgetAccount(budget, { name: "Other", defaultCurrency: "PLN" });
+
+    await expect(updateBudgetAccount(budget, mainId, { hidden: true })).rejects.toThrow(
+      "planning:errors.budget.mainAccountLocked",
+    );
+    await expect(deleteBudgetAccount(budget, mainId)).rejects.toThrow("planning:errors.budget.mainAccountLocked");
+
+    await setMainBudgetAccount(budget, other.id);
+    expect(await getBudgetProfile(budget)).toEqual(expect.objectContaining({ mainAccountId: other.id }));
+
+    await updateBudgetAccount(budget, mainId, { hidden: true });
+    await expect(setMainBudgetAccount(budget, mainId)).rejects.toThrow(
+      "planning:errors.budget.hiddenAccountCannotBeMain",
+    );
+  });
+
+  it("locks the main currency once any transaction exists", async () => {
+    const { budget, mainId } = await setUp();
+
+    await setBudgetMainCurrency(budget, "EUR");
+    expect(await getBudgetProfile(budget)).toEqual(expect.objectContaining({ mainCurrency: "EUR" }));
+
+    await addBudgetTransaction(budget, monthTransaction(mainId));
+    await expect(setBudgetMainCurrency(budget, "PLN")).rejects.toThrow("planning:errors.budget.mainCurrencyLocked");
+  });
+
+  it("delete cascades to the account's months and keeps other accounts' data", async () => {
+    const { budget, mainId } = await setUp();
+    const doomed = await addBudgetAccount(budget, { name: "Old", defaultCurrency: "PLN" });
+    const kept = await addBudgetTransaction(budget, monthTransaction(mainId));
+    for (const date of ["2026-09-01", "2026-10-01", "2026-10-02", "2026-11-14"]) {
+      await addBudgetTransaction(budget, monthTransaction(doomed.id, date));
+    }
+    expect(await countBudgetAccountTransactions(budget, doomed.id)).toBe(4);
+    expect(await getBudgetAccountsWithTransactions(budget, [mainId, doomed.id])).toEqual([mainId, doomed.id]);
+
+    await deleteBudgetAccount(budget, doomed.id);
+
+    expect(await read(`budget_accounts/${doomed.id}`)).toBeUndefined();
+    expect(Object.keys(await list("budget_months"))).toEqual([`${mainId}_2026-11`]);
+    expect(await getBudgetAccounts(budget)).toEqual([expect.objectContaining({ id: mainId })]);
+    expect(await getBudgetTransactions(budget, { from: "2026-01", to: "2026-12" })).toEqual([kept]);
+  });
+
+  it("denies another user", async () => {
+    const { budget } = await setUp();
+    const account = await addBudgetAccount(budget, { name: "Mine", defaultCurrency: "PLN" });
+
+    await signInAs(OTHER);
+    await expect(updateBudgetAccount({ ...budget, uid: OTHER }, account.id, { hidden: true })).rejects.toMatchObject(
+      DENIED,
+    );
+    await expect(deleteBudgetAccount(budget, account.id)).rejects.toMatchObject(DENIED);
   });
 });

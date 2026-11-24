@@ -111,7 +111,14 @@
       "saveError": "Nie udało się zapisać transakcji. Spróbuj ponownie.",
       "deleteError": "Nie udało się usunąć transakcji. Spróbuj ponownie.",
       "transactionsDeleted": "Transakcje usunięte",
-      "importError": "Nie udało się zaimportować transakcji. Nic nie zapisano. Spróbuj ponownie."
+      "importError": "Nie udało się zaimportować transakcji. Nic nie zapisano. Spróbuj ponownie.",
+      "accountAdded": "Konto dodane",
+      "accountSaved": "Konto zaktualizowane",
+      "mainAccountChanged": "Zmieniono konto główne",
+      "mainCurrencyChanged": "Zmieniono walutę główną",
+      "accountDeleted": "Konto usunięte",
+      "accountSaveError": "Nie udało się zapisać konta. Spróbuj ponownie.",
+      "accountDeleteError": "Nie udało się usunąć konta. Spróbuj ponownie."
     }
   },
   "errors": {
@@ -134,7 +141,12 @@
       "monthTooLarge": "Ten miesiąc jest pełny: nie zmieści więcej transakcji tego konta.",
       "rateUnavailable": "Nie udało się pobrać kursu waluty.",
       "transactionMissing": "Ta transakcja już nie istnieje. Odśwież stronę.",
-      "importTooLarge": "Ten import się nie mieści: jeden z jego miesięcy przekroczyłby limit rozmiaru dla tego konta. Nic nie zaimportowano. Podziel plik na krótsze okresy."
+      "importTooLarge": "Ten import się nie mieści: jeden z jego miesięcy przekroczyłby limit rozmiaru dla tego konta. Nic nie zaimportowano. Podziel plik na krótsze okresy.",
+      "mainAccountLocked": "Konta głównego nie można ukryć ani usunąć. Najpierw ustaw inne konto jako główne.",
+      "accountHasTransactions": "To konto ma transakcje, więc nie można zmienić jego waluty.",
+      "hiddenAccountCannotBeMain": "Ukryte konto nie może być głównym. Najpierw je pokaż.",
+      "mainCurrencyLocked": "Waluta główna jest zablokowana, bo istnieją transakcje.",
+      "accountNotFound": "To konto już nie istnieje. Odśwież stronę."
     }
   },
   "splits": {
@@ -1037,6 +1049,47 @@
         "unconfirmed": "Transakcje bez kategorii",
         "close": "Zamknij",
         "openMonth": "Pokaż zaimportowane transakcje"
+      }
+    },
+    "accounts": {
+      "title": "Konta",
+      "add": "Dodaj konto",
+      "main": "Główne",
+      "hidden": "Ukryte",
+      "actions": "Akcje dla {{name}}",
+      "edit": "Edytuj",
+      "makeMain": "Ustaw jako główne",
+      "hide": "Ukryj",
+      "show": "Pokaż",
+      "hiddenHint": "Transakcje ukrytego konta nie są wliczane do listy transakcji, sum, Planera ani wykresów. Pokaż konto, aby znów je zobaczyć. Nadal możesz do niego importować i dodawać transakcje.",
+      "form": {
+        "addTitle": "Dodaj konto",
+        "addDescription": "Śledź kolejne konto bankowe, kartę lub gotówkę.",
+        "addSubmit": "Dodaj konto",
+        "editTitle": "Edytuj konto",
+        "editDescription": "Zmień nazwę konta lub jego walutę.",
+        "editSubmit": "Zapisz",
+        "name": "Nazwa konta",
+        "currency": "Domyślna waluta",
+        "currencyLocked": "Waluty nie można zmienić, gdy konto ma transakcje."
+      },
+      "delete": {
+        "action": "Usuń",
+        "title": "Usunąć {{name}}?",
+        "counting": "Liczenie transakcji konta…",
+        "countUnavailable": "Nie udało się policzyć transakcji konta.",
+        "description_one": "Konto {{name}} i jego {{count}} transakcja zostaną usunięte. Tego nie można cofnąć.",
+        "description_few": "Konto {{name}} i jego {{count}} transakcje zostaną usunięte. Tego nie można cofnąć.",
+        "description_many": "Konto {{name}} i jego {{count}} transakcji zostaną usunięte. Tego nie można cofnąć.",
+        "description_other": "Konto {{name}} i jego {{count}} transakcji zostaną usunięte. Tego nie można cofnąć.",
+        "hideHint": "Aby zachować historię, ale nie wliczać jej do sum, ukryj konto.",
+        "hideInstead": "Ukryj zamiast tego",
+        "confirm": "Usuń konto"
+      },
+      "mainCurrency": {
+        "label": "Waluta główna",
+        "editable": "Wszystkie sumy są pokazywane w tej walucie. Możesz ją zmienić do pierwszej transakcji.",
+        "locked": "Wszystkie sumy są pokazywane w tej walucie. Jest zablokowana, bo istnieją transakcje."
       }
     }
   }

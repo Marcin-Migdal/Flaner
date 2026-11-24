@@ -9,8 +9,11 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
   query,
   runTransaction,
+  setDoc,
+  updateDoc,
   where,
   writeBatch,
   type DocumentReference,
@@ -31,7 +34,9 @@ import {
 import { monthOfDate } from "../../utils/monthLedger";
 import type {
   BudgetAccount,
+  BudgetAccountChanges,
   BudgetAccountDoc,
+  BudgetAccountInput,
   BudgetAccountPayload,
   BudgetCategoriesDoc,
   BudgetCategoryTree,
@@ -90,9 +95,14 @@ const unwrapAccountKey = ({ uid, userKey }: UnlockedBudget, accountId: string, d
   return unwrapDataKey(wrappedKey.toUint8Array(), userKey, paths.account(accountId));
 };
 
-const getAccountKey = (budget: UnlockedBudget, accountId: string, data?: BudgetAccountDoc): Promise<CryptoKey> => {
+const cachedAccountKeys = (budget: UnlockedBudget) => {
   const keys = accountKeyCache.get(budget) ?? new Map<string, Promise<CryptoKey>>();
   accountKeyCache.set(budget, keys);
+  return keys;
+};
+
+const getAccountKey = (budget: UnlockedBudget, accountId: string, data?: BudgetAccountDoc): Promise<CryptoKey> => {
+  const keys = cachedAccountKeys(budget);
 
   const cached = keys.get(accountId);
   if (cached) return cached;
@@ -106,6 +116,25 @@ const getAccountKey = (budget: UnlockedBudget, accountId: string, data?: BudgetA
   key.catch(() => keys.delete(accountId));
   keys.set(accountId, key);
   return key;
+};
+
+/** A new account's document: its own data key wrapped by the user key, the name sealed with the account key. */
+const sealNewAccount = async (
+  { uid, userKey }: UnlockedBudget,
+  accountId: string,
+  { name, defaultCurrency }: BudgetAccountInput,
+  accountKey: CryptoKey,
+  now: number,
+): Promise<BudgetAccountDoc> => {
+  const payload: BudgetAccountPayload = { name };
+  return {
+    memberIds: [uid],
+    defaultCurrency,
+    hidden: false,
+    wrappedKeys: { [uid]: toBytes(await wrapDataKey(accountKey, userKey, paths.account(accountId))) },
+    payload: toBytes(await encryptJson(payload, accountKey, paths.account(accountId))),
+    createdAt: now,
+  };
 };
 
 // ---------------------------------------------------------------------------
@@ -167,15 +196,13 @@ export const createBudget = async (uid: string, input: CreateBudgetInput): Promi
     payload: toBytes(await encryptJson(input.categories, userKey, paths.categories(uid))),
     updatedAt: now,
   };
-  const accountPayload: BudgetAccountPayload = { name: input.mainAccount.name };
-  const accountDoc: BudgetAccountDoc = {
-    memberIds: [uid],
-    defaultCurrency: input.mainAccount.currency,
-    hidden: false,
-    wrappedKeys: { [uid]: toBytes(await wrapDataKey(accountKey, userKey, paths.account(accountRef.id))) },
-    payload: toBytes(await encryptJson(accountPayload, accountKey, paths.account(accountRef.id))),
-    createdAt: now,
-  };
+  const accountDoc = await sealNewAccount(
+    budget,
+    accountRef.id,
+    { name: input.mainAccount.name, defaultCurrency: input.mainAccount.currency },
+    accountKey,
+    now,
+  );
 
   await runTransaction(fb.firestore, async (transaction) => {
     if ((await transaction.get(refs.keys(uid))).exists()) {
@@ -337,6 +364,144 @@ export const getBudgetAccounts = async (budget: UnlockedBudget): Promise<BudgetA
   );
 
   return accounts.sort((a, b) => a.createdAt - b.createdAt);
+};
+
+// ---------------------------------------------------------------------------
+// Account management (Settings → Accounts & security)
+// ---------------------------------------------------------------------------
+
+/** Month documents of one account; a month exists only while it holds a transaction. */
+const accountMonthsQuery = (uid: string, accountId: string) =>
+  query(refs.months(), where("memberIds", "array-contains", uid), where("accountId", "==", accountId));
+
+const hasTransactions = async (uid: string, accountId: string) =>
+  !(await getDocs(query(accountMonthsQuery(uid, accountId), limit(1)))).empty;
+
+/** Which of the given accounts hold at least one transaction (one single-document query per account). */
+export const getBudgetAccountsWithTransactions = async (
+  { uid }: UnlockedBudget,
+  accountIds: string[],
+): Promise<string[]> => {
+  const used = await Promise.all(accountIds.map((accountId) => hasTransactions(uid, accountId)));
+  return accountIds.filter((_, index) => used[index]);
+};
+
+/** How many transactions an account holds (decrypts all its months; for the delete confirmation). */
+export const countBudgetAccountTransactions = async (budget: UnlockedBudget, accountId: string): Promise<number> => {
+  const snapshot = await getDocs(accountMonthsQuery(budget.uid, accountId));
+  const accountKey = await getAccountKey(budget, accountId);
+  const counts = await Promise.all(
+    snapshot.docs.map(async (monthDoc) => {
+      const { month, payload } = monthDoc.data();
+      const { transactions } = await decryptJson<BudgetMonthPayload>(
+        payload.toUint8Array(),
+        accountKey,
+        paths.month(accountId, month),
+      );
+      return transactions.length;
+    }),
+  );
+  return counts.reduce((sum, count) => sum + count, 0);
+};
+
+export const addBudgetAccount = async (budget: UnlockedBudget, input: BudgetAccountInput): Promise<BudgetAccount> => {
+  const accountRef = doc(refs.accounts());
+  const accountKey = await generateDataKey();
+  const createdAt = Date.now();
+
+  await setDoc(accountRef, await sealNewAccount(budget, accountRef.id, input, accountKey, createdAt));
+  cachedAccountKeys(budget).set(accountRef.id, Promise.resolve(accountKey));
+  return { id: accountRef.id, ...input, hidden: false, createdAt };
+};
+
+/**
+ * Renames, re-currencies or hides / shows an account. Fails with `errors.budget.accountHasTransactions` when the
+ * currency changes on an account with transactions and with `errors.budget.mainAccountLocked` when hiding the main
+ * account.
+ */
+export const updateBudgetAccount = async (
+  budget: UnlockedBudget,
+  accountId: string,
+  { name, defaultCurrency, hidden }: BudgetAccountChanges,
+): Promise<void> => {
+  // Queries cannot run inside a transaction: checked just before it
+  const currencyLocked = defaultCurrency !== undefined && (await hasTransactions(budget.uid, accountId));
+  const payload =
+    name === undefined
+      ? undefined
+      : toBytes(
+          await encryptJson<BudgetAccountPayload>(
+            { name },
+            await getAccountKey(budget, accountId),
+            paths.account(accountId),
+          ),
+        );
+
+  await runTransaction(fb.firestore, async (transaction) => {
+    const profile = (await transaction.get(refs.profile(budget.uid))).data();
+    const account = (await transaction.get(refs.account(accountId))).data();
+    if (!account) throw new Error("planning:errors.budget.accountNotFound");
+    if (hidden && profile?.mainAccountId === accountId) throw new Error("planning:errors.budget.mainAccountLocked");
+    if (currencyLocked && defaultCurrency !== account.defaultCurrency) {
+      throw new Error("planning:errors.budget.accountHasTransactions");
+    }
+
+    transaction.update(refs.account(accountId), {
+      ...(defaultCurrency !== undefined && { defaultCurrency }),
+      ...(hidden !== undefined && { hidden }),
+      ...(payload && { payload }),
+    });
+  });
+};
+
+/** Makes the account the main one (preselected for new and imported transactions). A hidden account cannot be main. */
+export const setMainBudgetAccount = async ({ uid }: UnlockedBudget, accountId: string): Promise<void> => {
+  await runTransaction(fb.firestore, async (transaction) => {
+    const account = (await transaction.get(refs.account(accountId))).data();
+    if (!account) throw new Error("planning:errors.budget.accountNotFound");
+    if (account.hidden) throw new Error("planning:errors.budget.hiddenAccountCannotBeMain");
+    transaction.update(refs.profile(uid), { mainAccountId: accountId, updatedAt: Date.now() });
+  });
+};
+
+/** Changes the main currency; fails with `errors.budget.mainCurrencyLocked` once any transaction exists. */
+export const setBudgetMainCurrency = async ({ uid }: UnlockedBudget, mainCurrency: string): Promise<void> => {
+  const anyMonth = await getDocs(query(refs.months(), where("memberIds", "array-contains", uid), limit(1)));
+  if (!anyMonth.empty) throw new Error("planning:errors.budget.mainCurrencyLocked");
+  await updateDoc(refs.profile(uid), { mainCurrency, updatedAt: Date.now() });
+};
+
+/**
+ * Deletes an account with every document that belongs to it (its months; recurring transactions join with their
+ * ticket) and forgets it in the remembered bank-file mappings. The main account is never deleted
+ * (`errors.budget.mainAccountLocked`). Batches of 500 with the account in the last one, so a cascade that fails
+ * half-way leaves the account listed and can be run again.
+ */
+export const deleteBudgetAccount = async (budget: UnlockedBudget, accountId: string): Promise<void> => {
+  const { uid, userKey } = budget;
+  const profile = await getBudgetProfile(budget);
+  if (!profile || profile.mainAccountId === accountId) throw new Error("planning:errors.budget.mainAccountLocked");
+
+  const months = await getDocs(accountMonthsQuery(uid, accountId));
+  for (let start = 0; start < months.docs.length; start += BATCH_LIMIT) {
+    const batch = writeBatch(fb.firestore);
+    months.docs.slice(start, start + BATCH_LIMIT).forEach((monthDoc) => batch.delete(monthDoc.ref));
+    await batch.commit();
+  }
+
+  const fileAccountMappings = Object.fromEntries(
+    Object.entries(profile.fileAccountMappings).filter(([, mappedId]) => mappedId !== accountId),
+  );
+  const profilePayload: BudgetProfilePayload = { fileAccountMappings };
+  const batch = writeBatch(fb.firestore).delete(refs.account(accountId));
+  if (Object.keys(fileAccountMappings).length !== Object.keys(profile.fileAccountMappings).length) {
+    batch.update(refs.profile(uid), {
+      payload: toBytes(await encryptJson(profilePayload, userKey, paths.profile(uid))),
+      updatedAt: Date.now(),
+    });
+  }
+  await batch.commit();
+  cachedAccountKeys(budget).delete(accountId);
 };
 
 // ---------------------------------------------------------------------------
