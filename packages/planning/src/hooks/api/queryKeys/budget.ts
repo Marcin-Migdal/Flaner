@@ -32,6 +32,16 @@ export const budgetInvalidation = {
     budgetKeys.transactions(uid, monthOfDate(date)),
     budgetKeys.accountsWithTransactions(uid),
   ],
+  /** Edits and bulk deletes change every month a transaction left or moved to. */
+  transactionsInMonths: ({ uid }: UserType, dates: string[]) => [
+    ...[...new Set(dates.map(monthOfDate))].map((month) => budgetKeys.transactions(uid, month)),
+    budgetKeys.accountsWithTransactions(uid),
+  ],
+  /** An import changes every month it adds to. */
+  transactionsImported: ({ uid }: UserType, inputs: { date: string }[]) => [
+    ...[...new Set(inputs.map(({ date }) => monthOfDate(date)))].map((month) => budgetKeys.transactions(uid, month)),
+    budgetKeys.accountsWithTransactions(uid),
+  ],
   /** Add, rename, re-currency, hide / show. Hiding is applied by the month ledger from the accounts list. */
   accountsChanged: ({ uid }: UserType) => [budgetKeys.accounts(uid)],
   /** Main account or main currency. */

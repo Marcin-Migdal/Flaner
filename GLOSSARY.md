@@ -220,7 +220,7 @@ A place a user's money sits (a bank account, a cash wallet); every transaction b
 _Avoid_: wallet, bank account (as the general term)
 
 **Hidden account**:
-An account whose transactions are left out of the transaction list, summaries, the budget and charts until the user picks that account explicitly. The main account cannot be hidden.
+An account whose transactions are left out of the transaction list, summaries, the budget and charts. It is not offered in the Accounts filter either; to see its transactions again, the user unhides it. The main account cannot be hidden.
 _Avoid_: archived account, inactive account
 
 **Main account**:

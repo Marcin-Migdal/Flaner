@@ -110,6 +110,8 @@
       "transactionDeleted": "Usunięto transakcję",
       "saveError": "Nie udało się zapisać transakcji. Spróbuj ponownie.",
       "deleteError": "Nie udało się usunąć transakcji. Spróbuj ponownie.",
+      "transactionsDeleted": "Transakcje usunięte",
+      "importError": "Nie udało się zaimportować transakcji. Nic nie zapisano. Spróbuj ponownie.",
       "accountAdded": "Konto dodane",
       "accountSaved": "Konto zaktualizowane",
       "mainAccountChanged": "Zmieniono konto główne",
@@ -138,6 +140,8 @@
       "keyChanged": "Budżet został zresetowany na innym urządzeniu. Odśwież stronę.",
       "monthTooLarge": "Ten miesiąc jest pełny: nie zmieści więcej transakcji tego konta.",
       "rateUnavailable": "Nie udało się pobrać kursu waluty.",
+      "transactionMissing": "Ta transakcja już nie istnieje. Odśwież stronę.",
+      "importTooLarge": "Ten import się nie mieści: jeden z jego miesięcy przekroczyłby limit rozmiaru dla tego konta. Nic nie zaimportowano. Podziel plik na krótsze okresy.",
       "mainAccountLocked": "Konta głównego nie można ukryć ani usunąć. Najpierw ustaw inne konto jako główne.",
       "accountHasTransactions": "To konto ma transakcje, więc nie można zmienić jego waluty.",
       "hiddenAccountCannotBeMain": "Ukryte konto nie może być głównym. Najpierw je pokaż.",
@@ -512,7 +516,8 @@
         "transactions": "Transakcje",
         "recurring": "Cykliczne"
       },
-      "add": "Dodaj transakcję"
+      "add": "Dodaj transakcję",
+      "import": "Importuj"
     },
     "settings": {
       "tabs": {
@@ -819,11 +824,20 @@
     },
     "transactionList": {
       "uncategorized": "Bez kategorii",
-      "delete": "Usuń {{payee}}"
+      "unconfirmed": "Niepotwierdzona kategoria",
+      "excluded": "Wykluczona",
+      "category": "Kategoria: {{payee}}",
+      "select": "Zaznacz: {{payee}}",
+      "payee": "Odbiorca / nadawca: {{payee}}",
+      "description": "Opis: {{payee}}",
+      "addDescription": "Dodaj opis",
+      "amount": "Kwota: {{payee}}",
+      "details": "Szczegóły: {{payee}}"
     },
     "categoryPicker": {
       "placeholder": "Wybierz kategorię",
-      "noResults": "Brak pasujących kategorii"
+      "noResults": "Brak pasujących kategorii",
+      "confirm": "Potwierdź kategorię {{category}}"
     },
     "monthSwitcher": {
       "previous": "Poprzedni miesiąc",
@@ -865,12 +879,177 @@
       "optional": "Opcjonalnie",
       "category": "Kategoria",
       "cancel": "Anuluj",
-      "save": "Dodaj transakcję"
+      "save": "Dodaj transakcję",
+      "editTitle": "Edytuj transakcję",
+      "saveEdit": "Zapisz zmiany"
     },
     "deleteTransaction": {
       "title": "Usunąć tę transakcję?",
       "description": "„{{payee}}” zostanie usunięta z budżetu. Tej operacji nie można cofnąć.",
       "confirm": "Usuń"
+    },
+    "transactionDetails": {
+      "date": "Data",
+      "account": "Konto",
+      "source": "Plik źródłowy",
+      "manual": "Dodana ręcznie",
+      "amount": "Kwota",
+      "amountAtRate": "{{amount}} = {{amountMain}} po kursie {{rate}} z {{date}}",
+      "amountTyped": "{{amount}} = {{amountMain}} (wpisane ręcznie)",
+      "edit": "Edytuj",
+      "delete": "Usuń"
+    },
+    "transactionFilters": {
+      "label": "Filtry",
+      "search": "Szukaj odbiorcy lub opisu",
+      "accounts": "Konta",
+      "allAccounts": "Wszystkie konta",
+      "categories": "Kategorie",
+      "allCategories": "Wszystkie kategorie",
+      "uncategorized": "Bez kategorii",
+      "type": "Typ",
+      "direction": "Kierunek",
+      "status": "Status",
+      "relevance": "Uwzględnianie",
+      "directions": {
+        "all": "Wszystkie",
+        "income": "Wpływy",
+        "expense": "Wydatki"
+      },
+      "statuses": {
+        "all": "Wszystkie",
+        "confirmed": "Potwierdzone",
+        "unconfirmed": "Niepotwierdzone"
+      },
+      "relevances": {
+        "relevant": "Uwzględniane",
+        "excluded": "Wykluczone",
+        "all": "Wszystkie"
+      },
+      "clear": "Wyczyść filtry",
+      "noMatches": "Żadna transakcja nie pasuje do filtrów"
+    },
+    "bulkActions": {
+      "label": "Akcje zbiorcze",
+      "selected_one": "Zaznaczono {{count}}",
+      "selected_few": "Zaznaczono {{count}}",
+      "selected_many": "Zaznaczono {{count}}",
+      "selected_other": "Zaznaczono {{count}}",
+      "setCategory": "Ustaw kategorię",
+      "confirm": "Potwierdź",
+      "delete": "Usuń",
+      "clear": "Odznacz wszystko",
+      "mixedTypes": "Zaznacz same wydatki albo same wpływy, aby ustawić kategorię",
+      "setCategoryTitle_one": "Ustaw kategorię {{count}} transakcji",
+      "setCategoryTitle_few": "Ustaw kategorię {{count}} transakcji",
+      "setCategoryTitle_many": "Ustaw kategorię {{count}} transakcji",
+      "setCategoryTitle_other": "Ustaw kategorię {{count}} transakcji",
+      "category": "Kategoria",
+      "save": "Ustaw kategorię",
+      "cancel": "Anuluj",
+      "deleteTitle_one": "Usunąć {{count}} transakcję?",
+      "deleteTitle_few": "Usunąć {{count}} transakcje?",
+      "deleteTitle_many": "Usunąć {{count}} transakcji?",
+      "deleteTitle_other": "Usunąć {{count}} transakcji?",
+      "deleteDescription": "Zostaną usunięte z budżetu. Tej operacji nie można cofnąć.",
+      "deleteConfirm": "Usuń"
+    },
+    "import": {
+      "title": "Import wyciągu",
+      "description": "Dodaj transakcje z pliku wyciągu z banku.",
+      "back": "Wstecz",
+      "steps": {
+        "file": "Plik",
+        "settings": "Ustawienia",
+        "preview": "Podgląd",
+        "result": "Wynik"
+      },
+      "banks": {
+        "millennium": "Bank Millennium"
+      },
+      "file": {
+        "drop": "Upuść tutaj plik CSV lub kliknij, aby go wybrać",
+        "hint": "Jeden plik wyciągu naraz, w formacie CSV.",
+        "notCsv": "To nie jest plik CSV. Wyeksportuj wyciąg z banku jako CSV i spróbuj ponownie.",
+        "empty": "W tym pliku nie ma transakcji.",
+        "unreadable": "Nie udało się odczytać pliku. Upewnij się, że to wyciąg CSV z banku.",
+        "recognized": "Rozpoznawane automatycznie: {{banks}}"
+      },
+      "settings": {
+        "bank": "Bank",
+        "bankDetected": "Rozpoznany z pliku. Zmień, jeśli się nie zgadza.",
+        "bankNotDetected": "Nie rozpoznano układu pliku. Wybierz bank, który go wystawił.",
+        "account": "Importuj na konto",
+        "fallbackCurrency": "Waluta dla wierszy bez waluty",
+        "fallbackCurrencyHint": "Używana tylko wtedy, gdy wiersz nie podaje waluty.",
+        "next": "Podgląd",
+        "previewError": "Nie udało się przygotować podglądu (brak połączenia lub kursu walut). Spróbuj ponownie."
+      },
+      "validation": {
+        "bankRequired": "Wybierz bank."
+      },
+      "preview": {
+        "filtersLabel": "Pokaż wiersze",
+        "filters": {
+          "all": "Wszystkie",
+          "new": "Nowe",
+          "duplicate": "Duplikaty",
+          "error": "Błędy",
+          "pending": "Oczekujące",
+          "unselected": "Niezaznaczone"
+        },
+        "selectedCount_one": "Zaznaczono {{count}} wiersz",
+        "selectedCount_few": "Zaznaczono {{count}} wiersze",
+        "selectedCount_many": "Zaznaczono {{count}} wierszy",
+        "selectedCount_other": "Zaznaczono {{count}} wiersza",
+        "setCategory": "Ustaw kategorię",
+        "errorsHeading": "Wiersze, których nie udało się odczytać",
+        "errorRow": "Wiersz {{row}}: {{reason}}",
+        "status": {
+          "new": "Nowa",
+          "duplicate": "Duplikat",
+          "error": "Błąd",
+          "pending": "Blokada karty"
+        },
+        "select": "Importuj {{payee}}",
+        "edit": "Edytuj {{payee}}",
+        "empty": "Brak wierszy do pokazania.",
+        "import_one": "Importuj {{count}} transakcję",
+        "import_few": "Importuj {{count}} transakcje",
+        "import_many": "Importuj {{count}} transakcji",
+        "import_other": "Importuj {{count}} transakcji"
+      },
+      "rowErrors": {
+        "columns": "nieprawidłowa liczba kolumn",
+        "date": "nieczytelna data",
+        "amount": "nieczytelna kwota",
+        "currency": "nieczytelna waluta"
+      },
+      "rowDialog": {
+        "title": "Edytuj wiersz",
+        "save": "Zapisz"
+      },
+      "categoryDialog": {
+        "title": "Ustaw kategorię",
+        "description": "Kategoria zostanie ustawiona na każdym zaznaczonym wierszu danego typu.",
+        "expense": "Kategoria dla wydatków",
+        "income": "Kategoria dla wpływów",
+        "apply": "Ustaw kategorię"
+      },
+      "result": {
+        "title_one": "Zaimportowano {{count}} transakcję",
+        "title_few": "Zaimportowano {{count}} transakcje",
+        "title_many": "Zaimportowano {{count}} transakcji",
+        "title_other": "Zaimportowano {{count}} transakcji",
+        "summary": "Podsumowanie importu",
+        "importedTo": "Zaimportowano na konto {{account}}",
+        "duplicates": "Pominięte duplikaty",
+        "pending": "Blokady karty (niezaimportowane)",
+        "errors": "Wiersze z błędami",
+        "unconfirmed": "Transakcje bez kategorii",
+        "close": "Zamknij",
+        "openMonth": "Pokaż zaimportowane transakcje"
+      }
     },
     "accounts": {
       "title": "Konta",

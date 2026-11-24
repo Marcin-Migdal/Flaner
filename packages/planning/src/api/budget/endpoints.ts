@@ -50,6 +50,7 @@ import type {
   BudgetTransaction,
   BudgetTransactionInput,
   BudgetTransactionRef,
+  BudgetTransactionUpdate,
   CreateBudgetInput,
   LockedBudget,
   UnlockedBudget,
@@ -571,6 +572,38 @@ export const getBudgetTransactions = async (
   return months.flat();
 };
 
+/** Every month `from`..`to` (inclusive, `YYYY-MM`). */
+const monthsBetween = (from: BudgetMonth, to: BudgetMonth): BudgetMonth[] => {
+  const months: BudgetMonth[] = [];
+  for (let [year, month] = from.split("-").map(Number); `${year}-${String(month).padStart(2, "0")}` <= to; ) {
+    months.push(`${year}-${String(month).padStart(2, "0")}`);
+    [year, month] = month === 12 ? [year + 1, 1] : [year, month + 1];
+  }
+  return months;
+};
+
+/** The transactions of one account dated in the months `from`..`to`: only that account's month documents are read. */
+export const getAccountTransactions = async (
+  budget: UnlockedBudget,
+  accountId: string,
+  { from, to }: { from: BudgetMonth; to: BudgetMonth },
+): Promise<BudgetTransaction[]> => {
+  const accountKey = await getAccountKey(budget, accountId);
+  const months = await Promise.all(
+    monthsBetween(from, to).map(async (month) => {
+      const data = (await getDoc(refs.month(accountId, month))).data();
+      if (!data) return [];
+      const { transactions } = await decryptJson<BudgetMonthPayload>(
+        data.payload.toUint8Array(),
+        accountKey,
+        paths.month(accountId, month),
+      );
+      return transactions.map((transaction): BudgetTransaction => ({ ...transaction, accountId }));
+    }),
+  );
+  return months.flat();
+};
+
 export const addBudgetTransaction = async (
   budget: UnlockedBudget,
   input: BudgetTransactionInput,
@@ -589,16 +622,147 @@ export const addBudgetTransaction = async (
   return { id, ...input };
 };
 
-export const deleteBudgetTransaction = async (
+/**
+ * Adds an import's transactions in one transaction: every affected month is read, then written. An import that
+ * would push any month over the size guard fails as a whole with `errors.budget.importTooLarge`.
+ */
+export const importBudgetTransactions = async (
   budget: UnlockedBudget,
-  { id, accountId, date }: BudgetTransactionRef,
-): Promise<void> => {
-  const month = monthOfDate(date);
+  inputs: BudgetTransactionInput[],
+): Promise<BudgetTransaction[]> => {
+  const added = inputs.map((input): BudgetTransaction => ({ id: crypto.randomUUID(), ...input }));
+  const byMonth = new Map<string, { accountId: string; month: BudgetMonth; stored: BudgetMonthPayload["transactions"] }>();
+  for (const { accountId, ...stored } of added) {
+    const month = monthOfDate(stored.date);
+    const key = paths.month(accountId, month);
+    const group = byMonth.get(key) ?? { accountId, month, stored: [] };
+    group.stored.push(stored);
+    byMonth.set(key, group);
+  }
 
   await runTransaction(fb.firestore, async (transaction) => {
-    const payload = await readMonth(transaction, budget, accountId, month);
-    await writeMonth(transaction, budget, accountId, month, {
-      transactions: payload.transactions.filter((stored) => stored.id !== id),
-    });
+    // A Firestore transaction reads everything before its first write
+    const months = await Promise.all(
+      [...byMonth.values()].map(async (group) => ({
+        ...group,
+        payload: await readMonth(transaction, budget, group.accountId, group.month),
+      })),
+    );
+    for (const { accountId, month, stored, payload } of months) {
+      try {
+        await writeMonth(transaction, budget, accountId, month, { transactions: [...payload.transactions, ...stored] });
+      } catch (error) {
+        if (error instanceof Error && error.message === "planning:errors.budget.monthTooLarge") {
+          throw new Error("planning:errors.budget.importTooLarge");
+        }
+        throw error;
+      }
+    }
+  });
+
+  return added;
+};
+
+export const deleteBudgetTransaction = (budget: UnlockedBudget, ref: BudgetTransactionRef): Promise<void> =>
+  deleteBudgetTransactions(budget, [ref]);
+
+type MonthSlot = { accountId: string; month: BudgetMonth };
+
+const slotId = ({ accountId, month }: MonthSlot) => `${accountId}_${month}`;
+
+const slotOf = ({ accountId, date }: Pick<BudgetTransaction, "accountId" | "date">): MonthSlot => ({
+  accountId,
+  month: monthOfDate(date),
+});
+
+type LoadedMonth = { slot: MonthSlot; transactions: BudgetMonthPayload["transactions"] };
+type LoadedMonths = Map<string, LoadedMonth>;
+
+/** Reads every slot once (a Firestore transaction needs all reads before its first write). */
+const readMonths = async (transaction: Transaction, budget: UnlockedBudget, slots: MonthSlot[]): Promise<LoadedMonths> => {
+  const unique = new Map(slots.map((slot) => [slotId(slot), slot]));
+  const loaded = await Promise.all(
+    [...unique.values()].map(async (slot): Promise<LoadedMonth> => {
+      const { transactions } = await readMonth(transaction, budget, slot.accountId, slot.month);
+      return { slot, transactions };
+    }),
+  );
+  return new Map(loaded.map((month) => [slotId(month.slot), month]));
+};
+
+const writeMonths = (transaction: Transaction, budget: UnlockedBudget, months: LoadedMonths) =>
+  Promise.all(
+    [...months.values()].map(({ slot, transactions }) =>
+      writeMonth(transaction, budget, slot.accountId, slot.month, { transactions }),
+    ),
+  );
+
+const missingTransaction = () => new Error("planning:errors.budget.transactionMissing");
+
+/** Deletes the transactions, each from its month; every affected month is written in one transaction. */
+export const deleteBudgetTransactions = async (budget: UnlockedBudget, refs: BudgetTransactionRef[]): Promise<void> => {
+  const ids = new Set(refs.map((ref) => ref.id));
+
+  await runTransaction(fb.firestore, async (transaction) => {
+    const months = await readMonths(transaction, budget, refs.map(slotOf));
+    for (const month of months.values()) {
+      month.transactions = month.transactions.filter((stored) => !ids.has(stored.id));
+    }
+    await writeMonths(transaction, budget, months);
   });
 };
+
+/**
+ * Applies the edits; a new `date` or `accountId` moves the transaction to that month / account document. Every
+ * affected month document is read and written in one transaction, so a move never leaves a copy or loses the row.
+ * The frozen import fields (`importHash`, `sourceFile`, `counterpartyAccount`) always keep their stored values:
+ * the stored transaction is spread and only the patch's fields override it.
+ */
+export const updateBudgetTransactions = async (
+  budget: UnlockedBudget,
+  updates: BudgetTransactionUpdate[],
+): Promise<BudgetTransaction[]> =>
+  runTransaction(fb.firestore, async (transaction) => {
+    const targetOf = ({ ref, patch }: BudgetTransactionUpdate) =>
+      slotOf({ accountId: patch.accountId ?? ref.accountId, date: patch.date ?? ref.date });
+    const months = await readMonths(transaction, budget, [
+      ...updates.map(({ ref }) => slotOf(ref)),
+      ...updates.map(targetOf),
+    ]);
+    const monthAt = (slot: MonthSlot) => {
+      const month = months.get(slotId(slot));
+      if (!month) throw missingTransaction();
+      return month;
+    };
+
+    const updated = updates.map((update) => {
+      const { ref, patch } = update;
+      const source = monthAt(slotOf(ref));
+      const index = source.transactions.findIndex((stored) => stored.id === ref.id);
+      if (index === -1) throw missingTransaction();
+
+      const stored = source.transactions[index];
+      const next: BudgetTransaction = {
+        ...stored,
+        accountId: ref.accountId,
+        ...patch,
+        id: stored.id,
+        importHash: stored.importHash,
+        sourceFile: stored.sourceFile,
+        counterpartyAccount: stored.counterpartyAccount,
+      };
+      const { accountId, ...nextStored } = next;
+
+      const target = monthAt(targetOf(update));
+      if (target === source) {
+        source.transactions[index] = nextStored;
+      } else {
+        source.transactions.splice(index, 1);
+        target.transactions.push(nextStored);
+      }
+      return { ...nextStored, accountId };
+    });
+
+    await writeMonths(transaction, budget, months);
+    return updated;
+  });

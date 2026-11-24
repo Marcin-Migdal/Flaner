@@ -24,9 +24,10 @@ import {
   type BudgetAccount,
   type BudgetCategoryTree,
   type BudgetProfile,
+  type BudgetTransaction,
   type BudgetTransactionInput,
 } from "../../api/budget";
-import { useAddBudgetTransactionMutation } from "../../hooks/api/mutation";
+import { useAddBudgetTransactionMutation, useUpdateBudgetTransactionsMutation } from "../../hooks/api/mutation";
 import { useGetExchangeRateQuery } from "../../hooks/api/query";
 import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
@@ -43,12 +44,32 @@ export type BudgetTransactionDialogProps = {
   categories: BudgetCategoryTree;
   /** Disables saving (e.g. offline). */
   saveDisabled?: boolean;
+  /** Edits this transaction (every field) instead of adding one; a new date or account moves it. */
+  transaction?: BudgetTransaction | null;
 };
 
 const isCategoryType = (value: string): value is BudgetTransactionFormData["type"] =>
   BUDGET_CATEGORY_TYPES.some((type) => type === value);
 
-const defaultValues = (profile: BudgetProfile, accounts: BudgetAccount[]): DefaultValues<BudgetTransactionFormData> => {
+const defaultValues = (
+  profile: BudgetProfile,
+  accounts: BudgetAccount[],
+  transaction?: BudgetTransaction | null,
+): DefaultValues<BudgetTransactionFormData> => {
+  if (transaction) {
+    return {
+      type: transaction.type,
+      amount: fromMinorUnits(transaction.amount),
+      currency: transaction.currency,
+      amountMain: transaction.currency === profile.mainCurrency ? null : fromMinorUnits(transaction.amountMain),
+      rateOverridden: transaction.rateOverridden,
+      date: parseISO(transaction.date),
+      payee: transaction.payee,
+      description: transaction.description,
+      accountId: transaction.accountId,
+      categoryId: transaction.categoryId,
+    };
+  }
   const mainAccount = accounts.find((account) => account.id === profile.mainAccountId) ?? accounts[0];
   return {
     type: "expense",
@@ -64,7 +85,10 @@ const defaultValues = (profile: BudgetProfile, accounts: BudgetAccount[]): Defau
   };
 };
 
-/** Add transaction (manual entry). A transaction saved with a category is confirmed. */
+/**
+ * Add transaction (manual entry; saved with a category it is confirmed), or with `transaction` edit one: a changed
+ * category confirms it, the frozen import fields stay as they are.
+ */
 export const BudgetTransactionDialog = ({
   open,
   onOpenChange,
@@ -72,33 +96,30 @@ export const BudgetTransactionDialog = ({
   accounts,
   categories,
   saveDisabled,
+  transaction,
 }: BudgetTransactionDialogProps) => {
   const { t, i18n } = usePlanningTranslations();
   const currencyOptions = useCurrencyOptions();
   const showWriteError = useBudgetWriteErrorToast();
   const { mainCurrency } = profile;
-  const { mutateAsync: addTransaction, isPending } = useAddBudgetTransactionMutation();
+  const { mutateAsync: addTransaction, isPending: isAdding } = useAddBudgetTransactionMutation();
+  const { mutateAsync: updateTransactions, isPending: isUpdating } = useUpdateBudgetTransactionsMutation();
+  const isPending = isAdding || isUpdating;
 
   const methods = useForm<BudgetTransactionFormData>({
     resolver: zodResolver(getBudgetTransactionSchema(t, mainCurrency)),
-    defaultValues: defaultValues(profile, accounts),
+    defaultValues: defaultValues(profile, accounts, transaction),
   });
   const { control, setValue, reset, handleSubmit } = methods;
 
   useEffect(() => {
-    if (open) reset(defaultValues(profile, accounts));
-  }, [open, profile, accounts, reset]);
+    if (open) reset(defaultValues(profile, accounts, transaction));
+  }, [open, profile, accounts, transaction, reset]);
 
-  const [type, amount, currency, date, rateOverridden, accountId] = useWatch({
+  const [type, amount, currency, date, rateOverridden] = useWatch({
     control,
-    name: ["type", "amount", "currency", "date", "rateOverridden", "accountId"],
+    name: ["type", "amount", "currency", "date", "rateOverridden"],
   });
-
-  // Picking an account switches to its default currency
-  useEffect(() => {
-    const account = accounts.find((candidate) => candidate.id === accountId);
-    if (account) setValue("currency", account.defaultCurrency);
-  }, [accountId, accounts, setValue]);
   const isForeign = !!currency && currency !== mainCurrency;
   const rateDay = date ? format(date, "yyyy-MM-dd") : "";
   const { data: rate, isFetching: isRateFetching, isError: isRateError } = useGetExchangeRateQuery({
@@ -134,25 +155,40 @@ export const BudgetTransactionDialog = ({
     // Without a published rate (e.g. the rate service is down) the typed amount defines the rate
     const usedRate = foreign ? (rate ?? { rate: amountMain / amountMinor, date: day }) : { rate: 1, date: day };
 
-    const input: BudgetTransactionInput = {
+    // An edit that keeps amount, currency, date and main-currency amount keeps the stored conversion as it was
+    const keepConversion =
+      !!transaction &&
+      transaction.amount === amountMinor &&
+      transaction.currency === data.currency &&
+      transaction.date === day &&
+      transaction.amountMain === amountMain;
+    const conversion = keepConversion
+      ? { rate: transaction.rate, rateDate: transaction.rateDate, rateOverridden: transaction.rateOverridden }
+      : { rate: usedRate.rate, rateDate: usedRate.date, rateOverridden: foreign && (data.rateOverridden || !rate) };
+
+    const input = {
       accountId: data.accountId,
       date: day,
       type: data.type,
       amount: amountMinor,
       currency: data.currency,
       amountMain,
-      rate: usedRate.rate,
-      rateDate: usedRate.date,
-      rateOverridden: foreign && (data.rateOverridden || !rate),
+      ...conversion,
       payee: data.payee.trim(),
       description: data.description.trim(),
       categoryId: data.categoryId,
-      confirmed: data.categoryId !== null,
-      excluded: false,
     };
 
     try {
-      await addTransaction(input);
+      if (transaction) {
+        // An unchanged category keeps its confirmation; a picked one is confirmed
+        const confirmed =
+          data.categoryId === transaction.categoryId ? transaction.confirmed : data.categoryId !== null;
+        await updateTransactions([{ ref: transaction, patch: { ...input, confirmed } }]);
+      } else {
+        const added: BudgetTransactionInput = { ...input, confirmed: data.categoryId !== null, excluded: false };
+        await addTransaction(added);
+      }
       onOpenChange(false);
     } catch (error) {
       if (error instanceof Error) {
@@ -168,7 +204,7 @@ export const BudgetTransactionDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={styles.content}>
         <DialogHeader className={styles.header}>
-          <DialogTitle>{t("budget.transactionForm.title")}</DialogTitle>
+          <DialogTitle>{t(transaction ? "budget.transactionForm.editTitle" : "budget.transactionForm.title")}</DialogTitle>
         </DialogHeader>
 
         <FormProvider {...methods}>
@@ -246,7 +282,13 @@ export const BudgetTransactionDialog = ({
                   name={accountField.name}
                   options={accountOptions}
                   value={accountOptions.find((option) => option.value === accountField.value) ?? null}
-                  onChange={(option) => option && accountField.onChange(option.value)}
+                  onChange={(option) => {
+                    if (!option) return;
+                    accountField.onChange(option.value);
+                    // Picking an account switches to its default currency
+                    const account = accounts.find((candidate) => candidate.id === option.value);
+                    if (account) setValue("currency", account.defaultCurrency);
+                  }}
                   onBlur={accountField.onBlur}
                   error={accountState.error?.message}
                   disabled={accounts.length < 2}
@@ -276,7 +318,7 @@ export const BudgetTransactionDialog = ({
               </Button>
               {/* Never saves an amount computed from the previous date's / currency's rate */}
               <Button type="submit" variant="brand" isBusy={isPending} disabled={saveDisabled || (isForeign && isRateFetching)}>
-                {t("budget.transactionForm.save")}
+                {t(transaction ? "budget.transactionForm.saveEdit" : "budget.transactionForm.save")}
               </Button>
             </div>
           </form>
