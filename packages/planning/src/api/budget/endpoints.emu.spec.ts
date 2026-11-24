@@ -1,6 +1,7 @@
 // Runs against the Firestore + Auth emulators with the real security rules: `npm run test:emulator`.
 import { fb } from "@flaner/shared/firebase";
 import { setupEmulator } from "@flaner/test-utils/emulator";
+import { addMonths, format, setDate } from "date-fns";
 import { Bytes, collection, doc, setDoc } from "firebase/firestore";
 import { encryptJson, generateDataKey, generateRecoveryKey, wrapDataKey } from "../../utils/budgetCrypto";
 import {
@@ -11,6 +12,7 @@ import {
   countBudgetAccountTransactions,
   createBudget,
   deleteBudgetAccount,
+  deleteBudgetRecurring,
   deleteBudgetTransaction,
   deleteBudgetTransactions,
   getBudgetAccounts,
@@ -18,18 +20,22 @@ import {
   getBudgetCategories,
   getBudgetPlan,
   getBudgetProfile,
+  getBudgetRecurring,
   getAccountTransactions,
   getBudgetTransactions,
   getLockedBudget,
   importBudgetTransactions,
+  makeBudgetTransactionRecurring,
   replaceRecoveryKey,
   resetBudget,
   setBudgetPlanAmount,
   setBudgetMainCurrency,
   setMainBudgetAccount,
+  stopBudgetRecurring,
   unlockWithPassphrase,
   unlockWithRecoveryKey,
   updateBudgetAccount,
+  updateBudgetRecurringRule,
   updateBudgetTransactions,
 } from "./endpoints";
 import type {
@@ -39,6 +45,7 @@ import type {
   BudgetTransactionPatch,
   BudgetTransactionRef,
   CreateBudgetInput,
+  RepeatRuleInput,
   UnlockedBudget,
 } from "./types";
 
@@ -677,5 +684,128 @@ describe("budget plans", () => {
       setBudgetPlanAmount(budget, { month: "2026-11", type: "expense", categoryId: "cat-food", amount: 1 }),
     ).rejects.toMatchObject(DENIED);
     await expect(getBudgetPlan(budget, "2026-12")).rejects.toMatchObject(DENIED);
+  });
+});
+
+describe("budget recurring transactions", () => {
+  // Relative to the real today: matching looks ahead to the end of next month and an edit starts today
+  const dayIn = (monthsFromNow: number, day: number) => format(setDate(addMonths(new Date(), monthsFromNow), day), "yyyy-MM-dd");
+  const today = format(new Date(), "yyyy-MM-dd");
+  const monthlyOn10th: RepeatRuleInput = { pattern: { frequency: "monthly", interval: 1, day: 10 }, end: { type: "never" } };
+
+  const rent = (accountId: string, date: string): BudgetTransactionInput => ({
+    ...monthTransaction(accountId, date),
+    payee: "Secret Landlord",
+    categoryId: "cat-food",
+    amount: 250000,
+    amountMain: 250000,
+  });
+
+  const setUp = async () => {
+    await signInAs(ME);
+    const budget = await createBudget(ME, input());
+    const [account] = await getBudgetAccounts(budget);
+    return { budget, accountId: account.id };
+  };
+
+  const matchedIds = async (budget: UnlockedBudget) => {
+    const [recurring] = await getBudgetRecurring(budget);
+    return Object.fromEntries(
+      Object.entries(recurring.occurrences).map(([dueDate, match]) => [dueDate, match.transactionId]),
+    );
+  };
+
+  it("makes a transaction the first occurrence, stores nothing readable and matches later transactions", async () => {
+    const { budget, accountId } = await setUp();
+    const first = await addBudgetTransaction(budget, rent(accountId, dayIn(-2, 10)));
+    const later = await addBudgetTransaction(budget, rent(accountId, dayIn(-1, 12)));
+    await addBudgetTransaction(budget, { ...rent(accountId, dayIn(-1, 11)), payee: "Someone else" });
+
+    const recurring = await makeBudgetTransactionRecurring(budget, first, monthlyOn10th);
+
+    expect(recurring).toEqual(
+      expect.objectContaining({ accountId, payee: "Secret Landlord", amount: 250000, rule: expect.objectContaining({ start: first.date }) }),
+    );
+    expect(await matchedIds(budget)).toEqual({ [dayIn(-2, 10)]: first.id, [dayIn(-1, 10)]: later.id });
+    const stored = JSON.stringify(await read(`budget_recurring/${accountId}`));
+    expect(stored).not.toContain("Secret Landlord");
+    expect(stored).not.toContain("250000");
+    await expect(makeBudgetTransactionRecurring(budget, first, monthlyOn10th)).rejects.toThrow(
+      "planning:errors.budget.alreadyRecurring",
+    );
+
+    // A transaction added later matches by itself
+    const next = await addBudgetTransaction(budget, rent(accountId, dayIn(0, 8)));
+    expect(await matchedIds(budget)).toEqual(
+      expect.objectContaining({ [dayIn(0, 10)]: next.id, [dayIn(-1, 10)]: later.id }),
+    );
+  });
+
+  it("updates the matches when a matched transaction is deleted or re-dated, keeping the recurring transaction", async () => {
+    const { budget, accountId } = await setUp();
+    const first = await addBudgetTransaction(budget, rent(accountId, dayIn(-2, 10)));
+    const later = await addBudgetTransaction(budget, rent(accountId, dayIn(-1, 12)));
+    const current = await addBudgetTransaction(budget, rent(accountId, dayIn(0, 9)));
+    await makeBudgetTransactionRecurring(budget, first, monthlyOn10th);
+
+    await deleteBudgetTransaction(budget, later);
+    expect(await matchedIds(budget)).toEqual({ [dayIn(-2, 10)]: first.id, [dayIn(0, 10)]: current.id });
+
+    await updateBudgetTransactions(budget, [{ ref: current, patch: { date: dayIn(1, 11) } }]);
+    expect(await matchedIds(budget)).toEqual({ [dayIn(-2, 10)]: first.id, [dayIn(1, 10)]: current.id });
+
+    // Another category: no longer the same recurring payment
+    await updateBudgetTransactions(budget, [{ ref: { ...current, date: dayIn(1, 11) }, patch: { categoryId: null } }]);
+    expect(await matchedIds(budget)).toEqual({ [dayIn(-2, 10)]: first.id });
+  });
+
+  it("edits the rule from today keeping earlier matches, stops and deletes", async () => {
+    const { budget, accountId } = await setUp();
+    const first = await addBudgetTransaction(budget, rent(accountId, dayIn(-2, 10)));
+    const recurring = await makeBudgetTransactionRecurring(budget, first, monthlyOn10th);
+
+    const on20th: RepeatRuleInput = { pattern: { frequency: "monthly", interval: 1, day: 20 }, end: { type: "after", count: 3 } };
+    await updateBudgetRecurringRule(budget, recurring, on20th);
+    const [edited] = await getBudgetRecurring(budget);
+    expect(edited.rule).toEqual(expect.objectContaining({ pattern: on20th.pattern, start: today }));
+    expect(edited.rule.end).toEqual(expect.objectContaining({ type: "after", count: 3 }));
+    expect(edited.occurrences[dayIn(-2, 10)].transactionId).toBe(first.id);
+
+    await stopBudgetRecurring(budget, recurring);
+    const [stopped] = await getBudgetRecurring(budget);
+    expect(stopped.rule.end.type).toBe("until");
+    expect(stopped.occurrences[dayIn(-2, 10)].transactionId).toBe(first.id);
+
+    await deleteBudgetRecurring(budget, recurring);
+    expect(await getBudgetRecurring(budget)).toEqual([]);
+    expect(await read(`budget_recurring/${accountId}`)).toBeUndefined();
+    // The transaction stays
+    expect(await getBudgetTransactions(budget, { from: "2000-01", to: "2100-12" })).toEqual([first]);
+  });
+
+  it("is removed by deleting its account and by Reset budget", async () => {
+    const { budget, accountId } = await setUp();
+    const other = await addBudgetAccount(budget, { name: "Other", defaultCurrency: "PLN" });
+    await makeBudgetTransactionRecurring(budget, await addBudgetTransaction(budget, rent(other.id, dayIn(-1, 10))), monthlyOn10th);
+    await makeBudgetTransactionRecurring(budget, await addBudgetTransaction(budget, rent(accountId, dayIn(-1, 10))), monthlyOn10th);
+
+    await deleteBudgetAccount(budget, other.id);
+    expect(Object.keys(await list("budget_recurring"))).toEqual([accountId]);
+    // An account without recurring transactions deletes too
+    await deleteBudgetAccount(budget, (await addBudgetAccount(budget, { name: "Empty", defaultCurrency: "PLN" })).id);
+
+    await resetBudget(ME);
+    expect(await list("budget_recurring")).toEqual({});
+  });
+
+  it("denies another user", async () => {
+    const { budget, accountId } = await setUp();
+    const first = await addBudgetTransaction(budget, rent(accountId, dayIn(-1, 10)));
+    const recurring = await makeBudgetTransactionRecurring(budget, first, monthlyOn10th);
+
+    await signInAs(OTHER);
+    await expect(getBudgetRecurring({ ...budget, uid: OTHER })).resolves.toEqual([]);
+    await expect(getBudgetRecurring(budget)).rejects.toMatchObject(DENIED);
+    await expect(deleteBudgetRecurring(budget, recurring)).rejects.toMatchObject(DENIED);
   });
 });

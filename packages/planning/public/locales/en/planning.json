@@ -119,7 +119,11 @@
       "accountDeleted": "Account deleted",
       "accountSaveError": "Couldn't save the account. Try again.",
       "accountDeleteError": "Couldn't delete the account. Try again.",
-      "planSaveError": "Couldn't save the plan. Try again."
+      "planSaveError": "Couldn't save the plan. Try again.",
+      "recurringMade": "Recurring transaction created",
+      "recurringSaved": "Repeat rule saved",
+      "recurringStopped": "Recurring transaction stopped",
+      "recurringDeleted": "Recurring transaction deleted"
     }
   },
   "errors": {
@@ -147,7 +151,11 @@
       "accountHasTransactions": "This account has transactions, so its currency can't be changed.",
       "hiddenAccountCannotBeMain": "A hidden account can't be the main account. Show it first.",
       "mainCurrencyLocked": "The main currency is locked because transactions exist.",
-      "accountNotFound": "This account no longer exists. Reload the page."
+      "accountNotFound": "This account no longer exists. Reload the page.",
+      "alreadyRecurring": "This transaction already belongs to a recurring transaction.",
+      "recurringNoOccurrence": "The rule ends before its first occurrence. Pick another end.",
+      "recurringMissing": "This recurring transaction no longer exists. Refresh the list.",
+      "recurringTooLarge": "This account has too many recurring transactions to save more."
     }
   },
   "splits": {
@@ -763,7 +771,12 @@
       "payeeMax": "Use at most 120 characters.",
       "descriptionMax": "Use at most 500 characters.",
       "accountRequired": "Choose an account.",
-      "categoryRequired": "Choose a category."
+      "categoryRequired": "Choose a category.",
+      "numberRequired": "Enter a number.",
+      "wholeNumber": "Use a whole number.",
+      "numberRange": "This number is out of range.",
+      "weekdaysRequired": "Choose at least one day.",
+      "endDateAfterStart": "Choose a date on or after the start."
     },
     "transactionsEmpty": {
       "title": "No transactions yet",
@@ -828,7 +841,8 @@
       "description": "Description of {{payee}}",
       "addDescription": "Add a description",
       "amount": "Amount of {{payee}}",
-      "details": "Details of {{payee}}"
+      "details": "Details of {{payee}}",
+      "recurring": "Recurring"
     },
     "categoryPicker": {
       "placeholder": "Choose a category",
@@ -893,7 +907,8 @@
       "amountAtRate": "{{amount}} = {{amountMain}} at the rate {{rate}} from {{date}}",
       "amountTyped": "{{amount}} = {{amountMain}} (entered by hand)",
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "makeRecurring": "Make recurring"
     },
     "transactionFilters": {
       "label": "Filters",
@@ -1131,6 +1146,90 @@
         "transactions": "Transactions this month ({{count}})",
         "noTransactions": "No transactions this month.",
         "openInTransactions": "Open in Transactions"
+      }
+    },
+    "repeatRule": {
+      "weekly_one": "Every week on {{days}}",
+      "weekly_other": "Every {{count}} weeks on {{days}}",
+      "monthlyDay_one": "Every month on day {{day}}",
+      "monthlyDay_other": "Every {{count}} months on day {{day}}",
+      "monthlyLast_one": "Every month on the last day",
+      "monthlyLast_other": "Every {{count}} months on the last day",
+      "yearly_one": "Every year on {{date}}",
+      "yearly_other": "Every {{count}} years on {{date}}",
+      "until": "{{rule}}, until {{date}}"
+    },
+    "recurringForm": {
+      "title": "Make recurring",
+      "editTitle": "Edit repeat rule",
+      "description": "{{payee}} on {{date}} becomes the first occurrence.",
+      "editDescription": "{{payee}}: the new rule applies from today. Earlier payments stay as they are.",
+      "frequency": "Repeats",
+      "frequencies": {
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "yearly": "Yearly"
+      },
+      "interval": "Every",
+      "units": {
+        "weekly_one": "week",
+        "weekly_other": "weeks",
+        "monthly_one": "month",
+        "monthly_other": "months",
+        "yearly_one": "year",
+        "yearly_other": "years"
+      },
+      "weekdays": "On",
+      "monthDay": "Day of the month",
+      "monthDayHint": "Days 29–31 fall on the last day of shorter months.",
+      "lastDay": "Last day",
+      "yearMonth": "Month",
+      "yearDay": "Day",
+      "end": "Ends",
+      "ends": {
+        "never": "Never",
+        "until": "On a date",
+        "after": "After a number of times"
+      },
+      "endDate": "End date",
+      "endCount": "Number of times",
+      "nextDates": "Next: {{dates}}",
+      "noDates": "No dates left with this end.",
+      "cancel": "Cancel",
+      "save": "Make recurring",
+      "saveEdit": "Save rule"
+    },
+    "recurring": {
+      "groups": {
+        "expense": "Expenses",
+        "income": "Income"
+      },
+      "monthlySum": "This month: {{amount}}",
+      "status": {
+        "paid": "Paid",
+        "upcoming": "Upcoming",
+        "overdue": "Overdue"
+      },
+      "next": "Next: {{date}}",
+      "ended": "Ended",
+      "occurrences": "Occurrences",
+      "matched": "{{amount}} on {{date}}",
+      "editRule": "Edit rule",
+      "stop": "Stop",
+      "delete": "Delete",
+      "empty": {
+        "title": "No recurring transactions yet",
+        "description": "Open a transaction on the Transactions tab and choose Make recurring for bills, subscriptions or salary."
+      },
+      "stopConfirm": {
+        "title": "Stop this recurring transaction?",
+        "description": "Nothing more is expected from {{payee}} from today. Paid occurrences stay.",
+        "confirm": "Stop"
+      },
+      "deleteConfirm": {
+        "title": "Delete this recurring transaction?",
+        "description": "{{payee}} and its payment history are removed. The transactions themselves stay.",
+        "confirm": "Delete"
       }
     }
   }

@@ -41,6 +41,10 @@ export type BudgetTransactionListProps = {
   renderRowFooter?: (transaction: BudgetTransaction) => ReactNode;
   /** Greys a row out (e.g. a pending card hold in the import preview). */
   isRowMuted?: (transaction: BudgetTransaction) => boolean;
+  /** Ids of transactions matched to a recurring transaction: their rows show the recurring marker. */
+  recurringIds?: ReadonlySet<string>;
+  /** Make recurring action in the expanded row (not offered on a row that already belongs to one). */
+  onMakeRecurring?: (transaction: BudgetTransaction) => void;
 };
 
 /** The Budget's transaction rows grouped by day, each day with its net. Shared by Transactions and the import preview. */
@@ -60,6 +64,8 @@ export const BudgetTransactionList = ({
   renderRowEnd,
   renderRowFooter,
   isRowMuted,
+  recurringIds,
+  onMakeRecurring,
 }: BudgetTransactionListProps) => {
   const { i18n } = usePlanningTranslations();
   const { format } = useMoneyFormatter();
@@ -122,6 +128,10 @@ export const BudgetTransactionList = ({
                 onDelete={onDelete && (() => onDelete(transaction))}
                 actionsDisabled={actionsDisabled}
                 muted={!!isRowMuted?.(transaction)}
+                recurring={!!recurringIds?.has(transaction.id)}
+                onMakeRecurring={
+                  onMakeRecurring && !recurringIds?.has(transaction.id) ? () => onMakeRecurring(transaction) : undefined
+                }
                 start={renderRowStart?.(transaction)}
                 end={renderRowEnd?.(transaction)}
                 footer={renderRowFooter?.(transaction)}
