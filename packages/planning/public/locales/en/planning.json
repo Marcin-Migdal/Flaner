@@ -155,7 +155,8 @@
       "alreadyRecurring": "This transaction already belongs to a recurring transaction.",
       "recurringNoOccurrence": "The rule ends before its first occurrence. Pick another end.",
       "recurringMissing": "This recurring transaction no longer exists. Refresh the list.",
-      "recurringTooLarge": "This account has too many recurring transactions to save more."
+      "recurringTooLarge": "This account has too many recurring transactions to save more.",
+      "recurringFirstTooFar": "The rule's first date is more than 7 days after this transaction. Pick a rule that starts near its date."
     }
   },
   "splits": {

@@ -19,7 +19,8 @@ export type OccurrenceStatus = "paid" | "upcoming" | "overdue";
 
 const normalizePayee = (payee: string) => payee.trim().toLocaleLowerCase();
 
-const daysApart = (a: string, b: string) => Math.abs(differenceInCalendarDays(parseISO(a), parseISO(b)));
+/** Calendar days between two `YYYY-MM-DD` days, either order. */
+export const daysApart = (a: string, b: string) => Math.abs(differenceInCalendarDays(parseISO(a), parseISO(b)));
 
 /** Same account, direction, payee and category, not excluded, within ±7 days of `dueDate`. */
 export const matchesOccurrence = (recurring: BudgetRecurring, transaction: BudgetTransaction, dueDate: string) =>

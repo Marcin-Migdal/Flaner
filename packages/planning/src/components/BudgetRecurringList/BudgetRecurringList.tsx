@@ -1,7 +1,7 @@
 import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { cn } from "@flaner/shared/utils";
 import { Badge, Button } from "@flaner/ui-components";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import { ChevronDown, CircleHelp, CircleStop, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -22,7 +22,7 @@ import {
   recurringOccurrences,
   type OccurrenceStatus,
 } from "../../utils/recurringTransactions";
-import { shiftDay } from "../../utils/repeatRules";
+import { shiftDay, todayDay } from "../../utils/repeatRules";
 import { budgetRecurringListStyles as styles } from "./BudgetRecurringList.styles";
 
 /** How far back an expanded row lists occurrences. */
@@ -58,7 +58,7 @@ export const BudgetRecurringList = ({
   onStop,
   onDelete,
   actionsDisabled,
-  today = format(new Date(), "yyyy-MM-dd"),
+  today = todayDay(),
 }: BudgetRecurringListProps) => {
   const { t, i18n } = usePlanningTranslations();
   const { format: formatMoney } = useMoneyFormatter();

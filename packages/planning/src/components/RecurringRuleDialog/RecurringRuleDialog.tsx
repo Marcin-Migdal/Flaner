@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   FormDatePicker,
+  FormSelect,
   FormTextField,
   Select,
   Tabs,
@@ -13,10 +14,11 @@ import {
   TabsTrigger,
 } from "@flaner/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, getISODay, parseISO } from "date-fns";
+import { getISODay, parseISO } from "date-fns";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useController, useForm, useWatch } from "react-hook-form";
 import {
+  REPEAT_END_TYPES,
   REPEAT_FREQUENCIES,
   type BudgetRecurring,
   type BudgetTransaction,
@@ -27,12 +29,11 @@ import { useMakeBudgetRecurringMutation, useUpdateBudgetRecurringRuleMutation } 
 import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { useRepeatRuleText, useWeekdayNames } from "../../hooks/useRepeatRuleText";
-import { occurrences, resolveRepeatEnd } from "../../utils/repeatRules";
+import { occurrences, resolveRepeatEnd, todayDay } from "../../utils/repeatRules";
 import { getBudgetRecurringSchema, toRepeatRuleInput, type BudgetRecurringFormData } from "../../utils/schemas";
 import { recurringRuleDialogStyles as styles } from "./RecurringRuleDialog.styles";
 
 const WEEKDAYS: IsoWeekday[] = [1, 2, 3, 4, 5, 6, 7];
-const END_TYPES: BudgetRecurringFormData["endType"][] = ["never", "until", "after"];
 const PREVIEW_COUNT = 3;
 
 export type RecurringRuleDialogProps = {
@@ -48,9 +49,6 @@ export type RecurringRuleDialogProps = {
 
 const isFrequency = (value: string): value is BudgetRecurringFormData["frequency"] =>
   REPEAT_FREQUENCIES.some((frequency) => frequency === value);
-
-const isEndType = (value: string): value is BudgetRecurringFormData["endType"] =>
-  END_TYPES.some((endType) => endType === value);
 
 const defaultValues = (start: Date, recurring?: BudgetRecurring | null): BudgetRecurringFormData => {
   const fromStart: BudgetRecurringFormData = {
@@ -94,7 +92,7 @@ export const RecurringRuleDialog = ({ open, onOpenChange, transaction, recurring
   const isPending = isMaking || isUpdating;
 
   // A new rule starts on the transaction's date; an edited one today
-  const startDay = transaction?.date ?? format(new Date(), "yyyy-MM-dd");
+  const startDay = transaction?.date ?? todayDay();
   const start = useMemo(() => parseISO(startDay), [startDay]);
   const schema = useMemo(() => getBudgetRecurringSchema(t, start), [t, start]);
 
@@ -113,7 +111,6 @@ export const RecurringRuleDialog = ({ open, onOpenChange, transaction, recurring
   const { field: monthDayField } = useController({ control, name: "monthDay" });
   const { field: yearMonthField } = useController({ control, name: "yearMonth" });
   const { field: yearDayField } = useController({ control, name: "yearDay" });
-  const { field: endTypeField } = useController({ control, name: "endType" });
 
   const dayOptions = Array.from({ length: 31 }, (_, index) => ({ value: String(index + 1), label: String(index + 1) }));
   const monthDayOptions = [...dayOptions, { value: "last", label: t("budget.recurringForm.lastDay") }];
@@ -122,7 +119,7 @@ export const RecurringRuleDialog = ({ open, onOpenChange, transaction, recurring
     value: String(index + 1),
     label: monthFormat.format(new Date(2024, index, 1)),
   }));
-  const endOptions = END_TYPES.map((value) => ({ value, label: t(`budget.recurringForm.ends.${value}`) }));
+  const endOptions = REPEAT_END_TYPES.map((value) => ({ value, label: t(`budget.recurringForm.ends.${value}`) }));
   const dateFormat = new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" });
 
   // What the rule means, once the form is valid: its words and the next few due dates
@@ -261,14 +258,7 @@ export const RecurringRuleDialog = ({ open, onOpenChange, transaction, recurring
               )}
 
               <div className={styles.grid}>
-                <Select
-                  label={t("budget.recurringForm.end")}
-                  name={endTypeField.name}
-                  options={endOptions}
-                  value={endOptions.find((option) => option.value === endTypeField.value) ?? null}
-                  onChange={(option) => option && isEndType(option.value) && endTypeField.onChange(option.value)}
-                  onBlur={endTypeField.onBlur}
-                />
+                <FormSelect name="endType" label={t("budget.recurringForm.end")} options={endOptions} />
                 {values.endType === "until" && <FormDatePicker name="endDate" label={t("budget.recurringForm.endDate")} />}
                 {values.endType === "after" && (
                   <FormTextField

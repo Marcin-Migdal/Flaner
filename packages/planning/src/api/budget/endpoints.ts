@@ -3,7 +3,6 @@
 // budget back in; encryption, document ids and transactions stay in here.
 import { fb } from "@flaner/shared/firebase";
 import { firestoreConverter } from "@flaner/shared/utils";
-import { format } from "date-fns";
 import {
   Bytes,
   collection,
@@ -33,8 +32,14 @@ import {
   wrapDataKey,
 } from "../../utils/budgetCrypto";
 import { monthOfDate } from "../../utils/monthLedger";
-import { MATCH_WINDOW_DAYS, rematchRecurring, toMatch } from "../../utils/recurringTransactions";
-import { endOfNextMonth, nextOccurrence, resolveRepeatEnd, shiftDay } from "../../utils/repeatRules";
+import {
+  MATCH_WINDOW_DAYS,
+  daysApart,
+  recurringTransactionIds,
+  rematchRecurring,
+  toMatch,
+} from "../../utils/recurringTransactions";
+import { endOfNextMonth, nextOccurrence, resolveRepeatEnd, shiftDay, todayDay } from "../../utils/repeatRules";
 import type {
   BudgetAccount,
   BudgetAccountChanges,
@@ -826,6 +831,7 @@ const writeRecurring = async (
 
   const payload: BudgetRecurringPayload = { recurring: list.map(({ accountId: _accountId, ...stored }) => stored) };
   const sealed = await encryptJson(payload, await getAccountKey(budget, accountId), paths.recurring(accountId));
+  // Same 1 MiB document limit as a month
   if (sealed.byteLength > MAX_MONTH_PAYLOAD_BYTES) throw new Error("planning:errors.budget.recurringTooLarge");
 
   const recurringDoc: BudgetRecurringDoc = { accountId, memberIds: [budget.uid], payload: toBytes(sealed) };
@@ -836,8 +842,6 @@ type RecurringList = { accountId: string; list: BudgetRecurring[] };
 
 const writeRecurringLists = (transaction: Transaction, budget: UnlockedBudget, lists: RecurringList[]) =>
   Promise.all(lists.map(({ accountId, list }) => writeRecurring(transaction, budget, accountId, list)));
-
-const today = () => format(new Date(), "yyyy-MM-dd");
 
 /**
  * Re-matches the account's occurrences due in `window` against its transactions dated within 7 days of it: the
@@ -909,14 +913,13 @@ export const getBudgetRecurring = async (budget: UnlockedBudget): Promise<Budget
   return lists.flat().sort((a, b) => a.createdAt - b.createdAt);
 };
 
-const isMatched = (list: BudgetRecurring[], transactionId: string) =>
-  list.some((recurring) => Object.values(recurring.occurrences).some((match) => match.transactionId === transactionId));
-
 /**
  * Make recurring: the transaction becomes the first occurrence of a new recurring transaction (`start` is its date),
  * and the account's later transactions up to the end of next month are matched at once. Fails with
- * `errors.budget.alreadyRecurring` when the transaction already belongs to one and with
- * `errors.budget.recurringNoOccurrence` when the rule ends before its first occurrence.
+ * `errors.budget.alreadyRecurring` when the transaction already belongs to one, with
+ * `errors.budget.recurringNoOccurrence` when the rule ends before its first occurrence and with
+ * `errors.budget.recurringFirstTooFar` when the first occurrence is more than 7 days after the transaction (it could
+ * never stay matched to it).
  */
 export const makeBudgetTransactionRecurring = async (
   budget: UnlockedBudget,
@@ -926,6 +929,7 @@ export const makeBudgetTransactionRecurring = async (
   const rule: RepeatRule = { pattern, start: source.date, end: resolveRepeatEnd(pattern, source.date, end) };
   const firstDue = nextOccurrence(rule, source.date);
   if (!firstDue) throw new Error("planning:errors.budget.recurringNoOccurrence");
+  if (daysApart(firstDue, source.date) > MATCH_WINDOW_DAYS) throw new Error("planning:errors.budget.recurringFirstTooFar");
 
   const created: BudgetRecurring = {
     id: crypto.randomUUID(),
@@ -943,12 +947,12 @@ export const makeBudgetTransactionRecurring = async (
 
   return runTransaction(fb.firestore, async (transaction) => {
     const list = await readRecurring(transaction, budget, source.accountId);
-    if (isMatched(list, source.id)) throw new Error("planning:errors.budget.alreadyRecurring");
+    if (recurringTransactionIds(list).has(source.id)) throw new Error("planning:errors.budget.alreadyRecurring");
 
     const from = shiftDay(firstDue, 1);
     const next = await rematchAccount(transaction, budget, new Map(), source.accountId, [...list, created], {
       from,
-      to: endOfNextMonth(from > today() ? from : today()),
+      to: endOfNextMonth(from > todayDay() ? from : todayDay()),
     });
     await writeRecurring(transaction, budget, source.accountId, next);
     return next[next.length - 1];
@@ -970,8 +974,8 @@ const changeRecurring = (
 
 /**
  * Edit rule: the new rule applies from today (its `start`). Matches due before its next due date stay as history;
- * later matches are dropped and the occurrences up to the end of next month re-matched, so a transaction no longer
- * on the rule can match another recurring transaction.
+ * later matches are dropped and the occurrences up to the end of next month (or the last dropped match) re-matched,
+ * so a transaction no longer on the rule can match another recurring transaction.
  */
 export const updateBudgetRecurringRule = (
   budget: UnlockedBudget,
@@ -979,7 +983,7 @@ export const updateBudgetRecurringRule = (
   { pattern, end }: RepeatRuleInput,
 ): Promise<void> =>
   changeRecurring(budget, ref, async (recurring, list, transaction) => {
-    const start = today();
+    const start = todayDay();
     const rule: RepeatRule = { pattern, start, end: resolveRepeatEnd(pattern, start, end) };
     const firstDue = nextOccurrence(rule, start);
     const history = Object.fromEntries(
@@ -987,18 +991,21 @@ export const updateBudgetRecurringRule = (
     );
     const edited = list.map((candidate) => (candidate.id === ref.id ? { ...recurring, rule, occurrences: history } : candidate));
     if (!firstDue) return edited;
-    return rematchAccount(transaction, budget, new Map(), ref.accountId, edited, { from: firstDue, to: endOfNextMonth(firstDue) });
+    const lastStored = Object.keys(recurring.occurrences).sort().at(-1) ?? firstDue;
+    const to = endOfNextMonth(firstDue) > lastStored ? endOfNextMonth(firstDue) : lastStored;
+    return rematchAccount(transaction, budget, new Map(), ref.accountId, edited, { from: firstDue, to });
   });
 
-/** Stop: nothing is due from today on; paid occurrences stay. */
+/** Stop: nothing is due from today on (an earlier end stays); paid occurrences stay. */
 export const stopBudgetRecurring = (budget: UnlockedBudget, ref: BudgetRecurringRef): Promise<void> =>
-  changeRecurring(budget, ref, async (recurring, list) =>
-    list.map((candidate) =>
-      candidate.id === ref.id
-        ? { ...recurring, rule: { ...recurring.rule, end: { type: "until", date: shiftDay(today(), -1) } } }
-        : candidate,
-    ),
-  );
+  changeRecurring(budget, ref, async (recurring, list) => {
+    const yesterday = shiftDay(todayDay(), -1);
+    const { end } = recurring.rule;
+    const date = end.type !== "never" && end.date < yesterday ? end.date : yesterday;
+    return list.map((candidate) =>
+      candidate.id === ref.id ? { ...recurring, rule: { ...recurring.rule, end: { type: "until", date } } } : candidate,
+    );
+  });
 
 /** Deletes the recurring transaction; its matched transactions stay as they are. */
 export const deleteBudgetRecurring = (budget: UnlockedBudget, ref: BudgetRecurringRef): Promise<void> =>

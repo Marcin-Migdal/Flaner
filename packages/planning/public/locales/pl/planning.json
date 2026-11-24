@@ -155,7 +155,8 @@
       "alreadyRecurring": "Ta transakcja należy już do transakcji cyklicznej.",
       "recurringNoOccurrence": "Reguła kończy się przed pierwszym wystąpieniem. Wybierz inny koniec.",
       "recurringMissing": "Ta transakcja cykliczna już nie istnieje. Odśwież listę.",
-      "recurringTooLarge": "To konto ma zbyt wiele transakcji cyklicznych, by zapisać kolejne."
+      "recurringTooLarge": "To konto ma zbyt wiele transakcji cyklicznych, by zapisać kolejne.",
+      "recurringFirstTooFar": "Pierwszy termin reguły wypada ponad 7 dni po tej transakcji. Wybierz regułę zaczynającą się blisko jej daty."
     }
   },
   "splits": {

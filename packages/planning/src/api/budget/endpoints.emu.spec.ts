@@ -733,6 +733,11 @@ describe("budget recurring transactions", () => {
     await expect(makeBudgetTransactionRecurring(budget, first, monthlyOn10th)).rejects.toThrow(
       "planning:errors.budget.alreadyRecurring",
     );
+    // The first occurrence must stay within the matching window of the transaction
+    const other = await addBudgetTransaction(budget, { ...rent(accountId, dayIn(-1, 1)), payee: "Other" });
+    await expect(
+      makeBudgetTransactionRecurring(budget, other, { pattern: { frequency: "monthly", interval: 1, day: 28 }, end: { type: "never" } }),
+    ).rejects.toThrow("planning:errors.budget.recurringFirstTooFar");
 
     // A transaction added later matches by itself
     const next = await addBudgetTransaction(budget, rent(accountId, dayIn(0, 8)));
@@ -774,6 +779,10 @@ describe("budget recurring transactions", () => {
     await stopBudgetRecurring(budget, recurring);
     const [stopped] = await getBudgetRecurring(budget);
     expect(stopped.rule.end.type).toBe("until");
+    // Stop never moves an earlier end later
+    await updateBudgetRecurringRule(budget, recurring, { pattern: on20th.pattern, end: { type: "until", date: dayIn(-1, 1) } });
+    await stopBudgetRecurring(budget, recurring);
+    expect((await getBudgetRecurring(budget))[0].rule.end).toEqual({ type: "until", date: dayIn(-1, 1) });
     expect(stopped.occurrences[dayIn(-2, 10)].transactionId).toBe(first.id);
 
     await deleteBudgetRecurring(budget, recurring);

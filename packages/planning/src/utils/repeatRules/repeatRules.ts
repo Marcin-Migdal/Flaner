@@ -84,6 +84,9 @@ export const resolveRepeatEnd = (
   return { type: "after", count: end.count, date: nthOccurrence(pattern, start, end.count) ?? start };
 };
 
+/** Today as `YYYY-MM-DD`. */
+export const todayDay = () => toDay(new Date());
+
 /** A day `days` after (or before, negative) `day`. */
 export const shiftDay = (day: string, days: number) => toDay(addDays(parseISO(day), days));
 

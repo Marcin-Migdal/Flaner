@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import * as z from "zod";
-import type { RepeatRuleInput } from "../../../api/budget";
+import { REPEAT_END_TYPES, REPEAT_FREQUENCIES, type RepeatRuleInput } from "../../../api/budget";
 
 const wholeNumber = (t: (key: string) => string, min: number, max: number) =>
   z
@@ -16,13 +16,13 @@ const wholeNumber = (t: (key: string) => string, min: number, max: number) =>
 export const getBudgetRecurringSchema = (t: (key: string) => string, start: Date) =>
   z
     .object({
-      frequency: z.enum(["weekly", "monthly", "yearly"]),
+      frequency: z.enum(REPEAT_FREQUENCIES),
       interval: wholeNumber(t, 1, 99),
       weekdays: z.array(z.literal([1, 2, 3, 4, 5, 6, 7])),
       monthDay: z.union([wholeNumber(t, 1, 31), z.literal("last")]),
       yearMonth: wholeNumber(t, 1, 12),
       yearDay: wholeNumber(t, 1, 31),
-      endType: z.enum(["never", "until", "after"]),
+      endType: z.enum(REPEAT_END_TYPES),
       endDate: z.date().nullable(),
       endCount: wholeNumber(t, 1, 999).nullable(),
     })

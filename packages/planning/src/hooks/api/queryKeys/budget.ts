@@ -31,8 +31,8 @@ export const budgetKeys = {
 /** Which keys each budget write makes stale. */
 export const budgetInvalidation = {
   createBudget: ({ uid }: UserType) => [budgetKeys.locked(uid)],
+  // Every transaction write below also re-matches the recurring transactions
   /** Adding or deleting a transaction changes its month only (and which accounts hold transactions). */
-  // Every transaction write also re-matches the recurring transactions
   transactionsChanged: ({ uid }: UserType, { date }: { date: string }) => [
     budgetKeys.transactions(uid, monthOfDate(date)),
     budgetKeys.accountsWithTransactions(uid),

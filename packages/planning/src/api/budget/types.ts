@@ -176,6 +176,8 @@ export type RepeatPattern =
 
 export const REPEAT_FREQUENCIES = ["weekly", "monthly", "yearly"] as const;
 
+export const REPEAT_END_TYPES = ["never", "until", "after"] as const;
+
 /** How a rule ends, as the editor sets it. */
 export type RepeatEndInput = { type: "never" } | { type: "until"; date: string } | { type: "after"; count: number };
 
