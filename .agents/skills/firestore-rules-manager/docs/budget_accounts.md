@@ -5,7 +5,7 @@ Budget accounts (MFE `planning`, Budget; ADR 0002): a place the user's money sit
 ## Invariants
 - **A1** Only members read, update and delete an account.
 - **A2** `memberIds` is exactly `[me]` on create and on every update (one member in the MVP); `wrappedKeys` holds exactly the caller's wrapped key.
-- **A3** The doc is a fixed envelope: exactly the schema fields, with the documented types and sizes; `createdAt` never changes. Content (main account cannot be hidden or deleted, currency supported) is checked on the client.
+- **A3** The doc is a fixed envelope: exactly the schema fields, with the documented types and sizes; `createdAt` never changes. Content (main account cannot be hidden or deleted, a hidden account cannot be main, the currency changes only while the account has no transactions, currency supported) is checked on the client.
 
 ## Schema
 | Field | Type | Required | Notes |
@@ -24,6 +24,10 @@ Budget accounts (MFE `planning`, Budget; ADR 0002): a place the user's money sit
 | --- | --- | --- | --- |
 | Onboarding (main account) | `packages/planning/src/api/budget/endpoints.ts#createBudget` | set `budget_accounts/{new}` with keys, profile and categories (see `budget_keys.md`) | ✅ transaction |
 | Reset budget | `packages/planning/src/api/budget/endpoints.ts#resetBudget` | delete every `budget_accounts` doc where `memberIds array-contains me`, with every other budget document of the user; `budget_keys/{me}` in the last batch | ⚠️ batches of 500 (keys last, so a failed reset stays locked and can be retried) |
+| Add an account | `packages/planning/src/api/budget/endpoints.ts#addBudgetAccount` | set `budget_accounts/{new}` | single write |
+| Rename / change currency / hide / show | `packages/planning/src/api/budget/endpoints.ts#updateBudgetAccount` | get `budget_profiles/{me}` + update `budget_accounts/{id}` (`payload`, `defaultCurrency`, `hidden`); the currency changes only while the account has no month (checked by a query just before) | ✅ transaction |
+| Make main | `packages/planning/src/api/budget/endpoints.ts#setMainBudgetAccount` | get `budget_accounts/{id}` (not hidden) + update `budget_profiles/{me}.mainAccountId` | ✅ transaction |
+| Delete an account | `packages/planning/src/api/budget/endpoints.ts#deleteBudgetAccount` | delete every `budget_months` doc of the account, then delete `budget_accounts/{id}` with the profile's remembered file mappings re-encrypted without it (if it had one); never the main account | ⚠️ batches of 500, account last (a failed cascade leaves the account listed and can be retried) |
 
 ## Queries
 | Query | Endpoint | Allowed by |
@@ -72,4 +76,4 @@ match /budget_accounts/{accountId} {
 
 ## Tests
 - `firestore-tests/budget/budget_accounts.spec.ts` — create, member query / read / update / delete, other or extra members denied, foreign wrapped keys denied, non-members / anonymous denied, invalid envelope (readable name, extra field, wrong types) denied.
-- `packages/planning/src/api/budget/endpoints.emu.spec.ts` — main account created by onboarding holds no readable name; listed and decrypted by `getBudgetAccounts`; reset deletes only the user's accounts; another user denied.
+- `packages/planning/src/api/budget/endpoints.emu.spec.ts` — main account created by onboarding holds no readable name; listed and decrypted by `getBudgetAccounts`; reset deletes only the user's accounts; another user denied. Account management: add (encrypted name), rename / hide / show, currency locked once the account has transactions, make main, main account cannot be hidden or deleted, a hidden account cannot become main, delete cascades to the account's months only; another user denied.

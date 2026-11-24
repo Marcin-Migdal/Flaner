@@ -53,6 +53,20 @@
       ]
     },
     {
+      "collectionGroup": "budget_months",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "arrayConfig": "CONTAINS",
+          "fieldPath": "memberIds"
+        },
+        {
+          "fieldPath": "accountId",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "budget_plans",
       "queryScope": "COLLECTION",
       "fields": [

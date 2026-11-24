@@ -14,7 +14,13 @@ export const budgetKeys = {
   profile: (uid: string) => ["budget", "profile", uid],
   categories: (uid: string) => ["budget", "categories", uid],
   accounts: (uid: string) => ["budget", "accounts", uid],
-  transactions: (uid: string, month: BudgetMonth) => ["budget", "transactions", uid, month],
+  /** Prefix of every month's transactions. */
+  allTransactions: (uid: string) => ["budget", "transactions", uid],
+  transactions: (uid: string, month: BudgetMonth) => [...budgetKeys.allTransactions(uid), month],
+  /** Ids of the accounts holding at least one transaction (currency locks); stale with the accounts. */
+  accountsWithTransactions: (uid: string) => [...budgetKeys.accounts(uid), "withTransactions"],
+  /** One account's transaction count (delete confirmation). */
+  accountTransactionCount: (uid: string, accountId: string) => ["budget", "accountTransactionCount", uid, accountId],
   plan: (uid: string, month: BudgetMonth) => ["budget", "plan", uid, month],
   /** A published rate (`getExchangeRate`); never changes, so it is never invalidated. */
   exchangeRate: (from: string, to: string, date: string) => ["budget", "exchangeRate", from, to, date],
@@ -23,8 +29,27 @@ export const budgetKeys = {
 /** Which keys each budget write makes stale. */
 export const budgetInvalidation = {
   createBudget: ({ uid }: UserType) => [budgetKeys.locked(uid)],
-  /** Adding or deleting a transaction changes its month only. */
-  transactionsChanged: ({ uid }: UserType, { date }: { date: string }) => [budgetKeys.transactions(uid, monthOfDate(date))],
+  /** Adding or deleting a transaction changes its month only (and which accounts hold transactions). */
+  transactionsChanged: ({ uid }: UserType, { date }: { date: string }) => [
+    budgetKeys.transactions(uid, monthOfDate(date)),
+    budgetKeys.accountsWithTransactions(uid),
+  ],
+  /** Edits and bulk deletes change every month a transaction left or moved to. */
+  transactionsInMonths: ({ uid }: UserType, dates: string[]) => [
+    ...[...new Set(dates.map(monthOfDate))].map((month) => budgetKeys.transactions(uid, month)),
+    budgetKeys.accountsWithTransactions(uid),
+  ],
+  /** An import changes every month it adds to. */
+  transactionsImported: ({ uid }: UserType, inputs: { date: string }[]) => [
+    ...[...new Set(inputs.map(({ date }) => monthOfDate(date)))].map((month) => budgetKeys.transactions(uid, month)),
+    budgetKeys.accountsWithTransactions(uid),
+  ],
+  /** Add, rename, re-currency, hide / show. Hiding is applied by the month ledger from the accounts list. */
+  accountsChanged: ({ uid }: UserType) => [budgetKeys.accounts(uid)],
+  /** Main account or main currency. */
+  profileChanged: ({ uid }: UserType) => [budgetKeys.profile(uid)],
+  /** The account's transactions go with it. */
+  accountDeleted: ({ uid }: UserType) => [budgetKeys.accounts(uid), budgetKeys.profile(uid), budgetKeys.allTransactions(uid)],
   /** A limit or planned income changes its month's plan only. */
   planChanged: ({ uid }: UserType, { month }: { month: BudgetMonth }) => [budgetKeys.plan(uid, month)],
   // New salt / wrapped keys: a cached copy would no longer unlock

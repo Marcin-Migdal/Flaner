@@ -110,6 +110,15 @@
       "transactionDeleted": "Transaction deleted",
       "saveError": "Couldn't save the transaction. Try again.",
       "deleteError": "Couldn't delete the transaction. Try again.",
+      "transactionsDeleted": "Transactions deleted",
+      "importError": "Couldn't import the transactions. Nothing was saved. Try again.",
+      "accountAdded": "Account added",
+      "accountSaved": "Account updated",
+      "mainAccountChanged": "Main account changed",
+      "mainCurrencyChanged": "Main currency changed",
+      "accountDeleted": "Account deleted",
+      "accountSaveError": "Couldn't save the account. Try again.",
+      "accountDeleteError": "Couldn't delete the account. Try again.",
       "planSaveError": "Couldn't save the plan. Try again."
     }
   },
@@ -131,7 +140,14 @@
       "wrongRecoveryKey": "This recovery key doesn't unlock your budget.",
       "keyChanged": "Your budget was reset on another device. Reload the page.",
       "monthTooLarge": "This month is full: it cannot hold more transactions for this account.",
-      "rateUnavailable": "Couldn't fetch the exchange rate."
+      "rateUnavailable": "Couldn't fetch the exchange rate.",
+      "transactionMissing": "This transaction no longer exists. Reload the page.",
+      "importTooLarge": "This import doesn't fit: one of its months would exceed the size limit for this account. Nothing was imported. Split the file into smaller periods.",
+      "mainAccountLocked": "The main account can't be hidden or deleted. Make another account main first.",
+      "accountHasTransactions": "This account has transactions, so its currency can't be changed.",
+      "hiddenAccountCannotBeMain": "A hidden account can't be the main account. Show it first.",
+      "mainCurrencyLocked": "The main currency is locked because transactions exist.",
+      "accountNotFound": "This account no longer exists. Reload the page."
     }
   },
   "splits": {
@@ -495,7 +511,8 @@
         "transactions": "Transactions",
         "recurring": "Recurring"
       },
-      "add": "Add transaction"
+      "add": "Add transaction",
+      "import": "Import"
     },
     "settings": {
       "tabs": {
@@ -803,11 +820,20 @@
     },
     "transactionList": {
       "uncategorized": "Uncategorized",
-      "delete": "Delete {{payee}}"
+      "unconfirmed": "Unconfirmed category",
+      "excluded": "Excluded",
+      "category": "Category of {{payee}}",
+      "select": "Select {{payee}}",
+      "payee": "Payee of {{payee}}",
+      "description": "Description of {{payee}}",
+      "addDescription": "Add a description",
+      "amount": "Amount of {{payee}}",
+      "details": "Details of {{payee}}"
     },
     "categoryPicker": {
       "placeholder": "Choose a category",
-      "noResults": "No matching categories"
+      "noResults": "No matching categories",
+      "confirm": "Confirm category {{category}}"
     },
     "monthSwitcher": {
       "previous": "Previous month",
@@ -849,12 +875,204 @@
       "optional": "Optional",
       "category": "Category",
       "cancel": "Cancel",
-      "save": "Add transaction"
+      "save": "Add transaction",
+      "editTitle": "Edit transaction",
+      "saveEdit": "Save changes"
     },
     "deleteTransaction": {
       "title": "Delete this transaction?",
       "description": "\"{{payee}}\" will be removed from your budget. This cannot be undone.",
       "confirm": "Delete"
+    },
+    "transactionDetails": {
+      "date": "Date",
+      "account": "Account",
+      "source": "Source file",
+      "manual": "Added by hand",
+      "amount": "Amount",
+      "amountAtRate": "{{amount}} = {{amountMain}} at the rate {{rate}} from {{date}}",
+      "amountTyped": "{{amount}} = {{amountMain}} (entered by hand)",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "transactionFilters": {
+      "label": "Filters",
+      "search": "Search payee or description",
+      "accounts": "Accounts",
+      "allAccounts": "All accounts",
+      "categories": "Categories",
+      "allCategories": "All categories",
+      "uncategorized": "Uncategorized",
+      "type": "Type",
+      "direction": "Direction",
+      "status": "Status",
+      "relevance": "Relevance",
+      "directions": {
+        "all": "All",
+        "income": "Income",
+        "expense": "Expenses"
+      },
+      "statuses": {
+        "all": "All",
+        "confirmed": "Confirmed",
+        "unconfirmed": "Unconfirmed"
+      },
+      "relevances": {
+        "relevant": "Relevant",
+        "excluded": "Excluded",
+        "all": "All"
+      },
+      "clear": "Clear filters",
+      "noMatches": "No transactions match these filters"
+    },
+    "bulkActions": {
+      "label": "Bulk actions",
+      "selected_one": "{{count}} selected",
+      "selected_other": "{{count}} selected",
+      "setCategory": "Set category",
+      "confirm": "Confirm",
+      "delete": "Delete",
+      "clear": "Clear selection",
+      "mixedTypes": "Select only expenses or only income to set a category",
+      "setCategoryTitle_one": "Set the category of {{count}} transaction",
+      "setCategoryTitle_other": "Set the category of {{count}} transactions",
+      "category": "Category",
+      "save": "Set category",
+      "cancel": "Cancel",
+      "deleteTitle_one": "Delete {{count}} transaction?",
+      "deleteTitle_other": "Delete {{count}} transactions?",
+      "deleteDescription": "They will be removed from the budget. This cannot be undone.",
+      "deleteConfirm": "Delete"
+    },
+    "import": {
+      "title": "Import a statement",
+      "description": "Bring in transactions from your bank's statement file.",
+      "back": "Back",
+      "steps": {
+        "file": "File",
+        "settings": "Settings",
+        "preview": "Preview",
+        "result": "Result"
+      },
+      "banks": {
+        "millennium": "Bank Millennium"
+      },
+      "file": {
+        "drop": "Drop a CSV file here or click to choose one",
+        "hint": "One statement file at a time, in CSV format.",
+        "notCsv": "This is not a CSV file. Export the statement from your bank as CSV and try again.",
+        "empty": "This file has no transactions.",
+        "unreadable": "Couldn't read this file. Make sure it's a CSV statement from your bank.",
+        "recognized": "Recognized automatically: {{banks}}"
+      },
+      "settings": {
+        "bank": "Bank",
+        "bankDetected": "Recognized from the file. Change it if it's wrong.",
+        "bankNotDetected": "This file's layout wasn't recognized. Choose the bank that issued it.",
+        "account": "Import to account",
+        "fallbackCurrency": "Currency for rows without one",
+        "fallbackCurrencyHint": "Used only when a row doesn't state its currency.",
+        "next": "Preview",
+        "previewError": "Couldn't prepare the preview (no connection or exchange rate). Try again."
+      },
+      "validation": {
+        "bankRequired": "Choose a bank."
+      },
+      "preview": {
+        "filtersLabel": "Show rows",
+        "filters": {
+          "all": "All",
+          "new": "New",
+          "duplicate": "Duplicates",
+          "error": "Errors",
+          "pending": "Pending",
+          "unselected": "Not selected"
+        },
+        "selectedCount_one": "{{count}} row selected",
+        "selectedCount_other": "{{count}} rows selected",
+        "setCategory": "Set category",
+        "errorsHeading": "Rows that couldn't be read",
+        "errorRow": "Row {{row}}: {{reason}}",
+        "status": {
+          "new": "New",
+          "duplicate": "Duplicate",
+          "error": "Error",
+          "pending": "Pending card hold"
+        },
+        "select": "Import {{payee}}",
+        "edit": "Edit {{payee}}",
+        "empty": "No rows to show.",
+        "import_one": "Import {{count}} transaction",
+        "import_other": "Import {{count}} transactions"
+      },
+      "rowErrors": {
+        "columns": "wrong number of columns",
+        "date": "unreadable date",
+        "amount": "unreadable amount",
+        "currency": "unreadable currency"
+      },
+      "rowDialog": {
+        "title": "Edit row",
+        "save": "Save"
+      },
+      "categoryDialog": {
+        "title": "Set category",
+        "description": "The category is set on every selected row of its type.",
+        "expense": "Category for expenses",
+        "income": "Category for income",
+        "apply": "Set category"
+      },
+      "result": {
+        "title_one": "{{count}} transaction imported",
+        "title_other": "{{count}} transactions imported",
+        "summary": "Import summary",
+        "importedTo": "Imported to {{account}}",
+        "duplicates": "Duplicates skipped",
+        "pending": "Pending card holds (not imported)",
+        "errors": "Rows with errors",
+        "unconfirmed": "Transactions without a category",
+        "close": "Close",
+        "openMonth": "Show imported transactions"
+      }
+    },
+    "accounts": {
+      "title": "Accounts",
+      "add": "Add account",
+      "main": "Main",
+      "hidden": "Hidden",
+      "actions": "Actions for {{name}}",
+      "edit": "Edit",
+      "makeMain": "Make main",
+      "hide": "Hide",
+      "show": "Show",
+      "hiddenHint": "A hidden account's transactions are left out of the Transactions list, totals, Planner and charts. Show the account to see them again. You can still import into it and add transactions to it.",
+      "form": {
+        "addTitle": "Add account",
+        "addDescription": "Track another bank account, card or cash.",
+        "addSubmit": "Add account",
+        "editTitle": "Edit account",
+        "editDescription": "Rename the account or change its currency.",
+        "editSubmit": "Save",
+        "name": "Account name",
+        "currency": "Default currency",
+        "currencyLocked": "The currency can't be changed once the account has transactions."
+      },
+      "delete": {
+        "action": "Delete",
+        "title": "Delete {{name}}?",
+        "counting": "Counting the account's transactions…",
+        "countUnavailable": "Couldn't count the account's transactions.",
+        "description_one": "{{name}} and its {{count}} transaction will be deleted. This can't be undone.",
+        "description_other": "{{name}} and its {{count}} transactions will be deleted. This can't be undone.",
+        "hideHint": "To keep its history but leave it out of totals, hide the account instead.",
+        "hideInstead": "Hide instead",
+        "confirm": "Delete account"
+      },
+      "mainCurrency": {
+        "label": "Main currency",
+        "editable": "All totals are shown in this currency. You can change it until the first transaction.",
+        "locked": "All totals are shown in this currency. It is locked because transactions exist."
+      }
     },
     "planner": {
       "monthHeader": {

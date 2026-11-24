@@ -1,5 +1,6 @@
 import { cn } from "@flaner/shared/utils";
 import { Select, type SelectOption } from "@flaner/ui-components";
+import { CircleHelp } from "lucide-react";
 import { useMemo } from "react";
 import type { BudgetCategoryIcon, BudgetCategoryTree, BudgetCategoryType, ChartColorIndex } from "../../api/budget";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
@@ -24,10 +25,33 @@ export type CategoryPickerProps = {
   error?: string;
   disabled?: boolean;
   id?: string;
+  /**
+   * `inline` (a list row): the category's icon, then the name opening the searchable list. An unconfirmed category
+   * shows "?" on the icon, and clicking the icon confirms it. Needs `aria-label` instead of `label`.
+   */
+  variant?: "field" | "inline";
+  /** `inline`: whether the category is confirmed (no "?"). */
+  confirmed?: boolean;
+  /** `inline`: confirms the shown category (icon click). */
+  onConfirm?: () => void;
+  "aria-label"?: string;
 };
 
 /** Searchable list of one type's categories and subcategories, each with its category's icon and colour. */
-export const CategoryPicker = ({ tree, type, value, onChange, label, error, disabled, id }: CategoryPickerProps) => {
+export const CategoryPicker = ({
+  tree,
+  type,
+  value,
+  onChange,
+  label,
+  error,
+  disabled,
+  id,
+  variant = "field",
+  confirmed = true,
+  onConfirm,
+  "aria-label": ariaLabel,
+}: CategoryPickerProps) => {
   const { t } = usePlanningTranslations();
 
   const options = useMemo(
@@ -46,9 +70,11 @@ export const CategoryPicker = ({ tree, type, value, onChange, label, error, disa
   );
   const selected = options.find((option) => option.value === value) ?? null;
 
-  return (
+  const select = (
     <Select<CategoryOption>
       id={id}
+      aria-label={ariaLabel}
+      containerClassName={variant === "inline" ? styles.inlineSelect : undefined}
       label={label}
       error={error}
       disabled={disabled}
@@ -67,7 +93,10 @@ export const CategoryPicker = ({ tree, type, value, onChange, label, error, disa
         const Icon = BUDGET_CATEGORY_ICON_COMPONENTS[option.icon];
         return (
           <span className={cn(styles.option, context === "menu" && option.parentName && styles.subOption)}>
-            <Icon aria-hidden="true" className={cn(styles.icon, BUDGET_CATEGORY_COLOR_CLASSES[option.color])} />
+            {/* Inline, the icon is shown (and clickable) beside the select */}
+            {!(variant === "inline" && context === "value") && (
+              <Icon aria-hidden="true" className={cn(styles.icon, BUDGET_CATEGORY_COLOR_CLASSES[option.color])} />
+            )}
             <span className={styles.label}>
               {context === "value" && option.parentName ? `${option.parentName} / ${option.label}` : option.label}
             </span>
@@ -75,5 +104,37 @@ export const CategoryPicker = ({ tree, type, value, onChange, label, error, disa
         );
       }}
     />
+  );
+
+  if (variant === "field") return select;
+
+  const Icon = selected ? BUDGET_CATEGORY_ICON_COMPONENTS[selected.icon] : CircleHelp;
+  const iconClass = cn(styles.icon, selected ? BUDGET_CATEGORY_COLOR_CLASSES[selected.color] : styles.uncategorizedIcon);
+  // Only a set category can be confirmed; Uncategorized is fixed by picking one
+  const canConfirm = !!selected && !confirmed;
+
+  return (
+    <span className={styles.inline}>
+      {canConfirm ? (
+        <button
+          type="button"
+          className={styles.inlineIcon}
+          disabled={disabled}
+          onClick={onConfirm}
+          aria-label={t("budget.categoryPicker.confirm", { category: selected.label })}
+          title={t("budget.categoryPicker.confirm", { category: selected.label })}
+        >
+          <Icon aria-hidden="true" className={iconClass} />
+          <span aria-hidden="true" className={styles.unconfirmedMark}>
+            ?
+          </span>
+        </button>
+      ) : (
+        <span className={styles.inlineIcon}>
+          <Icon aria-hidden="true" className={iconClass} />
+        </span>
+      )}
+      {select}
+    </span>
   );
 };

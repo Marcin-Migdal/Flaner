@@ -10,15 +10,25 @@ import {
   TabsTrigger,
 } from "@flaner/ui-components";
 import { format } from "date-fns";
-import { FileUp, Plus, ReceiptText, WifiOff } from "lucide-react";
+import { FileUp, Plus, ReceiptText, SearchX, WifiOff } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
-import type { BudgetMonth, BudgetTransaction } from "../../api/budget";
+import type {
+  BudgetMonth,
+  BudgetTransaction,
+  BudgetTransactionPatch,
+  BudgetTransactionUpdate,
+} from "../../api/budget";
 import { BudgetMonthSwitcher } from "../../components/BudgetMonthSwitcher";
 import { BudgetOfflineBanner } from "../../components/BudgetOfflineBanner";
 import { BudgetTransactionDialog } from "../../components/BudgetTransactionDialog";
 import { BudgetTransactionList } from "../../components/BudgetTransactionList";
-import { useDeleteBudgetTransactionMutation } from "../../hooks/api/mutation";
+import { StatementImportSheet } from "../../components/StatementImportSheet";
+import {
+  useDeleteBudgetTransactionMutation,
+  useDeleteBudgetTransactionsMutation,
+  useUpdateBudgetTransactionsMutation,
+} from "../../hooks/api/mutation";
 import {
   useGetBudgetAccountsQuery,
   useGetBudgetCategoriesQuery,
@@ -29,16 +39,28 @@ import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
 import { useHashTab } from "../../hooks/useHashTab";
 import { useIsOnline } from "../../hooks/useIsOnline";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
-import { buildMonthLedger } from "../../utils/monthLedger";
-import { BudgetMonthTotals } from "./components";
+import { sortBudgetAccounts } from "../../utils/sortBudgetAccounts";
+import { buildMonthLedger, groupTransactionsByDay, resolveTransactionCategory } from "../../utils/monthLedger";
+import { categoryPatch } from "../../utils/transactionEdits";
+import {
+  DEFAULT_TRANSACTION_FILTERS,
+  filterTransactions,
+  readTransactionFilters,
+  writeTransactionFilters,
+  type TransactionFilters,
+} from "../../utils/transactionFilters";
+import { BudgetBulkActions, BudgetMonthTotals, BudgetTransactionFilters } from "./components";
 import { budgetTransactionsViewStyles as styles } from "./BudgetTransactionsView.styles";
 
 const TABS = ["transactions", "recurring"] as const;
 const MONTH_PARAM = /^\d{4}-(0[1-9]|1[0-2])$/;
 
-/** `/planning/budget/transactions?month=YYYY-MM`: tabs Transactions | Recurring (`#recurring`). */
+/**
+ * `/planning/budget/transactions?month=YYYY-MM`: tabs Transactions | Recurring (`#recurring`). The list filters live
+ * in the URL too (`q`, `accounts`, `categories`, `direction`, `status`, `relevance`), so a link can open it filtered.
+ */
 export const BudgetTransactionsView = () => {
-  const { t } = usePlanningTranslations();
+  const { t, i18n } = usePlanningTranslations();
   const [tab, setTab] = useHashTab(TABS);
   const [searchParams, setSearchParams] = useSearchParams();
   const monthParam = searchParams.get("month") ?? "";
@@ -46,9 +68,18 @@ export const BudgetTransactionsView = () => {
   const isOnline = useIsOnline();
   const showWriteError = useBudgetWriteErrorToast();
 
-  const [isAddOpen, setIsAddOpen] = useState(false);
+  const filters = readTransactionFilters(searchParams);
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // `null`: the dialog adds a transaction
+  const [editing, setEditing] = useState<BudgetTransaction | null>(null);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [toDelete, setToDelete] = useState<BudgetTransaction | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const { mutateAsync: deleteTransaction, isPending: isDeleting } = useDeleteBudgetTransactionMutation();
+  const { mutateAsync: deleteTransactions, isPending: isBulkDeleting } = useDeleteBudgetTransactionsMutation();
+  const { mutateAsync: updateTransactions, isPending: isUpdating } = useUpdateBudgetTransactionsMutation();
 
   const profile = useGetBudgetProfileQuery();
   const accounts = useGetBudgetAccountsQuery();
@@ -59,15 +90,87 @@ export const BudgetTransactionsView = () => {
     () => buildMonthLedger({ month, transactions: transactions.data ?? [], accounts: accounts.data ?? [] }),
     [month, transactions.data, accounts.data],
   );
+  // One month of rows: cheap enough to filter on every render
+  const visible = categories.data
+    ? filterTransactions(transactions.data ?? [], filters, { accounts: accounts.data ?? [], categories: categories.data })
+    : [];
+  const visibleDays = groupTransactionsByDay(visible, accounts.data ?? []);
+  // Only rows still shown take part in a bulk action (a filter change can hide selected ones)
+  const selected = visible.filter((transaction) => selectedIds.has(transaction.id));
 
-  const setMonth = (next: BudgetMonth) =>
+  /** `clearFilters`: opens the month unfiltered (e.g. the import's "Show imported transactions"). */
+  const setMonth = (next: BudgetMonth, { clearFilters = false } = {}) => {
+    setSelectedIds(new Set());
     setSearchParams(
       (params) => {
-        params.set("month", next);
-        return params;
+        const updated = clearFilters ? writeTransactionFilters(params, DEFAULT_TRANSACTION_FILTERS) : params;
+        updated.set("month", next);
+        return updated;
       },
       { preventScrollReset: true },
     );
+  };
+
+  const setFilters = (next: TransactionFilters) =>
+    setSearchParams((params) => writeTransactionFilters(params, next), { replace: true, preventScrollReset: true });
+
+  const openDialog = (transaction: BudgetTransaction | null) => {
+    setEditing(transaction);
+    setIsDialogOpen(true);
+  };
+
+  const update = async (updates: BudgetTransactionUpdate[], onDone?: () => void) => {
+    try {
+      await updateTransactions(updates);
+      onDone?.();
+    } catch (error) {
+      if (error instanceof Error) {
+        showWriteError(error, { retry: () => void update(updates, onDone), fallbackKey: "toasts.budget.saveError" });
+      }
+      throw error;
+    }
+  };
+
+  const updateOne = (transaction: BudgetTransaction, patch: BudgetTransactionPatch) =>
+    // The toast already reported a failure; the inline field shows the stored value again after a refetch
+    update([{ ref: transaction, patch }]).catch(() => undefined);
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const bulkSetCategory = (categoryId: string | null) =>
+    update(
+      selected.map((transaction) => ({ ref: transaction, patch: categoryPatch(categoryId) })),
+      clearSelection,
+    );
+
+  const bulkConfirm = () => {
+    const tree = categories.data;
+    if (!tree) return;
+    // Only a set category can be confirmed; Uncategorized rows wait for one
+    const toConfirm = selected.filter(
+      (transaction) => !transaction.confirmed && resolveTransactionCategory(tree, transaction),
+    );
+    if (toConfirm.length === 0) {
+      clearSelection();
+      return;
+    }
+    void update(
+      toConfirm.map((transaction) => ({ ref: transaction, patch: { confirmed: true } })),
+      clearSelection,
+    ).catch(() => undefined);
+  };
+
+  const confirmBulkDelete = async () => {
+    try {
+      await deleteTransactions(selected);
+      setIsBulkDeleteOpen(false);
+      clearSelection();
+    } catch (error) {
+      if (error instanceof Error) {
+        showWriteError(error, { retry: () => void confirmBulkDelete(), fallbackKey: "toasts.budget.deleteError" });
+      }
+    }
+  };
 
   const confirmDelete = async (transaction: BudgetTransaction) => {
     try {
@@ -102,9 +205,8 @@ export const BudgetTransactionsView = () => {
             title={t("budget.transactionsEmpty.title")}
             description={t("budget.transactionsEmpty.description")}
             action={
-              // Import is wired by #172
               <div className={styles.emptyActions}>
-                <Button variant="outline" disabled>
+                <Button variant="outline" disabled={!isOnline || !canAdd} onClick={() => setIsImportOpen(true)}>
                   <FileUp aria-hidden="true" />
                   {t("budget.transactionsEmpty.import")}
                 </Button>
@@ -112,14 +214,50 @@ export const BudgetTransactionsView = () => {
             }
           />
         ) : (
-          <BudgetTransactionList
-            days={ledger.days}
-            categories={categories.data}
-            accounts={accounts.data}
-            mainCurrency={profile.data.mainCurrency}
-            onDelete={setToDelete}
-            actionsDisabled={!isOnline}
-          />
+          <>
+            <BudgetTransactionFilters
+              filters={filters}
+              onChange={setFilters}
+              accounts={sortBudgetAccounts(accounts.data, profile.data.mainAccountId, i18n.language)}
+              categories={categories.data}
+            />
+            {visibleDays.length === 0 ? (
+              <EmptyState
+                icon={<SearchX aria-hidden="true" />}
+                title={t("budget.transactionFilters.noMatches")}
+                action={
+                  <Button variant="outline" onClick={() => setFilters(DEFAULT_TRANSACTION_FILTERS)}>
+                    {t("budget.transactionFilters.clear")}
+                  </Button>
+                }
+              />
+            ) : (
+              <BudgetTransactionList
+                days={visibleDays}
+                categories={categories.data}
+                accounts={accounts.data}
+                mainCurrency={profile.data.mainCurrency}
+                onDelete={setToDelete}
+                onEdit={openDialog}
+                onUpdate={(transaction, patch) => void updateOne(transaction, patch)}
+                actionsDisabled={!isOnline}
+                selectedIds={selectedIds}
+                onSelectionChange={setSelectedIds}
+                expandable
+              />
+            )}
+            {selected.length > 0 && (
+              <BudgetBulkActions
+                selected={selected}
+                categories={categories.data}
+                onSetCategory={bulkSetCategory}
+                onConfirm={bulkConfirm}
+                onDelete={() => setIsBulkDeleteOpen(true)}
+                onClear={clearSelection}
+                disabled={!isOnline || isUpdating || isBulkDeleting}
+              />
+            )}
+          </>
         )}
       </>
     );
@@ -132,10 +270,16 @@ export const BudgetTransactionsView = () => {
       <PageHeader
         title={t("nav.budgetTransactions")}
         actions={
-          <Button variant="brand" disabled={!isOnline || !canAdd} onClick={() => setIsAddOpen(true)}>
-            <Plus aria-hidden="true" />
-            {t("budget.transactions.add")}
-          </Button>
+          <div className={styles.headerActions}>
+            <Button variant="outline" disabled={!isOnline || !canAdd} onClick={() => setIsImportOpen(true)}>
+              <FileUp aria-hidden="true" />
+              {t("budget.transactions.import")}
+            </Button>
+            <Button variant="brand" disabled={!isOnline || !canAdd} onClick={() => openDialog(null)}>
+              <Plus aria-hidden="true" />
+              {t("budget.transactions.add")}
+            </Button>
+          </div>
         }
       />
 
@@ -160,12 +304,27 @@ export const BudgetTransactionsView = () => {
 
       {profile.data && accounts.data && categories.data && (
         <BudgetTransactionDialog
-          open={isAddOpen}
-          onOpenChange={setIsAddOpen}
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          transaction={editing}
           profile={profile.data}
           accounts={accounts.data}
           categories={categories.data}
           saveDisabled={!isOnline}
+        />
+      )}
+
+      {profile.data && accounts.data && categories.data && (
+        <StatementImportSheet
+          open={isImportOpen}
+          onOpenChange={setIsImportOpen}
+          profile={profile.data}
+          accounts={accounts.data}
+          categories={categories.data}
+          onOpenMonth={(next) => {
+            setIsImportOpen(false);
+            setMonth(next, { clearFilters: true });
+          }}
         />
       )}
 
@@ -178,6 +337,17 @@ export const BudgetTransactionsView = () => {
         variant="destructive"
         isConfirming={isDeleting}
         onConfirm={() => toDelete && void confirmDelete(toDelete)}
+      />
+
+      <ConfirmationPopup
+        open={isBulkDeleteOpen}
+        onOpenChange={setIsBulkDeleteOpen}
+        title={t("budget.bulkActions.deleteTitle", { count: selected.length })}
+        description={t("budget.bulkActions.deleteDescription")}
+        confirmLabel={t("budget.bulkActions.deleteConfirm")}
+        variant="destructive"
+        isConfirming={isBulkDeleting}
+        onConfirm={() => void confirmBulkDelete()}
       />
     </div>
   );
