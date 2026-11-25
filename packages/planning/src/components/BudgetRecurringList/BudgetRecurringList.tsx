@@ -19,6 +19,7 @@ import {
   monthAmountMain,
   monthStatus,
   nextDueDate,
+  overdueSince,
   recurringOccurrences,
   type OccurrenceStatus,
 } from "../../utils/recurringTransactions";
@@ -85,7 +86,13 @@ export const BudgetRecurringList = ({
       ? (resolved.subcategory?.name ?? resolved.category.name)
       : t("budget.transactionList.uncategorized");
     const nextDue = nextDueDate(item, today);
-    const nextText = nextDue ? t("budget.recurring.next", { date: formatDay(nextDue) }) : t("budget.recurring.ended");
+    const overdue = overdueSince(item, today);
+    // An ended (stopped) rule says so; otherwise the first unpaid overdue day wins over the next one
+    const nextText = !nextDue
+      ? t("budget.recurring.ended")
+      : overdue
+        ? t("budget.recurring.overdueSince", { date: formatDay(overdue) })
+        : t("budget.recurring.next", { date: formatDay(nextDue) });
     const expected = expectedAmount(item);
     const expanded = expandedId === item.id;
     const detailsId = `recurring-${item.id}`;

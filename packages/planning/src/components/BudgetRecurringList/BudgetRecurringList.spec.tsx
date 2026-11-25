@@ -75,8 +75,9 @@ describe("BudgetRecurringList", () => {
     expect(within(expenses).getByText("This month: -PLN 3,095.00")).toBeInTheDocument();
     const rent = within(expenses).getByRole("button", { name: /Landlord/ });
     expect(rent).toHaveTextContent("Rent · Every month on day 10");
-    // The overdue 10 November shows in the status; the next due date is the next one ahead
-    expect(rent).toHaveTextContent("Next: Dec 10, 2026");
+    // 10 November is unpaid: the row says since when, not the next date ahead
+    expect(rent).toHaveTextContent("Overdue since Nov 10, 2026");
+    expect(rent).not.toHaveTextContent("Next:");
     expect(rent).toHaveTextContent("-PLN 2,600.00");
     expect(rent).toHaveTextContent("Overdue");
     expect(within(expenses).getByRole("button", { name: /Gym/ })).toHaveTextContent(
@@ -110,6 +111,21 @@ describe("BudgetRecurringList", () => {
     expect(onEditRule).toHaveBeenCalledWith(expect.objectContaining({ id: "rent" }));
     expect(onStop).toHaveBeenCalledWith(expect.objectContaining({ id: "rent" }));
     expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: "rent" }));
+  });
+
+  it("shows the next due date when nothing is overdue", () => {
+    const paidNovember = recurring({
+      occurrences: {
+        "2026-10-10": { transactionId: "oct", date: "2026-10-09", amount: 260000, amountMain: 260000 },
+        "2026-11-10": { transactionId: "nov", date: "2026-11-10", amount: 260000, amountMain: 260000 },
+      },
+    });
+    renderList({ recurring: [paidNovember] });
+
+    const rent = screen.getByRole("button", { name: /Landlord/ });
+    expect(rent).toHaveTextContent("Next: Dec 10, 2026");
+    expect(rent).toHaveTextContent("Paid");
+    expect(rent).not.toHaveTextContent("Overdue");
   });
 
   it("shows an ended recurring transaction without Stop", async () => {

@@ -4,6 +4,7 @@ import {
   monthAmountMain,
   monthStatus,
   nextDueDate,
+  overdueSince,
   recurringOccurrences,
   rematchRecurring,
 } from "./recurringTransactions";
@@ -147,6 +148,15 @@ describe("recurring statuses", () => {
 
     // Four Mondays in February 2026: one paid 1000, three expected at the last paid 1000
     expect(monthAmountMain(weekly, "2026-02", "2026-02-03")).toBe(4000);
+  });
+
+  it("gives the first unpaid due date after the last paid one as overdue since", () => {
+    expect(overdueSince(paidFebruary, "2026-03-10")).toBeNull();
+    expect(overdueSince(paidFebruary, "2026-03-11")).toBe("2026-03-10");
+    expect(overdueSince(paidFebruary, "2026-05-01")).toBe("2026-03-10");
+    // Nothing paid yet: counted from the start
+    expect(overdueSince(recurring(), "2026-01-11")).toBe("2026-01-10");
+    expect(overdueSince(recurring(), "2026-01-10")).toBeNull();
   });
 
   it("finds the next unpaid due date", () => {

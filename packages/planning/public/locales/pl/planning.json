@@ -1265,7 +1265,8 @@
         "title": "Usunąć tę transakcję cykliczną?",
         "description": "{{payee}} i historia płatności zostaną usunięte. Same transakcje zostają.",
         "confirm": "Usuń"
-      }
+      },
+      "overdueSince": "Zaległa od {{date}}"
     }
   }
 }

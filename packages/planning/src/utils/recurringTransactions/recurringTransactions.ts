@@ -113,6 +113,20 @@ export const nextDueDate = (recurring: BudgetRecurring, today: string): string |
   return null;
 };
 
+/**
+ * The first unpaid occurrence due before `today` after the last paid one (from `start` when none is paid), or `null`
+ * when nothing is overdue: the row shows "Overdue since" it instead of the next due date.
+ */
+export const overdueSince = (recurring: BudgetRecurring, today: string): string | null => {
+  const lastPaid = Object.keys(recurring.occurrences).sort().at(-1);
+  const [first] = occurrencesBetween(
+    recurring.rule,
+    lastPaid ? shiftDay(lastPaid, 1) : recurring.rule.start,
+    shiftDay(today, -1),
+  );
+  return first ?? null;
+};
+
 export type RecurringOccurrence = { dueDate: string; status: OccurrenceStatus; match?: BudgetRecurringMatch };
 
 /** Occurrences due in `from`..`to`: the rule's plus stored matches from before an edit, newest first. */

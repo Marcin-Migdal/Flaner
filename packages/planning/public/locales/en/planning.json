@@ -1231,7 +1231,8 @@
         "title": "Delete this recurring transaction?",
         "description": "{{payee}} and its payment history are removed. The transactions themselves stay.",
         "confirm": "Delete"
-      }
+      },
+      "overdueSince": "Overdue since {{date}}"
     }
   }
 }
