@@ -114,12 +114,12 @@ export const BudgetTransactionDialog = ({
   });
   const { control, setValue, getValues, reset, handleSubmit } = methods;
   const rules = useGetBudgetRulesQuery();
-  // The category this dialog prefilled from a rule; a category the user picked is never replaced
-  const prefilled = useRef<string | null>(null);
+  // Once the user picks or clears the category themselves, the rules never replace it
+  const categoryTouched = useRef(false);
 
   useEffect(() => {
     if (!open) return;
-    prefilled.current = null;
+    categoryTouched.current = false;
     reset(defaultValues(profile, accounts, transaction));
   }, [open, profile, accounts, transaction, reset]);
 
@@ -135,11 +135,8 @@ export const BudgetTransactionDialog = ({
   });
 
   useEffect(() => {
-    if (!open || transaction) return;
-    const current = getValues("categoryId");
-    if (current !== null && current !== prefilled.current) return;
-    prefilled.current = suggestedCategoryId;
-    if (current !== suggestedCategoryId) setValue("categoryId", suggestedCategoryId);
+    if (!open || transaction || categoryTouched.current) return;
+    if (getValues("categoryId") !== suggestedCategoryId) setValue("categoryId", suggestedCategoryId);
   }, [open, transaction, suggestedCategoryId, getValues, setValue]);
   const isForeign = !!currency && currency !== mainCurrency;
   const rateDay = date ? format(date, "yyyy-MM-dd") : "";
@@ -329,7 +326,10 @@ export const BudgetTransactionDialog = ({
                 tree={categories}
                 type={type}
                 value={categoryField.value}
-                onChange={categoryField.onChange}
+                onChange={(categoryId) => {
+                  categoryTouched.current = true;
+                  categoryField.onChange(categoryId);
+                }}
                 suggestedId={suggestedCategoryId}
               />
             </div>

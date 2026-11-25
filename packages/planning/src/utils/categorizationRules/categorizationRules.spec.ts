@@ -39,6 +39,7 @@ describe("normalizeAccountNumber", () => {
     expect(normalizeAccountNumber("PL61 1090 1014 0000 0712 1981 2874")).toBe("61109010140000071219812874");
     expect(normalizeAccountNumber("61'1090'1014'0000'0712'1981'2874")).toBe("61109010140000071219812874");
     expect(normalizeAccountNumber("pl61109010140000071219812874")).toBe("61109010140000071219812874");
+    expect(normalizeAccountNumber("PL61-1090-1014.0000")).toBe("61109010140000");
   });
 
   it("keeps a foreign number whole", () => {

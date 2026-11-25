@@ -53,6 +53,7 @@ import type {
   BudgetProfileDoc,
   BudgetProfilePayload,
   BudgetRule,
+  BudgetRuleChanges,
   BudgetRulesDoc,
   BudgetRulesPayload,
   BudgetTransaction,
@@ -571,7 +572,7 @@ const changeRules = (budget: UnlockedBudget, change: (rules: BudgetRule[]) => Bu
 export const editBudgetRule = (
   budget: UnlockedBudget,
   ruleId: string,
-  changes: Partial<Pick<BudgetRule, "key" | "categoryId">>,
+  changes: BudgetRuleChanges,
 ): Promise<BudgetRule[]> => changeRules(budget, (rules) => editRule(rules, ruleId, changes));
 
 export const deleteBudgetRule = (budget: UnlockedBudget, ruleId: string): Promise<BudgetRule[]> =>

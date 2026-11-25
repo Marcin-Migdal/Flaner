@@ -42,12 +42,12 @@ export const BudgetRulesSection = () => {
     [rules.data, i18n.language],
   );
 
-  const run = async (write: () => Promise<unknown>) => {
+  const writeWithRetry = async (write: () => Promise<BudgetRule[]>) => {
     try {
       await write();
     } catch (error) {
       if (error instanceof Error) {
-        showWriteError(error, { retry: () => void run(write), fallbackKey: "toasts.budget.ruleSaveError" });
+        showWriteError(error, { retry: () => void writeWithRetry(write), fallbackKey: "toasts.budget.ruleSaveError" });
       }
     }
   };
@@ -110,7 +110,7 @@ export const BudgetRulesSection = () => {
                             onCommit={(input) => {
                               const key = shortenedKeyword(rule, input);
                               if (!key) return false;
-                              void run(() => editRule({ ruleId: id, changes: { key } }));
+                              void writeWithRetry(() => editRule({ ruleId: id, changes: { key } }));
                               return true;
                             }}
                           />
@@ -135,7 +135,7 @@ export const BudgetRulesSection = () => {
                           aria-label={t("budget.rules.category", { counterparty: label })}
                           onChange={(categoryId) => {
                             if (categoryId && categoryId !== rule.categoryId) {
-                              void run(() => editRule({ ruleId: id, changes: { categoryId } }));
+                              void writeWithRetry(() => editRule({ ruleId: id, changes: { categoryId } }));
                             }
                           }}
                         />
@@ -146,7 +146,7 @@ export const BudgetRulesSection = () => {
                         className={styles.delete}
                         disabled={!isOnline}
                         aria-label={t("budget.rules.delete", { counterparty: label })}
-                        onClick={() => void run(() => deleteRule(id))}
+                        onClick={() => void writeWithRetry(() => deleteRule(id))}
                       >
                         <Trash2 aria-hidden="true" />
                       </Button>

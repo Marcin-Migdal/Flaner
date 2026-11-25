@@ -41,7 +41,7 @@ import { useHashTab } from "../../hooks/useHashTab";
 import { useIsOnline } from "../../hooks/useIsOnline";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { sortBudgetAccounts } from "../../utils/sortBudgetAccounts";
-import { matchRule } from "../../utils/categorizationRules";
+import { guessCategory } from "../../utils/categorizationRules";
 import { buildMonthLedger, groupTransactionsByDay, resolveTransactionCategory } from "../../utils/monthLedger";
 import { categoryPatch } from "../../utils/transactionEdits";
 import {
@@ -199,6 +199,7 @@ export const BudgetTransactionsView = () => {
     if (isError || !profile.data || !categories.data || !accounts.data) {
       return <EmptyState title={t("errors.fetchError", { ns: "common" })} />;
     }
+    const tree = categories.data;
 
     return (
       <>
@@ -247,7 +248,7 @@ export const BudgetTransactionsView = () => {
                 actionsDisabled={!isOnline}
                 selectedIds={selectedIds}
                 onSelectionChange={setSelectedIds}
-                suggestCategory={(transaction) => matchRule(rules.data ?? [], transaction)?.categoryId ?? null}
+                suggestCategory={(transaction) => guessCategory(rules.data ?? [], tree, transaction)}
                 expandable
               />
             )}

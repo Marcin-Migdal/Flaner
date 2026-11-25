@@ -15,7 +15,7 @@ import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
 import { useImportPreview } from "../../hooks/useImportPreview";
 import { useIsOnline } from "../../hooks/useIsOnline";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
-import { guessCategory, matchRule } from "../../utils/categorizationRules";
+import { guessCategory } from "../../utils/categorizationRules";
 import { monthOfDate } from "../../utils/monthLedger";
 import type { ImportSettingsFormData } from "../../utils/schemas";
 import { parseStatementRows, type ImportPreview, type ImportPreviewRow } from "../../utils/statementImport";
@@ -252,7 +252,7 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
       <ImportRowDialog
         transaction={editing}
         categories={categories}
-        suggestedCategoryId={editing && (matchRule(rules.data ?? [], editing)?.categoryId ?? null)}
+        suggestedCategoryId={editing && guessCategory(rules.data ?? [], categories, editing)}
         onClose={() => setEditing(null)}
         onSave={(changes) => editing && editRow(editing.id, changes)}
       />

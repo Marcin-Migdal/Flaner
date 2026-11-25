@@ -93,6 +93,9 @@ export type BudgetRule = {
   payee?: string;
 };
 
+/** Settings → Rules: a rule's new category and / or (keyword rules) its shortened key. */
+export type BudgetRuleChanges = Partial<Pick<BudgetRule, "key" | "categoryId">>;
+
 /** A calendar month, `YYYY-MM`. */
 export type BudgetMonth = string;
 

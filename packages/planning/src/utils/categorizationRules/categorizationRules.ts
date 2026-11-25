@@ -1,12 +1,12 @@
-import type { BudgetCategoryTree, BudgetRule, BudgetTransaction } from "../../api/budget";
+import type { BudgetCategoryTree, BudgetRule, BudgetRuleChanges, BudgetTransaction } from "../../api/budget";
 import { resolveTransactionCategory } from "../monthLedger";
 
 /**
- * The counterparty's account number as a rule key: spaces and apostrophes stripped, a Polish number without its
- * `PL` prefix (digits only), a foreign number kept whole. `null` when nothing is left.
+ * The counterparty's account number as a rule key: separators (spaces, apostrophes, dashes, dots) stripped, a
+ * Polish number without its `PL` prefix (digits only), a foreign number kept whole. `null` when nothing is left.
  */
 export const normalizeAccountNumber = (raw: string | null | undefined): string | null => {
-  const compact = (raw ?? "").replace(/[\s']/g, "").toUpperCase();
+  const compact = (raw ?? "").replace(/[^\p{L}\d]/gu, "").toUpperCase();
   const number = /^PL\d+$/.test(compact) ? compact.slice(2) : compact;
   return number || null;
 };
@@ -77,7 +77,7 @@ export const shortenedKeyword = (rule: Pick<BudgetRule, "key">, input: string): 
 export const editRule = (
   rules: BudgetRule[],
   id: string,
-  changes: Partial<Pick<BudgetRule, "key" | "categoryId">>,
+  changes: BudgetRuleChanges,
 ): BudgetRule[] => {
   const rule = rules.find((existing) => ruleId(existing) === id);
   if (!rule) return rules;
