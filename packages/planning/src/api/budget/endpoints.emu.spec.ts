@@ -735,6 +735,9 @@ describe("budget split-offs, exclusion and refunds", () => {
     await expect(updateBudgetTransactions(budget, [{ ref: purchase, patch: { amount: 2500 } }])).rejects.toThrow(
       "planning:errors.budget.splitOffsTooLarge",
     );
+    await expect(updateBudgetTransactions(budget, [{ ref: purchase, patch: { type: "income" } }])).rejects.toThrow(
+      "planning:errors.budget.splitTypeLocked",
+    );
 
     await removeBudgetSplitOff(budget, purchase, lamp.id);
     expect((await byId(budget, purchase.id))?.splitOffs).toEqual([]);
@@ -783,6 +786,10 @@ describe("budget split-offs, exclusion and refunds", () => {
     ).rejects.toThrow("planning:errors.budget.linkedLocked");
     await expect(
       updateBudgetTransactions(budget, [{ ref: purchase, patch: { date: "2026-09-30" } }]),
+    ).rejects.toThrow("planning:errors.budget.linkedLocked");
+    // Not even within the month: a refund never predates its purchase
+    await expect(
+      updateBudgetTransactions(budget, [{ ref: linkedRefund, patch: { date: "2026-11-01" } }]),
     ).rejects.toThrow("planning:errors.budget.linkedLocked");
 
     await unlinkBudgetRefund(budget, linkOf(linkedRefund));

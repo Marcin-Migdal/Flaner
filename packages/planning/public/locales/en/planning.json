@@ -151,7 +151,8 @@
       "linkedLocked": "This transaction is part of a linked refund: its amount, type, date and account are locked. Unlink the refund first.",
       "splitOffsTooLarge": "Split-offs must stay below the transaction's amount.",
       "splitOffMissing": "This split-off no longer exists. Reload the page.",
-      "refundNotAllowed": "This refund can't be linked: it must be relevant income, not linked yet, dated on or after the purchase and smaller than what's left of it."
+      "refundNotAllowed": "This refund can't be linked: it must be relevant income, not linked yet, dated on or after the purchase and smaller than what's left of it.",
+      "splitTypeLocked": "A split transaction can't change between expense and income. Remove its split-offs first."
     }
   },
   "splits": {
@@ -769,7 +770,7 @@
       "accountRequired": "Choose an account.",
       "categoryRequired": "Choose a category.",
       "splitOffTooLarge": "Split-offs must stay below the transaction's amount",
-      "noteMax": "The note is too long",
+      "splitOffNoteMax": "The note can have at most 200 characters",
       "refundRequired": "Pick the refund",
       "refundTooLarge": "The refund must be smaller than what's left of the purchase"
     },
@@ -886,7 +887,7 @@
       "save": "Add transaction",
       "editTitle": "Edit transaction",
       "saveEdit": "Save changes",
-      "linkedLocked": "A refund is linked: type, date, account and the refund's amount are locked until you unlink it."
+      "linkedLocked": "A refund is linked: type, date, account, currency and the refund's amount are locked until you unlink it."
     },
     "deleteTransaction": {
       "title": "Delete this transaction?",

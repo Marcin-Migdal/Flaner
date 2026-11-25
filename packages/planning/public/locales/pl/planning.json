@@ -151,7 +151,8 @@
       "linkedLocked": "Ta transakcja należy do powiązanego zwrotu: jej kwota, typ, data i konto są zablokowane. Najpierw odłącz zwrot.",
       "splitOffsTooLarge": "Wydzielone części muszą być mniejsze niż kwota transakcji.",
       "splitOffMissing": "Ta wydzielona część już nie istnieje. Odśwież stronę.",
-      "refundNotAllowed": "Nie można powiązać tego zwrotu: musi to być uwzględniany wpływ, jeszcze niepowiązany, z datą nie wcześniejszą niż zakup i mniejszy niż pozostała kwota zakupu."
+      "refundNotAllowed": "Nie można powiązać tego zwrotu: musi to być uwzględniany wpływ, jeszcze niepowiązany, z datą nie wcześniejszą niż zakup i mniejszy niż pozostała kwota zakupu.",
+      "splitTypeLocked": "Podzielona transakcja nie może zmienić typu (wydatek / wpływ). Najpierw usuń wydzielone części."
     }
   },
   "splits": {
@@ -775,7 +776,7 @@
       "accountRequired": "Wybierz konto.",
       "categoryRequired": "Wybierz kategorię.",
       "splitOffTooLarge": "Wydzielone części muszą być mniejsze niż kwota transakcji",
-      "noteMax": "Notatka jest za długa",
+      "splitOffNoteMax": "Notatka może mieć najwyżej 200 znaków",
       "refundRequired": "Wybierz zwrot",
       "refundTooLarge": "Zwrot musi być mniejszy niż pozostała kwota zakupu"
     },
@@ -892,7 +893,7 @@
       "save": "Dodaj transakcję",
       "editTitle": "Edytuj transakcję",
       "saveEdit": "Zapisz zmiany",
-      "linkedLocked": "Powiązano zwrot: typ, data, konto i kwota zwrotu są zablokowane do czasu odłączenia."
+      "linkedLocked": "Powiązano zwrot: typ, data, konto, waluta i kwota zwrotu są zablokowane do czasu odłączenia."
     },
     "deleteTransaction": {
       "title": "Usunąć tę transakcję?",

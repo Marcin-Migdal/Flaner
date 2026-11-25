@@ -17,6 +17,6 @@ describe("getBudgetSplitOffSchema", () => {
   });
 
   it("limits the note", () => {
-    expect(messages({ amount: 1, categoryId: null, note: "x".repeat(201) })).toEqual(["budget.validation.noteMax"]);
+    expect(messages({ amount: 1, categoryId: null, note: "x".repeat(201) })).toEqual(["budget.validation.splitOffNoteMax"]);
   });
 });

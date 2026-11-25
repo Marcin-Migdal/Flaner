@@ -32,7 +32,7 @@ import {
   wrapDataKey,
 } from "../../utils/budgetCrypto";
 import { monthOfDate } from "../../utils/monthLedger";
-import { refundRoom, splitRest } from "../../utils/splitOffs";
+import { linkRefOf, refundRoom, splitRest } from "../../utils/splitOffs";
 import type {
   BudgetAccount,
   BudgetAccountChanges,
@@ -742,12 +742,6 @@ type StoredTransaction = BudgetMonthPayload["transactions"][number];
 
 const linkSlot = ({ accountId, month }: BudgetLinkRef): MonthSlot => ({ accountId, month });
 
-const linkRefOf = ({ id, accountId, date }: BudgetTransactionRef): BudgetLinkRef => ({
-  transactionId: id,
-  accountId,
-  month: monthOfDate(date),
-});
-
 /** The stored transaction and its position in an already read month. */
 const locate = (months: LoadedMonths, slot: MonthSlot, id: string) => {
   const month = months.get(slotId(slot));
@@ -783,22 +777,41 @@ const releaseRefund = ({ refundOf: _link, ...refund }: StoredTransaction): Store
   excluded: false,
 });
 
-/** The other side of each link a transaction holds, and what cleaning it up means there. */
-type LinkEnd = { target: BudgetLinkRef } & ({ side: "purchase"; splitOffId: string } | { side: "refund" });
+/**
+ * The other side of each link a transaction (`sourceId`) holds, and what cleaning it up means there: drop the refund
+ * split-off from the purchase, or release the refund.
+ */
+type LinkEnd = { target: BudgetLinkRef; sourceId: string } & (
+  | { side: "purchase"; splitOffId: string }
+  | { side: "refund" }
+);
 
-const linksOf = (stored: StoredTransaction): LinkEnd[] => [
-  ...(stored.refundOf ? [{ target: stored.refundOf, side: "purchase" as const, splitOffId: stored.refundOf.splitOffId }] : []),
-  ...(stored.splitOffs ?? []).flatMap((splitOff) =>
-    splitOff.refund ? [{ target: splitOff.refund, side: "refund" as const }] : [],
-  ),
-];
+const linksOf = (stored: StoredTransaction): LinkEnd[] => {
+  const ends: LinkEnd[] = [];
+  if (stored.refundOf) {
+    ends.push({ target: stored.refundOf, sourceId: stored.id, side: "purchase", splitOffId: stored.refundOf.splitOffId });
+  }
+  for (const splitOff of stored.splitOffs ?? []) {
+    if (splitOff.refund) ends.push({ target: splitOff.refund, sourceId: stored.id, side: "refund" });
+  }
+  return ends;
+};
 
-/** Cleans up the far side of a link whose near side goes away (a missing far side is left as it is). */
+/**
+ * Cleans up the far side of a link whose near side goes away. A far side that is missing, or no longer points back
+ * at the near side (relinked meanwhile), is left as it is.
+ */
 const detach = (months: LoadedMonths, link: LinkEnd) => {
   const found = locate(months, linkSlot(link.target), link.target.transactionId);
   if (!found) return;
-  found.month.transactions[found.index] =
-    link.side === "purchase" ? dropRefundSplitOff(found.stored, link.splitOffId) : releaseRefund(found.stored);
+  if (link.side === "purchase") {
+    const pointsBack = found.stored.splitOffs?.some(
+      (splitOff) => splitOff.id === link.splitOffId && splitOff.refund?.transactionId === link.sourceId,
+    );
+    if (pointsBack) found.month.transactions[found.index] = dropRefundSplitOff(found.stored, link.splitOffId);
+  } else if (found.stored.refundOf?.transactionId === link.sourceId) {
+    found.month.transactions[found.index] = releaseRefund(found.stored);
+  }
 };
 
 /** Reads the slots not read yet into `months` (still before the transaction's first write). */
@@ -846,9 +859,9 @@ export const deleteBudgetTransactions = async (budget: UnlockedBudget, refs: Bud
  * Applies the edits; a new `date` or `accountId` moves the transaction to that month / account document. Every
  * affected month document is read and written in one transaction, so a move never leaves a copy or loses the row.
  * The frozen import fields (`importHash`, `sourceFile`, `counterpartyAccount`) always keep their stored values:
- * the stored transaction is spread and only the patch's fields override it. Both sides of a refund link cannot move
- * to another month / account or change type, a linked refund keeps its amount and stays excluded
- * (`errors.budget.linkedLocked`), and a split transaction's amount stays above its split-offs
+ * the stored transaction is spread and only the patch's fields override it. Both sides of a refund link keep their
+ * date, account, type and currency, a linked refund keeps its amount and stays excluded (`errors.budget.linkedLocked`),
+ * a split transaction keeps its type (`errors.budget.splitTypeLocked`) and an amount above its split-offs
  * (`errors.budget.splitOffsTooLarge`).
  */
 export const updateBudgetTransactions = async (
@@ -875,17 +888,19 @@ export const updateBudgetTransactions = async (
       if (index === -1) throw missingTransaction();
 
       const stored = source.transactions[index];
+      const changes = (key: "amount" | "amountMain" | "currency" | "excluded" | "date" | "type") =>
+        patch[key] !== undefined && patch[key] !== stored[key];
       if (stored.refundOf || stored.splitOffs?.some((splitOff) => splitOff.refund)) {
-        // Both sides of a link keep their place (the link points at their month) and type
+        // Both sides of a link keep their place (the link points at their month), date (a refund never predates its
+        // purchase), type and currency (the refund split-off is in the purchase's currency)
         const moved = slotId(targetOf(update)) !== slotId(slotOf(ref));
-        const retyped = patch.type !== undefined && patch.type !== stored.type;
-        if (moved || retyped) throw linkedLocked();
+        if (moved || changes("date") || changes("type") || changes("currency")) throw linkedLocked();
       }
+      // Split-off categories belong to the transaction's type's tree
+      if (stored.splitOffs?.length && changes("type")) throw new Error("planning:errors.budget.splitTypeLocked");
       if (stored.refundOf) {
         // A linked refund's amount is locked (its split-off on the purchase mirrors it), and it stays excluded
-        const changes = (key: "amount" | "amountMain" | "currency" | "excluded") =>
-          patch[key] !== undefined && patch[key] !== stored[key];
-        if (changes("amount") || changes("amountMain") || changes("currency") || changes("excluded")) {
+        if (changes("amount") || changes("amountMain") || changes("excluded")) {
           throw linkedLocked();
         }
       }
@@ -992,7 +1007,7 @@ export const removeBudgetSplitOff = async (
     month.transactions[index] = refund
       ? dropRefundSplitOff(stored, splitOffId)
       : { ...stored, splitOffs: (stored.splitOffs ?? []).filter((splitOff) => splitOff.id !== splitOffId) };
-    if (refund) detach(months, { target: refund, side: "refund" });
+    if (refund) detach(months, { target: refund, sourceId: ref.id, side: "refund" });
     await writeMonths(transaction, budget, months);
   });
 };
@@ -1068,7 +1083,7 @@ export const unlinkBudgetRefund = async (budget: UnlockedBudget, refund: BudgetL
     await readMoreMonths(transaction, budget, months, [linkSlot(refundOf)]);
 
     returned.month.transactions[returned.index] = releaseRefund(returned.stored);
-    detach(months, { target: refundOf, side: "purchase", splitOffId: refundOf.splitOffId });
+    detach(months, { target: refundOf, sourceId: refund.transactionId, side: "purchase", splitOffId: refundOf.splitOffId });
     await writeMonths(transaction, budget, months);
   });
 };

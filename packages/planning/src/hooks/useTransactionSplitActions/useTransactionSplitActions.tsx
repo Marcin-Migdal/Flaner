@@ -36,9 +36,9 @@ export const useTransactionSplitActions = ({
   const { mutateAsync: removeSplitOff } = useRemoveBudgetSplitOffMutation();
   const { mutateAsync: unlinkRefund } = useUnlinkBudgetRefundMutation();
 
-  const run = (write: () => Promise<unknown>) => {
-    write().catch((error: unknown) => {
-      if (error instanceof Error) showWriteError(error, { retry: () => run(write), fallbackKey: "toasts.budget.saveError" });
+  const run = <T,>(write: () => Promise<T>) => {
+    write().catch((error: Error) => {
+      showWriteError(error, { retry: () => run(write), fallbackKey: "toasts.budget.saveError" });
     });
   };
 

@@ -6,8 +6,7 @@ import { Eye, EyeOff, Pencil, Split, Trash2, Undo2, Unlink } from "lucide-react"
 import type { ReactNode } from "react";
 import type { BudgetTransaction } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
-import { monthOfDate } from "../../../../utils/monthLedger";
-import { splitRest } from "../../../../utils/splitOffs";
+import { linkRefOf, splitRest } from "../../../../utils/splitOffs";
 import type { TransactionSplitActions } from "../../types";
 import { transactionDetailsStyles as styles } from "./TransactionDetails.styles";
 
@@ -119,13 +118,7 @@ export const TransactionDetails = ({
                 variant="outline"
                 size="sm"
                 disabled={actionsDisabled}
-                onClick={() =>
-                  splitActions.onUnlinkRefund({
-                    transactionId: transaction.id,
-                    accountId: transaction.accountId,
-                    month: monthOfDate(transaction.date),
-                  })
-                }
+                onClick={() => splitActions.onUnlinkRefund(linkRefOf(transaction))}
               >
                 <Unlink aria-hidden="true" />
                 {t("budget.refundLink.unlink")}

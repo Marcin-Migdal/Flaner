@@ -1,4 +1,4 @@
-import type { BudgetSplitOff, BudgetTransaction } from "../../api/budget";
+import type { BudgetLinkRef, BudgetSplitOff, BudgetTransaction, BudgetTransactionRef } from "../../api/budget";
 
 /**
  * Split-off and refund maths (GLOSSARY → Split-off, Linked refund). Pure: split-off amounts are in the transaction's
@@ -54,6 +54,13 @@ export const ledgerEntries = (transaction: BudgetTransaction): BudgetTransaction
 /** The main-currency amount a transaction counts: without excluded split-offs; 0 when it is excluded. */
 export const countedAmountMain = (transaction: BudgetTransaction) =>
   ledgerEntries(transaction).reduce((sum, entry) => sum + entry.amountMain, 0);
+
+/** Where a transaction is stored, as a link points at it. */
+export const linkRefOf = ({ id, accountId, date }: BudgetTransactionRef): BudgetLinkRef => ({
+  transactionId: id,
+  accountId,
+  month: date.slice(0, 7),
+});
 
 /** Part of a link (a linked refund, or a purchase with a refund split-off). */
 export const isRefundLinked = (transaction: BudgetTransaction) =>

@@ -110,6 +110,8 @@ export const BudgetTransactionDialog = ({
   const isPending = isAdding || isUpdating;
   const isLinked = !!transaction && isRefundLinked(transaction);
   const isAmountLocked = !!transaction?.refundOf;
+  // Split-off categories belong to the transaction's type's tree
+  const isTypeLocked = isLinked || !!transaction?.splitOffs?.length;
 
   const methods = useForm<BudgetTransactionFormData>({
     resolver: zodResolver(getBudgetTransactionSchema(t, mainCurrency)),
@@ -229,7 +231,7 @@ export const BudgetTransactionDialog = ({
               >
                 <TabsList className={styles.typeTabsList} aria-label={t("budget.transactionForm.type")}>
                   {BUDGET_CATEGORY_TYPES.map((value) => (
-                    <TabsTrigger key={value} value={value} disabled={isLinked && value !== type}>
+                    <TabsTrigger key={value} value={value} disabled={isTypeLocked && value !== type}>
                       {t(`budget.transactionForm.types.${value}`)}
                     </TabsTrigger>
                   ))}
@@ -254,6 +256,7 @@ export const BudgetTransactionDialog = ({
                   label={t("budget.transactionForm.amount")}
                   currencyLabel={t("budget.transactionForm.currency")}
                   currencyOptions={currencyOptions}
+                  currencyDisabled={isLinked}
                   onCurrencyChange={() => setValue("rateOverridden", false)}
                 />
               )}

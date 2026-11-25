@@ -12,7 +12,7 @@ export const getBudgetSplitOffSchema = (t: (key: string) => string, room: number
   z.object({
     amount: getBudgetAmountSchema(t).refine((amount) => toMinorUnits(amount) < room, t("budget.validation.splitOffTooLarge")),
     categoryId: z.string().nullable(),
-    note: z.string().trim().max(BUDGET_SPLIT_OFF_NOTE_MAX, t("budget.validation.noteMax")),
+    note: z.string().trim().max(BUDGET_SPLIT_OFF_NOTE_MAX, t("budget.validation.splitOffNoteMax")),
   });
 
 export type BudgetSplitOffFormData = z.infer<ReturnType<typeof getBudgetSplitOffSchema>>;
