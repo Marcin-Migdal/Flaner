@@ -27,7 +27,7 @@ Budget accounts (MFE `planning`, Budget; ADR 0002): a place the user's money sit
 | Add an account | `packages/planning/src/api/budget/endpoints.ts#addBudgetAccount` | set `budget_accounts/{new}` | single write |
 | Rename / change currency / hide / show | `packages/planning/src/api/budget/endpoints.ts#updateBudgetAccount` | get `budget_profiles/{me}` + update `budget_accounts/{id}` (`payload`, `defaultCurrency`, `hidden`); the currency changes only while the account has no month (checked by a query just before) | ✅ transaction |
 | Make main | `packages/planning/src/api/budget/endpoints.ts#setMainBudgetAccount` | get `budget_accounts/{id}` (not hidden) + update `budget_profiles/{me}.mainAccountId` | ✅ transaction |
-| Delete an account | `packages/planning/src/api/budget/endpoints.ts#deleteBudgetAccount` | delete every `budget_months` doc of the account, then delete `budget_accounts/{id}` with the profile's remembered file mappings re-encrypted without it (if it had one); never the main account | ⚠️ batches of 500, account last (a failed cascade leaves the account listed and can be retried) |
+| Delete an account | `packages/planning/src/api/budget/endpoints.ts#deleteBudgetAccount` | delete every `budget_months` doc of the account, then delete `budget_accounts/{id}` and its `budget_recurring/{id}` (if it exists) with the profile's remembered file mappings re-encrypted without it (if it had one); never the main account | ⚠️ batches of 500, account last (a failed cascade leaves the account listed and can be retried) |
 
 ## Queries
 | Query | Endpoint | Allowed by |

@@ -107,6 +107,8 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
               mode="single"
               required
               selected={value}
+              // Opens on the selected date's month (e.g. editing an older transaction), else the current one
+              defaultMonth={value}
               onSelect={handleSelect}
               locale={dfLocale}
             />
