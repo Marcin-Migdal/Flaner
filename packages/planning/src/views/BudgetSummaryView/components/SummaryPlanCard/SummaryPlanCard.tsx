@@ -58,7 +58,10 @@ export const SummaryPlanCard = ({ progress, mainCurrency, plannerHref }: Summary
               count: progress.exceeded.length,
               more: progress.exceeded.length - 1,
               name: firstExceeded.subcategory
-                ? `${firstExceeded.category.name} / ${firstExceeded.subcategory.name}`
+                ? t("budget.summary.plan.subcategoryName", {
+                    category: firstExceeded.category.name,
+                    subcategory: firstExceeded.subcategory.name,
+                  })
                 : firstExceeded.category.name,
             })}
           </Badge>

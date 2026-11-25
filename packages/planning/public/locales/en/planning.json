@@ -1323,7 +1323,8 @@
         "othersOf": "Others ({{names}})",
         "uncategorized": "Uncategorized",
         "onCategory": "{{name}} · general",
-        "empty": "No spending this month."
+        "empty": "No spending this month.",
+        "drilledDescription": "{{month}} · {{category}}"
       },
       "totals": {
         "title": "Month totals",
@@ -1345,7 +1346,8 @@
         "exceeded_other": "Over the limit: {{name}} and {{more}} more",
         "outside": "Outside the plan {{amount}}",
         "noLimits": "No limits this month yet.",
-        "openPlanner": "Open Planner"
+        "openPlanner": "Open Planner",
+        "subcategoryName": "{{category}} / {{subcategory}}"
       },
       "review": {
         "title": "To review",

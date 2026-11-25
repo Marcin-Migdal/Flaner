@@ -37,7 +37,7 @@ const stepColor = (color: ChartColorIndex, step: number): ChartColorIndex =>
  * subcategories; a subcategory, a category without any, Uncategorized or Others opens its transactions.
  */
 export const SummarySpendingCard = ({ breakdown, month, monthLabel, mainCurrency }: SummarySpendingCardProps) => {
-  const { t } = usePlanningTranslations();
+  const { t, i18n } = usePlanningTranslations();
   const { format } = useMoneyFormatter();
   const navigate = useNavigate();
   const [drilledId, setDrilledId] = useState<string | null>(null);
@@ -97,18 +97,13 @@ export const SummarySpendingCard = ({ breakdown, month, monthLabel, mainCurrency
   };
 
   const categoryIcon = (id: string) => {
-    if (id === OTHERS_ID) {
-      return (
-        <span className={cn(styles.tile, styles.uncategorizedTile)}>
-          <CircleEllipsis aria-hidden="true" />
-        </span>
-      );
-    }
     const item = breakdown.top.find((candidate) => candidate.id === id);
     if (!item?.category) {
+      // Others and Uncategorized: a dashed tile
+      const Icon = id === OTHERS_ID ? CircleEllipsis : CircleHelp;
       return (
         <span className={cn(styles.tile, styles.uncategorizedTile)}>
-          <CircleHelp aria-hidden="true" />
+          <Icon aria-hidden="true" />
         </span>
       );
     }
@@ -126,7 +121,9 @@ export const SummarySpendingCard = ({ breakdown, month, monthLabel, mainCurrency
         id,
         label:
           id === OTHERS_ID
-            ? t("budget.summary.spending.othersOf", { names: breakdown.others.map(labelOf).join(", ") })
+            ? t("budget.summary.spending.othersOf", {
+                names: new Intl.ListFormat(i18n.language, { type: "unit" }).format(breakdown.others.map(labelOf)),
+              })
             : label,
         value,
         color,
@@ -136,7 +133,11 @@ export const SummarySpendingCard = ({ breakdown, month, monthLabel, mainCurrency
   return (
     <ChartContainer
       title={t("budget.summary.spending.title")}
-      description={drilled ? `${monthLabel} · ${drilled.label}` : monthLabel}
+      description={
+        drilled
+          ? t("budget.summary.spending.drilledDescription", { month: monthLabel, category: drilled.label })
+          : monthLabel
+      }
     >
       {segments.length === 0 ? (
         <p className={styles.empty}>{t("budget.summary.spending.empty")}</p>

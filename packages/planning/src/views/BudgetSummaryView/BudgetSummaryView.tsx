@@ -95,9 +95,21 @@ export const BudgetSummaryView = () => {
       return <EmptyState icon={<WifiOff aria-hidden="true" />} title={t("budget.offline.monthUnavailable")} />;
     }
     const isLoading =
-      profile.isPending || accounts.isPending || categories.isPending || transactions.isPending || plan.isPending;
+      profile.isPending ||
+      accounts.isPending ||
+      categories.isPending ||
+      transactions.isPending ||
+      plan.isPending ||
+      recurring.isPending;
     if (isLoading) return <LoadingFallback />;
-    if (profile.isError || accounts.isError || categories.isError || transactions.isError || plan.isError) {
+    if (
+      profile.isError ||
+      accounts.isError ||
+      categories.isError ||
+      transactions.isError ||
+      plan.isError ||
+      recurring.isError
+    ) {
       return <EmptyState title={t("errors.fetchError", { ns: "common" })} />;
     }
     if (!profile.data || !summary) return <EmptyState title={t("errors.fetchError", { ns: "common" })} />;

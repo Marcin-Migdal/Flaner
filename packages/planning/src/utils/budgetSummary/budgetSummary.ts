@@ -41,7 +41,7 @@ export type SpendingCategory = {
 export type SpendingBreakdown = {
   /** All counted expenses (the month's expenses total). */
   total: number;
-  /** The largest categories, at most `SUMMARY_TOP_CATEGORIES` (all of them when they fit with no Others). */
+  /** The largest categories, at most `SUMMARY_TOP_CATEGORIES`. */
   top: SpendingCategory[];
   /** The rest, largest first; empty when there is no Others. */
   others: SpendingCategory[];
@@ -52,8 +52,8 @@ const byAmount = <T extends { amount: number }>(a: T, b: T) => b.amount - a.amou
 
 /**
  * Expenses by main category, ranked (ties keep the tree's order, Uncategorized after the tree). Takes the ledger's
- * `entries`, so split-offs count under their own category. More than `SUMMARY_TOP_CATEGORIES` + 1 categories: the
- * top ones stay, the rest fold into Others (Others never holds just one category).
+ * `entries`, so split-offs count under their own category. Beyond the top `SUMMARY_TOP_CATEGORIES`, the rest fold
+ * into Others.
  */
 export const buildSpendingBreakdown = (entries: BudgetTransaction[], tree: BudgetCategoryTree): SpendingBreakdown => {
   const amounts = new Map<string, number>();
@@ -89,9 +89,8 @@ export const buildSpendingBreakdown = (entries: BudgetTransaction[], tree: Budge
 
   // `sort` is stable, so equal amounts keep the tree's order
   const ranked = categories.sort(byAmount);
-  const fits = ranked.length <= SUMMARY_TOP_CATEGORIES + 1;
-  const top = fits ? ranked : ranked.slice(0, SUMMARY_TOP_CATEGORIES);
-  const others = fits ? [] : ranked.slice(SUMMARY_TOP_CATEGORIES);
+  const top = ranked.slice(0, SUMMARY_TOP_CATEGORIES);
+  const others = ranked.slice(SUMMARY_TOP_CATEGORIES);
   return { total, top, others, othersAmount: others.reduce((sum, item) => sum + item.amount, 0) };
 };
 

@@ -139,16 +139,15 @@ describe("buildSpendingBreakdown", () => {
     expect(breakdown.othersAmount).toBe(300 + 200 + 10);
   });
 
-  it("shows 8 categories without an Others holding a single one", () => {
+  it("folds the 8th category into Others; equal amounts keep the tree's order", () => {
     const ids = ["food", "home", "c3", "c4", "c5", "c6", "c7", "c8"];
     const breakdown = buildSpendingBreakdown(
       entriesOf(ids.map((id) => tx({ categoryId: id, amountMain: 100 }))),
       tree,
     );
 
-    // Equal amounts keep the tree's order
-    expect(breakdown.top.map(({ id }) => id)).toEqual(ids);
-    expect(breakdown.others).toEqual([]);
+    expect(breakdown.top.map(({ id }) => id)).toEqual(ids.slice(0, 7));
+    expect(breakdown.others.map(({ id }) => id)).toEqual(["c8"]);
   });
 });
 

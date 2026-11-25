@@ -1,10 +1,18 @@
 import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { cn } from "@flaner/shared/utils";
 import { Card, CardHeader, CardTitle } from "@flaner/ui-components";
-import { ArrowDownRight, ArrowUpRight, Equal } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Equal, type LucideIcon } from "lucide-react";
 import { signedAmount, type MonthTotals } from "../../../../utils/monthLedger";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { summaryTotalsCardStyles as styles } from "./SummaryTotalsCard.styles";
+
+type Direction = "up" | "down" | "same";
+
+const ARROWS: Record<Direction, LucideIcon> = { up: ArrowUpRight, down: ArrowDownRight, same: Equal };
+
+const directionOf = (change: number): Direction => (change > 0 ? "up" : change < 0 ? "down" : "same");
+
+type TotalRow = { key: keyof MonthTotals; value: number; change: number; className?: string };
 
 export type SummaryTotalsCardProps = {
   totals: MonthTotals;
@@ -19,11 +27,11 @@ export type SummaryTotalsCardProps = {
 export const SummaryTotalsCard = ({ totals, change, previousMonthLabel, mainCurrency }: SummaryTotalsCardProps) => {
   const { t } = usePlanningTranslations();
   const { format } = useMoneyFormatter();
-  const rows = [
+  const rows: TotalRow[] = [
     { key: "income", value: totals.income, change: change.income, className: styles.income },
-    { key: "expenses", value: signedAmount("expense", totals.expenses), change: change.expenses, className: undefined },
-    { key: "balance", value: totals.balance, change: change.balance, className: undefined },
-  ] as const;
+    { key: "expenses", value: signedAmount("expense", totals.expenses), change: change.expenses },
+    { key: "balance", value: totals.balance, change: change.balance },
+  ];
 
   return (
     <Card>
@@ -32,8 +40,8 @@ export const SummaryTotalsCard = ({ totals, change, previousMonthLabel, mainCurr
       </CardHeader>
       <dl className={styles.list}>
         {rows.map((row) => {
-          const Arrow = row.change > 0 ? ArrowUpRight : row.change < 0 ? ArrowDownRight : Equal;
-          const direction = row.change > 0 ? "up" : row.change < 0 ? "down" : "same";
+          const direction = directionOf(row.change);
+          const Arrow = ARROWS[direction];
           return (
             <div key={row.key} className={styles.row}>
               <dt className={styles.label}>{t(`budget.summary.totals.${row.key}`)}</dt>

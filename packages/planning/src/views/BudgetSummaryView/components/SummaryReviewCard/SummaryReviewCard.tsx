@@ -29,7 +29,7 @@ export const SummaryReviewCard = ({ count, reviewHref }: SummaryReviewCardProps)
       ) : (
         <p className={styles.split}>{t("budget.summary.review.allClear")}</p>
       )}
-      {count.unconfirmed > 0 && (
+      {count.total > 0 && (
         <CardFooter>
           <Link to={reviewHref} className={buttonVariants({ variant: "outline", size: "sm" })}>
             {t("budget.summary.review.open")}
