@@ -5,6 +5,7 @@ import type { BudgetAccount, BudgetCategoryTree, BudgetTransaction, BudgetTransa
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import type { LedgerDay } from "../../utils/monthLedger";
 import { TransactionRow, type SelectMode } from "./components/TransactionRow";
+import type { TransactionSplitActions } from "./types";
 import { budgetTransactionListStyles as styles } from "./BudgetTransactionList.styles";
 
 export type BudgetTransactionListProps = {
@@ -15,6 +16,8 @@ export type BudgetTransactionListProps = {
   mainCurrency: string;
   /** Delete action in the expanded row. */
   onDelete?: (transaction: BudgetTransaction) => void;
+  /** Split off, Link a refund, Exclude / Restore, Unlink in the expanded rows and the split-off rows. */
+  splitActions?: TransactionSplitActions;
   /** Disables the row actions and inline edits (e.g. offline). */
   actionsDisabled?: boolean;
   /**
@@ -56,6 +59,7 @@ export const BudgetTransactionList = ({
   accounts,
   mainCurrency,
   onDelete,
+  splitActions,
   actionsDisabled,
   onUpdate,
   onEdit,
@@ -130,6 +134,7 @@ export const BudgetTransactionList = ({
                 onUpdate={onUpdate && ((patch) => onUpdate(transaction, patch))}
                 onEdit={onEdit && (() => onEdit(transaction))}
                 onDelete={onDelete && (() => onDelete(transaction))}
+                splitActions={splitActions}
                 actionsDisabled={actionsDisabled}
                 muted={!!isRowMuted?.(transaction)}
                 recurring={!!recurringIds?.has(transaction.id)}

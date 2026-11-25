@@ -1,0 +1,20 @@
+export const splitOffRowStyles = {
+  row: "border-t border-dashed border-border-subtle",
+  excluded: "[&>div:first-child]:opacity-60",
+  summary:
+    "flex cursor-pointer items-center gap-3 py-2 pr-3 pl-10 select-none sm:pr-4 sm:pl-14 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
+  static: "cursor-default",
+  branch: "size-4 shrink-0 text-muted-foreground",
+  icon: "flex size-7 shrink-0 items-center justify-center rounded-full bg-muted [&>svg]:size-3.5",
+  uncategorizedIcon: "text-muted-foreground",
+  body: "min-w-0 flex-1",
+  name: "block truncate text-sm",
+  meta: "block truncate text-xs text-muted-foreground",
+  amounts: "shrink-0 text-right tabular-nums",
+  amount: "block text-sm",
+  income: "text-success-text",
+  amountMain: "block text-xs text-muted-foreground",
+  chevron: "size-4 shrink-0 text-muted-foreground transition-transform",
+  chevronOpen: "rotate-180",
+  details: "flex flex-wrap gap-2 border-t border-border-subtle bg-muted/30 py-3 pr-3 pl-10 sm:pr-4 sm:pl-14",
+};

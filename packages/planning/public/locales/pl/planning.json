@@ -157,7 +157,12 @@
       "recurringNoOccurrence": "Reguła kończy się przed pierwszym wystąpieniem. Wybierz inny koniec.",
       "recurringMissing": "Ta transakcja cykliczna już nie istnieje. Odśwież listę.",
       "recurringTooLarge": "To konto ma zbyt wiele transakcji cyklicznych, by zapisać kolejne.",
-      "recurringFirstTooFar": "Pierwszy termin reguły wypada ponad 7 dni po tej transakcji. Wybierz regułę zaczynającą się blisko jej daty."
+      "recurringFirstTooFar": "Pierwszy termin reguły wypada ponad 7 dni po tej transakcji. Wybierz regułę zaczynającą się blisko jej daty.",
+      "linkedLocked": "Ta transakcja należy do powiązanego zwrotu: jej kwota, typ, data i konto są zablokowane. Najpierw odłącz zwrot.",
+      "splitOffsTooLarge": "Wydzielone części muszą być mniejsze niż kwota transakcji.",
+      "splitOffMissing": "Ta wydzielona część już nie istnieje. Odśwież stronę.",
+      "refundNotAllowed": "Nie można powiązać tego zwrotu: musi to być uwzględniany wpływ, jeszcze niepowiązany, z datą nie wcześniejszą niż zakup i mniejszy niż pozostała kwota zakupu.",
+      "splitTypeLocked": "Podzielona transakcja nie może zmienić typu (wydatek / wpływ). Najpierw usuń wydzielone części."
     }
   },
   "splits": {
@@ -784,7 +789,11 @@
       "wholeNumber": "Użyj liczby całkowitej.",
       "numberRange": "Ta liczba jest poza zakresem.",
       "weekdaysRequired": "Wybierz co najmniej jeden dzień.",
-      "endDateAfterStart": "Wybierz datę nie wcześniejszą niż początek."
+      "endDateAfterStart": "Wybierz datę nie wcześniejszą niż początek.",
+      "splitOffTooLarge": "Wydzielone części muszą być mniejsze niż kwota transakcji",
+      "splitOffNoteMax": "Notatka może mieć najwyżej 200 znaków",
+      "refundRequired": "Wybierz zwrot",
+      "refundTooLarge": "Zwrot musi być mniejszy niż pozostała kwota zakupu"
     },
     "transactionsEmpty": {
       "title": "Brak transakcji",
@@ -918,12 +927,19 @@
       "cancel": "Anuluj",
       "save": "Dodaj transakcję",
       "editTitle": "Edytuj transakcję",
-      "saveEdit": "Zapisz zmiany"
+      "saveEdit": "Zapisz zmiany",
+      "linkedLocked": "Powiązano zwrot: typ, data, konto, waluta i kwota zwrotu są zablokowane do czasu odłączenia."
     },
     "deleteTransaction": {
       "title": "Usunąć tę transakcję?",
       "description": "„{{payee}}” zostanie usunięta z budżetu. Tej operacji nie można cofnąć.",
-      "confirm": "Usuń"
+      "confirm": "Usuń",
+      "imported": "Ta transakcja pochodzi z importu, więc ponowny import tego pliku ją przywróci: aby trwale ją pominąć, wyklucz ją zamiast usuwać.",
+      "splitOffs_one": "Jej wydzielona część zostanie usunięta razem z nią.",
+      "splitOffs_few": "Jej {{count}} wydzielone części zostaną usunięte razem z nią.",
+      "splitOffs_many": "Jej {{count}} wydzielonych części zostanie usuniętych razem z nią.",
+      "splitOffs_other": "Jej {{count}} wydzielonych części zostanie usuniętych razem z nią.",
+      "linked": "Powiązany zwrot zostanie odłączony."
     },
     "transactionDetails": {
       "date": "Data",
@@ -935,7 +951,10 @@
       "amountTyped": "{{amount}} = {{amountMain}} (wpisane ręcznie)",
       "edit": "Edytuj",
       "delete": "Usuń",
-      "makeRecurring": "Ustaw jako cykliczną"
+      "makeRecurring": "Ustaw jako cykliczną",
+      "rest": "Liczone na transakcji",
+      "refund": "Zwrot",
+      "refundLinked": "Powiązany z zakupem, nie liczy się jako wpływ"
     },
     "transactionFilters": {
       "label": "Filtry",
@@ -1295,6 +1314,41 @@
         "confirm": "Usuń"
       },
       "overdueSince": "Zaległa od {{date}}"
+    },
+    "splitOff": {
+      "title": "Wydziel część",
+      "editTitle": "Edytuj wydzieloną część",
+      "description": "Część „{{payee}}” ({{amount}}) liczona we własnej kategorii. Transakcja zachowuje resztę.",
+      "amount": "Kwota",
+      "amountLocked": "Zablokowana, dopóki zwrot jest powiązany",
+      "room": "Mniej niż {{amount}}",
+      "category": "Kategoria",
+      "note": "Notatka",
+      "save": "Wydziel",
+      "saveEdit": "Zapisz",
+      "action": "Wydziel część",
+      "edit": "Edytuj",
+      "remove": "Usuń",
+      "details": "Szczegóły wydzielonej części: {{name}}",
+      "label": "Wydzielona część",
+      "of": "z {{amount}}",
+      "list": "Wydzielone części: {{payee}}"
+    },
+    "refundLink": {
+      "title": "Powiąż zwrot",
+      "description": "Wybierz wpływ będący zwrotem za „{{payee}}”. Zostanie wydzielony z zakupu (do {{amount}}) i przestanie liczyć się jako wpływ.",
+      "candidates": "Wpływy",
+      "noCandidates": "Żaden wpływ nie pasuje: nie może być wykluczony ani powiązany, musi mieć datę nie wcześniejszą niż zakup i być mniejszy niż pozostała kwota zakupu.",
+      "amount": "Zwrócona kwota ({{currency}})",
+      "converted": "Przeliczone z {{amount}} przez kwoty w walucie głównej. Możesz ją zmienić.",
+      "save": "Powiąż zwrot",
+      "action": "Powiąż zwrot",
+      "unlink": "Odłącz zwrot",
+      "refundBadge": "Zwrot"
+    },
+    "exclusion": {
+      "exclude": "Wyklucz",
+      "restore": "Przywróć"
     }
   }
 }

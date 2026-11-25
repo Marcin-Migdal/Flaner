@@ -6,12 +6,15 @@ import type {
   BudgetSubcategory,
   BudgetTransaction,
 } from "../../api/budget";
+import { countedAmountMain, ledgerEntries } from "../splitOffs";
 
 /**
  * The month ledger: every counting rule of a Budget month, shared by Transactions, the Planner and Summary so
  * their numbers are identical. Pure — takes decrypted transactions, returns numbers in the main currency.
  *
- * Counted: transactions dated in the month, not excluded, on accounts that are not hidden; their `amountMain`.
+ * Counted: transactions dated in the month, not excluded, on accounts that are not hidden; their `amountMain`
+ * without excluded split-offs. Each split-off counts under its own category, the rest under the transaction's
+ * (`entries`).
  */
 
 export type MonthTotals = {
@@ -34,6 +37,11 @@ export type MonthLedger = {
   totals: MonthTotals;
   /** Days with counted transactions, newest first. */
   days: LedgerDay[];
+  /**
+   * The counted parts by category (`ledgerEntries`): each transaction's rest, then its split-offs that are not
+   * excluded. What the Planner and Summary group by category.
+   */
+  entries: BudgetTransaction[];
 };
 
 export type MonthLedgerInput = {
@@ -66,7 +74,7 @@ export const groupTransactionsByDay = (transactions: BudgetTransaction[], accoun
   // Walk backwards, so within a day the transaction added last comes first
   for (const transaction of [...transactions].reverse()) {
     const day = daysByDate.get(transaction.date) ?? { date: transaction.date, net: 0, transactions: [] };
-    if (isCounted(transaction, hiddenAccountIds)) day.net += signedAmount(transaction.type, transaction.amountMain);
+    if (isCounted(transaction, hiddenAccountIds)) day.net += signedAmount(transaction.type, countedAmountMain(transaction));
     day.transactions.push(transaction);
     daysByDate.set(transaction.date, day);
   }
@@ -81,13 +89,14 @@ export const buildMonthLedger = ({ month, transactions, accounts }: MonthLedgerI
   );
 
   const totals: MonthTotals = { income: 0, expenses: 0, balance: 0 };
-  for (const transaction of counted) {
-    if (transaction.type === "income") totals.income += transaction.amountMain;
-    else totals.expenses += transaction.amountMain;
+  const entries = counted.flatMap(ledgerEntries);
+  for (const entry of entries) {
+    if (entry.type === "income") totals.income += entry.amountMain;
+    else totals.expenses += entry.amountMain;
   }
   totals.balance = totals.income - totals.expenses;
 
-  return { totals, days: groupTransactionsByDay(counted, accounts) };
+  return { totals, days: groupTransactionsByDay(counted, accounts), entries };
 };
 
 export type ResolvedCategory = {

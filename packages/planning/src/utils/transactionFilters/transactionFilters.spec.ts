@@ -86,6 +86,14 @@ describe("filterTransactions", () => {
     expect(filter(rows, { categoryIds: ["groceries", UNCATEGORIZED_FILTER] })).toEqual(["sub", "none", "deleted"]);
   });
 
+  it("matches a transaction through one of its split-offs", () => {
+    const rows = [
+      tx("split", { categoryId: "groceries", splitOffs: [{ id: "s", amount: 1, categoryId: "car", note: "", excluded: false }] }),
+      tx("plain", { categoryId: "groceries" }),
+    ];
+    expect(filter(rows, { categoryIds: ["car"] })).toEqual(["split"]);
+  });
+
   it("combines direction, status and relevance", () => {
     const rows = [
       tx("expense"),

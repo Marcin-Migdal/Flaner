@@ -2,10 +2,12 @@ import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { cn } from "@flaner/shared/utils";
 import { Button } from "@flaner/ui-components";
 import { parseISO } from "date-fns";
-import { Pencil, Repeat, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Pencil, Repeat, Split, Trash2, Undo2, Unlink } from "lucide-react";
 import type { ReactNode } from "react";
 import type { BudgetTransaction } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
+import { linkRefOf, splitRest } from "../../../../utils/splitOffs";
+import type { TransactionSplitActions } from "../../types";
 import { transactionDetailsStyles as styles } from "./TransactionDetails.styles";
 
 export type TransactionDetailsProps = {
@@ -16,6 +18,8 @@ export type TransactionDetailsProps = {
   children?: ReactNode;
   onEdit?: () => void;
   onDelete?: () => void;
+  /** Split off, Link a refund, Exclude / Restore (Unlink for a linked refund). */
+  splitActions?: TransactionSplitActions;
   /** Make recurring (only on a transaction that does not belong to a recurring transaction yet). */
   onMakeRecurring?: () => void;
   actionsDisabled?: boolean;
@@ -29,6 +33,7 @@ export const TransactionDetails = ({
   children,
   onEdit,
   onDelete,
+  splitActions,
   onMakeRecurring,
   actionsDisabled,
 }: TransactionDetailsProps) => {
@@ -37,7 +42,6 @@ export const TransactionDetails = ({
   const dateFormat = new Intl.DateTimeFormat(i18n.language, { dateStyle: "full" });
   const isForeign = transaction.currency !== mainCurrency;
 
-  // The split-off lines (#178) join here: the transaction's own counted rest, then each split-off
   const amountSplit = isForeign
     ? t(transaction.rateOverridden ? "budget.transactionDetails.amountTyped" : "budget.transactionDetails.amountAtRate", {
         amount: format(transaction.amount, transaction.currency),
@@ -54,6 +58,17 @@ export const TransactionDetails = ({
     [t("budget.transactionDetails.source"), transaction.sourceFile ?? t("budget.transactionDetails.manual")],
     [t("budget.transactionDetails.amount"), amountSplit],
   ];
+  // A split transaction: what it counts itself (its split-offs are listed as rows under it)
+  if (transaction.splitOffs?.length) {
+    details.push([t("budget.transactionDetails.rest"), format(splitRest(transaction), transaction.currency)]);
+  }
+  if (transaction.refundOf) {
+    details.push([t("budget.transactionDetails.refund"), t("budget.transactionDetails.refundLinked")]);
+  }
+
+  const { refundOf } = transaction;
+  const canLinkRefund = transaction.type === "expense" && !transaction.excluded;
+  const hasActions = !!(onEdit || onDelete || onMakeRecurring || splitActions);
 
   return (
     <div className={styles.root}>
@@ -66,8 +81,7 @@ export const TransactionDetails = ({
           </div>
         ))}
       </dl>
-      {/* Link a refund and Exclude join these actions in later tickets */}
-      {(onEdit || onDelete || onMakeRecurring) && (
+      {hasActions && (
         <div className={styles.actions}>
           {onEdit && (
             <Button type="button" variant="outline" size="sm" disabled={actionsDisabled} onClick={onEdit}>
@@ -75,6 +89,54 @@ export const TransactionDetails = ({
               {t("budget.transactionDetails.edit")}
             </Button>
           )}
+          {splitActions && !refundOf && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={actionsDisabled}
+              onClick={() => splitActions.onSplitOff(transaction)}
+            >
+              <Split aria-hidden="true" />
+              {t("budget.splitOff.action")}
+            </Button>
+          )}
+          {splitActions && canLinkRefund && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={actionsDisabled}
+              onClick={() => splitActions.onLinkRefund(transaction)}
+            >
+              <Undo2 aria-hidden="true" />
+              {t("budget.refundLink.action")}
+            </Button>
+          )}
+          {splitActions &&
+            (refundOf ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={actionsDisabled}
+                onClick={() => splitActions.onUnlinkRefund(linkRefOf(transaction))}
+              >
+                <Unlink aria-hidden="true" />
+                {t("budget.refundLink.unlink")}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={actionsDisabled}
+                onClick={() => splitActions.onToggleExcluded(transaction)}
+              >
+                {transaction.excluded ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}
+                {t(transaction.excluded ? "budget.exclusion.restore" : "budget.exclusion.exclude")}
+              </Button>
+            ))}
           {onMakeRecurring && (
             <Button type="button" variant="outline" size="sm" disabled={actionsDisabled} onClick={onMakeRecurring}>
               <Repeat aria-hidden="true" />

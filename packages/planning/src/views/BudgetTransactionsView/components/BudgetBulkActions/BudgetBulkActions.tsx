@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@flaner/ui-components";
-import { CheckCheck, Tags, Trash2, X } from "lucide-react";
+import { CheckCheck, Eye, EyeOff, Tags, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import type { BudgetCategoryTree, BudgetTransaction } from "../../../../api/budget";
 import { CategoryPicker } from "../../../../components/CategoryPicker";
@@ -18,18 +18,24 @@ export type BudgetBulkActionsProps = {
   categories: BudgetCategoryTree;
   onSetCategory: (categoryId: string | null) => Promise<void>;
   onConfirm: () => void;
+  /** Excludes the selected relevant transactions. */
+  onExclude: () => void;
+  /** Restores the selected excluded transactions (a linked refund stays excluded until unlinked). */
+  onRestore: () => void;
   onDelete: () => void;
   onClear: () => void;
   /** Disables the actions (offline, or a bulk write running). */
   disabled?: boolean;
 };
 
-/** Bulk actions for the selected transactions: set category, confirm, delete (exclude / restore join with #178). */
+/** Bulk actions for the selected transactions: set category, confirm, exclude / restore, delete. */
 export const BudgetBulkActions = ({
   selected,
   categories,
   onSetCategory,
   onConfirm,
+  onExclude,
+  onRestore,
   onDelete,
   onClear,
   disabled,
@@ -44,6 +50,8 @@ export const BudgetBulkActions = ({
   const types = new Set(selected.map((transaction) => transaction.type));
   const [type] = types;
   const canSetCategory = types.size === 1;
+  const canExclude = selected.some((transaction) => !transaction.excluded);
+  const canRestore = selected.some((transaction) => transaction.excluded && !transaction.refundOf);
 
   const saveCategory = async () => {
     setIsSaving(true);
@@ -79,6 +87,18 @@ export const BudgetBulkActions = ({
           <CheckCheck aria-hidden="true" />
           {t("budget.bulkActions.confirm")}
         </Button>
+        {canExclude && (
+          <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={onExclude}>
+            <EyeOff aria-hidden="true" />
+            {t("budget.exclusion.exclude")}
+          </Button>
+        )}
+        {canRestore && (
+          <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={onRestore}>
+            <Eye aria-hidden="true" />
+            {t("budget.exclusion.restore")}
+          </Button>
+        )}
         <Button type="button" variant="destructive" size="sm" disabled={disabled} onClick={onDelete}>
           <Trash2 aria-hidden="true" />
           {t("budget.bulkActions.delete")}

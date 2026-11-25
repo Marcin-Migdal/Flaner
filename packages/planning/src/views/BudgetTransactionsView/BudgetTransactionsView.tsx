@@ -41,10 +41,12 @@ import {
 import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
 import { useHashTab } from "../../hooks/useHashTab";
 import { useIsOnline } from "../../hooks/useIsOnline";
+import { useTransactionSplitActions } from "../../hooks/useTransactionSplitActions";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { sortBudgetAccounts } from "../../utils/sortBudgetAccounts";
 import { guessCategory } from "../../utils/categorizationRules";
 import { buildMonthLedger, groupTransactionsByDay, resolveTransactionCategory } from "../../utils/monthLedger";
+import { isRefundLinked } from "../../utils/splitOffs";
 import { recurringTransactionIds } from "../../utils/recurringTransactions";
 import { categoryPatch } from "../../utils/transactionEdits";
 import {
@@ -95,6 +97,11 @@ export const BudgetTransactionsView = () => {
   // Only marks suggestions in the pickers: the list renders without it
   const rules = useGetBudgetRulesQuery();
   const transactions = useGetBudgetTransactionsQuery(month);
+  const { splitActions, dialogs: splitDialogs } = useTransactionSplitActions({
+    accounts: accounts.data,
+    categories: categories.data,
+    saveDisabled: !isOnline,
+  });
   const recurring = useGetBudgetRecurringQuery();
   const recurringIds = useMemo(() => recurringTransactionIds(recurring.data ?? []), [recurring.data]);
 
@@ -168,6 +175,18 @@ export const BudgetTransactionsView = () => {
     }
     void update(
       toConfirm.map((transaction) => ({ ref: transaction, patch: { confirmed: true } })),
+      clearSelection,
+    ).catch(() => undefined);
+  };
+
+  const bulkSetExcluded = (excluded: boolean) => {
+    // A linked refund stays excluded until it is unlinked
+    const toChange = selected.filter(
+      (transaction) => transaction.excluded !== excluded && (excluded || !transaction.refundOf),
+    );
+    if (toChange.length === 0) return;
+    void update(
+      toChange.map((transaction) => ({ ref: transaction, patch: { excluded } })),
       clearSelection,
     ).catch(() => undefined);
   };
@@ -251,6 +270,7 @@ export const BudgetTransactionsView = () => {
                 accounts={accounts.data}
                 mainCurrency={profile.data.mainCurrency}
                 onDelete={setToDelete}
+                splitActions={splitActions}
                 onEdit={openDialog}
                 onUpdate={(transaction, patch) => void updateOne(transaction, patch)}
                 recurringIds={recurringIds}
@@ -275,6 +295,8 @@ export const BudgetTransactionsView = () => {
                 categories={categories.data}
                 onSetCategory={bulkSetCategory}
                 onConfirm={bulkConfirm}
+                onExclude={() => bulkSetExcluded(true)}
+                onRestore={() => bulkSetExcluded(false)}
                 onDelete={() => setIsBulkDeleteOpen(true)}
                 onClear={clearSelection}
                 disabled={!isOnline || isUpdating || isBulkDeleting}
@@ -360,11 +382,26 @@ export const BudgetTransactionsView = () => {
         />
       )}
 
+      {splitDialogs}
+
       <ConfirmationPopup
         open={toDelete !== null}
         onOpenChange={(open) => !open && setToDelete(null)}
         title={t("budget.deleteTransaction.title")}
-        description={toDelete ? t("budget.deleteTransaction.description", { payee: toDelete.payee }) : undefined}
+        description={
+          toDelete
+            ? [
+                t("budget.deleteTransaction.description", { payee: toDelete.payee }),
+                // Re-import would bring an imported transaction back: excluding it is the lasting way out
+                toDelete.importHash && t("budget.deleteTransaction.imported"),
+                toDelete.splitOffs?.length &&
+                  t("budget.deleteTransaction.splitOffs", { count: toDelete.splitOffs.length }),
+                isRefundLinked(toDelete) && t("budget.deleteTransaction.linked"),
+              ]
+                .filter(Boolean)
+                .join(" ")
+            : undefined
+        }
         confirmLabel={t("budget.deleteTransaction.confirm")}
         variant="destructive"
         isConfirming={isDeleting}

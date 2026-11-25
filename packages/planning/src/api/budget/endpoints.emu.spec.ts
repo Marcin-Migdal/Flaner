@@ -16,6 +16,7 @@ import {
 import {
   MAX_MONTH_PAYLOAD_BYTES,
   addBudgetAccount,
+  addBudgetSplitOff,
   addBudgetTransaction,
   changeBudgetPassphrase,
   countBudgetAccountTransactions,
@@ -37,6 +38,8 @@ import {
   getBudgetTransactions,
   getLockedBudget,
   importBudgetTransactions,
+  linkBudgetRefund,
+  removeBudgetSplitOff,
   makeBudgetTransactionRecurring,
   rememberFileAccountMappings,
   replaceRecoveryKey,
@@ -45,15 +48,18 @@ import {
   setBudgetMainCurrency,
   setMainBudgetAccount,
   stopBudgetRecurring,
+  unlinkBudgetRefund,
   unlockWithPassphrase,
   unlockWithRecoveryKey,
   updateBudgetAccount,
   updateBudgetRecurringRule,
+  updateBudgetSplitOff,
   updateBudgetTransactions,
 } from "./endpoints";
 import type {
   BudgetAccountDoc,
   BudgetCategoryTree,
+  BudgetTransaction,
   BudgetTransactionInput,
   BudgetTransactionPatch,
   BudgetTransactionRef,
@@ -757,6 +763,195 @@ describe("budget plans", () => {
       setBudgetPlanAmount(budget, { month: "2026-11", type: "expense", categoryId: "cat-food", amount: 1 }),
     ).rejects.toMatchObject(DENIED);
     await expect(getBudgetPlan(budget, "2026-12")).rejects.toMatchObject(DENIED);
+  });
+});
+
+describe("budget split-offs, exclusion and refunds", () => {
+  const setUp = async () => {
+    await signInAs(ME);
+    const budget = await createBudget(ME, input({ mainAccount: { name: "Main", currency: "PLN" } }));
+    const [main] = await getBudgetAccounts(budget);
+    return { budget, mainId: main.id };
+  };
+
+  const purchaseOf = (accountId: string, date = "2026-11-14") => ({
+    ...monthTransaction(accountId, date),
+    amount: 10000,
+    amountMain: 10000,
+    categoryId: "sub-groceries",
+  });
+
+  const refundOf = (accountId: string, date: string, amount = 2000): BudgetTransactionInput => ({
+    ...monthTransaction(accountId, date),
+    type: "income",
+    amount,
+    amountMain: amount,
+    payee: "Shop refund",
+    categoryId: "cat-salary",
+  });
+
+  const all = (budget: UnlockedBudget) => getBudgetTransactions(budget, { from: "2026-01", to: "2026-12" });
+  const byId = async (budget: UnlockedBudget, id: string): Promise<BudgetTransaction | undefined> =>
+    (await all(budget)).find((stored) => stored.id === id);
+  const linkOf = (refund: BudgetTransaction) => ({
+    transactionId: refund.id,
+    accountId: refund.accountId,
+    month: refund.date.slice(0, 7),
+  });
+
+  it("adds, edits, excludes and removes split-offs; their sum stays below the total", async () => {
+    const { budget, mainId } = await setUp();
+    const purchase = await addBudgetTransaction(budget, purchaseOf(mainId));
+
+    const lamp = await addBudgetSplitOff(budget, purchase, { amount: 3000, categoryId: "cat-food", note: "Lamp" });
+    await updateBudgetSplitOff(budget, purchase, lamp.id, { amount: 2500, note: "Desk lamp", excluded: true });
+    expect((await byId(budget, purchase.id))?.splitOffs).toEqual([
+      { ...lamp, amount: 2500, note: "Desk lamp", excluded: true },
+    ]);
+
+    await expect(
+      addBudgetSplitOff(budget, purchase, { amount: 7500, categoryId: null, note: "" }),
+    ).rejects.toThrow("planning:errors.budget.splitOffsTooLarge");
+    await expect(updateBudgetTransactions(budget, [{ ref: purchase, patch: { amount: 2500 } }])).rejects.toThrow(
+      "planning:errors.budget.splitOffsTooLarge",
+    );
+    await expect(updateBudgetTransactions(budget, [{ ref: purchase, patch: { type: "income" } }])).rejects.toThrow(
+      "planning:errors.budget.splitTypeLocked",
+    );
+
+    await removeBudgetSplitOff(budget, purchase, lamp.id);
+    expect((await byId(budget, purchase.id))?.splitOffs).toEqual([]);
+  });
+
+  it("excludes and restores transactions in bulk", async () => {
+    const { budget, mainId } = await setUp();
+    const a = await addBudgetTransaction(budget, monthTransaction(mainId, "2026-10-01"));
+    const b = await addBudgetTransaction(budget, monthTransaction(mainId, "2026-11-01"));
+
+    await updateBudgetTransactions(budget, [a, b].map((ref) => ({ ref, patch: { excluded: true } })));
+    expect((await all(budget)).map((stored) => stored.excluded)).toEqual([true, true]);
+    await updateBudgetTransactions(budget, [a, b].map((ref) => ({ ref, patch: { excluded: false } })));
+    expect((await all(budget)).map((stored) => stored.excluded)).toEqual([false, false]);
+  });
+
+  it("links a refund across months and accounts: an excluded split-off on the purchase, the refund excluded; unlink restores both", async () => {
+    const { budget, mainId } = await setUp();
+    const card = await addBudgetAccount(budget, { name: "Card", defaultCurrency: "PLN" });
+    const purchase = await addBudgetTransaction(budget, purchaseOf(mainId, "2026-10-30"));
+    const refund = await addBudgetTransaction(budget, refundOf(card.id, "2026-11-04"));
+
+    await linkBudgetRefund(budget, { purchase, refund, amount: 2000 });
+
+    const linkedPurchase = await byId(budget, purchase.id);
+    const [refundSplitOff] = linkedPurchase?.splitOffs ?? [];
+    expect(refundSplitOff).toMatchObject({
+      amount: 2000,
+      categoryId: "sub-groceries",
+      excluded: true,
+      refund: { transactionId: refund.id, accountId: card.id, month: "2026-11" },
+    });
+    expect(await byId(budget, refund.id)).toMatchObject({
+      excluded: true,
+      refundOf: { transactionId: purchase.id, accountId: mainId, month: "2026-10", splitOffId: refundSplitOff.id },
+    });
+
+    // Locked while linked
+    const linkedRefund = await byId(budget, refund.id);
+    if (!linkedRefund) throw new Error("refund missing");
+    await expect(updateBudgetTransactions(budget, [{ ref: linkedRefund, patch: { amount: 1000 } }])).rejects.toThrow(
+      "planning:errors.budget.linkedLocked",
+    );
+    await expect(
+      updateBudgetSplitOff(budget, purchase, refundSplitOff.id, { amount: 1000 }),
+    ).rejects.toThrow("planning:errors.budget.linkedLocked");
+    await expect(
+      updateBudgetTransactions(budget, [{ ref: purchase, patch: { date: "2026-09-30" } }]),
+    ).rejects.toThrow("planning:errors.budget.linkedLocked");
+    // Not even within the month: a refund never predates its purchase
+    await expect(
+      updateBudgetTransactions(budget, [{ ref: linkedRefund, patch: { date: "2026-11-01" } }]),
+    ).rejects.toThrow("planning:errors.budget.linkedLocked");
+
+    await unlinkBudgetRefund(budget, linkOf(linkedRefund));
+    expect((await byId(budget, purchase.id))?.splitOffs).toEqual([]);
+    const released = await byId(budget, refund.id);
+    expect(released?.excluded).toBe(false);
+    expect(released?.refundOf).toBeUndefined();
+  });
+
+  it("carves a refund out of a split-off and returns it there on unlink", async () => {
+    const { budget, mainId } = await setUp();
+    const purchase = await addBudgetTransaction(budget, purchaseOf(mainId));
+    const lamp = await addBudgetSplitOff(budget, purchase, { amount: 5000, categoryId: "cat-food", note: "Lamp" });
+    const refund = await addBudgetTransaction(budget, refundOf(mainId, "2026-11-20", 1500));
+
+    await linkBudgetRefund(budget, { purchase, splitOffId: lamp.id, refund, amount: 1500 });
+    expect((await byId(budget, purchase.id))?.splitOffs).toEqual([
+      { ...lamp, amount: 3500 },
+      expect.objectContaining({ amount: 1500, categoryId: "cat-food", parentSplitOffId: lamp.id, excluded: true }),
+    ]);
+
+    await unlinkBudgetRefund(budget, linkOf(refund));
+    expect((await byId(budget, purchase.id))?.splitOffs).toEqual([lamp]);
+  });
+
+  it("refuses refunds that do not qualify", async () => {
+    const { budget, mainId } = await setUp();
+    const purchase = await addBudgetTransaction(budget, purchaseOf(mainId, "2026-11-14"));
+    const before = await addBudgetTransaction(budget, refundOf(mainId, "2026-11-13"));
+    const tooBig = await addBudgetTransaction(budget, refundOf(mainId, "2026-11-15", 10000));
+    const expense = await addBudgetTransaction(budget, monthTransaction(mainId, "2026-11-15"));
+    const refusal = "planning:errors.budget.refundNotAllowed";
+
+    await expect(linkBudgetRefund(budget, { purchase, refund: before, amount: 2000 })).rejects.toThrow(refusal);
+    await expect(linkBudgetRefund(budget, { purchase, refund: tooBig, amount: 10000 })).rejects.toThrow(refusal);
+    await expect(linkBudgetRefund(budget, { purchase, refund: expense, amount: 1000 })).rejects.toThrow(refusal);
+  });
+
+  it("deleting either side cleans up the other, across months", async () => {
+    const { budget, mainId } = await setUp();
+    const purchase = await addBudgetTransaction(budget, purchaseOf(mainId, "2026-10-30"));
+    const refund = await addBudgetTransaction(budget, refundOf(mainId, "2026-11-04"));
+    await linkBudgetRefund(budget, { purchase, refund, amount: 2000 });
+
+    await deleteBudgetTransaction(budget, refund);
+    expect((await byId(budget, purchase.id))?.splitOffs).toEqual([]);
+
+    const secondRefund = await addBudgetTransaction(budget, refundOf(mainId, "2026-11-05"));
+    await linkBudgetRefund(budget, { purchase, refund: secondRefund, amount: 2000 });
+    await deleteBudgetTransaction(budget, purchase);
+    const released = await byId(budget, secondRefund.id);
+    expect(released).toMatchObject({ excluded: false });
+    expect(released?.refundOf).toBeUndefined();
+  });
+
+  it("removing a refund split-off unlinks the refund", async () => {
+    const { budget, mainId } = await setUp();
+    const purchase = await addBudgetTransaction(budget, purchaseOf(mainId, "2026-10-30"));
+    const refund = await addBudgetTransaction(budget, refundOf(mainId, "2026-11-04"));
+    await linkBudgetRefund(budget, { purchase, refund, amount: 2000 });
+    const [refundSplitOff] = (await byId(budget, purchase.id))?.splitOffs ?? [];
+
+    await removeBudgetSplitOff(budget, purchase, refundSplitOff.id);
+    expect((await byId(budget, purchase.id))?.splitOffs).toEqual([]);
+    expect(await byId(budget, refund.id)).toMatchObject({ excluded: false });
+  });
+
+  it("deleting an account unlinks refunds pointing into it", async () => {
+    const { budget, mainId } = await setUp();
+    const card = await addBudgetAccount(budget, { name: "Card", defaultCurrency: "PLN" });
+    const purchase = await addBudgetTransaction(budget, purchaseOf(mainId, "2026-10-30"));
+    const refund = await addBudgetTransaction(budget, refundOf(card.id, "2026-11-04"));
+    const cardPurchase = await addBudgetTransaction(budget, purchaseOf(card.id, "2026-09-01"));
+    const mainRefund = await addBudgetTransaction(budget, refundOf(mainId, "2026-09-02"));
+    await linkBudgetRefund(budget, { purchase, refund, amount: 2000 });
+    await linkBudgetRefund(budget, { purchase: cardPurchase, refund: mainRefund, amount: 2000 });
+
+    await deleteBudgetAccount(budget, card.id);
+
+    expect((await byId(budget, purchase.id))?.splitOffs).toEqual([]);
+    expect(await byId(budget, mainRefund.id)).toMatchObject({ excluded: false });
+    expect((await byId(budget, mainRefund.id))?.refundOf).toBeUndefined();
   });
 });
 

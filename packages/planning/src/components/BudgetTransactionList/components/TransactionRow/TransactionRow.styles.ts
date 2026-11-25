@@ -28,6 +28,8 @@ export const transactionRowStyles = {
   currency: "text-xs font-normal text-muted-foreground",
   income: "text-success-text",
   amountMain: "block text-xs text-muted-foreground",
+  amountOf: "block text-xs text-muted-foreground",
+  splitOffs: "bg-card",
   recurringMark: "inline-flex shrink-0 text-muted-foreground [&>svg]:size-3.5",
   expandButton: "shrink-0 text-muted-foreground",
   chevron: "transition-transform",

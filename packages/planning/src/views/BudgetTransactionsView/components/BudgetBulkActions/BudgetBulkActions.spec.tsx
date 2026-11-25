@@ -33,21 +33,51 @@ const tx = (id: string, type: BudgetTransaction["type"] = "expense"): BudgetTran
 
 const renderBar = (selected: BudgetTransaction[]) => {
   const onSetCategory = vi.fn().mockResolvedValue(undefined);
+  const onExclude = vi.fn();
+  const onRestore = vi.fn();
   renderWithProviders(
     <BudgetBulkActions
       selected={selected}
       categories={categories}
       onSetCategory={onSetCategory}
       onConfirm={vi.fn()}
+      onExclude={onExclude}
+      onRestore={onRestore}
       onDelete={vi.fn()}
       onClear={vi.fn()}
     />,
     { i18nInstance: i18n },
   );
-  return { onSetCategory };
+  return { onSetCategory, onExclude, onRestore };
 };
 
 describe("BudgetBulkActions", () => {
+  it("offers Exclude for relevant rows and Restore for excluded ones, never for a linked refund", async () => {
+    const user = userEvent.setup();
+    const linkedRefund: BudgetTransaction = {
+      ...tx("refund", "income"),
+      excluded: true,
+      refundOf: { transactionId: "buy", accountId: "main", month: "2026-11", splitOffId: "s" },
+    };
+    const { onExclude, onRestore } = renderBar([tx("a"), { ...tx("b"), excluded: true }, linkedRefund]);
+
+    await user.click(screen.getByRole("button", { name: "Exclude" }));
+    await user.click(screen.getByRole("button", { name: "Restore" }));
+    expect(onExclude).toHaveBeenCalledOnce();
+    expect(onRestore).toHaveBeenCalledOnce();
+  });
+
+  it("hides Restore when only linked refunds are excluded", () => {
+    const linkedRefund: BudgetTransaction = {
+      ...tx("refund", "income"),
+      excluded: true,
+      refundOf: { transactionId: "buy", accountId: "main", month: "2026-11", splitOffId: "s" },
+    };
+    renderBar([linkedRefund]);
+    expect(screen.queryByRole("button", { name: "Restore" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Exclude" })).not.toBeInTheDocument();
+  });
+
   it("picks a category with the keyboard without closing the dialog, then sets it", async () => {
     const user = userEvent.setup();
     const { onSetCategory } = renderBar([tx("a"), tx("b")]);
