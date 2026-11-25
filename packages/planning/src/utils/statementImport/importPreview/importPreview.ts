@@ -2,7 +2,7 @@ import type { BudgetMonth, BudgetTransaction } from "../../../api/budget";
 import type { ExchangeRate } from "../../../api/splits";
 import { monthOfDate } from "../../monthLedger";
 import { computeImportHashes } from "../importHash";
-import type { StatementErrorRow, StatementRow, StatementTransactionRow } from "../types";
+import { isStatementErrorRow, isStatementTransactionRow, type StatementErrorRow, type StatementRow } from "../types";
 
 /** New: imported unless unchecked. Duplicate: already in the account, skipped unless checked. Pending: never imported. */
 export type ImportPreviewStatus = "new" | "duplicate" | "pending";
@@ -22,7 +22,7 @@ export type ImportPreview = {
 
 export type ImportPreviewInput = {
   rows: StatementRow[];
-  /** Every row goes to this account (multi-account mapping: #174). */
+  /** Every row goes to this account (the caller splits a multi-account file by its mapping). */
   accountId: string;
   /** For rows whose file gives no currency. */
   fallbackCurrency: string;
@@ -33,9 +33,6 @@ export type ImportPreviewInput = {
   /** The `currency` → main currency rate of `date`. */
   getRate: (currency: string, date: string) => Promise<ExchangeRate>;
 };
-
-const isTransactionRow = (row: StatementRow): row is StatementTransactionRow => row.status === "ok";
-const isErrorRow = (row: StatementRow): row is StatementErrorRow => row.status === "error";
 
 /**
  * The import preview of parsed statement rows: dedup hashes frozen from the rows as read, duplicates found by
@@ -51,8 +48,8 @@ export const buildImportPreview = async ({
   loadTransactions,
   getRate,
 }: ImportPreviewInput): Promise<ImportPreview> => {
-  const errors = rows.filter(isErrorRow);
-  const readRows = rows.filter(isTransactionRow);
+  const errors = rows.filter(isStatementErrorRow);
+  const readRows = rows.filter(isStatementTransactionRow);
   if (readRows.length === 0) return { rows: [], errors };
 
   const months = readRows.map((row) => monthOfDate(row.date)).sort();

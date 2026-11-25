@@ -534,6 +534,30 @@ export const deleteBudgetAccount = async (budget: UnlockedBudget, accountId: str
   cachedAccountKeys(budget).delete(accountId);
 };
 
+/**
+ * Remembers which Flaner account (or `null`: skip) each bank account of an imported file goes to, merged into the
+ * mappings already stored in the encrypted profile. Writes nothing when nothing changes.
+ */
+export const rememberFileAccountMappings = async (
+  budget: UnlockedBudget,
+  mappings: BudgetProfile["fileAccountMappings"],
+): Promise<void> => {
+  const { uid, userKey } = budget;
+  const profile = await getBudgetProfile(budget);
+  if (!profile) return;
+
+  const fileAccountMappings = { ...profile.fileAccountMappings, ...mappings };
+  if (Object.entries(mappings).every(([fileAccount, target]) => profile.fileAccountMappings[fileAccount] === target)) {
+    return;
+  }
+
+  const profilePayload: BudgetProfilePayload = { fileAccountMappings };
+  await updateDoc(refs.profile(uid), {
+    payload: toBytes(await encryptJson(profilePayload, userKey, paths.profile(uid))),
+    updatedAt: Date.now(),
+  });
+};
+
 // ---------------------------------------------------------------------------
 // Transactions: one encrypted month document per account and month
 // ---------------------------------------------------------------------------

@@ -42,8 +42,8 @@ export type BudgetCategoryTree = Record<BudgetCategoryType, BudgetCategory[]>;
 export type BudgetProfile = {
   mainCurrency: string;
   mainAccountId: string;
-  /** Bank file account (masked number) → Flaner account id, remembered between imports. */
-  fileAccountMappings: Record<string, string>;
+  /** Bank file account (number as written in the file) → Flaner account id, or `null` when its rows are skipped; remembered between imports. */
+  fileAccountMappings: Record<string, string | null>;
 };
 
 export type BudgetAccount = {

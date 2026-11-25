@@ -1001,7 +1001,14 @@
         "fallbackCurrency": "Waluta dla wierszy bez waluty",
         "fallbackCurrencyHint": "Używana tylko wtedy, gdy wiersz nie podaje waluty.",
         "next": "Podgląd",
-        "previewError": "Nie udało się przygotować podglądu (brak połączenia lub kursu walut). Spróbuj ponownie."
+        "previewError": "Nie udało się przygotować podglądu (brak połączenia lub kursu walut). Spróbuj ponownie.",
+        "fileAccounts": "Rachunki w tym pliku",
+        "fileAccountsHint": "Wybierz, dokąd trafią transakcje każdego rachunku, albo go pomiń. Zapamiętamy to przy kolejnym imporcie.",
+        "fileAccountRows_one": "{{count}} wiersz",
+        "fileAccountRows_few": "{{count}} wiersze",
+        "fileAccountRows_many": "{{count}} wierszy",
+        "fileAccountRows_other": "{{count}} wiersza",
+        "skipAccount": "Nie importuj"
       },
       "validation": {
         "bankRequired": "Wybierz bank."
@@ -1066,7 +1073,8 @@
         "errors": "Wiersze z błędami",
         "unconfirmed": "Transakcje bez kategorii",
         "close": "Zamknij",
-        "openMonth": "Pokaż zaimportowane transakcje"
+        "openMonth": "Pokaż zaimportowane transakcje",
+        "skippedAccounts": "Wiersze pominiętych rachunków"
       }
     },
     "accounts": {

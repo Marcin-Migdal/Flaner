@@ -989,7 +989,12 @@
         "fallbackCurrency": "Currency for rows without one",
         "fallbackCurrencyHint": "Used only when a row doesn't state its currency.",
         "next": "Preview",
-        "previewError": "Couldn't prepare the preview (no connection or exchange rate). Try again."
+        "previewError": "Couldn't prepare the preview (no connection or exchange rate). Try again.",
+        "fileAccounts": "Bank accounts in this file",
+        "fileAccountsHint": "Choose where each account's transactions go, or skip it. Remembered for the next import.",
+        "fileAccountRows_one": "{{count}} row",
+        "fileAccountRows_other": "{{count}} rows",
+        "skipAccount": "Don't import"
       },
       "validation": {
         "bankRequired": "Choose a bank."
@@ -1048,7 +1053,8 @@
         "errors": "Rows with errors",
         "unconfirmed": "Transactions without a category",
         "close": "Close",
-        "openMonth": "Show imported transactions"
+        "openMonth": "Show imported transactions",
+        "skippedAccounts": "Rows of skipped bank accounts"
       }
     },
     "accounts": {
