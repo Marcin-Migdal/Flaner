@@ -20,3 +20,7 @@ export const categoryPatch = (categoryId: string | null): BudgetTransactionPatch
   categoryId,
   confirmed: categoryId !== null,
 });
+
+/** A category still to approve (e.g. a rule's guess); a transaction without a category is uncategorized instead. */
+export const hasUnconfirmedCategory = ({ categoryId, confirmed }: Pick<BudgetTransaction, "categoryId" | "confirmed">) =>
+  categoryId !== null && !confirmed;

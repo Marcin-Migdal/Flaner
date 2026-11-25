@@ -18,7 +18,7 @@ export type ImportResult = {
   duplicates: number;
   pending: number;
   errors: number;
-  /** Imported transactions without a category. */
+  /** Imported transactions whose category is unconfirmed (a rule's guess); uncategorized rows are not counted. */
   unconfirmed: number;
   /** The month of the newest imported transaction, `null` when nothing was imported. */
   newestMonth: BudgetMonth | null;

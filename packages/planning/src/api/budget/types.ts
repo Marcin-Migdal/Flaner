@@ -78,6 +78,24 @@ export type UnlockedBudget = {
   userKey: CryptoKey;
 };
 
+/**
+ * A categorization rule (GLOSSARY → Categorization rule): transactions of one type whose counterparty has this
+ * account number, or whose payee (else description) contains this keyword, get this category. Identified by
+ * (`kind`, `type`, `key`); learned from the user's category choices, never added by hand.
+ */
+export type BudgetRule = {
+  kind: "accountNumber" | "keyword";
+  /** Normalized (`normalizeAccountNumber` / `normalizeKeyword`). */
+  key: string;
+  type: BudgetCategoryType;
+  categoryId: string;
+  /** Account-number rules: the payee of the transaction that taught it last (the Rules tab's label). */
+  payee?: string;
+};
+
+/** Settings → Rules: a rule's new category and / or (keyword rules) its shortened key. */
+export type BudgetRuleChanges = Partial<Pick<BudgetRule, "key" | "categoryId">>;
+
 /** A calendar month, `YYYY-MM`. */
 export type BudgetMonth = string;
 
@@ -253,6 +271,16 @@ export type BudgetProfilePayload = Pick<BudgetProfile, "fileAccountMappings">;
 export type BudgetCategoriesDoc = {
   payload: Bytes;
   updatedAt: number;
+};
+
+/** `budget_rules/{uid}`. `payload`: `BudgetRulesPayload` (user key). */
+export type BudgetRulesDoc = {
+  payload: Bytes;
+  updatedAt: number;
+};
+
+export type BudgetRulesPayload = {
+  rules: BudgetRule[];
 };
 
 /** `budget_accounts/{accountId}`. `payload`: `BudgetAccountPayload` (account key, wrapped per member in `wrappedKeys`). */

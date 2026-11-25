@@ -17,7 +17,7 @@ import {
 } from "@flaner/ui-components";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, parseISO } from "date-fns";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { FormProvider, useController, useForm, useWatch, type DefaultValues } from "react-hook-form";
 import {
   BUDGET_CATEGORY_TYPES,
@@ -28,9 +28,10 @@ import {
   type BudgetTransactionInput,
 } from "../../api/budget";
 import { useAddBudgetTransactionMutation, useUpdateBudgetTransactionsMutation } from "../../hooks/api/mutation";
-import { useGetExchangeRateQuery } from "../../hooks/api/query";
+import { useGetBudgetRulesQuery, useGetExchangeRateQuery } from "../../hooks/api/query";
 import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
+import { guessCategory } from "../../utils/categorizationRules";
 import { getBudgetTransactionSchema, type BudgetTransactionFormData } from "../../utils/schemas";
 import { sortBudgetAccounts } from "../../utils/sortBudgetAccounts";
 import { CategoryPicker } from "../CategoryPicker";
@@ -87,7 +88,8 @@ const defaultValues = (
 
 /**
  * Add transaction (manual entry; saved with a category it is confirmed), or with `transaction` edit one: a changed
- * category confirms it, the frozen import fields stay as they are.
+ * category confirms it, the frozen import fields stay as they are. Adding, an empty category is prefilled from a
+ * keyword rule once the payee is typed; the rule's suggestion is marked in the category picker.
  */
 export const BudgetTransactionDialog = ({
   open,
@@ -110,16 +112,32 @@ export const BudgetTransactionDialog = ({
     resolver: zodResolver(getBudgetTransactionSchema(t, mainCurrency)),
     defaultValues: defaultValues(profile, accounts, transaction),
   });
-  const { control, setValue, reset, handleSubmit } = methods;
+  const { control, setValue, getValues, reset, handleSubmit } = methods;
+  const rules = useGetBudgetRulesQuery();
+  // Once the user picks or clears the category themselves, the rules never replace it
+  const categoryTouched = useRef(false);
 
   useEffect(() => {
-    if (open) reset(defaultValues(profile, accounts, transaction));
+    if (!open) return;
+    categoryTouched.current = false;
+    reset(defaultValues(profile, accounts, transaction));
   }, [open, profile, accounts, transaction, reset]);
 
-  const [type, amount, currency, date, rateOverridden] = useWatch({
+  const [type, amount, currency, date, rateOverridden, payee] = useWatch({
     control,
-    name: ["type", "amount", "currency", "date", "rateOverridden"],
+    name: ["type", "amount", "currency", "date", "rateOverridden", "payee"],
   });
+  const suggestedCategoryId = guessCategory(rules.data ?? [], categories, {
+    type,
+    payee: payee ?? "",
+    description: transaction?.description ?? "",
+    counterpartyAccount: transaction?.counterpartyAccount,
+  });
+
+  useEffect(() => {
+    if (!open || transaction || categoryTouched.current) return;
+    if (getValues("categoryId") !== suggestedCategoryId) setValue("categoryId", suggestedCategoryId);
+  }, [open, transaction, suggestedCategoryId, getValues, setValue]);
   const isForeign = !!currency && currency !== mainCurrency;
   const rateDay = date ? format(date, "yyyy-MM-dd") : "";
   const { data: rate, isFetching: isRateFetching, isError: isRateError } = useGetExchangeRateQuery({
@@ -308,7 +326,11 @@ export const BudgetTransactionDialog = ({
                 tree={categories}
                 type={type}
                 value={categoryField.value}
-                onChange={categoryField.onChange}
+                onChange={(categoryId) => {
+                  categoryTouched.current = true;
+                  categoryField.onChange(categoryId);
+                }}
+                suggestedId={suggestedCategoryId}
               />
             </div>
 

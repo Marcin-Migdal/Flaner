@@ -7,6 +7,7 @@ import { monthOfDate } from "../../../utils/monthLedger";
 // - `locked`: the user's stored keys (`budget_keys/{uid}`), read by the Budget gate to pick onboarding or unlock.
 // - `profile` / `categories` / `accounts`: decrypted per-user documents, read behind the gate.
 // - `transactions`: the decrypted transactions of all the user's accounts in one month (one month-range query).
+// - `rules`: the decrypted categorization rules (`budget_rules/{uid}`); every write that sets a category can teach one.
 // - `plan`: the decrypted plan of one month (`budget_plans/{uid}_{month}`), `null` while the month has none.
 // - `recurring`: every recurring transaction of the user's accounts with its matches (`budget_recurring`).
 export const budgetKeys = {
@@ -14,6 +15,7 @@ export const budgetKeys = {
   locked: (uid: string) => ["budget", "locked", uid],
   profile: (uid: string) => ["budget", "profile", uid],
   categories: (uid: string) => ["budget", "categories", uid],
+  rules: (uid: string) => ["budget", "rules", uid],
   accounts: (uid: string) => ["budget", "accounts", uid],
   /** Prefix of every month's transactions. */
   allTransactions: (uid: string) => ["budget", "transactions", uid],
@@ -38,18 +40,31 @@ export const budgetInvalidation = {
     budgetKeys.accountsWithTransactions(uid),
     budgetKeys.recurring(uid),
   ],
+  /** A manual entry with a category also teaches a rule. */
+  transactionAdded: (user: UserType, input: { date: string }) => [
+    ...budgetInvalidation.transactionsChanged(user, input),
+    budgetKeys.rules(user.uid),
+  ],
   /** Edits and bulk deletes change every month a transaction left or moved to. */
   transactionsInMonths: ({ uid }: UserType, dates: string[]) => [
     ...[...new Set(dates.map(monthOfDate))].map((month) => budgetKeys.transactions(uid, month)),
     budgetKeys.accountsWithTransactions(uid),
     budgetKeys.recurring(uid),
   ],
-  /** An import changes every month it adds to. */
+  /** Edits also teach a rule when they set or change a category. */
+  transactionsEdited: (user: UserType, dates: string[]) => [
+    ...budgetInvalidation.transactionsInMonths(user, dates),
+    budgetKeys.rules(user.uid),
+  ],
+  /** An import changes every month it adds to, and teaches from the rows changed in the preview. */
   transactionsImported: ({ uid }: UserType, inputs: { date: string }[]) => [
     ...[...new Set(inputs.map(({ date }) => monthOfDate(date)))].map((month) => budgetKeys.transactions(uid, month)),
     budgetKeys.accountsWithTransactions(uid),
+    budgetKeys.rules(uid),
     budgetKeys.recurring(uid),
   ],
+  /** Settings → Rules: edit or delete a rule. */
+  rulesChanged: ({ uid }: UserType) => [budgetKeys.rules(uid)],
   /** Add, rename, re-currency, hide / show. Hiding is applied by the month ledger from the accounts list. */
   accountsChanged: ({ uid }: UserType) => [budgetKeys.accounts(uid)],
   /** Main account or main currency. */

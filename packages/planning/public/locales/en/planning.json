@@ -120,6 +120,7 @@
       "accountSaveError": "Couldn't save the account. Try again.",
       "accountDeleteError": "Couldn't delete the account. Try again.",
       "planSaveError": "Couldn't save the plan. Try again.",
+      "ruleSaveError": "Couldn't save the rule. Try again.",
       "recurringMade": "Recurring transaction created",
       "recurringSaved": "Repeat rule saved",
       "recurringStopped": "Recurring transaction stopped",
@@ -845,10 +846,29 @@
       "details": "Details of {{payee}}",
       "recurring": "Recurring"
     },
+    "rules": {
+      "title": "Categorization rules",
+      "hint": "Learned from the categories you set. They categorize new transactions only, never the ones you already have.",
+      "search": "Search rules",
+      "noMatches": "No matching rules",
+      "keyword": "Keyword {{keyword}}",
+      "category": "Category for {{counterparty}}",
+      "delete": "Delete the rule for {{counterparty}}",
+      "shortenHint": "Shorten a keyword to match more transactions, e.g. \"biedronka warszawa\" → \"biedronka\".",
+      "kinds": {
+        "keyword": "Keyword",
+        "accountNumber": "Account number"
+      },
+      "empty": {
+        "title": "No rules yet",
+        "description": "Set a category on a transaction and Flaner will remember it for that payee."
+      }
+    },
     "categoryPicker": {
       "placeholder": "Choose a category",
       "noResults": "No matching categories",
-      "confirm": "Confirm category {{category}}"
+      "confirm": "Confirm category {{category}}",
+      "suggested": "Rule suggestion"
     },
     "monthSwitcher": {
       "previous": "Previous month",
@@ -1051,7 +1071,7 @@
         "duplicates": "Duplicates skipped",
         "pending": "Pending card holds (not imported)",
         "errors": "Rows with errors",
-        "unconfirmed": "Transactions without a category",
+        "unconfirmed": "Unconfirmed categories",
         "close": "Close",
         "openMonth": "Show imported transactions",
         "skippedAccounts": "Rows of skipped bank accounts"

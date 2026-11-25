@@ -31,6 +31,7 @@ import {
   unwrapDataKey,
   wrapDataKey,
 } from "../../utils/budgetCrypto";
+import { deleteRule, editRule, learnRule, type RuleSubject } from "../../utils/categorizationRules";
 import { monthOfDate } from "../../utils/monthLedger";
 import {
   MATCH_WINDOW_DAYS,
@@ -59,6 +60,10 @@ import type {
   BudgetProfile,
   BudgetProfileDoc,
   BudgetProfilePayload,
+  BudgetRule,
+  BudgetRuleChanges,
+  BudgetRulesDoc,
+  BudgetRulesPayload,
   BudgetRecurring,
   BudgetRecurringDoc,
   BudgetRecurringPayload,
@@ -79,6 +84,7 @@ const paths = {
   keys: (uid: string) => `budget_keys/${uid}`,
   profile: (uid: string) => `budget_profiles/${uid}`,
   categories: (uid: string) => `budget_categories/${uid}`,
+  rules: (uid: string) => `budget_rules/${uid}`,
   account: (accountId: string) => `budget_accounts/${accountId}`,
   month: (accountId: string, month: BudgetMonth) => `budget_months/${accountId}_${month}`,
   plan: (uid: string, month: BudgetMonth) => `budget_plans/${uid}_${month}`,
@@ -90,6 +96,7 @@ const refs = {
   profile: (uid: string) => doc(fb.firestore, paths.profile(uid)).withConverter(firestoreConverter<BudgetProfileDoc>()),
   categories: (uid: string) =>
     doc(fb.firestore, paths.categories(uid)).withConverter(firestoreConverter<BudgetCategoriesDoc>()),
+  rules: (uid: string) => doc(fb.firestore, paths.rules(uid)).withConverter(firestoreConverter<BudgetRulesDoc>()),
   accounts: () => collection(fb.firestore, "budget_accounts").withConverter(firestoreConverter<BudgetAccountDoc>()),
   account: (accountId: string) =>
     doc(fb.firestore, paths.account(accountId)).withConverter(firestoreConverter<BudgetAccountDoc>()),
@@ -320,6 +327,7 @@ export const replaceRecoveryKey = async (budget: UnlockedBudget, input: string):
 const RESET_COLLECTIONS: { name: string; owner: "docId" | "memberIds" | "ownerId" }[] = [
   { name: "budget_profiles", owner: "docId" },
   { name: "budget_categories", owner: "docId" },
+  { name: "budget_rules", owner: "docId" },
   { name: "budget_months", owner: "memberIds" },
   { name: "budget_accounts", owner: "memberIds" },
   { name: "budget_plans", owner: "ownerId" },
@@ -559,6 +567,69 @@ export const rememberFileAccountMappings = async (
 };
 
 // ---------------------------------------------------------------------------
+// Categorization rules: one encrypted document per user (`budget_rules/{uid}`)
+// ---------------------------------------------------------------------------
+
+const decryptRules = async ({ uid, userKey }: UnlockedBudget, data: BudgetRulesDoc | undefined): Promise<BudgetRule[]> => {
+  if (!data) return [];
+  const { rules } = await decryptJson<BudgetRulesPayload>(data.payload.toUint8Array(), userKey, paths.rules(uid));
+  return rules;
+};
+
+/** The user's categorization rules (none before the first category is set). */
+export const getBudgetRules = async (budget: UnlockedBudget): Promise<BudgetRule[]> =>
+  decryptRules(budget, (await getDoc(refs.rules(budget.uid))).data());
+
+const readRules = async (transaction: Transaction, budget: UnlockedBudget) =>
+  decryptRules(budget, (await transaction.get(refs.rules(budget.uid))).data());
+
+const writeRules = async (transaction: Transaction, { uid, userKey }: UnlockedBudget, rules: BudgetRule[]) => {
+  const payload: BudgetRulesPayload = { rules };
+  const rulesDoc: BudgetRulesDoc = {
+    payload: toBytes(await encryptJson(payload, userKey, paths.rules(uid))),
+    updatedAt: Date.now(),
+  };
+  transaction.set(refs.rules(uid), rulesDoc);
+};
+
+/** A category the user set or changed on a transaction: it teaches the transaction's counterparty a rule. */
+type RuleLesson = { subject: RuleSubject; categoryId: string };
+
+/**
+ * Teaches the lessons in order (the latest wins) inside the caller's transaction; the rules were read with its other
+ * reads (`rules`). Writes only when a rule changed.
+ */
+const teachRules = async (transaction: Transaction, budget: UnlockedBudget, rules: BudgetRule[], lessons: RuleLesson[]) => {
+  const learned = lessons.reduce((current, { subject, categoryId }) => learnRule(current, subject, categoryId), rules);
+  if (learned !== rules) await writeRules(transaction, budget, learned);
+};
+
+/** Settings → Rules: applies one change to the stored rules in a transaction. */
+const changeRules = (budget: UnlockedBudget, change: (rules: BudgetRule[]) => BudgetRule[]): Promise<BudgetRule[]> =>
+  runTransaction(fb.firestore, async (transaction) => {
+    const rules = await readRules(transaction, budget);
+    const next = change(rules);
+    if (next !== rules) await writeRules(transaction, budget, next);
+    return next;
+  });
+
+/** Changes a rule's category and / or (keyword rules) its key, e.g. a shortened keyword (`shortenedKeyword`). */
+export const editBudgetRule = (
+  budget: UnlockedBudget,
+  ruleId: string,
+  changes: BudgetRuleChanges,
+): Promise<BudgetRule[]> => changeRules(budget, (rules) => editRule(rules, ruleId, changes));
+
+export const deleteBudgetRule = (budget: UnlockedBudget, ruleId: string): Promise<BudgetRule[]> =>
+  changeRules(budget, (rules) => deleteRule(rules, ruleId));
+
+/** A confirmed new transaction with a category teaches a rule (a manual entry; an import row changed in the preview). */
+const lessonsFromNew = (inputs: BudgetTransactionInput[]): RuleLesson[] =>
+  inputs.flatMap((input) =>
+    input.confirmed && input.categoryId ? [{ subject: input, categoryId: input.categoryId }] : [],
+  );
+
+// ---------------------------------------------------------------------------
 // Transactions: one encrypted month document per account and month
 // ---------------------------------------------------------------------------
 
@@ -658,6 +729,7 @@ export const getAccountTransactions = async (
   return months.flat();
 };
 
+/** Adds a transaction; a confirmed one with a category (manual entry) teaches its counterparty's rule. */
 export const addBudgetTransaction = async (
   budget: UnlockedBudget,
   input: BudgetTransactionInput,
@@ -666,12 +738,17 @@ export const addBudgetTransaction = async (
   const month = monthOfDate(input.date);
   const id = crypto.randomUUID();
 
+  const lessons = lessonsFromNew([input]);
+
   await runTransaction(fb.firestore, async (transaction) => {
     const months = await readMonths(transaction, budget, [{ accountId, month }]);
     months.get(slotId({ accountId, month }))?.transactions.push({ id, ...stored });
     const recurring = await syncRecurring(transaction, budget, months, [input]);
+    // A Firestore transaction reads everything before its first write
+    const rules = lessons.length > 0 ? await readRules(transaction, budget) : [];
     await writeMonths(transaction, budget, months);
     await writeRecurringLists(transaction, budget, recurring);
+    await teachRules(transaction, budget, rules, lessons);
   });
 
   return { id, ...input };
@@ -679,13 +756,16 @@ export const addBudgetTransaction = async (
 
 /**
  * Adds an import's transactions in one transaction: every affected month is read, then written. An import that
- * would push any month over the size guard fails as a whole with `errors.budget.importTooLarge`.
+ * would push any month over the size guard fails as a whole with `errors.budget.importTooLarge`. Rows whose category
+ * was set or changed in the preview (confirmed) teach rules; guesses left untouched (unconfirmed) do not.
  */
 export const importBudgetTransactions = async (
   budget: UnlockedBudget,
   inputs: BudgetTransactionInput[],
 ): Promise<BudgetTransaction[]> => {
   const added = inputs.map((input): BudgetTransaction => ({ id: crypto.randomUUID(), ...input }));
+
+  const lessons = lessonsFromNew(inputs);
 
   await runTransaction(fb.firestore, async (transaction) => {
     // A Firestore transaction reads everything before its first write
@@ -694,6 +774,7 @@ export const importBudgetTransactions = async (
       months.get(slotId(slotOf({ accountId, date: stored.date })))?.transactions.push(stored);
     }
     const recurring = await syncRecurring(transaction, budget, months, added);
+    const rules = lessons.length > 0 ? await readRules(transaction, budget) : [];
     try {
       await writeMonths(transaction, budget, months);
     } catch (error) {
@@ -703,6 +784,7 @@ export const importBudgetTransactions = async (
       throw error;
     }
     await writeRecurringLists(transaction, budget, recurring);
+    await teachRules(transaction, budget, rules, lessons);
   });
 
   return added;
@@ -763,7 +845,8 @@ export const deleteBudgetTransactions = async (budget: UnlockedBudget, refs: Bud
  * Applies the edits; a new `date` or `accountId` moves the transaction to that month / account document. Every
  * affected month document is read and written in one transaction, so a move never leaves a copy or loses the row.
  * The frozen import fields (`importHash`, `sourceFile`, `counterpartyAccount`) always keep their stored values:
- * the stored transaction is spread and only the patch's fields override it.
+ * the stored transaction is spread and only the patch's fields override it. A category set or changed (not cleared,
+ * not merely confirmed) teaches the counterparty's rule, in the same transaction.
  */
 export const updateBudgetTransactions = async (
   budget: UnlockedBudget,
@@ -776,6 +859,9 @@ export const updateBudgetTransactions = async (
       ...updates.map(({ ref }) => slotOf(ref)),
       ...updates.map(targetOf),
     ]);
+    const teaches = updates.some(({ patch }) => !!patch.categoryId);
+    const rules = teaches ? await readRules(transaction, budget) : [];
+    const lessons: RuleLesson[] = [];
     const monthAt = (slot: MonthSlot) => {
       const month = months.get(slotId(slot));
       if (!month) throw missingTransaction();
@@ -799,6 +885,9 @@ export const updateBudgetTransactions = async (
         counterpartyAccount: stored.counterpartyAccount,
       };
       const { accountId, ...nextStored } = next;
+      if (next.categoryId && next.categoryId !== stored.categoryId) {
+        lessons.push({ subject: next, categoryId: next.categoryId });
+      }
 
       const target = monthAt(targetOf(update));
       if (target === source) {
@@ -814,6 +903,7 @@ export const updateBudgetTransactions = async (
     const recurring = await syncRecurring(transaction, budget, months, [...updates.map(({ ref }) => ref), ...updated]);
     await writeMonths(transaction, budget, months);
     await writeRecurringLists(transaction, budget, recurring);
+    await teachRules(transaction, budget, rules, lessons);
     return updated;
   });
 

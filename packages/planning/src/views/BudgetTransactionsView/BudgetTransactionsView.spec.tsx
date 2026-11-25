@@ -13,6 +13,7 @@ import type {
   BudgetAccount,
   BudgetCategoryTree,
   BudgetRecurring,
+  BudgetRule,
   BudgetTransaction,
   UnlockedBudget,
 } from "../../api/budget";
@@ -32,6 +33,7 @@ vi.mock("../../api/budget", async (importOriginal) => ({
   getBudgetAccounts: vi.fn(),
   getBudgetCategories: vi.fn(),
   getBudgetTransactions: vi.fn(),
+  getBudgetRules: vi.fn(),
   addBudgetTransaction: vi.fn(),
   deleteBudgetTransaction: vi.fn(),
   deleteBudgetTransactions: vi.fn(),
@@ -91,7 +93,14 @@ const setUp = ({
   accounts = [account()],
   transactions = [],
   recurring = [],
-}: { accounts?: BudgetAccount[]; transactions?: BudgetTransaction[]; recurring?: BudgetRecurring[] } = {}) => {
+  rules = [],
+}: {
+  accounts?: BudgetAccount[];
+  transactions?: BudgetTransaction[];
+  recurring?: BudgetRecurring[];
+  rules?: BudgetRule[];
+} = {}) => {
+  vi.mocked(budgetApi.getBudgetRules).mockResolvedValue(rules);
   vi.mocked(budgetApi.getBudgetProfile).mockResolvedValue({
     mainCurrency: "PLN",
     mainAccountId: "main",
@@ -215,6 +224,38 @@ describe("BudgetTransactionsView", () => {
       confirmed: true,
       excluded: false,
     });
+  });
+
+  it("prefills an empty category from a keyword rule once the payee is typed, and saves it confirmed", async () => {
+    setUp({ rules: [{ kind: "keyword", key: "biedronka", type: "expense", categoryId: "groceries" }] });
+    const userEvents = userEvent.setup();
+    renderView();
+    const dialog = await openAddForm(userEvents);
+
+    await userEvents.type(within(dialog).getByRole("spinbutton", { name: "Amount" }), "12.5");
+    await userEvents.type(within(dialog).getByLabelText("Payee"), "Biedronka 102 Kraków");
+    expect(within(dialog).getByText("Shopping / Groceries")).toBeInTheDocument();
+    await userEvents.click(within(dialog).getByRole("button", { name: "Add transaction" }));
+
+    await waitFor(() =>
+      expect(budgetApi.addBudgetTransaction).toHaveBeenCalledWith(
+        budget,
+        expect.objectContaining({ payee: "Biedronka 102 Kraków", categoryId: "groceries", confirmed: true }),
+      ),
+    );
+  });
+
+  it("never replaces a category the user picked with a rule's guess", async () => {
+    setUp({ rules: [{ kind: "keyword", key: "biedronka", type: "expense", categoryId: "groceries" }] });
+    const userEvents = userEvent.setup();
+    renderView();
+    const dialog = await openAddForm(userEvents);
+
+    await userEvents.type(within(dialog).getByLabelText("Category"), "Shop");
+    await userEvents.click(screen.getByRole("option", { name: "Shopping" }));
+    await userEvents.type(within(dialog).getByLabelText("Payee"), "Biedronka");
+
+    expect(within(dialog).queryByText("Shopping / Groceries")).not.toBeInTheDocument();
   });
 
   it("clears the category when switching between Expense and Income, saving unconfirmed without one", async () => {

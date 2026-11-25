@@ -1,5 +1,5 @@
 import { cn } from "@flaner/shared/utils";
-import { Select, type SelectOption } from "@flaner/ui-components";
+import { Badge, Select, type SelectOption } from "@flaner/ui-components";
 import { CircleHelp } from "lucide-react";
 import { useMemo } from "react";
 import type { BudgetCategoryIcon, BudgetCategoryTree, BudgetCategoryType, ChartColorIndex } from "../../api/budget";
@@ -21,6 +21,10 @@ export type CategoryPickerProps = {
   /** A category or subcategory id; `null` (or an id not in the tree) reads as no category. */
   value: string | null;
   onChange: (categoryId: string | null) => void;
+  /** The categorization rule's suggestion for the transaction (`matchRule`): marked in the list. */
+  suggestedId?: string | null;
+  /** Offers clearing the category (default); off where a category is required (e.g. a rule's). */
+  clearable?: boolean;
   label?: string;
   error?: string;
   disabled?: boolean;
@@ -43,6 +47,8 @@ export const CategoryPicker = ({
   type,
   value,
   onChange,
+  suggestedId,
+  clearable = true,
   label,
   error,
   disabled,
@@ -83,7 +89,7 @@ export const CategoryPicker = ({
       onChange={(option) => onChange(option ? option.value : null)}
       placeholder={t("budget.categoryPicker.placeholder")}
       noOptionsMessage={() => t("budget.categoryPicker.noResults")}
-      isClearable
+      isClearable={clearable}
       isSearchable
       filterOption={({ data }, input) => {
         const query = input.trim().toLowerCase();
@@ -100,6 +106,11 @@ export const CategoryPicker = ({
             <span className={styles.label}>
               {context === "value" && option.parentName ? `${option.parentName} / ${option.label}` : option.label}
             </span>
+            {context === "menu" && option.value === suggestedId && (
+              <Badge variant="neutral" size="sm" className={styles.suggestion}>
+                {t("budget.categoryPicker.suggested")}
+              </Badge>
+            )}
           </span>
         );
       }}

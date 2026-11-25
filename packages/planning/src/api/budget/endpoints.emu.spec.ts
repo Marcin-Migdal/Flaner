@@ -21,14 +21,17 @@ import {
   countBudgetAccountTransactions,
   createBudget,
   deleteBudgetAccount,
+  deleteBudgetRule,
   deleteBudgetRecurring,
   deleteBudgetTransaction,
   deleteBudgetTransactions,
+  editBudgetRule,
   getBudgetAccounts,
   getBudgetAccountsWithTransactions,
   getBudgetCategories,
   getBudgetPlan,
   getBudgetProfile,
+  getBudgetRules,
   getBudgetRecurring,
   getAccountTransactions,
   getBudgetTransactions,
@@ -226,6 +229,8 @@ describe("budget endpoints", () => {
     await addBudgetTransaction(budget, monthTransaction(account.id, "2026-11-02"));
     await setBudgetPlanAmount(budget, { month: "2026-10", type: "expense", categoryId: "cat-food", amount: 100 });
     await setBudgetPlanAmount(budget, { month: "2026-11", type: "income", categoryId: "cat-salary", amount: 100 });
+    await addBudgetTransaction(budget, { ...monthTransaction(account.id), categoryId: "cat-food", confirmed: true });
+    expect(await read(`budget_rules/${ME}`)).toBeDefined();
 
     await resetBudget(ME);
 
@@ -238,6 +243,7 @@ describe("budget endpoints", () => {
     expect(await read(`budget_keys/${ME}`)).toBeUndefined();
     expect(await read(`budget_profiles/${ME}`)).toBeUndefined();
     expect(await read(`budget_categories/${ME}`)).toBeUndefined();
+    expect(await read(`budget_rules/${ME}`)).toBeUndefined();
     const accounts = Object.values(await list("budget_accounts"));
     expect(accounts.map((account) => account.memberIds)).toEqual([[OTHER]]);
     expect(await read(`budget_keys/${OTHER}`)).toBeDefined();
@@ -883,5 +889,98 @@ describe("budget recurring transactions", () => {
     await expect(getBudgetRecurring({ ...budget, uid: OTHER })).resolves.toEqual([]);
     await expect(getBudgetRecurring(budget)).rejects.toMatchObject(DENIED);
     await expect(deleteBudgetRecurring(budget, recurring)).rejects.toMatchObject(DENIED);
+  });
+});
+
+describe("budget categorization rules", () => {
+  const setUp = async () => {
+    await signInAs(ME);
+    const budget = await createBudget(ME, input());
+    const [account] = await getBudgetAccounts(budget);
+    return { budget, account };
+  };
+
+  const shop = (accountId: string, overrides: Partial<BudgetTransactionInput> = {}): BudgetTransactionInput => ({
+    ...monthTransaction(accountId),
+    payee: "Biedronka 1234 Warszawa",
+    ...overrides,
+  });
+
+  it("a manual transaction with a category teaches a keyword rule, stored encrypted", async () => {
+    const { budget, account } = await setUp();
+    expect(await getBudgetRules(budget)).toEqual([]);
+
+    await addBudgetTransaction(budget, shop(account.id, { categoryId: "sub-groceries", confirmed: true }));
+
+    expect(await getBudgetRules(budget)).toEqual([
+      { kind: "keyword", key: "biedronka warszawa", type: "expense", categoryId: "sub-groceries" },
+    ]);
+    const stored = await read(`budget_rules/${ME}`);
+    expect(stored).toEqual({ payload: expect.anything(), updatedAt: expect.any(Number) });
+    const raw = JSON.stringify(stored);
+    for (const secret of ["biedronka", "sub-groceries", "keyword"]) expect(raw).not.toContain(secret);
+  });
+
+  it("an import teaches from rows changed in the preview (confirmed), not from untouched guesses", async () => {
+    const { budget, account } = await setUp();
+
+    await importBudgetTransactions(budget, [
+      shop(account.id, { payee: "Lidl", categoryId: "sub-groceries", confirmed: false }),
+      shop(account.id, { payee: "Landlord", counterpartyAccount: "PL61 1090 1014", categoryId: "cat-food", confirmed: true }),
+    ]);
+
+    expect(await getBudgetRules(budget)).toEqual([
+      { kind: "accountNumber", key: "6110901014", type: "expense", categoryId: "cat-food", payee: "Landlord" },
+    ]);
+  });
+
+  it("changing a category on the list teaches; confirming or clearing teaches nothing", async () => {
+    const { budget, account } = await setUp();
+    const guessed = await addBudgetTransaction(budget, shop(account.id, { categoryId: "cat-food", confirmed: false }));
+    expect(await getBudgetRules(budget)).toEqual([]);
+
+    await updateBudgetTransactions(budget, [{ ref: guessed, patch: { confirmed: true } }]);
+    await updateBudgetTransactions(budget, [{ ref: guessed, patch: { categoryId: null, confirmed: false } }]);
+    expect(await getBudgetRules(budget)).toEqual([]);
+
+    await updateBudgetTransactions(budget, [{ ref: guessed, patch: { categoryId: "sub-groceries", confirmed: true } }]);
+    await updateBudgetTransactions(budget, [{ ref: guessed, patch: { categoryId: "cat-food", confirmed: true } }]);
+
+    expect(await getBudgetRules(budget)).toEqual([
+      { kind: "keyword", key: "biedronka warszawa", type: "expense", categoryId: "cat-food" },
+    ]);
+  });
+
+  it("never re-categorizes stored transactions", async () => {
+    const { budget, account } = await setUp();
+    const first = await addBudgetTransaction(budget, shop(account.id, { categoryId: "cat-food", confirmed: true }));
+    const second = await addBudgetTransaction(budget, shop(account.id));
+
+    await updateBudgetTransactions(budget, [{ ref: first, patch: { categoryId: "sub-groceries", confirmed: true } }]);
+
+    const stored = await getBudgetTransactions(budget, { from: "2026-11", to: "2026-11" });
+    expect(stored.find(({ id }) => id === second.id)).toMatchObject({ categoryId: null, confirmed: false });
+  });
+
+  it("Settings edits and deletes a rule", async () => {
+    const { budget, account } = await setUp();
+    await addBudgetTransaction(budget, shop(account.id, { categoryId: "cat-food", confirmed: true }));
+    await addBudgetTransaction(budget, shop(account.id, { payee: "Rent", categoryId: "cat-food", confirmed: true }));
+
+    await editBudgetRule(budget, "keyword:expense:biedronka warszawa", { key: "biedronka", categoryId: "sub-groceries" });
+    await deleteBudgetRule(budget, "keyword:expense:rent");
+
+    expect(await getBudgetRules(budget)).toEqual([
+      { kind: "keyword", key: "biedronka", type: "expense", categoryId: "sub-groceries" },
+    ]);
+  });
+
+  it("denies another user", async () => {
+    const { budget, account } = await setUp();
+    await addBudgetTransaction(budget, shop(account.id, { categoryId: "cat-food", confirmed: true }));
+
+    await signInAs(OTHER);
+    await expect(getBudgetRules(budget)).rejects.toMatchObject(DENIED);
+    await expect(deleteBudgetRule(budget, "keyword:expense:biedronka warszawa")).rejects.toMatchObject(DENIED);
   });
 });

@@ -71,3 +71,9 @@ export const budgetRecurring = (uid: string, overrides: Record<string, unknown> 
   payload: bytes(512),
   ...overrides,
 });
+
+export const budgetRules = (overrides: Record<string, unknown> = {}) => ({
+  payload: bytes(1024),
+  updatedAt: 1,
+  ...overrides,
+});

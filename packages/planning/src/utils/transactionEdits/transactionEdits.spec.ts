@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { amountPatch, categoryPatch } from "./transactionEdits";
+import { amountPatch, categoryPatch, hasUnconfirmedCategory } from "./transactionEdits";
 
 describe("amountPatch", () => {
   it("converts the new amount at the stored rate", () => {
@@ -25,5 +25,13 @@ describe("categoryPatch", () => {
   it("confirms a set category and leaves a cleared one to review", () => {
     expect(categoryPatch("groceries")).toEqual({ categoryId: "groceries", confirmed: true });
     expect(categoryPatch(null)).toEqual({ categoryId: null, confirmed: false });
+  });
+});
+
+describe("hasUnconfirmedCategory", () => {
+  it("is a category still to approve (a rule's guess), never a missing one", () => {
+    expect(hasUnconfirmedCategory({ categoryId: "groceries", confirmed: false })).toBe(true);
+    expect(hasUnconfirmedCategory({ categoryId: "groceries", confirmed: true })).toBe(false);
+    expect(hasUnconfirmedCategory({ categoryId: null, confirmed: false })).toBe(false);
   });
 });

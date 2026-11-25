@@ -34,6 +34,7 @@ import {
   useGetBudgetAccountsQuery,
   useGetBudgetCategoriesQuery,
   useGetBudgetProfileQuery,
+  useGetBudgetRulesQuery,
   useGetBudgetRecurringQuery,
   useGetBudgetTransactionsQuery,
 } from "../../hooks/api/query";
@@ -42,6 +43,7 @@ import { useHashTab } from "../../hooks/useHashTab";
 import { useIsOnline } from "../../hooks/useIsOnline";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { sortBudgetAccounts } from "../../utils/sortBudgetAccounts";
+import { guessCategory } from "../../utils/categorizationRules";
 import { buildMonthLedger, groupTransactionsByDay, resolveTransactionCategory } from "../../utils/monthLedger";
 import { recurringTransactionIds } from "../../utils/recurringTransactions";
 import { categoryPatch } from "../../utils/transactionEdits";
@@ -90,6 +92,8 @@ export const BudgetTransactionsView = () => {
   const profile = useGetBudgetProfileQuery();
   const accounts = useGetBudgetAccountsQuery();
   const categories = useGetBudgetCategoriesQuery();
+  // Only marks suggestions in the pickers: the list renders without it
+  const rules = useGetBudgetRulesQuery();
   const transactions = useGetBudgetTransactionsQuery(month);
   const recurring = useGetBudgetRecurringQuery();
   const recurringIds = useMemo(() => recurringTransactionIds(recurring.data ?? []), [recurring.data]);
@@ -203,6 +207,7 @@ export const BudgetTransactionsView = () => {
     if (isError || !profile.data || !categories.data || !accounts.data) {
       return <EmptyState title={t("errors.fetchError", { ns: "common" })} />;
     }
+    const tree = categories.data;
 
     return (
       <>
@@ -260,6 +265,7 @@ export const BudgetTransactionsView = () => {
                 actionsDisabled={!isOnline}
                 selectedIds={selectedIds}
                 onSelectionChange={setSelectedIds}
+                suggestCategory={(transaction) => guessCategory(rules.data ?? [], tree, transaction)}
                 expandable
               />
             )}
