@@ -12,7 +12,7 @@ const FIXTURE = path.join(__dirname, "..", "..", "fixtures", "bank-statements", 
 const DISTINCT_DAYS = 18;
 
 test.describe("Budget statement import", () => {
-  test("a Millennium file is previewed, imported and listed; importing it again finds only duplicates", async ({
+  test("a Millennium file is mapped, previewed, imported and listed; importing it again finds only duplicates", async ({
     page,
   }) => {
     // Onboarding runs 600,000 PBKDF2 rounds in the browser
@@ -35,7 +35,11 @@ test.describe("Budget statement import", () => {
     await gate.completeOnboarding({ passphrase: PASSPHRASE, accountName: "Millennium" });
     await expect(transactions.emptyStateTitle).toBeVisible();
 
-    await transactions.openImportPreview(FIXTURE);
+    // Both bank accounts of the file go to the one Flaner account
+    await transactions.openImportPreview(FIXTURE, [
+      [/9694$/, "Millennium"],
+      [/0369$/, "Millennium"],
+    ]);
     const sheet = transactions.importSheet;
     await expect(transactions.importFilter(/new|nowe/, 30)).toBeVisible();
     await expect(transactions.importFilter(/duplicates|duplikaty/, 0)).toBeVisible();
@@ -56,7 +60,7 @@ test.describe("Budget statement import", () => {
     await expect(transactions.row("Gęś i Syn").filter({ has: page.locator('input[value="Opis 32"]') })).toBeVisible();
     await expect(transactions.row("Usługi Łąka Sp. z o.o. 12")).toBeVisible();
 
-    // The same file again: every row is already in the account
+    // The same file again, its bank accounts preselected from the remembered mapping: every row is already in the account
     await transactions.openImportPreview(FIXTURE);
     await expect(transactions.importFilter(/duplicates|duplikaty/, 30)).toBeVisible();
     await expect(transactions.importFilter(/new|nowe/, 0)).toBeVisible();

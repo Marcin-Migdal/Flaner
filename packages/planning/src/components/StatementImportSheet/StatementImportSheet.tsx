@@ -1,5 +1,5 @@
 import { Sheet, SidePanel, Stepper } from "@flaner/ui-components";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type {
   BudgetAccount,
   BudgetCategoryTree,
@@ -9,16 +9,24 @@ import type {
   BudgetTransaction,
   BudgetTransactionInput,
 } from "../../api/budget";
-import { useImportBudgetTransactionsMutation } from "../../hooks/api/mutation";
 import { useGetBudgetRulesQuery } from "../../hooks/api/query";
+import {
+  useImportBudgetTransactionsMutation,
+  useRememberFileAccountMappingsMutation,
+} from "../../hooks/api/mutation";
 import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
 import { useImportPreview } from "../../hooks/useImportPreview";
 import { useIsOnline } from "../../hooks/useIsOnline";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { guessCategory } from "../../utils/categorizationRules";
 import { monthOfDate } from "../../utils/monthLedger";
-import type { ImportSettingsFormData } from "../../utils/schemas";
-import { parseStatementRows, type ImportPreview, type ImportPreviewRow } from "../../utils/statementImport";
+import { SKIP_FILE_ACCOUNT, type ImportSettingsFormData } from "../../utils/schemas";
+import {
+  parseStatementRows,
+  type FileAccountTargets,
+  type ImportPreview,
+  type ImportPreviewRow,
+} from "../../utils/statementImport";
 import {
   ImportCategoryDialog,
   ImportFileStep,
@@ -86,12 +94,14 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
   const preview = useImportPreview();
   const { mutateAsync: importTransactions, isPending: isImporting } = useImportBudgetTransactionsMutation();
   const rules = useGetBudgetRulesQuery();
+  const { mutate: rememberMappings } = useRememberFileAccountMappingsMutation();
 
   const [step, setStep] = useState<ImportStep>("file");
   const [file, setFile] = useState<ImportFile | null>(null);
   const [settings, setSettings] = useState<ImportSettingsFormData | null>(null);
   const [rows, setRows] = useState<ImportPreviewRow[]>([]);
   const [errors, setErrors] = useState<ImportPreview["errors"]>([]);
+  const [skipped, setSkipped] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<BudgetTransaction | null>(null);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -99,14 +109,30 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
 
   const mainAccount = accounts.find((account) => account.id === profile.mainAccountId) ?? accounts[0];
 
+  const { fileAccountMappings } = profile;
+  // A remembered mapping wins while its account still exists; a one-account file falls back to the main account
+  const defaultTarget = useCallback(
+    (fileAccount: string, isOnlyAccount: boolean) => {
+      const remembered = fileAccountMappings[fileAccount];
+      if (remembered === null && !isOnlyAccount) return SKIP_FILE_ACCOUNT;
+      if (remembered && accounts.some((account) => account.id === remembered)) return remembered;
+      return isOnlyAccount ? (mainAccount?.id ?? "") : "";
+    },
+    [fileAccountMappings, accounts, mainAccount],
+  );
+
+  const targetsOf = (values: ImportSettingsFormData): FileAccountTargets =>
+    Object.fromEntries(
+      values.fileAccounts.map(({ fileAccount, target }) => [fileAccount, target === SKIP_FILE_ACCOUNT ? null : target]),
+    );
+
   const buildPreview = async (values: ImportSettingsFormData) => {
     if (!file) return;
     setSettings(values);
-    const account = accounts.find((candidate) => candidate.id === values.accountId);
     const built = await preview.mutateAsync({
       rows: parseStatementRows(values.bank, file.records),
-      accountId: values.accountId,
-      fallbackCurrency: values.fallbackCurrency || account?.defaultCurrency || profile.mainCurrency,
+      targets: targetsOf(values),
+      fallbackCurrency: values.fallbackCurrency || profile.mainCurrency,
       mainCurrency: profile.mainCurrency,
       fileName: file.name,
     });
@@ -118,6 +144,7 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
       })),
     );
     setErrors(built.errors);
+    setSkipped(built.skipped);
     setSelected(new Set(built.rows.filter((row) => row.status === "new").map((row) => row.transaction.id)));
     setStep("preview");
   };
@@ -156,13 +183,16 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
     try {
       const added = await importTransactions(toImport.map(toInput));
       const newest = added.reduce<string | null>((max, { date }) => (max && max > date ? max : date), null);
+      const targets = settings ? targetsOf(settings) : {};
+      // Best effort: the transactions are in; a mapping that fails to save is just asked again next time
+      rememberMappings(targets);
+      const targetIds = [...new Set(Object.values(targets).filter((target) => target !== null))];
       setResult({
-        imported: [
-          {
-            accountName: accounts.find((account) => account.id === settings?.accountId)?.name ?? "",
-            count: added.length,
-          },
-        ],
+        imported: targetIds.map((accountId) => ({
+          accountName: accounts.find((account) => account.id === accountId)?.name ?? "",
+          count: added.filter((transaction) => transaction.accountId === accountId).length,
+        })),
+        skipped,
         duplicates: rows.filter((row) => row.status === "duplicate" && !isChecked(row)).length,
         pending: rows.filter((row) => row.status === "pending").length,
         errors: errors.length,
@@ -209,10 +239,11 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
           defaultValues={
             settings ?? {
               bank: file.bank ?? undefined,
-              accountId: mainAccount?.id ?? "",
+              fileAccounts: [],
               fallbackCurrency: mainAccount?.defaultCurrency ?? profile.mainCurrency,
             }
           }
+          defaultTarget={defaultTarget}
           isBusy={preview.isPending}
           error={previewError}
           onBack={() => setStep("file")}

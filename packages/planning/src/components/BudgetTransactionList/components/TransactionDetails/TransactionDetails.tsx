@@ -2,7 +2,7 @@ import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { cn } from "@flaner/shared/utils";
 import { Button } from "@flaner/ui-components";
 import { parseISO } from "date-fns";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Repeat, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import type { BudgetTransaction } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
@@ -16,6 +16,8 @@ export type TransactionDetailsProps = {
   children?: ReactNode;
   onEdit?: () => void;
   onDelete?: () => void;
+  /** Make recurring (only on a transaction that does not belong to a recurring transaction yet). */
+  onMakeRecurring?: () => void;
   actionsDisabled?: boolean;
 };
 
@@ -27,6 +29,7 @@ export const TransactionDetails = ({
   children,
   onEdit,
   onDelete,
+  onMakeRecurring,
   actionsDisabled,
 }: TransactionDetailsProps) => {
   const { t, i18n } = usePlanningTranslations();
@@ -63,13 +66,19 @@ export const TransactionDetails = ({
           </div>
         ))}
       </dl>
-      {/* Make recurring, Link a refund and Exclude join these actions in later tickets */}
-      {(onEdit || onDelete) && (
+      {/* Link a refund and Exclude join these actions in later tickets */}
+      {(onEdit || onDelete || onMakeRecurring) && (
         <div className={styles.actions}>
           {onEdit && (
             <Button type="button" variant="outline" size="sm" disabled={actionsDisabled} onClick={onEdit}>
               <Pencil aria-hidden="true" />
               {t("budget.transactionDetails.edit")}
+            </Button>
+          )}
+          {onMakeRecurring && (
+            <Button type="button" variant="outline" size="sm" disabled={actionsDisabled} onClick={onMakeRecurring}>
+              <Repeat aria-hidden="true" />
+              {t("budget.transactionDetails.makeRecurring")}
             </Button>
           )}
           {onDelete && (

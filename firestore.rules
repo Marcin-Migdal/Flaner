@@ -228,6 +228,35 @@ service cloud.firestore {
     }
 
     // ==========================================
+    // BUDŻET: TRANSAKCJE CYKLICZNE (BUDGET_RECURRING)
+    // ==========================================
+    match /budget_recurring/{recurringId} {
+      function isRecurringAccountMember(accountId) {
+        return request.auth.uid in get(/databases/$(database)/documents/budget_accounts/$(accountId)).data.memberIds;
+      }
+
+      // R2 + R3 + R4: single member (the caller) of its own account, id == accountId, fixed envelope
+      function isValidBudgetRecurring() {
+        let data = request.resource.data;
+        return data.keys().hasOnly(['accountId', 'memberIds', 'payload']) &&
+        data.keys().hasAll(['accountId', 'memberIds', 'payload']) &&
+        data.memberIds == [request.auth.uid] &&
+        data.accountId is string && data.accountId == recurringId &&
+        data.payload is bytes && data.payload.size() <= 900000 &&
+        isRecurringAccountMember(data.accountId);
+      }
+
+      // R1: an existing document by its members; a missing one (first recurring transaction) by the account's members
+      allow read: if isAuthenticated() && (
+        (resource == null && isRecurringAccountMember(recurringId)) ||
+        (resource != null && request.auth.uid in resource.data.memberIds)
+      );
+      allow create: if isAuthenticated() && isValidBudgetRecurring();
+      allow update: if isAuthenticated() && request.auth.uid in resource.data.memberIds && isValidBudgetRecurring();
+      allow delete: if isAuthenticated() && request.auth.uid in resource.data.memberIds;
+    }
+
+    // ==========================================
     // BUDŻET: REGUŁY KATEGORYZACJI (BUDGET_RULES)
     // ==========================================
     match /budget_rules/{uid} {

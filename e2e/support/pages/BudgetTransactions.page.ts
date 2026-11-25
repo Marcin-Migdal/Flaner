@@ -26,9 +26,16 @@ export class BudgetTransactionsPage {
   }
 
   /** Opens the import wizard and walks File → Settings (bank and account as detected) to the Preview step. */
-  async openImportPreview(filePath: string) {
+  /** Imports a file up to the Preview step; `targets` maps a bank account of the file (by its masked number) to an option. */
+  async openImportPreview(filePath: string, targets: [fileAccount: RegExp, option: string][] = []) {
     await this.headerImportButton.click();
     await this.importSheet.locator('input[type="file"]').setInputFiles(filePath);
+    for (const [fileAccount, option] of targets) {
+      // react-select's input is not clickable; focus it and open the menu with the keyboard
+      await this.importSheet.getByLabel(fileAccount).focus();
+      await this.page.keyboard.press("ArrowDown");
+      await this.page.getByRole("option", { name: option, exact: true }).click();
+    }
     await this.importSheet.getByRole("button", { name: /^(preview|podgląd)$/i }).click();
   }
 

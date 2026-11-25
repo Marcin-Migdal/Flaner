@@ -42,6 +42,16 @@ describe("DatePicker component", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
+  it("opens the calendar on the selected date's month", async () => {
+    const user = userEvent.setup();
+    render(<DatePicker label="Date" value={new Date(2020, 9, 12)} />);
+
+    await user.click(screen.getByRole("button", { name: "Date" }));
+
+    expect(screen.getByRole("dialog")).toHaveTextContent("October 2020");
+    expect(screen.getByRole("dialog")).not.toHaveTextContent("November 2020");
+  });
+
   it("disables trigger button when disabled={true}", () => {
     render(<DatePicker label="Disabled date" disabled />);
     const triggerBtn = screen.getByRole("button", { name: "Disabled date" });

@@ -1,6 +1,6 @@
 # budget_months/{monthId}
 
-Budget transactions (MFE `planning`, Budget; ADR 0002): one document per account and calendar month, id `{accountId}_{YYYY-MM}`. Readable: `accountId`, `memberIds`, `month`. Every transaction of that account and month (payee, amounts, categories…) is one AES-GCM ciphertext in `payload`, encrypted with the account key and bound to the document path. `memberIds` copies the account's members (exactly one user in the MVP). Only the budget API module `packages/planning/src/api/budget` reads and writes it; every write goes through `runTransaction`.
+Budget transactions (MFE `planning`, Budget; ADR 0002): one document per account and calendar month, id `{accountId}_{YYYY-MM}`. Readable: `accountId`, `memberIds`, `month`. Every transaction of that account and month (payee, amounts, categories…) is one AES-GCM ciphertext in `payload`, encrypted with the account key and bound to the document path. `memberIds` copies the account's members (exactly one user in the MVP). Only the budget API module `packages/planning/src/api/budget` reads and writes it; every write goes through `runTransaction`. Every write that adds, edits, moves or deletes a transaction also re-matches the account's recurring transactions in the same transaction: it reads the account's `budget_recurring` document and the months within 14 days of the touched days (see `budget_recurring.md`).
 
 ## Invariants
 - **M1** Only members read, update and delete a month; a month that does not exist yet can be read (inside a transaction) only by a member of its account.

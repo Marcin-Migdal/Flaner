@@ -19,3 +19,5 @@ export * from "./transactionFilters";
 export * from "./transactionEdits";
 export * from "./statementImport";
 export * from "./categorizationRules";
+export * from "./repeatRules";
+export * from "./recurringTransactions";

@@ -63,6 +63,15 @@ export const budgetPlan = (uid: string, overrides: Record<string, unknown> = {})
   ...overrides,
 });
 
+export const RECURRING_PATH = `budget_recurring/${ACCOUNT_ID}`;
+
+export const budgetRecurring = (uid: string, overrides: Record<string, unknown> = {}) => ({
+  accountId: ACCOUNT_ID,
+  memberIds: [uid],
+  payload: bytes(512),
+  ...overrides,
+});
+
 export const budgetRules = (overrides: Record<string, unknown> = {}) => ({
   payload: bytes(1024),
   updatedAt: 1,

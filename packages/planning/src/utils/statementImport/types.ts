@@ -40,3 +40,7 @@ export type StatementErrorRow = {
 };
 
 export type StatementRow = StatementTransactionRow | StatementErrorRow;
+
+export const isStatementTransactionRow = (row: StatementRow): row is StatementTransactionRow => row.status === "ok";
+
+export const isStatementErrorRow = (row: StatementRow): row is StatementErrorRow => row.status === "error";

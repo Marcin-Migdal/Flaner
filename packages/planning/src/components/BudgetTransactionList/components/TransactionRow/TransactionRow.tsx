@@ -1,7 +1,7 @@
 import { useIsMobile, useMoneyFormatter } from "@flaner/shared/hooks";
 import { cn, fromMinorUnits, toMinorUnits } from "@flaner/shared/utils";
 import { Badge, Button, ShadcnCheckbox } from "@flaner/ui-components";
-import { ChevronDown, CircleHelp } from "lucide-react";
+import { ChevronDown, CircleHelp, Repeat } from "lucide-react";
 import { useRef, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import type { BudgetCategoryTree, BudgetTransaction, BudgetTransactionPatch } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
@@ -41,6 +41,9 @@ export type TransactionRowProps = {
   actionsDisabled?: boolean;
   /** Greyed out (e.g. a pending card hold in the import preview). */
   muted?: boolean;
+  /** Belongs to a recurring transaction: shows the recurring marker. */
+  recurring?: boolean;
+  onMakeRecurring?: () => void;
   /** Extra content before the row's icon, after its amounts, and on a full-width line below it. */
   start?: ReactNode;
   end?: ReactNode;
@@ -67,6 +70,8 @@ export const TransactionRow = ({
   onDelete,
   actionsDisabled,
   muted,
+  recurring,
+  onMakeRecurring,
   start,
   end,
   footer,
@@ -126,6 +131,12 @@ export const TransactionRow = ({
       {t("budget.transactionList.excluded")}
     </Badge>
   );
+  const recurringMark = recurring && (
+    <span className={styles.recurringMark}>
+      <Repeat aria-hidden="true" />
+      <span className="sr-only">{t("budget.transactionList.recurring")}</span>
+    </span>
+  );
   const amountMain = currency !== mainCurrency && (
     <span className={styles.amountMain}>{format(signedAmount(type, transaction.amountMain), mainCurrency)}</span>
   );
@@ -136,6 +147,7 @@ export const TransactionRow = ({
       mainCurrency={mainCurrency}
       onEdit={onEdit}
       onDelete={onDelete}
+      onMakeRecurring={onMakeRecurring}
       actionsDisabled={actionsDisabled}
     >
       {isMobile && categoryPicker}
@@ -181,6 +193,7 @@ export const TransactionRow = ({
           </span>
           {amountMain}
           {excludedBadge}
+          {recurringMark}
         </span>
       </>
     );
@@ -298,6 +311,7 @@ export const TransactionRow = ({
             </span>
           )}
         </span>
+        {recurringMark}
         {excludedBadge}
         <span className={styles.amounts}>
           {update ? (

@@ -9,6 +9,7 @@ import { monthOfDate } from "../../../utils/monthLedger";
 // - `transactions`: the decrypted transactions of all the user's accounts in one month (one month-range query).
 // - `rules`: the decrypted categorization rules (`budget_rules/{uid}`); every write that sets a category can teach one.
 // - `plan`: the decrypted plan of one month (`budget_plans/{uid}_{month}`), `null` while the month has none.
+// - `recurring`: every recurring transaction of the user's accounts with its matches (`budget_recurring`).
 export const budgetKeys = {
   all: ["budget"],
   locked: (uid: string) => ["budget", "locked", uid],
@@ -24,6 +25,7 @@ export const budgetKeys = {
   /** One account's transaction count (delete confirmation). */
   accountTransactionCount: (uid: string, accountId: string) => ["budget", "accountTransactionCount", uid, accountId],
   plan: (uid: string, month: BudgetMonth) => ["budget", "plan", uid, month],
+  recurring: (uid: string) => ["budget", "recurring", uid],
   /** A published rate (`getExchangeRate`); never changes, so it is never invalidated. */
   exchangeRate: (from: string, to: string, date: string) => ["budget", "exchangeRate", from, to, date],
 };
@@ -31,10 +33,12 @@ export const budgetKeys = {
 /** Which keys each budget write makes stale. */
 export const budgetInvalidation = {
   createBudget: ({ uid }: UserType) => [budgetKeys.locked(uid)],
+  // Every transaction write below also re-matches the recurring transactions
   /** Adding or deleting a transaction changes its month only (and which accounts hold transactions). */
   transactionsChanged: ({ uid }: UserType, { date }: { date: string }) => [
     budgetKeys.transactions(uid, monthOfDate(date)),
     budgetKeys.accountsWithTransactions(uid),
+    budgetKeys.recurring(uid),
   ],
   /** A manual entry with a category also teaches a rule. */
   transactionAdded: (user: UserType, input: { date: string }) => [
@@ -45,6 +49,7 @@ export const budgetInvalidation = {
   transactionsInMonths: ({ uid }: UserType, dates: string[]) => [
     ...[...new Set(dates.map(monthOfDate))].map((month) => budgetKeys.transactions(uid, month)),
     budgetKeys.accountsWithTransactions(uid),
+    budgetKeys.recurring(uid),
   ],
   /** Edits also teach a rule when they set or change a category. */
   transactionsEdited: (user: UserType, dates: string[]) => [
@@ -56,6 +61,7 @@ export const budgetInvalidation = {
     ...[...new Set(inputs.map(({ date }) => monthOfDate(date)))].map((month) => budgetKeys.transactions(uid, month)),
     budgetKeys.accountsWithTransactions(uid),
     budgetKeys.rules(uid),
+    budgetKeys.recurring(uid),
   ],
   /** Settings → Rules: edit or delete a rule. */
   rulesChanged: ({ uid }: UserType) => [budgetKeys.rules(uid)],
@@ -64,7 +70,14 @@ export const budgetInvalidation = {
   /** Main account or main currency. */
   profileChanged: ({ uid }: UserType) => [budgetKeys.profile(uid)],
   /** The account's transactions go with it. */
-  accountDeleted: ({ uid }: UserType) => [budgetKeys.accounts(uid), budgetKeys.profile(uid), budgetKeys.allTransactions(uid)],
+  accountDeleted: ({ uid }: UserType) => [
+    budgetKeys.accounts(uid),
+    budgetKeys.profile(uid),
+    budgetKeys.allTransactions(uid),
+    budgetKeys.recurring(uid),
+  ],
+  /** Make recurring, edit rule, stop, delete: only the recurring list changes. */
+  recurringChanged: ({ uid }: UserType) => [budgetKeys.recurring(uid)],
   /** A limit or planned income changes its month's plan only. */
   planChanged: ({ uid }: UserType, { month }: { month: BudgetMonth }) => [budgetKeys.plan(uid, month)],
   // New salt / wrapped keys: a cached copy would no longer unlock

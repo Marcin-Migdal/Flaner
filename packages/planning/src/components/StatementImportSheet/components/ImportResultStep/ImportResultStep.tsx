@@ -23,6 +23,10 @@ export const ImportResultStep = ({ result, onOpenMonth, onClose }: ImportResultS
       label: t("budget.import.result.importedTo", { account: accountName }),
       value: count,
     })),
+    // Only a multi-account file can skip a bank account
+    ...(result.skipped > 0
+      ? [{ key: "skipped", label: t("budget.import.result.skippedAccounts"), value: result.skipped }]
+      : []),
     { key: "duplicates", label: t("budget.import.result.duplicates"), value: result.duplicates },
     { key: "pending", label: t("budget.import.result.pending"), value: result.pending },
     { key: "errors", label: t("budget.import.result.errors"), value: result.errors },
