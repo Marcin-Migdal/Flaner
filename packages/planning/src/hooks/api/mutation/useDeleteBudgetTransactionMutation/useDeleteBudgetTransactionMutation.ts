@@ -12,7 +12,8 @@ export const useDeleteBudgetTransactionMutation = (options?: UseMutationOptions<
     {
       mutationKey: ["deleteBudgetTransaction"],
       mutationFn: (ref) => deleteBudgetTransaction(budget, ref),
-      invalidates: budgetInvalidation.transactionsChanged,
+      // A linked refund on the other side is cleaned up too, possibly in another month
+      invalidates: budgetInvalidation.linkedTransactionsChanged,
       meta: { successMessageKey: "planning:toasts.budget.transactionDeleted", skipErrorToast: true },
     },
     { networkMode: "always", ...options },

@@ -104,7 +104,41 @@ describe("buildMonthLedger", () => {
     expect(buildMonthLedger({ month: "2026-11", accounts, transactions: [] })).toEqual({
       totals: { income: 0, expenses: 0, balance: 0 },
       days: [],
+      entries: [],
     });
+  });
+
+  it("counts each split-off under its own category and the rest under the transaction's, skipping excluded ones", () => {
+    const linkRef = { transactionId: "refund", accountId: "main", month: "2026-11" };
+    const purchase = tx({
+      id: "buy",
+      amount: 10000,
+      amountMain: 10000,
+      categoryId: "groceries",
+      splitOffs: [
+        { id: "lamp", amount: 3000, categoryId: "shopping", note: "Lamp", excluded: false },
+        { id: "gift", amount: 1000, categoryId: "shopping", note: "", excluded: true },
+        { id: "back", amount: 500, categoryId: "groceries", note: "", excluded: true, refund: linkRef },
+      ],
+    });
+    const refund = tx({
+      id: "refund",
+      type: "income",
+      amount: 500,
+      amountMain: 500,
+      categoryId: "salary",
+      excluded: true,
+      refundOf: { transactionId: "buy", accountId: "main", month: "2026-11", splitOffId: "back" },
+    });
+
+    const ledger = buildMonthLedger({ month: "2026-11", accounts, transactions: [purchase, refund] });
+
+    expect(ledger.totals).toEqual({ income: 0, expenses: 8500, balance: -8500 });
+    expect(ledger.days).toEqual([{ date: "2026-11-10", net: -8500, transactions: [purchase] }]);
+    expect(ledger.entries.map(({ id, categoryId, amountMain }) => ({ id, categoryId, amountMain }))).toEqual([
+      { id: "buy", categoryId: "groceries", amountMain: 5500 },
+      { id: "buy/lamp", categoryId: "shopping", amountMain: 3000 },
+    ]);
   });
 });
 
@@ -117,6 +151,17 @@ describe("groupTransactionsByDay", () => {
     expect(groupTransactionsByDay([counted, excluded, hidden], accounts)).toEqual([
       { date: "2026-11-03", net: -3000, transactions: [hidden, excluded, counted] },
     ]);
+  });
+
+  it("leaves excluded split-offs out of a day's net", () => {
+    const split = tx({
+      date: "2026-11-03",
+      amountMain: 3000,
+      amount: 3000,
+      splitOffs: [{ id: "s", amount: 1000, categoryId: null, note: "", excluded: true }],
+    });
+
+    expect(groupTransactionsByDay([split], accounts)[0].net).toBe(-2000);
   });
 });
 

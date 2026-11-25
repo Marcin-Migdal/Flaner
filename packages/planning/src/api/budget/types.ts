@@ -81,6 +81,36 @@ export type UnlockedBudget = {
 /** A calendar month, `YYYY-MM`. */
 export type BudgetMonth = string;
 
+/** Where a linked transaction is stored: its id, account and month (a link may cross months and accounts). */
+export type BudgetLinkRef = {
+  transactionId: string;
+  accountId: string;
+  month: BudgetMonth;
+};
+
+/**
+ * A part of a transaction counted under its own category (GLOSSARY → Split-off). `amount` is in the transaction's
+ * currency and carved out of it: the transaction itself counts its total minus its split-offs.
+ */
+export type BudgetSplitOff = {
+  id: string;
+  amount: number;
+  /** A category or subcategory id of the transaction's type; `null` reads as Uncategorized. */
+  categoryId: string | null;
+  note: string;
+  excluded: boolean;
+  /** A refund split-off: the linked refund (GLOSSARY → Linked refund). Always excluded; its amount is locked while linked. */
+  refund?: BudgetLinkRef;
+  /** A refund split-off carved out of another split-off: unlinking returns the amount to it (when it still exists). */
+  parentSplitOffId?: string;
+};
+
+/** What the split-off dialog edits; the API gives a new split-off its id. */
+export type BudgetSplitOffInput = Pick<BudgetSplitOff, "amount" | "categoryId" | "note">;
+
+/** Edited fields of a split-off (a refund split-off keeps its amount and stays excluded). */
+export type BudgetSplitOffPatch = Partial<Pick<BudgetSplitOff, "amount" | "categoryId" | "note" | "excluded">>;
+
 /**
  * One money movement (GLOSSARY → Transaction). Amounts are positive integers in minor units; `type` gives the
  * direction. Stored encrypted inside its account's month document (`budget_months/{accountId}_{YYYY-MM}`).
@@ -108,6 +138,10 @@ export type BudgetTransaction = {
   categoryId: string | null;
   confirmed: boolean;
   excluded: boolean;
+  /** Absent or empty: not split. The sum of the amounts stays below `amount`. */
+  splitOffs?: BudgetSplitOff[];
+  /** A linked refund: the purchase and its refund split-off. A linked refund is always excluded. */
+  refundOf?: BudgetLinkRef & { splitOffId: string };
   /** Imported only: the frozen dedup hash of its statement row (`computeImportHashes`), kept through every edit. */
   importHash?: string;
   /** Imported only: the name of the statement file it came from. */
@@ -125,11 +159,24 @@ export type BudgetTransactionRef = Pick<BudgetTransaction, "id" | "accountId" | 
 /** Fields read from the statement file: never edited, so a re-import still recognizes an edited row. */
 export type FrozenImportFields = "importHash" | "sourceFile" | "counterpartyAccount";
 
+/** Changed only through the split-off and refund endpoints, which keep both sides of a link consistent. */
+export type LinkFields = "splitOffs" | "refundOf";
+
 /**
  * Edited fields of a stored transaction. A new `date` or `accountId` moves it to that month / account.
- * The frozen import fields are not editable.
+ * The frozen import fields and the split-off / refund fields are not editable here.
  */
-export type BudgetTransactionPatch = Partial<Omit<BudgetTransaction, "id" | FrozenImportFields>>;
+export type BudgetTransactionPatch = Partial<Omit<BudgetTransaction, "id" | FrozenImportFields | LinkFields>>;
+
+/** Links a refund (an income) to a purchase (an expense) or one of its split-offs. */
+export type BudgetRefundLinkInput = {
+  purchase: BudgetTransactionRef;
+  /** Carve the refund out of this split-off instead of the purchase's rest. */
+  splitOffId?: string;
+  refund: BudgetTransactionRef;
+  /** The refund split-off's amount, in the purchase's currency (converted when the currencies differ). */
+  amount: number;
+};
 
 /** One edit of a bulk update: which transaction (where it is stored now) and what changes. */
 export type BudgetTransactionUpdate = { ref: BudgetTransactionRef; patch: BudgetTransactionPatch };

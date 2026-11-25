@@ -7,9 +7,12 @@ import type { BudgetCategoryTree, BudgetTransaction, BudgetTransactionPatch } fr
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { BUDGET_CATEGORY_COLOR_CLASSES, BUDGET_CATEGORY_ICON_COMPONENTS } from "../../../../utils/budgetCategoryIcons";
 import { resolveTransactionCategory, signedAmount } from "../../../../utils/monthLedger";
+import { splitRest } from "../../../../utils/splitOffs";
 import { amountPatch, categoryPatch } from "../../../../utils/transactionEdits";
 import { CategoryPicker } from "../../../CategoryPicker";
+import type { TransactionSplitActions } from "../../types";
 import { InlineEdit } from "../InlineEdit";
+import { SplitOffRow } from "../SplitOffRow";
 import { TransactionDetails } from "../TransactionDetails";
 import { transactionRowStyles as styles } from "./TransactionRow.styles";
 
@@ -36,6 +39,8 @@ export type TransactionRowProps = {
   onUpdate?: (patch: BudgetTransactionPatch) => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  /** Split-off, exclusion and refund actions (expanded row and split-off rows). */
+  splitActions?: TransactionSplitActions;
   actionsDisabled?: boolean;
   /** Greyed out (e.g. a pending card hold in the import preview). */
   muted?: boolean;
@@ -62,6 +67,7 @@ export const TransactionRow = ({
   onUpdate,
   onEdit,
   onDelete,
+  splitActions,
   actionsDisabled,
   muted,
   start,
@@ -117,10 +123,40 @@ export const TransactionRow = ({
     />
   );
 
+  const splitOffs = transaction.splitOffs ?? [];
+  const isSplit = splitOffs.length > 0;
   const excludedBadge = transaction.excluded && (
     <Badge variant="neutral" size="sm">
-      {t("budget.transactionList.excluded")}
+      {t(transaction.refundOf ? "budget.refundLink.refundBadge" : "budget.transactionList.excluded")}
     </Badge>
+  );
+  // A split transaction shows what it counts itself, "of" its bank amount
+  const staticAmount = (
+    <>
+      <span className={cn(styles.amount, isIncome && styles.income)}>
+        {format(signedAmount(type, isSplit ? splitRest(transaction) : transaction.amount), currency)}
+      </span>
+      {isSplit && (
+        <span className={styles.amountOf}>
+          {t("budget.splitOff.of", { amount: format(transaction.amount, currency) })}
+        </span>
+      )}
+    </>
+  );
+  const splitOffRows = isSplit && (
+    <ul className={styles.splitOffs} aria-label={t("budget.splitOff.list", { payee })}>
+      {splitOffs.map((splitOff) => (
+        <SplitOffRow
+          key={splitOff.id}
+          transaction={transaction}
+          splitOff={splitOff}
+          categories={categories}
+          mainCurrency={mainCurrency}
+          actions={splitActions}
+          actionsDisabled={actionsDisabled}
+        />
+      ))}
+    </ul>
   );
   const amountMain = currency !== mainCurrency && (
     <span className={styles.amountMain}>{format(signedAmount(type, transaction.amountMain), mainCurrency)}</span>
@@ -132,6 +168,7 @@ export const TransactionRow = ({
       mainCurrency={mainCurrency}
       onEdit={onEdit}
       onDelete={onDelete}
+      splitActions={splitActions}
       actionsDisabled={actionsDisabled}
     >
       {isMobile && categoryPicker}
@@ -172,9 +209,7 @@ export const TransactionRow = ({
           </span>
         </span>
         <span className={styles.amounts}>
-          <span className={cn(styles.amount, isIncome && styles.income)}>
-            {format(signedAmount(type, transaction.amount), currency)}
-          </span>
+          {staticAmount}
           {amountMain}
           {excludedBadge}
         </span>
@@ -228,6 +263,7 @@ export const TransactionRow = ({
         </div>
         {footerLine}
         {details}
+        {splitOffRows}
       </li>
     );
   }
@@ -296,7 +332,8 @@ export const TransactionRow = ({
         </span>
         {excludedBadge}
         <span className={styles.amounts}>
-          {update ? (
+          {/* A split transaction's total is edited in the dialog: in place it shows its rest */}
+          {update && !isSplit ? (
             <span className={cn(styles.amountEdit, isIncome && styles.income)}>
               <span aria-hidden="true">{isIncome ? "+" : "−"}</span>
               <InlineEdit
@@ -314,9 +351,7 @@ export const TransactionRow = ({
               <span className={styles.currency}>{currency}</span>
             </span>
           ) : (
-            <span className={cn(styles.amount, isIncome && styles.income)}>
-              {format(signedAmount(type, transaction.amount), currency)}
-            </span>
+            staticAmount
           )}
           {amountMain}
         </span>
@@ -337,6 +372,7 @@ export const TransactionRow = ({
       </div>
       {footerLine}
       {details}
+      {splitOffRows}
     </li>
   );
 };

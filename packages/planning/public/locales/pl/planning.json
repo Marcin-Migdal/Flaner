@@ -147,7 +147,11 @@
       "accountHasTransactions": "To konto ma transakcje, więc nie można zmienić jego waluty.",
       "hiddenAccountCannotBeMain": "Ukryte konto nie może być głównym. Najpierw je pokaż.",
       "mainCurrencyLocked": "Waluta główna jest zablokowana, bo istnieją transakcje.",
-      "accountNotFound": "To konto już nie istnieje. Odśwież stronę."
+      "accountNotFound": "To konto już nie istnieje. Odśwież stronę.",
+      "linkedLocked": "Ta transakcja należy do powiązanego zwrotu: jej kwota, typ, data i konto są zablokowane. Najpierw odłącz zwrot.",
+      "splitOffsTooLarge": "Wydzielone części muszą być mniejsze niż kwota transakcji.",
+      "splitOffMissing": "Ta wydzielona część już nie istnieje. Odśwież stronę.",
+      "refundNotAllowed": "Nie można powiązać tego zwrotu: musi to być uwzględniany wpływ, jeszcze niepowiązany, z datą nie wcześniejszą niż zakup i mniejszy niż pozostała kwota zakupu."
     }
   },
   "splits": {
@@ -769,7 +773,11 @@
       "payeeMax": "Użyj najwyżej 120 znaków.",
       "descriptionMax": "Użyj najwyżej 500 znaków.",
       "accountRequired": "Wybierz konto.",
-      "categoryRequired": "Wybierz kategorię."
+      "categoryRequired": "Wybierz kategorię.",
+      "splitOffTooLarge": "Wydzielone części muszą być mniejsze niż kwota transakcji",
+      "noteMax": "Notatka jest za długa",
+      "refundRequired": "Wybierz zwrot",
+      "refundTooLarge": "Zwrot musi być mniejszy niż pozostała kwota zakupu"
     },
     "transactionsEmpty": {
       "title": "Brak transakcji",
@@ -883,12 +891,19 @@
       "cancel": "Anuluj",
       "save": "Dodaj transakcję",
       "editTitle": "Edytuj transakcję",
-      "saveEdit": "Zapisz zmiany"
+      "saveEdit": "Zapisz zmiany",
+      "linkedLocked": "Powiązano zwrot: typ, data, konto i kwota zwrotu są zablokowane do czasu odłączenia."
     },
     "deleteTransaction": {
       "title": "Usunąć tę transakcję?",
       "description": "„{{payee}}” zostanie usunięta z budżetu. Tej operacji nie można cofnąć.",
-      "confirm": "Usuń"
+      "confirm": "Usuń",
+      "imported": "Ta transakcja pochodzi z importu, więc ponowny import tego pliku ją przywróci: aby trwale ją pominąć, wyklucz ją zamiast usuwać.",
+      "splitOffs_one": "Jej wydzielona część zostanie usunięta razem z nią.",
+      "splitOffs_few": "Jej {{count}} wydzielone części zostaną usunięte razem z nią.",
+      "splitOffs_many": "Jej {{count}} wydzielonych części zostanie usuniętych razem z nią.",
+      "splitOffs_other": "Jej {{count}} wydzielonych części zostanie usuniętych razem z nią.",
+      "linked": "Powiązany zwrot zostanie odłączony."
     },
     "transactionDetails": {
       "date": "Data",
@@ -899,7 +914,10 @@
       "amountAtRate": "{{amount}} = {{amountMain}} po kursie {{rate}} z {{date}}",
       "amountTyped": "{{amount}} = {{amountMain}} (wpisane ręcznie)",
       "edit": "Edytuj",
-      "delete": "Usuń"
+      "delete": "Usuń",
+      "rest": "Liczone na transakcji",
+      "refund": "Zwrot",
+      "refundLinked": "Powiązany z zakupem, nie liczy się jako wpływ"
     },
     "transactionFilters": {
       "label": "Filtry",
@@ -1152,6 +1170,41 @@
         "noTransactions": "Brak transakcji w tym miesiącu.",
         "openInTransactions": "Otwórz w Transakcjach"
       }
+    },
+    "splitOff": {
+      "title": "Wydziel część",
+      "editTitle": "Edytuj wydzieloną część",
+      "description": "Część „{{payee}}” ({{amount}}) liczona we własnej kategorii. Transakcja zachowuje resztę.",
+      "amount": "Kwota",
+      "amountLocked": "Zablokowana, dopóki zwrot jest powiązany",
+      "room": "Mniej niż {{amount}}",
+      "category": "Kategoria",
+      "note": "Notatka",
+      "save": "Wydziel",
+      "saveEdit": "Zapisz",
+      "action": "Wydziel część",
+      "edit": "Edytuj",
+      "remove": "Usuń",
+      "details": "Szczegóły wydzielonej części: {{name}}",
+      "label": "Wydzielona część",
+      "of": "z {{amount}}",
+      "list": "Wydzielone części: {{payee}}"
+    },
+    "refundLink": {
+      "title": "Powiąż zwrot",
+      "description": "Wybierz wpływ będący zwrotem za „{{payee}}”. Zostanie wydzielony z zakupu (do {{amount}}) i przestanie liczyć się jako wpływ.",
+      "candidates": "Wpływy",
+      "noCandidates": "Żaden wpływ nie pasuje: nie może być wykluczony ani powiązany, musi mieć datę nie wcześniejszą niż zakup i być mniejszy niż pozostała kwota zakupu.",
+      "amount": "Zwrócona kwota ({{currency}})",
+      "converted": "Przeliczone z {{amount}} przez kwoty w walucie głównej. Możesz ją zmienić.",
+      "save": "Powiąż zwrot",
+      "action": "Powiąż zwrot",
+      "unlink": "Odłącz zwrot",
+      "refundBadge": "Zwrot"
+    },
+    "exclusion": {
+      "exclude": "Wyklucz",
+      "restore": "Przywróć"
     }
   }
 }

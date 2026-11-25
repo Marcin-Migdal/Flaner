@@ -5,7 +5,7 @@ import { createTestI18n, renderWithProviders } from "@flaner/test-utils";
 import { useState } from "react";
 import en from "../../../public/locales/en/planning.json";
 import type { BudgetAccount, BudgetCategoryTree, BudgetTransaction } from "../../api/budget";
-import { buildMonthLedger } from "../../utils/monthLedger";
+import { buildMonthLedger, groupTransactionsByDay } from "../../utils/monthLedger";
 import { BudgetTransactionList, type BudgetTransactionListProps } from "./BudgetTransactionList";
 
 let mockIsMobile = false;
@@ -139,6 +139,76 @@ describe("BudgetTransactionList", () => {
     await user.click(within(row).getByRole("button", { name: "Delete" }));
     expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ payee: "Zalando" }));
     expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ payee: "Zalando" }));
+  });
+
+  describe("split-offs, exclusion and refunds", () => {
+    const splitActions = () => ({
+      onToggleExcluded: vi.fn(),
+      onSplitOff: vi.fn(),
+      onEditSplitOff: vi.fn(),
+      onToggleSplitOffExcluded: vi.fn(),
+      onRemoveSplitOff: vi.fn(),
+      onLinkRefund: vi.fn(),
+      onUnlinkRefund: vi.fn(),
+    });
+    const lamp = { id: "lamp", amount: 300, categoryId: "shopping", note: "Lamp", excluded: false };
+    const gift = { id: "gift", amount: 200, categoryId: null, note: "Gift", excluded: true };
+    const split = tx({ payee: "Ikea", amount: 1250, splitOffs: [lamp, gift] });
+
+    it("shows a split transaction's rest of its bank amount, with each split-off under it (excluded greyed)", () => {
+      renderList({ days: buildMonthLedger({ month: "2026-11", transactions: [split], accounts }).days });
+
+      const row = rowOf("Ikea");
+      expect(within(row).getByText("-PLN 7.50")).toBeInTheDocument();
+      expect(within(row).getByText("of PLN 12.50")).toBeInTheDocument();
+      const splitOffs = within(row).getByRole("list", { name: "Split-offs of Ikea" });
+      expect(within(splitOffs).getByText("Lamp")).toBeInTheDocument();
+      expect(within(splitOffs).getByText("-PLN 3.00")).toBeInTheDocument();
+      expect(within(splitOffs).getByText("Excluded")).toBeInTheDocument();
+    });
+
+    it("offers Split off, Link a refund and Exclude on an expense, and acts on a split-off", async () => {
+      const user = userEvent.setup();
+      const actions = splitActions();
+      renderList({ splitActions: actions, days: buildMonthLedger({ month: "2026-11", transactions: [split], accounts }).days });
+
+      await user.click(screen.getByRole("button", { name: "Details of Ikea" }));
+      const row = rowOf("Ikea");
+      await user.click(within(row).getByRole("button", { name: "Split off" }));
+      await user.click(within(row).getByRole("button", { name: "Link a refund" }));
+      await user.click(within(row).getByRole("button", { name: "Exclude" }));
+      expect(actions.onSplitOff).toHaveBeenCalledWith(expect.objectContaining({ payee: "Ikea" }));
+      expect(actions.onLinkRefund).toHaveBeenCalledWith(expect.objectContaining({ payee: "Ikea" }));
+      expect(actions.onToggleExcluded).toHaveBeenCalledOnce();
+
+      await user.click(screen.getByRole("button", { name: "Details of split-off Gift" }));
+      await user.click(screen.getByRole("button", { name: "Restore" }));
+      await user.click(screen.getByRole("button", { name: "Remove" }));
+      expect(actions.onToggleSplitOffExcluded).toHaveBeenCalledWith(expect.anything(), gift);
+      expect(actions.onRemoveSplitOff).toHaveBeenCalledWith(expect.anything(), gift);
+    });
+
+    it("a linked refund shows Refund and offers Unlink instead of Restore", async () => {
+      const user = userEvent.setup();
+      const actions = splitActions();
+      const refund = tx({
+        payee: "Zwrot Ikea",
+        type: "income",
+        categoryId: null,
+        excluded: true,
+        refundOf: { transactionId: "buy", accountId: "main", month: "2026-11", splitOffId: "s" },
+      });
+      renderList({ splitActions: actions, days: groupTransactionsByDay([refund], accounts) });
+
+      await user.click(screen.getByRole("button", { name: "Details of Zwrot Ikea" }));
+      const row = rowOf("Zwrot Ikea");
+      // The badge and the details line
+      expect(within(row).getAllByText("Refund")).toHaveLength(2);
+      expect(within(row).queryByRole("button", { name: "Restore" })).not.toBeInTheDocument();
+      expect(within(row).queryByRole("button", { name: "Split off" })).not.toBeInTheDocument();
+      await user.click(within(row).getByRole("button", { name: "Unlink refund" }));
+      expect(actions.onUnlinkRefund).toHaveBeenCalledWith({ transactionId: "Zwrot Ikea", accountId: "main", month: "2026-11" });
+    });
   });
 
   describe("on desktop, with onUpdate", () => {

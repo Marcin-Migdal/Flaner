@@ -32,6 +32,7 @@ import {
   wrapDataKey,
 } from "../../utils/budgetCrypto";
 import { monthOfDate } from "../../utils/monthLedger";
+import { refundRoom, splitRest } from "../../utils/splitOffs";
 import type {
   BudgetAccount,
   BudgetAccountChanges,
@@ -41,6 +42,7 @@ import type {
   BudgetCategoriesDoc,
   BudgetCategoryTree,
   BudgetKeysDoc,
+  BudgetLinkRef,
   BudgetMonth,
   BudgetMonthDoc,
   BudgetMonthPayload,
@@ -51,6 +53,10 @@ import type {
   BudgetProfile,
   BudgetProfileDoc,
   BudgetProfilePayload,
+  BudgetRefundLinkInput,
+  BudgetSplitOff,
+  BudgetSplitOffInput,
+  BudgetSplitOffPatch,
   BudgetTransaction,
   BudgetTransactionInput,
   BudgetTransactionRef,
@@ -482,9 +488,10 @@ export const setBudgetMainCurrency = async ({ uid }: UnlockedBudget, mainCurrenc
 
 /**
  * Deletes an account with every document that belongs to it (its months; recurring transactions join with their
- * ticket) and forgets it in the remembered bank-file mappings. The main account is never deleted
- * (`errors.budget.mainAccountLocked`). Batches of 500 with the account in the last one, so a cascade that fails
- * half-way leaves the account listed and can be run again.
+ * ticket) and forgets it in the remembered bank-file mappings. Refunds linked across accounts are unlinked first: the
+ * other side, in another account, is restored (its refund split-off removed, or its refund counted again). The main
+ * account is never deleted (`errors.budget.mainAccountLocked`). Batches of 500 with the account in the last one, so
+ * a cascade that fails half-way leaves the account listed and can be run again.
  */
 export const deleteBudgetAccount = async (budget: UnlockedBudget, accountId: string): Promise<void> => {
   const { uid, userKey } = budget;
@@ -492,6 +499,27 @@ export const deleteBudgetAccount = async (budget: UnlockedBudget, accountId: str
   if (!profile || profile.mainAccountId === accountId) throw new Error("planning:errors.budget.mainAccountLocked");
 
   const months = await getDocs(accountMonthsQuery(uid, accountId));
+  const accountKey = await getAccountKey(budget, accountId);
+  const stored = await Promise.all(
+    months.docs.map(async (monthDoc) => {
+      const { month, payload } = monthDoc.data();
+      const { transactions } = await decryptJson<BudgetMonthPayload>(
+        payload.toUint8Array(),
+        accountKey,
+        paths.month(accountId, month),
+      );
+      return transactions;
+    }),
+  );
+  const outward = stored.flat().flatMap(linksOf).filter(({ target }) => target.accountId !== accountId);
+  if (outward.length > 0) {
+    await runTransaction(fb.firestore, async (transaction) => {
+      const linked = await readMonths(transaction, budget, outward.map(({ target }) => linkSlot(target)));
+      outward.forEach((link) => detach(linked, link));
+      await writeMonths(transaction, budget, linked);
+    });
+  }
+
   for (let start = 0; start < months.docs.length; start += BATCH_LIMIT) {
     const batch = writeBatch(fb.firestore);
     months.docs.slice(start, start + BATCH_LIMIT).forEach((monthDoc) => batch.delete(monthDoc.ref));
@@ -707,16 +735,109 @@ const writeMonths = (transaction: Transaction, budget: UnlockedBudget, months: L
   );
 
 const missingTransaction = () => new Error("planning:errors.budget.transactionMissing");
+const linkedLocked = () => new Error("planning:errors.budget.linkedLocked");
+const splitOffsTooLarge = () => new Error("planning:errors.budget.splitOffsTooLarge");
 
-/** Deletes the transactions, each from its month; every affected month is written in one transaction. */
+type StoredTransaction = BudgetMonthPayload["transactions"][number];
+
+const linkSlot = ({ accountId, month }: BudgetLinkRef): MonthSlot => ({ accountId, month });
+
+const linkRefOf = ({ id, accountId, date }: BudgetTransactionRef): BudgetLinkRef => ({
+  transactionId: id,
+  accountId,
+  month: monthOfDate(date),
+});
+
+/** The stored transaction and its position in an already read month. */
+const locate = (months: LoadedMonths, slot: MonthSlot, id: string) => {
+  const month = months.get(slotId(slot));
+  const index = month ? month.transactions.findIndex((stored) => stored.id === id) : -1;
+  if (!month || index === -1) return null;
+  return { month, index, stored: month.transactions[index] };
+};
+
+const locateOrThrow = (months: LoadedMonths, slot: MonthSlot, id: string) => {
+  const found = locate(months, slot, id);
+  if (!found) throw missingTransaction();
+  return found;
+};
+
+/** Removes a refund split-off; its amount returns to the split-off it was carved out of, or to the rest. */
+const dropRefundSplitOff = (purchase: StoredTransaction, splitOffId: string): StoredTransaction => {
+  const splitOffs = purchase.splitOffs ?? [];
+  const removed = splitOffs.find((splitOff) => splitOff.id === splitOffId);
+  if (!removed) return purchase;
+  return {
+    ...purchase,
+    splitOffs: splitOffs
+      .filter((splitOff) => splitOff.id !== splitOffId)
+      .map((splitOff) =>
+        splitOff.id === removed.parentSplitOffId ? { ...splitOff, amount: splitOff.amount + removed.amount } : splitOff,
+      ),
+  };
+};
+
+/** A refund that counts again: no link, not excluded. */
+const releaseRefund = ({ refundOf: _link, ...refund }: StoredTransaction): StoredTransaction => ({
+  ...refund,
+  excluded: false,
+});
+
+/** The other side of each link a transaction holds, and what cleaning it up means there. */
+type LinkEnd = { target: BudgetLinkRef } & ({ side: "purchase"; splitOffId: string } | { side: "refund" });
+
+const linksOf = (stored: StoredTransaction): LinkEnd[] => [
+  ...(stored.refundOf ? [{ target: stored.refundOf, side: "purchase" as const, splitOffId: stored.refundOf.splitOffId }] : []),
+  ...(stored.splitOffs ?? []).flatMap((splitOff) =>
+    splitOff.refund ? [{ target: splitOff.refund, side: "refund" as const }] : [],
+  ),
+];
+
+/** Cleans up the far side of a link whose near side goes away (a missing far side is left as it is). */
+const detach = (months: LoadedMonths, link: LinkEnd) => {
+  const found = locate(months, linkSlot(link.target), link.target.transactionId);
+  if (!found) return;
+  found.month.transactions[found.index] =
+    link.side === "purchase" ? dropRefundSplitOff(found.stored, link.splitOffId) : releaseRefund(found.stored);
+};
+
+/** Reads the slots not read yet into `months` (still before the transaction's first write). */
+const readMoreMonths = async (
+  transaction: Transaction,
+  budget: UnlockedBudget,
+  months: LoadedMonths,
+  slots: MonthSlot[],
+) => {
+  const more = await readMonths(
+    transaction,
+    budget,
+    slots.filter((slot) => !months.has(slotId(slot))),
+  );
+  more.forEach((month, id) => months.set(id, month));
+};
+
+/**
+ * Deletes the transactions, each from its month, with their split-offs. A linked refund on the other side is cleaned
+ * up: a deleted refund removes its refund split-off from the purchase; a deleted purchase makes its refunds count
+ * again. Every affected month (other months and accounts included) is written in one transaction.
+ */
 export const deleteBudgetTransactions = async (budget: UnlockedBudget, refs: BudgetTransactionRef[]): Promise<void> => {
   const ids = new Set(refs.map((ref) => ref.id));
 
   await runTransaction(fb.firestore, async (transaction) => {
     const months = await readMonths(transaction, budget, refs.map(slotOf));
+    const links = refs
+      .flatMap((ref) => {
+        const found = locate(months, slotOf(ref), ref.id);
+        return found ? linksOf(found.stored) : [];
+      })
+      .filter(({ target }) => !ids.has(target.transactionId));
+    await readMoreMonths(transaction, budget, months, links.map(({ target }) => linkSlot(target)));
+
     for (const month of months.values()) {
       month.transactions = month.transactions.filter((stored) => !ids.has(stored.id));
     }
+    links.forEach((link) => detach(months, link));
     await writeMonths(transaction, budget, months);
   });
 };
@@ -725,7 +846,10 @@ export const deleteBudgetTransactions = async (budget: UnlockedBudget, refs: Bud
  * Applies the edits; a new `date` or `accountId` moves the transaction to that month / account document. Every
  * affected month document is read and written in one transaction, so a move never leaves a copy or loses the row.
  * The frozen import fields (`importHash`, `sourceFile`, `counterpartyAccount`) always keep their stored values:
- * the stored transaction is spread and only the patch's fields override it.
+ * the stored transaction is spread and only the patch's fields override it. Both sides of a refund link cannot move
+ * to another month / account or change type, a linked refund keeps its amount and stays excluded
+ * (`errors.budget.linkedLocked`), and a split transaction's amount stays above its split-offs
+ * (`errors.budget.splitOffsTooLarge`).
  */
 export const updateBudgetTransactions = async (
   budget: UnlockedBudget,
@@ -751,6 +875,23 @@ export const updateBudgetTransactions = async (
       if (index === -1) throw missingTransaction();
 
       const stored = source.transactions[index];
+      if (stored.refundOf || stored.splitOffs?.some((splitOff) => splitOff.refund)) {
+        // Both sides of a link keep their place (the link points at their month) and type
+        const moved = slotId(targetOf(update)) !== slotId(slotOf(ref));
+        const retyped = patch.type !== undefined && patch.type !== stored.type;
+        if (moved || retyped) throw linkedLocked();
+      }
+      if (stored.refundOf) {
+        // A linked refund's amount is locked (its split-off on the purchase mirrors it), and it stays excluded
+        const changes = (key: "amount" | "amountMain" | "currency" | "excluded") =>
+          patch[key] !== undefined && patch[key] !== stored[key];
+        if (changes("amount") || changes("amountMain") || changes("currency") || changes("excluded")) {
+          throw linkedLocked();
+        }
+      }
+      if (patch.amount !== undefined && splitRest({ amount: patch.amount, splitOffs: stored.splitOffs }) <= 0) {
+        throw splitOffsTooLarge();
+      }
       const next: BudgetTransaction = {
         ...stored,
         accountId: ref.accountId,
@@ -775,6 +916,162 @@ export const updateBudgetTransactions = async (
     await writeMonths(transaction, budget, months);
     return updated;
   });
+
+// ---------------------------------------------------------------------------
+// Split-offs and refunds (GLOSSARY → Split-off, Linked refund)
+// ---------------------------------------------------------------------------
+
+/** Reads the transaction's month, lets `change` replace it, and writes the month back. */
+const changeTransaction = (
+  budget: UnlockedBudget,
+  ref: BudgetTransactionRef,
+  change: (stored: StoredTransaction) => StoredTransaction,
+) =>
+  runTransaction(fb.firestore, async (transaction) => {
+    const months = await readMonths(transaction, budget, [slotOf(ref)]);
+    const { month, index, stored } = locateOrThrow(months, slotOf(ref), ref.id);
+    month.transactions[index] = change(stored);
+    await writeMonths(transaction, budget, months);
+  });
+
+const splitOffOrThrow = (stored: StoredTransaction, splitOffId: string) => {
+  const splitOff = stored.splitOffs?.find((candidate) => candidate.id === splitOffId);
+  if (!splitOff) throw new Error("planning:errors.budget.splitOffMissing");
+  return splitOff;
+};
+
+/** Every split-off above zero and their sum below the total (`errors.budget.splitOffsTooLarge`). */
+const checkSplitOffs = (stored: StoredTransaction) => {
+  const splitOffs = stored.splitOffs ?? [];
+  if (splitOffs.some((splitOff) => splitOff.amount <= 0) || splitRest(stored) <= 0) throw splitOffsTooLarge();
+  return stored;
+};
+
+/** Splits off part of a transaction (own amount, category and note); the transaction keeps the rest. */
+export const addBudgetSplitOff = async (
+  budget: UnlockedBudget,
+  ref: BudgetTransactionRef,
+  input: BudgetSplitOffInput,
+): Promise<BudgetSplitOff> => {
+  const splitOff: BudgetSplitOff = { id: crypto.randomUUID(), ...input, excluded: false };
+  await changeTransaction(budget, ref, (stored) =>
+    checkSplitOffs({ ...stored, splitOffs: [...(stored.splitOffs ?? []), splitOff] }),
+  );
+  return splitOff;
+};
+
+/** Edits or excludes / restores a split-off. A refund split-off keeps its amount and stays excluded. */
+export const updateBudgetSplitOff = (
+  budget: UnlockedBudget,
+  ref: BudgetTransactionRef,
+  splitOffId: string,
+  patch: BudgetSplitOffPatch,
+): Promise<void> =>
+  changeTransaction(budget, ref, (stored) => {
+    const current = splitOffOrThrow(stored, splitOffId);
+    const amountChanges = patch.amount !== undefined && patch.amount !== current.amount;
+    if (current.refund && (amountChanges || patch.excluded === false)) throw linkedLocked();
+    return checkSplitOffs({
+      ...stored,
+      splitOffs: (stored.splitOffs ?? []).map((splitOff) => (splitOff.id === splitOffId ? { ...splitOff, ...patch } : splitOff)),
+    });
+  });
+
+/** Removes a split-off: its amount returns to the transaction. A refund split-off is unlinked (the refund counts again). */
+export const removeBudgetSplitOff = async (
+  budget: UnlockedBudget,
+  ref: BudgetTransactionRef,
+  splitOffId: string,
+): Promise<void> => {
+  await runTransaction(fb.firestore, async (transaction) => {
+    const months = await readMonths(transaction, budget, [slotOf(ref)]);
+    const { month, index, stored } = locateOrThrow(months, slotOf(ref), ref.id);
+    const { refund } = splitOffOrThrow(stored, splitOffId);
+    if (refund) await readMoreMonths(transaction, budget, months, [linkSlot(refund)]);
+
+    month.transactions[index] = refund
+      ? dropRefundSplitOff(stored, splitOffId)
+      : { ...stored, splitOffs: (stored.splitOffs ?? []).filter((splitOff) => splitOff.id !== splitOffId) };
+    if (refund) detach(months, { target: refund, side: "refund" });
+    await writeMonths(transaction, budget, months);
+  });
+};
+
+/**
+ * Links an incoming refund to a purchase (or one of its split-offs): the refund's amount (`input.amount`, in the
+ * purchase's currency) is split off the purchase as an excluded refund split-off under the same category, and the
+ * refund is excluded. Fails with `errors.budget.refundNotAllowed` unless the refund is income, relevant, not linked,
+ * dated on or after the purchase, and smaller than what is left of the purchase / split-off. Both months (any months
+ * and accounts) are written in one transaction.
+ */
+export const linkBudgetRefund = async (
+  budget: UnlockedBudget,
+  { purchase, splitOffId, refund, amount }: BudgetRefundLinkInput,
+): Promise<void> => {
+  await runTransaction(fb.firestore, async (transaction) => {
+    const months = await readMonths(transaction, budget, [slotOf(purchase), slotOf(refund)]);
+    const bought = locateOrThrow(months, slotOf(purchase), purchase.id);
+    const returned = locateOrThrow(months, slotOf(refund), refund.id);
+    const purchaseTx: BudgetTransaction = { ...bought.stored, accountId: purchase.accountId };
+    const parent = splitOffId === undefined ? undefined : splitOffOrThrow(bought.stored, splitOffId);
+
+    const allowed =
+      purchaseTx.type === "expense" &&
+      !purchaseTx.excluded &&
+      !parent?.excluded &&
+      returned.stored.type === "income" &&
+      !returned.stored.excluded &&
+      !returned.stored.refundOf &&
+      returned.stored.date >= purchaseTx.date &&
+      amount > 0 &&
+      amount < refundRoom(purchaseTx, splitOffId);
+    if (!allowed) throw new Error("planning:errors.budget.refundNotAllowed");
+
+    const refundSplitOff: BudgetSplitOff = {
+      id: crypto.randomUUID(),
+      amount,
+      categoryId: parent ? parent.categoryId : purchaseTx.categoryId,
+      note: returned.stored.payee,
+      excluded: true,
+      refund: linkRefOf(refund),
+      ...(parent && { parentSplitOffId: parent.id }),
+    };
+    bought.month.transactions[bought.index] = {
+      ...bought.stored,
+      splitOffs: [
+        ...(bought.stored.splitOffs ?? []).map((splitOff) =>
+          splitOff.id === parent?.id ? { ...splitOff, amount: splitOff.amount - amount } : splitOff,
+        ),
+        refundSplitOff,
+      ],
+    };
+    returned.month.transactions[returned.index] = {
+      ...returned.stored,
+      excluded: true,
+      refundOf: { ...linkRefOf(purchase), splitOffId: refundSplitOff.id },
+    };
+    await writeMonths(transaction, budget, months);
+  });
+};
+
+/**
+ * Unlinks a refund: its refund split-off leaves the purchase (the amount returns) and the refund counts again.
+ * `refund` is where the refund is stored (the row's own place, or a refund split-off's `refund`).
+ */
+export const unlinkBudgetRefund = async (budget: UnlockedBudget, refund: BudgetLinkRef): Promise<void> => {
+  await runTransaction(fb.firestore, async (transaction) => {
+    const months = await readMonths(transaction, budget, [linkSlot(refund)]);
+    const returned = locate(months, linkSlot(refund), refund.transactionId);
+    if (!returned) throw missingTransaction();
+    const { refundOf } = returned.stored;
+    if (!refundOf) return;
+    await readMoreMonths(transaction, budget, months, [linkSlot(refundOf)]);
+
+    returned.month.transactions[returned.index] = releaseRefund(returned.stored);
+    detach(months, { target: refundOf, side: "purchase", splitOffId: refundOf.splitOffId });
+    await writeMonths(transaction, budget, months);
+  });
+};
 
 // ---------------------------------------------------------------------------
 // Plans: one encrypted document per user and planned month

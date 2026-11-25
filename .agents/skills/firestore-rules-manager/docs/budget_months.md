@@ -23,10 +23,12 @@ Budget transactions (MFE `planning`, Budget; ADR 0002): one document per account
 | --- | --- | --- | --- |
 | Add a transaction (manual) | `packages/planning/src/api/budget/endpoints.ts#addBudgetTransaction` | get + set `budget_months/{accountId}_{month}` (created on the month's first transaction) | ✅ transaction |
 | Import a statement | `packages/planning/src/api/budget/endpoints.ts#importBudgetTransactions` | get every affected `budget_months/{accountId}_{month}`, then set each (created on its first transaction); the whole import fails when any month exceeds the size guard (`errors.budget.importTooLarge`) | ✅ transaction |
-| Delete transactions (one or bulk) | `packages/planning/src/api/budget/endpoints.ts#deleteBudgetTransactions` (`deleteBudgetTransaction` for one) | get + set every affected month, or delete a month once its last transaction is gone | ✅ transaction |
+| Delete transactions (one or bulk) | `packages/planning/src/api/budget/endpoints.ts#deleteBudgetTransactions` (`deleteBudgetTransaction` for one) | get + set every affected month, or delete a month once its last transaction is gone; the months of linked refunds / purchases (any account and month) are read and set too, to clean up the other side | ✅ transaction |
 | Edit transactions (inline, dialog, bulk set category / confirm); move to another month / account | `packages/planning/src/api/budget/endpoints.ts#updateBudgetTransactions` | get every source and target month, then set each (a month left empty is deleted; a target month is created on its first transaction) | ✅ transaction |
+| Split-offs: add, edit / exclude, remove | `packages/planning/src/api/budget/endpoints.ts#addBudgetSplitOff`, `#updateBudgetSplitOff`, `#removeBudgetSplitOff` | get + set the transaction's month; removing a refund split-off also gets + sets the refund's month | ✅ transaction |
+| Link / unlink a refund | `packages/planning/src/api/budget/endpoints.ts#linkBudgetRefund`, `#unlinkBudgetRefund` | get the purchase's and the refund's months (any accounts and months), then set both | ✅ transaction |
 | Reset budget | `packages/planning/src/api/budget/endpoints.ts#resetBudget` | delete every `budget_months` doc where `memberIds array-contains me`, with every other budget document of the user; `budget_keys/{me}` in the last batch (see `budget_accounts.md`) | ⚠️ batches of 500 (keys last, so a failed reset stays locked and can be retried) |
-| Delete an account (cascade) | `packages/planning/src/api/budget/endpoints.ts#deleteBudgetAccount` | delete every `budget_months` doc where `memberIds array-contains me` and `accountId == id`, before the account itself (see `budget_accounts.md`) | ⚠️ batches of 500 |
+| Delete an account (cascade) | `packages/planning/src/api/budget/endpoints.ts#deleteBudgetAccount` | first get + set the other accounts' months holding the other side of a refund link (unlinked, one transaction), then delete every `budget_months` doc where `memberIds array-contains me` and `accountId == id`, before the account itself (see `budget_accounts.md`) | ⚠️ unlink in one transaction, then batches of 500 |
 
 ## Queries
 | Query | Endpoint | Allowed by |
@@ -35,7 +37,7 @@ Budget transactions (MFE `planning`, Budget; ADR 0002): one document per account
 | `budget_months` where `memberIds array-contains me` | `resetBudget` | read: member |
 | `budget_months` where `memberIds array-contains me`, `limit 1` | `setBudgetMainCurrency` (main currency locked once any transaction exists) | read: member |
 | `budget_months` where `memberIds array-contains me` and `accountId == id` (optionally `limit 1`) | `getBudgetAccountsWithTransactions`, `countBudgetAccountTransactions`, `updateBudgetAccount`, `deleteBudgetAccount` | read: member; index `memberIds CONTAINS, accountId ASC` |
-| `get budget_months/{accountId}_{month}` (missing doc, inside a transaction) | `addBudgetTransaction`, `importBudgetTransactions`, `updateBudgetTransactions` (move target) | read: member of `budget_accounts/{accountId}` |
+| `get budget_months/{accountId}_{month}` (missing doc, inside a transaction) | `addBudgetTransaction`, `importBudgetTransactions`, `updateBudgetTransactions` (move target), refund link cleanup (a deleted other side) | read: member of `budget_accounts/{accountId}` |
 | `get budget_months/{accountId}_{month}` for each month of a range (missing docs included) | `getAccountTransactions` (import preview duplicate check) | read: member of `budget_accounts/{accountId}` |
 
 ## Access matrix

@@ -58,10 +58,13 @@ export const filterTransactions = (
       return false;
     }
     if (categoryIds.size > 0) {
-      const resolved = resolveTransactionCategory(categories, transaction);
-      const matches = resolved
-        ? categoryIds.has(resolved.category.id) || (!!resolved.subcategory && categoryIds.has(resolved.subcategory.id))
-        : categoryIds.has(UNCATEGORIZED_FILTER);
+      // A split transaction matches through its own category or any split-off's
+      const matches = [transaction, ...(transaction.splitOffs ?? [])].some(({ categoryId }) => {
+        const resolved = resolveTransactionCategory(categories, { type: transaction.type, categoryId });
+        return resolved
+          ? categoryIds.has(resolved.category.id) || (!!resolved.subcategory && categoryIds.has(resolved.subcategory.id))
+          : categoryIds.has(UNCATEGORIZED_FILTER);
+      });
       if (!matches) return false;
     }
     return true;

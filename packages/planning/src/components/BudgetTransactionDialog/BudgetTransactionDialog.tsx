@@ -2,6 +2,7 @@ import { useCurrencyOptions } from "@flaner/shared/hooks";
 import { fromMinorUnits, toMinorUnits } from "@flaner/shared/utils";
 import {
   Button,
+  DatePicker,
   Dialog,
   DialogContent,
   DialogHeader,
@@ -33,6 +34,7 @@ import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { getBudgetTransactionSchema, type BudgetTransactionFormData } from "../../utils/schemas";
 import { sortBudgetAccounts } from "../../utils/sortBudgetAccounts";
+import { isRefundLinked } from "../../utils/splitOffs";
 import { CategoryPicker } from "../CategoryPicker";
 import { budgetTransactionDialogStyles as styles } from "./BudgetTransactionDialog.styles";
 
@@ -87,7 +89,8 @@ const defaultValues = (
 
 /**
  * Add transaction (manual entry; saved with a category it is confirmed), or with `transaction` edit one: a changed
- * category confirms it, the frozen import fields stay as they are.
+ * category confirms it, the frozen import fields stay as they are. While a refund is linked, both sides keep their
+ * type, date and account, and the refund keeps its amount (shown read-only).
  */
 export const BudgetTransactionDialog = ({
   open,
@@ -105,6 +108,8 @@ export const BudgetTransactionDialog = ({
   const { mutateAsync: addTransaction, isPending: isAdding } = useAddBudgetTransactionMutation();
   const { mutateAsync: updateTransactions, isPending: isUpdating } = useUpdateBudgetTransactionsMutation();
   const isPending = isAdding || isUpdating;
+  const isLinked = !!transaction && isRefundLinked(transaction);
+  const isAmountLocked = !!transaction?.refundOf;
 
   const methods = useForm<BudgetTransactionFormData>({
     resolver: zodResolver(getBudgetTransactionSchema(t, mainCurrency)),
@@ -135,6 +140,7 @@ export const BudgetTransactionDialog = ({
   }, [isForeign, rateOverridden, rate, amount, setValue]);
 
   const { field: amountMainField, fieldState: amountMainState } = useController({ control, name: "amountMain" });
+  const { field: dateField } = useController({ control, name: "date" });
   const { field: categoryField } = useController({ control, name: "categoryId" });
   const { field: accountField, fieldState: accountState } = useController({ control, name: "accountId" });
 
@@ -210,6 +216,7 @@ export const BudgetTransactionDialog = ({
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <div className={styles.body}>
+              {isLinked && <p className={styles.lockedHint}>{t("budget.transactionForm.linkedLocked")}</p>}
               <Tabs
                 className={styles.typeTabs}
                 value={type}
@@ -222,21 +229,34 @@ export const BudgetTransactionDialog = ({
               >
                 <TabsList className={styles.typeTabsList} aria-label={t("budget.transactionForm.type")}>
                   {BUDGET_CATEGORY_TYPES.map((value) => (
-                    <TabsTrigger key={value} value={value}>
+                    <TabsTrigger key={value} value={value} disabled={isLinked && value !== type}>
                       {t(`budget.transactionForm.types.${value}`)}
                     </TabsTrigger>
                   ))}
                 </TabsList>
               </Tabs>
 
-              <FormMoneyInput
-                amountName="amount"
-                currencyName="currency"
-                label={t("budget.transactionForm.amount")}
-                currencyLabel={t("budget.transactionForm.currency")}
-                currencyOptions={currencyOptions}
-                onCurrencyChange={() => setValue("rateOverridden", false)}
-              />
+              {/* Read-only, not `disabled` form fields: react-hook-form would drop a disabled field's value on submit */}
+              {isAmountLocked ? (
+                <MoneyInput
+                  label={t("budget.transactionForm.amount")}
+                  currencyLabel={t("budget.transactionForm.currency")}
+                  currency={currency}
+                  value={amount ?? ""}
+                  readOnly
+                  disabled
+                  currencyDisabled
+                />
+              ) : (
+                <FormMoneyInput
+                  amountName="amount"
+                  currencyName="currency"
+                  label={t("budget.transactionForm.amount")}
+                  currencyLabel={t("budget.transactionForm.currency")}
+                  currencyOptions={currencyOptions}
+                  onCurrencyChange={() => setValue("rateOverridden", false)}
+                />
+              )}
 
               {isForeign && (
                 <div className={styles.conversion}>
@@ -248,6 +268,7 @@ export const BudgetTransactionDialog = ({
                     currencyLabel={t("budget.transactionForm.currency")}
                     currency={mainCurrency}
                     currencyDisabled
+                    disabled={isAmountLocked}
                     value={amountMainField.value ?? ""}
                     error={amountMainState.error?.message}
                     onBlur={amountMainField.onBlur}
@@ -275,7 +296,11 @@ export const BudgetTransactionDialog = ({
               )}
 
               <div className={styles.grid}>
-                <FormDatePicker name="date" label={t("budget.transactionForm.date")} />
+                {isLinked ? (
+                  <DatePicker label={t("budget.transactionForm.date")} value={dateField.value} disabled />
+                ) : (
+                  <FormDatePicker name="date" label={t("budget.transactionForm.date")} />
+                )}
                 {/* Not `FormSelect disabled`: react-hook-form would drop a disabled field's value on submit */}
                 <Select
                   label={t("budget.transactionForm.account")}
@@ -291,7 +316,7 @@ export const BudgetTransactionDialog = ({
                   }}
                   onBlur={accountField.onBlur}
                   error={accountState.error?.message}
-                  disabled={accounts.length < 2}
+                  disabled={accounts.length < 2 || isLinked}
                 />
               </div>
 

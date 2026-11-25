@@ -7,5 +7,6 @@ export const budgetTransactionDialogStyles = {
   grid: "grid grid-cols-1 sm:grid-cols-2 gap-4",
   conversion: "space-y-1",
   conversionHint: "flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground",
+  lockedHint: "rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground",
   footer: "flex justify-end gap-2 px-4 py-3 md:px-6 border-t",
 };

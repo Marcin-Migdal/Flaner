@@ -147,7 +147,11 @@
       "accountHasTransactions": "This account has transactions, so its currency can't be changed.",
       "hiddenAccountCannotBeMain": "A hidden account can't be the main account. Show it first.",
       "mainCurrencyLocked": "The main currency is locked because transactions exist.",
-      "accountNotFound": "This account no longer exists. Reload the page."
+      "accountNotFound": "This account no longer exists. Reload the page.",
+      "linkedLocked": "This transaction is part of a linked refund: its amount, type, date and account are locked. Unlink the refund first.",
+      "splitOffsTooLarge": "Split-offs must stay below the transaction's amount.",
+      "splitOffMissing": "This split-off no longer exists. Reload the page.",
+      "refundNotAllowed": "This refund can't be linked: it must be relevant income, not linked yet, dated on or after the purchase and smaller than what's left of it."
     }
   },
   "splits": {
@@ -763,7 +767,11 @@
       "payeeMax": "Use at most 120 characters.",
       "descriptionMax": "Use at most 500 characters.",
       "accountRequired": "Choose an account.",
-      "categoryRequired": "Choose a category."
+      "categoryRequired": "Choose a category.",
+      "splitOffTooLarge": "Split-offs must stay below the transaction's amount",
+      "noteMax": "The note is too long",
+      "refundRequired": "Pick the refund",
+      "refundTooLarge": "The refund must be smaller than what's left of the purchase"
     },
     "transactionsEmpty": {
       "title": "No transactions yet",
@@ -877,12 +885,17 @@
       "cancel": "Cancel",
       "save": "Add transaction",
       "editTitle": "Edit transaction",
-      "saveEdit": "Save changes"
+      "saveEdit": "Save changes",
+      "linkedLocked": "A refund is linked: type, date, account and the refund's amount are locked until you unlink it."
     },
     "deleteTransaction": {
       "title": "Delete this transaction?",
       "description": "\"{{payee}}\" will be removed from your budget. This cannot be undone.",
-      "confirm": "Delete"
+      "confirm": "Delete",
+      "imported": "It was imported, so importing the same file again brings it back: to leave it out for good, exclude it instead.",
+      "splitOffs_one": "Its split-off is deleted with it.",
+      "splitOffs_other": "Its {{count}} split-offs are deleted with it.",
+      "linked": "Its linked refund is unlinked."
     },
     "transactionDetails": {
       "date": "Date",
@@ -893,7 +906,10 @@
       "amountAtRate": "{{amount}} = {{amountMain}} at the rate {{rate}} from {{date}}",
       "amountTyped": "{{amount}} = {{amountMain}} (entered by hand)",
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "rest": "Counted on the transaction",
+      "refund": "Refund",
+      "refundLinked": "Linked to a purchase, not counted as income"
     },
     "transactionFilters": {
       "label": "Filters",
@@ -1132,6 +1148,41 @@
         "noTransactions": "No transactions this month.",
         "openInTransactions": "Open in Transactions"
       }
+    },
+    "splitOff": {
+      "title": "Split off",
+      "editTitle": "Edit split-off",
+      "description": "Part of \"{{payee}}\" ({{amount}}) counted under its own category. The transaction keeps the rest.",
+      "amount": "Amount",
+      "amountLocked": "Locked while the refund is linked",
+      "room": "Less than {{amount}}",
+      "category": "Category",
+      "note": "Note",
+      "save": "Split off",
+      "saveEdit": "Save",
+      "action": "Split off",
+      "edit": "Edit",
+      "remove": "Remove",
+      "details": "Details of split-off {{name}}",
+      "label": "Split-off",
+      "of": "of {{amount}}",
+      "list": "Split-offs of {{payee}}"
+    },
+    "refundLink": {
+      "title": "Link a refund",
+      "description": "Pick the incoming refund of \"{{payee}}\". It is split off the purchase (up to {{amount}}) and no longer counted as income.",
+      "candidates": "Incoming transactions",
+      "noCandidates": "No incoming transaction fits: it must not be excluded or linked, be dated on or after the purchase and be smaller than what's left of it.",
+      "amount": "Refunded amount ({{currency}})",
+      "converted": "Converted from {{amount}} through the main-currency amounts. You can change it.",
+      "save": "Link refund",
+      "action": "Link a refund",
+      "unlink": "Unlink refund",
+      "refundBadge": "Refund"
+    },
+    "exclusion": {
+      "exclude": "Exclude",
+      "restore": "Restore"
     }
   }
 }

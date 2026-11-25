@@ -146,8 +146,8 @@ const buildSide = (
 };
 
 export const buildPlannerMonth = ({ categories, plan, ...ledgerInput }: PlannerMonthInput): PlannerMonth => {
-  const { totals, days } = buildMonthLedger(ledgerInput);
-  const counted = days.flatMap((day) => day.transactions);
+  // Split-offs count under their own category, the transaction's rest under its category
+  const { totals, entries: counted } = buildMonthLedger(ledgerInput);
 
   const expenses = buildSide(categories, "expense", plan?.limits ?? {}, counted);
   const income = buildSide(categories, "income", plan?.plannedIncome ?? {}, counted);

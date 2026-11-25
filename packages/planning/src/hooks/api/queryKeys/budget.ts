@@ -17,6 +17,13 @@ export const budgetKeys = {
   /** Prefix of every month's transactions. */
   allTransactions: (uid: string) => ["budget", "transactions", uid],
   transactions: (uid: string, month: BudgetMonth) => [...budgetKeys.allTransactions(uid), month],
+  /** Transactions of the months `from`..`to` (refund candidates); under `allTransactions`, so writes reach it. */
+  transactionsRange: (uid: string, from: BudgetMonth, to: BudgetMonth) => [
+    ...budgetKeys.allTransactions(uid),
+    "range",
+    from,
+    to,
+  ],
   /** Ids of the accounts holding at least one transaction (currency locks); stale with the accounts. */
   accountsWithTransactions: (uid: string) => [...budgetKeys.accounts(uid), "withTransactions"],
   /** One account's transaction count (delete confirmation). */
@@ -37,6 +44,14 @@ export const budgetInvalidation = {
   /** Edits and bulk deletes change every month a transaction left or moved to. */
   transactionsInMonths: ({ uid }: UserType, dates: string[]) => [
     ...[...new Set(dates.map(monthOfDate))].map((month) => budgetKeys.transactions(uid, month)),
+    budgetKeys.accountsWithTransactions(uid),
+  ],
+  /**
+   * Deletes, split-offs and refund links: a linked refund on the other side may sit in any month and account, so
+   * every loaded month is refetched.
+   */
+  linkedTransactionsChanged: ({ uid }: UserType) => [
+    budgetKeys.allTransactions(uid),
     budgetKeys.accountsWithTransactions(uid),
   ],
   /** An import changes every month it adds to. */
