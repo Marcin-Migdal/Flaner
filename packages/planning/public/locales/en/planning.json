@@ -1311,6 +1311,64 @@
     "exclusion": {
       "exclude": "Exclude",
       "restore": "Restore"
+    },
+    "summary": {
+      "spending": {
+        "title": "Spending by category",
+        "chartLabel": "Spending by category, {{month}}",
+        "listLabel": "Categories by spending",
+        "spent": "Spent",
+        "allCategories": "All categories",
+        "others": "Others",
+        "othersOf": "Others ({{names}})",
+        "uncategorized": "Uncategorized",
+        "onCategory": "{{name}} · general",
+        "empty": "No spending this month."
+      },
+      "totals": {
+        "title": "Month totals",
+        "income": "Income",
+        "expenses": "Expenses",
+        "balance": "Balance",
+        "up": "Up {{amount}} vs {{month}}",
+        "down": "Down {{amount}} vs {{month}}",
+        "same": "Same as {{month}}"
+      },
+      "plan": {
+        "title": "Plan",
+        "spentOfLimit": "{{spent}} of {{limit}}",
+        "progressLabel": "Spent in the plan",
+        "daysLeft_one": "{{count}} day left",
+        "daysLeft_other": "{{count}} days left",
+        "monthEnded": "Month ended",
+        "exceeded_one": "Over the limit: {{name}}",
+        "exceeded_other": "Over the limit: {{name}} and {{more}} more",
+        "outside": "Outside the plan {{amount}}",
+        "noLimits": "No limits this month yet.",
+        "openPlanner": "Open Planner"
+      },
+      "review": {
+        "title": "To review",
+        "count_one": "{{count}} transaction to review",
+        "count_other": "{{count}} transactions to review",
+        "split": "{{unconfirmed}} unconfirmed · {{uncategorized}} uncategorized",
+        "allClear": "Everything is reviewed.",
+        "open": "Review in Transactions"
+      },
+      "bars": {
+        "title": "Income vs expenses",
+        "chartLabel": "Income vs expenses, 12 months ending {{month}}",
+        "description": "{{month}}: income {{income}} · expenses {{expenses}}",
+        "income": "Income",
+        "expenses": "Expenses"
+      },
+      "recurring": {
+        "title": "Recurring this month",
+        "progress": "{{done}} of {{total}} done · {{amount}} still expected",
+        "empty": "Nothing recurring this month.",
+        "open": "Open Recurring",
+        "received": "Received"
+      }
     }
   }
 }
