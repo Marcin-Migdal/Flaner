@@ -1,4 +1,4 @@
-import type { StatementRow, StatementTransactionRow } from "../types";
+import { isStatementTransactionRow, type StatementRow, type StatementTransactionRow } from "../types";
 
 /** What a bank account of the file is imported to: a Flaner account id, or `null` to skip its rows. */
 export type FileAccountTargets = Record<string, string | null>;
@@ -15,17 +15,19 @@ export type FileAccountSplit = {
   skipped: number;
 };
 
-const isTransactionRow = (row: StatementRow): row is StatementTransactionRow => row.status === "ok";
+/** The bank accounts (or cards) the file's read rows belong to, in the order they first appear, with their row counts. */
+export const countFileAccountRows = (rows: StatementRow[]): Map<string, number> => {
+  const counts = new Map<string, number>();
+  for (const { fileAccount } of rows.filter(isStatementTransactionRow)) {
+    counts.set(fileAccount, (counts.get(fileAccount) ?? 0) + 1);
+  }
+  return counts;
+};
 
-/** The bank accounts (or cards) the file's read rows belong to, in the order they first appear. */
-export const listFileAccounts = (rows: StatementRow[]): string[] => [
-  ...new Set(rows.filter(isTransactionRow).map((row) => row.fileAccount)),
-];
-
-/** `PL34 0215 … 9694` → `•••• 9694`: enough to tell a user's accounts apart without showing the whole number. */
+/** `PL34 0215 8418 … 9694` → `PL34 … 9694`: enough to tell a user's accounts apart without showing the whole number. */
 export const maskFileAccount = (fileAccount: string): string => {
   const compact = fileAccount.replace(/\s/g, "");
-  return compact.length > 4 ? `•••• ${compact.slice(-4)}` : compact;
+  return compact.length > 8 ? `${compact.slice(0, 4)} … ${compact.slice(-4)}` : compact;
 };
 
 /**
@@ -36,7 +38,7 @@ export const splitRowsByFileAccount = (rows: StatementRow[], targets: FileAccoun
   const groups = new Map<string, StatementTransactionRow[]>();
   let skipped = 0;
 
-  for (const row of rows.filter(isTransactionRow)) {
+  for (const row of rows.filter(isStatementTransactionRow)) {
     const accountId = targets[row.fileAccount];
     if (!accountId) {
       skipped += 1;

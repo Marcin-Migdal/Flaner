@@ -7,10 +7,10 @@ import { FormProvider, useController, useForm, useWatch, type Control } from "re
 import type { BudgetAccount } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import {
+  countFileAccountRows,
   maskFileAccount,
   parseStatementRows,
   STATEMENT_BANKS,
-  type StatementBank,
 } from "../../../../utils/statementImport";
 import {
   getImportSettingsSchema,
@@ -36,16 +36,6 @@ export type ImportSettingsStepProps = {
   onSubmit: (settings: ImportSettingsFormData) => void;
 };
 
-/** The bank accounts the file's rows belong to with their row counts, in file order. */
-const readFileAccounts = (bank: StatementBank | undefined, records: string[][]) => {
-  const counts = new Map<string, number>();
-  if (!bank) return counts;
-  for (const row of parseStatementRows(bank, records)) {
-    if (row.status === "ok") counts.set(row.fileAccount, (counts.get(row.fileAccount) ?? 0) + 1);
-  }
-  return counts;
-};
-
 /**
  * Import wizard, Settings step: bank (detected from the header, can be changed), the target of each bank account
  * of the file (one account: a Flaner account; several: a Flaner account each or skipped) and fallback currency.
@@ -69,7 +59,11 @@ export const ImportSettingsStep = ({
   const { control, getValues, setValue } = methods;
 
   const bank = useWatch({ control, name: "bank" });
-  const fileAccounts = useMemo(() => readFileAccounts(bank, file.records), [bank, file.records]);
+  // The file's bank accounts with their row counts, in file order
+  const fileAccounts = useMemo(
+    () => countFileAccountRows(bank ? parseStatementRows(bank, file.records) : []),
+    [bank, file.records],
+  );
   const isMultiAccount = fileAccounts.size > 1;
 
   // A (re)chosen bank reads the file again: its bank accounts get their preselected targets

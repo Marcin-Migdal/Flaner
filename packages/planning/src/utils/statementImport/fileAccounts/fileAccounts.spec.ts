@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { decodeStatementFile } from "../decodeStatementFile";
 import { parseStatementRows, readStatement } from "../statementParser";
-import { listFileAccounts, maskFileAccount, splitRowsByFileAccount } from "./fileAccounts";
+import { countFileAccountRows, maskFileAccount, splitRowsByFileAccount } from "./fileAccounts";
 
 const CHECKING = "PL34 0215 8418 3495 1552 2867 9694";
 const SAVINGS = "PL12 9594 8546 4581 7280 7584 0369";
@@ -18,19 +18,23 @@ const fixtureRows = async (month: string) => {
   return parseStatementRows("millennium", records);
 };
 
-describe("listFileAccounts", () => {
-  it("lists both bank accounts of the Millennium export, in file order", async () => {
-    expect(listFileAccounts(await fixtureRows("2026-10"))).toEqual([CHECKING, SAVINGS]);
+describe("countFileAccountRows", () => {
+  it("lists both bank accounts of the Millennium export in file order, with their rows", async () => {
+    const counts = countFileAccountRows(await fixtureRows("2026-10"));
+
+    expect([...counts.keys()]).toEqual([CHECKING, SAVINGS]);
+    expect(counts.get(CHECKING)).toBe(26);
+    expect(counts.get(SAVINGS)).toBe(4);
   });
 
   it("ignores rows that couldn't be read", () => {
-    expect(listFileAccounts([{ status: "error", rowNumber: 2, reason: "date" }])).toEqual([]);
+    expect(countFileAccountRows([{ status: "error", rowNumber: 2, reason: "date" }]).size).toBe(0);
   });
 });
 
 describe("maskFileAccount", () => {
-  it("keeps only the last four digits", () => {
-    expect(maskFileAccount(CHECKING)).toBe("•••• 9694");
+  it("keeps only the first and last four characters", () => {
+    expect(maskFileAccount(CHECKING)).toBe("PL34 … 9694");
   });
 
   it("leaves a short number as it is", () => {

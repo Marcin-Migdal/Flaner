@@ -3,12 +3,11 @@ import { getAccountTransactions } from "../../api/budget";
 import { useUnlockedBudget } from "../../context/BudgetContext";
 import {
   buildImportPreview,
+  isStatementErrorRow,
   splitRowsByFileAccount,
   type FileAccountTargets,
   type ImportPreview,
   type ImportPreviewInput,
-  type StatementErrorRow,
-  type StatementRow,
 } from "../../utils/statementImport";
 import { exchangeRateQueryOptions } from "../api/query";
 
@@ -21,8 +20,6 @@ export type MultiAccountImportPreview = ImportPreview & {
   /** Read rows of skipped bank accounts. */
   skipped: number;
 };
-
-const isErrorRow = (row: StatementRow): row is StatementErrorRow => row.status === "error";
 
 /**
  * Builds the import preview (a one-off read whose result lives in the wizard, not in the query cache, hence a
@@ -58,7 +55,7 @@ export const useImportPreview = () => {
         rows: previews
           .flatMap((preview) => preview.rows)
           .sort((a, b) => b.transaction.date.localeCompare(a.transaction.date) || a.rowNumber - b.rowNumber),
-        errors: rows.filter(isErrorRow),
+        errors: rows.filter(isStatementErrorRow),
         skipped,
       };
     },

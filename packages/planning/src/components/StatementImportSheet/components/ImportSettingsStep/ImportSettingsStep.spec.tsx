@@ -75,9 +75,9 @@ describe("ImportSettingsStep", () => {
     renderStep([CHECKING, CHECKING, SAVINGS]);
 
     expect(screen.getByText("Bank accounts in this file")).toBeInTheDocument();
-    expect(screen.getByLabelText("•••• 9694")).toBeInTheDocument();
+    expect(screen.getByLabelText("PL34 … 9694")).toBeInTheDocument();
     expect(screen.getByText("2 rows")).toBeInTheDocument();
-    expect(screen.getByLabelText("•••• 0369")).toBeInTheDocument();
+    expect(screen.getByLabelText("PL12 … 0369")).toBeInTheDocument();
     expect(screen.getByText("1 row")).toBeInTheDocument();
   });
 
