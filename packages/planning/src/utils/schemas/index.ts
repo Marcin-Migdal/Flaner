@@ -9,3 +9,4 @@ export * from "./budget-security-schema";
 export * from "./budget-plan-schema";
 export * from "./budget-account-schema";
 export * from "./budget-import-schema";
+export * from "./budget-recurring-schema";

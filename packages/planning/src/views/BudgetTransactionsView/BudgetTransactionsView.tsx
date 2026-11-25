@@ -23,6 +23,7 @@ import { BudgetMonthSwitcher } from "../../components/BudgetMonthSwitcher";
 import { BudgetOfflineBanner } from "../../components/BudgetOfflineBanner";
 import { BudgetTransactionDialog } from "../../components/BudgetTransactionDialog";
 import { BudgetTransactionList } from "../../components/BudgetTransactionList";
+import { RecurringRuleDialog } from "../../components/RecurringRuleDialog";
 import { StatementImportSheet } from "../../components/StatementImportSheet";
 import {
   useDeleteBudgetTransactionMutation,
@@ -33,6 +34,7 @@ import {
   useGetBudgetAccountsQuery,
   useGetBudgetCategoriesQuery,
   useGetBudgetProfileQuery,
+  useGetBudgetRecurringQuery,
   useGetBudgetTransactionsQuery,
 } from "../../hooks/api/query";
 import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
@@ -41,6 +43,7 @@ import { useIsOnline } from "../../hooks/useIsOnline";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { sortBudgetAccounts } from "../../utils/sortBudgetAccounts";
 import { buildMonthLedger, groupTransactionsByDay, resolveTransactionCategory } from "../../utils/monthLedger";
+import { recurringTransactionIds } from "../../utils/recurringTransactions";
 import { categoryPatch } from "../../utils/transactionEdits";
 import {
   DEFAULT_TRANSACTION_FILTERS,
@@ -49,7 +52,7 @@ import {
   writeTransactionFilters,
   type TransactionFilters,
 } from "../../utils/transactionFilters";
-import { BudgetBulkActions, BudgetMonthTotals, BudgetTransactionFilters } from "./components";
+import { BudgetBulkActions, BudgetMonthTotals, BudgetRecurringTab, BudgetTransactionFilters } from "./components";
 import { budgetTransactionsViewStyles as styles } from "./BudgetTransactionsView.styles";
 
 const TABS = ["transactions", "recurring"] as const;
@@ -77,6 +80,9 @@ export const BudgetTransactionsView = () => {
   const [toDelete, setToDelete] = useState<BudgetTransaction | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  // Make recurring: the transaction the rule dialog starts from
+  const [makingRecurring, setMakingRecurring] = useState<BudgetTransaction | null>(null);
+  const [isRecurringOpen, setIsRecurringOpen] = useState(false);
   const { mutateAsync: deleteTransaction, isPending: isDeleting } = useDeleteBudgetTransactionMutation();
   const { mutateAsync: deleteTransactions, isPending: isBulkDeleting } = useDeleteBudgetTransactionsMutation();
   const { mutateAsync: updateTransactions, isPending: isUpdating } = useUpdateBudgetTransactionsMutation();
@@ -85,6 +91,8 @@ export const BudgetTransactionsView = () => {
   const accounts = useGetBudgetAccountsQuery();
   const categories = useGetBudgetCategoriesQuery();
   const transactions = useGetBudgetTransactionsQuery(month);
+  const recurring = useGetBudgetRecurringQuery();
+  const recurringIds = useMemo(() => recurringTransactionIds(recurring.data ?? []), [recurring.data]);
 
   const ledger = useMemo(
     () => buildMonthLedger({ month, transactions: transactions.data ?? [], accounts: accounts.data ?? [] }),
@@ -240,6 +248,15 @@ export const BudgetTransactionsView = () => {
                 onDelete={setToDelete}
                 onEdit={openDialog}
                 onUpdate={(transaction, patch) => void updateOne(transaction, patch)}
+                recurringIds={recurringIds}
+                onMakeRecurring={
+                  recurring.data
+                    ? (transaction) => {
+                        setMakingRecurring(transaction);
+                        setIsRecurringOpen(true);
+                      }
+                    : undefined
+                }
                 actionsDisabled={!isOnline}
                 selectedIds={selectedIds}
                 onSelectionChange={setSelectedIds}
@@ -299,7 +316,9 @@ export const BudgetTransactionsView = () => {
           </div>
           {renderTransactions()}
         </TabsContent>
-        <TabsContent value="recurring" />
+        <TabsContent value="recurring" className={styles.tab}>
+          <BudgetRecurringTab />
+        </TabsContent>
       </Tabs>
 
       {profile.data && accounts.data && categories.data && (
@@ -313,6 +332,13 @@ export const BudgetTransactionsView = () => {
           saveDisabled={!isOnline}
         />
       )}
+
+      <RecurringRuleDialog
+        open={isRecurringOpen}
+        onOpenChange={setIsRecurringOpen}
+        transaction={makingRecurring}
+        saveDisabled={!isOnline}
+      />
 
       {profile.data && accounts.data && categories.data && (
         <StatementImportSheet
