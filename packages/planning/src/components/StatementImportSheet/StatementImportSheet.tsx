@@ -19,6 +19,7 @@ import { useImportPreview } from "../../hooks/useImportPreview";
 import { useIsOnline } from "../../hooks/useIsOnline";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { guessCategory } from "../../utils/categorizationRules";
+import { hasUnconfirmedCategory } from "../../utils/transactionEdits";
 import { monthOfDate } from "../../utils/monthLedger";
 import { SKIP_FILE_ACCOUNT, type ImportSettingsFormData } from "../../utils/schemas";
 import {
@@ -196,7 +197,7 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
         duplicates: rows.filter((row) => row.status === "duplicate" && !isChecked(row)).length,
         pending: rows.filter((row) => row.status === "pending").length,
         errors: errors.length,
-        unconfirmed: added.filter((transaction) => !transaction.confirmed).length,
+        unconfirmed: added.filter(hasUnconfirmedCategory).length,
         newestMonth: newest ? monthOfDate(newest) : null,
       });
       setStep("result");
