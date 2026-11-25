@@ -14,7 +14,7 @@ export const useAddBudgetTransactionMutation = (
     {
       mutationKey: ["addBudgetTransaction"],
       mutationFn: (input) => addBudgetTransaction(budget, input),
-      invalidates: budgetInvalidation.transactionsChanged,
+      invalidates: budgetInvalidation.transactionAdded,
       meta: { successMessageKey: "planning:toasts.budget.transactionAdded", skipErrorToast: true },
     },
     // Fails at once offline instead of waiting paused for the connection

@@ -20,6 +20,8 @@ export type SelectMode = "toggle" | "range";
 export type TransactionRowProps = {
   transaction: BudgetTransaction;
   categories: BudgetCategoryTree;
+  /** The categorization rule's suggestion, marked in the category picker. */
+  suggestedCategoryId?: string | null;
   accountName: string;
   showAccount: boolean;
   mainCurrency: string;
@@ -50,6 +52,7 @@ const parseAmount = (text: string) => Number(text.replace(/\s/g, "").replace(","
 export const TransactionRow = ({
   transaction,
   categories,
+  suggestedCategoryId,
   accountName,
   showAccount,
   mainCurrency,
@@ -110,6 +113,7 @@ export const TransactionRow = ({
       type={type}
       value={transaction.categoryId}
       confirmed={transaction.confirmed}
+      suggestedId={suggestedCategoryId}
       disabled={actionsDisabled}
       aria-label={t("budget.transactionList.category", { payee })}
       onChange={(categoryId) => onUpdate(categoryPatch(categoryId))}

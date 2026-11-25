@@ -9,7 +9,13 @@ import { createMockUser, createTestI18n, renderWithProviders } from "@flaner/tes
 import { toast } from "@flaner/shared/utils";
 import en from "../../../public/locales/en/planning.json";
 import * as budgetApi from "../../api/budget";
-import type { BudgetAccount, BudgetCategoryTree, BudgetTransaction, UnlockedBudget } from "../../api/budget";
+import type {
+  BudgetAccount,
+  BudgetCategoryTree,
+  BudgetRule,
+  BudgetTransaction,
+  UnlockedBudget,
+} from "../../api/budget";
 import * as exchangeRatesApi from "../../api/exchangeRates";
 import { BudgetProvider, useBudgetSession } from "../../context/BudgetContext";
 import { BudgetTransactionsView } from "./BudgetTransactionsView";
@@ -26,6 +32,7 @@ vi.mock("../../api/budget", async (importOriginal) => ({
   getBudgetAccounts: vi.fn(),
   getBudgetCategories: vi.fn(),
   getBudgetTransactions: vi.fn(),
+  getBudgetRules: vi.fn(),
   addBudgetTransaction: vi.fn(),
   deleteBudgetTransaction: vi.fn(),
   deleteBudgetTransactions: vi.fn(),
@@ -81,7 +88,9 @@ const tx = (overrides: Partial<BudgetTransaction>): BudgetTransaction => ({
 const setUp = ({
   accounts = [account()],
   transactions = [],
-}: { accounts?: BudgetAccount[]; transactions?: BudgetTransaction[] } = {}) => {
+  rules = [],
+}: { accounts?: BudgetAccount[]; transactions?: BudgetTransaction[]; rules?: BudgetRule[] } = {}) => {
+  vi.mocked(budgetApi.getBudgetRules).mockResolvedValue(rules);
   vi.mocked(budgetApi.getBudgetProfile).mockResolvedValue({
     mainCurrency: "PLN",
     mainAccountId: "main",
@@ -203,6 +212,38 @@ describe("BudgetTransactionsView", () => {
       confirmed: true,
       excluded: false,
     });
+  });
+
+  it("prefills an empty category from a keyword rule once the payee is typed, and saves it confirmed", async () => {
+    setUp({ rules: [{ kind: "keyword", key: "biedronka", type: "expense", categoryId: "groceries" }] });
+    const userEvents = userEvent.setup();
+    renderView();
+    const dialog = await openAddForm(userEvents);
+
+    await userEvents.type(within(dialog).getByRole("spinbutton", { name: "Amount" }), "12.5");
+    await userEvents.type(within(dialog).getByLabelText("Payee"), "Biedronka 102 Kraków");
+    expect(within(dialog).getByText("Shopping / Groceries")).toBeInTheDocument();
+    await userEvents.click(within(dialog).getByRole("button", { name: "Add transaction" }));
+
+    await waitFor(() =>
+      expect(budgetApi.addBudgetTransaction).toHaveBeenCalledWith(
+        budget,
+        expect.objectContaining({ payee: "Biedronka 102 Kraków", categoryId: "groceries", confirmed: true }),
+      ),
+    );
+  });
+
+  it("never replaces a category the user picked with a rule's guess", async () => {
+    setUp({ rules: [{ kind: "keyword", key: "biedronka", type: "expense", categoryId: "groceries" }] });
+    const userEvents = userEvent.setup();
+    renderView();
+    const dialog = await openAddForm(userEvents);
+
+    await userEvents.type(within(dialog).getByLabelText("Category"), "Shop");
+    await userEvents.click(screen.getByRole("option", { name: "Shopping" }));
+    await userEvents.type(within(dialog).getByLabelText("Payee"), "Biedronka");
+
+    expect(within(dialog).queryByText("Shopping / Groceries")).not.toBeInTheDocument();
   });
 
   it("clears the category when switching between Expense and Income, saving unconfirmed without one", async () => {

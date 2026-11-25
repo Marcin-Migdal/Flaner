@@ -119,7 +119,8 @@
       "accountDeleted": "Konto usunięte",
       "accountSaveError": "Nie udało się zapisać konta. Spróbuj ponownie.",
       "accountDeleteError": "Nie udało się usunąć konta. Spróbuj ponownie.",
-      "planSaveError": "Nie udało się zapisać planu. Spróbuj ponownie."
+      "planSaveError": "Nie udało się zapisać planu. Spróbuj ponownie.",
+      "ruleSaveError": "Nie udało się zapisać reguły. Spróbuj ponownie."
     }
   },
   "errors": {
@@ -836,10 +837,29 @@
       "amount": "Kwota: {{payee}}",
       "details": "Szczegóły: {{payee}}"
     },
+    "rules": {
+      "title": "Reguły kategoryzacji",
+      "hint": "Uczą się z kategorii, które ustawiasz. Kategoryzują tylko nowe transakcje, nigdy te, które już masz.",
+      "search": "Szukaj reguł",
+      "noMatches": "Brak pasujących reguł",
+      "keyword": "Słowo kluczowe {{keyword}}",
+      "category": "Kategoria dla {{counterparty}}",
+      "delete": "Usuń regułę dla {{counterparty}}",
+      "shortenHint": "Skróć słowo kluczowe, by pasowało do większej liczby transakcji, np. \"biedronka warszawa\" → \"biedronka\".",
+      "kinds": {
+        "keyword": "Słowo kluczowe",
+        "accountNumber": "Numer konta"
+      },
+      "empty": {
+        "title": "Brak reguł",
+        "description": "Ustaw kategorię transakcji, a Flaner zapamięta ją dla tego odbiorcy."
+      }
+    },
     "categoryPicker": {
       "placeholder": "Wybierz kategorię",
       "noResults": "Brak pasujących kategorii",
-      "confirm": "Potwierdź kategorię {{category}}"
+      "confirm": "Potwierdź kategorię {{category}}",
+      "suggested": "Sugestia reguły"
     },
     "monthSwitcher": {
       "previous": "Poprzedni miesiąc",
@@ -1048,7 +1068,7 @@
         "duplicates": "Pominięte duplikaty",
         "pending": "Blokady karty (niezaimportowane)",
         "errors": "Wiersze z błędami",
-        "unconfirmed": "Transakcje bez kategorii",
+        "unconfirmed": "Niepotwierdzone kategorie",
         "close": "Zamknij",
         "openMonth": "Pokaż zaimportowane transakcje"
       }

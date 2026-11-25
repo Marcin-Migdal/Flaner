@@ -39,6 +39,8 @@ export type BudgetTransactionListProps = {
   renderRowEnd?: (transaction: BudgetTransaction) => ReactNode;
   /** A second line under a row, full width (e.g. the import preview's status on narrow screens). */
   renderRowFooter?: (transaction: BudgetTransaction) => ReactNode;
+  /** The categorization rule's suggestion for a row (`matchRule`), marked in its category picker. */
+  suggestCategory?: (transaction: BudgetTransaction) => string | null;
   /** Greys a row out (e.g. a pending card hold in the import preview). */
   isRowMuted?: (transaction: BudgetTransaction) => boolean;
 };
@@ -60,6 +62,7 @@ export const BudgetTransactionList = ({
   renderRowEnd,
   renderRowFooter,
   isRowMuted,
+  suggestCategory,
 }: BudgetTransactionListProps) => {
   const { i18n } = usePlanningTranslations();
   const { format } = useMoneyFormatter();
@@ -104,6 +107,7 @@ export const BudgetTransactionList = ({
                 key={transaction.id}
                 transaction={transaction}
                 categories={categories}
+                suggestedCategoryId={suggestCategory?.(transaction)}
                 accountName={accountNames.get(transaction.accountId) ?? ""}
                 showAccount={showAccount}
                 mainCurrency={mainCurrency}

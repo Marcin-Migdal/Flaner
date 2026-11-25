@@ -13,6 +13,7 @@ const i18n = createTestI18n({
           placeholder: "Choose a category",
           noResults: "No categories",
           confirm: "Confirm category {{category}}",
+          suggested: "Rule suggestion",
         },
       },
     },
@@ -46,6 +47,16 @@ const renderPicker = (props: Partial<Parameters<typeof CategoryPicker>[0]> = {})
 };
 
 describe("CategoryPicker", () => {
+  it("marks the rule's suggestion in the list", async () => {
+    const user = userEvent.setup();
+    renderPicker({ suggestedId: "fuel" });
+
+    await user.click(screen.getByLabelText("Category"));
+
+    expect(screen.getByRole("option", { name: /Fuel/ })).toHaveTextContent("Rule suggestion");
+    expect(screen.getByRole("option", { name: "Groceries" })).not.toHaveTextContent("Rule suggestion");
+  });
+
   it("offers only the given type's categories and subcategories", async () => {
     const user = userEvent.setup();
     renderPicker();

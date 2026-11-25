@@ -18,3 +18,4 @@ export * from "./sortBudgetAccounts";
 export * from "./transactionFilters";
 export * from "./transactionEdits";
 export * from "./statementImport";
+export * from "./categorizationRules";

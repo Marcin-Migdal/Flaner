@@ -62,3 +62,9 @@ export const budgetPlan = (uid: string, overrides: Record<string, unknown> = {})
   updatedAt: 1,
   ...overrides,
 });
+
+export const budgetRules = (overrides: Record<string, unknown> = {}) => ({
+  payload: bytes(1024),
+  updatedAt: 1,
+  ...overrides,
+});

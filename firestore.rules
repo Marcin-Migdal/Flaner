@@ -228,6 +228,22 @@ service cloud.firestore {
     }
 
     // ==========================================
+    // BUDŻET: REGUŁY KATEGORYZACJI (BUDGET_RULES)
+    // ==========================================
+    match /budget_rules/{uid} {
+      function isValidBudgetRules() {
+        let data = request.resource.data;
+        return request.resource.data.keys().hasOnly(['payload', 'updatedAt']) &&
+          data.keys().hasAll(['payload', 'updatedAt']) &&
+          data.payload is bytes && data.payload.size() <= 524288 &&
+          data.updatedAt is number;
+      }
+
+      allow read, delete: if isAuthenticated() && request.auth.uid == uid;
+      allow create, update: if isAuthenticated() && request.auth.uid == uid && isValidBudgetRules();
+    }
+
+    // ==========================================
     // WYDARZENIA (EVENTS)
     // ==========================================
     match /events/{eventId} {

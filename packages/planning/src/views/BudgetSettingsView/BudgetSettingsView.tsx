@@ -3,6 +3,7 @@ import { useHashTab } from "../../hooks/useHashTab";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { budgetSettingsViewStyles as styles } from "./BudgetSettingsView.styles";
 import { BudgetAccountsSection } from "./components/BudgetAccountsSection";
+import { BudgetRulesSection } from "./components/BudgetRulesSection";
 import { BudgetSecuritySection } from "./components/BudgetSecuritySection";
 
 const TABS = ["accounts", "categories", "rules"] as const;
@@ -29,7 +30,9 @@ export const BudgetSettingsView = () => {
           <BudgetSecuritySection />
         </TabsContent>
         <TabsContent value="categories" />
-        <TabsContent value="rules" />
+        <TabsContent value="rules" className={styles.tabContent}>
+          <BudgetRulesSection />
+        </TabsContent>
       </Tabs>
     </div>
   );

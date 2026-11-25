@@ -33,6 +33,7 @@ import {
   useGetBudgetAccountsQuery,
   useGetBudgetCategoriesQuery,
   useGetBudgetProfileQuery,
+  useGetBudgetRulesQuery,
   useGetBudgetTransactionsQuery,
 } from "../../hooks/api/query";
 import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
@@ -40,6 +41,7 @@ import { useHashTab } from "../../hooks/useHashTab";
 import { useIsOnline } from "../../hooks/useIsOnline";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { sortBudgetAccounts } from "../../utils/sortBudgetAccounts";
+import { matchRule } from "../../utils/categorizationRules";
 import { buildMonthLedger, groupTransactionsByDay, resolveTransactionCategory } from "../../utils/monthLedger";
 import { categoryPatch } from "../../utils/transactionEdits";
 import {
@@ -84,6 +86,8 @@ export const BudgetTransactionsView = () => {
   const profile = useGetBudgetProfileQuery();
   const accounts = useGetBudgetAccountsQuery();
   const categories = useGetBudgetCategoriesQuery();
+  // Only marks suggestions in the pickers: the list renders without it
+  const rules = useGetBudgetRulesQuery();
   const transactions = useGetBudgetTransactionsQuery(month);
 
   const ledger = useMemo(
@@ -243,6 +247,7 @@ export const BudgetTransactionsView = () => {
                 actionsDisabled={!isOnline}
                 selectedIds={selectedIds}
                 onSelectionChange={setSelectedIds}
+                suggestCategory={(transaction) => matchRule(rules.data ?? [], transaction)?.categoryId ?? null}
                 expandable
               />
             )}
