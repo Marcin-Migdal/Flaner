@@ -2,7 +2,7 @@ import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { cn } from "@flaner/shared/utils";
 import { Button } from "@flaner/ui-components";
 import { parseISO } from "date-fns";
-import { Eye, EyeOff, Pencil, Split, Trash2, Undo2, Unlink } from "lucide-react";
+import { Eye, EyeOff, Pencil, Repeat, Split, Trash2, Undo2, Unlink } from "lucide-react";
 import type { ReactNode } from "react";
 import type { BudgetTransaction } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
@@ -20,6 +20,8 @@ export type TransactionDetailsProps = {
   onDelete?: () => void;
   /** Split off, Link a refund, Exclude / Restore (Unlink for a linked refund). */
   splitActions?: TransactionSplitActions;
+  /** Make recurring (only on a transaction that does not belong to a recurring transaction yet). */
+  onMakeRecurring?: () => void;
   actionsDisabled?: boolean;
 };
 
@@ -32,6 +34,7 @@ export const TransactionDetails = ({
   onEdit,
   onDelete,
   splitActions,
+  onMakeRecurring,
   actionsDisabled,
 }: TransactionDetailsProps) => {
   const { t, i18n } = usePlanningTranslations();
@@ -65,7 +68,7 @@ export const TransactionDetails = ({
 
   const { refundOf } = transaction;
   const canLinkRefund = transaction.type === "expense" && !transaction.excluded;
-  const hasActions = !!(onEdit || onDelete || splitActions);
+  const hasActions = !!(onEdit || onDelete || onMakeRecurring || splitActions);
 
   return (
     <div className={styles.root}>
@@ -78,7 +81,6 @@ export const TransactionDetails = ({
           </div>
         ))}
       </dl>
-      {/* Make recurring joins these actions in a later ticket */}
       {hasActions && (
         <div className={styles.actions}>
           {onEdit && (
@@ -135,6 +137,12 @@ export const TransactionDetails = ({
                 {t(transaction.excluded ? "budget.exclusion.restore" : "budget.exclusion.exclude")}
               </Button>
             ))}
+          {onMakeRecurring && (
+            <Button type="button" variant="outline" size="sm" disabled={actionsDisabled} onClick={onMakeRecurring}>
+              <Repeat aria-hidden="true" />
+              {t("budget.transactionDetails.makeRecurring")}
+            </Button>
+          )}
           {onDelete && (
             <Button type="button" variant="destructive" size="sm" disabled={actionsDisabled} onClick={onDelete}>
               <Trash2 aria-hidden="true" />

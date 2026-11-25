@@ -15,6 +15,9 @@ Index of the places where a rule of one collection reads another collection, or 
 | `editTemplate`, `deleteTemplate` | the owner's `spools` (`templateId`) | `templates.md`, `spools.md` |
 | `deleteLookupMaterial`, `deleteLookupType` | child lookups matched by name | `lookup_*.md` |
 | `createBudget` (Budget onboarding) | `budget_keys` must be missing; writes `budget_keys`, `budget_profiles`, `budget_categories`, `budget_accounts` in one transaction | `budget_*.md` |
+| `addBudgetTransaction`, `importBudgetTransactions`, `updateBudgetTransactions` (categorization rules learn) | write `budget_rules/{me}` in the same transaction as the `budget_months` documents | `budget_rules.md`, `budget_months.md` |
 | `budget_months` rules | `get()` of `budget_accounts/{accountId}.memberIds` (create / update, and reading a month that does not exist yet) | `budget_months.md`, `budget_accounts.md` |
+| `budget_recurring` rules | `get()` of `budget_accounts/{accountId}.memberIds` (create / update, and reading a document that does not exist yet) | `budget_recurring.md`, `budget_accounts.md` |
+| `addBudgetTransaction`, `importBudgetTransactions`, `updateBudgetTransactions`, `deleteBudgetTransactions` | re-match `budget_recurring/{accountId}` with the `budget_months` they write, in one transaction | `budget_months.md`, `budget_recurring.md` |
 
 **Denormalized copies** (not kept in sync by rules): `username` / `avatarUrl` in `friendRequests` and notifications (historical, kept as sent); template fields in `spools`; group name / avatar in invitations. `friendships` hold no profile copy: friend lists read `users/{uid}` live (#26).

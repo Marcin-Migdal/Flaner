@@ -30,6 +30,7 @@ export const transactionRowStyles = {
   amountMain: "block text-xs text-muted-foreground",
   amountOf: "block text-xs text-muted-foreground",
   splitOffs: "bg-card",
+  recurringMark: "inline-flex shrink-0 text-muted-foreground [&>svg]:size-3.5",
   expandButton: "shrink-0 text-muted-foreground",
   chevron: "transition-transform",
   chevronOpen: "rotate-180",

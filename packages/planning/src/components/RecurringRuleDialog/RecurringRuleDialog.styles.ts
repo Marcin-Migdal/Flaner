@@ -1,0 +1,17 @@
+export const recurringRuleDialogStyles = {
+  content: "w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:max-w-lg p-0 gap-0 overflow-hidden",
+  header: "px-4 py-4 md:px-6 md:pt-6 md:pb-4 border-b",
+  body: "flex flex-col gap-5 px-4 py-4 md:px-6 md:py-5 max-h-[70dvh] overflow-y-auto",
+  frequencyTabs: "w-full",
+  frequencyTabsList: "grid w-full grid-cols-3",
+  grid: "grid grid-cols-1 sm:grid-cols-2 gap-4",
+  weekdays: "space-y-1.5",
+  weekdaysLabel: "text-sm font-medium",
+  weekdayButtons: "grid grid-cols-7 gap-1",
+  weekdayButton: "px-0 capitalize",
+  error: "text-xs text-danger-text",
+  preview: "rounded-md border border-border-subtle bg-muted/30 px-3 py-2 text-sm",
+  previewRule: "font-medium first-letter:uppercase",
+  previewNext: "text-xs text-muted-foreground",
+  footer: "flex justify-end gap-2 px-4 py-3 md:px-6 border-t",
+};

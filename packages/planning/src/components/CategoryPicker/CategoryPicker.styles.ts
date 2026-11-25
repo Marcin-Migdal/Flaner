@@ -3,6 +3,7 @@ export const categoryPickerStyles = {
   subOption: "pl-6",
   icon: "size-4 shrink-0",
   label: "truncate",
+  suggestion: "ml-auto shrink-0",
   inline: "flex min-w-0 items-center gap-2",
   inlineIcon:
     "relative flex size-9 shrink-0 items-center justify-center rounded-full bg-muted enabled:cursor-pointer enabled:hover:bg-accent disabled:opacity-60",

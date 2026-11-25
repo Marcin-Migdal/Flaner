@@ -1,7 +1,7 @@
 import { useIsMobile, useMoneyFormatter } from "@flaner/shared/hooks";
 import { cn, fromMinorUnits, toMinorUnits } from "@flaner/shared/utils";
 import { Badge, Button, ShadcnCheckbox } from "@flaner/ui-components";
-import { ChevronDown, CircleHelp } from "lucide-react";
+import { ChevronDown, CircleHelp, Repeat } from "lucide-react";
 import { useRef, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import type { BudgetCategoryTree, BudgetTransaction, BudgetTransactionPatch } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
@@ -23,6 +23,8 @@ export type SelectMode = "toggle" | "range";
 export type TransactionRowProps = {
   transaction: BudgetTransaction;
   categories: BudgetCategoryTree;
+  /** The categorization rule's suggestion, marked in the category picker. */
+  suggestedCategoryId?: string | null;
   accountName: string;
   showAccount: boolean;
   mainCurrency: string;
@@ -44,6 +46,9 @@ export type TransactionRowProps = {
   actionsDisabled?: boolean;
   /** Greyed out (e.g. a pending card hold in the import preview). */
   muted?: boolean;
+  /** Belongs to a recurring transaction: shows the recurring marker. */
+  recurring?: boolean;
+  onMakeRecurring?: () => void;
   /** Extra content before the row's icon, after its amounts, and on a full-width line below it. */
   start?: ReactNode;
   end?: ReactNode;
@@ -55,6 +60,7 @@ const parseAmount = (text: string) => Number(text.replace(/\s/g, "").replace(","
 export const TransactionRow = ({
   transaction,
   categories,
+  suggestedCategoryId,
   accountName,
   showAccount,
   mainCurrency,
@@ -70,6 +76,8 @@ export const TransactionRow = ({
   splitActions,
   actionsDisabled,
   muted,
+  recurring,
+  onMakeRecurring,
   start,
   end,
   footer,
@@ -116,6 +124,7 @@ export const TransactionRow = ({
       type={type}
       value={transaction.categoryId}
       confirmed={transaction.confirmed}
+      suggestedId={suggestedCategoryId}
       disabled={actionsDisabled}
       aria-label={t("budget.transactionList.category", { payee })}
       onChange={(categoryId) => onUpdate(categoryPatch(categoryId))}
@@ -158,6 +167,12 @@ export const TransactionRow = ({
       ))}
     </ul>
   );
+  const recurringMark = recurring && (
+    <span className={styles.recurringMark}>
+      <Repeat aria-hidden="true" />
+      <span className="sr-only">{t("budget.transactionList.recurring")}</span>
+    </span>
+  );
   const amountMain = currency !== mainCurrency && (
     <span className={styles.amountMain}>{format(signedAmount(type, transaction.amountMain), mainCurrency)}</span>
   );
@@ -169,6 +184,7 @@ export const TransactionRow = ({
       onEdit={onEdit}
       onDelete={onDelete}
       splitActions={splitActions}
+      onMakeRecurring={onMakeRecurring}
       actionsDisabled={actionsDisabled}
     >
       {isMobile && categoryPicker}
@@ -212,6 +228,7 @@ export const TransactionRow = ({
           {staticAmount}
           {amountMain}
           {excludedBadge}
+          {recurringMark}
         </span>
       </>
     );
@@ -330,6 +347,7 @@ export const TransactionRow = ({
             </span>
           )}
         </span>
+        {recurringMark}
         {excludedBadge}
         <span className={styles.amounts}>
           {/* A split transaction's total is edited in the dialog: in place it shows its rest */}

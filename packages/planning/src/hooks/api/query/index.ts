@@ -13,4 +13,6 @@ export * from "./useGetExchangeRateQuery";
 export * from "./useGetBudgetPlanQuery";
 export * from "./useGetBudgetAccountsWithTransactionsQuery";
 export * from "./useGetBudgetAccountTransactionCountQuery";
+export * from "./useGetBudgetRulesQuery";
+export * from "./useGetBudgetRecurringQuery";
 export * from "./useGetBudgetTransactionsRangeQuery";

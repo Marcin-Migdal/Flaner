@@ -42,8 +42,8 @@ export type BudgetCategoryTree = Record<BudgetCategoryType, BudgetCategory[]>;
 export type BudgetProfile = {
   mainCurrency: string;
   mainAccountId: string;
-  /** Bank file account (masked number) → Flaner account id, remembered between imports. */
-  fileAccountMappings: Record<string, string>;
+  /** Bank file account (number as written in the file) → Flaner account id, or `null` when its rows are skipped; remembered between imports. */
+  fileAccountMappings: Record<string, string | null>;
 };
 
 export type BudgetAccount = {
@@ -77,6 +77,24 @@ export type UnlockedBudget = {
   keyId: string;
   userKey: CryptoKey;
 };
+
+/**
+ * A categorization rule (GLOSSARY → Categorization rule): transactions of one type whose counterparty has this
+ * account number, or whose payee (else description) contains this keyword, get this category. Identified by
+ * (`kind`, `type`, `key`); learned from the user's category choices, never added by hand.
+ */
+export type BudgetRule = {
+  kind: "accountNumber" | "keyword";
+  /** Normalized (`normalizeAccountNumber` / `normalizeKeyword`). */
+  key: string;
+  type: BudgetCategoryType;
+  categoryId: string;
+  /** Account-number rules: the payee of the transaction that taught it last (the Rules tab's label). */
+  payee?: string;
+};
+
+/** Settings → Rules: a rule's new category and / or (keyword rules) its shortened key. */
+export type BudgetRuleChanges = Partial<Pick<BudgetRule, "key" | "categoryId">>;
 
 /** A calendar month, `YYYY-MM`. */
 export type BudgetMonth = string;
@@ -210,6 +228,66 @@ export type BudgetPlanAmountInput = {
   amount: number | null;
 };
 
+/** ISO weekday: 1 = Monday … 7 = Sunday. */
+export type IsoWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+/** How often a recurring transaction is due; `interval` repeats every N weeks / months / years. */
+export type RepeatPattern =
+  | { frequency: "weekly"; interval: number; weekdays: IsoWeekday[] }
+  /** Days 29–31 fall on the last day of shorter months. */
+  | { frequency: "monthly"; interval: number; day: number | "last" }
+  /** `month` 1–12; 29 February falls on 28 February outside leap years. */
+  | { frequency: "yearly"; interval: number; month: number; day: number };
+
+export const REPEAT_FREQUENCIES = ["weekly", "monthly", "yearly"] as const;
+
+export const REPEAT_END_TYPES = ["never", "until", "after"] as const;
+
+/** How a rule ends, as the editor sets it. */
+export type RepeatEndInput = { type: "never" } | { type: "until"; date: string } | { type: "after"; count: number };
+
+/** A stored end: "after N times" keeps `count` for the editor and ends on `date`, the Nth occurrence's. */
+export type RepeatEnd = Exclude<RepeatEndInput, { type: "after" }> | { type: "after"; count: number; date: string };
+
+/** A repeat rule: occurrences are computed from `start` (`YYYY-MM-DD`), never stored. */
+export type RepeatRule = { pattern: RepeatPattern; start: string; end: RepeatEnd };
+
+/** A transaction matched to one occurrence. */
+export type BudgetRecurringMatch = {
+  transactionId: string;
+  /** The matched transaction's date (its month document). */
+  date: string;
+  amount: number;
+  amountMain: number;
+};
+
+/**
+ * What the user expects to pay or receive (GLOSSARY → Recurring transaction). Stored encrypted in its account's
+ * `budget_recurring/{accountId}` document; only the matches are stored, keyed by the occurrence's due date.
+ */
+export type BudgetRecurring = {
+  id: string;
+  /** Derived from the document on read, never stored in the payload. */
+  accountId: string;
+  type: BudgetCategoryType;
+  payee: string;
+  categoryId: string | null;
+  /** The amount of the transaction it was made from (the expected amount until an occurrence is paid). */
+  amount: number;
+  currency: string;
+  amountMain: number;
+  rule: RepeatRule;
+  /** Due date (`YYYY-MM-DD`) → matched transaction. */
+  occurrences: Record<string, BudgetRecurringMatch>;
+  createdAt: number;
+};
+
+/** Identifies a stored recurring transaction. */
+export type BudgetRecurringRef = Pick<BudgetRecurring, "id" | "accountId">;
+
+/** A rule from the editor; the API sets its `start` (the transaction's date, or the day of an edit). */
+export type RepeatRuleInput = { pattern: RepeatPattern; end: RepeatEndInput };
+
 // ---------------------------------------------------------------------------
 // Stored documents: readable envelope + `payload` (sealed: 12-byte IV ‖ AES-GCM ciphertext, see `budgetCrypto`)
 // ---------------------------------------------------------------------------
@@ -242,6 +320,16 @@ export type BudgetCategoriesDoc = {
   updatedAt: number;
 };
 
+/** `budget_rules/{uid}`. `payload`: `BudgetRulesPayload` (user key). */
+export type BudgetRulesDoc = {
+  payload: Bytes;
+  updatedAt: number;
+};
+
+export type BudgetRulesPayload = {
+  rules: BudgetRule[];
+};
+
 /** `budget_accounts/{accountId}`. `payload`: `BudgetAccountPayload` (account key, wrapped per member in `wrappedKeys`). */
 export type BudgetAccountDoc = {
   memberIds: string[];
@@ -264,6 +352,17 @@ export type BudgetMonthDoc = {
 
 export type BudgetMonthPayload = {
   transactions: Omit<BudgetTransaction, "accountId">[];
+};
+
+/** `budget_recurring/{accountId}`: one per account with recurring transactions. `payload`: `BudgetRecurringPayload` (account key). */
+export type BudgetRecurringDoc = {
+  accountId: string;
+  memberIds: string[];
+  payload: Bytes;
+};
+
+export type BudgetRecurringPayload = {
+  recurring: Omit<BudgetRecurring, "accountId">[];
 };
 
 /** `budget_plans/{uid}_{YYYY-MM}`: one per planned month. `payload`: `BudgetPlanPayload` (user key). */

@@ -1,5 +1,5 @@
 import { Sheet, SidePanel, Stepper } from "@flaner/ui-components";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type {
   BudgetAccount,
   BudgetCategoryTree,
@@ -9,14 +9,25 @@ import type {
   BudgetTransaction,
   BudgetTransactionInput,
 } from "../../api/budget";
-import { useImportBudgetTransactionsMutation } from "../../hooks/api/mutation";
+import { useGetBudgetRulesQuery } from "../../hooks/api/query";
+import {
+  useImportBudgetTransactionsMutation,
+  useRememberFileAccountMappingsMutation,
+} from "../../hooks/api/mutation";
 import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
 import { useImportPreview } from "../../hooks/useImportPreview";
 import { useIsOnline } from "../../hooks/useIsOnline";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
+import { guessCategory } from "../../utils/categorizationRules";
+import { hasUnconfirmedCategory } from "../../utils/transactionEdits";
 import { monthOfDate } from "../../utils/monthLedger";
-import type { ImportSettingsFormData } from "../../utils/schemas";
-import { parseStatementRows, type ImportPreview, type ImportPreviewRow } from "../../utils/statementImport";
+import { SKIP_FILE_ACCOUNT, type ImportSettingsFormData } from "../../utils/schemas";
+import {
+  parseStatementRows,
+  type FileAccountTargets,
+  type ImportPreview,
+  type ImportPreviewRow,
+} from "../../utils/statementImport";
 import {
   ImportCategoryDialog,
   ImportFileStep,
@@ -44,11 +55,18 @@ export type StatementImportSheetProps = {
   onOpenMonth: (month: BudgetMonth) => void;
 };
 
-/** A preview row's stored form: the import gives it its own id; a category picked in the preview confirms it. */
+/**
+ * A preview row's stored form: the import gives it its own id. A category picked in the preview is confirmed (and
+ * teaches its rule); a rule's guess left untouched stays unconfirmed.
+ */
 const toInput = ({ transaction: { id: _previewId, ...input } }: ImportPreviewRow): BudgetTransactionInput => ({
   ...input,
-  confirmed: input.categoryId !== null,
+  confirmed: input.confirmed && input.categoryId !== null,
 });
+
+/** A category set in the preview: confirmed when it changes the row's category, else the row stays as it was. */
+const withCategory = (transaction: BudgetTransaction, categoryId: string | null): BudgetTransaction =>
+  categoryId === transaction.categoryId ? transaction : { ...transaction, categoryId, confirmed: true };
 
 /** Statement import wizard in a side sheet: File → Settings → Preview → Result. */
 export const StatementImportSheet = ({ open, onOpenChange, ...props }: StatementImportSheetProps) => {
@@ -76,12 +94,15 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
   const showWriteError = useBudgetWriteErrorToast();
   const preview = useImportPreview();
   const { mutateAsync: importTransactions, isPending: isImporting } = useImportBudgetTransactionsMutation();
+  const rules = useGetBudgetRulesQuery();
+  const { mutate: rememberMappings } = useRememberFileAccountMappingsMutation();
 
   const [step, setStep] = useState<ImportStep>("file");
   const [file, setFile] = useState<ImportFile | null>(null);
   const [settings, setSettings] = useState<ImportSettingsFormData | null>(null);
   const [rows, setRows] = useState<ImportPreviewRow[]>([]);
   const [errors, setErrors] = useState<ImportPreview["errors"]>([]);
+  const [skipped, setSkipped] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<BudgetTransaction | null>(null);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -89,19 +110,42 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
 
   const mainAccount = accounts.find((account) => account.id === profile.mainAccountId) ?? accounts[0];
 
+  const { fileAccountMappings } = profile;
+  // A remembered mapping wins while its account still exists; a one-account file falls back to the main account
+  const defaultTarget = useCallback(
+    (fileAccount: string, isOnlyAccount: boolean) => {
+      const remembered = fileAccountMappings[fileAccount];
+      if (remembered === null && !isOnlyAccount) return SKIP_FILE_ACCOUNT;
+      if (remembered && accounts.some((account) => account.id === remembered)) return remembered;
+      return isOnlyAccount ? (mainAccount?.id ?? "") : "";
+    },
+    [fileAccountMappings, accounts, mainAccount],
+  );
+
+  const targetsOf = (values: ImportSettingsFormData): FileAccountTargets =>
+    Object.fromEntries(
+      values.fileAccounts.map(({ fileAccount, target }) => [fileAccount, target === SKIP_FILE_ACCOUNT ? null : target]),
+    );
+
   const buildPreview = async (values: ImportSettingsFormData) => {
     if (!file) return;
     setSettings(values);
-    const account = accounts.find((candidate) => candidate.id === values.accountId);
     const built = await preview.mutateAsync({
       rows: parseStatementRows(values.bank, file.records),
-      accountId: values.accountId,
-      fallbackCurrency: values.fallbackCurrency || account?.defaultCurrency || profile.mainCurrency,
+      targets: targetsOf(values),
+      fallbackCurrency: values.fallbackCurrency || profile.mainCurrency,
       mainCurrency: profile.mainCurrency,
       fileName: file.name,
     });
-    setRows(built.rows);
+    // Rules guess categories for the new rows; a guess stays unconfirmed until the user changes it
+    setRows(
+      built.rows.map((row) => ({
+        ...row,
+        transaction: { ...row.transaction, categoryId: guessCategory(rules.data ?? [], categories, row.transaction) },
+      })),
+    );
     setErrors(built.errors);
+    setSkipped(built.skipped);
     setSelected(new Set(built.rows.filter((row) => row.status === "new").map((row) => row.transaction.id)));
     setStep("preview");
   };
@@ -119,11 +163,10 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
       transaction.id !== id
         ? null
         : {
-            ...transaction,
+            ...withCategory(transaction, categoryId),
             amount,
             amountMain:
               transaction.currency === profile.mainCurrency ? amount : Math.round(amount * transaction.rate),
-            categoryId,
           },
     );
 
@@ -133,7 +176,7 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
   const setCategory = (categoryIds: Partial<Record<BudgetCategoryType, string>>) =>
     updateRows((transaction) => {
       const categoryId = categoryIds[transaction.type];
-      return selected.has(transaction.id) && categoryId ? { ...transaction, categoryId } : null;
+      return selected.has(transaction.id) && categoryId ? withCategory(transaction, categoryId) : null;
     });
 
   const runImport = async () => {
@@ -141,17 +184,20 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
     try {
       const added = await importTransactions(toImport.map(toInput));
       const newest = added.reduce<string | null>((max, { date }) => (max && max > date ? max : date), null);
+      const targets = settings ? targetsOf(settings) : {};
+      // Best effort: the transactions are in; a mapping that fails to save is just asked again next time
+      rememberMappings(targets);
+      const targetIds = [...new Set(Object.values(targets).filter((target) => target !== null))];
       setResult({
-        imported: [
-          {
-            accountName: accounts.find((account) => account.id === settings?.accountId)?.name ?? "",
-            count: added.length,
-          },
-        ],
+        imported: targetIds.map((accountId) => ({
+          accountName: accounts.find((account) => account.id === accountId)?.name ?? "",
+          count: added.filter((transaction) => transaction.accountId === accountId).length,
+        })),
+        skipped,
         duplicates: rows.filter((row) => row.status === "duplicate" && !isChecked(row)).length,
         pending: rows.filter((row) => row.status === "pending").length,
         errors: errors.length,
-        unconfirmed: added.filter((transaction) => transaction.categoryId === null).length,
+        unconfirmed: added.filter(hasUnconfirmedCategory).length,
         newestMonth: newest ? monthOfDate(newest) : null,
       });
       setStep("result");
@@ -194,10 +240,11 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
           defaultValues={
             settings ?? {
               bank: file.bank ?? undefined,
-              accountId: mainAccount?.id ?? "",
+              fileAccounts: [],
               fallbackCurrency: mainAccount?.defaultCurrency ?? profile.mainCurrency,
             }
           }
+          defaultTarget={defaultTarget}
           isBusy={preview.isPending}
           error={previewError}
           onBack={() => setStep("file")}
@@ -237,6 +284,7 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
       <ImportRowDialog
         transaction={editing}
         categories={categories}
+        suggestedCategoryId={editing && guessCategory(rules.data ?? [], categories, editing)}
         onClose={() => setEditing(null)}
         onSave={(changes) => editing && editRow(editing.id, changes)}
       />

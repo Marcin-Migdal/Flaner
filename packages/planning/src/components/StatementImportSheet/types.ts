@@ -12,11 +12,13 @@ export type ImportFile = {
 
 export type ImportResult = {
   imported: { accountName: string; count: number }[];
+  /** Rows of bank accounts skipped in Settings. */
+  skipped: number;
   /** Duplicate rows left unchecked. */
   duplicates: number;
   pending: number;
   errors: number;
-  /** Imported transactions without a category. */
+  /** Imported transactions whose category is unconfirmed (a rule's guess); uncategorized rows are not counted. */
   unconfirmed: number;
   /** The month of the newest imported transaction, `null` when nothing was imported. */
   newestMonth: BudgetMonth | null;

@@ -13,13 +13,21 @@ export type ImportRowDialogProps = {
   /** The preview row being edited; `null` closes the dialog. */
   transaction: BudgetTransaction | null;
   categories: BudgetCategoryTree;
+  /** The categorization rule's suggestion for the row, marked in the category picker. */
+  suggestedCategoryId?: string | null;
   onClose: () => void;
   /** `amount` in minor units. */
   onSave: (changes: { amount: number; categoryId: string | null }) => void;
 };
 
 /** Import preview: edit one row's amount and category (the dedup hash stays as read from the file). */
-export const ImportRowDialog = ({ transaction, categories, onClose, onSave }: ImportRowDialogProps) => {
+export const ImportRowDialog = ({
+  transaction,
+  categories,
+  suggestedCategoryId,
+  onClose,
+  onSave,
+}: ImportRowDialogProps) => {
   const { t } = usePlanningTranslations();
   const methods = useForm<ImportRowFormData>({ resolver: zodResolver(getImportRowSchema(t)) });
   const { field: categoryField } = useController({ control: methods.control, name: "categoryId" });
@@ -62,6 +70,7 @@ export const ImportRowDialog = ({ transaction, categories, onClose, onSave }: Im
                   type={transaction.type}
                   value={categoryField.value}
                   onChange={categoryField.onChange}
+                  suggestedId={suggestedCategoryId}
                 />
               )}
             </div>

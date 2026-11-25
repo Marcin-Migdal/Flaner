@@ -9,7 +9,14 @@ import { createMockUser, createTestI18n, renderWithProviders } from "@flaner/tes
 import { toast } from "@flaner/shared/utils";
 import en from "../../../public/locales/en/planning.json";
 import * as budgetApi from "../../api/budget";
-import type { BudgetAccount, BudgetCategoryTree, BudgetTransaction, UnlockedBudget } from "../../api/budget";
+import type {
+  BudgetAccount,
+  BudgetCategoryTree,
+  BudgetRecurring,
+  BudgetRule,
+  BudgetTransaction,
+  UnlockedBudget,
+} from "../../api/budget";
 import * as exchangeRatesApi from "../../api/exchangeRates";
 import { BudgetProvider, useBudgetSession } from "../../context/BudgetContext";
 import { BudgetTransactionsView } from "./BudgetTransactionsView";
@@ -26,10 +33,14 @@ vi.mock("../../api/budget", async (importOriginal) => ({
   getBudgetAccounts: vi.fn(),
   getBudgetCategories: vi.fn(),
   getBudgetTransactions: vi.fn(),
+  getBudgetRules: vi.fn(),
   addBudgetTransaction: vi.fn(),
   deleteBudgetTransaction: vi.fn(),
   deleteBudgetTransactions: vi.fn(),
   updateBudgetTransactions: vi.fn(),
+  getBudgetRecurring: vi.fn(),
+  makeBudgetTransactionRecurring: vi.fn(),
+  stopBudgetRecurring: vi.fn(),
 }));
 vi.mock("../../api/exchangeRates", () => ({ getExchangeRate: vi.fn() }));
 // The wizard has its own specs; here only its Result step's "open the month" callback matters
@@ -81,7 +92,15 @@ const tx = (overrides: Partial<BudgetTransaction>): BudgetTransaction => ({
 const setUp = ({
   accounts = [account()],
   transactions = [],
-}: { accounts?: BudgetAccount[]; transactions?: BudgetTransaction[] } = {}) => {
+  recurring = [],
+  rules = [],
+}: {
+  accounts?: BudgetAccount[];
+  transactions?: BudgetTransaction[];
+  recurring?: BudgetRecurring[];
+  rules?: BudgetRule[];
+} = {}) => {
+  vi.mocked(budgetApi.getBudgetRules).mockResolvedValue(rules);
   vi.mocked(budgetApi.getBudgetProfile).mockResolvedValue({
     mainCurrency: "PLN",
     mainAccountId: "main",
@@ -94,6 +113,8 @@ const setUp = ({
   vi.mocked(budgetApi.deleteBudgetTransaction).mockResolvedValue(undefined);
   vi.mocked(budgetApi.deleteBudgetTransactions).mockResolvedValue(undefined);
   vi.mocked(budgetApi.updateBudgetTransactions).mockResolvedValue([]);
+  vi.mocked(budgetApi.getBudgetRecurring).mockResolvedValue(recurring);
+  vi.mocked(budgetApi.stopBudgetRecurring).mockResolvedValue(undefined);
 };
 
 // Stands in for the Budget gate: the page renders once the budget is unlocked
@@ -203,6 +224,38 @@ describe("BudgetTransactionsView", () => {
       confirmed: true,
       excluded: false,
     });
+  });
+
+  it("prefills an empty category from a keyword rule once the payee is typed, and saves it confirmed", async () => {
+    setUp({ rules: [{ kind: "keyword", key: "biedronka", type: "expense", categoryId: "groceries" }] });
+    const userEvents = userEvent.setup();
+    renderView();
+    const dialog = await openAddForm(userEvents);
+
+    await userEvents.type(within(dialog).getByRole("spinbutton", { name: "Amount" }), "12.5");
+    await userEvents.type(within(dialog).getByLabelText("Payee"), "Biedronka 102 Kraków");
+    expect(within(dialog).getByText("Shopping / Groceries")).toBeInTheDocument();
+    await userEvents.click(within(dialog).getByRole("button", { name: "Add transaction" }));
+
+    await waitFor(() =>
+      expect(budgetApi.addBudgetTransaction).toHaveBeenCalledWith(
+        budget,
+        expect.objectContaining({ payee: "Biedronka 102 Kraków", categoryId: "groceries", confirmed: true }),
+      ),
+    );
+  });
+
+  it("never replaces a category the user picked with a rule's guess", async () => {
+    setUp({ rules: [{ kind: "keyword", key: "biedronka", type: "expense", categoryId: "groceries" }] });
+    const userEvents = userEvent.setup();
+    renderView();
+    const dialog = await openAddForm(userEvents);
+
+    await userEvents.type(within(dialog).getByLabelText("Category"), "Shop");
+    await userEvents.click(screen.getByRole("option", { name: "Shopping" }));
+    await userEvents.type(within(dialog).getByLabelText("Payee"), "Biedronka");
+
+    expect(within(dialog).queryByText("Shopping / Groceries")).not.toBeInTheDocument();
   });
 
   it("clears the category when switching between Expense and Income, saving unconfirmed without one", async () => {
@@ -474,5 +527,72 @@ describe("BudgetTransactionsView", () => {
       expect(budgetApi.getBudgetTransactions).toHaveBeenCalledWith(budget, { from: "2026-10", to: "2026-10" }),
     );
     expect(screen.queryByRole("button", { name: "Clear filters" })).not.toBeInTheDocument();
+  });
+
+  it("makes a transaction recurring from its expanded row; the row then shows the marker", async () => {
+    const source = tx({ id: "rent", payee: "Landlord", date: "2026-11-10" });
+    setUp({ transactions: [source] });
+    vi.mocked(budgetApi.makeBudgetTransactionRecurring).mockImplementation(async () => {
+      const made: BudgetRecurring = {
+        id: "r1",
+        accountId: "main",
+        type: "expense",
+        payee: "Landlord",
+        categoryId: "groceries",
+        amount: 1250,
+        currency: "PLN",
+        amountMain: 1250,
+        rule: { pattern: { frequency: "monthly", interval: 1, day: 10 }, start: "2026-11-10", end: { type: "never" } },
+        occurrences: { "2026-11-10": { transactionId: "rent", date: "2026-11-10", amount: 1250, amountMain: 1250 } },
+        createdAt: 1,
+      };
+      vi.mocked(budgetApi.getBudgetRecurring).mockResolvedValue([made]);
+      return made;
+    });
+    const userEvents = userEvent.setup();
+    renderView();
+
+    await userEvents.click(await screen.findByRole("button", { name: "Details of Landlord" }));
+    await userEvents.click(screen.getByRole("button", { name: "Make recurring" }));
+    const dialog = await screen.findByRole("dialog", { name: "Make recurring" });
+    // Prefilled from the transaction's date: monthly on the 10th
+    expect(within(dialog).getByText("Every month on day 10")).toBeInTheDocument();
+    await userEvents.click(within(dialog).getByRole("button", { name: "Make recurring" }));
+
+    await waitFor(() =>
+      expect(budgetApi.makeBudgetTransactionRecurring).toHaveBeenCalledWith(budget, source, {
+        pattern: { frequency: "monthly", interval: 1, day: 10 },
+        end: { type: "never" },
+      }),
+    );
+    expect(await screen.findByText("Recurring", { selector: ".sr-only" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Make recurring" })).not.toBeInTheDocument();
+  });
+
+  it("lists recurring transactions on the Recurring tab and stops one after confirmation", async () => {
+    const rent: BudgetRecurring = {
+      id: "r1",
+      accountId: "main",
+      type: "expense",
+      payee: "Landlord",
+      categoryId: "groceries",
+      amount: 250000,
+      currency: "PLN",
+      amountMain: 250000,
+      rule: { pattern: { frequency: "monthly", interval: 1, day: 10 }, start: "2026-01-10", end: { type: "never" } },
+      occurrences: {},
+      createdAt: 1,
+    };
+    setUp({ recurring: [rent] });
+    const userEvents = userEvent.setup();
+    renderView("/planning/budget/transactions#recurring");
+
+    const region = await screen.findByRole("region", { name: "Expenses" });
+    await userEvents.click(within(region).getByRole("button", { name: /Landlord/ }));
+    await userEvents.click(screen.getByRole("button", { name: "Stop" }));
+    const confirm = await screen.findByRole("dialog", { name: "Stop this recurring transaction?" });
+    await userEvents.click(within(confirm).getByRole("button", { name: "Stop" }));
+
+    await waitFor(() => expect(budgetApi.stopBudgetRecurring).toHaveBeenCalledWith(budget, rent));
   });
 });

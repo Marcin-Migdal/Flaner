@@ -318,4 +318,19 @@ describe("BudgetTransactionList", () => {
       expect(screen.queryByText("Source file")).not.toBeInTheDocument();
     });
   });
+
+  it("marks rows of a recurring transaction and offers Make recurring on the others", async () => {
+    const user = userEvent.setup();
+    const onMakeRecurring = vi.fn();
+    renderList({ recurringIds: new Set(["Biedronka"]), onMakeRecurring });
+
+    expect(within(rowOf("Biedronka")).getByText("Recurring")).toBeInTheDocument();
+    expect(within(rowOf("Zalando")).queryByText("Recurring")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Details of Biedronka" }));
+    expect(within(rowOf("Biedronka")).queryByRole("button", { name: "Make recurring" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Details of Zalando" }));
+    await user.click(within(rowOf("Zalando")).getByRole("button", { name: "Make recurring" }));
+    expect(onMakeRecurring).toHaveBeenCalledWith(expect.objectContaining({ payee: "Zalando" }));
+  });
 });
