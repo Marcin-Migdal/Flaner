@@ -1,23 +1,55 @@
 import * as z from "zod";
-import { STATEMENT_BANKS } from "../../statementImport/types";
+import { IMPORT_COLUMN_ROLES, IMPORT_DATE_FORMATS, IMPORT_DECIMAL_SEPARATORS } from "../../../api/budget/types";
+import { validateImportColumns } from "../../statementImport/importTemplate";
 import { getBudgetAmountSchema } from "../budget-transaction-schema";
 
 /** An import Settings target that skips the bank account's rows (never a Flaner account id). */
 export const SKIP_FILE_ACCOUNT = "skip";
 
+/** Import Settings "bank" choice: map the file's columns (and save them as a new import template). */
+export const CUSTOM_MAPPING = "custom";
+
+/** Import Settings "bank" choice of a saved import template (never a bank id or `CUSTOM_MAPPING`). */
+export const templateSource = (name: string) => `template:${name}`;
+
+export const TEMPLATE_NAME_MAX_LENGTH = 40;
+
 /** Import wizard, Settings step: each bank account of the file goes to a Flaner account or is skipped. */
 export const getImportSettingsSchema = (t: (key: string) => string) =>
-  z.object({
-    bank: z.enum(STATEMENT_BANKS, { message: t("budget.import.validation.bankRequired") }),
-    fileAccounts: z.array(
-      z.object({
-        fileAccount: z.string(),
-        /** A Flaner account id or `SKIP_FILE_ACCOUNT`. */
-        target: z.string().min(1, t("budget.validation.accountRequired")),
+  z
+    .object({
+      /** A `StatementBank`, `templateSource(name)` of a saved template, or `CUSTOM_MAPPING`. */
+      bank: z.string({ message: t("budget.import.validation.bankRequired") }).min(1, t("budget.import.validation.bankRequired")),
+      /** The column mapping used with `CUSTOM_MAPPING`, saved as an import template under `name`. */
+      mapping: z.object({
+        name: z.string().max(TEMPLATE_NAME_MAX_LENGTH, t("budget.import.validation.templateNameTooLong")),
+        columns: z.array(z.enum(IMPORT_COLUMN_ROLES)),
+        dateFormat: z.enum(IMPORT_DATE_FORMATS),
+        decimalSeparator: z.enum(IMPORT_DECIMAL_SEPARATORS),
       }),
-    ),
-    fallbackCurrency: z.string().min(1, t("budget.validation.currencyRequired")),
-  });
+      fileAccounts: z.array(
+        z.object({
+          fileAccount: z.string(),
+          /** A Flaner account id or `SKIP_FILE_ACCOUNT`. */
+          target: z.string().min(1, t("budget.validation.accountRequired")),
+        }),
+      ),
+      fallbackCurrency: z.string().min(1, t("budget.validation.currencyRequired")),
+    })
+    .superRefine(({ bank, mapping }, ctx) => {
+      if (bank !== CUSTOM_MAPPING) return;
+      if (!mapping.name.trim()) {
+        ctx.addIssue({ code: "custom", path: ["mapping", "name"], message: t("budget.import.validation.templateNameRequired") });
+      }
+      const columnsError = validateImportColumns(mapping.columns);
+      if (columnsError) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["mapping", "columns"],
+          message: t(`budget.import.validation.columns.${columnsError}`),
+        });
+      }
+    });
 
 export type ImportSettingsFormData = z.infer<ReturnType<typeof getImportSettingsSchema>>;
 

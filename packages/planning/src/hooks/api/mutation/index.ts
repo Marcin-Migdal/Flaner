@@ -35,6 +35,7 @@ export * from "./useImportBudgetTransactionsMutation";
 export * from "./useEditBudgetRuleMutation";
 export * from "./useDeleteBudgetRuleMutation";
 export * from "./useRememberFileAccountMappingsMutation";
+export * from "./useSaveImportTemplateMutation";
 export * from "./useMakeBudgetRecurringMutation";
 export * from "./useUpdateBudgetRecurringRuleMutation";
 export * from "./useStopBudgetRecurringMutation";

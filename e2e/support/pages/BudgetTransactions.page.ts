@@ -39,6 +39,13 @@ export class BudgetTransactionsPage {
     await this.importSheet.getByRole("button", { name: /^(preview|podgląd)$/i }).click();
   }
 
+  /** Picks an option of a react-select in the import sheet (its input is not clickable: focus it, open the menu with the keyboard). */
+  async chooseImportOption(label: RegExp, option: RegExp) {
+    await this.importSheet.getByLabel(label).focus();
+    await this.page.keyboard.press("ArrowDown");
+    await this.page.getByRole("option", { name: option }).click();
+  }
+
   /** A status filter tab of the import preview, with its count. */
   importFilter(name: RegExp, count: number): Locator {
     return this.importSheet.getByRole("tab", { name: new RegExp(`^(${name.source})\\s*${count}$`, "i") });

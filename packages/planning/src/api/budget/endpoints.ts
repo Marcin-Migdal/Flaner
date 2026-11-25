@@ -42,6 +42,7 @@ import {
   toMatch,
 } from "../../utils/recurringTransactions";
 import { endOfNextMonth, nextOccurrence, resolveRepeatEnd, shiftDay, todayDay } from "../../utils/repeatRules";
+import { withImportTemplate } from "../../utils/statementImport/importTemplate";
 import type {
   BudgetAccount,
   BudgetAccountChanges,
@@ -79,6 +80,7 @@ import type {
   BudgetTransactionRef,
   BudgetTransactionUpdate,
   CreateBudgetInput,
+  ImportTemplate,
   LockedBudget,
   RepeatRule,
   RepeatRuleInput,
@@ -557,7 +559,7 @@ export const deleteBudgetAccount = async (budget: UnlockedBudget, accountId: str
   const fileAccountMappings = Object.fromEntries(
     Object.entries(profile.fileAccountMappings).filter(([, mappedId]) => mappedId !== accountId),
   );
-  const profilePayload: BudgetProfilePayload = { fileAccountMappings };
+  const profilePayload: BudgetProfilePayload = { fileAccountMappings, importTemplates: profile.importTemplates };
   const batch = writeBatch(fb.firestore).delete(refs.account(accountId));
   // Deleting a missing document is denied by the rules: only an existing recurring document goes
   if ((await getDoc(refs.recurring(accountId))).exists()) batch.delete(refs.recurring(accountId));
@@ -588,7 +590,26 @@ export const rememberFileAccountMappings = async (
     return;
   }
 
-  const profilePayload: BudgetProfilePayload = { fileAccountMappings };
+  const profilePayload: BudgetProfilePayload = { fileAccountMappings, importTemplates: profile.importTemplates };
+  await updateDoc(refs.profile(uid), {
+    payload: toBytes(await encryptJson(profilePayload, userKey, paths.profile(uid))),
+    updatedAt: Date.now(),
+  });
+};
+
+/**
+ * Saves an import template in the encrypted profile: a template of the same name (case-insensitively) is replaced,
+ * else it is added. A file with the template's header is then recognized by it.
+ */
+export const saveImportTemplate = async (budget: UnlockedBudget, template: ImportTemplate): Promise<void> => {
+  const { uid, userKey } = budget;
+  const profile = await getBudgetProfile(budget);
+  if (!profile) return;
+
+  const profilePayload: BudgetProfilePayload = {
+    fileAccountMappings: profile.fileAccountMappings,
+    importTemplates: withImportTemplate(profile.importTemplates ?? [], template),
+  };
   await updateDoc(refs.profile(uid), {
     payload: toBytes(await encryptJson(profilePayload, userKey, paths.profile(uid))),
     updatedAt: Date.now(),
