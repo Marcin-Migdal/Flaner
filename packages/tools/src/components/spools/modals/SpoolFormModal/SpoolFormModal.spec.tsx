@@ -31,6 +31,7 @@ vi.mock("../../../../hooks", () => ({
 
 const mockTemplates: FilamentTemplate[] = [
   {
+    createdAt: 1700000000000,
     id: "tpl-1",
     userId: "user-1",
     material: "PLA",
@@ -42,6 +43,8 @@ const mockTemplates: FilamentTemplate[] = [
 ];
 
 const mockInitialSpool: FilamentSpool = {
+  finishedAt: null,
+  createdAt: 1700000000000,
   id: "spool-1",
   userId: "user-1",
   name: "Existing Spool",

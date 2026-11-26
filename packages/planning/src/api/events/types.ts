@@ -26,12 +26,15 @@ export type SchedulerEvent = {
   endDate?: string;
   proposedDates: ProposedDateSlot[];
   votes?: EventVotes;
-  isFinalized?: boolean;
+  isFinalized: boolean;
   /** Slot key (`getSlotKey`) of the winning slot, set by `finalizeSchedulerEvent`; slots of a finalized event cannot change */
   finalizedSlotKey?: string;
   createdAt: number;
   updatedAt: number;
 };
+
+/** What a caller passes to create an event; `createSchedulerEvent` fills in the rest (`isFinalized: false`, ids, timestamps) */
+export type NewSchedulerEvent = Omit<SchedulerEvent, "id" | "isFinalized" | "createdAt" | "updatedAt">;
 
 /** The winning slot of a finalized event */
 export const getWinningSlot = ({ isFinalized, finalizedSlotKey, proposedDates }: SchedulerEvent) =>

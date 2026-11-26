@@ -20,6 +20,7 @@ vi.mock("../../hooks/api/mutation/useVoteSlotMutation", () => ({
 
 describe("SlotVotingModal", () => {
   const mockEvent: SchedulerEvent = {
+    isFinalized: false,
     id: "evt-1",
     name: "Project Sync",
     description: "Sync meeting",

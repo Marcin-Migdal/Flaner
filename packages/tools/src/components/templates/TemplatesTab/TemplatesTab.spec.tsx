@@ -8,6 +8,7 @@ import type { FilamentTemplate } from "../../../api/templates";
 
 const mockTemplates: FilamentTemplate[] = [
   {
+    createdAt: 1700000000000,
     id: "tmpl-1",
     userId: "user-1",
     material: "PLA",

@@ -12,6 +12,8 @@ vi.mock("react-i18next", () => ({
 }));
 
 const mockSpool: FilamentSpool = {
+  finishedAt: null,
+  createdAt: 1700000000000,
   id: "spool-fin-1",
   userId: "user-1",
   templateId: null,

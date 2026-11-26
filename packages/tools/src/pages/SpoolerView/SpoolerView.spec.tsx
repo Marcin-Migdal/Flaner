@@ -9,6 +9,8 @@ import type { FilamentTemplate } from "../../api/templates";
 
 const mockSpools: FilamentSpool[] = [
   {
+    finishedAt: null,
+    createdAt: 1700000000000,
     id: "spool-1",
     userId: "user-1",
     templateId: "tmpl-1",
@@ -25,6 +27,7 @@ const mockSpools: FilamentSpool[] = [
 
 const mockTemplates: FilamentTemplate[] = [
   {
+    createdAt: 1700000000000,
     id: "tmpl-1",
     userId: "user-1",
     material: "PLA",

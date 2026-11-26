@@ -16,6 +16,7 @@ const lookupColor = (overrides: Partial<LookupColor>): LookupColor => ({
   typeName: "Galaxy",
   name: "Red",
   hex: "#ff00ff",
+  createdAt: 1700000000000,
   ...overrides,
 });
 
@@ -79,8 +80,8 @@ describe("filamentCatalog", () => {
 
     it("adds custom lookups as custom nodes with their ids", () => {
       const [nylon] = buildFilamentOptions(
-        [{ id: "m-1", userId: "user-1", name: "Nylon" }],
-        [{ id: "t-1", userId: "user-1", materialName: "nylon", name: "CF" }],
+        [{ id: "m-1", userId: "user-1", name: "Nylon", createdAt: 1700000000000 }],
+        [{ id: "t-1", userId: "user-1", materialName: "nylon", name: "CF", createdAt: 1700000000000 }],
         [lookupColor({ id: "c-1", materialName: "NYLON", typeName: "cf", name: "Black", hex: "#111111" })],
       ).filter((m) => m.isCustom);
 
@@ -93,8 +94,8 @@ describe("filamentCatalog", () => {
     it("merges case-duplicate lookups into one node", () => {
       const custom = buildFilamentOptions(
         [
-          { id: "m-1", userId: "user-1", name: "Nylon" },
-          { id: "m-2", userId: "user-1", name: "nylon" },
+          { id: "m-1", userId: "user-1", name: "Nylon", createdAt: 1700000000000 },
+          { id: "m-2", userId: "user-1", name: "nylon", createdAt: 1700000000000 },
         ],
         [],
         [],
@@ -114,7 +115,7 @@ describe("filamentCatalog", () => {
     });
 
     it("does not change the catalog itself", () => {
-      buildFilamentOptions([{ id: "m-1", userId: "user-1", name: "PLA" }], [], []);
+      buildFilamentOptions([{ id: "m-1", userId: "user-1", name: "PLA", createdAt: 1700000000000 }], [], []);
 
       expect(buildFilamentOptions([], [], []).find((m) => m.name === "PLA")?.id).toBeUndefined();
     });

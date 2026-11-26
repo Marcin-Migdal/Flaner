@@ -95,6 +95,7 @@ vi.mock("../../../../hooks", () => ({
 }));
 
 const mockTemplate: FilamentTemplate = {
+  createdAt: 1700000000000,
   id: "tmpl-1",
   userId: "user-1",
   material: "PLA",
@@ -223,6 +224,7 @@ describe("TemplateFormModal", () => {
   it("displays duplicate error when saving template matching another existing template", async () => {
     mockUserTemplates = [
       {
+        createdAt: 1700000000000,
         id: "tmpl-other",
         userId: "user-123",
         material: "PLA",
@@ -435,6 +437,7 @@ describe("TemplateFormModal", () => {
         isOpen={true}
         onClose={vi.fn()}
         initialData={{
+          createdAt: 1700000000000,
           id: "tmpl-bambu",
           userId: "user-1",
           material: "PLA",
@@ -793,6 +796,7 @@ describe("TemplateFormModal", () => {
         isOpen={true}
         onClose={vi.fn()}
         initialData={{
+          createdAt: 1700000000000,
           id: "tmpl-sparse",
           userId: "user-1",
           material: "PETG",

@@ -18,6 +18,7 @@ describe("useGetGroupPendingInvitationsQuery", () => {
   it("fetches pending invitations for a group", async () => {
     const mockInvs: GroupInvitation[] = [
       {
+        groupAvatarUrl: null,
         groupId: "grp-1",
         groupName: "Test Group",
         userId: "u-1",

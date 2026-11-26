@@ -8,7 +8,7 @@ export type FriendRequest = {
   senderAvatarUrl: string;
   receiverUsername: string;
   receiverAvatarUrl: string;
-  status: "pending" | "accepted" | "rejected";
+  status: "pending";
   createdAt: number;
 };
 

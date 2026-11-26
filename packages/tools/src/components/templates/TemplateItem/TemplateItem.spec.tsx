@@ -11,6 +11,7 @@ vi.mock("react-i18next", () => ({
 }));
 
 const mockTemplate: FilamentTemplate = {
+  createdAt: 1700000000000,
   id: "tpl-1",
   userId: "user-1",
   material: "PLA",

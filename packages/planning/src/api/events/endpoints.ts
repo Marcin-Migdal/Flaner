@@ -20,6 +20,7 @@ import {
 } from "firebase/firestore";
 import {
   getSlotKey,
+  type NewSchedulerEvent,
   type ProposedDateSlot,
   type SchedulerEvent,
   type SchedulerEventEdit,
@@ -61,7 +62,7 @@ const getUnreadEventNotifications = (eventId: string, participantIds: string[]) 
   );
 
 export const createSchedulerEvent = async (
-  data: Omit<SchedulerEvent, "id" | "createdAt" | "updatedAt">,
+  data: NewSchedulerEvent,
   user: UserType,
 ): Promise<SchedulerEvent> => {
   const eventRef = doc(refs.events());

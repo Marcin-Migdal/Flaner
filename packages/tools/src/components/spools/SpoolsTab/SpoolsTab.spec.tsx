@@ -9,6 +9,8 @@ import type { FilamentSpool, RecordUsageResult } from "../../../api/spools";
 
 const mockSpools: FilamentSpool[] = [
   {
+    finishedAt: null,
+    createdAt: 1700000000000,
     id: "spool-1",
     userId: "user-1",
     templateId: null,
@@ -22,6 +24,8 @@ const mockSpools: FilamentSpool[] = [
     isFinished: false,
   },
   {
+    finishedAt: null,
+    createdAt: 1700000000000,
     id: "spool-2",
     userId: "user-1",
     templateId: null,
@@ -98,6 +102,7 @@ vi.mock("../../../hooks", () => ({
 
 const mockTemplates: FilamentTemplate[] = [
   {
+    createdAt: 1700000000000,
     id: "tmpl-1",
     userId: "user-1",
     material: "PLA",

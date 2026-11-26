@@ -25,6 +25,8 @@ describe("useGetSpoolsQuery", () => {
         initialWeight: 1000,
         currentWeight: 750,
         isFinished: false,
+        finishedAt: null,
+        createdAt: 1700000000000,
         material: "PLA",
         type: "Basic",
         colorName: "White",
