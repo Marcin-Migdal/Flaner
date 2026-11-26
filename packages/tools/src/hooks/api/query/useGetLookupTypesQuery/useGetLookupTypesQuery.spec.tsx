@@ -16,7 +16,7 @@ describe("useGetLookupTypesQuery", () => {
   });
 
   it("fetches lookup types when authenticated", async () => {
-    const mockTypes = [{ id: "t1", userId: "user-1", materialName: "PLA", name: "Matte" }];
+    const mockTypes = [{ id: "t1", userId: "user-1", materialName: "PLA", name: "Matte", createdAt: 1700000000000 }];
     vi.mocked(lookupsApi.fetchLookupTypes).mockResolvedValueOnce(mockTypes);
     const { result, queryClient } = renderHookWithProviders(() => useGetLookupTypesQuery(), { user: mockUser });
 

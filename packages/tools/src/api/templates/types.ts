@@ -6,7 +6,7 @@ export type FilamentTemplate = {
   colorName: string;
   colorHex: string;
   defaultWeight: number;
-  createdAt?: number | null;
+  createdAt: number;
 };
 
 export type TemplateInput = Omit<FilamentTemplate, "id" | "userId" | "createdAt">;

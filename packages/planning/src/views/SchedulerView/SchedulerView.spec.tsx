@@ -9,6 +9,7 @@ const signedInUser = createMockUser({ uid: "user-1", username: "Alice", email: "
 
 const mockEvents: SchedulerEvent[] = [
   {
+    isFinalized: false,
     id: "evt-1",
     name: "Sprint 42 Planning",
     description: "Bi-weekly sprint planning",
@@ -28,6 +29,7 @@ const mockEvents: SchedulerEvent[] = [
     updatedAt: 1700000000000,
   },
   {
+    isFinalized: false,
     id: "evt-2",
     name: "Quarterly Retro",
     description: "Retro of Q2",

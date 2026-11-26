@@ -57,7 +57,7 @@ export type GroupRequest = {
 export type GroupInvitation = {
   groupId: string;
   groupName: string;
-  groupAvatarUrl?: string | null;
+  groupAvatarUrl: string | null;
   userId: string;
   invitedByUserId: string;
   invitedAt: number;

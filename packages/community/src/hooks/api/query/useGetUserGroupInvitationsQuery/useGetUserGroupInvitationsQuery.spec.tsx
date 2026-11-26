@@ -18,6 +18,7 @@ describe("useGetUserGroupInvitationsQuery", () => {
   it("loads and subscribes to the user's group invitations", async () => {
     const mockInvs: GroupInvitation[] = [
       {
+        groupAvatarUrl: null,
         groupId: "g-1",
         groupName: "Climbers",
         userId: "u-1",

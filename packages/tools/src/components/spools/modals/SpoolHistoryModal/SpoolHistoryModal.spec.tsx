@@ -16,7 +16,7 @@ const mockPrints: SpoolPrint[] = [
   {
     id: "print-2",
     usedWeight: 20,
-    createdAt: null,
+    createdAt: 1711900000000,
   },
 ];
 
@@ -50,6 +50,8 @@ vi.mock("../../../../hooks", () => ({
 }));
 
 const mockSpool: FilamentSpool = {
+  finishedAt: null,
+  createdAt: 1700000000000,
   id: "spool-1",
   userId: "user-1",
   templateId: null,
@@ -72,7 +74,7 @@ describe("SpoolHistoryModal", () => {
     };
   });
 
-  it("renders print history entries including null timestamp fallback", () => {
+  it("renders print history entries", () => {
     render(
       <SpoolHistoryModal
         isOpen={true}
@@ -220,29 +222,5 @@ describe("SpoolHistoryModal", () => {
       />
     );
     expect(screen.queryByText("Spool 1")).not.toBeInTheDocument();
-  });
-
-  it("handles prints without a date gracefully", () => {
-    queryState = {
-      data: [
-        {
-          id: "print-invalid",
-          usedWeight: 15,
-          createdAt: null,
-        },
-      ],
-      isLoading: false,
-    };
-
-    render(
-      <SpoolHistoryModal
-        isOpen={true}
-        onClose={vi.fn()}
-        spool={mockSpool}
-      />
-    );
-
-    expect(screen.getByText("-15g")).toBeInTheDocument();
-    expect(screen.getByText("-")).toBeInTheDocument();
   });
 });

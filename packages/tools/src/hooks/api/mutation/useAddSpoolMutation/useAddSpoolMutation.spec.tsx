@@ -28,6 +28,7 @@ describe("useAddSpoolMutation", () => {
       colorName: "White",
       colorHex: "#ffffff",
       defaultWeight: 1000,
+      createdAt: 1700000000000,
     };
     const payload = {
       data: {

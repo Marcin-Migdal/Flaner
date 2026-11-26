@@ -20,6 +20,7 @@ describe("useGetUserSchedulerEventsRealtimeQuery", () => {
 
   const sampleEvents: SchedulerEvent[] = [
     {
+      isFinalized: false,
       id: "evt-1",
       name: "Meeting",
       description: "Dev sync",
@@ -55,6 +56,7 @@ describe("useGetUserSchedulerEventsRealtimeQuery", () => {
     const updatedEvents: SchedulerEvent[] = [
       ...sampleEvents,
       {
+        isFinalized: false,
         id: "evt-2",
         name: "Second Event",
         description: "New",

@@ -200,6 +200,7 @@ describe("EventModal", () => {
   });
 
   const existingEvent: SchedulerEvent = {
+    isFinalized: false,
     id: "evt-edit",
     name: "Summer Gathering",
     description: "BBQ and games",
@@ -466,6 +467,7 @@ describe("EventModal", () => {
   it("sends an empty description when the edited event has none", async () => {
     const user = userEvent.setup();
     const minimalEvent: SchedulerEvent = {
+      isFinalized: false,
       id: "evt-min",
       name: "Minimal Event",
       description: "",
@@ -508,6 +510,7 @@ describe("EventModal", () => {
         isOpen={true}
         onOpenChange={vi.fn()}
         eventToEdit={{
+          isFinalized: false,
           id: "evt-no-end",
           name: "No End Date",
           description: "",

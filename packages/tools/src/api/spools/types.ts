@@ -6,8 +6,8 @@ export type FilamentSpool = {
   initialWeight: number;
   currentWeight: number;
   isFinished: boolean;
-  finishedAt?: number | null;
-  createdAt?: number | null;
+  finishedAt: number | null;
+  createdAt: number;
   material: string;
   type: string;
   colorName: string;
@@ -24,7 +24,7 @@ export type SpoolInput = {
 export type SpoolPrint = {
   id: string;
   usedWeight: number;
-  createdAt: number | null;
+  createdAt: number;
 };
 
 export type RecordUsageInput = {

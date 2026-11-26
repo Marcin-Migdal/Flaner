@@ -28,6 +28,7 @@ describe("useEditSpoolMutation", () => {
       colorName: "Blue",
       colorHex: "#0000ff",
       defaultWeight: 1000,
+      createdAt: 1700000000000,
     };
     const payload = {
       spoolId: "s1",

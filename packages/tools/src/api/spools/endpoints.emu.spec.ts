@@ -36,6 +36,7 @@ const spool = (overrides: Partial<FilamentSpool> = {}): FilamentSpool => ({
 const print = (id: string, usedWeight: number, createdAt: number): SpoolPrint => ({ id, usedWeight, createdAt });
 
 const template: FilamentTemplate = {
+  createdAt: 1700000000000,
   id: "tpl-2",
   userId: "user-1",
   material: "PETG",

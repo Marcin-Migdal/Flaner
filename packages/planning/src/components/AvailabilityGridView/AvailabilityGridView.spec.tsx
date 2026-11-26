@@ -20,6 +20,7 @@ describe("AvailabilityGridView", () => {
   const mockVoteSlot = vi.fn();
 
   const mockEvent: SchedulerEvent = {
+    isFinalized: false,
     id: "evt-grid",
     name: "Sprint Planning",
     description: "Bi-weekly sprint planning",

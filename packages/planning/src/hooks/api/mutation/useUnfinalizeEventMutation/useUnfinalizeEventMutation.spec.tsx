@@ -21,6 +21,7 @@ describe("useUnfinalizeEventMutation", () => {
   });
 
   const sampleEvent: SchedulerEvent = {
+    isFinalized: false,
     id: "evt-1",
     name: "Event",
     description: "Desc",

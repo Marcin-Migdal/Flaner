@@ -56,6 +56,7 @@ vi.mock("../../../../hooks/api/mutation", () => ({
 }));
 
 const mockEvent: SchedulerEvent = {
+  isFinalized: false,
   id: "evt-control",
   name: "Product Kickoff",
   description: "Kickoff meeting for Q3",
