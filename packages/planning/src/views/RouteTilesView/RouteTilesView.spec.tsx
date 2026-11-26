@@ -53,33 +53,19 @@ describe("RouteTilesView", () => {
       initialEntries: ["/planning/budget"],
     });
 
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Budget" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getAllByRole("button").map((tile) => tile.textContent),
-    ).toEqual(["Summary", "Planner"]);
+    expect(screen.getByRole("heading", { level: 1, name: "Budget" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button").map((tile) => tile.textContent)).toEqual(["Summary", "Planner"]);
 
     await user.click(screen.getByRole("button", { name: "Planner" }));
 
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "/planning/budget/planner",
-    );
+    expect(screen.getByRole("status")).toHaveTextContent("/planning/budget/planner");
   });
 
   it("is not added when the route declares its own index", () => {
-    renderWithProviders(
-      <Routes
-        routes={budgetRoute([
-          { index: true, element: <p>Own index</p> },
-          ...views,
-        ])}
-      />,
-      {
-        i18nInstance: i18n,
-        initialEntries: ["/planning/budget"],
-      },
-    );
+    renderWithProviders(<Routes routes={budgetRoute([{ index: true, element: <p>Own index</p> }, ...views])} />, {
+      i18nInstance: i18n,
+      initialEntries: ["/planning/budget"],
+    });
 
     expect(screen.getByText("Own index")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();

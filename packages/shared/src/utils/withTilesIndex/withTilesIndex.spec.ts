@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { AppRouteObject } from "../../types/navigation";
 import { type TilesIndexProps, withTilesIndex } from "./withTilesIndex";
 
-const tilesOf = ({ label, routes }: TilesIndexProps) =>
-  `${label}:${routes.length}`;
+const tilesOf = ({ label, routes }: TilesIndexProps) => `${label}:${routes.length}`;
 
 describe("withTilesIndex", () => {
   it("adds a tiles index route to a labelled route with children", () => {
@@ -67,9 +66,7 @@ describe("withTilesIndex", () => {
   });
 
   it("leaves unlabelled routes (layouts) without tiles", () => {
-    const routes: AppRouteObject[] = [
-      { path: "budget", children: [{ path: "summary" }] },
-    ];
+    const routes: AppRouteObject[] = [{ path: "budget", children: [{ path: "summary" }] }];
 
     expect(withTilesIndex(routes, tilesOf)).toEqual(routes);
   });
