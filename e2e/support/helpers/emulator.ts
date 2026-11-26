@@ -131,6 +131,11 @@ export const readDocument = async (path: string): Promise<StoredData | undefined
   return fromFirestoreFields(body.fields ?? {});
 };
 
+/** Deletes a document bypassing security rules (e.g. a change made on another device). */
+export const deleteDocument = async (path: string) => {
+  await request(`${FIRESTORE_URL}/${path}`, { method: "DELETE", headers: { Authorization: "Bearer owner" } });
+};
+
 export type E2EUser = UserType & { password: string };
 
 /** Marks an account's email as verified (admin access), like a click on the verification link. */

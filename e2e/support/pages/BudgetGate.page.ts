@@ -39,6 +39,11 @@ export class BudgetGatePage {
     return recoveryKey;
   }
 
+  /** Comes back to this tab from another window (fires the focus refetch). */
+  async returnToTab() {
+    await this.page.evaluate(() => window.dispatchEvent(new Event("visibilitychange")));
+  }
+
   /** Unlocks with the passphrase; "Remember this device" is on by default. */
   async unlock(passphrase: string, { remember = true }: { remember?: boolean } = {}) {
     const main = this.page.getByRole("main");
