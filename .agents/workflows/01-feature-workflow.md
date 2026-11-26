@@ -33,7 +33,7 @@ Feature work runs through the `mattpocock-skills` plugin. Each skill's own `SKIL
 ## Phase 3: Implement
 
 1. **Branch:** `feature/<issue>-<slug>` from `develop`; never commit on `develop` / `master` (`.agents/AGENTS.md` → GIT). Default: one feature branch and one PR per spec, its tickets committed one after another.
-2. **One ticket per session:** `/implement #N`, then `/clear`. For parallel tickets use `/implement-spec`, never two `/implement` sessions in one checkout.
+2. **One ticket per session:** `/implement #N`, then `/clear`. For parallel tickets use `/implement-spec`, never two `/implement` sessions in one checkout. Parallel tickets in the cloud (one session, branch and PR each): `cloud-batch` skill.
 3. The skill drives `/tdd` at the agreed seams, typechecks, runs the tests, runs `/code-review` and commits. Flaner additions before its commit:
    - `npx nx run <pkg>:lint --fix` on every touched package.
    - `npm run lint:tokens` when UI changed.
