@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Button } from "./button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./sheet";
 
-/** Browsing or managing a collection / secondary context (members, invitations, mobile filters). */
+/** Browsing or managing a collection / secondary context (members, invitations, mobile filters). The corner close button is named from `ui:close` (switch the locale in the toolbar); `closeLabel` overrides it. */
 const meta = {
   title: "Primitives/Sheet",
   component: Sheet,
@@ -21,6 +21,22 @@ export const Default: Story = {
         <SheetHeader>
           <SheetTitle>Invitations</SheetTitle>
           <SheetDescription>People who want to join your groups.</SheetDescription>
+        </SheetHeader>
+      </SheetContent>
+    </Sheet>
+  ),
+};
+
+export const CustomCloseLabel: Story = {
+  render: () => (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open</Button>
+      </SheetTrigger>
+      <SheetContent closeLabel="Dismiss">
+        <SheetHeader>
+          <SheetTitle>Custom close label</SheetTitle>
+          <SheetDescription>The corner button is announced as &ldquo;Dismiss&rdquo;.</SheetDescription>
         </SheetHeader>
       </SheetContent>
     </Sheet>

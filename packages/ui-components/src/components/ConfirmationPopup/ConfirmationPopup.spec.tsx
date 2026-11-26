@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createTestI18n, renderWithProviders } from "@flaner/test-utils";
+import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
 import { ConfirmationPopup } from "./ConfirmationPopup";
 
 describe("ConfirmationPopup component", () => {
@@ -124,5 +126,28 @@ describe("ConfirmationPopup component", () => {
 
     expect(screen.getByRole("button", { name: "confirm" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "cancel" })).toBeInTheDocument();
+  });
+
+  it("names the dialog close button from the ui namespace", () => {
+    const i18nInstance = createTestI18n({ pl: { ui: { close: "Zamknij" } } });
+    void i18nInstance.changeLanguage("pl");
+    renderWithProviders(
+      <ConfirmationPopup open onOpenChange={vi.fn()} title="Usuń" onConfirm={vi.fn()} />,
+      { i18nInstance },
+    );
+
+    expect(screen.getByRole("button", { name: "Zamknij" })).toBeInTheDocument();
+  });
+
+  it("names the dialog close button from closeLabel", () => {
+    render(
+      <Dialog open>
+        <DialogContent closeLabel="Dismiss dialog" aria-describedby={undefined}>
+          <DialogTitle>Title</DialogTitle>
+        </DialogContent>
+      </Dialog>,
+    );
+
+    expect(screen.getByRole("button", { name: "Dismiss dialog" })).toBeInTheDocument();
   });
 });

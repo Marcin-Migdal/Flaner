@@ -4,6 +4,7 @@ import { Dialog as SheetPrimitive } from "radix-ui"
 import { cn } from "@flaner/shared/utils";
 import { Button } from "./button"
 import { XIcon } from "lucide-react"
+import { useUiTranslations } from "../../hooks/useUiTranslations"
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
@@ -48,12 +49,16 @@ function SheetContent({
   children,
   side = "right",
   showCloseButton = true,
+  closeLabel,
   onOpenAutoFocus,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left"
   showCloseButton?: boolean
+  /** Accessible name of the corner close button; defaults to `ui:close` (translated). */
+  closeLabel?: string
 }) {
+  const { t } = useUiTranslations()
   return (
     <SheetPortal>
       <SheetOverlay />
@@ -82,7 +87,7 @@ function SheetContent({
             >
               <XIcon
               />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">{closeLabel ?? t("close")}</span>
             </Button>
           </SheetPrimitive.Close>
         )}

@@ -1,6 +1,7 @@
 {
   "loading": "Ładowanie...",
   "confirm": "Potwierdź",
+  "close": "Zamknij",
   "cancel": "Anuluj",
   "imagePicker": {
     "invalidFileType": "Wybrany plik musi być obrazem (JPEG, PNG itp.).",

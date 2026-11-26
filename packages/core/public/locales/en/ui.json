@@ -1,6 +1,7 @@
 {
   "loading": "Loading...",
   "confirm": "Confirm",
+  "close": "Close",
   "cancel": "Cancel",
   "select": {
     "create": "Create \"{{value}}\""
