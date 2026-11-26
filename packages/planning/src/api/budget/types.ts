@@ -140,6 +140,9 @@ export type UnlockedBudget = {
   userKey: CryptoKey;
 };
 
+/** Onboarding's result: the unlocked budget plus the stored keys just written (as `getLockedBudget` reads them). */
+export type CreatedBudget = UnlockedBudget & { locked: LockedBudget };
+
 /**
  * A categorization rule (GLOSSARY → Categorization rule): transactions of one type whose counterparty has this
  * account number, or whose payee (else description) contains this keyword, get this category. Identified by

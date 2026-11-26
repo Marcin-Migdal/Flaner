@@ -1,17 +1,19 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { Route, Routes } from "react-router";
 import { createMockUser, createTestI18n, renderWithProviders } from "@flaner/test-utils";
 import en from "../../../public/locales/en/planning.json";
 import * as budgetApi from "../../api/budget";
-import type { LockedBudget, UnlockedBudget } from "../../api/budget";
+import type { CreateBudgetInput, LockedBudget, UnlockedBudget } from "../../api/budget";
 import { BudgetProvider, useBudgetSession } from "../../context/BudgetContext";
+import { useCreateBudgetMutation } from "../../hooks/api/mutation";
+import { budgetKeys } from "../../hooks/api/queryKeys";
 import { BudgetGate } from "./BudgetGate";
 
 import * as budgetDevice from "../../utils/budgetDevice";
 
-vi.mock("../../api/budget", () => ({ getLockedBudget: vi.fn(), unlockWithPassphrase: vi.fn() }));
+vi.mock("../../api/budget", () => ({ getLockedBudget: vi.fn(), unlockWithPassphrase: vi.fn(), createBudget: vi.fn() }));
 vi.mock("../../utils/budgetDevice", () => ({ getRememberedBudget: vi.fn() }));
 
 beforeEach(() => {
@@ -46,9 +48,25 @@ const UnlockProbe = () => {
   return <button onClick={() => setBudget(unlocked)}>test-unlock</button>;
 };
 
+const onboardingInput: CreateBudgetInput = {
+  passphrase: "purple tractor sings loudly",
+  recoveryKey: "ABCD-EFGH-JKMN-PQRS-TVWX-YZ01-2345-6789",
+  mainCurrency: "PLN",
+  mainAccount: { name: "Cash", currency: "PLN" },
+  categories: { expense: [], income: [] },
+};
+
+// Stands in for the last onboarding step: the same mutation, then the budget kept in the session
+const OnboardingProbe = () => {
+  const { setBudget } = useBudgetSession();
+  const { mutateAsync } = useCreateBudgetMutation();
+  return <button onClick={async () => setBudget(await mutateAsync(onboardingInput))}>test-onboard</button>;
+};
+
 const ui = (
   <BudgetProvider>
     <UnlockProbe />
+    <OnboardingProbe />
     <Routes>
       <Route
         path="/planning/budget"
@@ -115,5 +133,60 @@ describe("BudgetGate", () => {
 
     expect(await screen.findByRole("heading", { name: "Unlock your Budget" })).toBeInTheDocument();
     expect(screen.queryByText("Budget page")).not.toBeInTheDocument();
+  });
+
+  it("shows onboarding once the stored keys are gone (budget reset on another device, not set up again)", async () => {
+    vi.mocked(budgetApi.getLockedBudget).mockResolvedValue(locked);
+    const events = userEvent.setup();
+    const { queryClient } = renderGate();
+
+    await screen.findByRole("heading", { name: "Unlock your Budget" });
+    await events.click(screen.getByRole("button", { name: "test-unlock" }));
+    expect(screen.getByText("Budget page")).toBeInTheDocument();
+
+    vi.mocked(budgetApi.getLockedBudget).mockResolvedValue(null);
+    await queryClient.refetchQueries({ queryKey: budgetKeys.locked("alice") });
+
+    expect(await screen.findByRole("heading", { name: "Set up your Budget" })).toBeInTheDocument();
+    expect(screen.queryByText("Budget page")).not.toBeInTheDocument();
+  });
+
+  it("opens the page right after onboarding in this tab, without an unlock prompt", async () => {
+    // The fetch before onboarding found no keys; nothing refetches them afterwards
+    vi.mocked(budgetApi.getLockedBudget).mockResolvedValue(null);
+    vi.mocked(budgetApi.createBudget).mockResolvedValue({ ...unlocked, locked });
+    const events = userEvent.setup();
+    const { queryClient } = renderGate();
+
+    await screen.findByRole("heading", { name: "Set up your Budget" });
+    await events.click(screen.getByRole("button", { name: "test-onboard" }));
+
+    expect(await screen.findByText("Budget page")).toBeInTheDocument();
+    expect(queryClient.getQueryData(budgetKeys.locked("alice"))).toEqual(locked);
+    expect(budgetDevice.getRememberedBudget).not.toHaveBeenCalled();
+    expect(screen.queryByRole("heading", { name: "Unlock your Budget" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the new budget when a read of the keys from before onboarding finishes after it", async () => {
+    vi.mocked(budgetApi.getLockedBudget).mockResolvedValue(null);
+    vi.mocked(budgetApi.createBudget).mockResolvedValue({ ...unlocked, locked });
+    const events = userEvent.setup();
+    const { queryClient } = renderGate();
+    await screen.findByRole("heading", { name: "Set up your Budget" });
+
+    // e.g. a focus refetch that started before the keys were written and still answers "no keys"
+    let finishStaleRead = (_: null) => {};
+    vi.mocked(budgetApi.getLockedBudget).mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishStaleRead = resolve;
+      }),
+    );
+    void queryClient.refetchQueries({ queryKey: budgetKeys.locked("alice") });
+    await events.click(screen.getByRole("button", { name: "test-onboard" }));
+    finishStaleRead(null);
+
+    expect(await screen.findByText("Budget page")).toBeInTheDocument();
+    await waitFor(() => expect(queryClient.getQueryData(budgetKeys.locked("alice"))).toEqual(locked));
+    expect(screen.queryByRole("heading", { name: "Set up your Budget" })).not.toBeInTheDocument();
   });
 });

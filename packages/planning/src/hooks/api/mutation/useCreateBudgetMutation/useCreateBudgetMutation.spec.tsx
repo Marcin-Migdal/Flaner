@@ -2,7 +2,7 @@ import { act, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { createMockUser, renderHookWithProviders } from "@flaner/test-utils";
 import * as budgetApi from "../../../../api/budget";
-import type { CreateBudgetInput, UnlockedBudget } from "../../../../api/budget";
+import type { CreateBudgetInput, LockedBudget, UnlockedBudget } from "../../../../api/budget";
 import { budgetKeys } from "../../queryKeys";
 import { useCreateBudgetMutation } from "./useCreateBudgetMutation";
 
@@ -19,19 +19,27 @@ const input: CreateBudgetInput = {
 };
 
 describe("useCreateBudgetMutation", () => {
-  it("creates the budget for the signed-in user and refreshes their stored keys", async () => {
+  it("creates the budget for the signed-in user and stores their new keys in the cache", async () => {
     const userKey = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, false, ["encrypt"]);
     const budget: UnlockedBudget = { uid: "user-1", keyId: "key-1", userKey };
-    vi.mocked(budgetApi.createBudget).mockResolvedValueOnce(budget);
+    const locked: LockedBudget = {
+      uid: "user-1",
+      keyId: "key-1",
+      salt: new Uint8Array(16),
+      iterations: 600000,
+      passphraseWrappedKey: new Uint8Array(60),
+      recoveryWrappedKey: new Uint8Array(60),
+    };
+    vi.mocked(budgetApi.createBudget).mockResolvedValueOnce({ ...budget, locked });
     const { result, queryClient } = renderHookWithProviders(() => useCreateBudgetMutation(), { user });
-    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    const setQueryData = vi.spyOn(queryClient, "setQueryData");
 
     act(() => result.current.mutate(input));
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(budgetApi.createBudget).toHaveBeenCalledWith("user-1", input);
-    expect(result.current.data).toBe(budget);
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: budgetKeys.locked("user-1") });
+    expect(result.current.data).toEqual(budget);
+    expect(setQueryData).toHaveBeenCalledWith(budgetKeys.locked("user-1"), locked);
   });
 
   it("fails without a signed-in user", async () => {

@@ -24,9 +24,14 @@ export const BudgetGate = ({ children }: BudgetGateProps) => {
   // The Budget route's own URL
   const { pathname } = useResolvedPath(".");
 
-  // Never keep the keys of a user who signed out or switched accounts, nor a key replaced by a reset elsewhere
+  // Never keep the keys of a user who signed out or switched accounts, nor a key replaced or deleted by a reset
+  // elsewhere. A cached `null` always means "no stored keys" (onboarding writes its keys into the cache);
+  // while the keys are still loading (`undefined`) the budget is kept.
   const isOwnBudget =
-    budget !== null && budget.uid === user?.uid && (!locked || locked.keyId === budget.keyId);
+    budget !== null &&
+    budget.uid === user?.uid &&
+    locked !== null &&
+    (locked === undefined || locked.keyId === budget.keyId);
   useEffect(() => {
     if (budget && !isOwnBudget) setBudget(null);
   }, [budget, isOwnBudget, setBudget]);

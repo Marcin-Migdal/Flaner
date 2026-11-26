@@ -71,7 +71,15 @@ describe("BudgetOnboarding", () => {
   it("creates the budget with the main currency from the locale, the main account and seeded categories", async () => {
     const userKey = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, false, ["encrypt"]);
     const unlocked = { uid: "user-1", keyId: "key-1", userKey };
-    vi.mocked(budgetApi.createBudget).mockResolvedValueOnce(unlocked);
+    const locked: budgetApi.LockedBudget = {
+      uid: "user-1",
+      keyId: "key-1",
+      salt: new Uint8Array(16),
+      iterations: 600000,
+      passphraseWrappedKey: new Uint8Array(60),
+      recoveryWrappedKey: new Uint8Array(60),
+    };
+    vi.mocked(budgetApi.createBudget).mockResolvedValueOnce({ ...unlocked, locked });
     const { events, onComplete } = renderOnboarding();
 
     await passPassphraseStep(events);

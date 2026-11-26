@@ -145,7 +145,7 @@ describe("budget endpoints", () => {
       fileAccountMappings: {},
     });
     expect(await getBudgetCategories(budget)).toEqual(categories);
-    expect(await getLockedBudget(ME)).toEqual(expect.objectContaining({ uid: ME, keyId: budget.keyId }));
+    expect(await getLockedBudget(ME)).toEqual(budget.locked);
   });
 
   it("stores no readable account name, category name or passphrase", async () => {
