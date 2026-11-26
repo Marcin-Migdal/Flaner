@@ -4,14 +4,31 @@
     {
       "name": "dev-emulators",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:emulators"],
+      "runtimeArgs": [
+        "run",
+        "dev:emulators"
+      ],
       "port": 4200
     },
     {
       "name": "dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 4200
+    },
+    {
+      "name": "storybook",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "storybook",
+        "--",
+        "--no-open"
+      ],
+      "port": 6006
     }
   ]
 }
