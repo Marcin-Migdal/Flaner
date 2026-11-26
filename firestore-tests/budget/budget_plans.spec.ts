@@ -54,6 +54,11 @@ describe("budget_plans", () => {
       getDocs(query(plans, where("ownerId", "==", ME), orderBy("month", "desc"), limit(1))),
     );
     expect(latest.docs.map((d) => d.id)).toEqual([`${ME}_2026-12`]);
+    // The last planned month before a month (Planner's empty-month start)
+    const before = await assertSucceeds(
+      getDocs(query(plans, where("ownerId", "==", ME), where("month", "<", "2026-12"), orderBy("month", "desc"), limit(1))),
+    );
+    expect(before.docs.map((d) => d.id)).toEqual([PLAN_PATH.split("/")[1]]);
     await assertFails(getDocs(query(plans, where("month", "==", MONTH))));
   });
 

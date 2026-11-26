@@ -6,7 +6,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { createMockUser, createTestI18n, renderWithProviders } from "@flaner/test-utils";
 import en from "../../../public/locales/en/planning.json";
 import * as budgetApi from "../../api/budget";
-import type { BudgetCategoryTree, BudgetPlan, BudgetTransaction, UnlockedBudget } from "../../api/budget";
+import type { BudgetCategoryTree, BudgetPlan, BudgetRecurring, BudgetTransaction, UnlockedBudget } from "../../api/budget";
 import { BudgetProvider, useBudgetSession } from "../../context/BudgetContext";
 import { BudgetPlannerView } from "./BudgetPlannerView";
 
@@ -24,6 +24,12 @@ vi.mock("../../api/budget", async (importOriginal) => ({
   getBudgetTransactions: vi.fn(),
   getBudgetPlan: vi.fn(),
   setBudgetPlanAmount: vi.fn(),
+  getBudgetRecurring: vi.fn(),
+  getLastBudgetPlanBefore: vi.fn(),
+  startBudgetPlan: vi.fn(),
+  dismissBudgetPlanRecurring: vi.fn(),
+  linkBudgetRecurringOccurrence: vi.fn(),
+  unlinkBudgetRecurringOccurrence: vi.fn(),
 }));
 vi.mock("@flaner/shared/utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@flaner/shared/utils")>()),
@@ -68,7 +74,43 @@ const tx = (categoryId: string | null, amountMain: number, overrides: Partial<Bu
   ...overrides,
 });
 
-const setUp = ({ transactions = [], plan = null }: { transactions?: BudgetTransaction[]; plan?: BudgetPlan | null } = {}) => {
+// Monthly on the 10th from January 2026, 120.00 expected
+const recurringOn = (categoryId: string, overrides: Partial<BudgetRecurring> = {}): BudgetRecurring => ({
+  id: `r-${categoryId}`,
+  accountId: "main",
+  type: "expense",
+  payee: "Netflix",
+  categoryId,
+  amount: 12000,
+  currency: "PLN",
+  amountMain: 12000,
+  rule: { pattern: { frequency: "monthly", interval: 1, day: 10 }, start: "2026-01-10", end: { type: "never" } },
+  occurrences: {},
+  createdAt: 1,
+  ...overrides,
+});
+
+const setUp = ({
+  transactions = [],
+  plan = null,
+  recurring = [],
+  lastPlan = null,
+}: {
+  transactions?: BudgetTransaction[];
+  plan?: BudgetPlan | null;
+  recurring?: BudgetRecurring[];
+  lastPlan?: BudgetPlan | null;
+} = {}) => {
+  vi.mocked(budgetApi.getBudgetRecurring).mockResolvedValue(recurring);
+  vi.mocked(budgetApi.getLastBudgetPlanBefore).mockResolvedValue(lastPlan);
+  vi.mocked(budgetApi.startBudgetPlan).mockImplementation(async (_, started) => started);
+  vi.mocked(budgetApi.dismissBudgetPlanRecurring).mockImplementation(async (_, { month }) => ({
+    month,
+    limits: {},
+    plannedIncome: {},
+  }));
+  vi.mocked(budgetApi.linkBudgetRecurringOccurrence).mockResolvedValue();
+  vi.mocked(budgetApi.unlinkBudgetRecurringOccurrence).mockResolvedValue();
   vi.mocked(budgetApi.getBudgetProfile).mockResolvedValue({ mainCurrency: "PLN", mainAccountId: "main", fileAccountMappings: {} });
   vi.mocked(budgetApi.getBudgetAccounts).mockResolvedValue([
     { id: "main", name: "mBank", defaultCurrency: "PLN", hidden: false, createdAt: 1 },
@@ -204,5 +246,163 @@ describe("BudgetPlannerView", () => {
 
     const card = await screen.findByRole("region", { name: "Salary" });
     expect(within(card).getByText("Short of plan · PLN 3,450.00")).toBeInTheDocument();
+  });
+
+  it("shows recurring paid / expected on cards and lines, and recurring without a limit outside the plan", async () => {
+    setUp({
+      plan: plan({ limits: { food: 150000, groceries: 100000 } }),
+      recurring: [
+        recurringOn("groceries", {
+          occurrences: { "2026-11-10": { transactionId: "t-paid", date: "2026-11-10", amount: 9000, amountMain: 9000 } },
+        }),
+        recurringOn("coffee", { id: "r-coffee", payee: "Coffee club" }),
+      ],
+    });
+    renderView();
+
+    const card = await screen.findByRole("region", { name: "Food" });
+    expect(
+      within(card).getByRole("group", { name: /^Recurring: PLN\s90\.00 paid of PLN\s90\.00 expected$/ }),
+    ).toBeInTheDocument();
+    expect(within(card).getByRole("note", { name: /^Recurring: PLN\s90\.00 paid of PLN\s90\.00 expected$/ })).toBeInTheDocument();
+    const outside = screen.getByRole("list", { name: "Outside the plan" });
+    expect(within(outside).getByText("Coffee")).toBeInTheDocument();
+    expect(within(outside).getByText(/^Recurring PLN\s120\.00$/)).toBeInTheDocument();
+  });
+
+  it("adds a limit from Outside the plan, defaulting to the expected recurring when it is higher than spent", async () => {
+    setUp({ transactions: [tx("coffee", 6400)], plan: plan({}), recurring: [recurringOn("coffee")] });
+    const userEvents = userEvent.setup();
+    renderView();
+
+    const outside = await screen.findByRole("list", { name: "Outside the plan" });
+    await userEvents.click(within(outside).getByRole("button", { name: "Add limit: Food / Coffee" }));
+    const dialog = await screen.findByRole("dialog", { name: "Add limit" });
+    expect(within(dialog).getByRole("spinbutton", { name: "Limit" })).toHaveValue(120);
+    expect(within(dialog).getByText(/Already spent this month: PLN\s64\.00/)).toBeInTheDocument();
+  });
+
+  it("warns in the details sheet when the limit is below this month's recurring, and sets it to the sum", async () => {
+    setUp({ plan: plan({ limits: { groceries: 10000 } }), recurring: [recurringOn("groceries")] });
+    const userEvents = userEvent.setup();
+    renderView();
+
+    await userEvents.click(await screen.findByRole("button", { name: "Details of Groceries" }));
+    const sheet = await screen.findByRole("dialog", { name: "Groceries" });
+    expect(within(sheet).getByText(/The limit is below this month's recurring \(PLN\s120\.00\)/)).toBeInTheDocument();
+    await userEvents.click(within(sheet).getByRole("button", { name: /^Set to PLN\s120\.00$/ }));
+
+    await waitFor(() =>
+      expect(budgetApi.setBudgetPlanAmount).toHaveBeenCalledWith(budget, {
+        month: "2026-11",
+        type: "expense",
+        categoryId: "groceries",
+        amount: 12000,
+      }),
+    );
+  });
+
+  it("links an unpaid occurrence to the nearest transaction and unlinks a paid one", async () => {
+    const near = tx("groceries", 11900, { date: "2026-11-12", payee: "Netflix.com" });
+    const far = tx("groceries", 5000, { date: "2026-11-28", payee: "Shop" });
+    const unpaid = recurringOn("groceries");
+    const paid = recurringOn("groceries", {
+      id: "r-paid",
+      payee: "Spotify",
+      occurrences: { "2026-11-10": { transactionId: "t-old", date: "2026-11-10", amount: 2399, amountMain: 2399 } },
+    });
+    setUp({ transactions: [far, near], plan: plan({ limits: { groceries: 100000 } }), recurring: [unpaid, paid] });
+    const userEvents = userEvent.setup();
+    renderView();
+
+    await userEvents.click(await screen.findByRole("button", { name: "Details of Groceries" }));
+    const sheet = await screen.findByRole("dialog", { name: "Groceries" });
+    await userEvents.click(within(sheet).getByRole("button", { name: "Recurring this month (2)" }));
+    await userEvents.click(within(sheet).getByRole("button", { name: /^Link Netflix due/ }));
+
+    const dialog = await screen.findByRole("dialog", { name: "Link Netflix" });
+    const options = within(dialog).getAllByRole("button", { name: /^Link .+ of / });
+    expect(options.map((option) => option.getAttribute("aria-label"))).toEqual([
+      expect.stringMatching(/^Link Netflix\.com of/),
+      expect.stringMatching(/^Link Shop of/),
+    ]);
+    await userEvents.click(options[0]);
+    await waitFor(() =>
+      expect(budgetApi.linkBudgetRecurringOccurrence).toHaveBeenCalledWith(budget, unpaid, {
+        dueDate: "2026-11-10",
+        transaction: near,
+      }),
+    );
+
+    await userEvents.click(within(sheet).getByRole("button", { name: /^Unlink Spotify due/ }));
+    await waitFor(() =>
+      expect(budgetApi.unlinkBudgetRecurringOccurrence).toHaveBeenCalledWith(budget, paid, "2026-11-10"),
+    );
+  });
+
+  it("starts an empty month from the last planned month, listing and adding the limits recurring adds", async () => {
+    setUp({
+      recurring: [recurringOn("coffee")],
+      lastPlan: plan({ month: "2026-09", limits: { groceries: 100000 }, plannedIncome: { salary: 845000 } }),
+    });
+    const userEvents = userEvent.setup();
+    renderView();
+
+    const start = await screen.findByRole("region", { name: "Start planning November 2026" });
+    expect(within(start).getAllByText(/^Food \/ Coffee · PLN\s120\.00$/)).toHaveLength(2);
+    await userEvents.click(within(start).getByRole("button", { name: "Copy from September 2026" }));
+
+    await waitFor(() =>
+      expect(budgetApi.startBudgetPlan).toHaveBeenCalledWith(budget, {
+        month: "2026-11",
+        limits: { groceries: 100000, coffee: 12000 },
+        plannedIncome: { salary: 845000 },
+      }),
+    );
+    expect(budgetApi.getLastBudgetPlanBefore).toHaveBeenCalledWith(budget, "2026-11");
+  });
+
+  it("starts empty with only the prefill limits, and offers no copy without an earlier plan", async () => {
+    setUp({ recurring: [recurringOn("coffee")] });
+    const userEvents = userEvent.setup();
+    renderView();
+
+    const start = await screen.findByRole("region", { name: "Start planning November 2026" });
+    expect(within(start).queryByRole("button", { name: /^Copy from/ })).not.toBeInTheDocument();
+    await userEvents.click(within(start).getByRole("button", { name: "Start empty" }));
+
+    await waitFor(() =>
+      expect(budgetApi.startBudgetPlan).toHaveBeenCalledWith(budget, {
+        month: "2026-11",
+        limits: { coffee: 12000 },
+        plannedIncome: {},
+      }),
+    );
+  });
+
+  it("shows a missing-limit banner in a planned month with Create limit and Dismiss", async () => {
+    setUp({ plan: plan({ limits: { groceries: 100000 } }), recurring: [recurringOn("coffee")] });
+    const userEvents = userEvent.setup();
+    renderView();
+
+    expect(await screen.findByText("Netflix has no limit in November 2026")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: /^Start planning/ })).not.toBeInTheDocument();
+    await userEvents.click(screen.getByRole("button", { name: "Create limit for Netflix" }));
+    const dialog = await screen.findByRole("dialog", { name: "Add limit" });
+    expect(within(dialog).getByRole("spinbutton", { name: "Limit" })).toHaveValue(120);
+    await userEvents.click(within(dialog).getByRole("button", { name: "Cancel" }));
+
+    await userEvents.click(screen.getByRole("button", { name: "Dismiss Netflix for this month" }));
+    await waitFor(() =>
+      expect(budgetApi.dismissBudgetPlanRecurring).toHaveBeenCalledWith(budget, { month: "2026-11", recurringId: "r-coffee" }),
+    );
+  });
+
+  it("hides a banner dismissed in this month's plan", async () => {
+    setUp({ plan: plan({ dismissedRecurring: ["r-coffee"] }), recurring: [recurringOn("coffee")] });
+    renderView();
+
+    expect(await screen.findByRole("list", { name: "Outside the plan" })).toBeInTheDocument();
+    expect(screen.queryByText("Netflix has no limit in November 2026")).not.toBeInTheDocument();
   });
 });

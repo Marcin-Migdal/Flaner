@@ -1,6 +1,7 @@
 import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { cn } from "@flaner/shared/utils";
 import { Badge, PlanProgressBar } from "@flaner/ui-components";
+import { Repeat } from "lucide-react";
 import type { BudgetCategoryType } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { BUDGET_CATEGORY_COLOR_CLASSES, BUDGET_CATEGORY_ICON_COMPONENTS } from "../../../../utils/budgetCategoryIcons";
@@ -20,7 +21,7 @@ export type PlanCategoryCardProps = {
 };
 
 /**
- * One category of the plan: Spent → Limit with a bar in the category colour (danger when over), its subcategory lines
+ * One category of the plan: Recurring (paid / expected, when any is due) → Spent → Limit with a bar in the category colour (danger when over), its subcategory lines
  * with a thin bar and an inline field. For income: Received → Planned income with a "Short of plan" tag.
  */
 export const PlanCategoryCard = ({ card, type, mainCurrency, onAmountChange, onOpen, disabled }: PlanCategoryCardProps) => {
@@ -35,6 +36,14 @@ export const PlanCategoryCard = ({ card, type, mainCurrency, onAmountChange, onO
     t(isExpense ? "budget.planner.limitFor" : "budget.planner.plannedIncomeFor", { name });
   const valueText = (value: number, max: number) =>
     t("budget.planner.valueText", { value: format(value, mainCurrency), max: format(max, mainCurrency) });
+  // Recurring (paid / expected): shown only where a recurring transaction is due this month
+  const recurringLabel = (paid: number, expected: number) =>
+    t(isExpense ? "budget.planner.recurringPaidOf" : "budget.planner.recurringReceivedOf", {
+      paid: format(paid, mainCurrency),
+      expected: format(expected, mainCurrency),
+    });
+  const recurringValue = (paid: number, expected: number) =>
+    t("budget.planner.recurringValue", { paid: format(paid, mainCurrency), expected: format(expected, mainCurrency) });
   const shortOfPlan = (spent: number, target: number) =>
     !isExpense && target > spent ? (
       <Badge variant="warning" shape="tag" className={styles.tag}>
@@ -57,6 +66,16 @@ export const PlanCategoryCard = ({ card, type, mainCurrency, onAmountChange, onO
           <span className={styles.name}>{category.name}</span>
         </button>
         <div className={styles.stats}>
+          {card.recurring.length > 0 && (
+            <div className={styles.stat} aria-label={recurringLabel(card.recurringPaid, card.recurringExpected)} role="group">
+              <span className={styles.statLabel} aria-hidden="true">
+                {t("budget.planner.stats.recurring")}
+              </span>
+              <span className={styles.recurringValue} aria-hidden="true">
+                {recurringValue(card.recurringPaid, card.recurringExpected)}
+              </span>
+            </div>
+          )}
           <div className={styles.stat}>
             <span className={styles.statLabel}>{spentLabel}</span>
             <span className={cn(styles.statValue, isExpense && card.spent > card.limit && styles.over)}>
@@ -101,6 +120,16 @@ export const PlanCategoryCard = ({ card, type, mainCurrency, onAmountChange, onO
                 >
                   <span className={styles.subName}>{line.subcategory.name}</span>
                 </button>
+                {line.recurring.length > 0 && (
+                  <span
+                    className={styles.lineRecurring}
+                    role="note"
+                    aria-label={recurringLabel(line.recurringPaid, line.recurringExpected)}
+                  >
+                    <Repeat aria-hidden="true" />
+                    <span aria-hidden="true">{recurringValue(line.recurringPaid, line.recurringExpected)}</span>
+                  </span>
+                )}
                 <span className={cn(styles.lineSpent, isExpense && line.spent > line.target && styles.over)}>
                   {format(line.spent, mainCurrency)}
                 </span>

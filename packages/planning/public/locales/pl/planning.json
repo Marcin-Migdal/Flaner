@@ -125,6 +125,8 @@
       "recurringSaved": "Zapisano regułę powtarzania",
       "recurringStopped": "Zatrzymano transakcję cykliczną",
       "recurringDeleted": "Usunięto transakcję cykliczną",
+      "recurringLinkError": "Nie udało się zapisać połączenia. Spróbuj ponownie.",
+      "planStarted": "Plan rozpoczęty",
       "categorySaveError": "Nie udało się zapisać kategorii. Spróbuj ponownie.",
       "categoryDeleteError": "Nie udało się usunąć kategorii. Spróbuj ponownie.",
       "categoryDeleted": "Kategoria usunięta"
@@ -166,6 +168,10 @@
       "splitOffMissing": "Ta wydzielona część już nie istnieje. Odśwież stronę.",
       "refundNotAllowed": "Nie można powiązać tego zwrotu: musi to być uwzględniany wpływ, jeszcze niepowiązany, z datą nie wcześniejszą niż zakup i mniejszy niż pozostała kwota zakupu.",
       "splitTypeLocked": "Podzielona transakcja nie może zmienić typu (wydatek / wpływ). Najpierw usuń wydzielone części.",
+      "occurrenceAlreadyPaid": "To wystąpienie jest już opłacone. Najpierw je rozłącz.",
+      "alreadyMatched": "Ta transakcja jest już dopasowana do transakcji cyklicznej.",
+      "planAlreadyStarted": "Ten miesiąc ma już plan. Został wczytany ponownie.",
+      "planMissing": "Ten miesiąc nie ma planu.",
       "categoryMissing": "Ta kategoria już nie istnieje. Odśwież stronę."
     }
   },
@@ -1231,7 +1237,8 @@
         "spent": "Wydane",
         "limit": "Limit",
         "received": "Otrzymane",
-        "plannedIncome": "Planowany przychód"
+        "plannedIncome": "Planowany przychód",
+        "recurring": "Cykliczne"
       },
       "addLimit": "Dodaj limit",
       "addLimitFor": "Dodaj limit: {{name}}",
@@ -1266,8 +1273,45 @@
         "over": "{{amount}} ponad limit",
         "transactions": "Transakcje w tym miesiącu ({{count}})",
         "noTransactions": "Brak transakcji w tym miesiącu.",
-        "openInTransactions": "Otwórz w Transakcjach"
-      }
+        "openInTransactions": "Otwórz w Transakcjach",
+        "belowRecurring": "Limit jest niższy niż transakcje cykliczne w tym miesiącu ({{amount}}).",
+        "setTo": "Ustaw {{amount}}",
+        "recurring": "Cykliczne w tym miesiącu ({{count}})",
+        "noRecurring": "Brak transakcji cyklicznych w tym miesiącu.",
+        "due": "Termin {{date}}",
+        "link": "Połącz",
+        "linkFor": "Połącz {{payee}} z terminem {{date}}",
+        "unlink": "Rozłącz",
+        "unlinkFor": "Rozłącz {{payee}} z terminem {{date}}",
+        "linkTitle": "Połącz {{payee}}",
+        "linkDescription": "Termin {{date}} · wybierz transakcję, która to opłaciła",
+        "noCandidates": "Brak transakcji w tej kategorii na tym koncie w tym miesiącu.",
+        "alreadyMatched": "Już dopasowana",
+        "cancel": "Anuluj",
+        "linkCandidate": "Połącz {{payee}} z dnia {{date}}"
+      },
+      "recurringValue": "{{paid}} / {{expected}}",
+      "recurringPaidOf": "Cykliczne: zapłacono {{paid}} z oczekiwanych {{expected}}",
+      "recurringReceivedOf": "Cykliczne: otrzymano {{paid}} z oczekiwanych {{expected}}",
+      "outsideRecurring": "Cykliczne {{amount}}",
+      "start": {
+        "title": "Zacznij planować {{month}}",
+        "description": "Ten miesiąc nie ma jeszcze planu. Nic nie zostanie zaplanowane, dopóki nie wybierzesz.",
+        "copy": "Skopiuj plan: {{month}}",
+        "empty": "Zacznij od zera",
+        "adds": "Transakcje cykliczne dodadzą:",
+        "addsNone": "Transakcje cykliczne nie dodadzą limitów.",
+        "addsItem": "{{name}} · {{amount}}"
+      },
+      "banner": {
+        "title": "{{payee}} nie ma limitu w {{month}}",
+        "description": "Ta transakcja cykliczna oczekuje {{amount}} w kategorii {{category}}, która nie ma w tym miesiącu własnego limitu.",
+        "create": "Utwórz limit",
+        "createFor": "Utwórz limit dla: {{payee}}",
+        "dismiss": "Odrzuć",
+        "dismissFor": "Odrzuć {{payee}} w tym miesiącu"
+      },
+      "categoryPath": "{{category}} / {{subcategory}}"
     },
     "repeatRule": {
       "weekly_one": "Co tydzień: {{days}}",

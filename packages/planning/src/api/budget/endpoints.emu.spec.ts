@@ -32,6 +32,7 @@ import {
   deleteBudgetRecurring,
   deleteBudgetTransaction,
   deleteBudgetTransactions,
+  dismissBudgetPlanRecurring,
   editBudgetRule,
   getBudgetAccounts,
   getBudgetAccountsWithTransactions,
@@ -42,8 +43,10 @@ import {
   getBudgetRecurring,
   getAccountTransactions,
   getBudgetTransactions,
+  getLastBudgetPlanBefore,
   getLockedBudget,
   importBudgetTransactions,
+  linkBudgetRecurringOccurrence,
   linkBudgetRefund,
   removeBudgetSplitOff,
   makeBudgetTransactionRecurring,
@@ -54,7 +57,9 @@ import {
   setBudgetPlanAmount,
   setBudgetMainCurrency,
   setMainBudgetAccount,
+  startBudgetPlan,
   stopBudgetRecurring,
+  unlinkBudgetRecurringOccurrence,
   unlinkBudgetRefund,
   unlockWithPassphrase,
   unlockWithRecoveryKey,
@@ -797,6 +802,38 @@ describe("budget plans", () => {
     });
   });
 
+  it("starts a month's plan once, finds the last planned month before it and dismisses banners per month", async () => {
+    const budget = await setUp();
+    expect(await getLastBudgetPlanBefore(budget, "2026-11")).toBeNull();
+
+    const september = { month: "2026-09", limits: { "cat-food": 1000 }, plannedIncome: {} };
+    await startBudgetPlan(budget, september);
+    await startBudgetPlan(budget, { month: "2026-10", limits: {}, plannedIncome: { "cat-salary": 5000 } });
+    await startBudgetPlan(budget, { month: "2026-12", limits: {}, plannedIncome: {} });
+    await expect(startBudgetPlan(budget, september)).rejects.toThrow("planning:errors.budget.planAlreadyStarted");
+
+    expect(await getLastBudgetPlanBefore(budget, "2026-11")).toEqual({
+      month: "2026-10",
+      limits: {},
+      plannedIncome: { "cat-salary": 5000 },
+    });
+    expect(await getLastBudgetPlanBefore(budget, "2026-10")).toEqual(september);
+
+    await dismissBudgetPlanRecurring(budget, { month: "2026-09", recurringId: "rec-1" });
+    // Saving an amount keeps the dismissed banners
+    await setBudgetPlanAmount(budget, { month: "2026-09", type: "expense", categoryId: "cat-food", amount: 2000 });
+    expect(await getBudgetPlan(budget, "2026-09")).toEqual({
+      month: "2026-09",
+      limits: { "cat-food": 2000 },
+      plannedIncome: {},
+      dismissedRecurring: ["rec-1"],
+    });
+    expect(JSON.stringify(await read(`budget_plans/${ME}_2026-09`))).not.toContain("rec-1");
+    await expect(dismissBudgetPlanRecurring(budget, { month: "2026-11", recurringId: "rec-1" })).rejects.toThrow(
+      "planning:errors.budget.planMissing",
+    );
+  });
+
   it("denies another user", async () => {
     const budget = await setUp();
     await setBudgetPlanAmount(budget, { month: "2026-11", type: "expense", categoryId: "cat-food", amount: 1000 });
@@ -807,6 +844,8 @@ describe("budget plans", () => {
       setBudgetPlanAmount(budget, { month: "2026-11", type: "expense", categoryId: "cat-food", amount: 1 }),
     ).rejects.toMatchObject(DENIED);
     await expect(getBudgetPlan(budget, "2026-12")).rejects.toMatchObject(DENIED);
+    await expect(getLastBudgetPlanBefore(budget, "2026-12")).rejects.toMatchObject(DENIED);
+    await expect(startBudgetPlan(budget, { month: "2026-12", limits: {}, plannedIncome: {} })).rejects.toMatchObject(DENIED);
   });
 });
 
@@ -1102,6 +1141,37 @@ describe("budget recurring transactions", () => {
     expect(await read(`budget_recurring/${accountId}`)).toBeUndefined();
     // The transaction stays
     expect(await getBudgetTransactions(budget, { from: "2000-01", to: "2100-12" })).toEqual([first]);
+  });
+
+  it("links an unpaid occurrence by hand and unlinks a paid one; both stick through automatic re-matching", async () => {
+    const { budget, accountId } = await setUp();
+    const first = await addBudgetTransaction(budget, rent(accountId, dayIn(-2, 10)));
+    const auto = await addBudgetTransaction(budget, rent(accountId, dayIn(-1, 11)));
+    // Another payee, 15 days after the due date: automatic matching never picks it
+    const manual = await addBudgetTransaction(budget, { ...rent(accountId, dayIn(-1, 25)), payee: "Landlord's agent" });
+    const recurring = await makeBudgetTransactionRecurring(budget, first, monthlyOn10th);
+    expect(await matchedIds(budget)).toEqual({ [dayIn(-2, 10)]: first.id, [dayIn(-1, 10)]: auto.id });
+
+    await unlinkBudgetRecurringOccurrence(budget, recurring, dayIn(-1, 10));
+    expect(await matchedIds(budget)).toEqual({ [dayIn(-2, 10)]: first.id });
+    await expect(
+      linkBudgetRecurringOccurrence(budget, recurring, { dueDate: dayIn(-1, 10), transaction: first }),
+    ).rejects.toThrow("planning:errors.budget.alreadyMatched");
+
+    await linkBudgetRecurringOccurrence(budget, recurring, { dueDate: dayIn(-1, 10), transaction: manual });
+    expect(await matchedIds(budget)).toEqual({ [dayIn(-2, 10)]: first.id, [dayIn(-1, 10)]: manual.id });
+    await expect(
+      linkBudgetRecurringOccurrence(budget, recurring, { dueDate: dayIn(-1, 10), transaction: auto }),
+    ).rejects.toThrow("planning:errors.budget.occurrenceAlreadyPaid");
+
+    // A write near the occurrence re-matches it: the manual link stays
+    await updateBudgetTransactions(budget, [{ ref: auto, patch: { description: "touched" } }]);
+    expect(await matchedIds(budget)).toEqual({ [dayIn(-2, 10)]: first.id, [dayIn(-1, 10)]: manual.id });
+    expect(JSON.stringify(await read(`budget_recurring/${accountId}`))).not.toContain(manual.id);
+
+    // Deleting the linked transaction frees the occurrence; the unlinked one is never matched to it again
+    await deleteBudgetTransaction(budget, manual);
+    expect(await matchedIds(budget)).toEqual({ [dayIn(-2, 10)]: first.id });
   });
 
   it("is removed by deleting its account and by Reset budget", async () => {

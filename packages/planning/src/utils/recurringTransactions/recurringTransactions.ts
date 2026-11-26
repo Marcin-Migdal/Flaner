@@ -42,8 +42,8 @@ export const toMatch = ({ id, date, amount, amountMain }: BudgetTransaction): Bu
  * Re-matches the occurrences due in `from`..`to` against `pool` — every transaction of the account dated within
  * 7 days of that window (so every candidate of those occurrences is known). Matches due outside the window stay;
  * a stored match that is not on the current rule (history from before an edit) stays while its transaction still
- * fits. Each occurrence on the rule takes the closest fitting transaction no other occurrence uses, closest pairs
- * first; recurring transactions earlier in `list` choose first.
+ * fits; a manual link stays while its transaction exists (and is not excluded). Each occurrence on the rule takes the closest fitting transaction no other occurrence uses, closest pairs
+ * first, skipping transactions unlinked from it by hand; recurring transactions earlier in `list` choose first.
  */
 export const rematchRecurring = (
   list: BudgetRecurring[],
@@ -53,12 +53,20 @@ export const rematchRecurring = (
   const byId = new Map(pool.map((transaction) => [transaction.id, transaction]));
   const dues = list.map((recurring) => occurrencesBetween(recurring.rule, from, to));
 
+  // `pool` holds every transaction of the account dated in this range, so a match dated in it but missing is gone
+  const poolFrom = shiftDay(from, -MATCH_WINDOW_DAYS);
+  const poolTo = shiftDay(to, MATCH_WINDOW_DAYS);
+
   const kept = list.map((recurring, index) => {
     const onRule = new Set(dues[index]);
     return Object.fromEntries(
       Object.entries(recurring.occurrences).flatMap(([dueDate, match]): [string, BudgetRecurringMatch][] => {
-        if (dueDate < from || dueDate > to) return [[dueDate, match]];
         const transaction = byId.get(match.transactionId);
+        if (match.manual) {
+          if (match.date < poolFrom || match.date > poolTo) return [[dueDate, match]];
+          return transaction && !transaction.excluded ? [[dueDate, { ...toMatch(transaction), manual: true }]] : [];
+        }
+        if (dueDate < from || dueDate > to) return [[dueDate, match]];
         if (onRule.has(dueDate) || !transaction || !matchesOccurrence(recurring, transaction, dueDate)) return [];
         return [[dueDate, toMatch(transaction)]];
       }),
@@ -71,7 +79,12 @@ export const rematchRecurring = (
     const pairs = dues[index]
       .flatMap((dueDate) =>
         pool
-          .filter((transaction) => !used.has(transaction.id) && matchesOccurrence(recurring, transaction, dueDate))
+          .filter(
+            (transaction) =>
+              !used.has(transaction.id) &&
+              !recurring.unlinked?.[dueDate]?.includes(transaction.id) &&
+              matchesOccurrence(recurring, transaction, dueDate),
+          )
           .map((transaction) => ({ dueDate, transaction, distance: daysApart(transaction.date, dueDate) })),
       )
       .sort(
@@ -149,6 +162,10 @@ const monthRange = (month: BudgetMonth) => ({
   from: `${month}-01`,
   to: format(endOfMonth(parseISO(`${month}-01`)), "yyyy-MM-dd"),
 });
+
+/** Occurrences due in `month` (`recurringOccurrences` over the whole month). */
+export const monthOccurrences = (recurring: BudgetRecurring, month: BudgetMonth, today: string) =>
+  recurringOccurrences(recurring, monthRange(month), today);
 
 const STATUS_PRIORITY: OccurrenceStatus[] = ["overdue", "upcoming", "paid"];
 

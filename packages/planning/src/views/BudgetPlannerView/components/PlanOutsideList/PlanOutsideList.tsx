@@ -1,7 +1,7 @@
 import { useMoneyFormatter } from "@flaner/shared/hooks";
 import { cn } from "@flaner/shared/utils";
 import { Badge, Button, buttonVariants } from "@flaner/ui-components";
-import { CircleHelp, Plus } from "lucide-react";
+import { CircleHelp, Plus, Repeat } from "lucide-react";
 import { Link } from "react-router";
 import type { BudgetCategoryType, BudgetMonth } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
@@ -20,7 +20,7 @@ export type PlanOutsideListProps = {
   mainCurrency: string;
   /** Uncategorized links to this month in Transactions, filtered to uncategorized rows of `type`. */
   month: BudgetMonth;
-  /** Add limit / planned income, preset to the row's category and its amount so far. */
+  /** Add limit / planned income, preset to the row's category (the caller picks the amount). */
   onAdd: (row: OutsideRow & { id: string }) => void;
   onOpen: (categoryId: string) => void;
   disabled?: boolean;
@@ -38,7 +38,7 @@ const uncategorizedHref = (month: BudgetMonth, type: BudgetCategoryType) => {
 
 const hasCategory = (row: OutsideRow): row is OutsideRow & { id: string } => row.id !== null;
 
-/** Spending (or income) without a target of its own, each with Add limit; Uncategorized links to Transactions. */
+/** Spending, income or recurring without a target of its own, each with Add limit; Uncategorized links to Transactions. */
 export const PlanOutsideList = ({
   rows,
   type,
@@ -51,6 +51,13 @@ export const PlanOutsideList = ({
   const { t } = usePlanningTranslations();
   const { format } = useMoneyFormatter();
   const isExpense = type === "expense";
+  const recurring = ({ recurringExpected }: OutsideRow) =>
+    recurringExpected > 0 && (
+      <span className={styles.recurring}>
+        <Repeat aria-hidden="true" />
+        {t("budget.planner.outsideRecurring", { amount: format(recurringExpected, mainCurrency) })}
+      </span>
+    );
 
   return (
     <ul className={styles.root} aria-label={isExpense ? t("budget.planner.sections.outside") : undefined}>
@@ -64,6 +71,7 @@ export const PlanOutsideList = ({
                 </span>
                 <span className={styles.label}>{t("budget.planner.uncategorized")}</span>
               </span>
+              {recurring(row)}
               <span className={styles.spent}>{format(row.spent, mainCurrency)}</span>
               {/* Not `Button asChild`: Slot needs a single child and Button adds its busy spinner slot */}
               <Link to={uncategorizedHref(month, type)} className={buttonVariants({ variant: "ghost", size: "sm" })}>
@@ -96,6 +104,7 @@ export const PlanOutsideList = ({
                 {t("budget.planner.outsideTag")}
               </Badge>
             )}
+            {recurring(row)}
             <span className={styles.spent}>{format(row.spent, mainCurrency)}</span>
             <Button
               variant="outline"

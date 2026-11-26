@@ -15,6 +15,15 @@ export class BudgetPlannerPage {
     this.addLimitDialog = page.getByRole("dialog", { name: /^(add limit|dodaj limit)$/i });
   }
 
+  /** The empty month's start (Copy from <last planned month> / Start empty). */
+  get startCard(): Locator {
+    return this.page.getByRole("main").getByRole("region", { name: /^(start planning|zacznij planować) /i });
+  }
+
+  async nextMonth() {
+    await this.page.getByRole("button", { name: /^(next month|następny miesiąc)$/i }).click();
+  }
+
   /** A category card, found by the category's name. */
   card(category: RegExp): Locator {
     return this.page.getByRole("main").getByRole("region", { name: category });

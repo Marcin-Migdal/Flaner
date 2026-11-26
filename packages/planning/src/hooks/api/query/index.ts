@@ -16,5 +16,6 @@ export * from "./useGetBudgetAccountTransactionCountQuery";
 export * from "./useGetBudgetRulesQuery";
 export * from "./useGetBudgetRecurringQuery";
 export * from "./useGetBudgetTransactionsRangeQuery";
+export * from "./useGetLastBudgetPlanBeforeQuery";
 export * from "./useGetBudgetTransactionsMonthsQuery";
 export * from "./useGetBudgetCategoryTransactionCountQuery";
