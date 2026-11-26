@@ -4,7 +4,7 @@ import { federation } from '@module-federation/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
-import { sharedFederationConfig } from '../../vite.federation';
+import { sharedFederationConfig, sharedOptimizeDeps } from '../../vite.federation';
 
 const PORT = 4200;
 
@@ -28,9 +28,7 @@ export default defineConfig({
   },
   preview: { port: PORT, strictPort: true, host: '0.0.0.0', cors: true },
   build: { target: 'chrome89' },
-  optimizeDeps: {
-    exclude: ['@flaner/ui-components'],
-  },
+  optimizeDeps: sharedOptimizeDeps,
   plugins: [
     tailwindcss(),
     federation({
