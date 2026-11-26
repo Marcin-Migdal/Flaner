@@ -45,3 +45,5 @@ export * from "./useUpdateBudgetSplitOffMutation";
 export * from "./useRemoveBudgetSplitOffMutation";
 export * from "./useLinkBudgetRefundMutation";
 export * from "./useUnlinkBudgetRefundMutation";
+export * from "./useUpdateBudgetCategoriesMutation";
+export * from "./useDeleteBudgetCategoryMutation";

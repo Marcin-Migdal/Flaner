@@ -21,7 +21,7 @@ Budget month plans (MFE `planning`, Budget → Planner; ADR 0002): one document 
 ## Write flows
 | Flow | Endpoint | Writes | Atomic |
 | --- | --- | --- | --- |
-| Set or remove a limit / planned income (Planner: inline field, Add limit dialog, details sheet) | `packages/planning/src/api/budget/endpoints.ts#setBudgetPlanAmount` | get + set `budget_plans/{me}_{month}` (created on the month's first limit) | ✅ transaction |
+| Set or remove a limit / planned income (Planner: inline field, Add limit dialog, details sheet) | `packages/planning/src/api/budget/endpoints.ts#setBudgetPlanAmount` | get `budget_categories/{me}`, get + set `budget_plans/{me}_{month}` (created on the month's first limit; limits and planned income of deleted categories are dropped on save) | ✅ transaction |
 | Reset budget | `packages/planning/src/api/budget/endpoints.ts#resetBudget` | delete every `budget_plans` doc where `ownerId == me`, with every other budget document of the user; `budget_keys/{me}` in the last batch (see `budget_keys.md`) | ⚠️ batches of 500 (keys last, so a failed reset stays locked and can be retried) |
 
 ## Queries
@@ -72,4 +72,4 @@ match /budget_plans/{planId} {
 
 ## Tests
 - `firestore-tests/budget/budget_plans.spec.ts` — the owner creates a month's plan in a transaction (reading the missing doc first), reads, updates and deletes it; owner-only query (reset) and the last-planned-month query; reading a missing plan of another user denied; another user's id / `ownerId` denied; id / `month` mismatch denied; invalid envelope (readable field, wrong types, oversized payload) denied; other users / anonymous denied.
-- `packages/planning/src/api/budget/endpoints.emu.spec.ts` — plans round-trip encrypted (no readable amount or category id), set / remove a limit and planned income, another user denied; Reset budget deletes the user's plans and keeps other users'.
+- `packages/planning/src/api/budget/endpoints.emu.spec.ts` — plans round-trip encrypted (no readable amount or category id), set / remove a limit and planned income, a deleted category's limit dropped on the next save, another user denied; Reset budget deletes the user's plans and keeps other users'.

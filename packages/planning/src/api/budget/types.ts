@@ -18,8 +18,10 @@ export const BUDGET_CATEGORY_ICONS = [
 
 export type BudgetCategoryIcon = (typeof BUDGET_CATEGORY_ICONS)[number];
 
-/** Index of a `--chart-N` colour token. */
-export type ChartColorIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+/** Indexes of the `--chart-N` colour tokens a main category can carry. */
+export const CHART_COLOR_INDEXES = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+
+export type ChartColorIndex = (typeof CHART_COLOR_INDEXES)[number];
 
 /** Uses its parent's icon and colour. */
 export type BudgetSubcategory = {
@@ -38,6 +40,19 @@ export type BudgetCategory = {
 
 /** The user's two trees, each in the user's order. */
 export type BudgetCategoryTree = Record<BudgetCategoryType, BudgetCategory[]>;
+
+/** A category or subcategory in one of the two trees. */
+export type BudgetCategoryRef = { type: BudgetCategoryType; categoryId: string };
+
+/** One tree edit (add, rename, icon / colour, reorder; `utils/categoryTree`), applied to the stored tree. */
+export type BudgetCategoryTreeChange = (tree: BudgetCategoryTree) => BudgetCategoryTree;
+
+/**
+ * Deletes a category (with its subcategories) or a subcategory. With a replacement (a category or subcategory of the
+ * same type that is not deleted) its transactions, split-offs, recurring transactions and rules move to it; without
+ * one they lose their category (transactions also become unconfirmed) and its rules are deleted.
+ */
+export type BudgetCategoryDeleteInput = BudgetCategoryRef & { replacementId: string | null };
 
 export type BudgetProfile = {
   mainCurrency: string;

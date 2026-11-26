@@ -140,4 +140,20 @@ export class BudgetTransactionsPage {
       .getByRole("button", { name: /^(delete|usuń)$/i })
       .click();
   }
+
+  /** Opens the view from the sidebar (in-app navigation keeps the budget unlocked). */
+  async openFromNav() {
+    await this.page.getByRole("link", { name: /^(transactions|transakcje)$/i }).first().click();
+  }
+
+  /** Sets a row's category with its inline picker (desktop): types the name and picks the first match. */
+  async setRowCategory(payee: string, category: string) {
+    await this.row(payee).getByRole("combobox", { name: /^(category of|kategoria:)/i }).fill(category);
+    await this.page.keyboard.press("Enter");
+  }
+
+  /** The "?" confirm button of a row whose category is unconfirmed (none once confirmed). */
+  confirmCategoryButton(payee: string): Locator {
+    return this.row(payee).getByRole("button", { name: /^(confirm category|potwierdź kategorię)/i });
+  }
 }

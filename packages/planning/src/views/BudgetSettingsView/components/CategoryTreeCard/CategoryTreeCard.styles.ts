@@ -1,0 +1,23 @@
+export const categoryTreeCardStyles = {
+  root: "min-w-0 space-y-3",
+  header: "flex items-center justify-between gap-3",
+  title: "text-base font-semibold text-foreground",
+  empty: "px-4 py-6 text-center text-sm text-muted-foreground",
+  list: "divide-y divide-border",
+  item: "bg-card",
+  row: "flex items-center gap-2 px-2 py-2 sm:px-3",
+  tile: "flex size-8 shrink-0 items-center justify-center rounded-md border border-current/40 bg-current/10 [&_svg]:size-4",
+  text: "flex min-w-0 flex-1 flex-col",
+  name: "truncate text-sm font-medium text-foreground",
+  meta: "truncate text-xs text-muted-foreground",
+  chevron: "transition-transform",
+  chevronOpen: "rotate-180",
+  // Indented under the parent's tile
+  subcategories: "border-t border-border-subtle pb-2 pl-8 sm:pl-10",
+  subRow: "flex items-center gap-2 py-1.5 pr-2 sm:pr-3",
+  subTile: "flex size-6 shrink-0 items-center justify-center rounded border border-current/40 bg-current/10 [&_svg]:size-3.5",
+  subName: "min-w-0 flex-1 truncate text-sm text-foreground",
+  addSub: "ml-8",
+  menu: "w-44",
+  destructiveItem: "text-destructive focus:bg-destructive/10 focus:text-destructive [&_svg]:text-destructive",
+};
