@@ -33,6 +33,9 @@ export type SchedulerEvent = {
   updatedAt: number;
 };
 
+/** What a caller passes to create an event; `createSchedulerEvent` fills in the rest (`isFinalized: false`, ids, timestamps) */
+export type NewSchedulerEvent = Omit<SchedulerEvent, "id" | "isFinalized" | "createdAt" | "updatedAt">;
+
 /** The winning slot of a finalized event */
 export const getWinningSlot = ({ isFinalized, finalizedSlotKey, proposedDates }: SchedulerEvent) =>
   isFinalized ? proposedDates.find((slot) => getSlotKey(slot) === finalizedSlotKey) : undefined;
