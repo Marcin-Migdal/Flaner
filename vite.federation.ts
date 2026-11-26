@@ -1,3 +1,5 @@
+import type { DepOptimizationOptions } from 'vite';
+
 export const sharedFederationConfig = {
   react: { singleton: true },
   'react-dom': { singleton: true },
@@ -17,3 +19,14 @@ export const sharedFederationConfig = {
   'firebase/firestore': { singleton: true },
   'sonner': { singleton: true },
 };
+
+// Every package's dev server. On a cold start (no `node_modules/.vite`, as in CI) a dependency the
+// crawl of `index.html` cannot see is found only when a page requests it; Vite then re-bundles and
+// sends `full-reload` to every open page, wiping their state mid-test (#189). Pre-bundle them up front.
+export const sharedOptimizeDeps = {
+  // Workspace source, served as-is so edits hot-reload; its own imports are found by crawling it
+  exclude: ['@flaner/ui-components'],
+  entries: ['index.html', '../ui-components/src/index.ts'],
+  // Runtime plugin injected by the federation plugin (dev type hints), invisible to the crawl
+  include: ['@module-federation/dts-plugin/dynamic-remote-type-hints-plugin'],
+} satisfies DepOptimizationOptions;
