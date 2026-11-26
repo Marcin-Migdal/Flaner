@@ -1,23 +1,18 @@
-import type { AppRouteObject } from "@flaner/shared/types";
+import type { TilesIndexProps } from "@flaner/shared/utils";
 import { PageTiles } from "@flaner/ui-components";
 import { useNavigate, useResolvedPath } from "react-router";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 
-export type BudgetTilesViewProps = {
-  /** The Budget route's own children (its views). */
-  routes: AppRouteObject[];
-};
-
-/** `/planning/budget`: tiles of the Budget views. */
-export const BudgetTilesView = ({ routes }: BudgetTilesViewProps) => {
+/** Tiles index page of a route with children, added by `withTilesIndex` (e.g. `/planning/budget`). */
+export const RouteTilesView = ({ label, routes }: TilesIndexProps) => {
   const { t } = usePlanningTranslations();
   const navigate = useNavigate();
-  // Index route: "." is the Budget route's own URL
+  // Index route: "." is the parent route's own URL
   const { pathname } = useResolvedPath(".");
 
   return (
     <PageTiles
-      title={t("nav.budget")}
+      title={t(label)}
       routes={routes}
       basePath={pathname}
       onSelect={(path) => navigate(path)}
@@ -26,4 +21,4 @@ export const BudgetTilesView = ({ routes }: BudgetTilesViewProps) => {
   );
 };
 
-export default BudgetTilesView;
+export default RouteTilesView;
