@@ -25,7 +25,7 @@ export const BudgetGate = ({ children }: BudgetGateProps) => {
   const { pathname } = useResolvedPath(".");
 
   // Never keep the keys of a user who signed out or switched accounts, nor a key replaced or deleted by a reset
-  // elsewhere. A cached `null` is always fetched (onboarding writes its keys into the cache), so it means "no keys";
+  // elsewhere. A cached `null` always means "no stored keys" (onboarding writes its keys into the cache);
   // while the keys are still loading (`undefined`) the budget is kept.
   const isOwnBudget =
     budget !== null &&

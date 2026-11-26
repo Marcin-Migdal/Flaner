@@ -94,6 +94,7 @@ import type {
   BudgetTransactionUpdate,
   CreateBudgetInput,
   ImportTemplate,
+  CreatedBudget,
   LockedBudget,
   RepeatRule,
   RepeatRuleInput,
@@ -215,12 +216,8 @@ export const getLockedBudget = async (uid: string): Promise<LockedBudget | null>
 /**
  * Onboarding: creates the keys, the profile, the category tree and the main account in one transaction.
  * Fails with `errors.budget.alreadySetUp` when the user already has keys (e.g. onboarding finished on another device).
- * Resolves with the unlocked budget and, in `locked`, the stored keys just written (as `getLockedBudget` reads them).
  */
-export const createBudget = async (
-  uid: string,
-  input: CreateBudgetInput,
-): Promise<UnlockedBudget & { locked: LockedBudget }> => {
+export const createBudget = async (uid: string, input: CreateBudgetInput): Promise<CreatedBudget> => {
   const recoveryKey = parseRecoveryKey(input.recoveryKey);
   if (!recoveryKey) throw new Error("planning:errors.budget.invalidRecoveryKey");
 

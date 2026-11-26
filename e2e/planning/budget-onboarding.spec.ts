@@ -58,7 +58,7 @@ test.describe("Budget onboarding", () => {
     // Reset elsewhere, nobody has set it up again yet: the stored keys are gone
     await deleteDocument(`budget_keys/${user.uid}`);
     // Back to the tab: the stored keys are refetched on window focus
-    await page.evaluate(() => window.dispatchEvent(new Event("visibilitychange")));
+    await gate.returnToTab();
 
     await expect(gate.onboardingHeading).toBeVisible();
     await expect(transactions.emptyStateTitle).not.toBeVisible();

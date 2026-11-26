@@ -5,7 +5,8 @@ import { monthOfDate } from "../../../utils/monthLedger";
 // Budget query keys — the only place that builds them. All fetched (no listeners).
 // - `all`: prefix of every budget key (Reset budget drops them).
 // - `locked`: the user's stored keys (`budget_keys/{uid}`), read by the Budget gate to pick onboarding or unlock.
-//   Onboarding writes it with `setQueryData` instead of invalidating it, so a cached `null` is always a fetched one.
+//   Onboarding and Reset budget write it with `setQueryData` instead of invalidating it, so a cached `null` always
+//   means "no stored keys" (never the stale read from before onboarding).
 // - `profile` / `categories` / `accounts`: decrypted per-user documents, read behind the gate.
 // - `transactions`: the decrypted transactions of all the user's accounts in one month (one month-range query).
 // - `rules`: the decrypted categorization rules (`budget_rules/{uid}`); every write that sets a category can teach one.

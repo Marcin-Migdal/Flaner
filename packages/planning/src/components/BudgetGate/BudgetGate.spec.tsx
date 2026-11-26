@@ -5,8 +5,7 @@ import { Route, Routes } from "react-router";
 import { createMockUser, createTestI18n, renderWithProviders } from "@flaner/test-utils";
 import en from "../../../public/locales/en/planning.json";
 import * as budgetApi from "../../api/budget";
-import type { LockedBudget, UnlockedBudget } from "../../api/budget";
-import type { CreateBudgetInput } from "../../api/budget";
+import type { CreateBudgetInput, LockedBudget, UnlockedBudget } from "../../api/budget";
 import { BudgetProvider, useBudgetSession } from "../../context/BudgetContext";
 import { useCreateBudgetMutation } from "../../hooks/api/mutation";
 import { budgetKeys } from "../../hooks/api/queryKeys";
@@ -164,7 +163,30 @@ describe("BudgetGate", () => {
 
     expect(await screen.findByText("Budget page")).toBeInTheDocument();
     expect(queryClient.getQueryData(budgetKeys.locked("alice"))).toEqual(locked);
-    await waitFor(() => expect(budgetDevice.getRememberedBudget).not.toHaveBeenCalled());
+    expect(budgetDevice.getRememberedBudget).not.toHaveBeenCalled();
     expect(screen.queryByRole("heading", { name: "Unlock your Budget" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the new budget when a read of the keys from before onboarding finishes after it", async () => {
+    vi.mocked(budgetApi.getLockedBudget).mockResolvedValue(null);
+    vi.mocked(budgetApi.createBudget).mockResolvedValue({ ...unlocked, locked });
+    const events = userEvent.setup();
+    const { queryClient } = renderGate();
+    await screen.findByRole("heading", { name: "Set up your Budget" });
+
+    // e.g. a focus refetch that started before the keys were written and still answers "no keys"
+    let finishStaleRead = (_: null) => {};
+    vi.mocked(budgetApi.getLockedBudget).mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishStaleRead = resolve;
+      }),
+    );
+    void queryClient.refetchQueries({ queryKey: budgetKeys.locked("alice") });
+    await events.click(screen.getByRole("button", { name: "test-onboard" }));
+    finishStaleRead(null);
+
+    expect(await screen.findByText("Budget page")).toBeInTheDocument();
+    await waitFor(() => expect(queryClient.getQueryData(budgetKeys.locked("alice"))).toEqual(locked));
+    expect(screen.queryByRole("heading", { name: "Set up your Budget" })).not.toBeInTheDocument();
   });
 });
