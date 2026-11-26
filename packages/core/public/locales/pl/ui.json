@@ -1,6 +1,7 @@
 {
   "loading": "Ładowanie...",
   "confirm": "Potwierdź",
+  "close": "Zamknij",
   "cancel": "Anuluj",
   "select": {
     "create": "Utwórz \"{{value}}\""
