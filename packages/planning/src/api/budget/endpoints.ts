@@ -34,6 +34,7 @@ import {
 import { deleteRule, editRule, learnRule, type RuleSubject } from "../../utils/categorizationRules";
 import {
   categoryIdsOf,
+  isOneOf,
   pruneDeletedCategories,
   reassignRules,
   reassignTransaction,
@@ -59,6 +60,7 @@ import type {
   BudgetCategoriesDoc,
   BudgetCategoryDeleteInput,
   BudgetCategoryTree,
+  BudgetCategoryTreeChange,
   BudgetKeysDoc,
   BudgetLinkRef,
   BudgetMonth,
@@ -1550,7 +1552,7 @@ const writeCategories = async (transaction: Transaction, { uid, userKey }: Unloc
  */
 export const updateBudgetCategories = (
   budget: UnlockedBudget,
-  change: (tree: BudgetCategoryTree) => BudgetCategoryTree,
+  change: BudgetCategoryTreeChange,
 ): Promise<BudgetCategoryTree> =>
   runTransaction(fb.firestore, async (transaction) => {
     const tree = await readCategories(transaction, budget);
@@ -1610,12 +1612,12 @@ const reassignAccount = (
       }
     }
     // Moved with its transactions, so its matches (same category) keep holding
-    const movesRecurring = recurring.some(({ categoryId }) => categoryId !== null && deletedIds.has(categoryId));
+    const movesRecurring = recurring.some(({ categoryId }) => isOneOf(deletedIds, categoryId));
 
     await writeMonths(transaction, budget, changed);
     if (movesRecurring) {
       const next = recurring.map((item) =>
-        item.categoryId !== null && deletedIds.has(item.categoryId) ? { ...item, categoryId: replacementId } : item,
+        isOneOf(deletedIds, item.categoryId) ? { ...item, categoryId: replacementId } : item,
       );
       await writeRecurring(transaction, budget, accountId, next);
     }

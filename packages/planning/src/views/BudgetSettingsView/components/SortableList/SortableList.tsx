@@ -94,16 +94,16 @@ export const SortableList = <T extends SortableItem>({
   );
 
   const nameOf = (id: UniqueIdentifier) => items.find((item) => item.id === id)?.name ?? "";
-  const positionOf = (id: UniqueIdentifier | undefined) => ({
+  const placeOf = (id: UniqueIdentifier | undefined) => ({
     position: items.findIndex((item) => item.id === id) + 1,
     total: items.length,
   });
   const announcements: Announcements = {
     onDragStart: ({ active }) => t("budget.categories.drag.start", { name: nameOf(active.id) }),
     onDragOver: ({ active, over }) =>
-      over ? t("budget.categories.drag.over", { name: nameOf(active.id), ...positionOf(over.id) }) : undefined,
+      over ? t("budget.categories.drag.over", { name: nameOf(active.id), ...placeOf(over.id) }) : undefined,
     onDragEnd: ({ active, over }) =>
-      t("budget.categories.drag.end", { name: nameOf(active.id), ...positionOf(over?.id ?? active.id) }),
+      t("budget.categories.drag.end", { name: nameOf(active.id), ...placeOf(over?.id ?? active.id) }),
     onDragCancel: ({ active }) => t("budget.categories.drag.cancel", { name: nameOf(active.id) }),
   };
 

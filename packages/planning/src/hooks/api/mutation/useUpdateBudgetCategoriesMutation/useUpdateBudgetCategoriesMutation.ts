@@ -1,11 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useUserMutation } from "@flaner/shared/hooks";
-import { updateBudgetCategories, type BudgetCategoryTree } from "../../../../api/budget";
+import {
+  updateBudgetCategories,
+  type BudgetCategoryTree,
+  type BudgetCategoryTreeChange,
+} from "../../../../api/budget";
 import { useUnlockedBudget } from "../../../../context/BudgetContext";
 import { budgetKeys } from "../../queryKeys";
-
-/** One tree edit (`utils/categoryTree`), applied to the stored tree. */
-export type BudgetCategoryTreeChange = (tree: BudgetCategoryTree) => BudgetCategoryTree;
 
 /**
  * Settings → Categories: add, rename, icon / colour, reorder. Shown at once (a dropped row stays where it was

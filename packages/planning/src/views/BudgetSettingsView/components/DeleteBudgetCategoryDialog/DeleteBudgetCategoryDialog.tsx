@@ -16,8 +16,7 @@ import { DELETE_BUDGET_CATEGORY_MUTATION_KEY as DELETE_MUTATION_KEY, useDeleteBu
 import { useGetBudgetCategoryTransactionCountQuery } from "../../../../hooks/api/query";
 import { useBudgetWriteErrorToast } from "../../../../hooks/useBudgetWriteErrorToast";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
-import { categoryIdsOf, removeCategory } from "../../../../utils/categoryTree";
-import { resolveTransactionCategory } from "../../../../utils/monthLedger";
+import { categoryIdsOf, findCategory, removeCategory } from "../../../../utils/categoryTree";
 import { deleteBudgetCategoryDialogStyles as styles } from "./DeleteBudgetCategoryDialog.styles";
 
 export type DeleteBudgetCategoryDialogProps = {
@@ -41,7 +40,7 @@ const DialogBody = ({ tree, target, onClose, actionsDisabled }: DialogBodyProps)
   // Same type only, never the deleted category or its subcategories
   const candidates = useMemo(() => removeCategory(tree, target), [tree, target]);
 
-  const resolved = resolveTransactionCategory(tree, target);
+  const resolved = findCategory(tree, target);
   const name = resolved ? (resolved.subcategory?.name ?? resolved.category.name) : "";
   const subcategories = resolved && !resolved.subcategory ? resolved.category.subcategories.length : 0;
 

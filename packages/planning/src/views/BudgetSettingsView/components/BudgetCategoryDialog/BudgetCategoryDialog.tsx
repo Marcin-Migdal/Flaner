@@ -15,10 +15,10 @@ import { useEffect } from "react";
 import { FormProvider, useController, useForm, useWatch } from "react-hook-form";
 import {
   BUDGET_CATEGORY_ICONS,
+  CHART_COLOR_INDEXES,
   type BudgetCategory,
   type BudgetCategoryType,
   type BudgetSubcategory,
-  type ChartColorIndex,
 } from "../../../../api/budget";
 import { useUpdateBudgetCategoriesMutation } from "../../../../hooks/api/mutation";
 import { useBudgetWriteErrorToast } from "../../../../hooks/useBudgetWriteErrorToast";
@@ -27,8 +27,6 @@ import { BUDGET_CATEGORY_COLOR_CLASSES, BUDGET_CATEGORY_ICON_COMPONENTS } from "
 import { addCategory, addSubcategory, updateCategory } from "../../../../utils/categoryTree";
 import { getBudgetCategorySchema, type BudgetCategoryFormData } from "../../../../utils/schemas";
 import { budgetCategoryDialogStyles as styles } from "./BudgetCategoryDialog.styles";
-
-const COLORS: ChartColorIndex[] = [1, 2, 3, 4, 5, 6, 7, 8];
 
 /** What the dialog adds or edits: a main category (`parent` `null`) or a subcategory of `parent`. */
 export type BudgetCategoryDialogTarget = {
@@ -86,7 +84,7 @@ const ColorSwatches = () => {
     <fieldset className={styles.fieldset}>
       <legend className={styles.legend}>{t("budget.categories.form.color")}</legend>
       <div className={styles.swatches}>
-        {COLORS.map((color) => (
+        {CHART_COLOR_INDEXES.map((color) => (
           <label key={color} className={styles.choice} title={t("budget.categories.form.colorOption", { index: color })}>
             <input
               type="radio"
@@ -142,11 +140,13 @@ export const BudgetCategoryDialog = ({ target, onClose, saveDisabled }: BudgetCa
   });
   const { reset, handleSubmit } = methods;
 
-  // The main category's own look, a subcategory's parent's, or the defaults for a new one
-  const look = target?.parent ?? (target?.editing && "icon" in target.editing ? target.editing : null);
+  // Whose icon and colour the form starts with: a subcategory's parent, the edited main category, or none (defaults)
+  const iconSource = target?.parent ?? (target?.editing && "icon" in target.editing ? target.editing : null);
   useEffect(() => {
-    if (target) reset({ name: target.editing?.name ?? "", icon: look?.icon ?? "tag", color: look?.color ?? 1 });
-  }, [target, look, reset]);
+    if (target) {
+      reset({ name: target.editing?.name ?? "", icon: iconSource?.icon ?? "tag", color: iconSource?.color ?? 1 });
+    }
+  }, [target, iconSource, reset]);
 
   const isSub = target?.parent != null;
   const isEdit = target?.editing != null;

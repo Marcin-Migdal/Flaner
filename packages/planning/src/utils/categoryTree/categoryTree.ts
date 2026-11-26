@@ -17,21 +17,37 @@ export type BudgetCategoryChanges = Partial<Pick<BudgetCategory, "name" | "icon"
  * The ids a delete removes: the category's own id and, for a main category, its subcategories' ids. Empty when the
  * id is not in the type's tree.
  */
+/** A main category's own id and its subcategories' ids. */
+const familyIds = (category: BudgetCategory) => [category.id, ...category.subcategories.map((sub) => sub.id)];
+
 export const categoryIdsOf = (tree: BudgetCategoryTree, { type, categoryId }: BudgetCategoryRef): string[] => {
   for (const category of tree[type]) {
-    if (category.id === categoryId) return [category.id, ...category.subcategories.map((sub) => sub.id)];
+    if (category.id === categoryId) return familyIds(category);
     if (category.subcategories.some((sub) => sub.id === categoryId)) return [categoryId];
   }
   return [];
 };
 
+/** The category or subcategory a ref points at (a subcategory with its parent), or `null` when it is gone. */
+export const findCategory = (
+  tree: BudgetCategoryTree,
+  { type, categoryId }: BudgetCategoryRef,
+): { category: BudgetCategory; subcategory: BudgetSubcategory | null } | null => {
+  for (const category of tree[type]) {
+    if (category.id === categoryId) return { category, subcategory: null };
+    const subcategory = category.subcategories.find((sub) => sub.id === categoryId);
+    if (subcategory) return { category, subcategory };
+  }
+  return null;
+};
+
 /** Every category and subcategory id of both trees. */
 export const treeCategoryIds = (tree: BudgetCategoryTree): Set<string> =>
-  new Set(
-    Object.values(tree).flatMap((categories) =>
-      categories.flatMap((category) => [category.id, ...category.subcategories.map((sub) => sub.id)]),
-    ),
-  );
+  new Set(Object.values(tree).flatMap((categories) => categories.flatMap(familyIds)));
+
+/** Whether a (possibly missing) category id is one of `ids`. */
+export const isOneOf = (ids: ReadonlySet<string>, categoryId: string | null): categoryId is string =>
+  categoryId !== null && ids.has(categoryId);
 
 const mapTree = (
   tree: BudgetCategoryTree,
@@ -132,7 +148,7 @@ export const reassignTransaction = <T extends Categorized>(
   deletedIds: ReadonlySet<string>,
   replacementId: string | null,
 ): T => {
-  const isDeleted = (id: string | null) => id !== null && deletedIds.has(id);
+  const isDeleted = (id: string | null) => isOneOf(deletedIds, id);
   const ownMoves = isDeleted(transaction.categoryId);
   const splitOffMoves = transaction.splitOffs?.some((splitOff) => isDeleted(splitOff.categoryId)) ?? false;
   if (!ownMoves && !splitOffMoves) return transaction;
@@ -150,8 +166,8 @@ export const reassignTransaction = <T extends Categorized>(
 
 /** Whether the transaction or one of its split-offs is on one of the categories. */
 export const usesCategory = (transaction: Categorized, ids: ReadonlySet<string>): boolean =>
-  (transaction.categoryId !== null && ids.has(transaction.categoryId)) ||
-  (transaction.splitOffs ?? []).some((splitOff) => splitOff.categoryId !== null && ids.has(splitOff.categoryId));
+  isOneOf(ids, transaction.categoryId) ||
+  (transaction.splitOffs ?? []).some((splitOff) => isOneOf(ids, splitOff.categoryId));
 
 /** Rules after a category delete: repointed to the replacement, or deleted without one. Same array when unchanged. */
 export const reassignRules = (

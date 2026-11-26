@@ -1,6 +1,10 @@
 import { EmptyState, LoadingFallback } from "@flaner/ui-components";
 import { useState } from "react";
-import { BUDGET_CATEGORY_TYPES, type BudgetCategoryRef, type BudgetCategoryTree } from "../../../../api/budget";
+import {
+  BUDGET_CATEGORY_TYPES,
+  type BudgetCategoryRef,
+  type BudgetCategoryTreeChange,
+} from "../../../../api/budget";
 import { useUpdateBudgetCategoriesMutation } from "../../../../hooks/api/mutation";
 import { useGetBudgetCategoriesQuery } from "../../../../hooks/api/query";
 import { useBudgetWriteErrorToast } from "../../../../hooks/useBudgetWriteErrorToast";
@@ -26,7 +30,7 @@ export const BudgetCategoriesSection = () => {
   const [editing, setEditing] = useState<BudgetCategoryDialogTarget | null>(null);
   const [deleting, setDeleting] = useState<BudgetCategoryRef | null>(null);
 
-  const save = async (change: (tree: BudgetCategoryTree) => BudgetCategoryTree) => {
+  const save = async (change: BudgetCategoryTreeChange) => {
     try {
       await updateCategories(change);
     } catch (error) {
