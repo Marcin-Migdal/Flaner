@@ -1016,12 +1016,14 @@
         "notCsv": "This is not a CSV file. Export the statement from your bank as CSV and try again.",
         "empty": "This file has no transactions.",
         "unreadable": "Couldn't read this file. Make sure it's a CSV statement from your bank.",
-        "recognized": "Recognized automatically: {{banks}}"
+        "recognized": "Recognized automatically: {{banks}}",
+        "templates": "Your import templates: {{templates}}",
+        "otherCsv": "Any other CSV: map its columns in the next step and save them as a template."
       },
       "settings": {
         "bank": "Bank",
         "bankDetected": "Recognized from the file. Change it if it's wrong.",
-        "bankNotDetected": "This file's layout wasn't recognized. Choose the bank that issued it.",
+        "bankNotDetected": "This file's layout wasn't recognized. Map its columns, or choose the bank that issued it.",
         "account": "Import to account",
         "fallbackCurrency": "Currency for rows without one",
         "fallbackCurrencyHint": "Used only when a row doesn't state its currency.",
@@ -1031,10 +1033,23 @@
         "fileAccountsHint": "Choose where each account's transactions go, or skip it. Remembered for the next import.",
         "fileAccountRows_one": "{{count}} row",
         "fileAccountRows_other": "{{count}} rows",
-        "skipAccount": "Don't import"
+        "skipAccount": "Don't import",
+        "banksGroup": "Banks",
+        "templatesGroup": "Your import templates",
+        "otherGroup": "Other",
+        "customMapping": "Other bank: map columns",
+        "templateSaveError": "Couldn't save the import template (no connection?). Try again."
       },
       "validation": {
-        "bankRequired": "Choose a bank."
+        "bankRequired": "Choose a bank.",
+        "templateNameRequired": "Name the template.",
+        "templateNameTooLong": "Use at most 40 characters.",
+        "columns": {
+          "date": "Choose exactly one date column.",
+          "amount": "Choose one amount column, or one debit and one credit column.",
+          "text": "Choose a payee or description column.",
+          "currency": "Choose at most one currency column."
+        }
       },
       "preview": {
         "filtersLabel": "Show rows",
@@ -1092,6 +1107,36 @@
         "close": "Close",
         "openMonth": "Show imported transactions",
         "skippedAccounts": "Rows of skipped bank accounts"
+      },
+      "mapping": {
+        "title": "Column mapping",
+        "hint": "Say what each column holds; the values come from the first rows of the file. Saved as a template, it recognizes the next file of this kind by itself.",
+        "name": "Template name",
+        "nameHint": "For example the bank's name. Saving under an existing name replaces that template.",
+        "dateFormat": "Date format",
+        "decimalSeparator": "Decimal separator",
+        "decimal": {
+          "comma": "Comma (1 234,56)",
+          "dot": "Dot (1,234.56)"
+        },
+        "dateTokens": {
+          "year": "YYYY",
+          "month": "MM",
+          "day": "DD"
+        },
+        "column": "Column {{number}}",
+        "readRows_one": "{{count}} of {{total}} rows read with this mapping",
+        "readRows_other": "{{count}} of {{total}} rows read with this mapping",
+        "roles": {
+          "ignore": "Ignore",
+          "date": "Date",
+          "amount": "Amount (minus = expense)",
+          "debit": "Debit (expense)",
+          "credit": "Credit (income)",
+          "payee": "Payee",
+          "description": "Description",
+          "currency": "Currency"
+        }
       }
     },
     "accounts": {

@@ -1030,12 +1030,14 @@
         "notCsv": "To nie jest plik CSV. Wyeksportuj wyciąg z banku jako CSV i spróbuj ponownie.",
         "empty": "W tym pliku nie ma transakcji.",
         "unreadable": "Nie udało się odczytać pliku. Upewnij się, że to wyciąg CSV z banku.",
-        "recognized": "Rozpoznawane automatycznie: {{banks}}"
+        "recognized": "Rozpoznawane automatycznie: {{banks}}",
+        "templates": "Twoje szablony importu: {{templates}}",
+        "otherCsv": "Każdy inny plik CSV: w następnym kroku przypiszesz jego kolumny i zapiszesz je jako szablon."
       },
       "settings": {
         "bank": "Bank",
         "bankDetected": "Rozpoznany z pliku. Zmień, jeśli się nie zgadza.",
-        "bankNotDetected": "Nie rozpoznano układu pliku. Wybierz bank, który go wystawił.",
+        "bankNotDetected": "Nie rozpoznano układu pliku. Przypisz jego kolumny albo wybierz bank, który go wystawił.",
         "account": "Importuj na konto",
         "fallbackCurrency": "Waluta dla wierszy bez waluty",
         "fallbackCurrencyHint": "Używana tylko wtedy, gdy wiersz nie podaje waluty.",
@@ -1047,10 +1049,23 @@
         "fileAccountRows_few": "{{count}} wiersze",
         "fileAccountRows_many": "{{count}} wierszy",
         "fileAccountRows_other": "{{count}} wiersza",
-        "skipAccount": "Nie importuj"
+        "skipAccount": "Nie importuj",
+        "banksGroup": "Banki",
+        "templatesGroup": "Twoje szablony importu",
+        "otherGroup": "Inne",
+        "customMapping": "Inny bank: przypisz kolumny",
+        "templateSaveError": "Nie udało się zapisać szablonu importu (brak połączenia?). Spróbuj ponownie."
       },
       "validation": {
-        "bankRequired": "Wybierz bank."
+        "bankRequired": "Wybierz bank.",
+        "templateNameRequired": "Nazwij szablon.",
+        "templateNameTooLong": "Użyj najwyżej 40 znaków.",
+        "columns": {
+          "date": "Wybierz dokładnie jedną kolumnę z datą.",
+          "amount": "Wybierz jedną kolumnę z kwotą albo jedną kolumnę obciążeń i jedną uznań.",
+          "text": "Wybierz kolumnę z odbiorcą lub opisem.",
+          "currency": "Wybierz najwyżej jedną kolumnę z walutą."
+        }
       },
       "preview": {
         "filtersLabel": "Pokaż wiersze",
@@ -1114,6 +1129,38 @@
         "close": "Zamknij",
         "openMonth": "Pokaż zaimportowane transakcje",
         "skippedAccounts": "Wiersze pominiętych rachunków"
+      },
+      "mapping": {
+        "title": "Przypisanie kolumn",
+        "hint": "Wskaż, co zawiera każda kolumna; wartości pochodzą z pierwszych wierszy pliku. Po zapisaniu szablonu kolejny taki plik zostanie rozpoznany automatycznie.",
+        "name": "Nazwa szablonu",
+        "nameHint": "Na przykład nazwa banku. Zapis pod istniejącą nazwą zastępuje ten szablon.",
+        "dateFormat": "Format daty",
+        "decimalSeparator": "Separator dziesiętny",
+        "decimal": {
+          "comma": "Przecinek (1 234,56)",
+          "dot": "Kropka (1,234.56)"
+        },
+        "dateTokens": {
+          "year": "RRRR",
+          "month": "MM",
+          "day": "DD"
+        },
+        "column": "Kolumna {{number}}",
+        "readRows_one": "Odczytano {{count}} z {{total}} wierszy z tym przypisaniem",
+        "readRows_few": "Odczytano {{count}} z {{total}} wierszy z tym przypisaniem",
+        "readRows_many": "Odczytano {{count}} z {{total}} wierszy z tym przypisaniem",
+        "readRows_other": "Odczytano {{count}} z {{total}} wierszy z tym przypisaniem",
+        "roles": {
+          "ignore": "Pomiń",
+          "date": "Data",
+          "amount": "Kwota (minus = wydatek)",
+          "debit": "Obciążenie (wydatek)",
+          "credit": "Uznanie (przychód)",
+          "payee": "Odbiorca",
+          "description": "Opis",
+          "currency": "Waluta"
+        }
       }
     },
     "accounts": {
