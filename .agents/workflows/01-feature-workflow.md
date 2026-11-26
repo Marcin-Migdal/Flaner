@@ -33,7 +33,7 @@ Feature work runs through the `mattpocock-skills` plugin. Each skill's own `SKIL
 ## Phase 3: Implement
 
 1. **Branch:** `feature/<issue>-<slug>` from `develop`; never commit on `develop` / `master` (`.agents/AGENTS.md` → GIT). Default: one feature branch and one PR per spec, its tickets committed one after another.
-2. **One ticket per session:** `/implement #N`, then `/clear`. For parallel tickets use `/implement-spec`, never two `/implement` sessions in one checkout.
+2. **One ticket per session:** `/implement #N`, then `/clear`. For parallel tickets use `/implement-spec`, never two `/implement` sessions in one checkout. Parallel tickets in the cloud (one session, branch and PR each): `cloud-batch` skill.
 3. The skill drives `/tdd` at the agreed seams, typechecks, runs the tests, runs `/code-review` and commits. Flaner additions before its commit:
    - `npx nx run <pkg>:lint --fix` on every touched package.
    - `npm run lint:tokens` when UI changed.
@@ -45,7 +45,7 @@ Feature work runs through the `mattpocock-skills` plugin. Each skill's own `SKIL
 
 1. Before the PR, run what CI runs: `npx nx affected -t typecheck lint test --base=origin/develop --head=HEAD`.
 2. Open the PR to `develop` when the user asks (or as the draft PR of `/implement-spec`). Body: the `/pr` template, then `Closes #N` for every ticket and the spec, then the section `## Manual test (for the local session, before merge)` (`.agents/AGENTS.md` → PRE-MERGE MANUAL TEST).
-3. Don't wait for the manual test before opening the PR. It runs after the PR is opened and before merge: by the implementing agent if it worked locally, otherwise by a local session from the PR body.
+3. Don't wait for the manual test before opening the PR. It runs after the PR is opened and before merge: by the implementing agent if it worked locally, otherwise by a local session from the PR body (`manual-test` skill).
    - If the branch does not change `firestore.rules` / `firestore.indexes.json`: a local test (`npm run dev:emulators` or `npm run dev`) is enough, because the emulators run the same rules and indexes as DEV. Exception: a new or changed Firestore query must also be tested on DEV, because the emulator does not enforce composite indexes.
    - If it does: GitHub → Actions → *Deploy Firestore* → *Run workflow* on the feature branch (DEV only), then test on the branch's Vercel Preview or with `npm run dev` (local `.env` → DEV).
    - If the branch is abandoned after a DEV deploy, run the workflow on `develop` to restore DEV.

@@ -13,6 +13,7 @@ import { useGetBudgetRulesQuery } from "../../hooks/api/query";
 import {
   useImportBudgetTransactionsMutation,
   useRememberFileAccountMappingsMutation,
+  useSaveImportTemplateMutation,
 } from "../../hooks/api/mutation";
 import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
 import { useImportPreview } from "../../hooks/useImportPreview";
@@ -21,9 +22,10 @@ import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { guessCategory } from "../../utils/categorizationRules";
 import { hasUnconfirmedCategory } from "../../utils/transactionEdits";
 import { monthOfDate } from "../../utils/monthLedger";
-import { SKIP_FILE_ACCOUNT, type ImportSettingsFormData } from "../../utils/schemas";
+import { CUSTOM_MAPPING, SKIP_FILE_ACCOUNT, type ImportSettingsFormData } from "../../utils/schemas";
 import {
-  parseStatementRows,
+  findImportTemplate,
+  importTemplateKey,
   type FileAccountTargets,
   type ImportPreview,
   type ImportPreviewRow,
@@ -36,6 +38,7 @@ import {
   ImportRowDialog,
   ImportSettingsStep,
 } from "./components";
+import { blankMapping, mappingOf, readImportRows, resolveImportSource, type ImportSource } from "./importSource";
 import { statementImportSheetStyles as styles } from "./StatementImportSheet.styles";
 import type { ImportFile, ImportResult } from "./types";
 import { sortBudgetAccounts } from "../../utils/sortBudgetAccounts";
@@ -96,10 +99,12 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
   const { mutateAsync: importTransactions, isPending: isImporting } = useImportBudgetTransactionsMutation();
   const rules = useGetBudgetRulesQuery();
   const { mutate: rememberMappings } = useRememberFileAccountMappingsMutation();
+  const saveTemplate = useSaveImportTemplateMutation();
 
   const [step, setStep] = useState<ImportStep>("file");
   const [file, setFile] = useState<ImportFile | null>(null);
   const [settings, setSettings] = useState<ImportSettingsFormData | null>(null);
+  const [targets, setTargets] = useState<FileAccountTargets>({});
   const [rows, setRows] = useState<ImportPreviewRow[]>([]);
   const [errors, setErrors] = useState<ImportPreview["errors"]>([]);
   const [skipped, setSkipped] = useState(0);
@@ -111,6 +116,7 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
   const mainAccount = accounts.find((account) => account.id === profile.mainAccountId) ?? accounts[0];
 
   const { fileAccountMappings } = profile;
+  const templates = profile.importTemplates ?? [];
   // A remembered mapping wins while its account still exists; a one-account file falls back to the main account
   const defaultTarget = useCallback(
     (fileAccount: string, isOnlyAccount: boolean) => {
@@ -122,17 +128,28 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
     [fileAccountMappings, accounts, mainAccount],
   );
 
-  const targetsOf = (values: ImportSettingsFormData): FileAccountTargets =>
+  // A template-read file's one target is remembered per template
+  const targetsOf = (values: ImportSettingsFormData, source: ImportSource): FileAccountTargets =>
     Object.fromEntries(
-      values.fileAccounts.map(({ fileAccount, target }) => [fileAccount, target === SKIP_FILE_ACCOUNT ? null : target]),
+      values.fileAccounts.map(({ fileAccount, target }) => [
+        source.kind === "template" ? importTemplateKey(source.template.name) : fileAccount,
+        target === SKIP_FILE_ACCOUNT ? null : target,
+      ]),
     );
 
   const buildPreview = async (values: ImportSettingsFormData) => {
     if (!file) return;
+    const source = resolveImportSource(values, file.records[0] ?? [], templates);
+    if (!source) return;
     setSettings(values);
+    saveTemplate.reset();
+    // A new mapping is saved first, so the next file of its kind is recognized even if this import is abandoned
+    if (source.kind === "template" && source.isNew) await saveTemplate.mutateAsync(source.template);
+    const fileTargets = targetsOf(values, source);
+    setTargets(fileTargets);
     const built = await preview.mutateAsync({
-      rows: parseStatementRows(values.bank, file.records),
-      targets: targetsOf(values),
+      rows: readImportRows(source, file.records),
+      targets: fileTargets,
       fallbackCurrency: values.fallbackCurrency || profile.mainCurrency,
       mainCurrency: profile.mainCurrency,
       fileName: file.name,
@@ -184,7 +201,6 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
     try {
       const added = await importTransactions(toImport.map(toInput));
       const newest = added.reduce<string | null>((max, { date }) => (max && max > date ? max : date), null);
-      const targets = settings ? targetsOf(settings) : {};
       // Best effort: the transactions are in; a mapping that fails to save is just asked again next time
       rememberMappings(targets);
       const targetIds = [...new Set(Object.values(targets).filter((target) => target !== null))];
@@ -208,11 +224,24 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
     }
   };
 
-  const previewError = preview.error
-    ? BUDGET_ERROR.test(preview.error.message)
-      ? t(preview.error.message)
-      : t("budget.import.settings.previewError")
-    : null;
+  const previewError = saveTemplate.error
+    ? t("budget.import.settings.templateSaveError")
+    : preview.error
+      ? BUDGET_ERROR.test(preview.error.message)
+        ? t(preview.error.message)
+        : t("budget.import.settings.previewError")
+      : null;
+
+  // A file recognized by a saved template opens with it; any other unrecognized file opens on column mapping
+  const defaultSettings = (read: ImportFile): Partial<ImportSettingsFormData> => {
+    const template = findImportTemplate(templates, read.records[0] ?? []);
+    return {
+      bank: read.bank ?? (template ? importTemplateKey(template.name) : CUSTOM_MAPPING),
+      mapping: template ? mappingOf(template) : blankMapping(read.records[0] ?? []),
+      fileAccounts: [],
+      fallbackCurrency: mainAccount?.defaultCurrency ?? profile.mainCurrency,
+    };
+  };
 
   return (
     <>
@@ -224,10 +253,12 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
 
       {step === "file" && (
         <ImportFileStep
+          templates={templates}
           onRead={(read) => {
             setFile(read);
             setSettings(null);
             preview.reset();
+            saveTemplate.reset();
             setStep("settings");
           }}
         />
@@ -237,15 +268,10 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
         <ImportSettingsStep
           file={file}
           accounts={sortBudgetAccounts(accounts, profile.mainAccountId, i18n.language)}
-          defaultValues={
-            settings ?? {
-              bank: file.bank ?? undefined,
-              fileAccounts: [],
-              fallbackCurrency: mainAccount?.defaultCurrency ?? profile.mainCurrency,
-            }
-          }
+          templates={templates}
+          defaultValues={settings ?? defaultSettings(file)}
           defaultTarget={defaultTarget}
-          isBusy={preview.isPending}
+          isBusy={preview.isPending || saveTemplate.isPending}
           error={previewError}
           onBack={() => setStep("file")}
           onSubmit={(values) => void buildPreview(values).catch(() => undefined)}

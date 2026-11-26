@@ -32,6 +32,13 @@ export const budgetKeys = {
   /** One account's transaction count (delete confirmation). */
   accountTransactionCount: (uid: string, accountId: string) => ["budget", "accountTransactionCount", uid, accountId],
   plan: (uid: string, month: BudgetMonth) => ["budget", "plan", uid, month],
+  /** How many transactions use the categories (delete confirmation). */
+  categoryTransactionCount: (uid: string, categoryIds: string[]) => [
+    "budget",
+    "categoryTransactionCount",
+    uid,
+    categoryIds.join(","),
+  ],
   recurring: (uid: string) => ["budget", "recurring", uid],
   /** A published rate (`getExchangeRate`); never changes, so it is never invalidated. */
   exchangeRate: (from: string, to: string, date: string) => ["budget", "exchangeRate", from, to, date],
@@ -89,6 +96,16 @@ export const budgetInvalidation = {
   accountDeleted: ({ uid }: UserType) => [
     budgetKeys.accounts(uid),
     budgetKeys.profile(uid),
+    budgetKeys.allTransactions(uid),
+    budgetKeys.recurring(uid),
+  ],
+  /**
+   * A deleted category moves (or uncategorizes) transactions in any month and account, recurring transactions and
+   * rules. Tree edits need nothing: the mutation stores the saved tree in the cache.
+   */
+  categoryDeleted: ({ uid }: UserType) => [
+    budgetKeys.categories(uid),
+    budgetKeys.rules(uid),
     budgetKeys.allTransactions(uid),
     budgetKeys.recurring(uid),
   ],
