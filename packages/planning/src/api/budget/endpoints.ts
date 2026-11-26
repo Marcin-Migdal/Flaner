@@ -215,8 +215,12 @@ export const getLockedBudget = async (uid: string): Promise<LockedBudget | null>
 /**
  * Onboarding: creates the keys, the profile, the category tree and the main account in one transaction.
  * Fails with `errors.budget.alreadySetUp` when the user already has keys (e.g. onboarding finished on another device).
+ * Resolves with the unlocked budget and, in `locked`, the stored keys just written (as `getLockedBudget` reads them).
  */
-export const createBudget = async (uid: string, input: CreateBudgetInput): Promise<UnlockedBudget> => {
+export const createBudget = async (
+  uid: string,
+  input: CreateBudgetInput,
+): Promise<UnlockedBudget & { locked: LockedBudget }> => {
   const recoveryKey = parseRecoveryKey(input.recoveryKey);
   if (!recoveryKey) throw new Error("planning:errors.budget.invalidRecoveryKey");
 
@@ -228,14 +232,24 @@ export const createBudget = async (uid: string, input: CreateBudgetInput): Promi
   const budget: UnlockedBudget = { uid, keyId: crypto.randomUUID(), userKey };
   const now = Date.now();
 
-  const keysDoc: BudgetKeysDoc = {
-    salt: toBytes(salt),
-    iterations: KDF_ITERATIONS,
+  const locked: LockedBudget = {
+    uid,
     keyId: budget.keyId,
-    passphraseWrappedKey: toBytes(
-      await wrapDataKey(userKey, await derivePassphraseKey(input.passphrase, salt), paths.keys(uid)),
+    salt,
+    iterations: KDF_ITERATIONS,
+    passphraseWrappedKey: await wrapDataKey(
+      userKey,
+      await derivePassphraseKey(input.passphrase, salt),
+      paths.keys(uid),
     ),
-    recoveryWrappedKey: toBytes(await wrapDataKey(userKey, await deriveRecoveryKey(recoveryKey), paths.keys(uid))),
+    recoveryWrappedKey: await wrapDataKey(userKey, await deriveRecoveryKey(recoveryKey), paths.keys(uid)),
+  };
+  const keysDoc: BudgetKeysDoc = {
+    salt: toBytes(locked.salt),
+    iterations: locked.iterations,
+    keyId: locked.keyId,
+    passphraseWrappedKey: toBytes(locked.passphraseWrappedKey),
+    recoveryWrappedKey: toBytes(locked.recoveryWrappedKey),
     createdAt: now,
     updatedAt: now,
   };
@@ -270,7 +284,7 @@ export const createBudget = async (uid: string, input: CreateBudgetInput): Promi
       .set(accountRef, accountDoc);
   });
 
-  return budget;
+  return { ...budget, locked };
 };
 
 /** Fails with `errors.budget.wrongPassphrase` when the passphrase does not unwrap the user key. */

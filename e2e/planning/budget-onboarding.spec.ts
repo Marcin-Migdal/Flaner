@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import type { BudgetAccountDoc, BudgetProfileDoc } from "../../packages/planning/src/api/budget/types";
 import { signInAsNewUser } from "../support/helpers/auth";
-import { readDocument } from "../support/helpers/emulator";
+import { deleteDocument, readDocument } from "../support/helpers/emulator";
 import { BudgetGatePage } from "../support/pages/BudgetGate.page";
 import { BudgetTransactionsPage } from "../support/pages/BudgetTransactions.page";
 
@@ -43,5 +43,24 @@ test.describe("Budget onboarding", () => {
     await expect(gate.unlockHeading).toBeVisible();
     await gate.unlock(PASSPHRASE);
     await expect(transactions.emptyStateTitle).toBeVisible();
+  });
+
+  test("an open tab shows onboarding again once the budget was reset on another device", async ({ page }) => {
+    test.slow();
+    const user = await signInAsNewUser(page);
+    const gate = new BudgetGatePage(page);
+    const transactions = new BudgetTransactionsPage(page);
+
+    await page.goto("/planning/budget/transactions");
+    await gate.completeOnboarding({ passphrase: PASSPHRASE, accountName: ACCOUNT_NAME });
+    await expect(transactions.emptyStateTitle).toBeVisible();
+
+    // Reset elsewhere, nobody has set it up again yet: the stored keys are gone
+    await deleteDocument(`budget_keys/${user.uid}`);
+    // Back to the tab: the stored keys are refetched on window focus
+    await page.evaluate(() => window.dispatchEvent(new Event("visibilitychange")));
+
+    await expect(gate.onboardingHeading).toBeVisible();
+    await expect(transactions.emptyStateTitle).not.toBeVisible();
   });
 });
