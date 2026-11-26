@@ -15,6 +15,7 @@
   - `/implement` commits its ticket to the current branch.
   - `/implement-spec` creates an integration branch, per-ticket worktrees and branches, merges them, and may open a draft PR.
   - `/prototype` and wayfinder research tickets commit to throwaway `prototype/*` / `research/*` branches (pushed, never merged).
+  - The `manual-test` skill switches to the tested PR branches and, for a batch, merges them into a throwaway `test/batch-*` branch, pushes it for *Deploy Firestore*, and deletes it (remote and local) after the test.
 - Guardrails for those steps:
   - Never commit on `develop` or `master`. Before `/implement` or `/implement-spec`, if the current branch is `develop` / `master`, first create `feature/<issue>-<slug>` from `develop`.
   - Never push to, merge into or force-push `develop` / `master`. PRs target `develop`.
