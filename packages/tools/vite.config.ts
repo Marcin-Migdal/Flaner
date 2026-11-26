@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { federation } from '@module-federation/vite';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
-import { sharedFederationConfig } from '../../vite.federation';
+import { sharedFederationConfig, sharedOptimizeDeps } from '../../vite.federation';
 
 const PORT = 4205;
 
@@ -17,9 +17,7 @@ export default defineConfig({
   },
   preview: { port: PORT, strictPort: true, host: '0.0.0.0', cors: true },
   build: { target: 'chrome89' },
-  optimizeDeps: {
-    exclude: ['@flaner/ui-components'],
-  },
+  optimizeDeps: sharedOptimizeDeps,
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
