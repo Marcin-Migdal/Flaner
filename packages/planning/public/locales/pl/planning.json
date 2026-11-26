@@ -124,7 +124,10 @@
       "recurringMade": "Utworzono transakcję cykliczną",
       "recurringSaved": "Zapisano regułę powtarzania",
       "recurringStopped": "Zatrzymano transakcję cykliczną",
-      "recurringDeleted": "Usunięto transakcję cykliczną"
+      "recurringDeleted": "Usunięto transakcję cykliczną",
+      "categorySaveError": "Nie udało się zapisać kategorii. Spróbuj ponownie.",
+      "categoryDeleteError": "Nie udało się usunąć kategorii. Spróbuj ponownie.",
+      "categoryDeleted": "Kategoria usunięta"
     }
   },
   "errors": {
@@ -162,7 +165,8 @@
       "splitOffsTooLarge": "Wydzielone części muszą być mniejsze niż kwota transakcji.",
       "splitOffMissing": "Ta wydzielona część już nie istnieje. Odśwież stronę.",
       "refundNotAllowed": "Nie można powiązać tego zwrotu: musi to być uwzględniany wpływ, jeszcze niepowiązany, z datą nie wcześniejszą niż zakup i mniejszy niż pozostała kwota zakupu.",
-      "splitTypeLocked": "Podzielona transakcja nie może zmienić typu (wydatek / wpływ). Najpierw usuń wydzielone części."
+      "splitTypeLocked": "Podzielona transakcja nie może zmienić typu (wydatek / wpływ). Najpierw usuń wydzielone części.",
+      "categoryMissing": "Ta kategoria już nie istnieje. Odśwież stronę."
     }
   },
   "splits": {
@@ -793,7 +797,9 @@
       "splitOffTooLarge": "Wydzielone części muszą być mniejsze niż kwota transakcji",
       "splitOffNoteMax": "Notatka może mieć najwyżej 200 znaków",
       "refundRequired": "Wybierz zwrot",
-      "refundTooLarge": "Zwrot musi być mniejszy niż pozostała kwota zakupu"
+      "refundTooLarge": "Zwrot musi być mniejszy niż pozostała kwota zakupu",
+      "categoryNameRequired": "Podaj nazwę.",
+      "categoryNameMax": "Użyj najwyżej 40 znaków."
     },
     "transactionsEmpty": {
       "title": "Brak transakcji",
@@ -1349,6 +1355,98 @@
     "exclusion": {
       "exclude": "Wyklucz",
       "restore": "Przywróć"
+    },
+    "categories": {
+      "expenseTitle": "Kategorie wydatków",
+      "incomeTitle": "Kategorie przychodów",
+      "hint": "Przeciągnij uchwyt, aby zmienić kolejność, albo ustaw na nim fokus i użyj spacji oraz strzałek. Podkategorie mają ikonę i kolor swojej kategorii.",
+      "add": "Dodaj kategorię",
+      "addSubcategory": "Dodaj podkategorię",
+      "empty": "Brak kategorii.",
+      "subcategoryCount_one": "{{count}} podkategoria",
+      "subcategoryCount_few": "{{count}} podkategorie",
+      "subcategoryCount_many": "{{count}} podkategorii",
+      "subcategoryCount_other": "{{count}} podkategorii",
+      "actions": "Akcje dla {{name}}",
+      "edit": "Edytuj",
+      "delete": "Usuń",
+      "expand": "Pokaż podkategorie {{name}}",
+      "collapse": "Ukryj podkategorie {{name}}",
+      "move": "Przenieś {{name}}",
+      "drag": {
+        "instructions": "Aby zmienić kolejność, naciśnij spację lub Enter na uchwycie, przesuwaj strzałkami, a potem upuść spacją lub Enterem albo anuluj klawiszem Escape.",
+        "start": "Podniesiono {{name}}.",
+        "over": "{{name}} jest na pozycji {{position}} z {{total}}.",
+        "end": "Upuszczono {{name}} na pozycji {{position}} z {{total}}.",
+        "cancel": "Anulowano przenoszenie {{name}}."
+      },
+      "form": {
+        "addTitle": "Dodaj kategorię",
+        "addSubTitle": "Dodaj podkategorię do {{parent}}",
+        "editTitle": "Edytuj kategorię",
+        "editSubTitle": "Edytuj podkategorię",
+        "description": "Wybierz nazwę, ikonę i kolor. Podkategorie mają tę samą ikonę i kolor.",
+        "subDescription": "Podkategoria ma ikonę i kolor swojej kategorii.",
+        "name": "Nazwa",
+        "namePlaceholder": "np. Spożywcze",
+        "icon": "Ikona",
+        "color": "Kolor",
+        "colorOption": "Kolor {{index}}",
+        "preview": "Podgląd",
+        "addSubmit": "Dodaj",
+        "editSubmit": "Zapisz"
+      },
+      "deleteDialog": {
+        "title": "Usunąć {{name}}?",
+        "subcategories_one": "Jej {{count}} podkategoria zostanie usunięta razem z nią.",
+        "subcategories_few": "Jej {{count}} podkategorie zostaną usunięte razem z nią.",
+        "subcategories_many": "Jej {{count}} podkategorii zostanie usuniętych razem z nią.",
+        "subcategories_other": "Jej {{count}} podkategorii zostanie usuniętych razem z nią.",
+        "counting": "Liczenie transakcji, które jej używają…",
+        "countUnavailable": "Nie udało się policzyć transakcji, które jej używają.",
+        "usage_one": "Używa jej {{count}} transakcja.",
+        "usage_few": "Używają jej {{count}} transakcje.",
+        "usage_many": "Używa jej {{count}} transakcji.",
+        "usage_other": "Używa jej {{count}} transakcji.",
+        "replacement": "Przenieś ich transakcje do",
+        "noReplacement": "Nie przenoś · trafią do „Bez kategorii”",
+        "hint": "Z zamiennikiem jej transakcje, wydzielone części, transakcje cykliczne i reguły przechodzą do niego. Bez zamiennika jej transakcje trafiają do „Bez kategorii” jako niepotwierdzone, a jej reguły zostają usunięte. Jej limity znikają z planu przy jego najbliższym zapisie.",
+        "confirm": "Tak, usuń"
+      },
+      "icons": {
+        "shopping-bag": "Torba na zakupy",
+        "smile": "Uśmiech",
+        "house": "Dom",
+        "user": "Osoba",
+        "landmark": "Urząd",
+        "gift": "Prezent",
+        "receipt": "Rachunek",
+        "music": "Muzyka",
+        "car": "Samochód",
+        "briefcase": "Teczka",
+        "heart-pulse": "Zdrowie",
+        "piggy-bank": "Skarbonka",
+        "wallet": "Portfel",
+        "award": "Nagroda",
+        "handshake": "Uścisk dłoni",
+        "tag": "Metka",
+        "trending-up": "Wykres w górę",
+        "percent": "Procent",
+        "undo-2": "Zwrot",
+        "banknote": "Banknot",
+        "circle-ellipsis": "Inne",
+        "utensils": "Sztućce",
+        "plane": "Samolot",
+        "bus": "Autobus",
+        "graduation-cap": "Biret",
+        "dumbbell": "Hantel",
+        "paw-print": "Łapa",
+        "shirt": "Koszulka",
+        "baby": "Dziecko",
+        "coffee": "Kawa",
+        "book-open": "Książka",
+        "gamepad-2": "Pad do gier"
+      }
     }
   }
 }

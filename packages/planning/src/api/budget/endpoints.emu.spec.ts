@@ -6,6 +6,7 @@ import { setupEmulator } from "@flaner/test-utils/emulator";
 import { addMonths, format, setDate } from "date-fns";
 import { Bytes, collection, doc, setDoc } from "firebase/firestore";
 import { encryptJson, generateDataKey, generateRecoveryKey, wrapDataKey } from "../../utils/budgetCrypto";
+import { addCategory, addSubcategory, reorderCategories } from "../../utils/categoryTree";
 import {
   buildImportPreview,
   decodeStatementFile,
@@ -20,8 +21,10 @@ import {
   addBudgetTransaction,
   changeBudgetPassphrase,
   countBudgetAccountTransactions,
+  countBudgetCategoryTransactions,
   createBudget,
   deleteBudgetAccount,
+  deleteBudgetCategory,
   deleteBudgetRule,
   deleteBudgetRecurring,
   deleteBudgetTransaction,
@@ -52,6 +55,7 @@ import {
   unlockWithPassphrase,
   unlockWithRecoveryKey,
   updateBudgetAccount,
+  updateBudgetCategories,
   updateBudgetRecurringRule,
   updateBudgetSplitOff,
   updateBudgetTransactions,
@@ -1177,5 +1181,145 @@ describe("budget categorization rules", () => {
     await signInAs(OTHER);
     await expect(getBudgetRules(budget)).rejects.toMatchObject(DENIED);
     await expect(deleteBudgetRule(budget, "keyword:expense:biedronka warszawa")).rejects.toMatchObject(DENIED);
+  });
+});
+
+describe("budget category tree", () => {
+  const today = format(new Date(), "yyyy-MM-dd");
+
+  const shop = (accountId: string, overrides: Partial<BudgetTransactionInput> = {}): BudgetTransactionInput => ({
+    ...monthTransaction(accountId),
+    payee: "Biedronka 1234 Warszawa",
+    categoryId: "sub-groceries",
+    confirmed: true,
+    ...overrides,
+  });
+
+  // Expense: Shopping (Groceries), Home (Rent); a second account; a rule, a recurring transaction and a plan on Shopping
+  const setUp = async () => {
+    await signInAs(ME);
+    const budget = await createBudget(ME, input());
+    const [main] = await getBudgetAccounts(budget);
+    const card = await addBudgetAccount(budget, { name: "Card", defaultCurrency: "PLN" });
+    await updateBudgetCategories(budget, (tree) =>
+      addSubcategory(
+        addCategory(tree, "expense", { id: "cat-home", name: "Home", icon: "house", color: 2 }),
+        { type: "expense", categoryId: "cat-home" },
+        { id: "sub-rent", name: "Rent" },
+      ),
+    );
+
+    const groceries = await addBudgetTransaction(budget, shop(main.id, { date: "2026-10-03" }));
+    const split = await addBudgetTransaction(budget, shop(card.id, { payee: "Ikea", categoryId: "cat-home" }));
+    const lamp = await addBudgetSplitOff(budget, split, { amount: 300, categoryId: "cat-food", note: "Lamp" });
+    const other = await addBudgetTransaction(budget, shop(card.id, { payee: "Landlord", categoryId: "sub-rent" }));
+    const monthly = await addBudgetTransaction(budget, shop(main.id, { date: today, payee: "Gym", categoryId: "cat-food" }));
+    await makeBudgetTransactionRecurring(budget, monthly, {
+      pattern: { frequency: "monthly", interval: 1, day: Number(today.slice(8)) },
+      end: { type: "never" },
+    });
+    await setBudgetPlanAmount(budget, { month: "2026-11", type: "expense", categoryId: "cat-food", amount: 1000 });
+
+    return { budget, groceries, split, lamp, other, monthly };
+  };
+
+  const byId = async (budget: UnlockedBudget, id: string) =>
+    (await getBudgetTransactions(budget, { from: "2026-01", to: "2099-12" })).find((stored) => stored.id === id);
+
+  it("edits, reorders and stores the tree encrypted", async () => {
+    await signInAs(ME);
+    const budget = await createBudget(ME, input());
+
+    await updateBudgetCategories(budget, (tree) =>
+      addCategory(tree, "expense", { id: "cat-secret", name: "Secret hobby", icon: "gamepad-2", color: 4 }),
+    );
+    const saved = await updateBudgetCategories(budget, (tree) =>
+      reorderCategories(tree, "expense", null, "cat-secret", "cat-food"),
+    );
+
+    expect(saved.expense.map(({ id }) => id)).toEqual(["cat-secret", "cat-food"]);
+    expect(await getBudgetCategories(budget)).toEqual(saved);
+    expect(JSON.stringify(await read(`budget_categories/${ME}`))).not.toContain("Secret hobby");
+  });
+
+  it("counts the transactions using a category and its subcategories, split-offs included", async () => {
+    const { budget } = await setUp();
+
+    expect(await countBudgetCategoryTransactions(budget, ["cat-food", "sub-groceries"])).toBe(3);
+    expect(await countBudgetCategoryTransactions(budget, ["sub-rent"])).toBe(1);
+  });
+
+  it("with a replacement moves transactions, split-offs, recurring transactions and rules to it", async () => {
+    const { budget, groceries, split, lamp, other, monthly } = await setUp();
+
+    const tree = await deleteBudgetCategory(budget, { type: "expense", categoryId: "cat-food", replacementId: "sub-rent" });
+
+    expect(tree.expense.map(({ id }) => id)).toEqual(["cat-home"]);
+    expect(await getBudgetCategories(budget)).toEqual(tree);
+    expect(await byId(budget, groceries.id)).toMatchObject({ categoryId: "sub-rent", confirmed: true });
+    expect(await byId(budget, monthly.id)).toMatchObject({ categoryId: "sub-rent", confirmed: true });
+    expect(await byId(budget, split.id)).toMatchObject({
+      categoryId: "cat-home",
+      splitOffs: [{ ...lamp, categoryId: "sub-rent" }],
+    });
+    expect(await byId(budget, other.id)).toMatchObject({ categoryId: "sub-rent" });
+    const [recurring] = await getBudgetRecurring(budget);
+    expect(recurring).toMatchObject({ categoryId: "sub-rent", occurrences: { [today]: { transactionId: monthly.id } } });
+    expect((await getBudgetRules(budget)).map(({ key, categoryId }) => [key, categoryId])).toEqual(
+      expect.arrayContaining([
+        ["biedronka warszawa", "sub-rent"],
+        ["gym", "sub-rent"],
+      ]),
+    );
+    expect(await countBudgetCategoryTransactions(budget, ["cat-food", "sub-groceries"])).toBe(0);
+
+    // The deleted category's limit drops out on the plan's next save; the replacement keeps its own
+    const plan = await setBudgetPlanAmount(budget, { month: "2026-11", type: "expense", categoryId: "sub-rent", amount: 50 });
+    expect(plan.limits).toEqual({ "sub-rent": 50 });
+  });
+
+  it("without a replacement leaves transactions Uncategorized and unconfirmed and deletes the rules", async () => {
+    const { budget, groceries, split, lamp, monthly } = await setUp();
+
+    const tree = await deleteBudgetCategory(budget, { type: "expense", categoryId: "sub-groceries", replacementId: null });
+
+    expect(tree.expense[0]).toMatchObject({ id: "cat-food", subcategories: [] });
+    expect(await byId(budget, groceries.id)).toMatchObject({ categoryId: null, confirmed: false });
+    // Not on the deleted subcategory: unchanged
+    expect(await byId(budget, monthly.id)).toMatchObject({ categoryId: "cat-food", confirmed: true });
+    expect((await byId(budget, split.id))?.splitOffs).toEqual([lamp]);
+    expect((await getBudgetRules(budget)).map(({ key }) => key)).toEqual(["ikea", "landlord", "gym"]);
+
+    await deleteBudgetCategory(budget, { type: "expense", categoryId: "cat-food", replacementId: null });
+    expect((await byId(budget, split.id))?.splitOffs).toEqual([{ ...lamp, categoryId: null }]);
+    expect(await byId(budget, split.id)).toMatchObject({ categoryId: "cat-home", confirmed: true });
+    const [recurring] = await getBudgetRecurring(budget);
+    expect(recurring).toMatchObject({ categoryId: null, occurrences: { [today]: { transactionId: monthly.id } } });
+  });
+
+  it("refuses a missing category or a replacement that is deleted with it or of the other type", async () => {
+    const { budget } = await setUp();
+    const missing = "planning:errors.budget.categoryMissing";
+
+    await expect(
+      deleteBudgetCategory(budget, { type: "expense", categoryId: "nope", replacementId: null }),
+    ).rejects.toThrow(missing);
+    await expect(
+      deleteBudgetCategory(budget, { type: "expense", categoryId: "cat-food", replacementId: "sub-groceries" }),
+    ).rejects.toThrow(missing);
+    await expect(
+      deleteBudgetCategory(budget, { type: "expense", categoryId: "cat-food", replacementId: "cat-salary" }),
+    ).rejects.toThrow(missing);
+    expect((await getBudgetCategories(budget))?.expense.map(({ id }) => id)).toEqual(["cat-food", "cat-home"]);
+  });
+
+  it("denies another user", async () => {
+    const { budget } = await setUp();
+
+    await signInAs(OTHER);
+    await expect(updateBudgetCategories(budget, (tree) => tree)).rejects.toMatchObject(DENIED);
+    await expect(
+      deleteBudgetCategory(budget, { type: "expense", categoryId: "cat-food", replacementId: null }),
+    ).rejects.toMatchObject(DENIED);
   });
 });

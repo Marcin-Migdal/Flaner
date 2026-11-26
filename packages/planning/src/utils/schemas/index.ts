@@ -12,3 +12,4 @@ export * from "./budget-import-schema";
 export * from "./budget-recurring-schema";
 export * from "./budget-split-off-schema";
 export * from "./budget-refund-link-schema";
+export * from "./budget-category-schema";

@@ -39,6 +39,16 @@ export type BudgetCategory = {
 /** The user's two trees, each in the user's order. */
 export type BudgetCategoryTree = Record<BudgetCategoryType, BudgetCategory[]>;
 
+/** A category or subcategory in one of the two trees. */
+export type BudgetCategoryRef = { type: BudgetCategoryType; categoryId: string };
+
+/**
+ * Deletes a category (with its subcategories) or a subcategory. With a replacement (a category or subcategory of the
+ * same type that is not deleted) its transactions, split-offs, recurring transactions and rules move to it; without
+ * one they lose their category (transactions also become unconfirmed) and its rules are deleted.
+ */
+export type BudgetCategoryDeleteInput = BudgetCategoryRef & { replacementId: string | null };
+
 export type BudgetProfile = {
   mainCurrency: string;
   mainAccountId: string;

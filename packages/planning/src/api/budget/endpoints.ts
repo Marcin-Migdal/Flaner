@@ -32,6 +32,14 @@ import {
   wrapDataKey,
 } from "../../utils/budgetCrypto";
 import { deleteRule, editRule, learnRule, type RuleSubject } from "../../utils/categorizationRules";
+import {
+  categoryIdsOf,
+  pruneDeletedCategories,
+  reassignRules,
+  reassignTransaction,
+  removeCategory,
+  usesCategory,
+} from "../../utils/categoryTree";
 import { monthOfDate } from "../../utils/monthLedger";
 import { linkRefOf, refundRoom, splitRest } from "../../utils/splitOffs";
 import {
@@ -49,6 +57,7 @@ import type {
   BudgetAccountInput,
   BudgetAccountPayload,
   BudgetCategoriesDoc,
+  BudgetCategoryDeleteInput,
   BudgetCategoryTree,
   BudgetKeysDoc,
   BudgetLinkRef,
@@ -378,11 +387,12 @@ export const getBudgetProfile = async ({ uid, userKey }: UnlockedBudget): Promis
   return { mainCurrency: data.mainCurrency, mainAccountId: data.mainAccountId, ...payload };
 };
 
-export const getBudgetCategories = async ({ uid, userKey }: UnlockedBudget): Promise<BudgetCategoryTree | null> => {
-  const data = (await getDoc(refs.categories(uid))).data();
-  if (!data) return null;
+const decryptCategories = ({ uid, userKey }: UnlockedBudget, data: BudgetCategoriesDoc) =>
+  decryptJson<BudgetCategoryTree>(data.payload.toUint8Array(), userKey, paths.categories(uid));
 
-  return decryptJson<BudgetCategoryTree>(data.payload.toUint8Array(), userKey, paths.categories(uid));
+export const getBudgetCategories = async (budget: UnlockedBudget): Promise<BudgetCategoryTree | null> => {
+  const data = (await getDoc(refs.categories(budget.uid))).data();
+  return data ? decryptCategories(budget, data) : null;
 };
 
 /** The user's accounts, oldest first. */
@@ -1494,9 +1504,13 @@ export const setBudgetPlanAmount = (
     const stored = (await transaction.get(ref)).data();
     const plan = stored ? await decryptPlan(budget, stored) : { month, limits: {}, plannedIncome: {} };
 
+    const tree = await readCategories(transaction, budget);
+
     const field = type === "expense" ? "limits" : "plannedIncome";
     const { [categoryId]: _removed, ...kept } = plan[field];
-    const next: BudgetPlan = { ...plan, [field]: amount === null ? kept : { ...kept, [categoryId]: amount } };
+    const changed: BudgetPlan = { ...plan, [field]: amount === null ? kept : { ...kept, [categoryId]: amount } };
+    // Limits of deleted categories drop out on the plan's next save
+    const next = pruneDeletedCategories(changed, tree);
 
     const payload: BudgetPlanPayload = { limits: next.limits, plannedIncome: next.plannedIncome };
     const planDoc: BudgetPlanDoc = {
@@ -1508,3 +1522,145 @@ export const setBudgetPlanAmount = (
     transaction.set(ref, planDoc);
     return next;
   });
+
+// ---------------------------------------------------------------------------
+// Category tree (Settings → Categories): one encrypted document per user
+// ---------------------------------------------------------------------------
+
+const categoryMissing = () => new Error("planning:errors.budget.categoryMissing");
+
+const readCategories = async (transaction: Transaction, budget: UnlockedBudget): Promise<BudgetCategoryTree> => {
+  const data = (await transaction.get(refs.categories(budget.uid))).data();
+  if (!data) throw categoryMissing();
+  return decryptCategories(budget, data);
+};
+
+const writeCategories = async (transaction: Transaction, { uid, userKey }: UnlockedBudget, tree: BudgetCategoryTree) => {
+  const categoriesDoc: BudgetCategoriesDoc = {
+    payload: toBytes(await encryptJson(tree, userKey, paths.categories(uid))),
+    updatedAt: Date.now(),
+  };
+  transaction.set(refs.categories(uid), categoriesDoc);
+};
+
+/**
+ * Applies one edit (add, rename, icon / colour, reorder; `utils/categoryTree`) to the stored tree in a transaction, so
+ * an edit made on another device meanwhile is kept. Returns the tree as saved. Deleting goes through
+ * `deleteBudgetCategory`, which also moves what uses the category.
+ */
+export const updateBudgetCategories = (
+  budget: UnlockedBudget,
+  change: (tree: BudgetCategoryTree) => BudgetCategoryTree,
+): Promise<BudgetCategoryTree> =>
+  runTransaction(fb.firestore, async (transaction) => {
+    const tree = await readCategories(transaction, budget);
+    const next = change(tree);
+    if (next !== tree) await writeCategories(transaction, budget, next);
+    return next;
+  });
+
+/** Every month document of the user's accounts (all months; for a category's usage). */
+const allMonthsQuery = (uid: string) => query(refs.months(), where("memberIds", "array-contains", uid));
+
+/**
+ * How many transactions use the categories (a transaction counts once, also when only a split-off uses one).
+ * Decrypts every month of every account; for the delete confirmation.
+ */
+export const countBudgetCategoryTransactions = async (budget: UnlockedBudget, categoryIds: string[]): Promise<number> => {
+  const ids = new Set(categoryIds);
+  const snapshot = await getDocs(allMonthsQuery(budget.uid));
+  const counts = await Promise.all(
+    snapshot.docs.map(async (monthDoc) => {
+      const { accountId, month, payload } = monthDoc.data();
+      const { transactions } = await decryptJson<BudgetMonthPayload>(
+        payload.toUint8Array(),
+        await getAccountKey(budget, accountId),
+        paths.month(accountId, month),
+      );
+      return transactions.filter((stored) => usesCategory(stored, ids)).length;
+    }),
+  );
+  return counts.reduce((sum, count) => sum + count, 0);
+};
+
+/**
+ * One account's part of a category delete: its months and recurring transactions on a deleted category move to the
+ * replacement (or lose their category), all in one transaction. Only changed documents are written.
+ */
+const reassignAccount = (
+  budget: UnlockedBudget,
+  accountId: string,
+  months: BudgetMonth[],
+  deletedIds: ReadonlySet<string>,
+  replacementId: string | null,
+) =>
+  runTransaction(fb.firestore, async (transaction) => {
+    const loaded = await readMonths(
+      transaction,
+      budget,
+      months.map((month) => ({ accountId, month })),
+    );
+    const recurring = await readRecurring(transaction, budget, accountId);
+
+    const changed: LoadedMonths = new Map();
+    for (const [id, month] of loaded) {
+      const next = month.transactions.map((stored) => reassignTransaction(stored, deletedIds, replacementId));
+      if (next.some((stored, index) => stored !== month.transactions[index])) {
+        changed.set(id, { ...month, transactions: next });
+      }
+    }
+    // Moved with its transactions, so its matches (same category) keep holding
+    const movesRecurring = recurring.some(({ categoryId }) => categoryId !== null && deletedIds.has(categoryId));
+
+    await writeMonths(transaction, budget, changed);
+    if (movesRecurring) {
+      const next = recurring.map((item) =>
+        item.categoryId !== null && deletedIds.has(item.categoryId) ? { ...item, categoryId: replacementId } : item,
+      );
+      await writeRecurring(transaction, budget, accountId, next);
+    }
+  });
+
+/**
+ * Deletes a category (with its subcategories) or a subcategory (`BudgetCategoryDeleteInput`). First, per account in
+ * one transaction each, its transactions, split-offs and recurring transactions move to the replacement or lose their
+ * category (transactions also become unconfirmed); then the tree and the rules (repointed, or deleted without a
+ * replacement) are written in one transaction. A failure part-way leaves the category in place, so the delete can be
+ * retried. Limits on it drop out of plans on their next save (`setBudgetPlanAmount`). Returns the tree as saved.
+ */
+export const deleteBudgetCategory = async (
+  budget: UnlockedBudget,
+  { type, categoryId, replacementId }: BudgetCategoryDeleteInput,
+): Promise<BudgetCategoryTree> => {
+  const tree = await getBudgetCategories(budget);
+  const deletedIds = new Set(tree ? categoryIdsOf(tree, { type, categoryId }) : []);
+  const replacementValid =
+    replacementId === null ||
+    (tree !== null && !deletedIds.has(replacementId) && categoryIdsOf(tree, { type, categoryId: replacementId }).length > 0);
+  if (deletedIds.size === 0 || !replacementValid) throw categoryMissing();
+
+  const [months, recurring] = await Promise.all([
+    getDocs(allMonthsQuery(budget.uid)),
+    getDocs(query(refs.allRecurring(), where("memberIds", "array-contains", budget.uid))),
+  ]);
+  const monthsByAccount = new Map<string, BudgetMonth[]>(recurring.docs.map((item) => [item.data().accountId, []]));
+  for (const monthDoc of months.docs) {
+    const { accountId, month } = monthDoc.data();
+    monthsByAccount.set(accountId, [...(monthsByAccount.get(accountId) ?? []), month]);
+  }
+  await Promise.all(
+    [...monthsByAccount].map(([accountId, accountMonths]) =>
+      reassignAccount(budget, accountId, accountMonths, deletedIds, replacementId),
+    ),
+  );
+
+  return runTransaction(fb.firestore, async (transaction) => {
+    const current = await readCategories(transaction, budget);
+    const rules = await readRules(transaction, budget);
+    const next = removeCategory(current, { type, categoryId });
+    await writeCategories(transaction, budget, next);
+    const nextRules = reassignRules(rules, deletedIds, replacementId);
+    if (nextRules !== rules) await writeRules(transaction, budget, nextRules);
+    return next;
+  });
+};

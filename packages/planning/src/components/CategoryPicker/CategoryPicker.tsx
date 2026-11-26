@@ -26,6 +26,8 @@ export type CategoryPickerProps = {
   /** Offers clearing the category (default); off where a category is required (e.g. a rule's). */
   clearable?: boolean;
   label?: string;
+  /** Shown while no category is set (default "Choose a category"). */
+  placeholder?: string;
   error?: string;
   disabled?: boolean;
   id?: string;
@@ -50,6 +52,7 @@ export const CategoryPicker = ({
   suggestedId,
   clearable = true,
   label,
+  placeholder,
   error,
   disabled,
   id,
@@ -87,7 +90,7 @@ export const CategoryPicker = ({
       options={options}
       value={selected}
       onChange={(option) => onChange(option ? option.value : null)}
-      placeholder={t("budget.categoryPicker.placeholder")}
+      placeholder={placeholder ?? t("budget.categoryPicker.placeholder")}
       noOptionsMessage={() => t("budget.categoryPicker.noResults")}
       isClearable={clearable}
       isSearchable

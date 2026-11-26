@@ -124,7 +124,10 @@
       "recurringMade": "Recurring transaction created",
       "recurringSaved": "Repeat rule saved",
       "recurringStopped": "Recurring transaction stopped",
-      "recurringDeleted": "Recurring transaction deleted"
+      "recurringDeleted": "Recurring transaction deleted",
+      "categorySaveError": "Couldn't save the category. Try again.",
+      "categoryDeleteError": "Couldn't delete the category. Try again.",
+      "categoryDeleted": "Category deleted"
     }
   },
   "errors": {
@@ -162,7 +165,8 @@
       "splitOffsTooLarge": "Split-offs must stay below the transaction's amount.",
       "splitOffMissing": "This split-off no longer exists. Reload the page.",
       "refundNotAllowed": "This refund can't be linked: it must be relevant income, not linked yet, dated on or after the purchase and smaller than what's left of it.",
-      "splitTypeLocked": "A split transaction can't change between expense and income. Remove its split-offs first."
+      "splitTypeLocked": "A split transaction can't change between expense and income. Remove its split-offs first.",
+      "categoryMissing": "This category no longer exists. Reload the page."
     }
   },
   "splits": {
@@ -787,7 +791,9 @@
       "splitOffTooLarge": "Split-offs must stay below the transaction's amount",
       "splitOffNoteMax": "The note can have at most 200 characters",
       "refundRequired": "Pick the refund",
-      "refundTooLarge": "The refund must be smaller than what's left of the purchase"
+      "refundTooLarge": "The refund must be smaller than what's left of the purchase",
+      "categoryNameRequired": "Enter a name.",
+      "categoryNameMax": "Use at most 40 characters."
     },
     "transactionsEmpty": {
       "title": "No transactions yet",
@@ -1311,6 +1317,92 @@
     "exclusion": {
       "exclude": "Exclude",
       "restore": "Restore"
+    },
+    "categories": {
+      "expenseTitle": "Expense categories",
+      "incomeTitle": "Income categories",
+      "hint": "Drag the handle to reorder, or focus it and use Space and the arrow keys. Subcategories use their category's icon and colour.",
+      "add": "Add category",
+      "addSubcategory": "Add subcategory",
+      "empty": "No categories yet.",
+      "subcategoryCount_one": "{{count}} subcategory",
+      "subcategoryCount_other": "{{count}} subcategories",
+      "actions": "Actions for {{name}}",
+      "edit": "Edit",
+      "delete": "Delete",
+      "expand": "Show subcategories of {{name}}",
+      "collapse": "Hide subcategories of {{name}}",
+      "move": "Move {{name}}",
+      "drag": {
+        "instructions": "To reorder, press Space or Enter on the handle, move with the arrow keys, then press Space or Enter to drop, or Escape to cancel.",
+        "start": "Picked up {{name}}.",
+        "over": "{{name}} is at position {{position}} of {{total}}.",
+        "end": "{{name}} dropped at position {{position}} of {{total}}.",
+        "cancel": "Moving {{name}} was cancelled."
+      },
+      "form": {
+        "addTitle": "Add category",
+        "addSubTitle": "Add subcategory to {{parent}}",
+        "editTitle": "Edit category",
+        "editSubTitle": "Edit subcategory",
+        "description": "Pick a name, an icon and a colour. Its subcategories use the same icon and colour.",
+        "subDescription": "A subcategory uses its category's icon and colour.",
+        "name": "Name",
+        "namePlaceholder": "e.g. Groceries",
+        "icon": "Icon",
+        "color": "Colour",
+        "colorOption": "Colour {{index}}",
+        "preview": "Preview",
+        "addSubmit": "Add",
+        "editSubmit": "Save"
+      },
+      "deleteDialog": {
+        "title": "Delete {{name}}?",
+        "subcategories_one": "Its {{count}} subcategory is deleted with it.",
+        "subcategories_other": "Its {{count}} subcategories are deleted with it.",
+        "counting": "Counting the transactions that use it…",
+        "countUnavailable": "Couldn't count the transactions that use it.",
+        "usage_one": "{{count}} transaction uses it.",
+        "usage_other": "{{count}} transactions use it.",
+        "replacement": "Move their transactions to",
+        "noReplacement": "Don't move · they become Uncategorized",
+        "hint": "With a replacement, its transactions, split-offs, recurring transactions and rules move to it. Without one, its transactions become Uncategorized and unconfirmed and its rules are deleted. Its limits drop out of a plan when that plan is next saved.",
+        "confirm": "Yes, delete"
+      },
+      "icons": {
+        "shopping-bag": "Shopping bag",
+        "smile": "Smile",
+        "house": "House",
+        "user": "Person",
+        "landmark": "Government building",
+        "gift": "Gift",
+        "receipt": "Receipt",
+        "music": "Music",
+        "car": "Car",
+        "briefcase": "Briefcase",
+        "heart-pulse": "Health",
+        "piggy-bank": "Piggy bank",
+        "wallet": "Wallet",
+        "award": "Award",
+        "handshake": "Handshake",
+        "tag": "Tag",
+        "trending-up": "Rising chart",
+        "percent": "Percent",
+        "undo-2": "Return",
+        "banknote": "Banknote",
+        "circle-ellipsis": "Other",
+        "utensils": "Cutlery",
+        "plane": "Plane",
+        "bus": "Bus",
+        "graduation-cap": "Graduation cap",
+        "dumbbell": "Dumbbell",
+        "paw-print": "Paw print",
+        "shirt": "Shirt",
+        "baby": "Baby",
+        "coffee": "Coffee",
+        "book-open": "Book",
+        "gamepad-2": "Gamepad"
+      }
     }
   }
 }
