@@ -17,7 +17,7 @@ describe("useGetLookupColorsQuery", () => {
 
   it("fetches lookup colors when user is authenticated", async () => {
     const mockColors = [
-      { id: "c1", userId: "user-1", materialName: "PLA", typeName: "Basic", name: "Red", hex: "#ff0000" },
+      { id: "c1", userId: "user-1", materialName: "PLA", typeName: "Basic", name: "Red", hex: "#ff0000", createdAt: 1700000000000 },
     ];
     vi.mocked(lookupsApi.fetchLookupColors).mockResolvedValueOnce(mockColors);
     const { result, queryClient } = renderHookWithProviders(() => useGetLookupColorsQuery(), { user: mockUser });

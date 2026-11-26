@@ -18,7 +18,7 @@ describe("useGetSpoolPrintsQuery", () => {
       {
         id: "p1",
         usedWeight: 65,
-        createdAt: null,
+        createdAt: 1700000000000,
       },
     ];
     vi.mocked(spoolsApi.fetchSpoolPrints).mockResolvedValueOnce(mockPrints);

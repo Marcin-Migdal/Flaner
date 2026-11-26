@@ -19,6 +19,7 @@ vi.mock("../../../../api/events", async (importOriginal) => ({
 describe("useCreateEventMutation", () => {
   it("calls createSchedulerEvent on mutate with autoVote and triggers onSuccess", async () => {
     const mockCreated: SchedulerEvent = {
+      isFinalized: false,
       id: "evt-1",
       name: "New Event",
       description: "Desc",

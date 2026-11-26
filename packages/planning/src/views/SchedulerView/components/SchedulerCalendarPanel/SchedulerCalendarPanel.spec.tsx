@@ -42,6 +42,7 @@ describe("SchedulerCalendarPanel", () => {
   });
 
   const mockEvent: SchedulerEvent = {
+    isFinalized: false,
     id: "evt-cal",
     name: "Sprint Demo",
     description: "Review sprint deliverables",

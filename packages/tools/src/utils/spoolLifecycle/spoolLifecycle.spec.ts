@@ -13,6 +13,7 @@ const spool = (overrides: Partial<FilamentSpool> = {}): FilamentSpool => ({
   currentWeight: 500,
   isFinished: false,
   finishedAt: null,
+  createdAt: 1700000000000,
   material: "PLA",
   type: "Basic",
   colorName: "Black",

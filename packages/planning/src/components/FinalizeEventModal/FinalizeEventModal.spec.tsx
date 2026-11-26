@@ -19,6 +19,7 @@ vi.mock("../../hooks/api/mutation/useFinalizeEventMutation", () => ({
 
 describe("FinalizeEventModal", () => {
   const mockEvent: SchedulerEvent = {
+    isFinalized: false,
     id: "evt-123",
     name: "Team Planning",
     description: "Quarterly alignment",

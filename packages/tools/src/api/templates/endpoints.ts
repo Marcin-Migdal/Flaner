@@ -17,7 +17,7 @@ export const fetchTemplates = async (userId: string): Promise<FilamentTemplate[]
   const snap = await getDocs(q);
   const items = snap.docs.map((d) => ({ ...d.data(), id: d.id }));
   return items.sort((a, b) => {
-    return (b.createdAt ?? 0) - (a.createdAt ?? 0);
+    return b.createdAt - a.createdAt;
   });
 };
 

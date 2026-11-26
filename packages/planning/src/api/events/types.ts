@@ -26,7 +26,7 @@ export type SchedulerEvent = {
   endDate?: string;
   proposedDates: ProposedDateSlot[];
   votes?: EventVotes;
-  isFinalized?: boolean;
+  isFinalized: boolean;
   /** Slot key (`getSlotKey`) of the winning slot, set by `finalizeSchedulerEvent`; slots of a finalized event cannot change */
   finalizedSlotKey?: string;
   createdAt: number;

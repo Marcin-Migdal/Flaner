@@ -10,6 +10,7 @@ describe("RankedSlotsSheet", () => {
   const mockVoteSlot = vi.fn();
 
   const mockEvent: SchedulerEvent = {
+    isFinalized: false,
     id: "evt-ranked",
     name: "Strategy Meeting",
     description: "Annual meeting",

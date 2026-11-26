@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { SpoolItem } from "./SpoolItem";
 import type { FilamentSpool, SpoolPrint } from "../../../api/spools";
 
-let lastPrint: SpoolPrint | null = { id: "print-1", usedWeight: 10, createdAt: null };
+let lastPrint: SpoolPrint | null = { id: "print-1", usedWeight: 10, createdAt: 1700000000000 };
 
 vi.mock("../../../hooks", () => ({
   useToolsTranslations: () => ({ t: (key: string) => key }),
@@ -13,6 +13,8 @@ vi.mock("../../../hooks", () => ({
 }));
 
 const mockSpool: FilamentSpool = {
+  finishedAt: null,
+  createdAt: 1700000000000,
   id: "spool-1",
   userId: "user-1",
   templateId: null,
@@ -28,7 +30,7 @@ const mockSpool: FilamentSpool = {
 
 describe("SpoolItem", () => {
   beforeEach(() => {
-    lastPrint = { id: "print-1", usedWeight: 10, createdAt: null };
+    lastPrint = { id: "print-1", usedWeight: 10, createdAt: 1700000000000 };
   });
 
   it("disables undo when the spool has no prints", () => {

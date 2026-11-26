@@ -2,7 +2,7 @@ import type { UseMutationOptions } from "@tanstack/react-query";
 import { useUserMutation } from "@flaner/shared/hooks";
 import { createSchedulerEvent, getSlotKey, type SchedulerEvent, type VoteType } from "../../../../api/events";
 
-export type CreateEventInput = Omit<SchedulerEvent, "id" | "createdAt" | "updatedAt" | "creatorId"> & {
+export type CreateEventInput = Omit<SchedulerEvent, "id" | "isFinalized" | "createdAt" | "updatedAt" | "creatorId"> & {
   autoVoteProposedDates?: boolean;
 };
 

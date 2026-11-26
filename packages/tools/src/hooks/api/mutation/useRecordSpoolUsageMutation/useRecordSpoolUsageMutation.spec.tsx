@@ -10,6 +10,8 @@ vi.mock("../../../../api/spools", () => ({
 }));
 
 const mockSpool: FilamentSpool = {
+  finishedAt: null,
+  createdAt: 1700000000000,
   id: "spool-1",
   userId: "user-1",
   templateId: "tmpl-1",

@@ -31,7 +31,7 @@ export const fetchSpools = async (userId: string): Promise<FilamentSpool[]> => {
   const items = snap.docs.map((d) => ({ ...d.data(), id: d.id }));
 
   return items.sort((a, b) => {
-    return (b.createdAt ?? 0) - (a.createdAt ?? 0);
+    return b.createdAt - a.createdAt;
   });
 };
 
@@ -113,7 +113,7 @@ export const fetchSpoolPrints = async (spoolId: string): Promise<SpoolPrint[]> =
   const items = snap.docs.map((d) => ({ ...d.data(), id: d.id }));
 
   return items.sort((a, b) => {
-    return (b.createdAt ?? 0) - (a.createdAt ?? 0);
+    return b.createdAt - a.createdAt;
   });
 };
 

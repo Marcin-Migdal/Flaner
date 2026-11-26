@@ -16,7 +16,7 @@ describe("useGetLookupMaterialsQuery", () => {
   });
 
   it("fetches lookup materials when authenticated", async () => {
-    const mockMaterials = [{ id: "m1", userId: "user-1", name: "PETG" }];
+    const mockMaterials = [{ id: "m1", userId: "user-1", name: "PETG", createdAt: 1700000000000 }];
     vi.mocked(lookupsApi.fetchLookupMaterials).mockResolvedValueOnce(mockMaterials);
     const { result, queryClient } = renderHookWithProviders(() => useGetLookupMaterialsQuery(), { user: mockUser });
 

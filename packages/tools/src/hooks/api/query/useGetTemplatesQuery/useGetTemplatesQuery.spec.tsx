@@ -25,6 +25,7 @@ describe("useGetTemplatesQuery", () => {
         colorName: "Blue",
         colorHex: "#0000ff",
         defaultWeight: 1000,
+        createdAt: 1700000000000,
       },
     ];
     vi.mocked(templatesApi.fetchTemplates).mockResolvedValueOnce(mockTemplates);
