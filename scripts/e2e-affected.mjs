@@ -10,7 +10,7 @@ const MFES = ["community", "settings", "planning", "shopping", "tools"];
 const ALL_PROJECTS = ["community", "core", "planning", "tools", "settings", "mobile", "shopping"];
 const FULL_SUITE_PACKAGES = ["core", "shared", "ui-components", "test-utils"];
 // Files outside packages/ that cannot affect E2E.
-const IGNORED = [/^\.agents\//, /\.md$/];
+const IGNORED = [/^\.agents\//, /^\.claude\//, /\.md$/];
 
 const base = process.argv[2];
 if (!base) throw new Error("Usage: node scripts/e2e-affected.mjs <base-sha>");
