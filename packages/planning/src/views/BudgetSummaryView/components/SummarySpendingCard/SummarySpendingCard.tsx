@@ -132,6 +132,7 @@ export const SummarySpendingCard = ({ breakdown, month, monthLabel, mainCurrency
 
   return (
     <ChartContainer
+      bodyClassName={styles.container}
       title={t("budget.summary.spending.title")}
       description={
         drilled

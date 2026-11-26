@@ -131,48 +131,43 @@ export const daysLeftInMonth = (month: BudgetMonth, today: string): number => {
   return month > todayMonth ? days : days - Number(today.slice(8, 10)) + 1;
 };
 
-/** A limit spent over: a category card's own limit, or a subcategory line's. */
-export type ExceededLimit = {
+/** One limit of the plan: a category card's own limit, or a subcategory line's. */
+export type LimitProgress = {
   id: string;
   category: BudgetCategory;
   subcategory: BudgetSubcategory | null;
   spent: number;
   limit: number;
+  exceeded: boolean;
 };
 
 export type PlanProgress = {
-  /** Spent on categories with a limit (the cards). */
+  /** All of the month's expenses (the Planner header's Spent). */
   spent: number;
-  /** Sum of the limits (the cards'). */
+  /** Sum of the limits (the Planner header's Limit). */
   limit: number;
-  /** In the plan's order: each card, then its lines. */
-  exceeded: ExceededLimit[];
-  outsideSpent: number;
+  /** In the plan's order: each card's own limit, then its lines'. */
+  limits: LimitProgress[];
   daysLeft: number;
 };
 
-/** The Plan card: the Planner's expense side reduced to spent of limits, exceeded limits and Outside the plan. */
+const limitProgress = (
+  category: BudgetCategory,
+  subcategory: BudgetSubcategory | null,
+  spent: number,
+  limit: number,
+): LimitProgress => ({ id: (subcategory ?? category).id, category, subcategory, spent, limit, exceeded: spent > limit });
+
+/** The Plan card: the month's expenses against the sum of limits (as the Planner header), then each limit. */
 export const buildPlanProgress = (planner: PlannerMonth, month: BudgetMonth, today: string): PlanProgress => {
-  const { cards, outsideSpent, planned } = planner.expenses;
-  const exceeded = cards.flatMap((card): ExceededLimit[] => [
-    ...(card.target !== null && card.spent > card.target
-      ? [{ id: card.category.id, category: card.category, subcategory: null, spent: card.spent, limit: card.target }]
-      : []),
-    ...card.lines
-      .filter((line) => line.spent > line.target)
-      .map((line) => ({
-        id: line.subcategory.id,
-        category: card.category,
-        subcategory: line.subcategory,
-        spent: line.spent,
-        limit: line.target,
-      })),
-  ]);
+  const { cards, spent, planned } = planner.expenses;
   return {
-    spent: cards.reduce((sum, card) => sum + card.spent, 0),
+    spent,
     limit: planned,
-    exceeded,
-    outsideSpent,
+    limits: cards.flatMap((card) => [
+      ...(card.target === null ? [] : [limitProgress(card.category, null, card.spent, card.target)]),
+      ...card.lines.map((line) => limitProgress(card.category, line.subcategory, line.spent, line.target)),
+    ]),
     daysLeft: daysLeftInMonth(month, today),
   };
 };

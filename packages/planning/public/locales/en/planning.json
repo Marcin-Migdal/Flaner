@@ -1338,16 +1338,15 @@
       "plan": {
         "title": "Plan",
         "spentOfLimit": "{{spent}} of {{limit}}",
-        "progressLabel": "Spent in the plan",
+        "progressLabel": "Expenses against limits",
         "daysLeft_one": "{{count}} day left",
         "daysLeft_other": "{{count}} days left",
         "monthEnded": "Month ended",
-        "exceeded_one": "Over the limit: {{name}}",
-        "exceeded_other": "Over the limit: {{name}} and {{more}} more",
-        "outside": "Outside the plan {{amount}}",
         "noLimits": "No limits this month yet.",
         "openPlanner": "Open Planner",
-        "subcategoryName": "{{category}} / {{subcategory}}"
+        "subcategoryName": "{{category}} / {{subcategory}}",
+        "limitsLabel": "Limits",
+        "over": "Over by {{amount}}"
       },
       "review": {
         "title": "To review",

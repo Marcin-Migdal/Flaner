@@ -181,12 +181,17 @@ describe("BudgetSummaryView", () => {
     });
     renderView();
 
-    expect(await screen.findByRole("meter", { name: "Spent in the plan" })).toHaveAttribute(
+    // All of the month's expenses against the sum of limits, as the Planner header
+    expect(await screen.findByRole("meter", { name: "Expenses against limits" })).toHaveAttribute(
+      "aria-valuetext",
+      expect.stringMatching(/^PLN\s160\.00 of PLN\s100\.00$/),
+    );
+    const limits = screen.getByRole("list", { name: "Limits" });
+    expect(within(limits).getByRole("meter", { name: "Food" })).toHaveAttribute(
       "aria-valuetext",
       expect.stringMatching(/^PLN\s120\.00 of PLN\s100\.00$/),
     );
-    expect(screen.getByText("Over the limit: Food")).toBeInTheDocument();
-    expect(screen.getByText(/^Outside the plan PLN\s40\.00$/)).toBeInTheDocument();
+    expect(within(limits).getByText(/^Over by PLN\s20\.00$/)).toBeInTheDocument();
     expect(screen.getByText("2 transactions to review")).toBeInTheDocument();
     expect(screen.getByText("2 unconfirmed · 1 uncategorized")).toBeInTheDocument();
 

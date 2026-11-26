@@ -1,9 +1,9 @@
 import { useMoneyFormatter } from "@flaner/shared/hooks";
-import { Badge, buttonVariants, Card, CardFooter, CardHeader, CardTitle, PlanProgressBar } from "@flaner/ui-components";
+import { buttonVariants, Card, CardFooter, CardHeader, CardTitle, PlanProgressBar } from "@flaner/ui-components";
 import { TriangleAlert } from "lucide-react";
 import { Link } from "react-router";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
-import type { PlanProgress } from "../../../../utils/budgetSummary";
+import type { LimitProgress, PlanProgress } from "../../../../utils/budgetSummary";
 import { summaryPlanCardStyles as styles } from "./SummaryPlanCard.styles";
 
 export type SummaryPlanCardProps = {
@@ -12,16 +12,21 @@ export type SummaryPlanCardProps = {
   plannerHref: string;
 };
 
-/** Spent of the sum of limits, days left, exceeded limits and Outside the plan, with Open Planner. */
+/**
+ * The month's expenses against the sum of limits (as the Planner header), then each limit's spent of its limit with
+ * exceeded ones flagged by an icon and "Over by …" (never colour alone); days left and Open Planner.
+ */
 export const SummaryPlanCard = ({ progress, mainCurrency, plannerHref }: SummaryPlanCardProps) => {
   const { t, i18n } = usePlanningTranslations();
   const { format } = useMoneyFormatter();
   const percent = new Intl.NumberFormat(i18n.language, { style: "percent", maximumFractionDigits: 0 });
-  const spentOfLimit = t("budget.summary.plan.spentOfLimit", {
-    spent: format(progress.spent, mainCurrency),
-    limit: format(progress.limit, mainCurrency),
-  });
-  const [firstExceeded] = progress.exceeded;
+  const spentOf = (spent: number, limit: number) =>
+    t("budget.summary.plan.spentOfLimit", { spent: format(spent, mainCurrency), limit: format(limit, mainCurrency) });
+  const spentOfLimit = spentOf(progress.spent, progress.limit);
+  const nameOf = ({ category, subcategory }: LimitProgress) =>
+    subcategory
+      ? t("budget.summary.plan.subcategoryName", { category: category.name, subcategory: subcategory.name })
+      : category.name;
 
   return (
     <Card>
@@ -45,29 +50,41 @@ export const SummaryPlanCard = ({ progress, mainCurrency, plannerHref }: Summary
       ) : (
         <p className={styles.empty}>{t("budget.summary.plan.noLimits")}</p>
       )}
-      <div className={styles.facts}>
-        <span>
-          {progress.daysLeft > 0
-            ? t("budget.summary.plan.daysLeft", { count: progress.daysLeft })
-            : t("budget.summary.plan.monthEnded")}
-        </span>
-        {firstExceeded && (
-          <Badge variant="danger" shape="tag" className={styles.exceeded}>
-            <TriangleAlert aria-hidden="true" />
-            {t("budget.summary.plan.exceeded", {
-              count: progress.exceeded.length,
-              more: progress.exceeded.length - 1,
-              name: firstExceeded.subcategory
-                ? t("budget.summary.plan.subcategoryName", {
-                    category: firstExceeded.category.name,
-                    subcategory: firstExceeded.subcategory.name,
-                  })
-                : firstExceeded.category.name,
-            })}
-          </Badge>
-        )}
-        <span>{t("budget.summary.plan.outside", { amount: format(progress.outsideSpent, mainCurrency) })}</span>
-      </div>
+      <p className={styles.days}>
+        {progress.daysLeft > 0
+          ? t("budget.summary.plan.daysLeft", { count: progress.daysLeft })
+          : t("budget.summary.plan.monthEnded")}
+      </p>
+      {progress.limits.length > 0 && (
+        <ul className={styles.limits} aria-label={t("budget.summary.plan.limitsLabel")}>
+          {progress.limits.map((limit) => {
+            const name = nameOf(limit);
+            const value = spentOf(limit.spent, limit.limit);
+            return (
+              <li key={limit.id} className={styles.limit}>
+                <div className={styles.limitHeader}>
+                  <span className={styles.limitName}>{name}</span>
+                  <span className={styles.limitValue}>{value}</span>
+                </div>
+                <PlanProgressBar
+                  value={limit.spent}
+                  max={limit.limit}
+                  color={limit.category.color}
+                  size="sm"
+                  label={name}
+                  valueText={value}
+                />
+                {limit.exceeded && (
+                  <span className={styles.over}>
+                    <TriangleAlert aria-hidden="true" />
+                    {t("budget.summary.plan.over", { amount: format(limit.spent - limit.limit, mainCurrency) })}
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
       <CardFooter>
         <Link to={plannerHref} className={buttonVariants({ variant: "outline", size: "sm" })}>
           {t("budget.summary.plan.openPlanner")}

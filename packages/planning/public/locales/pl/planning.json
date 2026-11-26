@@ -1376,20 +1376,17 @@
       "plan": {
         "title": "Plan",
         "spentOfLimit": "{{spent}} z {{limit}}",
-        "progressLabel": "Wydano w planie",
+        "progressLabel": "Wydatki względem limitów",
         "daysLeft_one": "Został {{count}} dzień",
         "daysLeft_few": "Zostały {{count}} dni",
         "daysLeft_many": "Zostało {{count}} dni",
         "daysLeft_other": "Zostało {{count}} dni",
         "monthEnded": "Miesiąc zakończony",
-        "exceeded_one": "Przekroczony limit: {{name}}",
-        "exceeded_few": "Przekroczone limity: {{name}} i {{more}} więcej",
-        "exceeded_many": "Przekroczone limity: {{name}} i {{more}} więcej",
-        "exceeded_other": "Przekroczone limity: {{name}} i {{more}} więcej",
-        "outside": "Poza planem {{amount}}",
         "noLimits": "Brak limitów w tym miesiącu.",
         "openPlanner": "Otwórz planer",
-        "subcategoryName": "{{category}} / {{subcategory}}"
+        "subcategoryName": "{{category}} / {{subcategory}}",
+        "limitsLabel": "Limity",
+        "over": "Przekroczono o {{amount}}"
       },
       "review": {
         "title": "Do przejrzenia",

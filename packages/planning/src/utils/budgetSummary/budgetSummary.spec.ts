@@ -201,17 +201,18 @@ describe("buildPlanProgress", () => {
     ],
   });
 
-  it("sums spent of limits and lists exceeded limits in the plan's order", () => {
+  it("puts all expenses against the sum of limits and lists every limit in the plan's order", () => {
     const progress = buildPlanProgress(planner, "2026-11", "2026-11-25");
 
-    expect(progress.spent).toBe(1200 + 1600 + 100);
+    // As the Planner header: everything spent this month, Outside the plan included
+    expect(progress.spent).toBe(1200 + 1600 + 100 + 70 + 30);
     expect(progress.limit).toBe(3000);
-    expect(progress.exceeded.map(({ id, spent, limit }) => [id, spent, limit])).toEqual([
-      ["food", 1200, 1000],
-      ["rent", 1600, 1500],
+    expect(progress.limits.map(({ id, spent, limit, exceeded }) => [id, spent, limit, exceeded])).toEqual([
+      ["food", 1200, 1000, true],
+      ["rent", 1600, 1500, true],
+      ["c3", 100, 500, false],
     ]);
-    expect(progress.exceeded[1].subcategory?.id).toBe("rent");
-    expect(progress.outsideSpent).toBe(100);
+    expect(progress.limits[1].subcategory?.id).toBe("rent");
     expect(progress.daysLeft).toBe(6);
   });
 
