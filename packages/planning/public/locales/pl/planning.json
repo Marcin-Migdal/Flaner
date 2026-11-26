@@ -1403,6 +1403,69 @@
       "exclude": "Wyklucz",
       "restore": "Przywróć"
     },
+    "summary": {
+      "spending": {
+        "title": "Wydatki według kategorii",
+        "chartLabel": "Wydatki według kategorii, {{month}}",
+        "listLabel": "Kategorie według wydatków",
+        "spent": "Wydano",
+        "allCategories": "Wszystkie kategorie",
+        "others": "Pozostałe",
+        "othersOf": "Pozostałe ({{names}})",
+        "uncategorized": "Bez kategorii",
+        "onCategory": "{{name}} · ogólne",
+        "empty": "Brak wydatków w tym miesiącu.",
+        "drilledDescription": "{{month}} · {{category}}"
+      },
+      "totals": {
+        "title": "Podsumowanie miesiąca",
+        "income": "Przychody",
+        "expenses": "Wydatki",
+        "balance": "Saldo",
+        "up": "Więcej o {{amount}} niż poprzednio ({{month}})",
+        "down": "Mniej o {{amount}} niż poprzednio ({{month}})",
+        "same": "Tyle samo co poprzednio ({{month}})"
+      },
+      "plan": {
+        "title": "Plan",
+        "spentOfLimit": "{{spent}} z {{limit}}",
+        "progressLabel": "Wydatki względem limitów",
+        "daysLeft_one": "Został {{count}} dzień",
+        "daysLeft_few": "Zostały {{count}} dni",
+        "daysLeft_many": "Zostało {{count}} dni",
+        "daysLeft_other": "Zostało {{count}} dni",
+        "monthEnded": "Miesiąc zakończony",
+        "noLimits": "Brak limitów w tym miesiącu.",
+        "openPlanner": "Otwórz planer",
+        "subcategoryName": "{{category}} / {{subcategory}}",
+        "limitsLabel": "Limity",
+        "over": "Przekroczono o {{amount}}"
+      },
+      "review": {
+        "title": "Do przejrzenia",
+        "count_one": "{{count}} transakcja do przejrzenia",
+        "count_few": "{{count}} transakcje do przejrzenia",
+        "count_many": "{{count}} transakcji do przejrzenia",
+        "count_other": "{{count}} transakcji do przejrzenia",
+        "split": "{{unconfirmed}} niepotwierdzonych · {{uncategorized}} bez kategorii",
+        "allClear": "Wszystko przejrzane.",
+        "open": "Przejrzyj w transakcjach"
+      },
+      "bars": {
+        "title": "Przychody i wydatki",
+        "chartLabel": "Przychody i wydatki, 12 miesięcy do {{month}}",
+        "description": "{{month}}: przychody {{income}} · wydatki {{expenses}}",
+        "income": "Przychody",
+        "expenses": "Wydatki"
+      },
+      "recurring": {
+        "title": "Cykliczne w tym miesiącu",
+        "progress": "{{done}} z {{total}} gotowe · jeszcze {{amount}}",
+        "empty": "Brak cyklicznych w tym miesiącu.",
+        "open": "Otwórz cykliczne",
+        "received": "Otrzymano"
+        }
+      },
     "categories": {
       "expenseTitle": "Kategorie wydatków",
       "incomeTitle": "Kategorie przychodów",
