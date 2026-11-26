@@ -30,8 +30,20 @@ for (const mfe of MFES) {
 for (const file of changedFiles) {
   if (file.startsWith("packages/") || IGNORED.some((re) => re.test(file))) continue;
   const e2eProject = file.match(/^e2e\/(core|mobile|community|settings|planning|shopping|tools)\//)?.[1];
+  const pageObject = file.match(/^e2e\/support\/pages\/(.+\.page)\.ts$/)?.[1];
   if (e2eProject) projects.add(e2eProject);
-  else full = true; // e2e/support, e2e config, root config, lockfile, CI
+  else if (pageObject) {
+    // A page object runs only the projects whose specs import it; imported by another page object → full run.
+    let importers = [];
+    try {
+      importers = run("git", ["grep", "-l", "-F", `/${pageObject}"`, "--", "e2e"]).split("\n").filter(Boolean);
+    } catch {} // git grep exits 1 when nothing imports it
+    for (const importer of importers) {
+      const project = importer.match(/^e2e\/(core|mobile|community|settings|planning|shopping|tools)\//)?.[1];
+      if (project) projects.add(project);
+      else full = true;
+    }
+  } else full = true; // e2e/support helpers, e2e config, root config, lockfile, CI
 }
 
 const selected = full ? ALL_PROJECTS : ALL_PROJECTS.filter((p) => projects.has(p));
