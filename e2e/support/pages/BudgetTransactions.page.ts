@@ -1,6 +1,6 @@
 import { type Locator, type Page } from "@playwright/test";
 
-export type ManualTransactionInput = { amount: string; payee: string };
+export type ManualTransactionInput = { amount: string; payee: string; category?: RegExp };
 
 /** `/planning/budget/transactions` once the budget is unlocked. */
 export class BudgetTransactionsPage {
@@ -69,12 +69,26 @@ export class BudgetTransactionsPage {
     return this.page.getByRole("toolbar", { name: /^(bulk actions|akcje zbiorcze)$/i });
   }
 
-  /** Adds an expense in the main account's currency, without a category. */
-  async addExpense({ amount, payee }: ManualTransactionInput) {
+  /** Adds an expense dated today in the main account's currency, without a category unless one is given. */
+  async addExpense({ amount, payee, category }: ManualTransactionInput) {
     await this.addTransactionButton.click();
     await this.addDialog.getByLabel(/^(amount|kwota)$/i).fill(amount);
     await this.addDialog.getByLabel(/^(payee|odbiorca \/ nadawca)$/i).fill(payee);
+    if (category) {
+      await this.addDialog.getByLabel(/^(category|kategoria)$/i).click();
+      await this.page.getByRole("option", { name: category }).click();
+    }
     await this.addDialog.getByRole("button", { name: /^(add transaction|dodaj transakcję)$/i }).click();
+  }
+
+  /** Make recurring from the expanded row, with the dialog's default rule (monthly on the transaction's day). */
+  async makeRecurring(payee: string) {
+    await this.expandRow(payee);
+    await this.row(payee).getByRole("button", { name: /^(make recurring|ustaw jako cykliczną)$/i }).click();
+    await this.page
+      .getByRole("dialog", { name: /^(make recurring|ustaw jako cykliczną)$/i })
+      .getByRole("button", { name: /^(make recurring|ustaw jako cykliczną)$/i })
+      .click();
   }
 
   async deleteTransaction(payee: string) {

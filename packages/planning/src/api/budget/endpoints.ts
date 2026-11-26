@@ -10,6 +10,7 @@ import {
   getDoc,
   getDocs,
   limit,
+  orderBy,
   query,
   runTransaction,
   setDoc,
@@ -74,6 +75,7 @@ import type {
   BudgetRecurringDoc,
   BudgetRecurringPayload,
   BudgetRecurringRef,
+  BudgetOccurrenceLinkInput,
   BudgetTransaction,
   BudgetTransactionInput,
   BudgetTransactionRef,
@@ -111,6 +113,7 @@ const refs = {
     doc(fb.firestore, paths.month(accountId, month)).withConverter(firestoreConverter<BudgetMonthDoc>()),
   plan: (uid: string, month: BudgetMonth) =>
     doc(fb.firestore, paths.plan(uid, month)).withConverter(firestoreConverter<BudgetPlanDoc>()),
+  plans: () => collection(fb.firestore, "budget_plans").withConverter(firestoreConverter<BudgetPlanDoc>()),
   allRecurring: () =>
     collection(fb.firestore, "budget_recurring").withConverter(firestoreConverter<BudgetRecurringDoc>()),
   recurring: (accountId: string) =>
@@ -1462,6 +1465,52 @@ export const stopBudgetRecurring = (budget: UnlockedBudget, ref: BudgetRecurring
 export const deleteBudgetRecurring = (budget: UnlockedBudget, ref: BudgetRecurringRef): Promise<void> =>
   changeRecurring(budget, ref, async (_recurring, list) => list.filter((candidate) => candidate.id !== ref.id));
 
+/**
+ * Planner → Link: matches an unpaid occurrence to one of the account's transactions by hand. The link stays while
+ * the transaction exists, whatever automatic matching would pick. Fails with `errors.budget.occurrenceAlreadyPaid`,
+ * `errors.budget.alreadyMatched` (the transaction belongs to another occurrence) or `errors.budget.transactionMissing`.
+ */
+export const linkBudgetRecurringOccurrence = (
+  budget: UnlockedBudget,
+  ref: BudgetRecurringRef,
+  { dueDate, transaction: { id, date } }: BudgetOccurrenceLinkInput,
+): Promise<void> =>
+  changeRecurring(budget, ref, async (recurring, list, transaction) => {
+    if (recurring.occurrences[dueDate]) throw new Error("planning:errors.budget.occurrenceAlreadyPaid");
+    if (recurringTransactionIds(list).has(id)) throw new Error("planning:errors.budget.alreadyMatched");
+    const { transactions } = await readMonth(transaction, budget, ref.accountId, monthOfDate(date));
+    const stored = transactions.find((candidate) => candidate.id === id);
+    if (!stored) throw missingTransaction();
+
+    const { [dueDate]: unlinkedHere = [], ...unlinked } = recurring.unlinked ?? {};
+    const kept = unlinkedHere.filter((transactionId) => transactionId !== id);
+    const linked: BudgetRecurring = {
+      ...recurring,
+      occurrences: { ...recurring.occurrences, [dueDate]: { ...toMatch({ ...stored, accountId: ref.accountId }), manual: true } },
+      unlinked: kept.length > 0 ? { ...unlinked, [dueDate]: kept } : unlinked,
+    };
+    return list.map((candidate) => (candidate.id === ref.id ? linked : candidate));
+  });
+
+/**
+ * Planner → Unlink: the occurrence is unpaid again, and automatic matching never gives it that transaction again
+ * (it may still match another one).
+ */
+export const unlinkBudgetRecurringOccurrence = (
+  budget: UnlockedBudget,
+  ref: BudgetRecurringRef,
+  dueDate: string,
+): Promise<void> =>
+  changeRecurring(budget, ref, async (recurring, list) => {
+    const { [dueDate]: match, ...occurrences } = recurring.occurrences;
+    if (!match) return list;
+    const unlinked = {
+      ...recurring.unlinked,
+      [dueDate]: [...(recurring.unlinked?.[dueDate] ?? []), match.transactionId],
+    };
+    return list.map((candidate) => (candidate.id === ref.id ? { ...recurring, occurrences, unlinked } : candidate));
+  });
+
 // ---------------------------------------------------------------------------
 // Plans: one encrypted document per user and planned month
 // ---------------------------------------------------------------------------
@@ -1474,6 +1523,57 @@ const decryptPlan = async (budget: UnlockedBudget, data: BudgetPlanDoc): Promise
   );
   return { month: data.month, ...payload };
 };
+
+/** Encrypts and writes the month's plan (`ownerId` is the caller). */
+const writePlan = async (transaction: Transaction, budget: UnlockedBudget, plan: BudgetPlan) => {
+  const payload: BudgetPlanPayload = {
+    limits: plan.limits,
+    plannedIncome: plan.plannedIncome,
+    dismissedRecurring: plan.dismissedRecurring,
+  };
+  const planDoc: BudgetPlanDoc = {
+    ownerId: budget.uid,
+    month: plan.month,
+    payload: toBytes(await encryptJson(payload, budget.userKey, paths.plan(budget.uid, plan.month))),
+    updatedAt: Date.now(),
+  };
+  transaction.set(refs.plan(budget.uid, plan.month), planDoc);
+};
+
+/** The latest plan of a month before `month` (Copy from <last planned month>), or `null` when there is none. */
+export const getLastBudgetPlanBefore = async (budget: UnlockedBudget, month: BudgetMonth): Promise<BudgetPlan | null> => {
+  const snapshot = await getDocs(
+    query(refs.plans(), where("ownerId", "==", budget.uid), where("month", "<", month), orderBy("month", "desc"), limit(1)),
+  );
+  const [last] = snapshot.docs;
+  return last ? decryptPlan(budget, last.data()) : null;
+};
+
+/**
+ * Starts a month's plan (Copy from <last planned month> / Start empty, with the prefill limits). Fails with
+ * `errors.budget.planAlreadyStarted` when the month got a plan meanwhile (e.g. on another device).
+ */
+export const startBudgetPlan = (budget: UnlockedBudget, plan: BudgetPlan): Promise<BudgetPlan> =>
+  runTransaction(fb.firestore, async (transaction) => {
+    const stored = await transaction.get(refs.plan(budget.uid, plan.month));
+    if (stored.exists()) throw new Error("planning:errors.budget.planAlreadyStarted");
+    await writePlan(transaction, budget, plan);
+    return plan;
+  });
+
+/** Dismisses a recurring transaction's missing-limit banner in that month only (stored in its plan). */
+export const dismissBudgetPlanRecurring = (
+  budget: UnlockedBudget,
+  { month, recurringId }: { month: BudgetMonth; recurringId: string },
+): Promise<BudgetPlan> =>
+  runTransaction(fb.firestore, async (transaction) => {
+    const stored = (await transaction.get(refs.plan(budget.uid, month))).data();
+    if (!stored) throw new Error("planning:errors.budget.planMissing");
+    const plan = await decryptPlan(budget, stored);
+    const next: BudgetPlan = { ...plan, dismissedRecurring: [...new Set([...(plan.dismissedRecurring ?? []), recurringId])] };
+    await writePlan(transaction, budget, next);
+    return next;
+  });
 
 /** The month's plan, or `null` when the month has none yet. */
 export const getBudgetPlan = async (budget: UnlockedBudget, month: BudgetMonth): Promise<BudgetPlan | null> => {
@@ -1498,13 +1598,6 @@ export const setBudgetPlanAmount = (
     const { [categoryId]: _removed, ...kept } = plan[field];
     const next: BudgetPlan = { ...plan, [field]: amount === null ? kept : { ...kept, [categoryId]: amount } };
 
-    const payload: BudgetPlanPayload = { limits: next.limits, plannedIncome: next.plannedIncome };
-    const planDoc: BudgetPlanDoc = {
-      ownerId: budget.uid,
-      month,
-      payload: toBytes(await encryptJson(payload, budget.userKey, paths.plan(budget.uid, month))),
-      updatedAt: Date.now(),
-    };
-    transaction.set(ref, planDoc);
+    await writePlan(transaction, budget, next);
     return next;
   });

@@ -218,6 +218,8 @@ export type BudgetPlan = {
   limits: Record<string, number>;
   /** Income category / subcategory id → planned income. */
   plannedIncome: Record<string, number>;
+  /** Recurring transactions whose missing-limit banner was dismissed for this month (#182). */
+  dismissedRecurring?: string[];
 };
 
 /** Sets (`amount`) or removes (`null`) one category's limit, or planned income for an income category. */
@@ -259,6 +261,8 @@ export type BudgetRecurringMatch = {
   date: string;
   amount: number;
   amountMain: number;
+  /** Linked by hand in the Planner: kept while its transaction exists, whatever automatic matching would pick. */
+  manual?: true;
 };
 
 /**
@@ -279,11 +283,19 @@ export type BudgetRecurring = {
   rule: RepeatRule;
   /** Due date (`YYYY-MM-DD`) → matched transaction. */
   occurrences: Record<string, BudgetRecurringMatch>;
+  /** Due date → transactions unlinked by hand from that occurrence: automatic matching never picks them for it again. */
+  unlinked?: Record<string, string[]>;
   createdAt: number;
 };
 
 /** Identifies a stored recurring transaction. */
 export type BudgetRecurringRef = Pick<BudgetRecurring, "id" | "accountId">;
+
+/** Planner → Link: an unpaid occurrence (its due date) and the transaction it is linked to by hand. */
+export type BudgetOccurrenceLinkInput = {
+  dueDate: string;
+  transaction: Pick<BudgetTransaction, "id" | "date">;
+};
 
 /** A rule from the editor; the API sets its `start` (the transaction's date, or the day of an edit). */
 export type RepeatRuleInput = { pattern: RepeatPattern; end: RepeatEndInput };
@@ -373,4 +385,4 @@ export type BudgetPlanDoc = {
   updatedAt: number;
 };
 
-export type BudgetPlanPayload = Pick<BudgetPlan, "limits" | "plannedIncome">;
+export type BudgetPlanPayload = Pick<BudgetPlan, "limits" | "plannedIncome" | "dismissedRecurring">;

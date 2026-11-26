@@ -9,4 +9,5 @@ export const planOutsideListStyles = {
   label: "truncate text-sm text-foreground",
   parent: "text-muted-foreground",
   spent: "text-sm font-medium tabular-nums text-foreground",
+  recurring: "flex items-center gap-1 text-xs tabular-nums text-muted-foreground [&_svg]:size-3",
 };

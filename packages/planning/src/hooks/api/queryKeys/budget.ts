@@ -9,6 +9,7 @@ import { monthOfDate } from "../../../utils/monthLedger";
 // - `transactions`: the decrypted transactions of all the user's accounts in one month (one month-range query).
 // - `rules`: the decrypted categorization rules (`budget_rules/{uid}`); every write that sets a category can teach one.
 // - `plan`: the decrypted plan of one month (`budget_plans/{uid}_{month}`), `null` while the month has none.
+// - `lastPlanBefore`: the latest plan before a month (Copy from <last planned month>); every plan write makes it stale.
 // - `recurring`: every recurring transaction of the user's accounts with its matches (`budget_recurring`).
 export const budgetKeys = {
   all: ["budget"],
@@ -32,6 +33,9 @@ export const budgetKeys = {
   /** One account's transaction count (delete confirmation). */
   accountTransactionCount: (uid: string, accountId: string) => ["budget", "accountTransactionCount", uid, accountId],
   plan: (uid: string, month: BudgetMonth) => ["budget", "plan", uid, month],
+  /** Prefix of every `lastPlanBefore`. */
+  lastPlans: (uid: string) => ["budget", "lastPlan", uid],
+  lastPlanBefore: (uid: string, month: BudgetMonth) => [...budgetKeys.lastPlans(uid), month],
   recurring: (uid: string) => ["budget", "recurring", uid],
   /** A published rate (`getExchangeRate`); never changes, so it is never invalidated. */
   exchangeRate: (from: string, to: string, date: string) => ["budget", "exchangeRate", from, to, date],
@@ -95,7 +99,10 @@ export const budgetInvalidation = {
   /** Make recurring, edit rule, stop, delete: only the recurring list changes. */
   recurringChanged: ({ uid }: UserType) => [budgetKeys.recurring(uid)],
   /** A limit or planned income changes its month's plan only. */
-  planChanged: ({ uid }: UserType, { month }: { month: BudgetMonth }) => [budgetKeys.plan(uid, month)],
+  planChanged: ({ uid }: UserType, { month }: { month: BudgetMonth }) => [
+    budgetKeys.plan(uid, month),
+    budgetKeys.lastPlans(uid),
+  ],
   // New salt / wrapped keys: a cached copy would no longer unlock
   rewrapKeys: ({ uid }: UserType) => [budgetKeys.locked(uid)],
 };

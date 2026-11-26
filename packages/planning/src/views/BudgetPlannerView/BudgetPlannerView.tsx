@@ -4,27 +4,38 @@ import { format, parseISO } from "date-fns";
 import { Plus, WifiOff } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
-import type { BudgetCategoryType, BudgetMonth } from "../../api/budget";
+import type { BudgetCategoryType, BudgetMonth, BudgetPlan, BudgetRecurring, BudgetTransaction } from "../../api/budget";
 import { BudgetMonthSwitcher } from "../../components/BudgetMonthSwitcher";
 import { BudgetOfflineBanner } from "../../components/BudgetOfflineBanner";
-import { useSetBudgetPlanAmountMutation } from "../../hooks/api/mutation";
+import {
+  useDismissBudgetPlanRecurringMutation,
+  useLinkBudgetOccurrenceMutation,
+  useSetBudgetPlanAmountMutation,
+  useStartBudgetPlanMutation,
+  useUnlinkBudgetOccurrenceMutation,
+} from "../../hooks/api/mutation";
 import {
   useGetBudgetAccountsQuery,
   useGetBudgetCategoriesQuery,
   useGetBudgetPlanQuery,
   useGetBudgetProfileQuery,
+  useGetBudgetRecurringQuery,
   useGetBudgetTransactionsQuery,
+  useGetLastBudgetPlanBeforeQuery,
 } from "../../hooks/api/query";
 import { useBudgetWriteErrorToast } from "../../hooks/useBudgetWriteErrorToast";
 import { useIsOnline } from "../../hooks/useIsOnline";
 import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { buildPlannerMonth, findPlannerRow } from "../../utils/plannerMonth";
+import { missingLimits, prefillLimits, startingPlan, type PrefillLimit } from "../../utils/plannerRecurring";
 import {
   AddPlanAmountDialog,
   PlanCategoryCard,
   PlanDetailsSheet,
+  PlanMissingLimitBanners,
   PlannerMonthHeader,
   PlanOutsideList,
+  PlanStartCard,
   type AddPlanAmountPreset,
 } from "./components";
 import { budgetPlannerViewStyles as styles } from "./BudgetPlannerView.styles";
@@ -40,9 +51,9 @@ export const BudgetPlannerView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const monthParam = searchParams.get("month") ?? "";
   const month: BudgetMonth = MONTH_PARAM.test(monthParam) ? monthParam : format(new Date(), "yyyy-MM");
-  const monthLabel = new Intl.DateTimeFormat(i18n.language, { month: "long", year: "numeric" }).format(
-    parseISO(`${month}-01`),
-  );
+  const monthFormat = new Intl.DateTimeFormat(i18n.language, { month: "long", year: "numeric" });
+  const monthLabel = monthFormat.format(parseISO(`${month}-01`));
+  const today = format(new Date(), "yyyy-MM-dd");
   const transactionsHref = `../transactions?month=${month}`;
   const isOnline = useIsOnline();
   const showWriteError = useBudgetWriteErrorToast();
@@ -50,12 +61,20 @@ export const BudgetPlannerView = () => {
   const [addPreset, setAddPreset] = useState<AddPlanAmountPreset | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
   const { mutateAsync: setPlanAmount, isPending: isSaving } = useSetBudgetPlanAmountMutation();
+  const { mutateAsync: startPlan, isPending: isStarting } = useStartBudgetPlanMutation();
+  const { mutateAsync: dismissRecurring } = useDismissBudgetPlanRecurringMutation();
+  const { mutateAsync: linkOccurrence } = useLinkBudgetOccurrenceMutation();
+  const { mutateAsync: unlinkOccurrence } = useUnlinkBudgetOccurrenceMutation();
 
   const profile = useGetBudgetProfileQuery();
   const accounts = useGetBudgetAccountsQuery();
   const categories = useGetBudgetCategoriesQuery();
   const transactions = useGetBudgetTransactionsQuery(month);
   const plan = useGetBudgetPlanQuery(month);
+  const recurring = useGetBudgetRecurringQuery();
+  // An empty month offers Copy from <last planned month>
+  const isUnplanned = plan.isSuccess && plan.data === null;
+  const lastPlan = useGetLastBudgetPlanBeforeQuery(month, { enabled: isUnplanned });
 
   const planner = useMemo(
     () =>
@@ -66,10 +85,29 @@ export const BudgetPlannerView = () => {
             accounts: accounts.data ?? [],
             categories: categories.data,
             plan: plan.data ?? null,
+            recurring: { list: recurring.data ?? [], today },
           })
         : null,
-    [month, transactions.data, accounts.data, categories.data, plan.data],
+    [month, transactions.data, accounts.data, categories.data, plan.data, recurring.data, today],
   );
+
+  // The limits recurring adds to each start of an empty month (Copy / Start empty)
+  const start = useMemo(() => {
+    const tree = categories.data;
+    if (!isUnplanned || !tree || lastPlan.isPending) return null;
+    const prefillOn = (limits: Record<string, number>): PrefillLimit[] =>
+      prefillLimits({
+        month,
+        accounts: accounts.data ?? [],
+        categories: tree,
+        limits,
+        recurring: { list: recurring.data ?? [], today },
+      });
+    return {
+      copy: lastPlan.data ? { plan: lastPlan.data, prefill: prefillOn(lastPlan.data.limits) } : null,
+      emptyPrefill: prefillOn({}),
+    };
+  }, [isUnplanned, categories.data, accounts.data, recurring.data, lastPlan.isPending, lastPlan.data, month, today]);
 
   const setMonth = (next: BudgetMonth) =>
     setSearchParams(
@@ -93,13 +131,65 @@ export const BudgetPlannerView = () => {
       throw error;
     }
   };
+  const startMonth = async (next: BudgetPlan) => {
+    try {
+      await startPlan(next);
+    } catch (error) {
+      if (error instanceof Error) {
+        // Started meanwhile (e.g. on another device): show the stored plan
+        if (error.message === "planning:errors.budget.planAlreadyStarted") void plan.refetch();
+        showWriteError(error, { retry: () => void startMonth(next), fallbackKey: "toasts.budget.planSaveError" });
+      }
+    }
+  };
+  const dismiss = async (recurringId: string) => {
+    try {
+      await dismissRecurring({ month, recurringId });
+    } catch (error) {
+      if (error instanceof Error) {
+        showWriteError(error, { retry: () => void dismiss(recurringId), fallbackKey: "toasts.budget.planSaveError" });
+      }
+    }
+  };
+  const link = async (item: BudgetRecurring, dueDate: string, transaction: BudgetTransaction) => {
+    try {
+      await linkOccurrence({ recurring: item, dueDate, transaction });
+    } catch (error) {
+      if (error instanceof Error) {
+        showWriteError(error, {
+          retry: () => void link(item, dueDate, transaction).catch(() => undefined),
+          fallbackKey: "toasts.budget.recurringLinkError",
+        });
+      }
+      throw error;
+    }
+  };
+  const unlink = async (item: BudgetRecurring, dueDate: string) => {
+    try {
+      await unlinkOccurrence({ recurring: item, dueDate });
+    } catch (error) {
+      if (error instanceof Error) {
+        showWriteError(error, {
+          retry: () => void unlink(item, dueDate).catch(() => undefined),
+          fallbackKey: "toasts.budget.recurringLinkError",
+        });
+      }
+      throw error;
+    }
+  };
   const changeAmount = (type: BudgetCategoryType) => (categoryId: string, amount: number | null) =>
     saveAmount(type, categoryId, amount);
   const openDetails = (type: BudgetCategoryType) => (categoryId: string) => setSelection({ type, categoryId });
 
   const isLoading =
-    profile.isPending || accounts.isPending || categories.isPending || transactions.isPending || plan.isPending;
-  const isError = profile.isError || accounts.isError || categories.isError || transactions.isError || plan.isError;
+    profile.isPending ||
+    accounts.isPending ||
+    categories.isPending ||
+    transactions.isPending ||
+    plan.isPending ||
+    recurring.isPending;
+  const isError =
+    profile.isError || accounts.isError || categories.isError || transactions.isError || plan.isError || recurring.isError;
   const writesDisabled = !isOnline;
 
   const renderContent = () => {
@@ -117,6 +207,33 @@ export const BudgetPlannerView = () => {
     return (
       <>
         <PlannerMonthHeader planner={planner} mainCurrency={mainCurrency} />
+
+        {start && (
+          <PlanStartCard
+            monthLabel={monthLabel}
+            mainCurrency={mainCurrency}
+            copy={
+              start.copy && {
+                monthLabel: monthFormat.format(parseISO(`${start.copy.plan.month}-01`)),
+                prefill: start.copy.prefill,
+              }
+            }
+            emptyPrefill={start.emptyPrefill}
+            onCopy={() => start.copy && void startMonth(startingPlan(month, start.copy.plan, start.copy.prefill))}
+            onStartEmpty={() => void startMonth(startingPlan(month, null, start.emptyPrefill))}
+            isBusy={isStarting}
+            disabled={writesDisabled}
+          />
+        )}
+
+        <PlanMissingLimitBanners
+          missing={missingLimits(planner, plan.data ?? null)}
+          monthLabel={monthLabel}
+          mainCurrency={mainCurrency}
+          onCreate={({ categoryId, amount }) => setAddPreset({ type: "expense", categoryId, amount })}
+          onDismiss={({ planRecurring }) => void dismiss(planRecurring.recurring.id)}
+          disabled={writesDisabled}
+        />
 
         <section className={styles.section} aria-labelledby="planner-expenses">
           <div className={styles.sectionHeader}>
@@ -170,7 +287,14 @@ export const BudgetPlannerView = () => {
               type="expense"
               mainCurrency={mainCurrency}
               month={month}
-              onAdd={(row) => setAddPreset({ type: "expense", categoryId: row.id, amount: row.spent })}
+              onAdd={(row) =>
+                setAddPreset({
+                  type: "expense",
+                  categoryId: row.id,
+                  amount: Math.max(row.spent, row.recurringExpected),
+                  spent: row.spent,
+                })
+              }
               onOpen={openDetails("expense")}
               disabled={writesDisabled}
             />
@@ -219,7 +343,14 @@ export const BudgetPlannerView = () => {
                   type="income"
                   mainCurrency={mainCurrency}
                   month={month}
-                  onAdd={(row) => setAddPreset({ type: "income", categoryId: row.id, amount: row.spent })}
+                  onAdd={(row) =>
+                    setAddPreset({
+                      type: "income",
+                      categoryId: row.id,
+                      amount: Math.max(row.spent, row.recurringExpected),
+                      spent: row.spent,
+                    })
+                  }
                   onOpen={openDetails("income")}
                   disabled={writesDisabled}
                 />
@@ -248,6 +379,10 @@ export const BudgetPlannerView = () => {
           transactionsHref={transactionsHref}
           disabled={writesDisabled}
           onAmountChange={(detail, amount) => changeAmount(detail.type)(detail.categoryId, amount)}
+          monthTransactions={transactions.data ?? []}
+          allRecurring={recurring.data ?? []}
+          onLink={link}
+          onUnlink={unlink}
         />
       </>
     );

@@ -22,6 +22,9 @@ const row = (overrides: Partial<OutsideRow>): OutsideRow => ({
   subcategory: null,
   spent: 4500,
   transactions: [],
+  recurring: [],
+  recurringPaid: 0,
+  recurringExpected: 0,
   ...overrides,
 });
 const rows: OutsideRow[] = [

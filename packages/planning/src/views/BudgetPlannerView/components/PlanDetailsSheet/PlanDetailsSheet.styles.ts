@@ -17,4 +17,6 @@ export const planDetailsSheetStyles = {
   amount: "shrink-0 tabular-nums text-foreground",
   empty: "py-2 text-sm text-muted-foreground",
   footerLink: "self-start",
+  warning: "border-warning/40 bg-warning-subtle [&>svg]:text-warning-text",
+  warningBody: "gap-2 text-foreground",
 };

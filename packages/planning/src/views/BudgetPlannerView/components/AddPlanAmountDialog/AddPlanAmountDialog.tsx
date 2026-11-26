@@ -22,8 +22,10 @@ import { addPlanAmountDialogStyles as styles } from "./AddPlanAmountDialog.style
 export type AddPlanAmountPreset = {
   type: BudgetCategoryType;
   categoryId: string | null;
-  /** Spent (or received) so far, in minor units: the amount's default. */
+  /** The amount's default, in minor units: from Outside the plan, the higher of spent and expected recurring. */
   amount: number | null;
+  /** Spent (or received) so far, in minor units, shown under the amount; none when left out. */
+  spent?: number;
 };
 
 export type AddPlanAmountDialogProps = {
@@ -59,9 +61,9 @@ export const AddPlanAmountDialog = ({
   const { t } = usePlanningTranslations();
   const { format } = useMoneyFormatter();
   const isExpense = preset?.type !== "income";
-  const soFar = preset?.amount
+  const soFar = preset?.spent
     ? t(isExpense ? "budget.planner.dialog.spentHint" : "budget.planner.dialog.receivedHint", {
-        amount: format(preset.amount, mainCurrency),
+        amount: format(preset.spent, mainCurrency),
       })
     : undefined;
 

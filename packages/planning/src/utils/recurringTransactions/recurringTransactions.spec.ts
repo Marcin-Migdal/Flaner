@@ -121,6 +121,50 @@ describe("rematchRecurring", () => {
 
     expect(result.occurrences["2026-02-10"].amount).toBe(5000);
   });
+
+  it("keeps a manual link to a transaction automatic matching would not pick, until it is deleted", () => {
+    const linked = recurring({
+      occurrences: { "2026-02-10": { transactionId: "far", date: "2026-02-25", amount: 1, amountMain: 1, manual: true } },
+    });
+    const far = transaction("far", "2026-02-25", { payee: "Other" });
+    const near = transaction("near", "2026-02-11");
+
+    const [result] = rematchRecurring([linked], [far, near], window);
+    expect(result.occurrences["2026-02-10"]).toEqual({
+      transactionId: "far",
+      date: "2026-02-25",
+      amount: 5000,
+      amountMain: 5000,
+      manual: true,
+    });
+
+    // Its transaction deleted (its date is within the pool): the occurrence goes back to automatic matching
+    const [afterDelete] = rematchRecurring([linked], [near], window);
+    expect(afterDelete.occurrences["2026-02-10"].transactionId).toBe("near");
+    expect(afterDelete.occurrences["2026-02-10"].manual).toBeUndefined();
+  });
+
+  it("keeps a manual link dated outside the re-matched range as it is", () => {
+    const linked = recurring({
+      occurrences: { "2026-02-10": { transactionId: "far", date: "2026-02-27", amount: 1, amountMain: 1, manual: true } },
+    });
+
+    const [result] = rematchRecurring([linked], [], { from: "2026-02-01", to: "2026-02-12" });
+
+    expect(result.occurrences["2026-02-10"].transactionId).toBe("far");
+  });
+
+  it("never matches a transaction unlinked by hand to that occurrence again", () => {
+    const unlinked = recurring({ unlinked: { "2026-02-10": ["wrong"] } });
+
+    const [result] = rematchRecurring(
+      [unlinked],
+      [transaction("wrong", "2026-02-10"), transaction("other", "2026-02-14")],
+      window,
+    );
+
+    expect(result.occurrences["2026-02-10"].transactionId).toBe("other");
+  });
 });
 
 describe("recurring statuses", () => {

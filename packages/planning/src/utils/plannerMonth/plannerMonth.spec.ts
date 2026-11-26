@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { BudgetAccount, BudgetCategoryTree, BudgetPlan, BudgetTransaction } from "../../api/budget";
+import type { BudgetAccount, BudgetCategoryTree, BudgetPlan, BudgetRecurring, BudgetTransaction } from "../../api/budget";
 import { buildMonthLedger } from "../monthLedger";
 import { buildPlannerMonth, findPlannerRow } from "./plannerMonth";
 
@@ -236,5 +236,109 @@ describe("findPlannerRow", () => {
     expect(row("expense", "coffee")).toEqual(["food", "coffee", 700, null]);
     expect(row("expense", "parking")).toEqual(["transport", "parking", 0, null]);
     expect(row("income", "food")).toBeNull();
+  });
+});
+
+// Monthly on the 10th from January 2026, 50.00 expected
+const recurring = (categoryId: string | null, overrides: Partial<BudgetRecurring> = {}): BudgetRecurring => ({
+  id: `r-${categoryId}`,
+  accountId: "main",
+  type: "expense",
+  payee: "Netflix",
+  categoryId,
+  amount: 5000,
+  currency: "PLN",
+  amountMain: 5000,
+  rule: { pattern: { frequency: "monthly", interval: 1, day: 10 }, start: "2026-01-10", end: { type: "never" } },
+  occurrences: {},
+  createdAt: 1,
+  ...overrides,
+});
+const paidOn = (dueDate: string, amountMain: number) => ({
+  [dueDate]: { transactionId: `paid-${dueDate}`, date: dueDate, amount: amountMain, amountMain },
+});
+
+const buildWithRecurring = (
+  transactions: BudgetTransaction[],
+  budgetPlan: BudgetPlan | null,
+  list: BudgetRecurring[],
+) =>
+  buildPlannerMonth({
+    month: "2026-11",
+    accounts,
+    categories,
+    transactions,
+    plan: budgetPlan,
+    recurring: { list, today: "2026-11-15" },
+  });
+
+describe("buildPlannerMonth: recurring amounts", () => {
+  it("a line shows its recurring paid and expected; the card adds up its own and its lines' recurring", () => {
+    const weekly = recurring("groceries", {
+      id: "weekly",
+      amountMain: 1000,
+      rule: { pattern: { frequency: "weekly", interval: 1, weekdays: [1] }, start: "2026-01-05", end: { type: "never" } },
+      // Mondays of November 2026: 2, 9, 16, 23, 30; two paid
+      occurrences: { ...paidOn("2026-11-02", 1200), ...paidOn("2026-11-09", 900) },
+    });
+    const planner = buildWithRecurring(
+      [],
+      plan({ limits: { food: 15000, groceries: 10000 } }),
+      [weekly, recurring("food", { occurrences: paidOn("2026-10-10", 4000) })],
+    );
+
+    const [food] = planner.expenses.cards;
+    expect([food.lines[0].recurringPaid, food.lines[0].recurringExpected]).toEqual([2100, 2100 + 3 * 900]);
+    // Food's own: unpaid this month at the last paid amount (October's 40.00)
+    expect([food.recurringPaid, food.recurringExpected]).toEqual([2100, 2100 + 3 * 900 + 4000]);
+    expect(food.recurring.map(({ recurring: item }) => item.id)).toEqual(["r-food", "weekly"]);
+  });
+
+  it("puts recurring without a limit of its own in Outside the plan, even with nothing spent", () => {
+    const planner = buildWithRecurring(
+      [tx("coffee", 700)],
+      plan({ limits: { food: 15000 } }),
+      [recurring("restaurants"), recurring("home"), recurring(null), recurring("deleted")],
+    );
+
+    expect(
+      planner.expenses.outside.map((row) => [row.id, row.spent, row.recurringPaid, row.recurringExpected]),
+    ).toEqual([
+      ["restaurants", 0, 0, 5000],
+      ["coffee", 700, 0, 0],
+      ["home", 0, 0, 5000],
+      [null, 0, 0, 10000],
+    ]);
+    // Recurring is what is expected, not spending: the totals stay the Transactions month totals
+    expect(planner.expenses.outsideSpent).toBe(700);
+    expect(planner.expenses.spent).toBe(planner.totals.expenses);
+  });
+
+  it("leaves out recurring on hidden accounts and recurring with nothing due this month", () => {
+    const yearly = recurring("home", {
+      rule: { pattern: { frequency: "yearly", interval: 1, month: 3, day: 1 }, start: "2026-03-01", end: { type: "never" } },
+    });
+    const planner = buildWithRecurring([], null, [recurring("home", { accountId: "savings" }), yearly]);
+
+    expect(planner.expenses.outside).toEqual([]);
+  });
+
+  it("mirrors income: received and expected recurring on the planned income card", () => {
+    const salary = recurring("salary", { type: "income", amountMain: 845000, occurrences: paidOn("2026-11-10", 850000) });
+    const planner = buildWithRecurring([], plan({ plannedIncome: { salary: 845000 } }), [salary]);
+
+    const [card] = planner.income.cards;
+    expect([card.recurringPaid, card.recurringExpected]).toEqual([850000, 850000]);
+    expect(planner.expenses.outside).toEqual([]);
+  });
+
+  it("gives the details sheet the row's recurring with this month's occurrences", () => {
+    const planner = buildWithRecurring([], plan({ limits: { groceries: 10000 } }), [recurring("groceries")]);
+
+    const row = findPlannerRow(planner, categories, "expense", "groceries");
+    expect(row?.recurringExpected).toBe(5000);
+    expect(row?.recurring[0].occurrences).toEqual([{ dueDate: "2026-11-10", status: "overdue", match: undefined }]);
+    const outside = findPlannerRow(planner, categories, "expense", "home");
+    expect(outside?.recurring).toEqual([]);
   });
 });

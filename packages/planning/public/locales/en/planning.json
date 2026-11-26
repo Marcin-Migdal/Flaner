@@ -124,7 +124,9 @@
       "recurringMade": "Recurring transaction created",
       "recurringSaved": "Repeat rule saved",
       "recurringStopped": "Recurring transaction stopped",
-      "recurringDeleted": "Recurring transaction deleted"
+      "recurringDeleted": "Recurring transaction deleted",
+      "recurringLinkError": "Couldn't save the link. Try again.",
+      "planStarted": "Plan started"
     }
   },
   "errors": {
@@ -162,7 +164,11 @@
       "splitOffsTooLarge": "Split-offs must stay below the transaction's amount.",
       "splitOffMissing": "This split-off no longer exists. Reload the page.",
       "refundNotAllowed": "This refund can't be linked: it must be relevant income, not linked yet, dated on or after the purchase and smaller than what's left of it.",
-      "splitTypeLocked": "A split transaction can't change between expense and income. Remove its split-offs first."
+      "splitTypeLocked": "A split transaction can't change between expense and income. Remove its split-offs first.",
+      "occurrenceAlreadyPaid": "This occurrence is already paid. Unlink it first.",
+      "alreadyMatched": "This transaction is already matched to a recurring transaction.",
+      "planAlreadyStarted": "This month already has a plan. It has been reloaded.",
+      "planMissing": "This month has no plan."
     }
   },
   "splits": {
@@ -1154,7 +1160,8 @@
         "spent": "Spent",
         "limit": "Limit",
         "received": "Received",
-        "plannedIncome": "Planned income"
+        "plannedIncome": "Planned income",
+        "recurring": "Recurring"
       },
       "addLimit": "Add limit",
       "addLimitFor": "Add limit: {{name}}",
@@ -1189,8 +1196,45 @@
         "over": "{{amount}} over the limit",
         "transactions": "Transactions this month ({{count}})",
         "noTransactions": "No transactions this month.",
-        "openInTransactions": "Open in Transactions"
-      }
+        "openInTransactions": "Open in Transactions",
+        "belowRecurring": "The limit is below this month's recurring ({{amount}}).",
+        "setTo": "Set to {{amount}}",
+        "recurring": "Recurring this month ({{count}})",
+        "noRecurring": "No recurring transactions this month.",
+        "due": "Due {{date}}",
+        "link": "Link",
+        "linkFor": "Link {{payee}} due {{date}}",
+        "unlink": "Unlink",
+        "unlinkFor": "Unlink {{payee}} due {{date}}",
+        "linkTitle": "Link {{payee}}",
+        "linkDescription": "Due {{date}} · pick the transaction that paid it",
+        "noCandidates": "No transactions in this category on this account this month.",
+        "alreadyMatched": "Already matched",
+        "cancel": "Cancel",
+        "linkCandidate": "Link {{payee}} of {{date}}"
+      },
+      "recurringValue": "{{paid}} / {{expected}}",
+      "recurringPaidOf": "Recurring: {{paid}} paid of {{expected}} expected",
+      "recurringReceivedOf": "Recurring: {{paid}} received of {{expected}} expected",
+      "outsideRecurring": "Recurring {{amount}}",
+      "start": {
+        "title": "Start planning {{month}}",
+        "description": "This month has no plan yet. Nothing is planned until you choose.",
+        "copy": "Copy from {{month}}",
+        "empty": "Start empty",
+        "adds": "Recurring transactions add:",
+        "addsNone": "Recurring transactions add no limits.",
+        "addsItem": "{{name}} · {{amount}}"
+      },
+      "banner": {
+        "title": "{{payee}} has no limit in {{month}}",
+        "description": "This recurring transaction expects {{amount}} in {{category}}, which has no limit of its own this month.",
+        "create": "Create limit",
+        "createFor": "Create limit for {{payee}}",
+        "dismiss": "Dismiss",
+        "dismissFor": "Dismiss {{payee}} for this month"
+      },
+      "categoryPath": "{{category}} / {{subcategory}}"
     },
     "repeatRule": {
       "weekly_one": "Every week on {{days}}",
