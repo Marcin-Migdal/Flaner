@@ -10,9 +10,12 @@ import { addCategory, addSubcategory, reorderCategories } from "../../utils/cate
 import {
   buildImportPreview,
   decodeStatementFile,
+  findImportTemplate,
   parseStatementRows,
+  parseTemplateRows,
   readStatement,
   splitRowsByFileAccount,
+  importTemplateKey,
 } from "../../utils/statementImport";
 import {
   MAX_MONTH_PAYLOAD_BYTES,
@@ -46,6 +49,7 @@ import {
   makeBudgetTransactionRecurring,
   rememberFileAccountMappings,
   replaceRecoveryKey,
+  saveImportTemplate,
   resetBudget,
   setBudgetPlanAmount,
   setBudgetMainCurrency,
@@ -61,6 +65,7 @@ import {
   updateBudgetTransactions,
 } from "./endpoints";
 import type {
+  ImportTemplate,
   BudgetAccountDoc,
   BudgetCategoryTree,
   BudgetTransaction,
@@ -581,6 +586,41 @@ describe("budget transactions", () => {
       getRate: () => Promise.reject(new Error("every row is in the main currency")),
     });
     expect(again.rows.every((row) => row.status !== "new")).toBe(true);
+  });
+
+  it("an import template is saved encrypted, recognizes its file, and survives other profile writes", async () => {
+    const { budget, accountId } = await setUp();
+    const savingsId = await addAccount(budget, "Savings");
+    const text = '"Data","Kwota","Kontrahent","Tytuł"\r\n"03.11.2026","-12,50","Sklep Zielony","Zakupy"';
+    const { bank, records } = await readStatement(text);
+    expect(bank).toBeNull();
+
+    const template: ImportTemplate = {
+      name: "Pekao",
+      header: records[0],
+      columns: ["date", "amount", "payee", "description"],
+      dateFormat: "DD.MM.YYYY",
+      decimalSeparator: ",",
+    };
+    await saveImportTemplate(budget, template);
+    const saved = (await getBudgetProfile(budget))?.importTemplates ?? [];
+    expect(saved).toEqual([template]);
+    expect(JSON.stringify(await read(`budget_profiles/${ME}`))).not.toContain("Kontrahent");
+
+    // The next file of that kind is recognized and read by the template
+    const recognized = findImportTemplate(saved, records[0]);
+    expect(recognized?.name).toBe("Pekao");
+    expect(recognized && parseTemplateRows(recognized, records)).toEqual([
+      expect.objectContaining({ status: "ok", date: "2026-11-03", type: "expense", amount: 1250, payee: "Sklep Zielony" }),
+    ]);
+
+    // Remembering the template's account and deleting another account keep the templates
+    await rememberFileAccountMappings(budget, { [importTemplateKey("Pekao")]: accountId });
+    await deleteBudgetAccount(budget, savingsId);
+    expect(await getBudgetProfile(budget)).toMatchObject({
+      fileAccountMappings: { [importTemplateKey("Pekao")]: accountId },
+      importTemplates: [template],
+    });
   });
 
   it("fails an import as a whole when one month would exceed the size guard", async () => {
