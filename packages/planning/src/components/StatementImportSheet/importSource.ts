@@ -1,6 +1,7 @@
 import type { ImportTemplate } from "../../api/budget";
-import { CUSTOM_MAPPING, templateSource, type ImportSettingsFormData } from "../../utils/schemas";
+import { CUSTOM_MAPPING, type ImportSettingsFormData } from "../../utils/schemas";
 import {
+  importTemplateKey,
   STATEMENT_BANKS,
   parseStatementRows,
   parseTemplateRows,
@@ -13,8 +14,8 @@ export type ImportSource =
   | { kind: "bank"; bank: StatementBank }
   | { kind: "template"; template: ImportTemplate; isNew: boolean };
 
-/** The Settings step's one "bank account" of a template-read file (the wizard keys its remembered target by template). */
-export const TEMPLATE_FILE_ACCOUNT = "template";
+/** The Settings step's one "bank account" of a file read by a new mapping (not named yet; a saved template's is `importTemplateKey`). */
+export const NEW_TEMPLATE_FILE_ACCOUNT = "template";
 
 type ImportMapping = ImportSettingsFormData["mapping"];
 
@@ -31,7 +32,7 @@ export const resolveImportSource = (
     const template = { ...mapping, name: mapping.name.trim(), header: header.map((name) => name.trim()) };
     return { kind: "template", template, isNew: true };
   }
-  const template = templates.find((saved) => templateSource(saved.name) === bank);
+  const template = templates.find((saved) => importTemplateKey(saved.name) === bank);
   return template ? { kind: "template", template, isNew: false } : null;
 };
 

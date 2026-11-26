@@ -9,19 +9,18 @@ import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslatio
 import {
   countFileAccountRows,
   findImportTemplate,
+  importTemplateKey,
   isStatementTransactionRow,
   maskFileAccount,
   STATEMENT_BANKS,
-  templateFileAccount,
 } from "../../../../utils/statementImport";
 import {
   CUSTOM_MAPPING,
   getImportSettingsSchema,
   SKIP_FILE_ACCOUNT,
-  templateSource,
   type ImportSettingsFormData,
 } from "../../../../utils/schemas";
-import { blankMapping, readImportRows, resolveImportSource, TEMPLATE_FILE_ACCOUNT } from "../../importSource";
+import { blankMapping, readImportRows, resolveImportSource, NEW_TEMPLATE_FILE_ACCOUNT } from "../../importSource";
 import type { ImportFile } from "../../types";
 import { ImportColumnMapping } from "../ImportColumnMapping";
 import { importSettingsStepStyles as styles } from "./ImportSettingsStep.styles";
@@ -77,17 +76,16 @@ export const ImportSettingsStep = ({
     [bank, mapping, header, templates],
   );
   const rows = useMemo(() => readImportRows(source, file.records), [source, file.records]);
-  // The file's bank accounts with their row counts, in file order; a template-read file has exactly one
+  const readCount = rows.filter(isStatementTransactionRow).length;
+  // The file's bank accounts with their row counts, in file order; a template-read file has exactly one, keyed by
+  // the template (a new mapping's by a placeholder, so typing its name doesn't reset the target)
+  const templateAccount =
+    source?.kind === "template" ? (source.isNew ? NEW_TEMPLATE_FILE_ACCOUNT : importTemplateKey(source.template.name)) : null;
   const fileAccounts = useMemo(
-    () =>
-      source?.kind === "template"
-        ? new Map([[TEMPLATE_FILE_ACCOUNT, rows.filter(isStatementTransactionRow).length]])
-        : countFileAccountRows(rows),
-    [source?.kind, rows],
+    () => (templateAccount ? new Map([[templateAccount, readCount]]) : countFileAccountRows(rows)),
+    [templateAccount, readCount, rows],
   );
   const isMultiAccount = fileAccounts.size > 1;
-  // A saved template's remembered account is keyed by its name
-  const savedTemplate = source?.kind === "template" && !source.isNew ? source.template.name : null;
 
   // A (re)chosen bank reads the file again: its bank accounts get their preselected targets
   useEffect(() => {
@@ -98,15 +96,9 @@ export const ImportSettingsStep = ({
     }
     setValue(
       "fileAccounts",
-      listed.map((fileAccount) => ({
-        fileAccount,
-        target: defaultTarget(
-          fileAccount === TEMPLATE_FILE_ACCOUNT && savedTemplate ? templateFileAccount(savedTemplate) : fileAccount,
-          listed.length === 1,
-        ),
-      })),
+      listed.map((fileAccount) => ({ fileAccount, target: defaultTarget(fileAccount, listed.length === 1) })),
     );
-  }, [fileAccounts, savedTemplate, defaultTarget, getValues, setValue]);
+  }, [fileAccounts, defaultTarget, getValues, setValue]);
 
   const bankOptions = useMemo(
     () => [
@@ -118,7 +110,7 @@ export const ImportSettingsStep = ({
         ? [
             {
               label: t("budget.import.settings.templatesGroup"),
-              options: templates.map(({ name }) => ({ value: templateSource(name), label: name })),
+              options: templates.map(({ name }) => ({ value: importTemplateKey(name), label: name })),
             },
           ]
         : []),
@@ -152,7 +144,7 @@ export const ImportSettingsStep = ({
         />
 
         {bank === CUSTOM_MAPPING && (
-          <ImportColumnMapping records={file.records} readCount={rows.filter(isStatementTransactionRow).length} />
+          <ImportColumnMapping records={file.records} readCount={readCount} />
         )}
 
         {isMultiAccount ? (

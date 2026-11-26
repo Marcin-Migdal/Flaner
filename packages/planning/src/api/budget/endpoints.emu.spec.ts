@@ -14,7 +14,7 @@ import {
   parseTemplateRows,
   readStatement,
   splitRowsByFileAccount,
-  templateFileAccount,
+  importTemplateKey,
 } from "../../utils/statementImport";
 import {
   MAX_MONTH_PAYLOAD_BYTES,
@@ -611,10 +611,10 @@ describe("budget transactions", () => {
     ]);
 
     // Remembering the template's account and deleting another account keep the templates
-    await rememberFileAccountMappings(budget, { [templateFileAccount("Pekao")]: accountId });
+    await rememberFileAccountMappings(budget, { [importTemplateKey("Pekao")]: accountId });
     await deleteBudgetAccount(budget, savingsId);
     expect(await getBudgetProfile(budget)).toMatchObject({
-      fileAccountMappings: { [templateFileAccount("Pekao")]: accountId },
+      fileAccountMappings: { [importTemplateKey("Pekao")]: accountId },
       importTemplates: [template],
     });
   });

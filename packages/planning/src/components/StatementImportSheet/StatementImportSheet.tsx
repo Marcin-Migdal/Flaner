@@ -22,10 +22,10 @@ import { usePlanningTranslations } from "../../hooks/usePlanningTranslations";
 import { guessCategory } from "../../utils/categorizationRules";
 import { hasUnconfirmedCategory } from "../../utils/transactionEdits";
 import { monthOfDate } from "../../utils/monthLedger";
-import { CUSTOM_MAPPING, SKIP_FILE_ACCOUNT, templateSource, type ImportSettingsFormData } from "../../utils/schemas";
+import { CUSTOM_MAPPING, SKIP_FILE_ACCOUNT, type ImportSettingsFormData } from "../../utils/schemas";
 import {
   findImportTemplate,
-  templateFileAccount,
+  importTemplateKey,
   type FileAccountTargets,
   type ImportPreview,
   type ImportPreviewRow,
@@ -132,7 +132,7 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
   const targetsOf = (values: ImportSettingsFormData, source: ImportSource): FileAccountTargets =>
     Object.fromEntries(
       values.fileAccounts.map(({ fileAccount, target }) => [
-        source.kind === "template" ? templateFileAccount(source.template.name) : fileAccount,
+        source.kind === "template" ? importTemplateKey(source.template.name) : fileAccount,
         target === SKIP_FILE_ACCOUNT ? null : target,
       ]),
     );
@@ -236,7 +236,7 @@ const StatementImportWizard = ({ profile, accounts, categories, onOpenMonth, onC
   const defaultSettings = (read: ImportFile): Partial<ImportSettingsFormData> => {
     const template = findImportTemplate(templates, read.records[0] ?? []);
     return {
-      bank: read.bank ?? (template ? templateSource(template.name) : CUSTOM_MAPPING),
+      bank: read.bank ?? (template ? importTemplateKey(template.name) : CUSTOM_MAPPING),
       mapping: template ? mappingOf(template) : blankMapping(read.records[0] ?? []),
       fileAccounts: [],
       fallbackCurrency: mainAccount?.defaultCurrency ?? profile.mainCurrency,

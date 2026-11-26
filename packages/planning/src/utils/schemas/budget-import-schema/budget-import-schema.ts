@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { IMPORT_COLUMN_ROLES, IMPORT_DATE_FORMATS, IMPORT_DECIMAL_SEPARATORS } from "../../../api/budget/types";
+import { IMPORT_COLUMN_ROLES, IMPORT_DATE_FORMATS, IMPORT_DECIMAL_SEPARATORS } from "../../../api/budget";
 import { validateImportColumns } from "../../statementImport/importTemplate";
 import { getBudgetAmountSchema } from "../budget-transaction-schema";
 
@@ -9,16 +9,13 @@ export const SKIP_FILE_ACCOUNT = "skip";
 /** Import Settings "bank" choice: map the file's columns (and save them as a new import template). */
 export const CUSTOM_MAPPING = "custom";
 
-/** Import Settings "bank" choice of a saved import template (never a bank id or `CUSTOM_MAPPING`). */
-export const templateSource = (name: string) => `template:${name}`;
-
 export const TEMPLATE_NAME_MAX_LENGTH = 40;
 
 /** Import wizard, Settings step: each bank account of the file goes to a Flaner account or is skipped. */
 export const getImportSettingsSchema = (t: (key: string) => string) =>
   z
     .object({
-      /** A `StatementBank`, `templateSource(name)` of a saved template, or `CUSTOM_MAPPING`. */
+      /** A `StatementBank`, `importTemplateKey(name)` of a saved template, or `CUSTOM_MAPPING`. */
       bank: z.string({ message: t("budget.import.validation.bankRequired") }).min(1, t("budget.import.validation.bankRequired")),
       /** The column mapping used with `CUSTOM_MAPPING`, saved as an import template under `name`. */
       mapping: z.object({

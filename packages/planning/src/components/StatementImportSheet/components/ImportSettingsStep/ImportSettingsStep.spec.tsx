@@ -5,7 +5,8 @@ import { createTestI18n, renderWithProviders } from "@flaner/test-utils";
 import en from "../../../../../public/locales/en/planning.json";
 import type { BudgetAccount, ImportTemplate } from "../../../../api/budget";
 import { MILLENNIUM_HEADER } from "../../../../utils/statementImport/statementParser/millennium";
-import { CUSTOM_MAPPING, SKIP_FILE_ACCOUNT, templateSource, type ImportSettingsFormData } from "../../../../utils/schemas";
+import { CUSTOM_MAPPING, SKIP_FILE_ACCOUNT, type ImportSettingsFormData } from "../../../../utils/schemas";
+import { importTemplateKey } from "../../../../utils/statementImport";
 import { ImportSettingsStep, type ImportSettingsStepProps } from "./ImportSettingsStep";
 
 const i18n = createTestI18n({ en: { planning: en } });
@@ -202,7 +203,9 @@ describe("ImportSettingsStep: column mapping", () => {
   it("offers the saved templates and reads the file with the chosen one, without the mapping", async () => {
     const { onSubmit } = renderOther({
       templates: [pekao],
-      defaultValues: { bank: templateSource("Pekao"), fileAccounts: [], fallbackCurrency: "PLN" },
+      defaultValues: { bank: importTemplateKey("Pekao"), fileAccounts: [], fallbackCurrency: "PLN" },
+      // The template's remembered account
+      defaultTarget: (fileAccount) => (fileAccount === importTemplateKey("Pekao") ? "savings" : "main"),
     });
 
     expect(screen.getByText("Recognized from the file. Change it if it's wrong.")).toBeInTheDocument();
@@ -211,7 +214,10 @@ describe("ImportSettingsStep: column mapping", () => {
 
     await waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
-        expect.objectContaining({ bank: templateSource("Pekao"), fileAccounts: [{ fileAccount: "template", target: "main" }] }),
+        expect.objectContaining({
+          bank: importTemplateKey("Pekao"),
+          fileAccounts: [{ fileAccount: importTemplateKey("Pekao"), target: "savings" }],
+        }),
         expect.anything(),
       ),
     );

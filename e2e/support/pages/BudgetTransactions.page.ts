@@ -43,7 +43,46 @@ export class BudgetTransactionsPage {
   async chooseImportOption(label: RegExp, option: RegExp) {
     await this.importSheet.getByLabel(label).focus();
     await this.page.keyboard.press("ArrowDown");
-    await this.page.getByRole("option", { name: option }).click();
+    // The menu is portaled with a fixed position and may open below the viewport, out of a real click's reach
+    await this.page.getByRole("option", { name: option }).dispatchEvent("click");
+  }
+
+  /** Opens the import wizard and reads `file` (a path or an in-memory file) into the Settings step. */
+  async openImportSettings(file: Parameters<Locator["setInputFiles"]>[0]) {
+    await this.headerImportButton.click();
+    await this.importSheet.locator('input[type="file"]').setInputFiles(file);
+  }
+
+  /** The Settings step's column mapping of a file no bank or template recognizes. */
+  get columnMapping(): Locator {
+    return this.importSheet.getByRole("group", { name: /^(column mapping|przypisanie kolumn)$/i });
+  }
+
+  async nameImportTemplate(name: string) {
+    await this.importSheet.getByLabel(/^(template name|nazwa szablonu)$/i).fill(name);
+  }
+
+  /** The column mapping's count of rows it reads. */
+  mappingReadRows(count: number, total: number): Locator {
+    return this.importSheet.getByText(
+      new RegExp(`^(${count} of ${total} rows read|odczytano ${count} z ${total} wierszy)`, "i"),
+    );
+  }
+
+  async continueToPreview() {
+    await this.importSheet.getByRole("button", { name: /^(preview|podgląd)$/i }).click();
+  }
+
+  /** Imports the checked preview rows and closes the wizard from the Result step. */
+  async importAndClose(count: number, countLabelPl: string) {
+    await this.importSheet
+      .getByRole("button", { name: new RegExp(`^(import ${count} transactions|importuj ${count} ${countLabelPl})$`, "i") })
+      .click();
+    await this.importSheet
+      .getByText(new RegExp(`^(${count} transactions imported|zaimportowano ${count} ${countLabelPl})$`, "i"))
+      .waitFor();
+    // The Result step's own Close, not the sheet's corner button
+    await this.importSheet.getByRole("button", { name: /^(close|zamknij)$/i }).last().click();
   }
 
   /** A status filter tab of the import preview, with its count. */

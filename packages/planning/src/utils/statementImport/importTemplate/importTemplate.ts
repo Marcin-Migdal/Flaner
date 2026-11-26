@@ -10,10 +10,13 @@ import type { StatementRow } from "../types";
 /** Why a column mapping can't read a file: no single date column, no amount (one column or a debit and credit pair), no payee or description, or more than one currency column. */
 export type ImportColumnsError = "date" | "amount" | "text" | "currency";
 
-/** Template rows' "bank account" (one per template): keys the remembered Flaner account of the template's files. */
-export const templateFileAccount = (name: string) => `template:${name.trim().toLowerCase()}`;
+/**
+ * A template's identity (names are unique case-insensitively): its option in the import Settings and its rows'
+ * "bank account", which keys the remembered Flaner account of the template's files.
+ */
+export const importTemplateKey = (name: string) => `template:${name.trim().toLowerCase()}`;
 
-const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+const sameName = (a: string, b: string) => importTemplateKey(a) === importTemplateKey(b);
 
 /** The template that reads a file with this header row: the latest saved one when several match, else `null`. */
 export const findImportTemplate = (templates: ImportTemplate[], header: string[]): ImportTemplate | null =>
@@ -67,11 +70,14 @@ const parseTemplateDate = (value: string, format: ImportDateFormat): string | nu
 
 /**
  * A signed amount in minor units written with `separator` as the decimal mark, or `null`. Thousands may be grouped
- * by spaces, apostrophes or the other mark (only in groups of three digits); a Unicode minus counts as a minus.
+ * by spaces, apostrophes or the other mark (only in groups of three digits); a Unicode minus counts as a minus; a
+ * currency code or sign around the amount is ignored.
  */
 const parseTemplateAmount = (value: string, separator: ImportDecimalSeparator): number | null => {
   const thousands = escape(separator === "," ? "." : ",");
-  const compact = value.replace(/[\s']/g, "").replace(/\u2212/g, "-");
+  // A currency code or sign written with the amount ("-12,50 PLN", "zł 12,50", "-€4") is dropped
+  const compact = value.replace(/[\p{L}\p{Sc}\s']/gu, "")
+    .replace(/\u2212/g, "-");
   const match = new RegExp(`^([-+]?)(\\d{1,3}(?:${thousands}\\d{3})+|\\d+)(?:${escape(separator)}(\\d{1,2}))?$`).exec(compact);
   if (!match) return null;
   const [, sign, units, fraction = ""] = match;
@@ -86,7 +92,7 @@ const parseTemplateAmount = (value: string, separator: ImportDecimalSeparator): 
  */
 export const parseTemplateRows = (template: ImportTemplate, records: string[][]): StatementRow[] => {
   const { columns, dateFormat, decimalSeparator } = template;
-  const fileAccount = templateFileAccount(template.name);
+  const fileAccount = importTemplateKey(template.name);
   const indexesOf = (role: ImportColumnRole) =>
     columns.flatMap((column, index) => (column === role ? [index] : []));
   const [date, amount, debit, credit, currency] = (["date", "amount", "debit", "credit", "currency"] as const).map(

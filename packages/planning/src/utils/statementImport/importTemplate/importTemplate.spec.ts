@@ -3,7 +3,7 @@ import type { ImportTemplate } from "../../../api/budget";
 import {
   findImportTemplate,
   parseTemplateRows,
-  templateFileAccount,
+  importTemplateKey,
   validateImportColumns,
   withImportTemplate,
 } from "./importTemplate";
@@ -28,7 +28,7 @@ describe("parseTemplateRows", () => {
       {
         status: "ok",
         rowNumber: 2,
-        fileAccount: templateFileAccount("Pekao"),
+        fileAccount: importTemplateKey("Pekao"),
         date: "2026-11-03",
         type: "expense",
         amount: 123456,
@@ -92,6 +92,18 @@ describe("parseTemplateRows", () => {
     ).toEqual([
       ["expense", 123456],
       ["income", 100000],
+    ]);
+  });
+
+  it("ignores a currency code or sign written next to the amount", () => {
+    expect(
+      read({}, ["2026-11-03", "-12,50 PLN", "Shop", ""], ["2026-11-03", "zł 3,00", "Shop", ""], ["2026-11-03", "-€4", "Shop", ""]).map(
+        (row) => (row.status === "ok" ? [row.type, row.amount] : row.reason),
+      ),
+    ).toEqual([
+      ["expense", 1250],
+      ["income", 300],
+      ["expense", 400],
     ]);
   });
 

@@ -372,6 +372,16 @@ export const resetBudget = async (uid: string): Promise<void> => {
 // Profile, categories, accounts
 // ---------------------------------------------------------------------------
 
+/** The profile's encrypted payload with `changes` applied: every field not changed is kept as stored. */
+const profilePayloadBytes = async (
+  { uid, userKey }: UnlockedBudget,
+  { fileAccountMappings, importTemplates }: BudgetProfile,
+  changes: Partial<BudgetProfilePayload>,
+) => {
+  const profilePayload: BudgetProfilePayload = { fileAccountMappings, importTemplates, ...changes };
+  return toBytes(await encryptJson(profilePayload, userKey, paths.profile(uid)));
+};
+
 export const getBudgetProfile = async ({ uid, userKey }: UnlockedBudget): Promise<BudgetProfile | null> => {
   const data = (await getDoc(refs.profile(uid))).data();
   if (!data) return null;
@@ -524,7 +534,7 @@ export const setBudgetMainCurrency = async ({ uid }: UnlockedBudget, mainCurrenc
  * half-way leaves the account listed and can be run again.
  */
 export const deleteBudgetAccount = async (budget: UnlockedBudget, accountId: string): Promise<void> => {
-  const { uid, userKey } = budget;
+  const { uid } = budget;
   const profile = await getBudgetProfile(budget);
   if (!profile || profile.mainAccountId === accountId) throw new Error("planning:errors.budget.mainAccountLocked");
 
@@ -559,13 +569,12 @@ export const deleteBudgetAccount = async (budget: UnlockedBudget, accountId: str
   const fileAccountMappings = Object.fromEntries(
     Object.entries(profile.fileAccountMappings).filter(([, mappedId]) => mappedId !== accountId),
   );
-  const profilePayload: BudgetProfilePayload = { fileAccountMappings, importTemplates: profile.importTemplates };
   const batch = writeBatch(fb.firestore).delete(refs.account(accountId));
   // Deleting a missing document is denied by the rules: only an existing recurring document goes
   if ((await getDoc(refs.recurring(accountId))).exists()) batch.delete(refs.recurring(accountId));
   if (Object.keys(fileAccountMappings).length !== Object.keys(profile.fileAccountMappings).length) {
     batch.update(refs.profile(uid), {
-      payload: toBytes(await encryptJson(profilePayload, userKey, paths.profile(uid))),
+      payload: await profilePayloadBytes(budget, profile, { fileAccountMappings }),
       updatedAt: Date.now(),
     });
   }
@@ -581,7 +590,6 @@ export const rememberFileAccountMappings = async (
   budget: UnlockedBudget,
   mappings: BudgetProfile["fileAccountMappings"],
 ): Promise<void> => {
-  const { uid, userKey } = budget;
   const profile = await getBudgetProfile(budget);
   if (!profile) return;
 
@@ -590,9 +598,8 @@ export const rememberFileAccountMappings = async (
     return;
   }
 
-  const profilePayload: BudgetProfilePayload = { fileAccountMappings, importTemplates: profile.importTemplates };
-  await updateDoc(refs.profile(uid), {
-    payload: toBytes(await encryptJson(profilePayload, userKey, paths.profile(uid))),
+  await updateDoc(refs.profile(budget.uid), {
+    payload: await profilePayloadBytes(budget, profile, { fileAccountMappings }),
     updatedAt: Date.now(),
   });
 };
@@ -602,16 +609,13 @@ export const rememberFileAccountMappings = async (
  * else it is added. A file with the template's header is then recognized by it.
  */
 export const saveImportTemplate = async (budget: UnlockedBudget, template: ImportTemplate): Promise<void> => {
-  const { uid, userKey } = budget;
   const profile = await getBudgetProfile(budget);
   if (!profile) return;
 
-  const profilePayload: BudgetProfilePayload = {
-    fileAccountMappings: profile.fileAccountMappings,
-    importTemplates: withImportTemplate(profile.importTemplates ?? [], template),
-  };
-  await updateDoc(refs.profile(uid), {
-    payload: toBytes(await encryptJson(profilePayload, userKey, paths.profile(uid))),
+  await updateDoc(refs.profile(budget.uid), {
+    payload: await profilePayloadBytes(budget, profile, {
+      importTemplates: withImportTemplate(profile.importTemplates ?? [], template),
+    }),
     updatedAt: Date.now(),
   });
 };

@@ -1,6 +1,6 @@
 # budget_profiles/{uid}
 
-The Budget's per-user settings (MFE `planning`, Budget; ADR 0002). One doc per user (doc id == uid). Readable: the main currency and the main account id. Encrypted in `payload` with the user key: remembered bank-file account → Flaner account (or skipped) mappings (later also import templates). Only the budget API module `packages/planning/src/api/budget` reads and writes it.
+The Budget's per-user settings (MFE `planning`, Budget; ADR 0002). One doc per user (doc id == uid). Readable: the main currency and the main account id. Encrypted in `payload` with the user key: remembered bank-file account → Flaner account (or skipped) mappings and import templates (column mappings of CSV files no bank parser recognizes; #175). Only the budget API module `packages/planning/src/api/budget` reads and writes it.
 
 ## Invariants
 - **P1** Only the user reads, writes and deletes their own profile.
@@ -24,6 +24,7 @@ The Budget's per-user settings (MFE `planning`, Budget; ADR 0002). One doc per u
 | Make main account | `packages/planning/src/api/budget/endpoints.ts#setMainBudgetAccount` | update `mainAccountId`, `updatedAt` (see `budget_accounts.md`) | ✅ transaction |
 | Change main currency | `packages/planning/src/api/budget/endpoints.ts#setBudgetMainCurrency` | update `mainCurrency`, `updatedAt`; only while the user has no `budget_months` doc (checked by a query just before) | single write |
 | Remember import mappings | `packages/planning/src/api/budget/endpoints.ts#rememberFileAccountMappings` | update `payload` (file mappings merged with the import's), `updatedAt`; skipped when nothing changes | single write |
+| Save an import template | `packages/planning/src/api/budget/endpoints.ts#saveImportTemplate` | update `payload` (templates with the new one; one of the same name, case-insensitively, replaced), `updatedAt` | single write |
 | Delete an account | `packages/planning/src/api/budget/endpoints.ts#deleteBudgetAccount` | update `payload` (remembered file mappings without the account), `updatedAt`, in the account's last batch (see `budget_accounts.md`) | ⚠️ batch |
 | Reset budget | `packages/planning/src/api/budget/endpoints.ts#resetBudget` | delete `budget_profiles/{me}`, with every other budget document of the user; `budget_keys/{me}` in the last batch | ⚠️ batches of 500 (keys last, so a failed reset stays locked and can be retried) |
 
@@ -69,4 +70,4 @@ match /budget_profiles/{uid} {
 
 ## Tests
 - `firestore-tests/budget/budget_profiles.spec.ts` — own create / read / update / delete, other users / anonymous denied, invalid envelope (extra field, plain-text payload, wrong currency, changed `createdAt`) denied.
-- `packages/planning/src/api/budget/endpoints.emu.spec.ts` — profile created by onboarding and read back decrypted; deleted by reset; main account and main currency changed (currency locked once a transaction exists); import mappings remembered and updated.
+- `packages/planning/src/api/budget/endpoints.emu.spec.ts` — profile created by onboarding and read back decrypted; deleted by reset; main account and main currency changed (currency locked once a transaction exists); import mappings remembered and updated; an import template saved encrypted, recognizing its file and kept by the other profile writes.
