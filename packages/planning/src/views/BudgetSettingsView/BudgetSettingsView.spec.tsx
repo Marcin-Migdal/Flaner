@@ -7,6 +7,7 @@ import { BudgetSettingsView } from "./BudgetSettingsView";
 vi.mock("../../api/budget", () => ({ getLockedBudget: vi.fn().mockResolvedValue(null) }));
 // Need an unlocked budget; covered by their own specs
 vi.mock("./components/BudgetAccountsSection", () => ({ BudgetAccountsSection: () => null }));
+vi.mock("./components/BudgetCategoriesSection", () => ({ BudgetCategoriesSection: () => null }));
 vi.mock("./components/BudgetRulesSection", () => ({ BudgetRulesSection: () => null }));
 
 const i18n = createTestI18n({

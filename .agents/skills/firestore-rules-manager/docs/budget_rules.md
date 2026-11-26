@@ -23,6 +23,7 @@ The user's categorization rules (MFE `planning`, Budget; ADR 0002, #176): one li
 | Category set / changed on the list, in bulk or in the edit dialog (learn) | `packages/planning/src/api/budget/endpoints.ts#updateBudgetTransactions` | set `budget_rules/{me}` with every affected month, only when a rule changes | ✅ transaction |
 | Settings → Rules: change category, shorten keyword | `packages/planning/src/api/budget/endpoints.ts#editBudgetRule` | set `budget_rules/{me}` | ✅ transaction (read → write) |
 | Settings → Rules: delete | `packages/planning/src/api/budget/endpoints.ts#deleteBudgetRule` | set `budget_rules/{me}` | ✅ transaction (read → write) |
+| Settings → Categories: delete a category | `packages/planning/src/api/budget/endpoints.ts#deleteBudgetCategory` | set `budget_rules/{me}` (rules on the category repointed to the replacement, or deleted without one) with `budget_categories/{me}`, only when a rule changes | ✅ transaction (after the per-account moves, see `budget_categories.md`) |
 | Reset budget | `packages/planning/src/api/budget/endpoints.ts#resetBudget` | delete `budget_rules/{me}`, with every other budget document of the user; `budget_keys/{me}` in the last batch | ⚠️ batches of 500 (keys last, so a failed reset stays locked and can be retried) |
 
 ## Queries
@@ -61,4 +62,4 @@ match /budget_rules/{uid} {
 
 ## Tests
 - `firestore-tests/budget/budget_rules.spec.ts` — own create / read / update / delete, other users / anonymous denied, invalid envelope (readable rules, extra field, oversized payload) denied.
-- `packages/planning/src/api/budget/endpoints.emu.spec.ts` — learning from manual entry, import and list edits (confirm / clear teach nothing), never retroactive, Settings edit / delete, another user denied, deleted by reset.
+- `packages/planning/src/api/budget/endpoints.emu.spec.ts` — learning from manual entry, import and list edits (confirm / clear teach nothing), never retroactive, Settings edit / delete, repointed or deleted by a category delete, another user denied, deleted by reset.

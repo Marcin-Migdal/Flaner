@@ -21,3 +21,4 @@ export * from "./statementImport";
 export * from "./categorizationRules";
 export * from "./repeatRules";
 export * from "./recurringTransactions";
+export * from "./categoryTree";
