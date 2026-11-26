@@ -1,19 +1,22 @@
 import { cn } from "@flaner/shared/utils";
 import { FileUp, LoaderCircle } from "lucide-react";
 import { useId, useState, type DragEvent } from "react";
+import type { ImportTemplate } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import { STATEMENT_BANKS, decodeStatementFile, readStatement } from "../../../../utils/statementImport";
 import type { ImportFile } from "../../types";
 import { importFileStepStyles as styles } from "./ImportFileStep.styles";
 
 export type ImportFileStepProps = {
+  /** The user's saved import templates: listed as recognized too. */
+  templates: ImportTemplate[];
   onRead: (file: ImportFile) => void;
 };
 
 const CSV_NAME = /\.csv$/i;
 
 /** Import wizard, File step: drop or choose one CSV statement file. */
-export const ImportFileStep = ({ onRead }: ImportFileStepProps) => {
+export const ImportFileStep = ({ templates, onRead }: ImportFileStepProps) => {
   const { t } = usePlanningTranslations();
   const inputId = useId();
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +94,12 @@ export const ImportFileStep = ({ onRead }: ImportFileStepProps) => {
           banks: STATEMENT_BANKS.map((bank) => t(`budget.import.banks.${bank}`)).join(", "),
         })}
       </p>
+      {templates.length > 0 && (
+        <p className={styles.banks}>
+          {t("budget.import.file.templates", { templates: templates.map(({ name }) => name).join(", ") })}
+        </p>
+      )}
+      <p className={styles.banks}>{t("budget.import.file.otherCsv")}</p>
     </div>
   );
 };

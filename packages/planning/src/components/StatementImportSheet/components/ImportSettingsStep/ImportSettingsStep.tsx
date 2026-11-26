@@ -4,20 +4,25 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FileText } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useController, useForm, useWatch, type Control } from "react-hook-form";
-import type { BudgetAccount } from "../../../../api/budget";
+import type { BudgetAccount, ImportTemplate } from "../../../../api/budget";
 import { usePlanningTranslations } from "../../../../hooks/usePlanningTranslations";
 import {
   countFileAccountRows,
+  findImportTemplate,
+  importTemplateKey,
+  isStatementTransactionRow,
   maskFileAccount,
-  parseStatementRows,
   STATEMENT_BANKS,
 } from "../../../../utils/statementImport";
 import {
+  CUSTOM_MAPPING,
   getImportSettingsSchema,
   SKIP_FILE_ACCOUNT,
   type ImportSettingsFormData,
 } from "../../../../utils/schemas";
+import { blankMapping, readImportRows, resolveImportSource, NEW_TEMPLATE_FILE_ACCOUNT } from "../../importSource";
 import type { ImportFile } from "../../types";
+import { ImportColumnMapping } from "../ImportColumnMapping";
 import { importSettingsStepStyles as styles } from "./ImportSettingsStep.styles";
 
 type SelectOption = { value: string; label: string };
@@ -25,6 +30,9 @@ type SelectOption = { value: string; label: string };
 export type ImportSettingsStepProps = {
   file: ImportFile;
   accounts: BudgetAccount[];
+  /** The user's saved import templates. */
+  templates: ImportTemplate[];
+  /** `mapping` defaults to every column ignored. */
   defaultValues: Partial<ImportSettingsFormData>;
   /** The preselected target of a bank account (remembered mapping, else the main account for a one-account file). */
   defaultTarget: (fileAccount: string, isOnlyAccount: boolean) => string;
@@ -37,12 +45,14 @@ export type ImportSettingsStepProps = {
 };
 
 /**
- * Import wizard, Settings step: bank (detected from the header, can be changed), the target of each bank account
- * of the file (one account: a Flaner account; several: a Flaner account each or skipped) and fallback currency.
+ * Import wizard, Settings step: bank or import template (detected from the header, can be changed) or a column
+ * mapping for any other CSV, the target of each bank account of the file (one account: a Flaner account; several:
+ * a Flaner account each or skipped) and fallback currency.
  */
 export const ImportSettingsStep = ({
   file,
   accounts,
+  templates,
   defaultValues,
   defaultTarget,
   isBusy,
@@ -52,17 +62,28 @@ export const ImportSettingsStep = ({
 }: ImportSettingsStepProps) => {
   const { t } = usePlanningTranslations();
   const currencyOptions = useCurrencyOptions();
+  const header = useMemo(() => file.records[0] ?? [], [file.records]);
   const methods = useForm<ImportSettingsFormData>({
     resolver: zodResolver(getImportSettingsSchema(t)),
-    defaultValues,
+    defaultValues: { mapping: blankMapping(header), ...defaultValues },
   });
   const { control, getValues, setValue } = methods;
 
   const bank = useWatch({ control, name: "bank" });
-  // The file's bank accounts with their row counts, in file order
+  const mapping = useWatch({ control, name: "mapping" });
+  const source = useMemo(
+    () => (bank ? resolveImportSource({ bank, mapping }, header, templates) : null),
+    [bank, mapping, header, templates],
+  );
+  const rows = useMemo(() => readImportRows(source, file.records), [source, file.records]);
+  const readCount = rows.filter(isStatementTransactionRow).length;
+  // The file's bank accounts with their row counts, in file order; a template-read file has exactly one, keyed by
+  // the template (a new mapping's by a placeholder, so typing its name doesn't reset the target)
+  const templateAccount =
+    source?.kind === "template" ? (source.isNew ? NEW_TEMPLATE_FILE_ACCOUNT : importTemplateKey(source.template.name)) : null;
   const fileAccounts = useMemo(
-    () => countFileAccountRows(bank ? parseStatementRows(bank, file.records) : []),
-    [bank, file.records],
+    () => (templateAccount ? new Map([[templateAccount, readCount]]) : countFileAccountRows(rows)),
+    [templateAccount, readCount, rows],
   );
   const isMultiAccount = fileAccounts.size > 1;
 
@@ -80,9 +101,24 @@ export const ImportSettingsStep = ({
   }, [fileAccounts, defaultTarget, getValues, setValue]);
 
   const bankOptions = useMemo(
-    () => STATEMENT_BANKS.map((option) => ({ value: option, label: t(`budget.import.banks.${option}`) })),
-    [t],
+    () => [
+      {
+        label: t("budget.import.settings.banksGroup"),
+        options: STATEMENT_BANKS.map((option) => ({ value: option, label: t(`budget.import.banks.${option}`) })),
+      },
+      ...(templates.length > 0
+        ? [
+            {
+              label: t("budget.import.settings.templatesGroup"),
+              options: templates.map(({ name }) => ({ value: importTemplateKey(name), label: name })),
+            },
+          ]
+        : []),
+      { label: t("budget.import.settings.otherGroup"), options: [{ value: CUSTOM_MAPPING, label: t("budget.import.settings.customMapping") }] },
+    ],
+    [t, templates],
   );
+  const isRecognized = file.bank !== null || findImportTemplate(templates, header) !== null;
   const accountOptions = useMemo(
     () => accounts.map((account) => ({ value: account.id, label: account.name })),
     [accounts],
@@ -103,9 +139,13 @@ export const ImportSettingsStep = ({
         <FormSelect
           name="bank"
           label={t("budget.import.settings.bank")}
-          description={file.bank ? t("budget.import.settings.bankDetected") : t("budget.import.settings.bankNotDetected")}
+          description={isRecognized ? t("budget.import.settings.bankDetected") : t("budget.import.settings.bankNotDetected")}
           options={bankOptions}
         />
+
+        {bank === CUSTOM_MAPPING && (
+          <ImportColumnMapping records={file.records} readCount={readCount} />
+        )}
 
         {isMultiAccount ? (
           <fieldset className={styles.fileAccounts}>

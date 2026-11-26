@@ -126,7 +126,10 @@
       "recurringStopped": "Recurring transaction stopped",
       "recurringDeleted": "Recurring transaction deleted",
       "recurringLinkError": "Couldn't save the link. Try again.",
-      "planStarted": "Plan started"
+      "planStarted": "Plan started",
+      "categorySaveError": "Couldn't save the category. Try again.",
+      "categoryDeleteError": "Couldn't delete the category. Try again.",
+      "categoryDeleted": "Category deleted"
     }
   },
   "errors": {
@@ -168,7 +171,8 @@
       "occurrenceAlreadyPaid": "This occurrence is already paid. Unlink it first.",
       "alreadyMatched": "This transaction is already matched to a recurring transaction.",
       "planAlreadyStarted": "This month already has a plan. It has been reloaded.",
-      "planMissing": "This month has no plan."
+      "planMissing": "This month has no plan.",
+      "categoryMissing": "This category no longer exists. Reload the page."
     }
   },
   "splits": {
@@ -793,7 +797,9 @@
       "splitOffTooLarge": "Split-offs must stay below the transaction's amount",
       "splitOffNoteMax": "The note can have at most 200 characters",
       "refundRequired": "Pick the refund",
-      "refundTooLarge": "The refund must be smaller than what's left of the purchase"
+      "refundTooLarge": "The refund must be smaller than what's left of the purchase",
+      "categoryNameRequired": "Enter a name.",
+      "categoryNameMax": "Use at most 40 characters."
     },
     "transactionsEmpty": {
       "title": "No transactions yet",
@@ -1022,12 +1028,14 @@
         "notCsv": "This is not a CSV file. Export the statement from your bank as CSV and try again.",
         "empty": "This file has no transactions.",
         "unreadable": "Couldn't read this file. Make sure it's a CSV statement from your bank.",
-        "recognized": "Recognized automatically: {{banks}}"
+        "recognized": "Recognized automatically: {{banks}}",
+        "templates": "Your import templates: {{templates}}",
+        "otherCsv": "Any other CSV: map its columns in the next step and save them as a template."
       },
       "settings": {
         "bank": "Bank",
         "bankDetected": "Recognized from the file. Change it if it's wrong.",
-        "bankNotDetected": "This file's layout wasn't recognized. Choose the bank that issued it.",
+        "bankNotDetected": "This file's layout wasn't recognized. Map its columns, or choose the bank that issued it.",
         "account": "Import to account",
         "fallbackCurrency": "Currency for rows without one",
         "fallbackCurrencyHint": "Used only when a row doesn't state its currency.",
@@ -1037,10 +1045,23 @@
         "fileAccountsHint": "Choose where each account's transactions go, or skip it. Remembered for the next import.",
         "fileAccountRows_one": "{{count}} row",
         "fileAccountRows_other": "{{count}} rows",
-        "skipAccount": "Don't import"
+        "skipAccount": "Don't import",
+        "banksGroup": "Banks",
+        "templatesGroup": "Your import templates",
+        "otherGroup": "Other",
+        "customMapping": "Other bank: map columns",
+        "templateSaveError": "Couldn't save the import template (no connection?). Try again."
       },
       "validation": {
-        "bankRequired": "Choose a bank."
+        "bankRequired": "Choose a bank.",
+        "templateNameRequired": "Name the template.",
+        "templateNameTooLong": "Use at most 40 characters.",
+        "columns": {
+          "date": "Choose exactly one date column.",
+          "amount": "Choose one amount column, or one debit and one credit column.",
+          "text": "Choose a payee or description column.",
+          "currency": "Choose at most one currency column."
+        }
       },
       "preview": {
         "filtersLabel": "Show rows",
@@ -1098,6 +1119,36 @@
         "close": "Close",
         "openMonth": "Show imported transactions",
         "skippedAccounts": "Rows of skipped bank accounts"
+      },
+      "mapping": {
+        "title": "Column mapping",
+        "hint": "Say what each column holds; the values come from the first rows of the file. Saved as a template, it recognizes the next file of this kind by itself.",
+        "name": "Template name",
+        "nameHint": "For example the bank's name. Saving under an existing name replaces that template.",
+        "dateFormat": "Date format",
+        "decimalSeparator": "Decimal separator",
+        "decimal": {
+          "comma": "Comma (1 234,56)",
+          "dot": "Dot (1,234.56)"
+        },
+        "dateTokens": {
+          "year": "YYYY",
+          "month": "MM",
+          "day": "DD"
+        },
+        "column": "Column {{number}}",
+        "readRows_one": "{{count}} of {{total}} rows read with this mapping",
+        "readRows_other": "{{count}} of {{total}} rows read with this mapping",
+        "roles": {
+          "ignore": "Ignore",
+          "date": "Date",
+          "amount": "Amount (minus = expense)",
+          "debit": "Debit (expense)",
+          "credit": "Credit (income)",
+          "payee": "Payee",
+          "description": "Description",
+          "currency": "Currency"
+        }
       }
     },
     "accounts": {
@@ -1355,6 +1406,151 @@
     "exclusion": {
       "exclude": "Exclude",
       "restore": "Restore"
+    },
+    "summary": {
+      "spending": {
+        "title": "Spending by category",
+        "chartLabel": "Spending by category, {{month}}",
+        "listLabel": "Categories by spending",
+        "spent": "Spent",
+        "allCategories": "All categories",
+        "others": "Others",
+        "othersOf": "Others ({{names}})",
+        "uncategorized": "Uncategorized",
+        "onCategory": "{{name}} · general",
+        "empty": "No spending this month.",
+        "drilledDescription": "{{month}} · {{category}}"
+      },
+      "totals": {
+        "title": "Month totals",
+        "income": "Income",
+        "expenses": "Expenses",
+        "balance": "Balance",
+        "up": "Up {{amount}} vs {{month}}",
+        "down": "Down {{amount}} vs {{month}}",
+        "same": "Same as {{month}}"
+      },
+      "plan": {
+        "title": "Plan",
+        "spentOfLimit": "{{spent}} of {{limit}}",
+        "progressLabel": "Expenses against limits",
+        "daysLeft_one": "{{count}} day left",
+        "daysLeft_other": "{{count}} days left",
+        "monthEnded": "Month ended",
+        "noLimits": "No limits this month yet.",
+        "openPlanner": "Open Planner",
+        "subcategoryName": "{{category}} / {{subcategory}}",
+        "limitsLabel": "Limits",
+        "over": "Over by {{amount}}"
+      },
+      "review": {
+        "title": "To review",
+        "count_one": "{{count}} transaction to review",
+        "count_other": "{{count}} transactions to review",
+        "split": "{{unconfirmed}} unconfirmed · {{uncategorized}} uncategorized",
+        "allClear": "Everything is reviewed.",
+        "open": "Review in Transactions"
+      },
+      "bars": {
+        "title": "Income vs expenses",
+        "chartLabel": "Income vs expenses, 12 months ending {{month}}",
+        "description": "{{month}}: income {{income}} · expenses {{expenses}}",
+        "income": "Income",
+        "expenses": "Expenses"
+      },
+      "recurring": {
+        "title": "Recurring this month",
+        "progress": "{{done}} of {{total}} done · {{amount}} still expected",
+        "empty": "Nothing recurring this month.",
+        "open": "Open Recurring",
+        "received": "Received"
+        }
+      },
+    "categories": {
+      "expenseTitle": "Expense categories",
+      "incomeTitle": "Income categories",
+      "hint": "Drag the handle to reorder, or focus it and use Space and the arrow keys. Subcategories use their category's icon and colour.",
+      "add": "Add category",
+      "addSubcategory": "Add subcategory",
+      "empty": "No categories yet.",
+      "subcategoryCount_one": "{{count}} subcategory",
+      "subcategoryCount_other": "{{count}} subcategories",
+      "actions": "Actions for {{name}}",
+      "edit": "Edit",
+      "delete": "Delete",
+      "expand": "Show subcategories of {{name}}",
+      "collapse": "Hide subcategories of {{name}}",
+      "move": "Move {{name}}",
+      "drag": {
+        "instructions": "To reorder, press Space or Enter on the handle, move with the arrow keys, then press Space or Enter to drop, or Escape to cancel.",
+        "start": "Picked up {{name}}.",
+        "over": "{{name}} is at position {{position}} of {{total}}.",
+        "end": "{{name}} dropped at position {{position}} of {{total}}.",
+        "cancel": "Moving {{name}} was cancelled."
+      },
+      "form": {
+        "addTitle": "Add category",
+        "addSubTitle": "Add subcategory to {{parent}}",
+        "editTitle": "Edit category",
+        "editSubTitle": "Edit subcategory",
+        "description": "Pick a name, an icon and a colour. Its subcategories use the same icon and colour.",
+        "subDescription": "A subcategory uses its category's icon and colour.",
+        "name": "Name",
+        "namePlaceholder": "e.g. Groceries",
+        "icon": "Icon",
+        "color": "Colour",
+        "colorOption": "Colour {{index}}",
+        "preview": "Preview",
+        "addSubmit": "Add",
+        "editSubmit": "Save"
+      },
+      "deleteDialog": {
+        "title": "Delete {{name}}?",
+        "subcategories_one": "Its {{count}} subcategory is deleted with it.",
+        "subcategories_other": "Its {{count}} subcategories are deleted with it.",
+        "counting": "Counting the transactions that use it…",
+        "countUnavailable": "Couldn't count the transactions that use it.",
+        "usage_one": "{{count}} transaction uses it.",
+        "usage_other": "{{count}} transactions use it.",
+        "replacement": "Move their transactions to",
+        "noReplacement": "Don't move · they become Uncategorized",
+        "hint": "With a replacement, its transactions, split-offs, recurring transactions and rules move to it. Without one, its transactions become Uncategorized and unconfirmed and its rules are deleted. Its limits drop out of a plan when that plan is next saved.",
+        "confirm": "Yes, delete"
+      },
+      "icons": {
+        "shopping-bag": "Shopping bag",
+        "smile": "Smile",
+        "house": "House",
+        "user": "Person",
+        "landmark": "Government building",
+        "gift": "Gift",
+        "receipt": "Receipt",
+        "music": "Music",
+        "car": "Car",
+        "briefcase": "Briefcase",
+        "heart-pulse": "Health",
+        "piggy-bank": "Piggy bank",
+        "wallet": "Wallet",
+        "award": "Award",
+        "handshake": "Handshake",
+        "tag": "Tag",
+        "trending-up": "Rising chart",
+        "percent": "Percent",
+        "undo-2": "Return",
+        "banknote": "Banknote",
+        "circle-ellipsis": "Other",
+        "utensils": "Cutlery",
+        "plane": "Plane",
+        "bus": "Bus",
+        "graduation-cap": "Graduation cap",
+        "dumbbell": "Dumbbell",
+        "paw-print": "Paw print",
+        "shirt": "Shirt",
+        "baby": "Baby",
+        "coffee": "Coffee",
+        "book-open": "Book",
+        "gamepad-2": "Gamepad"
+      }
     }
   }
 }

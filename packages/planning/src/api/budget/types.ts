@@ -18,8 +18,10 @@ export const BUDGET_CATEGORY_ICONS = [
 
 export type BudgetCategoryIcon = (typeof BUDGET_CATEGORY_ICONS)[number];
 
-/** Index of a `--chart-N` colour token. */
-export type ChartColorIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+/** Indexes of the `--chart-N` colour tokens a main category can carry. */
+export const CHART_COLOR_INDEXES = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+
+export type ChartColorIndex = (typeof CHART_COLOR_INDEXES)[number];
 
 /** Uses its parent's icon and colour. */
 export type BudgetSubcategory = {
@@ -39,11 +41,71 @@ export type BudgetCategory = {
 /** The user's two trees, each in the user's order. */
 export type BudgetCategoryTree = Record<BudgetCategoryType, BudgetCategory[]>;
 
+/** A category or subcategory in one of the two trees. */
+export type BudgetCategoryRef = { type: BudgetCategoryType; categoryId: string };
+
+/** One tree edit (add, rename, icon / colour, reorder; `utils/categoryTree`), applied to the stored tree. */
+export type BudgetCategoryTreeChange = (tree: BudgetCategoryTree) => BudgetCategoryTree;
+
+/**
+ * Deletes a category (with its subcategories) or a subcategory. With a replacement (a category or subcategory of the
+ * same type that is not deleted) its transactions, split-offs, recurring transactions and rules move to it; without
+ * one they lose their category (transactions also become unconfirmed) and its rules are deleted.
+ */
+export type BudgetCategoryDeleteInput = BudgetCategoryRef & { replacementId: string | null };
+
 export type BudgetProfile = {
   mainCurrency: string;
   mainAccountId: string;
   /** Bank file account (number as written in the file) → Flaner account id, or `null` when its rows are skipped; remembered between imports. */
   fileAccountMappings: Record<string, string | null>;
+  /** Column mappings for CSV files of banks not recognized automatically, by name. Absent in profiles saved before #175. */
+  importTemplates?: ImportTemplate[];
+};
+
+/** What a CSV column holds when a file is read through an import template; `ignore` drops it. */
+export const IMPORT_COLUMN_ROLES = [
+  "ignore",
+  "date",
+  "amount",
+  "debit",
+  "credit",
+  "payee",
+  "description",
+  "currency",
+] as const;
+
+export type ImportColumnRole = (typeof IMPORT_COLUMN_ROLES)[number];
+
+/** Date layouts an import template can read (day and month may have one digit; a trailing time is ignored). */
+export const IMPORT_DATE_FORMATS = [
+  "YYYY-MM-DD",
+  "DD.MM.YYYY",
+  "DD-MM-YYYY",
+  "DD/MM/YYYY",
+  "MM/DD/YYYY",
+  "YYYY/MM/DD",
+  "YYYY.MM.DD",
+] as const;
+
+export type ImportDateFormat = (typeof IMPORT_DATE_FORMATS)[number];
+
+export const IMPORT_DECIMAL_SEPARATORS = [",", "."] as const;
+
+export type ImportDecimalSeparator = (typeof IMPORT_DECIMAL_SEPARATORS)[number];
+
+/**
+ * A saved column mapping (GLOSSARY → Import template): reads any CSV whose header row equals `header`. Names are
+ * unique, case-insensitively. Stored encrypted in the budget profile.
+ */
+export type ImportTemplate = {
+  name: string;
+  /** The file's header row, trimmed: a file with the same header is recognized by this template. */
+  header: string[];
+  /** One role per header column. */
+  columns: ImportColumnRole[];
+  dateFormat: ImportDateFormat;
+  decimalSeparator: ImportDecimalSeparator;
 };
 
 export type BudgetAccount = {
@@ -324,7 +386,7 @@ export type BudgetProfileDoc = {
   updatedAt: number;
 };
 
-export type BudgetProfilePayload = Pick<BudgetProfile, "fileAccountMappings">;
+export type BudgetProfilePayload = Pick<BudgetProfile, "fileAccountMappings" | "importTemplates">;
 
 /** `budget_categories/{uid}`. `payload`: `BudgetCategoryTree` (user key). */
 export type BudgetCategoriesDoc = {

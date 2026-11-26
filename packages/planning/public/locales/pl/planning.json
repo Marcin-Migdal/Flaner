@@ -126,7 +126,10 @@
       "recurringStopped": "Zatrzymano transakcję cykliczną",
       "recurringDeleted": "Usunięto transakcję cykliczną",
       "recurringLinkError": "Nie udało się zapisać połączenia. Spróbuj ponownie.",
-      "planStarted": "Plan rozpoczęty"
+      "planStarted": "Plan rozpoczęty",
+      "categorySaveError": "Nie udało się zapisać kategorii. Spróbuj ponownie.",
+      "categoryDeleteError": "Nie udało się usunąć kategorii. Spróbuj ponownie.",
+      "categoryDeleted": "Kategoria usunięta"
     }
   },
   "errors": {
@@ -168,7 +171,8 @@
       "occurrenceAlreadyPaid": "To wystąpienie jest już opłacone. Najpierw je rozłącz.",
       "alreadyMatched": "Ta transakcja jest już dopasowana do transakcji cyklicznej.",
       "planAlreadyStarted": "Ten miesiąc ma już plan. Został wczytany ponownie.",
-      "planMissing": "Ten miesiąc nie ma planu."
+      "planMissing": "Ten miesiąc nie ma planu.",
+      "categoryMissing": "Ta kategoria już nie istnieje. Odśwież stronę."
     }
   },
   "splits": {
@@ -799,7 +803,9 @@
       "splitOffTooLarge": "Wydzielone części muszą być mniejsze niż kwota transakcji",
       "splitOffNoteMax": "Notatka może mieć najwyżej 200 znaków",
       "refundRequired": "Wybierz zwrot",
-      "refundTooLarge": "Zwrot musi być mniejszy niż pozostała kwota zakupu"
+      "refundTooLarge": "Zwrot musi być mniejszy niż pozostała kwota zakupu",
+      "categoryNameRequired": "Podaj nazwę.",
+      "categoryNameMax": "Użyj najwyżej 40 znaków."
     },
     "transactionsEmpty": {
       "title": "Brak transakcji",
@@ -1036,12 +1042,14 @@
         "notCsv": "To nie jest plik CSV. Wyeksportuj wyciąg z banku jako CSV i spróbuj ponownie.",
         "empty": "W tym pliku nie ma transakcji.",
         "unreadable": "Nie udało się odczytać pliku. Upewnij się, że to wyciąg CSV z banku.",
-        "recognized": "Rozpoznawane automatycznie: {{banks}}"
+        "recognized": "Rozpoznawane automatycznie: {{banks}}",
+        "templates": "Twoje szablony importu: {{templates}}",
+        "otherCsv": "Każdy inny plik CSV: w następnym kroku przypiszesz jego kolumny i zapiszesz je jako szablon."
       },
       "settings": {
         "bank": "Bank",
         "bankDetected": "Rozpoznany z pliku. Zmień, jeśli się nie zgadza.",
-        "bankNotDetected": "Nie rozpoznano układu pliku. Wybierz bank, który go wystawił.",
+        "bankNotDetected": "Nie rozpoznano układu pliku. Przypisz jego kolumny albo wybierz bank, który go wystawił.",
         "account": "Importuj na konto",
         "fallbackCurrency": "Waluta dla wierszy bez waluty",
         "fallbackCurrencyHint": "Używana tylko wtedy, gdy wiersz nie podaje waluty.",
@@ -1053,10 +1061,23 @@
         "fileAccountRows_few": "{{count}} wiersze",
         "fileAccountRows_many": "{{count}} wierszy",
         "fileAccountRows_other": "{{count}} wiersza",
-        "skipAccount": "Nie importuj"
+        "skipAccount": "Nie importuj",
+        "banksGroup": "Banki",
+        "templatesGroup": "Twoje szablony importu",
+        "otherGroup": "Inne",
+        "customMapping": "Inny bank: przypisz kolumny",
+        "templateSaveError": "Nie udało się zapisać szablonu importu (brak połączenia?). Spróbuj ponownie."
       },
       "validation": {
-        "bankRequired": "Wybierz bank."
+        "bankRequired": "Wybierz bank.",
+        "templateNameRequired": "Nazwij szablon.",
+        "templateNameTooLong": "Użyj najwyżej 40 znaków.",
+        "columns": {
+          "date": "Wybierz dokładnie jedną kolumnę z datą.",
+          "amount": "Wybierz jedną kolumnę z kwotą albo jedną kolumnę obciążeń i jedną uznań.",
+          "text": "Wybierz kolumnę z odbiorcą lub opisem.",
+          "currency": "Wybierz najwyżej jedną kolumnę z walutą."
+        }
       },
       "preview": {
         "filtersLabel": "Pokaż wiersze",
@@ -1120,6 +1141,38 @@
         "close": "Zamknij",
         "openMonth": "Pokaż zaimportowane transakcje",
         "skippedAccounts": "Wiersze pominiętych rachunków"
+      },
+      "mapping": {
+        "title": "Przypisanie kolumn",
+        "hint": "Wskaż, co zawiera każda kolumna; wartości pochodzą z pierwszych wierszy pliku. Po zapisaniu szablonu kolejny taki plik zostanie rozpoznany automatycznie.",
+        "name": "Nazwa szablonu",
+        "nameHint": "Na przykład nazwa banku. Zapis pod istniejącą nazwą zastępuje ten szablon.",
+        "dateFormat": "Format daty",
+        "decimalSeparator": "Separator dziesiętny",
+        "decimal": {
+          "comma": "Przecinek (1 234,56)",
+          "dot": "Kropka (1,234.56)"
+        },
+        "dateTokens": {
+          "year": "RRRR",
+          "month": "MM",
+          "day": "DD"
+        },
+        "column": "Kolumna {{number}}",
+        "readRows_one": "Odczytano {{count}} z {{total}} wierszy z tym przypisaniem",
+        "readRows_few": "Odczytano {{count}} z {{total}} wierszy z tym przypisaniem",
+        "readRows_many": "Odczytano {{count}} z {{total}} wierszy z tym przypisaniem",
+        "readRows_other": "Odczytano {{count}} z {{total}} wierszy z tym przypisaniem",
+        "roles": {
+          "ignore": "Pomiń",
+          "date": "Data",
+          "amount": "Kwota (minus = wydatek)",
+          "debit": "Obciążenie (wydatek)",
+          "credit": "Uznanie (przychód)",
+          "payee": "Odbiorca",
+          "description": "Opis",
+          "currency": "Waluta"
+        }
       }
     },
     "accounts": {
@@ -1393,6 +1446,161 @@
     "exclusion": {
       "exclude": "Wyklucz",
       "restore": "Przywróć"
+    },
+    "summary": {
+      "spending": {
+        "title": "Wydatki według kategorii",
+        "chartLabel": "Wydatki według kategorii, {{month}}",
+        "listLabel": "Kategorie według wydatków",
+        "spent": "Wydano",
+        "allCategories": "Wszystkie kategorie",
+        "others": "Pozostałe",
+        "othersOf": "Pozostałe ({{names}})",
+        "uncategorized": "Bez kategorii",
+        "onCategory": "{{name}} · ogólne",
+        "empty": "Brak wydatków w tym miesiącu.",
+        "drilledDescription": "{{month}} · {{category}}"
+      },
+      "totals": {
+        "title": "Podsumowanie miesiąca",
+        "income": "Przychody",
+        "expenses": "Wydatki",
+        "balance": "Saldo",
+        "up": "Więcej o {{amount}} niż poprzednio ({{month}})",
+        "down": "Mniej o {{amount}} niż poprzednio ({{month}})",
+        "same": "Tyle samo co poprzednio ({{month}})"
+      },
+      "plan": {
+        "title": "Plan",
+        "spentOfLimit": "{{spent}} z {{limit}}",
+        "progressLabel": "Wydatki względem limitów",
+        "daysLeft_one": "Został {{count}} dzień",
+        "daysLeft_few": "Zostały {{count}} dni",
+        "daysLeft_many": "Zostało {{count}} dni",
+        "daysLeft_other": "Zostało {{count}} dni",
+        "monthEnded": "Miesiąc zakończony",
+        "noLimits": "Brak limitów w tym miesiącu.",
+        "openPlanner": "Otwórz planer",
+        "subcategoryName": "{{category}} / {{subcategory}}",
+        "limitsLabel": "Limity",
+        "over": "Przekroczono o {{amount}}"
+      },
+      "review": {
+        "title": "Do przejrzenia",
+        "count_one": "{{count}} transakcja do przejrzenia",
+        "count_few": "{{count}} transakcje do przejrzenia",
+        "count_many": "{{count}} transakcji do przejrzenia",
+        "count_other": "{{count}} transakcji do przejrzenia",
+        "split": "{{unconfirmed}} niepotwierdzonych · {{uncategorized}} bez kategorii",
+        "allClear": "Wszystko przejrzane.",
+        "open": "Przejrzyj w transakcjach"
+      },
+      "bars": {
+        "title": "Przychody i wydatki",
+        "chartLabel": "Przychody i wydatki, 12 miesięcy do {{month}}",
+        "description": "{{month}}: przychody {{income}} · wydatki {{expenses}}",
+        "income": "Przychody",
+        "expenses": "Wydatki"
+      },
+      "recurring": {
+        "title": "Cykliczne w tym miesiącu",
+        "progress": "{{done}} z {{total}} gotowe · jeszcze {{amount}}",
+        "empty": "Brak cyklicznych w tym miesiącu.",
+        "open": "Otwórz cykliczne",
+        "received": "Otrzymano"
+        }
+      },
+    "categories": {
+      "expenseTitle": "Kategorie wydatków",
+      "incomeTitle": "Kategorie przychodów",
+      "hint": "Przeciągnij uchwyt, aby zmienić kolejność, albo ustaw na nim fokus i użyj spacji oraz strzałek. Podkategorie mają ikonę i kolor swojej kategorii.",
+      "add": "Dodaj kategorię",
+      "addSubcategory": "Dodaj podkategorię",
+      "empty": "Brak kategorii.",
+      "subcategoryCount_one": "{{count}} podkategoria",
+      "subcategoryCount_few": "{{count}} podkategorie",
+      "subcategoryCount_many": "{{count}} podkategorii",
+      "subcategoryCount_other": "{{count}} podkategorii",
+      "actions": "Akcje dla {{name}}",
+      "edit": "Edytuj",
+      "delete": "Usuń",
+      "expand": "Pokaż podkategorie {{name}}",
+      "collapse": "Ukryj podkategorie {{name}}",
+      "move": "Przenieś {{name}}",
+      "drag": {
+        "instructions": "Aby zmienić kolejność, naciśnij spację lub Enter na uchwycie, przesuwaj strzałkami, a potem upuść spacją lub Enterem albo anuluj klawiszem Escape.",
+        "start": "Podniesiono {{name}}.",
+        "over": "{{name}} jest na pozycji {{position}} z {{total}}.",
+        "end": "Upuszczono {{name}} na pozycji {{position}} z {{total}}.",
+        "cancel": "Anulowano przenoszenie {{name}}."
+      },
+      "form": {
+        "addTitle": "Dodaj kategorię",
+        "addSubTitle": "Dodaj podkategorię do {{parent}}",
+        "editTitle": "Edytuj kategorię",
+        "editSubTitle": "Edytuj podkategorię",
+        "description": "Wybierz nazwę, ikonę i kolor. Podkategorie mają tę samą ikonę i kolor.",
+        "subDescription": "Podkategoria ma ikonę i kolor swojej kategorii.",
+        "name": "Nazwa",
+        "namePlaceholder": "np. Spożywcze",
+        "icon": "Ikona",
+        "color": "Kolor",
+        "colorOption": "Kolor {{index}}",
+        "preview": "Podgląd",
+        "addSubmit": "Dodaj",
+        "editSubmit": "Zapisz"
+      },
+      "deleteDialog": {
+        "title": "Usunąć {{name}}?",
+        "subcategories_one": "Jej {{count}} podkategoria zostanie usunięta razem z nią.",
+        "subcategories_few": "Jej {{count}} podkategorie zostaną usunięte razem z nią.",
+        "subcategories_many": "Jej {{count}} podkategorii zostanie usuniętych razem z nią.",
+        "subcategories_other": "Jej {{count}} podkategorii zostanie usuniętych razem z nią.",
+        "counting": "Liczenie transakcji, które jej używają…",
+        "countUnavailable": "Nie udało się policzyć transakcji, które jej używają.",
+        "usage_one": "Używa jej {{count}} transakcja.",
+        "usage_few": "Używają jej {{count}} transakcje.",
+        "usage_many": "Używa jej {{count}} transakcji.",
+        "usage_other": "Używa jej {{count}} transakcji.",
+        "replacement": "Przenieś ich transakcje do",
+        "noReplacement": "Nie przenoś · trafią do „Bez kategorii”",
+        "hint": "Z zamiennikiem jej transakcje, wydzielone części, transakcje cykliczne i reguły przechodzą do niego. Bez zamiennika jej transakcje trafiają do „Bez kategorii” jako niepotwierdzone, a jej reguły zostają usunięte. Jej limity znikają z planu przy jego najbliższym zapisie.",
+        "confirm": "Tak, usuń"
+      },
+      "icons": {
+        "shopping-bag": "Torba na zakupy",
+        "smile": "Uśmiech",
+        "house": "Dom",
+        "user": "Osoba",
+        "landmark": "Urząd",
+        "gift": "Prezent",
+        "receipt": "Rachunek",
+        "music": "Muzyka",
+        "car": "Samochód",
+        "briefcase": "Teczka",
+        "heart-pulse": "Zdrowie",
+        "piggy-bank": "Skarbonka",
+        "wallet": "Portfel",
+        "award": "Nagroda",
+        "handshake": "Uścisk dłoni",
+        "tag": "Metka",
+        "trending-up": "Wykres w górę",
+        "percent": "Procent",
+        "undo-2": "Zwrot",
+        "banknote": "Banknot",
+        "circle-ellipsis": "Inne",
+        "utensils": "Sztućce",
+        "plane": "Samolot",
+        "bus": "Autobus",
+        "graduation-cap": "Biret",
+        "dumbbell": "Hantel",
+        "paw-print": "Łapa",
+        "shirt": "Koszulka",
+        "baby": "Dziecko",
+        "coffee": "Kawa",
+        "book-open": "Książka",
+        "gamepad-2": "Pad do gier"
+      }
     }
   }
 }
