@@ -1244,7 +1244,7 @@
       "start": {
         "title": "Zacznij planować {{month}}",
         "description": "Ten miesiąc nie ma jeszcze planu. Nic nie zostanie zaplanowane, dopóki nie wybierzesz.",
-        "copy": "Skopiuj z {{month}}",
+        "copy": "Skopiuj plan: {{month}}",
         "empty": "Zacznij od zera",
         "adds": "Transakcje cykliczne dodadzą:",
         "addsNone": "Transakcje cykliczne nie dodadzą limitów.",
