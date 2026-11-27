@@ -244,3 +244,17 @@ for (const item of envs) {
 ```
 Remove the temporary script immediately after execution using `cmd /c del add_envs.cjs` to avoid committing sensitive plaintext secrets to repository logs.
 
+
+# Local Dev Server / E2E Slowness
+
+## Blank pages and timeouts in long local E2E runs (#219)
+
+**Symptom:** a long local run (`npm run e2e`, `--repeat-each=10`) fails at random with a blank page or `Test timeout of 30000ms exceeded`. Tests that pass take 10–25 s instead of 1–3 s. The host's Vite process (port 4200) sits at 100–150% CPU even when no browser is open.
+
+**Root cause:** the Module Federation dts plugin extracts the remotes' types into `packages/core/@mf-types/` (~850 directories) while the remotes start. Vite's file watcher watched that folder. Under `npm run dev` it then kept rescanning it nonstop (a CPU profile shows chokidar `readdir` / `lstat` / `path.join` on `@mf-types/**`). The busy event loop delayed every module request. The host page loads ~370 unbundled modules in dev, so the app took ~18 s to boot. That is longer than the 15 s `expect` timeout. Fewer workers did not help (2 workers: same failures), because the bottleneck is the busy dev server, not parallel load.
+
+**Fix:** `packages/core/vite.config.ts` → `server.watch.ignored: ['**/@mf-types/**']`. Nothing imports those files at runtime. After the fix, `--project=core --repeat-each=10` with the default 4 workers passes 141/141 in ~2 min (before: 13 failed, ~10 min).
+
+**How to check if it comes back:** with `npm run dev` idle, the `vite` process listening on :4200 should be near 0% CPU. To find the hot path, attach the inspector on the fly with `node -e "process._debugProcess(<pid>)"` and record a CPU profile on port 9229.
+
+**Not the cause:** the forwarded `[console.warn] You are loading @emotion/react when it is already loaded` lines. `react-select` is not in `sharedFederationConfig`, so each remote that renders `@flaner/ui-components`' `Select` loads its own pre-bundled copy with its own `@emotion/react`. The runs pass with the warning still present.
