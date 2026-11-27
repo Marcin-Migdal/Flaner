@@ -279,6 +279,10 @@ _Avoid_: income limit, income target
 One expected appearance of a recurring transaction in a given month, derived from its repeat rule. It is paid once a real transaction is matched to it; until then it is upcoming, and overdue after its due date.
 _Avoid_: instalment, scheduled transaction, planned payment
 
+**Recurring suggestion**:
+A group of past transactions with the same account, type and counterparty that repeat at a regular interval, from which the app guesses a repeat rule. It is not a recurring transaction until the user confirms it; a dismissed suggestion never comes back.
+_Avoid_: detected recurring, recurring candidate
+
 **Budget passphrase**:
 A second secret, separate from the Flaner login, that unlocks a user's Budget data. Flaner never stores or sees it, so it cannot be reset by email.
 _Avoid_: budget password, PIN, master password
