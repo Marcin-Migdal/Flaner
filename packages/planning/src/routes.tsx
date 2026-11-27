@@ -1,8 +1,10 @@
 import React from "react";
 import { Outlet } from "react-router";
 import type { AppRouteObject } from "@flaner/shared/types";
-import { BudgetTilesView } from "./views/BudgetTilesView";
+import { withTilesIndex } from "@flaner/shared/utils";
 
+// Tiles index of every labelled route with children (`withTilesIndex` below)
+const RouteTilesView = React.lazy(() => import("./views/RouteTilesView"));
 const SchedulerView = React.lazy(() => import("./views/SchedulerView"));
 const SplitsView = React.lazy(() => import("./views/SplitsView"));
 // Budget views stay lazy so their heavy dependencies (charts, CSV parser) load only on Budget pages
@@ -41,7 +43,8 @@ export const routes: AppRouteObject[] = [
     path: "",
     element: <Outlet />,
     handle: { label: "nav.planning", icon: "calendar" },
-    children: [
+    // Each labelled route with children below gets a tiles index page; `/planning` itself is core's PageTilesView
+    children: withTilesIndex([
       {
         path: "scheduling",
         element: <SchedulerView />,
@@ -66,9 +69,8 @@ export const routes: AppRouteObject[] = [
           </BudgetGate>
         ),
         handle: { label: "planning:nav.budget", icon: "piggy-bank" },
-        // A route with children shows a tiles page of them as its index
-        children: [{ index: true, element: <BudgetTilesView routes={budgetViews} /> }, ...budgetViews],
+        children: budgetViews,
       },
-    ],
+    ], (tiles) => <RouteTilesView {...tiles} />),
   },
 ];
