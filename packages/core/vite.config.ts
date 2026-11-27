@@ -20,6 +20,10 @@ export default defineConfig({
     strictPort: true,
     host: '0.0.0.0',
     cors: true,
+    // The MF dts plugin extracts remote types here (~850 dirs) while the remotes start; watching
+    // them leaves the watcher rescanning nonstop, pegs the CPU and slows every request (#219).
+    // Nothing imports them at runtime.
+    watch: { ignored: ['**/@mf-types/**'] },
     headers: {
       // Set to unsafe-none to completely bypass COOP restrictions on localhost,
       // which eliminates the browser console error regarding window.closed.
